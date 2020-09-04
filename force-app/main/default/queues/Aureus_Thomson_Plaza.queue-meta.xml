@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Queue xmlns="http://soap.sforce.com/2006/04/metadata">
+    <doesSendEmailToMembers>false</doesSendEmailToMembers>
+    <email>thomsonplaza@aureusacademy.com</email>
+    <name>Aureus Thomson Plaza</name>
+    <queueMembers>
+        <users>
+            <user>alice.wong@aureusacademy.com</user>
+            <user>angela.cortez@aureusacademy.com</user>
+            <user>cheryl.lai@aureusacademy.com</user>
+            <user>chiara@aureusacademy.com</user>
+            <user>kristy.chan@aureusacademy.com</user>
+        </users>
+    </queueMembers>
+    <queueSobject>
+        <sobjectType>Case</sobjectType>
+    </queueSobject>
+</Queue>

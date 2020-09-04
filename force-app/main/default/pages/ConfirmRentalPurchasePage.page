@@ -1,0 +1,235 @@
+<apex:page controller="ConfirmRentalPurchaseController" standardStylesheets="false" sidebar="false"
+    showHeader="false" lightningStylesheets="true" docType="html-5.0">
+    <apex:stylesheet value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.css')}" />
+    <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/jquery.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.js')}" />
+    <apex:slds />
+    <apex:form id="frm">
+       
+        <apex:actionFunction name="getSession" status="spinner" action="{!createSession}" reRender="framePanel,enrolBillDetailsPanel"
+            oncomplete="showModal();" />
+        <apex:actionFunction name="sendAgreement" status="spinner" action="{!sendAgreement}" reRender="frm" oncomplete="getSession();return false;"
+        />
+        <apex:actionFunction name="waitAgreement" status="spinner" action="{!waitAgreement}" reRender="frm" oncomplete="sendAgreement();return false;"
+        />
+        <apex:actionFunction name="signAgreement" status="spinner" action="{!signAgreement}" reRender="frm" oncomplete="waitForTwoSecond();return false;"
+        />
+        <apex:actionFunction name="isSignAgreement" status="spinner" action="{!isSignAgreement}" reRender="frm" oncomplete="checkIsSignedAgreement({!isSignedAgreement});return false;"
+        />
+        <apex:actionFunction name="createInvoiceForpayment" action="{!createInvoiceViaCard}" oncomplete="checkError('{!isErrorOnSave}','{!errorMessage}','createInvoice',{!isPaidAmount});return false;"  reRender="frm" status="spinner"/>
+        <apex:actionFunction name="completePayment" action="{!getPaymentForInvoices}" oncomplete="checkError('{!isErrorOnSave}','{!errorMessage}','completePayment',{!isPaidAmount});return false;"  reRender="frm" status="spinner"/>
+        <apex:actionFunction name="createAttachment" action="{!createAttachmentForEmail}" oncomplete="checkError('{!isErrorOnSave}','{!errorMessage}','createAttachmentForEmail',{!isPaidAmount});return false;"  reRender="frm" status="spinner"/>
+        
+        <apex:outputPanel rendered="{!!findEnrolId}" >  
+            <div class="slds-notify_container slds-is-relative slds-hide slds-size_1-of-1 paymentCmpErrDiv">
+                <div class="slds-notify slds-notify_toast slds-theme_error slds-m-left_none slds-m-right_medium" role="status">
+                    <div class="slds-notify__content">
+                        <h2 class="slds-text-heading_small contentPaymentCmpErrDiv"></h2>
+                    </div>
+
+                    <div class="slds-notify__close">
+                        <button class="slds-button slds-button_icon slds-button_icon-inverse" onclick=" $('.paymentCmpErrDiv').addClass('slds-hide');return false;"
+                            title="Close">
+                            X
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <c:PianoRentalPurchaseSummaryCMP enrolmentId="{!objEnrolment.id}" />
+            <div class="slds-grid slds-wrap slds-grid--align-spread slds-size_1-of-1" id="SignPandaDoc">
+                <div class="slds-col slds-size_1-of-1  slds-p-horizontal_medium">
+                    <a class="slds-button custom-btn" id="signButtonBtn" onclick="clickForSign();return false;">Click Here to Sign
+                        <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
+                            <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
+                                <use fill="White" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#chevronright')}"
+                                />
+                            </svg>
+                        </span>
+                    </a>
+                </div>
+            </div>
+            <apex:actionStatus id="spinner">
+            <apex:facet name="start">
+                <apex:outputPanel id="backdrop" styleClass="popupBackground">
+                    <div role="status" class="slds-spinner slds-spinner_brand slds-spinner_large">
+                        <div class="slds-spinner__dot-a"></div>
+                        <div class="slds-spinner__dot-b"></div>
+                    </div>
+                </apex:outputPanel>
+            </apex:facet>
+        </apex:actionStatus>
+        <div id="modalForDocument" style="height:640px" class="slds-hide">
+            <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open slds-modal_medium" aria-labelledby="modal-heading-01"
+                aria-modal="true" aria-describedby="modal-content-id-1">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick="$('#modalForDocument').addClass('slds-hide');">
+                            <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                                <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#close')}"
+                                />
+                            </svg>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate"></h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+
+                        <apex:outputPanel id="framePanel">
+                            <apex:iframe src="https://app.pandadoc.com/s/{!sessionId}" height="500px" width="100%"></apex:iframe>
+                        </apex:outputPanel>
+
+                    </div>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </div>
+        <div class="slds-form-element slds-p-bottom_xx-large slds-hide" id="showCardDetails">
+            <article class="slds-card mainContainer">
+                <div class="slds-card__header slds-grid">
+                  <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                    <div class="slds-media__body">
+                      <h2 class="slds-card__header-title">
+                        <a href="javascript:void(0);" class="slds-card__header-link slds-truncate" title="Accounts">
+                          <span>Add Card Details</span>
+                        </a>
+                      </h2>
+                    </div>
+                  </header>
+                </div>
+                <div class="slds-card__body slds-card__body_inner">
+                    <div class="slds-col dark-bg billig-info slds-grid">
+                        <ul class="slds-grid slds-wrap slds-size_1-of-1">
+                            <li class="slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                <strong>Card Info</strong>&nbsp;
+                                <apex:outputText value="{!cardImage}" escape="false" /> x{!cardNumber}&nbsp;
+                                <a href="/apex/UpdateCustomerCard?id={!objEnrolment.Parent__c}" target="_blank">Add New Card</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <footer class="slds-card__footer">
+                    <div class="slds-grid slds-wrap slds-grid--align-spread slds-size_1-of-1">
+                        <div class="slds-col slds-size_1-of-1  slds-p-horizontal_medium">
+                            <a class="slds-button custom-btn" id="payBtn" onclick="createInvoiceForpayment();return false;">Pay Now
+                                <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
+                                    <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
+                                        <use fill="White" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#chevronright')}"
+                                        />
+                                    </svg>
+                                </span>
+                            </a>
+                        </div>
+                    </div>
+                </footer>
+              </article>
+        </div>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!findEnrolId}" > 
+            <div class="slds-align_absolute-center slds-p-around_x-small">
+                <strong>We cannot process your request at the moment {!errorMessage}. Please contact centre admin for further assistance.
+                </strong>
+            </div>
+        </apex:outputPanel>
+        
+        
+    </apex:form>
+    <script type="text/javascript">
+
+        function clickForSign() {
+            $("#payBtn").css('pointer-events', 'none');
+            var checkErr = checkErrorOnSummaryPage();
+
+            if (!checkErr) {
+                isSignAgreement();
+            } else {
+                $("#payBtn").css('pointer-events', '');
+            }
+        }
+        function checkErrorOnSummaryPage() {
+            var isErr = false;
+            $('.inputchk').each(function () {
+
+                if (!$(this).prop('checked')) {
+                    $(this).parent().parent().parent().addClass('slds-has-error');
+                    $(this).parent().parent().next().removeClass('slds-hide');
+                    isErr = true;
+                    $(this).focus();
+                } else {
+                    $(this).parent().parent().parent().removeClass('slds-has-error');
+                    $(this).parent().parent().next().addClass('slds-hide');
+                }
+            });
+            return isErr;
+        }
+        function showModal() {
+            $('#modalForDocument').removeClass('slds-hide');
+        }
+
+        function hideModal() {
+            $('#modalForDocument').addClass('slds-hide');
+        }
+        function checkError(isErrOnSave, errorMessage,sendFunctionName,isPaidAmount){
+            console.log('isErrOnSave',isErrOnSave);
+            console.log('errorMessage',errorMessage);
+            console.log('sendFunctionName',sendFunctionName);
+            console.log('isPaidAmount',isPaidAmount);
+            if(isErrOnSave == 'true'){
+                $("#payBtn").css('pointer-events','');
+                $('.paymentCmpErrDiv').removeClass('slds-hide');
+                $('.contentPaymentCmpErrDiv').html(errorMessage);
+            }else{
+                $('.paymentCmpErrDiv').addClass('slds-hide');
+               if(sendFunctionName == 'createInvoice'){
+                    completePayment();
+               }
+                if(sendFunctionName =='completePayment'){
+                    createAttachment();
+               }else if(sendFunctionName == 'createAttachmentForEmail'){
+                   if(isPaidAmount){
+                        window.location.href="/apex/thankyoupage";
+                   }
+               }
+                //processAttach();
+            }
+        }
+        function waitForTwoSecond() {
+            setTimeout(function () {
+                waitAgreement();
+            }, 2000);
+        }
+        function checkIsSignedAgreement(isSignedAgreement) {
+            if(isSignedAgreement){
+                setTimeout(function () {
+                    getSession();
+                }, 2000);
+            }else{
+                signAgreement();
+            }
+        }
+        var eventMethod = window.addEventListener ? 'addEventListener' : 'attachEvent',
+            messageEvent = eventMethod === 'attachEvent' ? 'onmessage' : 'message';
+        //console.log('@@@@window ', window);
+        window[eventMethod](messageEvent, function (e) {
+            console.log('messageEvent', messageEvent);
+            if (e && e.data) {
+                try {
+                    console.log('e.data', e.data);
+                    var message = JSON.parse(e.data);
+                    console.log('message', message);
+                    if (message && message.event) {
+                        if (message.event == 'session_view.document.completed') {
+                            $('#SignPandaDoc').addClass('slds-hide');
+                            $('#showCardDetails').removeClass('slds-hide');
+                            $('#modalForDocument').addClass('slds-hide');
+                        }
+                    }
+                } catch (e) {
+                    console.log(e);
+                }
+            }
+        }, false); 
+
+      
+    </script>
+</apex:page>

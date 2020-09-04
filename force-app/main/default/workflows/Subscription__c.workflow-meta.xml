@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workflow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fieldUpdates>
+        <fullName>Update_subs_id</fullName>
+        <field>Name</field>
+        <formula>IF(Center__r.Country__r.Name=&quot;HK&quot;, (Center__r.Country__r.Name+&quot;-&quot;+Sub_Number_backend__c), Sub_Number_backend__c)</formula>
+        <name>Update subs id</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <rules>
+        <fullName>Update Subs number</fullName>
+        <actions>
+            <name>Update_subs_id</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <formula>TRUE</formula>
+        <triggerType>onCreateOnly</triggerType>
+    </rules>
+</Workflow>

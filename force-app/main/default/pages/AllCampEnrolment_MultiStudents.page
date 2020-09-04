@@ -1,0 +1,417 @@
+<apex:page controller="AllCampEnrolmentMultiStudentsCtrl" standardStylesheets="false" sidebar="false" showHeader="false" lightningStylesheets="true"
+    docType="html-5.0">
+    <!--intlInputPhone css and js file -->
+    <apex:stylesheet value="{!URLFOR($Resource.IntlInputPhone, '/css/intlInputPhone.min.css')}" />
+
+    <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}" />
+    <!--  To Solve increase field length when click in inputfield in mobile devices-->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0" />
+    <apex:stylesheet value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.css')}" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/"
+        crossorigin="anonymous" />
+    <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery/jquery.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.js')}" />
+    <!--intlInputPhone  js file -->
+    <!-- date picker js file-->
+    <!--<apex:includeScript value="{!URLFOR($Resource.Date_Picker_Js, '/jquery-ui.js')}" />-->
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <!-- date picker js file-->
+    <apex:includeScript value="{!URLFOR($Resource.IntlInputPhone, '/js/intlInputPhone.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/moment.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/fullCalenderCustom.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.FullCalender, '/fullcalendar.min.css')}" />
+    <apex:includeScript value="{!$Resource.aljs}" />
+    <apex:includeScript value="{!$Resource.datepicker}" />
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        #pageHeader {
+            background-color: #ffbf2f !important;
+            color: white;
+        }
+
+        .custom-Btn {
+            background-color: #ffaa00 !important;
+            color: white !important;
+            cursor: default;
+        }
+        .btn-block {
+            display: block;
+            width: 100%;
+            font-size: 1.2rem;
+        }
+        .custom-Btn:hover {
+            color: #ffaa00 !important;
+            background-color: white !important;
+            border: 1px solid #ffaa00;
+            cursor: default;
+        }
+
+        .custom-Btn:disabled {
+            background: rgba(255, 170, 0, 0.69) !important;
+            cursor: not-allowed;
+        }
+    </style>
+    <apex:form id="frm">
+        <apex:actionFunction name="getEnrolCampId" action="{!getCampId}" rerender="getCampPackage,getCampStudentDetial" status="spinner">
+            <apex:param assignTo="{!centerId}" name="centerId" value="" />
+            <apex:param assignTo="{!enrolCampId}" name="campId" value="" />
+            <apex:param assignTo="{!centerName}" name="CenterName" value="" />
+            <apex:param assignTo="{!countryCode}" name="countryCode" value="" />
+        </apex:actionFunction>
+        <apex:actionStatus id="spinner">
+            <apex:facet name="start">
+                <apex:outputPanel id="backdrop" styleClass="popupBackground">
+                    <div role="status" class="slds-spinner slds-spinner_brand slds-spinner_large">
+                        <div class="slds-spinner__dot-a"></div>
+                        <div class="slds-spinner__dot-b"></div>
+                    </div>
+                </apex:outputPanel>
+            </apex:facet>
+        </apex:actionStatus>
+        <!--start: Show All camps according to Center Id-->
+        <div class="centerDiv">
+            <div class="">
+                <div class="slds-page-header" id="pageHeader">
+                    <div class="slds-page-header__row">
+                        <div class="slds-page-header__col-title">
+                            <div class="slds-media">
+                                <div class="slds-media__body">
+                                    <div class="slds-page-header__name">
+                                        <div class="slds-page-header__name-title">
+                                            <h1>
+                                                <span class="slds-page-header__title slds-truncate" title="Camps Details">Current Active Camps</span>
+                                            </h1>
+                                        </div>
+                                    </div>
+                                    <p class="slds-page-header__name-meta">Enrol A Camp Now •
+                                        <!--{!centerName}-->
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <apex:outputPanel rendered="{!AND(mapOfCamp != null)}" styleClass="slds-grid slds-wrap ">
+                <div class="slds-col slds-size_12-of-12">
+                    <apex:repeat value="{!mapOfCamp}" var="campCenter">
+                        <!--Need to apply CSS here..-->
+                        <div class="slds-grid slds-wrap slds-p-top_large slds-p-bottom_large">
+                            <article class="slds-card  slds-col slds-size_12-of-12 ">
+                                <div class="slds-modal__header modalHeader slds-grid">
+                                    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                        <div class="slds-media__body">
+                                            <h2 class="slds-card__header-title slds-card__header-link slds-truncate">
+                                                <span>{!campCenter}</span>
+                                            </h2>
+                                        </div>
+                                    </header>
+                                </div>
+                                <div class="slds-card__body slds-card__body_inner slds-col slds-size_12-of-12  slds-p-top_xx-large " id="allPackages">
+                                    <!--<apex:outputPanel rendered="{!AND(mapOfCamp[campCenter] != null, mapOfCamp[campCenter].size > 0)}">-->
+                                        <apex:repeat value="{!mapOfCamp[campCenter]}" var="objListCamp">
+                                            <div class="slds-col slds-size_12-of-12 slds-p-around_medium slds-p-top_xx-large slds-box">
+                                                <article class="slds-card">
+                                                    <div class="slds-card__header slds-grid">
+                                                        <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                                            <!--<div class="slds-media__body slds-col slds-size_1-of-1 slds-medium-size_10-of-12">
+                                                                <h1 class="slds-card__header-title">
+                                                                    <span class="slds-card__header-link slds-truncate" title="{!objListCamp.name}">
+                                                                        {!objListCamp.name}
+                                                                    </span>
+                                                                </h1>
+                                                            </div>
+                                                            <div class="slds-no-flex slds-col slds-size_1-of-1 slds-medium-size_2-of-12">
+                                                                <button class="slds-button slds-button_neutral custom-Btn slds-float_right" id="enrolBtn" onclick="getCampId('{!objListCamp.id}'); return false;">
+                                                                    Enrol Now
+                                                                </button>
+                                                            </div>-->
+                                                            <div class="slds-media__body">
+                                                                <h2 class="slds-card__header-title slds-card__header-link slds-truncate" title="{!objListCamp.name}">
+                                                                    {!objListCamp.name}
+                                                                </h2>
+                                                              </div>
+                                                              <!--Updating the Enrol now button to botthom of the section for mobile responsiveness-->
+                                                              <!--<div class="slds-no-flex">
+                                                                <button class="slds-button slds-button_neutral custom-Btn slds-float_right" id="{!objListCamp.id}" data-campId="{!objListCamp.id}" data-centerId="{!objListCamp.Centre__r.id}" data-CenterName="{!objListCamp.Centre__r.Name}" data-countryCode="{!objListCamp.Centre__r.Country__r.name}" onclick="getCampId('{!objListCamp.id}'); return false;">
+                                                                    Enrol Now
+                                                                </button>
+                                                              </div>-->
+                                                        </header>
+                                                    </div>
+                                                    <div class="slds-card__body slds-card__body_inner slds-grid slds-wrap">
+                                                        <div class="slds-grid slds-wrap slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small">
+                                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_2-of-6">
+                                                                <span class="slds-card__header-link slds-truncate">Camp Name</span>
+                                                            </div>
+                                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_4-of-6 ">
+                                                                <span>{!objListCamp.Name}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="slds-grid slds-wrap slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small">
+                                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_2-of-6">
+                                                                <span class="slds-card__header-link slds-truncate">Center Name</span>
+                                                            </div>
+                                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_4-of-6 ">
+                                                                <span>{!objListCamp.Centre__r.Name}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="slds-grid slds-wrap slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small">
+                                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_2-of-6 ">
+                                                                <span class="slds-card__header-link slds-truncate">Minimum Age</span>
+                                                            </div>
+                                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_4-of-6 ">
+                                                                <span>
+                                                                    {!objListCamp.Minimum_Age__c} &nbsp;
+                                                                    <apex:outputLabel rendered="{!objListCamp.Minimum_Age__c == 1}"> Year </apex:outputLabel>
+                                                                    <apex:outputLabel rendered="{!objListCamp.Minimum_Age__c > 1}"> Years</apex:outputLabel>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="slds-grid slds-wrap slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small">
+                                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_2-of-6">
+                                                                <span class="slds-card__header-link slds-truncate">Maximum Age</span>
+                                                            </div>
+                                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_4-of-6">
+                                                                <span>
+                                                                    {!objListCamp.Maximum_Age__c} &nbsp;
+                                                                    <apex:outputLabel rendered="{!objListCamp.Maximum_Age__c == 1}"> Year </apex:outputLabel>
+                                                                    <apex:outputLabel rendered="{!objListCamp.Maximum_Age__c > 1}"> Years</apex:outputLabel>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="slds-grid slds-wrap slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small">
+                                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_2-of-6">
+                                                                <span class="slds-card__header-link slds-truncate">Start Date</span>
+                                                            </div>
+                                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_4-of-6">
+                                                                <span>
+                                                                    <!--<apex:outputPanel rendered="{!if(objListCamp.Camp_Days__r.size > 0, true,false)}">
+                                                                        <apex:outputText value="{0,date, dd/MM/yyyy}">
+                                                                            <apex:param value="{!objListCamp.Camp_Days__r[0].Dates_Of_The_Camp__c}" />
+                                                                        </apex:outputText>
+                                                                    </apex:outputPanel>
+                                                                    <apex:outputPanel rendered="{!if(objListCamp.Camp_Days__r.size > 0, false,true)}">
+
+                                                                    </apex:outputPanel>-->
+                                                                    
+                                                                        <!--commented by jatin: 4 mar,2020 according to camp feedbacks all dates change format May 5, 2020 instead of 05/05/2020
+                                                                            <apex:outputText value="{0,date, dd/MM/yyyy}">
+                                                                            <apex:param value="{!mapOfCampDay[objListCamp.id][0]}" />
+                                                                        </apex:outputText>-->
+                                                                        <apex:outputText value="{0,date,MMM d, yyyy}">
+                                                                        <apex:param value="{!mapOfCampDay[objListCamp.id][0]}" />
+                                                                    </apex:outputText>
+                                                                    
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="slds-grid slds-wrap slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small">
+                                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_2-of-6">
+                                                                <span class="slds-card__header-link slds-truncate">End Date</span>
+                                                            </div>
+                                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_4-of-6">
+                                                                <span>
+                                                                    <!--<apex:outputPanel rendered="{!AND(objListCamp.Camp_Days__r!= null,objListCamp.Camp_Days__r.size > 0)}">
+                                                                        <apex:outputText value="{0,date, dd/MM/yyyy}">
+                                                                            <apex:param value="{!objListCamp.Camp_Days__r[objListCamp.Camp_Days__r.size-1].Dates_Of_The_Camp__c}" />
+                                                                        </apex:outputText>
+                                                                    </apex:outputPanel>
+                                                                    <apex:outputPanel rendered="{!!AND(objListCamp.Camp_Days__r!= null,objListCamp.Camp_Days__r.size > 0)}">
+
+                                                                    </apex:outputPanel>-->
+                                                                    <!--commented by jatin: 4 mar,2020 according to camp feedbacks all dates change format May 5, 2020 instead of 05/05/2020
+                                                                    <apex:outputText value="{0,date, dd/MM/yyyy}">
+                                                                    <apex:param value="{!mapOfCampDay[objListCamp.id][1]}" />
+                                                                </apex:outputText>-->
+                                                                <apex:outputText value="{0,date, MMM d, yyyy}">
+                                                                    <apex:param value="{!mapOfCampDay[objListCamp.id][1]}" />
+                                                                </apex:outputText>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                    <footer>
+                                                        <div class="slds-grid slds-grid_align-end">
+                                                            <div class="slds-col">
+                                                                <button class="slds-button slds-button_neutral custom-Btn" id="{!objListCamp.id}" data-campId="{!objListCamp.id}" data-centerId="{!objListCamp.Centre__r.id}" data-CenterName="{!objListCamp.Centre__r.Name}" data-countryCode="{!objListCamp.Centre__r.Country__r.name}" onclick="getCampId('{!objListCamp.id}'); return false;">
+                                                                Enrol Now
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                            
+                                                    </footer>
+                                                </article>
+                                            </div>
+                                        </apex:repeat>
+                                        <!--End: Show All camps according to Center Id-->
+                                   <!-- </apex:outputPanel>
+
+                                    <!--start: Show error  if not found any camps list according to Center Id
+                                    <apex:outputPanel rendered="{!!AND(mapOfCamp[campCenter] == null,mapOfCamp[campCenter].size == 0)}" styleClass="">
+                                        <div class="slds-align_absolute-center slds-p-around_x-small" style="color:red;">
+                                            <strong>We cannot process your request at the moment. We Cannot Found any Camp related
+                                                to this center. Please contact centre admin for further assistance.
+                                            </strong>
+                                        </div>
+                                    </apex:outputPanel>-->
+                                    <!--end: Show error  if not found any camps list according to Center Id-->
+                                </div>
+                            </article>
+                        </div>
+                    </apex:repeat>
+                </div>
+            </apex:outputPanel>
+
+            <!--start: Show error  if not found center Id-->
+            <!--<apex:outputPanel rendered="{!!AND(mapOfCamp == null)}" styleClass="slds-grid slds-wrap slds-p-around_xx-large">
+                <div class="slds-col slds-size_12-of-12 slds-align_absolute-center slds-p-around_x-small" style="color:red;">
+                    <strong>We cannot process your request at the moment. Please contact centre admin for further assistance.
+                    </strong>
+                </div>
+            </apex:outputPanel>-->
+            <!--end: Show error  if not found center Id-->
+        </div>
+        <div class="slds-hide CampPackageDiv">
+            <!--start: Show camp package accorging to selected camp Id  other wise show error-->
+            <apex:outputPanel id="getCampPackage">
+                <apex:outputPanel rendered="{!if(enrolCampId != null, true,false)}">
+                    <c:CampPackageDetailsForEnrolStudentCMP enrolCampId="{!enrolCampId}" />
+                </apex:outputPanel>
+                <!--<apex:outputPanel rendered="{!if(enrolCampId != null, false,true)}">
+                    <div class="slds-align_absolute-center slds-p-around_x-small" style="color:red;">
+                        <strong>We cannot process your request at the moment. Please contact centre admin for further assistance.
+                        </strong>
+                    </div>
+                </apex:outputPanel>-->
+                <script>
+                    $(".package-list").first().prop('checked', true);
+                    $(".package-list").first().trigger('click');
+                </script>
+            </apex:outputPanel>
+            <!--end: Show camp package  accorging to selected camp Id -->
+        </div>
+        <div class="slds-hide CampStudentDetialInsertDiv">
+            <!--start: student fill our details -->
+            <apex:outputPanel id="getCampStudentDetial" >
+                <apex:outputPanel rendered="{!AND(enrolCampId!= null)}">
+                    <c:CampStudentDetialInsertCMP selectedCenterName="{!centerName}" selectedCenterId="{!centerId}"
+                        enrolCampId="{!enrolCampId}" countryCode="{!countryCode}" trvlDuration="{!trvlDuration}" isAtHome="{!isAureusAtHome}"
+                    />
+                </apex:outputPanel>
+            </apex:outputPanel>
+            <!--end: student fill our details -->
+        </div>
+        <div class="slds-docked-form-footer slds-hide" id="footerDiv">
+            <!--commented by jatin: 4 mar,2020 according to camp feedbacks show "Add Student" button should be larger below the selection of camp dates
+                <button type="button" class="slds-hide slds-button slds-button_neutral custom-Btn" onclick="addNewStudentDetail();" id="addStudentandPackageDetails">Add Student</button>
+            --><button type="button" class="slds-button slds-button_neutral custom-Btn " onclick="clickPreviousBtn();" id="previousbtn">PREVIOUS</button>
+            <button type="button" class=" slds-button slds-button_neutral custom-Btn" onclick="clickNextBtn();" id="nextbtn">NEXT</button>
+            <button type="button" class="slds-hide slds-button slds-button_neutral custom-Btn" onclick="fetchStudentDetails();" id="saveNewStudentbtn">NEXT</button>
+        </div>
+    </apex:form>
+    <script>
+        var maxAge = '';
+        var minAge = '';
+        var counterPage = 0;
+        $('#previousbtn').prop('disabled', true);
+        $('#nextbtn').prop('disabled', true);
+        var campId = '';
+        // get camp Id then show next component
+        function getCampId(enrolcamp) {
+            console.log('dddddddddd');
+            $('#studentSummary').addClass('slds-hide');
+            var centerId = $('#'+enrolcamp).attr('data-centerId');
+            campId = $('#'+enrolcamp).attr('data-campId');
+            var CenterName = $('#'+enrolcamp).attr('data-CenterName');
+            var countryCode = $('#'+enrolcamp).attr('data-countryCode');
+            console.log('centerId'+centerId);
+            $('.CampPackageDiv').removeClass('slds-hide');
+            $('.centerDiv').addClass('slds-hide');
+            $('#addStudentandPackageDetails').removeClass('slds-hide');
+            counterPage += 1;
+            $('#previousbtn').prop('disabled', false);
+            $('#footerDiv').removeClass('slds-hide');
+            $('#saveNewStudentbtn').attr('data-centerId', '{!centerId}');
+            $('#saveNewStudentbtn').attr('data-centerName', '{!centerName}');
+            $('#saveNewStudentbtn').attr('data-CampId', enrolcamp);
+            getEnrolCampId(centerId,campId,CenterName,countryCode);
+        }
+        // manage previous component
+        function clickPreviousBtn() {
+            counterPage -= 1;
+            $('#previousbtn').prop('disabled', false);
+            $('#studentSummary').addClass('slds-hide');
+            if (counterPage == 0) {
+                $('#previousbtn').prop('disabled', true);
+                $('.CampPackageDiv').addClass('slds-hide');
+                $('.centerDiv').removeClass('slds-hide');
+                $('#nextbtn').prop('disabled', false);
+                $('#footerDiv').addClass('slds-hide');
+                $('#addStudentandPackageDetails').addClass('slds-hide');
+            } else if (counterPage == 1) {
+                $('.CampPackageDiv').removeClass('slds-hide');
+                $('.CampStudentDetialInsertDiv').addClass('slds-hide');
+                $('#nextbtn').prop('disabled', false);
+                $('#nextbtn').removeClass('slds-hide');
+                $('#saveNewStudentbtn').addClass('slds-hide');
+                $('#addStudentandPackageDetails').removeClass('slds-hide');
+
+            } else if (counterPage == 2) {
+                $('#insertStudent').removeClass('slds-hide');
+                $('#studentSummary').addClass('slds-hide');
+                $('#showStudentSummarybtn').addClass('slds-hide');
+                $('#nextbtn').addClass('slds-hide');
+                $('#saveNewStudentbtn').removeClass('slds-hide');
+                $('#addStudentandPackageDetails').addClass('slds-hide');
+            }
+        }
+        // manage next component
+        function clickNextBtn() {
+            counterPage += 1;
+            if (counterPage == 2) {
+                $('#nextbtn').prop('disabled', true);
+                $('.CampPackageDiv').addClass('slds-hide');
+                $('.CampStudentDetialInsertDiv').removeClass('slds-hide');
+                $('#previousbtn').prop('disabled', false);
+                $('#nextbtn').addClass('slds-hide');
+                $('#saveNewStudentbtn').removeClass('slds-hide');
+                $('#addStudentandPackageDetails').addClass('slds-hide');
+                $('[id$=stuFirstName]').val('');
+                $('[id$=stuLastName]').val('');
+                $('[id$=studentbirthdate]').val('');
+                $('[id$=stuGender]').val('');
+                $('[id$=stuPreExperience]').val('');
+                $('[id$=stuFoodAllergy]').val('');
+                $('.inputstudentsel').each(function () {
+                    $(this).parent().parent().removeClass('slds-has-error');
+                    $(this).parent().next().addClass('slds-hide');
+                })
+                $('.inputstudenttxt').each(function () {
+                    $(this).parent().parent().removeClass('slds-has-error');
+                    $(this).parent().next().addClass('slds-hide');
+                
+                });
+
+            } else if (counterPage == 1) {
+                $('#nextbtn').prop('disabled', false);
+                $('.CampPackageDiv').removeClass('slds-hide');
+                $('.centerDiv').addClass('slds-hide');
+                $('#previousbtn').prop('disabled', false);
+                $('#addStudentandPackageDetails').removeClass('slds-hide');
+            }
+            $('#studentSummary').addClass('slds-hide');
+        }
+        // FOR MANAGE ENTER KEY NOT WORK IN THIS PAGE
+        $(document).ready(function() {
+            $(window).keydown(function(event){
+                if(event.keyCode == 13) {
+                    event.preventDefault();
+                    return false;
+                }
+            });
+        });
+    </script>
+</apex:page>

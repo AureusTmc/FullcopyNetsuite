@@ -1,0 +1,54 @@
+<apex:page controller="GenerateBankFileController" lightningStylesheets="true" docType="html-5.0">
+    <div class="slds-m-around_small">
+        <apex:slds />
+        <apex:sectionHeader title="Bank File" />
+        <apex:form >
+            <div class="slds-scope">
+                <div class="slds-form-element">
+                    <label class="slds-form-element__label" for="select-01">Organisation</label>
+                    <div class="slds-form-element__control">
+                        <div class="slds-select_container">
+                            <apex:selectList value="{!organisation}" size="1" styleclass="slds-select">
+                                <apex:selectOptions value="{!OrganisationList}"/>
+                            </apex:selectList>
+                        </div>
+                    </div>    
+                </div>
+                
+                <div class="slds-form-element">
+                    <label class="slds-form-element__label" for="select-01">Month</label>
+                    <div class="slds-form-element__control">
+                        <div class="slds-select_container">
+                            <apex:selectList value="{!month}" size="1" styleclass="slds-select">
+                                <apex:selectOptions value="{!MonthList}"/>
+                            </apex:selectList>
+                        </div>
+                    </div>    
+                </div>
+                
+                <div class="slds-form-element">
+                    <label class="slds-form-element__label" for="select-02">Year</label>
+                    <div class="slds-form-element__control">
+                        <div class="slds-select_container">
+                            <apex:selectList value="{!year}" size="1" styleclass="slds-select">
+                                <apex:selectOptions value="{!YearList}"/>
+                            </apex:selectList>
+                        </div>
+                    </div>    
+                </div>
+                
+                <div class="slds-form-element">
+                    <label class="slds-form-element__label" for="select-02">File upload date</label>
+                    <div class="slds-form-element__control">
+                        <div class="slds-select_container">
+                            <apex:input type="date" value="{!uploadDate}" styleclass="slds-select"/>
+                        </div>
+                    </div>    
+                </div>
+                
+                <br/>
+                <center><apex:commandButton styleClass="slds-button slds-button_brand" action="{!generate}" value="Generate"/></center>
+            </div>
+        </apex:form>
+    </div>
+</apex:page>

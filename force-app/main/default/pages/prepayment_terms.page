@@ -1,0 +1,162 @@
+<apex:page renderAs="pdf"  controller="PrePaymentSummaryController" applyBodyTag="false" applyHtmlTag="false" showHeader="false">
+    <html>
+        <head>
+            <style>
+                @page {
+                    size: letter;
+                    margin-top: 100px;
+                    padding:0px;
+                    margin-bottom: 90px;
+                
+                    @top-left {
+                        content: element(header);
+                    }  
+                }
+                
+                div.header {
+                    margin-top:10px;
+                    margin-bottom:30px;
+                    position: running(header);
+                    width: 100%;
+                    margin-right: 10px;
+                }
+                
+                td{
+                vertical-align:top;
+                padding-top:5px;
+                padding-bottom:5px;
+                }
+                
+                tr{
+                page-break-inside:avoid;
+                }
+                
+                .graycolor{
+                color:gray;
+                }
+                
+                body{
+                font-family : Arial, Helvetica, sans-serif;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <table width="100%">        
+                    <table width="100%">
+                        <tr>                         
+                            <td style="height:35px;background: #efb550;"></td>
+                        </tr>
+                        <tr>                         
+                            <td style="text-align:right;"><apex:image style="width:20%;" url="{!$Resource.Aureus_logo}"/></td>
+                        </tr>
+                    </table>  
+                </table>    
+            </div>
+            <!-- Cancellation policy -->
+            <div/>
+            <div class="leadTable" >                 
+                <table width="100%">
+                    <tr>
+                        <td style="text-align: center;font-size: 20px;padding-bottom:50px;">
+                            <strong>Pre-Payment 2019 <br/>Terms and Conditions </strong>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>1. Promotion Validity:</strong>
+                                <p style="text-align: justify;margin-top: 3px;margin-left: 18px;">The promotion is valid for customers at all of our facilities as well as Home Lessons, and
+                                not for Aureus Academy’s contract programmes/international schools.
+                                </p> 
+                        </td>
+                    </tr>
+                     <tr>
+                        <td>
+                            <strong>2. No Refunds: </strong>
+							<p style="text-align: justify;margin-top: 3px;margin-left: 18px;">
+                                <strong>There will be strictly no refunds under any circumstances.</strong>  
+                                The Pre-Payment is a special promotion in conjunction with GSS 2019 and it is not compulsory, 
+                                so customers can decide to participate in this promotion or not.
+                            </p> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>3. Make Up Lessons: </strong>
+								<p style="text-align: justify;margin-top: 3px;margin-left: 18px;">
+                            		Similar to regular lessons, as long as you continue after the pre-payment period is
+									complete, any pending make up lessons will still be valid for 4 months, as per student
+									policy. If any termination of enrolment has been made, any make up lessons will need to
+									be completed before the end of your last lesson.
+                            	</p> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>4.Packages Upgrade/ Downgrade: </strong>
+							<p style="text-align: justify;margin-top: 3px;margin-left: 18px;">
+                            	As this is a promotional package, unfortunately we will not be allowing any downgrading
+                                (i.e. from 45 to 30-min lesson packages) of classes. However, for lesson advancements,
+                                customers will simply have to pay the deposit top up + difference in lesson fees for the
+                                remaining months. The formula will be 60 / 45 mins lesson fee - our fixed prices
+                                corresponding with the previous package (i.e. 45 mins is either $349 or $320, 30 mins is
+                                either $235 or $213). We will not be calculating the top up from the discounted fees that
+                                the customer has already paid (so they continue to enjoy a discount).
+                            </p> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong><div/>5.Relocation:  </strong> <!-- style="page-break-after: always" -->
+							<p style="text-align: justify;margin-top: 3px;margin-left: 18px;">
+                            	We understand customers might not have control over this. We will do our best to find a
+								solution, but our pre-payment plan is a promotion so we will be unable to refund any
+								unused lessons under any circumstances. 
+                            </p> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>6. Change of instructor: </strong>
+								<p style="text-align: justify;margin-top: 3px;margin-left: 18px;">
+                            		Aureus does not change teachers very often as we have a minimal turnover of our staff.
+                                    If we change the teacher as a staff member leaves, we will have a transition where the
+                                    new teacher will sit in the lessons with the existing teacher before taking over.
+                                    <strong>
+                                    	 However,there will be no refunds should you want to cease lessons due to change of instructor. 
+                                    </strong>
+                            	</p> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>7. Location Change:  </strong>
+							<p style="text-align: justify;margin-top: 3px;margin-left: 18px;">
+                            	Customers from centres with a lower fee structure who wish to switch to a centre with
+								higher fee structure will have to top up the difference in fees. We will be calculating the
+								top up fees from the fixed Aureus price corresponding with their package and not from
+                                the discounted fees that they had prepaid. We will not be able to refund the difference
+                                for customers moving from a higher fee centre to a lower fee centre.
+                            </p> 
+                        </td>
+                    </tr>
+                	<tr>
+                        <td style="text-decoration:underline;">
+                        	<p style="text-align: justify;margin-top: 3px;margin-left: 18px;">
+                                <strong>The prepayment promotion cannot be combined with other ongoing offers or previous historical discounts.</strong>
+                        	</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                        	<p style="text-align: justify;margin-top: 3px;margin-left: 18px;">
+                                Aureus Group Pte Ltd reserves the right to amend above terms and conditions without prior notice.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+                <div /> 
+            </div>
+        </body>
+    </html>
+</apex:page>

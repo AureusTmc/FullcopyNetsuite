@@ -1,0 +1,450 @@
+<apex:page controller="WithdrawController" standardStylesheets="false" lightningStylesheets="true" showHeader="false" sidebar="false" >
+    <head>
+        
+        <title>Aureus Academy – Withdrawal Summary</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery/jquery.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.js')}"/>
+    </head>
+    <apex:slds />
+    <div class="content">
+        <apex:form id="frm">
+            <apex:outputPanel rendered="{!IF(Or(enrollmentObj.Package_Process_Status__c != 'Completed', $CurrentPage.parameters.bypass=='true'),TRUE,FALSE)}">
+                <div class="slds-scope mainContainer">
+                    <div class="slds-panel slds-size_medium slds-panel_docked slds-panel_docked-left slds-is-open content-box" style="width:100%;border-radius:10px;box-shadow:1px 2px 10px #f79c1a" aria-hidden="false">  
+                        <div class="slds-grid slds-wrap slds-grid--align-center">
+                            <div class="slds-col">           
+                                <div class="header slds-col">
+                                    <div class="slds-col" style="text-align:center;">
+                                        <td><apex:image style="width:50%;" url="{!$Resource.Aureus_logo}"/></td>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-panel__header">
+                            <div class="slds-col">
+                                <span class="main-title">Withdrawal Summary</span>
+                            </div>
+                        </div>
+                        <div class="content-body slds-col">
+                            <div class="slds-form-element">
+                                <div class="slds-notify_container slds-is-relative slds-hide firstCmpErrDiv">
+                                    <div class="slds-notify slds-notify_toast slds-theme_error slds-m-left_none slds-m-right_medium" role="status">
+                                        <div class="slds-notify__content">
+                                            <h2 class="slds-text-heading_small contentDivFirst"></h2>
+                                        </div>
+                                        <div class="slds-notify__close">
+                                            <button class="slds-button slds-button_icon slds-button_icon-inverse" title="Close">
+                                                X
+                                                <span class="slds-assistive-text">Close</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <fieldset class="slds-form-element final-step">
+                                    <div class="slds-form-element">
+                                        <div class="slds-grid slds-wrap ">
+                                            <label class="slds-form-element__label field-title slds-col slds-size_1-of-1 slds-p-horizontal_medium">Enrolment Details</label>
+                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                <div class="slds-form-element">
+                                                    <label class="slds-form-element__label f-title">Student Name<abbr class="slds-required"></abbr></label>
+                                                    <div class="slds-form-element__control">
+                                                        <apex:inputText id="withdrawSummaryStudentName" value="{!withdrawSummary.student}" styleclass="slds-input inputtxt" disabled="true"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                <div class="slds-form-element">
+                                                    <label class="slds-form-element__label f-title">Centre<abbr class="slds-required"></abbr></label>
+                                                    <div class="slds-form-element__control">
+                                                        <apex:inputText id="withdrawSummaryCentre" value="{!withdrawSummary.centre}" styleclass="slds-input inputtxt" disabled="true"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                <div class="slds-form-element">
+                                                    <label class="slds-form-element__label f-title">Package<abbr class="slds-required"></abbr></label>
+                                                    <div class="slds-form-element__control">
+                                                        <apex:inputText id="withdrawSummaryPackage" value="{!withdrawSummary.packageName}" styleclass="slds-input inputtxt" disabled="true"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                <div class="slds-form-element">
+                                                    <label class="slds-form-element__label f-title">Lesson Day &amp; Time<abbr class="slds-required" ></abbr></label>
+                                                    <div class="slds-form-element__control">
+                                                        <!--<input type="text" class="slds-input inputtxt" required="" />-->
+                                                        <apex:inputText id="withdrawSummaryLessonDay" value="{!withdrawSummary.LessonDay}" styleclass="slds-input inputtxt" disabled="true"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                                <fieldset class="slds-form-element final-step">
+                                    <div class="slds-form-element">
+                                        <div class="slds-grid slds-wrap ">
+                                            <label class="slds-form-element__label field-title slds-col slds-size_1-of-1 slds-p-horizontal_medium">Withdrawal Summary</label>
+                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                <div class="slds-form-element">
+                                                    <label class="slds-form-element__label f-title">Notice Date<abbr class="slds-required"></abbr></label>
+                                                    <div class="slds-form-element__control">
+                                                        <apex:inputText id="withdrawSummaryNoticeDate" value="{!withdrawSummary.noticeDate}" styleclass="slds-input inputtxt" disabled="true"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                <div class="slds-form-element">
+                                                    <label class="slds-form-element__label f-title">Final Lesson Date<abbr class="slds-required"></abbr></label>
+                                                    <div class="slds-form-element__control">
+                                                        <!--<input type="text" class="slds-input inputtxt" required="" />-->
+                                                        <apex:inputText id="withdrawSummaryFinalDate" value="{!withdrawSummary.lastDate}" styleclass="slds-input inputtxt" disabled="true"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                                <fieldset class="slds-form-element final-step">
+                                    <div class="slds-form-element" style="margin-top: 15px;">
+                                        <div style="font-size: 1.2em;">Final 4 Lessons</div>
+                                        <div class="tableDiv">
+                                            <table id="finalLessonsTbl" class="slds-table slds-table_cell-buffer slds-table_bordered">
+                                                <thead>
+                                                    <tr class="slds-line-height_reset">
+                                                        <th class="" scope="col">
+                                                            <div class="slds-truncate" title="Lesson">Lesson</div>
+                                                        </th>
+                                                        <th class="" scope="col">
+                                                            <div class="slds-truncate" title="Date">Date</div>
+                                                        </th>
+                                                        <th class="" scope="col">
+                                                            <div class="slds-truncate" title="Time">Time</div>
+                                                        </th>
+                                                        <th class="" scope="col">
+                                                            <div class="slds-truncate" title="Duration">Duration</div>
+                                                        </th>
+                                                        <th class="" scope="col">
+                                                            <div class="slds-truncate" title="Status">Status</div>
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="finalLessonsTblBody">
+                                                    <apex:repeat value="{!withdrawSummary.lastLessons}" var="value">
+                                                        <tr class="slds-line-height_reset">
+                                                            <td class="" scope="col">
+                                                                <div class="slds-truncate" title="Lesson">{!value.Lesson}</div>
+                                                            </td>
+                                                            <td class="" scope="col">
+                                                                <div class="slds-truncate" title="Date">{!value.bookingDate}</div>
+                                                            </td>
+                                                            <td class="" scope="col">
+                                                                <div class="slds-truncate" title="Time">{!value.bookingTime}</div>
+                                                            </td>
+                                                            <td class="" scope="col">
+                                                                <div class="slds-truncate" title="Duration">{!value.duration} Mins</div>
+                                                            </td>
+                                                            <td class="" scope="col">
+                                                                <div class="slds-truncate" title="Status">
+                                                                    <apex:outputPanel rendered="{!IF(AND(value.status != 'Billed', value.status != 'Deposit', NOT(ISBLANK(value.status))), true, false)}">
+                                                                        {!RIGHT(value.status, LEN(value.status) - FIND(':', value.status))}
+                                                                        <!-- commented as per julius request @26 jun 2019 -->
+                                                                        <!--<a href="/{!LEFT(value.status, FIND(':', value.status) - 1)}" target="_blank"></a>-->
+                                                                    </apex:outputPanel>
+                                                                    <apex:outputPanel rendered="{!IF(OR(value.status = 'Billed', value.status = 'Deposit'), true, false)}">
+                                                                        {!value.status}
+                                                                    </apex:outputPanel>
+                                                                </div>
+                                                            </td>
+                                                        </tr> 
+                                                    </apex:repeat>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                                <apex:outputPanel rendered="{!IF(OR(withdrawSummary.makeupLessons.size == NULL , withdrawSummary.makeupLessons.size == 0), false,true)}">         
+                                    <fieldset class="slds-form-element final-step">
+                                        <div class="slds-form-element" style="margin-top: 15px;">
+                                            <div style="font-size: 1.2em;">Make-Up Lessons</div>
+                                            <div class="tableDiv">
+                                                <table id="makeupLessonsTbl" class="slds-table slds-table_cell-buffer slds-table_bordered">
+                                                    <thead>
+                                                        <tr class="slds-line-height_reset">
+                                                            <th class="" scope="col">
+                                                                <div class="slds-truncate" title="Student">Student</div>
+                                                            </th>
+                                                            <th class="" scope="col">
+                                                                <div class="slds-truncate" title="Booking Date">Booking Date</div>
+                                                            </th>
+                                                            
+                                                            <th class="" scope="col">
+                                                                <div class="slds-truncate" title="Duration">Duration</div>
+                                                            </th>
+                                                            <th class="" scope="col">
+                                                                <div class="slds-truncate" title="Next Expiry Date">New Expiry Date</div>
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="makeupLessonsTblBody">
+                                                        <apex:repeat value="{!withdrawSummary.makeupLessons}" var="value">
+                                                            <tr class="slds-line-height_reset">
+                                                                <td class="" scope="col">
+                                                                    <div class="slds-truncate" title="Student">{!value.student}</div>
+                                                                </td>
+                                                                <td class="" scope="col">
+                                                                    <div class="slds-truncate" title="Cancellation Date">{!value.cancelDate}</div>
+                                                                </td>
+                                                                
+                                                                <td class="" scope="col">
+                                                                    <div class="slds-truncate" title="Duration">{!value.duration}</div>
+                                                                </td>
+                                                                <td class="" scope="col">
+                                                                    <div class="slds-truncate" title="Expiry Date">{!value.expiryDate}</div>
+                                                                </td>
+                                                            </tr>
+                                                        </apex:repeat>
+                                                    </tbody>
+                                                </table> 
+                                            </div>
+                                        </div>
+                                    </fieldset>
+                                </apex:outputPanel>
+                                <fieldset class="slds-form-element final-step">
+                                    <div class="slds-form-element" style="margin-top: 15px;">
+                                        <div style="font-size: 1.2em;">Deposit Balance (Final Month)</div>
+                                        
+                                        <div class="tableDiv">
+                                            <table id="depositBalanceTbl" class="slds-table slds-table_cell-buffer slds-table_bordered">
+                                                <thead>
+                                                    <tr class="slds-line-height_reset">
+                                                        <th class="" scope="col">
+                                                            <div class="slds-truncate" title="Package Name">Package Name</div>
+                                                        </th>
+                                                        <th class="" scope="col">
+                                                            <div class="slds-truncate" title="Student">Student</div>
+                                                        </th>
+                                                        <th class="" scope="col">
+                                                            <div class="slds-truncate" title="Qty">Qty</div>
+                                                        </th>
+                                                        <th class="" scope="col">
+                                                            <div class="slds-truncate" title="Rate">Rate</div>
+                                                        </th>
+                                                        <th class="" scope="col">
+                                                            <div class="slds-truncate" title="Total">Total</div>
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="depositBalanceTblBody">
+                                                    <apex:repeat value="{!withdrawSummary.finalDeposits}" var="value">
+                                                        <tr class="slds-line-height_reset">
+                                                            <td class="" scope="col">
+                                                                <div class="slds-truncate" title="Package Name">{!value.Lesson}</div>
+                                                            </td>
+                                                            <td class="" scope="col">
+                                                                <div class="slds-truncate" title="Student">{!value.student}</div>
+                                                            </td>
+                                                            <td class="" scope="col">
+                                                                <div class="slds-truncate" title="Qty">{!value.qty}</div>
+                                                            </td>
+                                                            <td class="" scope="col">
+                                                                <div class="slds-truncate" title="Rate"><apex:outputText value="{!ROUND(value.unitPrice,2)}"></apex:outputText></div>
+                                                            </td>
+                                                            <td class="" scope="col">
+                                                                <div class="slds-truncate" title="Total"><apex:outputText value="{!ROUND(value.total,2)}"></apex:outputText></div>
+                                                            </td>
+                                                        </tr>
+                                                    </apex:repeat>
+                                                    <apex:outputPanel rendered="{!AND(withdrawSummary.gst <> null, withdrawSummary.gst > 0)}"><tr ><td style="border: 0px;"></td><td style="border: 0px;"></td><td style="border: 0px;"></td><td><b>GST</b></td><td><apex:outputText rendered="{!withdrawSummary.gst <> null}" value="${!ROUND(withdrawSummary.gst,2)}" ></apex:outputText></td></tr></apex:outputPanel>
+                                                    <apex:outputPanel rendered="{!withdrawSummary.total <> null}"> <tr><td style="border: 0px;"></td><td style="border: 0px;"></td><td style="border: 0px;"></td><td><b>Total</b></td><td><apex:outputText rendered="{!withdrawSummary.total <> null}" value="${!ROUND(withdrawSummary.total,2)}"></apex:outputText></td></tr></apex:outputPanel>
+                                                    <apex:outputPanel rendered="{!withdrawSummary.deposit <> null}"><tr><td style="border: 0px;"></td><td style="border: 0px;"></td><td style="border: 0px;"></td><td><b>Deposit</b></td><td><apex:outputText rendered="{!withdrawSummary.deposit <> null}" value="${!ROUND(withdrawSummary.deposit,2)}"></apex:outputText></td></tr></apex:outputPanel>
+                                                    <apex:outputPanel rendered="{!AND(withdrawSummary.refund <>null, withdrawSummary.refund > 0)}"><tr><td style="border: 0px;"></td><td style="border: 0px;"></td><td style="border: 0px;"></td><td><b>Refund</b></td><td><apex:outputText rendered="{!withdrawSummary.refund <> null}" value="${!ROUND(withdrawSummary.refund,2)}"></apex:outputText></td></tr></apex:outputPanel>
+                                                </tbody>
+                                            </table> 
+                                        </div>
+                                        <div style="font-size: 1.0em;padding: 5px;">Note: 
+                                            Your final invoice will be generated on the 1st of your final lesson month. 
+                                            The deposit will be applied, and if a balance is applicable, a refund will be processed thereafter. 
+                                            In the event you have multiple students or multiple enrolments, and refund balance presented in the summary will be applied as 
+                                            a payment towards your next invoice.
+                                        </div>
+                                    </div>
+                                    
+                                </fieldset>
+                                <apex:outputPanel styleClass="slds-form-element slds-form-element_compound" id="panel">
+                                    <div class="slds-panel__header">
+                                        <div class="slds-col "><span class="main-title">Your Feedback</span></div>
+                                    </div>
+                                    <div class="slds-align_absolute-center slds-p-horizontal_small">As part of our continued efforts to improve our students and parents’ experience at Aureus Academy, we would appreciate it if you could give us some feedback as to why you are withdrawing from our programs! Please see the form below to provide feedback.</div>
+                                    <div class="slds-grid slds-wrap" style="padding-left: 0.50rem;padding-right: .50rem;">
+                                        <div class="slds-col slds-size--1-of-1 slds-medium-size--2-of-4">
+                                            <div class="slds-form-element">
+                                                <label class="slds-form-element__label" for="input-01">Reason of Withdraw</label>
+                                                <div class="slds-form-element__control">
+                                                    <apex:inputField value="{!enrollmentObj.Reason_of_Withdraw__c}" styleClass="slds-input"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="slds-col slds-size--1-of-1 slds-medium-size--2-of-4">
+                                            <apex:outputPanel rendered="{!AND(withdrawSummary.refund <> null, withdrawSummary.refund != 0)}">
+                                                <div class="slds-form-element">
+                                                    <label class="slds-form-element__label" for="input-02">Refund Method(If Applicable)</label>
+                                                    <div class="slds-form-element__control">
+                                                        <apex:inputText value="{!refundMethod}" styleClass="slds-input" disabled="true"/>
+                                                    </div>
+                                                </div>
+                                            </apex:outputPanel>
+                                        </div>
+                                        <div class="slds-col slds-size--1-of-1 slds-medium-size--2-of-4">
+                                            <apex:outputPanel rendered="{!AND(withdrawSummary.refund <> null, withdrawSummary.refund != 0, refundMethod = 'GIRo')}">
+                                                <div class="slds-form-element">
+                                                    <label class="slds-form-element__label">Bank Name</label>
+                                                    <div class="slds-form-element__control">
+                                                        <apex:inputText value="{!Bank_Name}" styleClass="slds-input"/>
+                                                    </div>
+                                                </div>
+                                            </apex:outputPanel>
+                                        </div>
+                                        <div class="slds-col slds-size--1-of-1 slds-medium-size--2-of-4">
+                                            <apex:outputPanel rendered="{!AND(withdrawSummary.refund <> null, withdrawSummary.refund != 0, refundMethod = 'GIRo')}">
+                                                <div class="slds-form-element">
+                                                    <label class="slds-form-element__label">Account No</label>
+                                                    <div class="slds-form-element__control">
+                                                        <apex:inputText value="{!Bank_Account_No}" styleClass="slds-input"/>
+                                                    </div>
+                                                </div>
+                                            </apex:outputPanel>
+                                        </div>
+                                        <div class="slds-col slds-size--1-of-1 slds-medium-size--2-of-4">
+                                            <div class="slds-form-element">
+                                                <label class="slds-form-element__label" for="input-05">Feedback/Comments</label>
+                                                <div class="slds-form-element__control">
+                                                    <apex:inputField value="{!enrollmentObj.Feedback_Comments__c}" styleClass="slds-input"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                    </div>
+                                </apex:outputPanel>
+                                <div class="slds-col slds-size_1-of-1  slds-p-horizontal_medium">
+                                    <apex:commandButton styleClass="slds-button slds-button_neutral custom-btn" value="Submit" action="{!saveEnrollment}"/>
+                                    <!--<a href="{!$Label.Aureus_Site}apex/EnrollmentCancellationProcess?id={!bookingId}&refund={!withdrawSummary.refund}" class="slds-button custom-btn">Give Feedback</a>-->
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!IF(enrollmentObj.Package_Process_Status__c == 'Completed',TRUE,FALSE)}">
+                <div class="slds-align_absolute-center" style="height:5rem">
+                    This link has been expired.
+                </div>
+            </apex:outputPanel>
+            
+        </apex:form>
+    </div>
+    <style>
+        
+        span.main-title {       
+        color: #200a28;     
+        font-size: 24px;        
+        border-radius: 0;       
+        font-weight: bold;      
+        margin-bottom: 10px;        
+        display: block;     
+        line-height: 30px;      
+        padding-bottom:10px;        
+        text-align:center;      
+        } 
+        
+        body{       
+        background-image: url("{!$Resource.music}") !important;     
+        background-size:100% 100% !important;       
+        background-repeat:no-repeat !important;     
+        background-position:left !important;        
+        } 
+        
+        .field-title {
+        font-size: 20px !important;
+        }
+        
+        .content-body {
+        overflow-x:hidden;
+        }
+        .outstanding {
+        padding: 10px;
+        }
+        
+        .content-box {      
+        margin: 50px 0 ;        
+        width: 90%;     
+        background: rgba(255, 255, 255, 1);     
+        border-radius: 10px;        
+        }
+        
+        .tableDiv{
+        width: 95%;
+        overflow-x: scroll;
+        }
+        
+        .content-body > div > fieldset {
+        max-height: 450px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 0 15px;
+        }
+        
+        .custom-btn {
+        padding: 5px 10px 3px !important;
+        color: #fff !important;
+        background: #f79c1a !important;
+        font-size: 16px !important;
+        text-transform: uppercase;
+        line-height: 20px !important;
+        margin: 15px 0 20px;
+        float:right;
+        margin-bottom: 10px !important;
+        }
+        
+        
+        textarea.slds-input,select {
+        border-color: #f79c1a !important;
+        }
+        
+        input.slds-input,select {
+        border-color: #f79c1a !important;
+        }
+        
+        .mainContainer{
+        width:50%; 
+        margin:auto; 
+        margin-top:50px;
+        }
+        
+        @media (min-width: 300px) and (max-width: 700px){
+        .mainContainer{
+        width:100%; 
+        margin:auto; 
+        margin-top: 0px;
+        }
+        
+        .content-box{
+        margin: 0px 0;
+        }
+        
+        ::-webkit-scrollbar-thumb:horizontal{
+        border-radius: 5px;
+        background-color: red;
+        background-image: -webkit-gradient(linear, 40% 0%, 75% 84%, from(#ff6da2), to(#7983f8), color-stop(.6,#7983f8));
+        height:10px;     
+        }
+        ::-webkit-scrollbar{
+        width: 18px;
+        background-color: #d1d1d1;
+        
+        }
+        }
+    </style>
+</apex:page>

@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workflow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <alerts>
+        <fullName>Enrolment_Confirmation_Email</fullName>
+        <description>Enrolment Confirmation Email</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Parent_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus/Confirmation_of_Enrolment_enrolment</template>
+    </alerts>
+    <alerts>
+        <fullName>Send_Enrollment_Request</fullName>
+        <description>Send Enrollment Request</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Parent_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus/Free_trail_booking_Confirmation</template>
+    </alerts>
+    <alerts>
+        <fullName>Send_Enrolment_Trial_Booking_Confirmation</fullName>
+        <description>Send Enrolment Trial Booking Confirmation</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Parent_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus/Free_trail_booking_Confirmation</template>
+    </alerts>
+    <alerts>
+        <fullName>Send_Enrolment_Trial_cancelled</fullName>
+        <description>Send Enrolment Trial cancelled</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Parent_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus/Trail_Enrolment_cancelled</template>
+    </alerts>
+    <alerts>
+        <fullName>Send_Free_Trial_Enrolment</fullName>
+        <description>Send Free Trial Enrolment</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Parent_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus/Free_Trial_Submission_Enrolment</template>
+    </alerts>
+    <alerts>
+        <fullName>Trail_Booking_Confirmation</fullName>
+        <description>Trail Booking Confirmation</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Parent_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus/Free_trail_booking_Confirmation</template>
+    </alerts>
+    <alerts>
+        <fullName>Trial_Booking_Reminder_Email</fullName>
+        <description>Trial Booking Reminder Email</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Parent_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus/Reminder_for_trial_lesson</template>
+    </alerts>
+    <alerts>
+        <fullName>Trial_Booking_Submission</fullName>
+        <description>Trial Booking Submission</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Parent_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus/Free_Trial_Submission_Enrolment</template>
+    </alerts>
+    <fieldUpdates>
+        <fullName>ENR_Update</fullName>
+        <field>Name</field>
+        <formula>IF(Center__r.Country__r.Name = &quot;HK&quot;,(Center__r.Country__r.Name+&quot;-&quot;+ Enr_Number_backend__c), Enr_Number_backend__c)</formula>
+        <name>ENR Update</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Parent_Email_on_Enrolment</fullName>
+        <field>Parent_Email__c</field>
+        <formula>Parent__r.PersonContact.Email</formula>
+        <name>Parent Email on Enrolment</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Enrollment_Created_Date</fullName>
+        <field>Enrolment_Created_Date__c</field>
+        <formula>Now()</formula>
+        <name>Update Enrollment Created Date</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <rules>
+        <fullName>Enrolment Confirmation</fullName>
+        <actions>
+            <name>Enrolment_Confirmation_Email_Sent</name>
+            <type>Task</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Enrolment__c.Type__c</field>
+            <operation>contains</operation>
+            <value>Regular</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Enrolment__c.Stage__c</field>
+            <operation>equals</operation>
+            <value>Enrolled</value>
+        </criteriaItems>
+        <description>Send an email after email confirmation</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Enrolment Confirmation from Portal - Stripo</fullName>
+        <actions>
+            <name>Enrolment_Confirmation_Email_Sent</name>
+            <type>Task</type>
+        </actions>
+        <active>false</active>
+        <criteriaItems>
+            <field>Enrolment__c.Type__c</field>
+            <operation>contains</operation>
+            <value>Regular</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Enrolment__c.Stage__c</field>
+            <operation>equals</operation>
+            <value>Enrolled</value>
+        </criteriaItems>
+        <description>Send an email after email confirmation</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Populate Parent Email</fullName>
+        <actions>
+            <name>Parent_Email_on_Enrolment</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Enrolment__c.CreatedDate</field>
+            <operation>notEqual</operation>
+        </criteriaItems>
+        <description>Populate parent email on opportunity from selected parent account</description>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Regular Enrolment Creation</fullName>
+        <active>false</active>
+        <criteriaItems>
+            <field>Enrolment__c.Stage__c</field>
+            <operation>equals</operation>
+            <value>Enrolled</value>
+        </criteriaItems>
+        <description>Create a task for center admin</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Reminder 1 day before the trial date</fullName>
+        <actions>
+            <name>Trial_Booking_Reminder_Email</name>
+            <type>Alert</type>
+        </actions>
+        <actions>
+            <name>Trial_Booking_Reminder_Email</name>
+            <type>Task</type>
+        </actions>
+        <active>false</active>
+        <criteriaItems>
+            <field>Enrolment__c.Type__c</field>
+            <operation>equals</operation>
+            <value>Trial</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Enrolment__c.Stage__c</field>
+            <operation>equals</operation>
+            <value>Booked</value>
+        </criteriaItems>
+        <description>Reminder 1 day before the trial date</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Trial Booking Confirmation Email</fullName>
+        <actions>
+            <name>Trail_Booking_Confirmation</name>
+            <type>Alert</type>
+        </actions>
+        <actions>
+            <name>Trial_Booking_Confirmation_Email</name>
+            <type>Task</type>
+        </actions>
+        <active>false</active>
+        <criteriaItems>
+            <field>Enrolment__c.Type__c</field>
+            <operation>equals</operation>
+            <value>Trial</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Enrolment__c.Stage__c</field>
+            <operation>equals</operation>
+            <value>Booked</value>
+        </criteriaItems>
+        <description>Email to customer on confirmation of trial booking</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Trial Booking Submission</fullName>
+        <actions>
+            <name>Trial_Booking_Submission</name>
+            <type>Alert</type>
+        </actions>
+        <actions>
+            <name>Trial_Booking_to_Review</name>
+            <type>Task</type>
+        </actions>
+        <active>false</active>
+        <criteriaItems>
+            <field>Enrolment__c.Type__c</field>
+            <operation>equals</operation>
+            <value>Trial</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Enrolment__c.Stage__c</field>
+            <operation>equals</operation>
+            <value>Requested</value>
+        </criteriaItems>
+        <description>Thank you email on trial booking submission</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Trial Cancelled</fullName>
+        <actions>
+            <name>Send_Enrolment_Trial_cancelled</name>
+            <type>Alert</type>
+        </actions>
+        <active>false</active>
+        <criteriaItems>
+            <field>Enrolment__c.Type__c</field>
+            <operation>equals</operation>
+            <value>Trial</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Enrolment__c.Stage__c</field>
+            <operation>equals</operation>
+            <value>Cancelled</value>
+        </criteriaItems>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Enr number</fullName>
+        <actions>
+            <name>ENR_Update</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <formula>TRUE</formula>
+        <triggerType>onCreateOnly</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Enrollment Created Date</fullName>
+        <actions>
+            <name>Update_Enrollment_Created_Date</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Enrolment__c.Type__c</field>
+            <operation>equals</operation>
+            <value>Regular</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Enrolment__c.Stage__c</field>
+            <operation>equals</operation>
+            <value>Enrolled</value>
+        </criteriaItems>
+        <description>Update Enrollment Created Date if type is regular</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <tasks>
+        <fullName>Enrolment_Confirmation_Email_Sent</fullName>
+        <assignedTo>aureus@techmatrixconsulting.com</assignedTo>
+        <assignedToType>user</assignedToType>
+        <description>Enrolment confirmation email sent to customer</description>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Completed</status>
+        <subject>Enrolment Confirmation Email Sent</subject>
+    </tasks>
+    <tasks>
+        <fullName>Trial_Booking_Confirmation_Email</fullName>
+        <assignedTo>aureus@techmatrixconsulting.com</assignedTo>
+        <assignedToType>user</assignedToType>
+        <description>Trial booking confirmation email sent to customer.</description>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Completed</status>
+        <subject>Trial Booking Confirmation Email</subject>
+    </tasks>
+    <tasks>
+        <fullName>Trial_Booking_Reminder_Email</fullName>
+        <assignedTo>aureus@techmatrixconsulting.com</assignedTo>
+        <assignedToType>user</assignedToType>
+        <description>Trial booking reminder email sent to customer.</description>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Completed</status>
+        <subject>Trial Booking Reminder Email</subject>
+    </tasks>
+    <tasks>
+        <fullName>Trial_Booking_to_Review</fullName>
+        <assignedTo>aureus@techmatrixconsulting.com</assignedTo>
+        <assignedToType>user</assignedToType>
+        <description>Hi Center Manager, 
+
+A new trial booking has been created online. Please review the new trial and take the necessary action. 
+
+Thanks</description>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <offsetFromField>Enrolment__c.Trial_Date__c</offsetFromField>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Open</status>
+        <subject>Trial Booking to Review</subject>
+    </tasks>
+</Workflow>

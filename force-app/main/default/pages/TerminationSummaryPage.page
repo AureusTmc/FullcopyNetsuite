@@ -1,0 +1,19 @@
+<apex:page controller="TerminateRentalSummaryController" standardStylesheets="false" sidebar="false" showHeader="false" lightningStylesheets="true"
+    docType="html-5.0">
+    <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/jquery.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/moment.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/fullCalenderCustom.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.FullCalender, '/fullcalendar.min.css')}" />
+    <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.FullCalender, '/scheduler.min.css')}" />
+    <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/scheduler.min.js')}" />
+    <apex:includeScript value="{!$Resource.aljs}" />
+    <apex:includeScript value="{!$Resource.datepicker}" />
+    <apex:slds />
+    <div class="slds-grid slds-wrap slds-gutters slds-p-around_xx-large">
+        <div class="slds-col slds-size_12-of-12">
+            <c:TerminateRentalSummaryCMP isSendToButton="False" />
+        </div>
+    </div>
+</apex:page>

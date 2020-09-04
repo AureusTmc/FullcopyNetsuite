@@ -1,0 +1,647 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workflow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <alerts>
+        <fullName>Appointment_Cancelled_No_Make_Up_Credit</fullName>
+        <description>Appointment Cancelled (No Make-Up Credit)</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Parent_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderAddress>noreply@aureusacademy.com</senderAddress>
+        <senderType>OrgWideEmailAddress</senderType>
+        <template>Aureus_Portal_Notifications/Lesson_Cancelled_No_Make_Up_Stripo</template>
+    </alerts>
+    <alerts>
+        <fullName>Convert_to_AdHoc_Via_Portal_App</fullName>
+        <description>Convert to AdHoc Via Portal/App</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Parent_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderAddress>noreply@aureusacademy.com</senderAddress>
+        <senderType>OrgWideEmailAddress</senderType>
+        <template>Aureus_Portal_Notifications/Convert_to_AdHoc_Via_Portal_App</template>
+    </alerts>
+    <alerts>
+        <fullName>Email_Confirmation_when_Lesson_type_is_Created</fullName>
+        <description>Email Confirmation when Lesson type is Created</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Parent_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus_New_Email_Template/LessonModeCreate</template>
+    </alerts>
+    <alerts>
+        <fullName>Email_Confirmation_when_Lesson_type_is_changed</fullName>
+        <description>Email Confirmation when Lesson type is changed</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Parent_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus_New_Email_Template/LessonModeUpdate</template>
+    </alerts>
+    <alerts>
+        <fullName>Lesson_Cancelled_with_Make_Up_Credit</fullName>
+        <description>Lesson Cancelled with Make-Up Credit</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Parent_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderAddress>noreply@aureusacademy.com</senderAddress>
+        <senderType>OrgWideEmailAddress</senderType>
+        <template>Aureus_Portal_Notifications/Lesson_Cancelled_Email_Stripo</template>
+    </alerts>
+    <alerts>
+        <fullName>Lesson_Make_Up_from_Portal</fullName>
+        <description>Lesson Make-Up from Portal</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Parent_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderAddress>noreply@aureusacademy.com</senderAddress>
+        <senderType>OrgWideEmailAddress</senderType>
+        <template>Aureus_Portal_Notifications/Make_Up_Lesson_Confirmation_Stripo</template>
+    </alerts>
+    <alerts>
+        <fullName>Reschedule_Lesson_Confirmation</fullName>
+        <description>Reschedule Lesson Confirmation</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Parent_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus_New_Email_Template/Reschedule_Lesson_Confirmation</template>
+    </alerts>
+    <alerts>
+        <fullName>Reschedule_Lesson_Confirmation_Portal_Alert</fullName>
+        <description>Reschedule Lesson Confirmation Portal Alert</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Parent_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderAddress>noreply@aureusacademy.com</senderAddress>
+        <senderType>OrgWideEmailAddress</senderType>
+        <template>Aureus_Portal_Notifications/Reschedule_Lesson_Confirmation_Stripo</template>
+    </alerts>
+    <alerts>
+        <fullName>Send_email_to_teacher_when_booking_date_is_of_today</fullName>
+        <description>Send email to teacher when booking date is of today</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Teacher_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderAddress>admin@aureusacademy.com</senderAddress>
+        <senderType>OrgWideEmailAddress</senderType>
+        <template>Aureus_New_Email_Template/Same_day_booking_email_template_for_teacher</template>
+    </alerts>
+    <fieldUpdates>
+        <fullName>Update_Booking_Time</fullName>
+        <field>Booking_Time_Text__c</field>
+        <formula>CASE(WEEKDAY( Booking_Date__c ), 
+1, &apos;Sun&apos;, 
+2, &apos;Mon&apos;, 
+3, &apos;Tue&apos;, 
+4, &apos;Wed&apos;, 
+5, &apos;Thu&apos;, 
+6, &apos;Fri&apos;, 
+&apos;Sat&apos;) &amp; &apos;, &apos; &amp; 
+
+CASE(MONTH( Booking_Date__c ), 
+1, &apos;Jan&apos;, 
+2, &apos;Feb&apos;, 
+3, &apos;Mar&apos;, 
+4, &apos;Apr&apos;, 
+5, &apos;May&apos;, 
+6, &apos;Jun&apos;, 
+7, &apos;Jul&apos;, 
+8, &apos;Aug&apos;, 
+9, &apos;Sep&apos;, 
+10,&apos;Oct&apos;, 
+11,&apos;Nov&apos;, 
+&apos;Dec&apos;) &amp; &apos; &apos; &amp; 
+TEXT(DAY(Booking_Date__c )) &amp; &apos; &apos; &amp; 
+
+TEXT(YEAR(Booking_Date__c )) &amp; &apos; @ &apos; &amp; 
+IF( 
+VALUE(TEXT(HOUR( End_Time__c )))&lt;=0,TEXT(HOUR(End_Time__c )+12), 
+IF( 
+VALUE(TEXT(HOUR(End_Time__c )))&gt;12,TEXT(HOUR(End_Time__c )-12), 
+TEXT(HOUR(End_Time__c )) 
+) 
+) 
+&amp;&quot;:&quot;&amp;LPAD(TEXT(MINUTE(End_Time__c )),2,&apos;0&apos;)&amp;&quot; &quot;&amp;IF(VALUE(TEXT(HOUR(End_Time__c ))) &lt; 12,&quot;AM&quot;,&quot;PM&quot;)</formula>
+        <name>Update Booking Time</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Booking_number</fullName>
+        <field>Name</field>
+        <formula>IF(Center__r.Country__r.Name = &quot;HK&quot;,(Center__r.Country__r.Name +&quot;-&quot;+ Booking_number_backend__c), Booking_number_backend__c)</formula>
+        <name>Update Booking number</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Canceled_BY</fullName>
+        <field>Canceled_By__c</field>
+        <formula>LastModifiedBy.FirstName + LastModifiedBy.LastName</formula>
+        <name>Update Canceled BY</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Canceled_Date</fullName>
+        <field>Canceled_Date__c</field>
+        <formula>Now()</formula>
+        <name>Update Canceled Date</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Instrument_Lesson</fullName>
+        <description>Update Instrument Lesson on Booking 
+to be used in portal email templates
+to print Make-Up and Ad-Hoc Lesson</description>
+        <field>Instrument_Lesson__c</field>
+        <formula>IF (
+ ISPICKVAL( Type__c , &quot;Make-up&quot;),
+&quot;Make-up&quot;,
+IF (
+ ISPICKVAL( Type__c , &quot;Ad-hoc&quot;),
+&quot;Ad-hoc&quot;,
+
+ Instrument__c
+
+))</formula>
+        <name>Update Instrument Lesson</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_IsReschedule</fullName>
+        <description>Update IsReschedule as False</description>
+        <field>Is_Reschedule_Booking__c</field>
+        <literalValue>0</literalValue>
+        <name>Update IsReschedule</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_IsReschedule_as_FALSE</fullName>
+        <description>Update IsReschedule as FALSE</description>
+        <field>Is_Reschedule_Booking__c</field>
+        <literalValue>0</literalValue>
+        <name>Update IsReschedule as FALSE</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Makeup_Given</fullName>
+        <field>Makeup_Given__c</field>
+        <formula>&apos;true&apos;</formula>
+        <name>Update Makeup Given</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Parent_Email</fullName>
+        <description>Update Parent Email: fetch from related Parent record</description>
+        <field>Parent_Email__c</field>
+        <formula>Parent__r.PersonContact.Email</formula>
+        <name>Update Parent Email</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Prev_Start_Date_Time_Text</fullName>
+        <description>Update Prev Start Date &amp; Time Text</description>
+        <field>Prev_Start_Date_Time_Text__c</field>
+        <formula>CASE(WEEKDAY(  Prev_Booking_Date__c  ), 
+1, &apos;Sun&apos;, 
+2, &apos;Mon&apos;, 
+3, &apos;Tue&apos;, 
+4, &apos;Wed&apos;, 
+5, &apos;Thu&apos;, 
+6, &apos;Fri&apos;, 
+&apos;Sat&apos;) &amp; &apos;, &apos; &amp; 
+
+CASE(MONTH( Prev_Booking_Date__c ), 
+1, &apos;Jan&apos;, 
+2, &apos;Feb&apos;, 
+3, &apos;Mar&apos;, 
+4, &apos;Apr&apos;, 
+5, &apos;May&apos;, 
+6, &apos;Jun&apos;, 
+7, &apos;Jul&apos;, 
+8, &apos;Aug&apos;, 
+9, &apos;Sep&apos;, 
+10,&apos;Oct&apos;, 
+11,&apos;Nov&apos;, 
+&apos;Dec&apos;) &amp; &apos; &apos; &amp; 
+TEXT(DAY(Prev_Booking_Date__c )) &amp; &apos; &apos; &amp; 
+
+TEXT(YEAR(Prev_Booking_Date__c )) &amp; &apos; @ &apos; &amp; 
+IF( 
+VALUE(TEXT(HOUR(  Prev_Start_Time__c  )))&lt;=0,TEXT(HOUR(Prev_Start_Time__c )+12), 
+IF( 
+VALUE(TEXT(HOUR(Prev_Start_Time__c )))&gt;12,TEXT(HOUR(Prev_Start_Time__c )-12), 
+TEXT(HOUR(Prev_Start_Time__c )) 
+) 
+) 
+&amp;&quot;:&quot;&amp;LPAD(TEXT(MINUTE(Prev_Start_Time__c )),2,&apos;0&apos;)&amp;&quot; &quot;&amp;IF(VALUE(TEXT(HOUR(Prev_Start_Time__c ))) &lt; 12,&quot;AM&quot;,&quot;PM&quot;)</formula>
+        <name>Update Prev Start Date &amp; Time Text</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>update_teacher_email</fullName>
+        <field>Teacher_Email__c</field>
+        <formula>Teacher_Account__r.PersonEmail</formula>
+        <name>Update Teacher Email</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <rules>
+        <fullName>5th Lesson Ad-hoc Booking from Portal%2FApp Stripo</fullName>
+        <actions>
+            <name>Convert_to_AdHoc_Via_Portal_App</name>
+            <type>Alert</type>
+        </actions>
+        <actions>
+            <name>X5th_Lesson_Ad_Hoc_Booking_Cofirmation</name>
+            <type>Task</type>
+        </actions>
+        <active>true</active>
+        <description>5th Lesson Ad-hoc Booking from Portal/App Stripo</description>
+        <formula>AND (
+ ISPICKVAL(  Type__c  , &quot;Ad-hoc&quot;),
+
+ ISPICKVAL( Status__c , &quot;Scheduled&quot;)
+,
+OR(
+ LastModifiedBy.Username = &quot;aureusacademy@aureusgroup.force.com&quot;,
+ LastModifiedBy.Username = &quot;admin@aureusacademy.com&quot;
+)
+)</formula>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Email Notification for Lesson Type Change</fullName>
+        <actions>
+            <name>Email_Confirmation_when_Lesson_type_is_changed</name>
+            <type>Alert</type>
+        </actions>
+        <active>false</active>
+        <formula>AND(Is_Lesson_Type_Change__c,ISCHANGED(Is_Lesson_Type_Change__c))</formula>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Email Notification for Lesson Type Create</fullName>
+        <actions>
+            <name>Email_Confirmation_when_Lesson_type_is_Created</name>
+            <type>Alert</type>
+        </actions>
+        <active>false</active>
+        <criteriaItems>
+            <field>Booking__c.Is_Lesson_Type_Change__c</field>
+            <operation>equals</operation>
+            <value>True</value>
+        </criteriaItems>
+        <triggerType>onCreateOnly</triggerType>
+    </rules>
+    <rules>
+        <fullName>Lesson Cancelled with Make-Up Credit From Portal</fullName>
+        <actions>
+            <name>Lesson_Cancelled_with_Make_Up_Credit</name>
+            <type>Alert</type>
+        </actions>
+        <actions>
+            <name>Email_Lesson_Cancelled_with_Make_Up_Credit</name>
+            <type>Task</type>
+        </actions>
+        <active>true</active>
+        <description>When Lesson was Cancelled with Make-Up Credit From Portal or App</description>
+        <formula>AND (
+ ISPICKVAL( Status__c , &quot;Canceled&quot;),
+NOT(ISPICKVAL(PRIORVALUE(Status__c),&quot;Canceled&quot; )), 
+ Available_Make_up_Units__c &gt; 0, 
+ OR(
+ LastModifiedBy.Username = &quot;aureusacademy@aureusgroup.force.com&quot;,
+ LastModifiedBy.Username = &quot;admin@aureusacademy.com&quot;
+)
+)</formula>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Lesson Cancelled without Make-Up Credit From Portal Stripo</fullName>
+        <actions>
+            <name>Appointment_Cancelled_No_Make_Up_Credit</name>
+            <type>Alert</type>
+        </actions>
+        <actions>
+            <name>Email_Lesson_Cancelled_without_Make_Up_Credit</name>
+            <type>Task</type>
+        </actions>
+        <active>false</active>
+        <description>When Lesson was Cancelled without Make-Up Credit From Portal or App
+(This process works only for Regular and Ad-Hoc Booking</description>
+        <formula>AND (
+ ISPICKVAL( Status__c , &quot;Canceled&quot;),
+NOT(ISPICKVAL(PRIORVALUE(Status__c),&quot;Canceled&quot; )
+) 
+,
+ 
+OR(
+ ISPICKVAL(  Type__c  , &quot;Regular&quot;),
+ISPICKVAL(  Type__c  , &quot;Ad-hoc&quot;)
+)
+,
+
+OR(
+ Available_Make_up_Units__c = 0, 
+ ISNULL(Available_Make_up_Units__c)
+)
+,
+
+OR(
+ LastModifiedBy.Username = &quot;aureusacademy@aureusgroup.force.com&quot;,
+ LastModifiedBy.Username = &quot;admin@aureusacademy.com&quot;
+)
+)</formula>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Lesson Make-Up From Portal Stripo</fullName>
+        <actions>
+            <name>Lesson_Make_Up_from_Portal</name>
+            <type>Alert</type>
+        </actions>
+        <actions>
+            <name>Email_Make_Up_Booking_Notification</name>
+            <type>Task</type>
+        </actions>
+        <active>true</active>
+        <description>When a Make-Up Lesson is Booked</description>
+        <formula>AND (
+ ISPICKVAL(  Type__c  , &quot;Make-up&quot;),
+
+ ISPICKVAL( Status__c , &quot;Scheduled&quot;)
+,
+OR(
+ LastModifiedBy.Username = &quot;aureusacademy@aureusgroup.force.com&quot;,
+ LastModifiedBy.Username = &quot;admin@aureusacademy.com&quot;
+)
+)</formula>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Lesson Reschedule From Portal Stripo</fullName>
+        <actions>
+            <name>Reschedule_Lesson_Confirmation_Portal_Alert</name>
+            <type>Alert</type>
+        </actions>
+        <actions>
+            <name>Update_IsReschedule</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <actions>
+            <name>Email_Reschedule_Lesson_Confirmation</name>
+            <type>Task</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Booking__c.Is_Reschedule_Booking__c</field>
+            <operation>equals</operation>
+            <value>True</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Booking__c.LastModifiedById</field>
+            <operation>equals</operation>
+            <value>aureusacademy Site Guest User,Aureus Admin</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Booking__c.Status__c</field>
+            <operation>equals</operation>
+            <value>Pending,Scheduled</value>
+        </criteriaItems>
+        <description>When Lesson in Rescheduled</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+        <workflowTimeTriggers>
+            <timeLength>0</timeLength>
+            <workflowTimeTriggerUnit>Hours</workflowTimeTriggerUnit>
+        </workflowTimeTriggers>
+    </rules>
+    <rules>
+        <fullName>Reschedule Lesson Confirmation</fullName>
+        <actions>
+            <name>Reschedule_Lesson_Confirmation</name>
+            <type>Alert</type>
+        </actions>
+        <actions>
+            <name>Email_Reschedule_Lesson_Confirmation</name>
+            <type>Task</type>
+        </actions>
+        <active>false</active>
+        <criteriaItems>
+            <field>Booking__c.Is_Reschedule_Booking__c</field>
+            <operation>equals</operation>
+            <value>True</value>
+        </criteriaItems>
+        <description>Reschedule Lesson Confirmation
+Disabling this rule, as using new Rule now</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Send email to teacher when booking date is of today</fullName>
+        <actions>
+            <name>Send_email_to_teacher_when_booking_date_is_of_today</name>
+            <type>Alert</type>
+        </actions>
+        <active>true</active>
+        <formula>Booking_Date__c = TODAY()</formula>
+        <triggerType>onCreateOnly</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Booking Time To Text</fullName>
+        <actions>
+            <name>Update_Booking_Time</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Booking__c.Booking_Date__c</field>
+            <operation>notEqual</operation>
+        </criteriaItems>
+        <description>OR( ISCHANGED( Start_Time__c ) ,ISCHANGED(  Appointment_Date__c ), ISCHANGED( End_Time__c ),  ISNEW()  )</description>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Booking number</fullName>
+        <actions>
+            <name>Update_Booking_number</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <formula>TRUE</formula>
+        <triggerType>onCreateOnly</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Canceled Date</fullName>
+        <actions>
+            <name>Update_Canceled_BY</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <actions>
+            <name>Update_Canceled_Date</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Booking__c.Status__c</field>
+            <operation>equals</operation>
+            <value>Canceled</value>
+        </criteriaItems>
+        <description>Update Canceled Date</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Instrument Lesson for Portal Templates</fullName>
+        <actions>
+            <name>Update_Instrument_Lesson</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Booking__c.CreatedDate</field>
+            <operation>notEqual</operation>
+        </criteriaItems>
+        <description>Update Instrument Lesson for Portal Email Templates Mapping</description>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Makeup Given</fullName>
+        <actions>
+            <name>Update_Makeup_Given</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Booking__c.Make_up_Expiry_Date__c</field>
+            <operation>notEqual</operation>
+        </criteriaItems>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Parent Email</fullName>
+        <actions>
+            <name>Update_Parent_Email</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <actions>
+            <name>update_teacher_email</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Booking__c.CreatedDate</field>
+            <operation>notEqual</operation>
+        </criteriaItems>
+        <description>Update Parent Email</description>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Prev Start Date %26 Time Text</fullName>
+        <actions>
+            <name>Update_Prev_Start_Date_Time_Text</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Booking__c.Prev_Booking_Date__c</field>
+            <operation>notEqual</operation>
+        </criteriaItems>
+        <description>Update Prev Start Date &amp; Time Text</description>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <tasks>
+        <fullName>Email_Lesson_Cancelled_with_Make_Up_Credit</fullName>
+        <assignedToType>owner</assignedToType>
+        <description>Email: Lesson Cancelled with Make-Up Credit
+Automated Email sent Cancellation details</description>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Completed</status>
+        <subject>Email: Lesson Cancelled with Make-Up Credit</subject>
+    </tasks>
+    <tasks>
+        <fullName>Email_Lesson_Cancelled_without_Make_Up_Credit</fullName>
+        <assignedToType>owner</assignedToType>
+        <description>Email: Lesson Cancelled without Make-Up Credit
+Automated Email sent with Lesson Details</description>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Completed</status>
+        <subject>Email: Lesson Cancelled without Make-Up Credit</subject>
+    </tasks>
+    <tasks>
+        <fullName>Email_Make_Up_Booking_Notification</fullName>
+        <assignedToType>owner</assignedToType>
+        <description>Email: Make-Up Booking Notification
+Automated Email sent with Make-Up Lesson Details</description>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Completed</status>
+        <subject>Email: Make-Up Booking Notification</subject>
+    </tasks>
+    <tasks>
+        <fullName>Email_Reschedule_Lesson_Confirmation</fullName>
+        <assignedToType>owner</assignedToType>
+        <description>Automated Email sent to Parents Email when they reschedule a Booking using RS online link</description>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Completed</status>
+        <subject>Email: Reschedule Lesson Confirmation</subject>
+    </tasks>
+    <tasks>
+        <fullName>X5th_Lesson_Ad_Hoc_Booking_Cofirmation</fullName>
+        <assignedTo>admin@aureusacademy.com</assignedTo>
+        <assignedToType>user</assignedToType>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Completed</status>
+        <subject>Email: 5th Lesson Ad-Hoc Booking Notification</subject>
+    </tasks>
+</Workflow>

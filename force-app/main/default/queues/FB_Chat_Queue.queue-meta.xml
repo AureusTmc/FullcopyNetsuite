@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Queue xmlns="http://soap.sforce.com/2006/04/metadata">
+    <doesSendEmailToMembers>false</doesSendEmailToMembers>
+    <name>FB Chat Queue</name>
+    <queueMembers>
+        <users>
+            <user>angela.cortez@aureusacademy.com</user>
+            <user>cheryl.lai@aureusacademy.com</user>
+            <user>chiara@aureusacademy.com</user>
+            <user>kentngau@aureusacademy.com</user>
+            <user>kristy.chan@aureusacademy.com</user>
+            <user>aureus@techmatrixconsulting.com</user>
+            <user>yunshi@aureusacademy.com</user>
+        </users>
+    </queueMembers>
+    <queueRoutingConfig>FB_Chat_Queue</queueRoutingConfig>
+    <queueSobject>
+        <sobjectType>Case</sobjectType>
+    </queueSobject>
+    <queueSobject>
+        <sobjectType>LiveAgentSession</sobjectType>
+    </queueSobject>
+    <queueSobject>
+        <sobjectType>LiveChatTranscript</sobjectType>
+    </queueSobject>
+    <queueSobject>
+        <sobjectType>MessagingEndUser</sobjectType>
+    </queueSobject>
+    <queueSobject>
+        <sobjectType>MessagingSession</sobjectType>
+    </queueSobject>
+</Queue>

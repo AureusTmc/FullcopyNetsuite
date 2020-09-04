@@ -1,0 +1,415 @@
+<apex:page lightningStylesheets="true" standardStylesheets="false" controller="DefaultRosteringSetupController">
+    <html xmlns:xlink="http://www.w3.org/1999/xlink">
+        <head>
+            <title>Admin Rostering Setup</title>
+            <!-- full calender link -->
+            <apex:stylesheet value="{!URLFOR($Resource.RosteringSetup, '/Rostering/css/fullcalendar.min.css')}" />
+            <apex:stylesheet value="{!URLFOR($Resource.RosteringSetup, '/Rostering/css/daterangepicker.css')}" />
+            <apex:stylesheet value="{!URLFOR($Resource.RosteringSetup, '/Rostering/css/scheduler.min.css')}" />
+            <apex:includeScript value="{!URLFOR($Resource.RosteringSetup, '/Rostering/js/jquery.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.RosteringSetup, '/Rostering/js/moment.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.RosteringSetup, '/Rostering/js/fullcalendar.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.RosteringSetup, '/Rostering/js/scheduler.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.RosteringSetup, '/Rostering/js/daterangepicker.min.js')}" />
+            <apex:slds />
+            <style>
+                .fc-head{
+                    background:#F3F2F2 !important;
+                    position: fixed;
+                    width: 100%;
+                    z-index: 999;
+                }
+                .fc-body{
+                    position: absolute;
+                    width: 100%;
+                    z-index: 1;
+                    padding-top:30px;
+                }
+                
+                .fc-view{
+                    top:60px;
+                }
+                
+                .fc-header-toolbar{
+                    position: fixed;
+                    width: 100%;
+                    z-index: 999;
+                }
+                
+                .fullday_Regular_Hours{ 
+                    background: {!settings.Regular_Hours_Color__c} !important;
+                    border-color: {!settings.Regular_Hours_Color__c}; 
+                }
+                .fullday_Opening_Hours{ 
+                    background: {!settings.Opening_Hours_Color__c} !important;
+                    border-color: {!settings.Opening_Hours_Color__c}; 
+                }
+                .fullday_Closing_Hours{ 
+                    background: {!settings.Closing_Hours_Color__c} !important;
+                    border-color: {!settings.Closing_Hours_Color__c}; 
+                }
+                .fullday_Exam_Day{ 
+                    background: {!settings.Exam_Day_Color__c} !important;
+                    border-color: {!settings.Exam_Day_Color__c}; 
+                }
+                .halfday_Regular_Hours{ 
+                    background: linear-gradient(100deg, {!settings.Regular_Hours_Color__c}, transparent);
+                    border-color: {!settings.Regular_Hours_Color__c}; 
+                }
+                .halfday_Opening_Hours{ 
+                    background: linear-gradient(100deg,  {!settings.Opening_Hours_Color__c}, transparent);
+                    border-color: {!settings.Opening_Hours_Color__c}; 
+                }
+                .halfday_Closing_Hours{ 
+                    background: linear-gradient(100deg, {!settings.Closing_Hours_Color__c}, transparent);
+                    border-color: {!settings.Closing_Hours_Color__c}; 
+                }
+                .halfday_Exam_Day{ 
+                    background: linear-gradient(100deg, {!settings.Exam_Day_Color__c} , transparent);
+                    border-color: {!settings.Exam_Day_Color__c} ; 
+                }
+                .event-highlight_halfday{ 
+                    background: linear-gradient(100deg, lightcoral , transparent);
+                    border-color: lightcoral !important; 
+                }
+                .event-highlight_fullday{ 
+                    background-color: lightcoral !important; 
+                    border-color: lightcoral !important; 
+                }
+                .event-not-highlight_halfday{ 
+                    background: linear-gradient(100deg, cornflowerblue, transparent); 
+                    border-color: cornflowerblue !important; 
+                }
+                .event-not-highlight_fullday{ 
+                    background-color: cornflowerblue !important; 
+                    border-color: cornflowerblue !important; 
+                }
+                body{
+                    margin: 0px !important;
+                }
+                .fc-center h2, .fc-left{
+                    padding-top: 10px;
+                    font-size: 15px;
+                }
+                .fc-toolbar.fc-header-toolbar {
+                    margin-bottom: 0px !important;;
+                    background: white!important;; 
+                }
+                .fc-scroller {
+                    height: auto !important;
+                }
+                .fc-today-button{
+                    text-transform: capitalize !important;
+                }
+                .dateFormat {
+                    display: none;
+                }
+                .daterangepicker {
+                    z-index: 9999 !important;
+                }
+                .slds-text-title_caps {
+                    color: white !important;
+                }
+                .slds-table tr,td:hover {
+                    backgroud-color: white !important;
+                }
+                .slds-table td {
+                    padding: 0px !important;
+                }
+                .fc-view {
+                    box-shadow: 0 0 2px grey !important;
+                }
+                .fc-timeline-event {
+                    font-size: 12px !important;
+                    font-weight: 600 !important;
+                    color: black !important;
+                    border-radius: 1px !important;
+                } 
+                /*@@arpit: 20-dec-2019 : for remove hyper-link*/ 
+                a.fc-timeline-event.fc-h-event.fc-event {
+                    text-decoration: none;
+                    cursor: default;
+                }
+                .fc-time{
+                    display:none;
+                }
+                fieldset {
+                    margin: 5px !important;
+                }
+                #calendar th, #calendar .fc-time,#calendar .fc-axis {
+                    box-shadow: 0 0 5px #F3F2F2 !important;
+                    background: #F3F2F2 !important;
+                    color: black !important;
+                    font-weight: 600;
+                    text-align: center;
+                }
+                .fc-title {
+                    font-family: sans-serif !important;
+                }
+                .fc-time-grid-event, .fc-day-grid-event, .fc-timeline-event {
+                    border-radius: 2px !important;
+                    margin: 1px !important;
+                }
+                .word_break_450px{
+                    overflow-wrap: break-word !important;
+                    word-wrap: break-word !important;
+                    max-width: 450px !important;
+                    overflow: unset !important;
+                    text-overflow: unset !important;
+                    white-space: inherit !important;
+                }
+                .fc-today{
+                  background-color:inherit !important;
+                }
+                .event-custom-new{
+                    box-shadow: 0 0 0px black !important;
+                    color: gray !important;
+                    border: none !important;
+                    text-align: center !important;
+                }
+                .event-custom-new .fc-title{
+                    font-size: 18px !important;
+                }
+            </style>
+        
+            <script>
+                var resourcesList = [];
+                var eventList = [];
+                var refreshWithDate = '';
+                var refresh = false;
+                var centre = [];
+                var cIndicator = '<div class="colorIndecator" style="font-size: small;text-align: initial;">'+
+                                 '<div><div class="" style="background-color: {!settings.Regular_Hours_Color__c};width: 8px;display: inline-block;height: 8px;"></div> Regular Hours'+
+                                 '<br/><div class="" style="background-color: {!settings.Exam_Day_Color__c};width: 8px;display: inline-block;height: 8px;"></div> Exam Day</div>'+
+                                 '</div>'+
+                                 '<div class="colorIndecator" style="font-size: small;text-align: initial;">'+
+                                 '<div><div class="" style="background-color: {!settings.Opening_Hours_Color__c};width: 8px;display: inline-block;height: 8px;"></div> Opening Hours'+
+                                 '<div><div class="" style="background-color: {!settings.Closing_Hours_Color__c};width: 8px;display: inline-block;height: 8px;"></div> Closing Hours'+
+                                 '</div>';
+            
+                function showSpinner() { if ($('#spinner').hasClass('slds-hide')) $('#spinner').removeClass('slds-hide'); }
+                function hideSpinner() { if (!$('#spinner').hasClass('slds-hide')) $('#spinner').addClass('slds-hide'); }
+                function refreshCalendar(){ refreshWithDate = $('#fullCalendarDate').val(); refresh = true; getEmployeeAssigned(); }
+                $( document ).ready(function() {
+                    <apex:repeat value="{!centreList}" var="ctr">
+                        centre.push('{!ctr.Id}');
+                        var o ={};
+                        o.id = '{!ctr.Id}';
+                        o.title = '{!ctr.Name}';
+                        resourcesList.push(o);
+                    </apex:repeat>
+                    getEmployeeAssigned();
+                });
+                
+                function initCaledar(){
+                    if(refresh) $('#calendar').fullCalendar('destroy');
+                    var today = new Date();
+                    var dd = String(today.getDate()).padStart(2, '0');
+                    var mm = String(today.getMonth() + 1).padStart(2, '0');
+                    var yyyy = today.getFullYear();
+                    today = mm + '/' + dd + '/' + yyyy;
+                    if(refreshWithDate == '')  refreshWithDate = today;
+                    $('#calendar').fullCalendar({
+                        schedulerLicenseKey: 'GPL-My-Project-Is-Open-Source',
+                        resourceAreaWidth: 230,
+                        editable: false, 
+                        aspectRatio: 1.8,
+                        selectable: false,
+                        Resize: false,
+                        defaultDate: refreshWithDate,
+                        slotLabelInterval: "24:00",
+                        slotLabelFormat: 'ddd, DD MMM',
+                        titleFormat: 'ddd, MMM DD YYYY',
+                        scrollTime: '00:00', 
+                        header: { left: 'prev,next today', center: 'title', right: '' },
+                        views: { week: { titleFormat: 'D MMMM YYYY', titleRangeSeparator: ' to ', } },
+                        defaultView: 'timelineWeek',
+                        resourceLabelText: 'Centre',
+                        resources: resourcesList ,
+                        events: eventList,
+                        eventDrop: function(event, delta, revertFunc) { revertFunc();},
+                        eventResize: function(event, delta, revertFunc) {revertFunc();},
+                        eventRender: function(event, element) {
+                            var title = '';
+                            var des = '';
+                            var addHt = '<label style="text-align: end !important; width: 90%; font-size: 10px; color: black; margin-bottom: 0px;">Additional</label>';
+                            if(event.additional === false) addHt = '';
+                            if(event.description != null && event.description != '' && event.description != 'undefined') des  = event.description;
+                            if(event.title != null && event.title != '' && event.title != 'undefined') title = event.title;
+                            var ht = addHt+'<div class="slds-card__header slds-grid" style="white-space: normal; overflow: unset;margin-top: 0px; padding-top: 0px;"><span>'+title+'</span></div>'+
+                                     '<div class="slds-card__body slds-card__body_inner" style="white-space: normal; overflow: unset;font-size: 10px;">'+des+'</div>';
+                            element.html(ht);
+                            $('.colorIndecator').remove();
+                            $('.fc-today-button').after(cIndicator);
+                        },
+                        select: function(startDate, endDate, jsEvent, view, resource) {},
+                        dayClick: function(date, jsEvent, view, resourceObj) {},
+                        eventClick: function(event, info) {},
+                    });
+                    convertToLightning();
+                }
+                function convertToLightning(){
+                    // For calendar button
+                    $('.fc-button').addClass('slds-button slds-button_neutral');
+                    $('.fc-icon-chevron-right').text('Next');
+                    $('.fc-icon-chevron-left').text('Pre');
+                    $('.fc-left').addClass('slds-p-bottom_x-small'); 
+                    
+                    //init date picker
+                    $('.dateButton').remove();
+                    $('.fc-prev-button').after('<button type="button" class="dateButton slds-button" style="border: 1px solid lightgray;"> <span class="fc-iconDatePicker"><input class="slds-input" type="text" style="text-align: center;font-weight: 600;color: rgba(27, 82, 151, 1);" id="fullCalendarDate" readonly/></span> </button>');
+                    $('#fullCalendarDate').daterangepicker({
+                        singleDatePicker: true, showDropdowns: true, minYear: 1901, maxYear: 2050, startDate: refreshWithDate
+                    }, function(start, end, label) {
+                        changeCalendarDate(end.format('MM-DD-YYYY'));
+                    });
+                    $('.fc-prev-button, .fc-next-button, .fc-today-button').click(function (){
+                        changeDateCalendar();
+                        refreshCalendar();
+                    });
+                    refresh = false;
+                    refreshWithDate = '';
+                }
+                
+                function changeCalendarDate(dtstring){
+                    $('#fullCalendarDate').daterangepicker({
+                        singleDatePicker: true, showDropdowns: true, minYear: 1901, maxYear: 2050, startDate: dtstring
+                    },function(start, end, label) {
+                        changeCalendarDate(end.format('MM-DD-YYYY'));
+                    });
+                    refresh = true;
+                    refreshWithDate = dtstring;
+                    getEmployeeAssigned();
+                }
+                function changeDateCalendar(){
+                    var b = $('#calendar').fullCalendar('getDate');
+                    if(b){
+                        b = b.toISOString();
+                        var dateVal = b.split('T')[0];
+                        var splitedValue = dateVal.split('-');
+                        
+                        $('#fullCalendarDate').daterangepicker({
+                            singleDatePicker: true, showDropdowns: true, minYear: 1901, maxYear: 2050,
+                            startDate: splitedValue[1]+'/'+splitedValue[2]+'/'+splitedValue[0] 
+                        },function(start, end, label) {
+                            changeCalendarDate(end.format('MM-DD-YYYY'));
+                        });
+                    }
+                }
+                
+                function getEmployeeAssigned() {
+                    showSpinner(); eventList = []; var month = '';
+                    var b = $('#fullCalendarDate').val();
+                    var dt = moment();
+                    if(b)  dt.year(b.split('/')[2]).month(b.split('/')[0] - 1).date(b.split('/')[1]);
+                    var beginOfWeek = dt.startOf('week');
+                    var start = beginOfWeek.format('YYYY-MM-DD');
+                    refreshWithDate = beginOfWeek.format('MM/DD/YYYY');
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.DefaultRosteringSetupController.getAssignedEmployee}',
+                        start, 
+                        function(result, event){
+                            if (event.status) {
+                                for(var i=0; i < result.length; i++){
+                                    var rostering = result[i].rostering;
+                                    var evt = {};
+                                    evt.id = rostering.Id;
+                                    evt.resourceId = rostering.Centre__c ;
+                                    evt.title = rostering.Employee__r.Name;
+                                    evt.start = rostering.Effective_Date__c;
+                                    evt.description = rostering.Notes__c;
+                                    if(rostering.Additional_Work_Day__c && rostering.Work_Day__c === 'Full Day'){
+                                        var className = 'fullday_';
+                                        if(rostering.Shift__c === 'Regular Hours'){
+                                            className += 'Regular_Hours';
+                                        }else if(rostering.Shift__c === 'Opening Hours'){
+                                            className += 'Opening_Hours';
+                                        }else if(rostering.Shift__c === 'Closing Hours'){
+                                            className += 'Closing_Hours';
+                                        }else if(rostering.Shift__c === 'Exam Day'){
+                                            className += 'Exam_Day';
+                                        }else{
+                                            className = 'event-highlight_fullday';
+                                        }
+                                        evt.className = className;
+                                        evt.additional = true;
+                                    }
+                                    if(rostering.Additional_Work_Day__c && rostering.Work_Day__c === 'Half Day'){
+                                        var className = 'halfday_';
+                                        if(rostering.Shift__c === 'Regular Hours'){
+                                            className += 'Regular_Hours';
+                                        }else if(rostering.Shift__c === 'Opening Hours'){
+                                            className += 'Opening_Hours';
+                                        }else if(rostering.Shift__c === 'Closing Hours'){
+                                            className += 'Closing_Hours';
+                                        }else if(rostering.Shift__c === 'Exam Day'){
+                                            className += 'Exam_Day';
+                                        }else{
+                                            className = 'event-highlight_halfday';
+                                        }
+                                        
+                                        evt.className = className;
+                                        evt.additional = true;
+                                    }
+                                    
+                                    if(!rostering.Additional_Work_Day__c && rostering.Work_Day__c === 'Full Day'){
+                                        var className = 'fullday_';
+                                        if(rostering.Shift__c === 'Regular Hours'){
+                                            className += 'Regular_Hours';
+                                        }else if(rostering.Shift__c === 'Opening Hours'){
+                                            className += 'Opening_Hours';
+                                        }else if(rostering.Shift__c === 'Closing Hours'){
+                                            className += 'Closing_Hours';
+                                        }else if(rostering.Shift__c === 'Exam Day'){
+                                            className += 'Exam_Day';
+                                        }else{
+                                            className = 'event-not-highlight_fullday';
+                                        }
+                                        
+                                        evt.className = className;
+                                        evt.additional = false;
+                                    }
+                                    if(!rostering.Additional_Work_Day__c && rostering.Work_Day__c === 'Half Day'){
+                                        var className = 'halfday_';
+                                        if(rostering.Shift__c === 'Regular Hours'){
+                                            className += 'Regular_Hours';
+                                        }else if(rostering.Shift__c === 'Opening Hours'){
+                                            className += 'Opening_Hours';
+                                        }else if(rostering.Shift__c === 'Closing Hours'){
+                                            className += 'Closing_Hours';
+                                        }else if(rostering.Shift__c === 'Exam Day'){
+                                            className += 'Exam_Day';
+                                        }else{
+                                            className = 'event-not-highlight_halfday';
+                                        }
+                                        evt.className = className;
+                                        evt.additional = false;
+                                    }
+                                    
+                                    eventList.push(evt);
+                                } 
+                                initCaledar();
+                                hideSpinner();
+                            } else if (event.type === 'exception') {} else {}
+                        }, 
+                        {escape: true} 
+                    );
+                }
+            </script>
+        </head>
+        <apex:form >
+            <apex:actionstatus id="spStatus" onstart="showSpinner();" onstop="hideSpinner();"></apex:actionstatus> 
+            <div id="spinner" class="slds-spinner_container slds-hide" style="position: fixed;">
+                <div role="status" class="slds-spinner slds-spinner--large slds-spinner--brand" style="transform: rotate(0deg); padding-top: 26px;">
+                    <div class="slds-spinner__dot-a"></div>
+                    <div class="slds-spinner__dot-b"></div>
+                </div>
+                <div class="slds-spinner" role="status" style="transform: rotate(0deg);padding-top: 26px;width: 100%;">
+                    <span class="textSpinner" style="position: initial"></span>
+                </div>
+            </div>
+            <!-- Main Calendar Element-->
+            <div id="calendar"></div>
+        </apex:form>
+    </html>
+</apex:page>

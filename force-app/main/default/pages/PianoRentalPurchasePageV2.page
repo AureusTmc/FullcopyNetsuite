@@ -1,0 +1,258 @@
+<!--31 Aug 2020 By Karan Singh: This page is replica of the PianoRentalPurchasePage.vfp but have slightly modification due to changes in the 
+Rental to Purchase Process for the Net Suite Integration. Please refer apex class for this changes
+2 Sep 2020 By Karan : re-designed this page so that it can be converted to the pdf and will se sent to the POS Team as SLDS cannot be work with PDF generation -->
+
+<apex:page standardController="Enrolment__c" extensions="PianoRentalPurchasePageV2Controller"  
+           sidebar="false" showHeader="false" docType="html-5.0" id="apexPage">
+    
+    <script>
+        function showSuccessToast( isEmailSent, isErrorOnSave) {
+            
+            if(isEmailSent & !isErrorOnSave){
+                sforce.one.showToast({
+                    "title": "Success!",
+                    "message": "Email Sent Successfully.",
+                    "type": "success"
+                });
+            }
+            else{
+                sforce.one.showToast({
+                    "title": "Error!",
+                    "message": "There was an error",
+                    "type": "error"
+                });
+                
+                }
+            
+        }
+    </script>
+    
+    <html>
+        
+        <!--_______________________________________________________ Show This Page when Piano is Not SOld  ______________________________________________-->
+        <apex:outputPanel id="apexOutPanel" rendered="{!!isAlreadySold}">
+            <apex:form >
+                <!-- ___________________________________________________________________ Page Modal Start ___________________________________________________________________________________________________ -->
+                <div style="padding: 20px;border: 1px solid black;">
+                    
+                    <!-- ___________________________________________________________________ Page Heading Start ___________________________________________________________________________________________________ -->
+                    <div style="border-bottom-style: solid;padding-bottom : 3%;text-align: center;">
+                        
+                        <h1 style="text-align: center;font-size: x-large;"> Piano Rental Purchase Summary </h1>        
+                    </div>
+                    <!-- ___________________________________________________________________ Page Heading END ___________________________________________________________________________________________________ -->
+                    
+                    
+                    <!-- ___________________________________________________________________ Enrolment Details Start ___________________________________________________________________________________________________ -->
+                    <section style="padding : 1%;">
+                        
+                        <h2 style="padding-bottom: 2%;">Enrolment Details</h2>
+                        
+                        <!-- ___________________________________________________________________ Enrolment Details Section Start ___________________________________________________________________________________________________ -->
+                        <div style="padding-top : 1%;padding-top: 2%;">
+                            
+                            <!-- ___________________________________________________________________ Enrolment Details Table START ___________________________________________________________________________________________________ -->
+                            <table style="border-collapse: collapse;width: 100%;">
+                                
+                                <!-- ___________________________________________________________________ Enrolment Details ROW 1  ___________________________________________________________________________________________________ -->
+                                <tr>
+                                    <td style="width : 50%;">
+                                        <apex:outputLabel style="color: rgb(62, 62, 60);" value="Parent Name"></apex:outputLabel>
+                                    </td>
+                                    <td style="width : 50%;">
+                                        <apex:outputLabel style="color: rgb(62, 62, 60);" value="Centre"></apex:outputLabel>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    
+                                    <td style="width : 50%;padding-bottom: 2%;"> 
+                                        <apex:outputText style=" border: 1px solid rgb(221, 219, 218);border-radius: .25rem;width: 80%;padding: 0 1rem 0 .75rem;line-height: 1.875rem;
+                                                                min-height: calc(1.875rem + (1px * 2));background-color: rgb(236, 235, 234);cursor: not-allowed;user-select: none;display: block;"
+                                                         value="{!enrolment.Parent__r.Name}"></apex:outputText>
+                                    </td>
+                                    <td style="width : 50%;padding-bottom: 2%;">
+                                        <apex:outputText style=" border: 1px solid rgb(221, 219, 218);border-radius: .25rem;width: 80%;padding: 0 1rem 0 .75rem;line-height: 1.875rem;
+                                                                min-height: calc(1.875rem + (1px * 2));background-color: rgb(236, 235, 234);cursor: not-allowed;user-select: none;display: block;"
+                                                         value="{!enrolment.Center__r.Name}"></apex:outputText>
+                                    </td>
+                                </tr>
+                                
+                                <!-- ___________________________________________________________________ Enrolment Details ROW 2 ___________________________________________________________________________________________________ -->
+                                
+                                <tr>
+                                    <td style="width : 50%;">
+                                        <apex:outputLabel style="color: rgb(62, 62, 60);" value="Mobile"></apex:outputLabel>
+                                    </td>
+                                    <td style="width : 50%;">
+                                        <apex:outputLabel style="color: rgb(62, 62, 60);" value="Email"></apex:outputLabel>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    
+                                    <td style="width : 50%;padding-bottom: 2%;"> 
+                                        <apex:outputText style=" border: 1px solid rgb(221, 219, 218);border-radius: .25rem;width: 80%;padding: 0 1rem 0 .75rem;line-height: 1.875rem;
+                                                                min-height: calc(1.875rem + (1px * 2));background-color: rgb(236, 235, 234);cursor: not-allowed;user-select: none;display: block;"
+                                                         value="{!enrolment.Parent__r.PersonMobilePhone}"></apex:outputText>
+                                    </td>
+                                    <td style="width : 50%;padding-bottom: 2%;">
+                                        <apex:outputText style=" border: 1px solid rgb(221, 219, 218);border-radius: .25rem;width: 80%;padding: 0 1rem 0 .75rem;line-height: 1.875rem;
+                                                                min-height: calc(1.875rem + (1px * 2));background-color: rgb(236, 235, 234);cursor: not-allowed;user-select: none;display: block;"
+                                                         value="{!enrolment.Parent__r.PersonEmail}"></apex:outputText>
+                                    </td>
+                                </tr>
+                                
+                                <!-- ___________________________________________________________________ Enrolment Details ROW 3 ___________________________________________________________________________________________________ -->
+                                <tr>
+                                    <td style="width : 50%;">
+                                        <apex:outputLabel style="color: rgb(62, 62, 60);" value="Brand"></apex:outputLabel>
+                                    </td>
+                                    <td style="width : 50%;">
+                                        <apex:outputLabel style="color: rgb(62, 62, 60);" value="Model"></apex:outputLabel>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    
+                                    <td style="width : 50%;padding-bottom: 2%;"> 
+                                        <apex:outputText style=" border: 1px solid rgb(221, 219, 218);border-radius: .25rem;width: 80%;padding: 0 1rem 0 .75rem;line-height: 1.875rem;
+                                                                min-height: calc(1.875rem + (1px * 2));background-color: rgb(236, 235, 234);cursor: not-allowed;user-select: none;display: block;"
+                                                         value="{!enrolment.Brand__c}"></apex:outputText>
+                                    </td>
+                                    <td style="width : 50%;padding-bottom: 2%;">
+                                        <apex:outputText style=" border: 1px solid rgb(221, 219, 218);border-radius: .25rem;width: 80%;padding: 0 1rem 0 .75rem;line-height: 1.875rem;
+                                                                min-height: calc(1.875rem + (1px * 2));background-color: rgb(236, 235, 234);cursor: not-allowed;user-select: none;display: block;"
+                                                         value="{!enrolment.Model__c}"></apex:outputText>
+                                    </td>
+                                </tr>
+                                
+                                <!-- ___________________________________________________________________ Enrolment Details ROW 4 ___________________________________________________________________________________________________ -->
+                                <tr>
+                                    <td style="width : 50%;">
+                                        <apex:outputLabel style="color: rgb(62, 62, 60);" value="Serial Number"></apex:outputLabel>
+                                    </td>
+                                    <td style="width : 50%;">
+                                        <apex:outputLabel style="color: rgb(62, 62, 60);" value="Product Id"></apex:outputLabel>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    
+                                    <td style="width : 50%;padding-bottom: 2%;"> 
+                                        <apex:outputText style=" border: 1px solid rgb(221, 219, 218);border-radius: .25rem;width: 80%;padding: 0 1rem 0 .75rem;line-height: 1.875rem;
+                                                                min-height: calc(1.875rem + (1px * 2));background-color: rgb(236, 235, 234);cursor: not-allowed;user-select: none;display: block;"
+                                                         value="{!enrolment.Serial_Number__c}"></apex:outputText>
+                                    </td>
+                                    <td style="width : 50%;padding-bottom: 2%;">
+                                        <apex:outputText style=" border: 1px solid rgb(221, 219, 218);border-radius: .25rem;width: 80%;padding: 0 1rem 0 .75rem;line-height: 1.875rem;
+                                                                min-height: calc(1.875rem + (1px * 2));background-color: rgb(236, 235, 234);cursor: not-allowed;user-select: none;display: block;"
+                                                         value="{!enrolment.Product_Id__c}"></apex:outputText>
+                                    </td>
+                                </tr>
+                                
+                            </table>
+                            <!-- ___________________________________________________________________ Enrolment Details Table END ___________________________________________________________________________________________________ -->
+                        </div>
+                        <!-- ___________________________________________________________________ Enrolment Details Section END ___________________________________________________________________________________________________ -->
+                        
+                    </section>
+                    <!-- ___________________________________________________________________ Enrolment Details END ___________________________________________________________________________________________________ -->
+                    
+                    <!-- ___________________________________________________________________ Charges Summary Start ___________________________________________________________________________________________________ -->
+                    <section style="padding: 1%;">
+                        
+                        <h2 style="padding-bottom: 2%;">Charges Summary</h2>
+                        
+                        <div style="padding-top : 1%;padding-top: 2%;">
+                            
+                            <!-- ___________________________________________________________________ Charges Summary Table Start ___________________________________________________________________________________________________ -->
+                            
+                            <table style="border-collapse: collapse;width: 95%;border-top: 1px solid rgb(221, 219, 218);padding-left: 1.5rem;text-align: left;">
+                                <tr>
+                                    <td style="width : 50%;background-color: rgb(250, 250, 249);color: rgb(81, 79, 77);padding: .45rem .5rem;font-weight: 700;line-height: normal;">
+                                        <apex:outputLabel style="color: rgb(62, 62, 60);" value="Description"></apex:outputLabel>
+                                    </td>
+                                    <td style="width : 50%;background-color: rgb(250, 250, 249);color: rgb(81, 79, 77);padding: .45rem .5rem;font-weight: 700;line-height: normal;">
+                                        <apex:outputLabel style="color: rgb(62, 62, 60);" value="Amount"></apex:outputLabel>
+                                    </td>
+                                </tr>
+                                
+                                <apex:repeat value="{!listOfSummary}" var="value">
+                                    <tr style="border-collapse: collapse;width: 100%;border-top: 1px solid rgb(221, 219, 218);padding-left: 1.5rem;text-align: left;">
+                                        <td style="color: rgb(81, 79, 77);padding: .45rem .5rem;font-weight: 700;line-height: normal;">
+                                            <div title="Description">
+                                                <apex:outputText value="{!value.packageName}"></apex:outputText>
+                                            </div>
+                                        </td>
+                                        
+                                        <td style="color: rgb(81, 79, 77);padding: .45rem .5rem;font-weight: 700;line-height: normal;">
+                                            <div title="Amount">
+                                                <apex:outputText value="{0, number, $,##0.00}" >
+                                                    <apex:param value="{!value.netAmount}"/>
+                                                </apex:outputText>
+                                                
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </apex:repeat>
+                                
+                                <tr style="border-collapse: collapse;width: 100%;border-top: 1px solid rgb(221, 219, 218);padding-left: 1.5rem;text-align: left;">
+                                    <td style="color: rgb(81, 79, 77);padding: .45rem .5rem;font-weight: 700;line-height: normal;">
+                                        <div title="Description" style="text-align: right;">
+                                            <apex:outputText ><b>Total Revenue Discount</b></apex:outputText>
+                                        </div>
+                                    </td>
+                                    
+                                    <td style="color: rgb(81, 79, 77);padding: .45rem .5rem;font-weight: 700;line-height: normal;">
+                                        <div title="Amount">
+                                            <apex:outputText value="{0, number, $,##0.00}" >
+                                                <apex:param value="{!amountAfterDiscount}"/>
+                                            </apex:outputText>
+                                            
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <tr style="border-collapse: collapse;width: 100%;border-top: 1px solid rgb(221, 219, 218);border-bottom: 1px solid rgb(221, 219, 218);padding-left: 1.5rem;text-align: left;">
+                                    <td style="color: rgb(81, 79, 77);padding: .45rem .5rem;font-weight: 700;line-height: normal;">
+                                        <div title="Description" style="text-align: right;">
+                                            <apex:outputText ><b>Total Deposit Refund</b></apex:outputText>
+                                        </div>
+                                    </td>
+                                    
+                                    <td style="color: rgb(81, 79, 77);padding: .45rem .5rem;font-weight: 700;line-height: normal;">
+                                        <div title="Amount">
+                                            <apex:outputText value="{0, number, $,##0.00}" >
+                                                <apex:param value="{!totalRentalDepositAmount}"/>
+                                            </apex:outputText>
+                                            
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                            <!-- ___________________________________________________________________ Charges Summary Table END ___________________________________________________________________________________________________ -->
+                        </div>
+                    </section>
+                    <!-- ___________________________________________________________________ Charges Summary  END ___________________________________________________________________________________________________ -->
+                </div>
+                <br/><br/>
+                <apex:outputPanel id="errorMsgSec">
+                    <div style="color: red;">
+                        <b>{!errorMessage}</b>
+                    </div>
+                </apex:outputPanel>
+                <apex:commandButton id="sendEmailBtn" reRender="errorMsgSec,sendEmailBtn" oncomplete="showSuccessToast({!isEmailSent},{!isErrorOnSave}); return false;" value="Send Email" action="{!sendEmailToPOS}" disabled="{!isEmailSent}" 
+                                    style="padding: 5px 10px 3px !important;font-size: 16px !important;text-transform: uppercase;line-height: 20px !important;margin: 15px 0 20px;float: right;height: 40px;cursor: pointer;" />
+                <!-- ___________________________________________________________________ Page Modal END ___________________________________________________________________________________________________ -->
+            </apex:form>
+        </apex:outputPanel>
+        
+        <!--_______________________________________________________ Show This Page when Piano is SOld  ______________________________________________-->
+        <apex:outputPanel rendered="{!isAlreadySold}">
+        
+        <div style="height: 420px;">
+            <strong>We cannot process your request at the moment Piano already sold. Please contact centre admin for further
+                    assistance.
+                </strong>
+            
+            </div>
+        </apex:outputPanel>
+    </html>
+</apex:page>

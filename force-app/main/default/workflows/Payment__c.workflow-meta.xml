@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workflow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fieldUpdates>
+        <fullName>Update_Payment_ID</fullName>
+        <field>Name</field>
+        <formula>IF(Invoice__r.Center__r.Country__r.Name = &quot;HK&quot;,(Invoice__r.Center__r.Country__r.Name +&quot;-&quot;+ Pay_number_backend__c),Pay_number_backend__c)</formula>
+        <name>Update Payment ID</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <rules>
+        <fullName>Create Refund Reminder</fullName>
+        <actions>
+            <name>Refund_Reminder</name>
+            <type>Task</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Payment__c.RecordTypeId</field>
+            <operation>equals</operation>
+            <value>Refund</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Payment__c.Payment_Status__c</field>
+            <operation>equals</operation>
+            <value>Pending</value>
+        </criteriaItems>
+        <triggerType>onCreateOnly</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update payment number</fullName>
+        <actions>
+            <name>Update_Payment_ID</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <formula>TRUE</formula>
+        <triggerType>onCreateOnly</triggerType>
+    </rules>
+    <tasks>
+        <fullName>Refund_Reminder</fullName>
+        <assignedTo>celine.luan@aureusacademy.com</assignedTo>
+        <assignedToType>user</assignedToType>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <offsetFromField>Payment__c.Payment_Date__c</offsetFromField>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Open</status>
+        <subject>Refund Reminder</subject>
+    </tasks>
+</Workflow>

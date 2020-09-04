@@ -1,0 +1,322 @@
+<apex:page id="pg" showHeader="false" controller="FreeTrial_IpadCntrl" standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False">
+    <head>
+        <title>Aureus Academy Trial Booking</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0"/>
+        <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}"/>     
+        <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700&display=swap" rel="stylesheet" /> 
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous" />
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery/jquery.js')}"/>            
+        
+        <style>
+         /*.sticky {  position: fixed;  top: 0;  width: 100%; z-index:99;}*/
+         .sticky {  position: fixed;  bottom: 0;  width: 100%; z-index:99;}
+            body{ font-size:16px; font-family: 'Lato', sans-serif; font-weight:300; color:#000; }
+            @media(min-width:991px){.new-container.class-true{width:80%; margin:0 auto; background-color:#fff;} .class-true .sticky{width:80%; left:10%;}}
+            .slds-checkbox .slds-form-element__label { font-size: .9125rem; color:#000; }
+            @media(min-width:999px){.slds-modal__container {width: 40%;}}
+            blocklist{ margin:0px;}
+            .icon-collapse,.icon-collapse:focus, .icon-collapse:hover {color:#000; font-weight:bold; font-size:26px;text-decoration: none;}
+            input{
+            height: calc(1.875rem + (1px * 10));}
+            ul li{margin-left:0px;}
+            @media(min-width:999px){
+            .m-lg-right{margin-right: .75rem;}}
+            @media(min-width:767px){
+            .text-lg-left{ text-align:left;}
+            .text-lg-right{text-align:right;}
+            .slds-large-p-around_large{padding:1.5rem;}
+            .slds-large-p-horizontal_xx-large{padding-left: 3rem; padding-right: 3rem;}
+            }
+            
+            .slds-radio{padding:0px;}
+            .btn-yellow, .btn-yellow:hover, .btn-yellow:focus {
+            background-color:#ffbf2f;
+            color:#fff;
+            }
+            
+            .slds-button_success{
+            color:#fff !important;
+            padding-left:12px;
+            padding-right:12px;}
+            .text-yellow{color:#ffbf2f;}
+            .btn-block{
+            display:block;
+            font-size:1.2rem; 
+            }
+            .btn-gray,.btn-gray:hover, .btn-gray:focus{
+            background-color:#ccced0;
+            color:#fff;
+            }
+            .time-list .slds-radio__label {
+            width: 100%;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            border: solid 1px #dcdcdc;
+            font-size: 19px;
+            background-color: #ffffff;
+            font-weight:bold;
+            
+            }
+            .slds-radio [type="radio"]:checked + .slds-radio__label > .slds-form-element__label, .slds-radio [type="radio"]:checked .slds-radio__label * {color:#fff !important;}
+            .slds-form-element__label{color:#9a9da0; font-size:19px;}
+            .slds-radio{padding:0px; border-radius:6px;}
+            .time-list label.slds-radio__label {
+            display: block !important;
+            padding:8px 10px;
+            border-radius:6px;
+            }
+            .slds-radio [type="radio"]:checked + .slds-radio__label{
+            background-color:#ffbf2f;
+            color:#fff;
+            }
+            input[type="radio"]:checked .slds-radio__label .slds-form-element__label {color:#ffffff !important;}
+            .date-list{max-height:320px; overflow-y:auto;}
+            .time-list {
+            width: calc(100% - 15px);
+            margin: 0 auto 10px;
+            }
+            
+            .slds-radio .slds-radio--faux, .slds-radio .slds-radio_faux {
+            width: 1.3rem;
+            height: 1.1em;
+            }
+            .slds-radio .slds-form-element__label {
+            font-size: .9125rem;
+            }
+            .slds-radio--button + .slds-radio--button, .slds-radio--button + .slds-radio_button, .slds-radio_button + .slds-radio--button, .slds-radio_button + .slds-radio_button {
+            border-left: 0px solid #dddbda;
+            }
+            .slds-radio [type="radio"]:checked + .slds-radio--faux::after, .slds-radio [type="radio"]:checked + .slds-radio__label .slds-radio--faux::after, .slds-radio [type="radio"]:checked + .slds-radio__label .slds-radio_faux::after, .slds-radio [type="radio"]:checked + .slds-radio_faux::after, .slds-radio [type="radio"]:checked ~ .slds-radio--faux::after, .slds-radio [type="radio"]:checked ~ .slds-radio_faux::after {background-color: #fff; border:2px solid #ffbf2f;}
+            .slds-radio .slds-radio--faux, .slds-radio .slds-radio_faux {transition: none;}
+            
+            
+            .box-info{
+            box-shadow: 0 1px 0 0 #ececee;
+            background-color:#fff;
+            margin-bottom:4px;
+            }
+            #step-2, #step-3, .bg-white{background-color:#fff;}
+            .title-no{border: solid 1px #353c43; border-radius:50%; padding: 4px 9px;} 
+            .bg-light{background-color:#f7f7f7 !important;}
+            .w-50{width:50%;}
+            .font-bold{font-weight:bold;}
+            @media(max-width:767px){
+            .text-sm-center{
+            text-align:center;
+            }
+            }
+        </style>
+        <script>
+            $(document).ready(function() { 
+                <apex:variable value="{!1}" var="stuIndex"/>
+                <apex:repeat value="{!enrModelList}" var="enrTrial">
+                    var tSlot = '{!enrTrial.slcdExistingStu}';
+                    var radioName = 'options'+{!stuIndex};
+                    $("input[name='"+radioName+"'][value='"+tSlot+"']").attr('checked', 'checked');
+                
+                    <apex:variable value="{!stuIndex+1}" var="stuIndex"/>
+                </apex:repeat>
+
+            });     
+        
+            function setExistingStu(stuIndx){
+                var optIndx = 'options'+stuIndx;
+                var slcdIsStu = $("input[name='"+optIndx+"']:checked").val();
+                slcdExistingStudent(stuIndx,slcdIsStu);             
+            }
+
+        function enablebtn(){                
+                var listsize= {!enrModelList.size};
+                console.log(typeof listsize);
+                var isSuccess = true;
+                for(var i=1; i<= listsize; i++){
+                    var optIndx = 'options'+i;
+                    var slcdIsStu = $("input[name='"+optIndx+"']:checked").val();
+                    if(!slcdIsStu){
+                      isSuccess = false;
+                    }               
+                }
+                if(isSuccess){
+                        $("#next_step3").addClass("btn-yellow").removeClass("btn-gray").css("pointer-events", "auto");  
+                   }else{
+                        $("#next_step3").addClass("btn-gray").removeClass("btn-yellow").css("pointer-events", "none");
+                        }
+            }           
+        
+            function validatePage(trialSize){
+                if(trialSize > 0){
+                    var isSuccess = true;
+                    
+                    for(var i=1; i<=trialSize; i++){
+                        var optIndx = 'options'+i;
+                        var slcdInst = $("input[name='"+optIndx+"']:checked").val();
+                        if(!slcdInst)
+                            isSuccess = false;
+                    }
+                    if(isSuccess){  
+                        $('.cmpErrDiv').addClass('slds-hide');
+                        nextBtn();
+                    }else{
+                        $('.cmpErrDiv').removeClass('slds-hide');
+                        $('.contentDiv').html('Please select option.');
+                    }
+                }
+            }
+        </script>
+    </head>
+    <body style="background-color:#f9f9fb">
+      <apex:outputPanel rendered="{!isSiteGuestUser}">     
+            <div  class="slds-p-around_medium" style="font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;">Aureus Academy Enrolment Process       
+            </div>
+            <p style="text-align:center;"><apex:image url="{!$Resource.Aureus_logo_png}" /></p>
+        </apex:outputPanel>    
+      <apex:form id="frm">
+          <apex:actionFunction name="nextBtn" action="{!nextBtnCmp6}" status="spinner"/>
+          <apex:actionFunction name="backBtn" action="{!backBtnCmp6}" status="spinner"/>
+          <apex:actionFunction name="slcdExistingStudent" action="{!processExistingStu}" reRender="noOfEnrPanel" status="spinner">
+              <apex:param name="slcdIndx" value="0" assignTo="{!slcdStuIndex}"/> 
+              <apex:param name="slcdExisStu" value="" assignTo="{!slcdExistingStu}"/> 
+          </apex:actionFunction>
+          <!--<apex:actionStatus id="spinner">
+              <apex:facet name="start"> 
+                  <apex:outputPanel id="backdrop" styleClass="popupBackground">
+                      <div role="status" class="slds-spinner slds-spinner_brand slds-spinner_large"> 
+                          <div class="slds-spinner__dot-a"></div>
+                          <div class="slds-spinner__dot-b"></div>
+                      </div>
+                  </apex:outputPanel>
+              </apex:facet>
+          </apex:actionStatus>-->
+          <apex:actionStatus id="spinner" styleClass="status">
+              <apex:facet name="start">
+                  <div class="demo-only demo--inverse " style="height:100%;width:100%;z-index:200;position:fixed">
+                      <div class="slds-spinner_container" style="height:100%;width:100%;">
+                          <div role="status" class="slds-spinner slds-spinner_large slds-spinner_brand">
+                              <span class="slds-assistive-text">Loading</span>
+                              <div class="slds-spinner__dot-a"></div>
+                              <div class="slds-spinner__dot-b"></div>
+                          </div>
+                      </div>
+                  </div>
+              </apex:facet>
+         </apex:actionStatus>   
+         <div class="new-container {!IF(isSiteGuestUser, 'class-true','')}">
+         <div  class="slds-text-heading_large  slds-p-around_small slds-text-align_center" style="font-weight:bold;">Student Record Found!</div>
+               
+                <!-- 
+        
+              <div class="slds-grid slds-wrap slds-p-around_small " id="myHeader" style="background-color:#f9f9fb; transition:all 0.3s ease-out;">
+                  <div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-text-align_center slds-large-order_2 slds-p-bottom_small">
+                      <h3 class="slds-text-heading_large" style="font-weight:bold;">Student Record Found!</h3>
+                  </div>
+                  <div class="slds-size_1-of-3 slds-large-size_1-of-3 slds-large-order_1"><span >
+                      <a class="slds-button btn-gray slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-p-horizontal_large slds-m-bottom_small" onClick="backBtn();" href="javascript:void(0)" id="back_step1" style="margin-bottom: .75rem;">Back</a></span>  
+                  </div>
+                  
+                  <div class="slds-size_2-of-3 slds-large-size_1-of-3 slds-text-align_right slds-large-order_3 "><span id="j_id0:frm:nextRefresh">
+                      <a class="slds-button btn-yellow slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-m-bottom_small slds-p-horizontal_large" onClick="validatePage('{!enrModelList.size}');"   href="javascript:void(0)" id="next_step3" >Next</a></span>
+                  </div>
+              </div>
+          <script>
+                  window.onscroll = function() {myFunction()};
+                        var header = document.getElementById("myHeader");
+                        var sticky = header.offsetTop;
+                        
+                        function myFunction() {
+                            if (window.pageYOffset > sticky) {
+                                header.classList.add("sticky");
+                            } else {
+                                header.classList.remove("sticky");
+                            }
+                        }
+                </script> -->
+       
+          <div class="slds-text-align_center slds-is-relative slds-hide cmpErrDiv">
+              <div class="slds-notify slds-notify_toast slds-theme_error slds-m-left_none slds-m-right_medium" role="status">
+                  <div class="slds-notify__content">
+                      <h2 class="slds-text-heading_small contentDiv"></h2>
+                  </div>
+                  <div class="slds-notify__close">
+                      <button class="slds-button slds-button_icon slds-button_icon-inverse" onclick="$('.cmpErrDiv').addClass('slds-hide');return false;" title="Close">
+                          X
+                          <span class="slds-assistive-text">Close</span>
+                      </button>
+                  </div>
+              </div>
+          </div>
+        
+        <div class="container slds-p-around_small slds-large-p-around_large bg-white" >
+           <p>We have found a record in our system based on the information you've entered. Would you like to select this student for the trial booking or would you like to create a new student record?</p>
+           <br/>
+            <apex:variable value="{!1}" var="stuIndex"/>
+            <apex:repeat value="{!enrModelList}" var="enrTrial">
+                <div class="bg-white slds-p-bottom_medium" >
+                    <h3 class="slds-text-heading_medium" style="font-weight:bold;">Trial Lesson {!stuIndex}</h3>
+                    <hr style="margin: 25px 0px;" />
+                    <div class="slds-grid slds-wrap date-list">
+                     <div class="slds-col slds-large-size_8-of-12 ">
+                        <apex:repeat value="{!enrTrial.existingStuOpt}" var="stuOpt">
+                            <div class="time-list m-lg-right">
+                               <div class="slds-form-element__control">
+                                   <span class="slds-radio">
+                                       <input type="radio" id="{!stuOpt}{!stuIndex}" value="{!stuOpt}" name="options{!stuIndex}" onClick="setExistingStu('{!stuIndex}');" onChange="enablebtn();" disabled="" />
+                                       <label class="slds-radio__label" for="{!stuOpt}{!stuIndex}">
+                                           <span class="slds-radio_faux"></span>
+                                           <span class="slds-form-element__label">{!enrTrial.existingStuOpt[stuOpt]}</span>
+                                       </label>
+                                   </span>
+                               </div>
+                           </div>
+                        </apex:repeat>
+                    </div>
+                </div>
+                </div>
+                <apex:variable value="{!stuIndex+1}" var="stuIndex"/>
+            </apex:repeat>
+        
+           <!-- 
+           <div class="slds-grid slds-wrap date-list">
+               <div class="slds-size_1-of-2">
+                   <div class="time-list m-lg-right">
+                       <div class="slds-form-element__control">
+                           <span class="slds-radio">
+                               <input type="radio" id="radio1" value="radio1" name="options" disabled="" checked="checked" />
+                               <label class="slds-radio__label" for="radio1">
+                                   <span class="slds-radio_faux"></span>
+                                   <span class="slds-form-element__label">Person name</span>
+                               </label>
+                           </span>
+                       </div>
+                   </div>
+               </div>
+               
+               <div class="slds-size_1-of-2">
+                   <div class="time-list">
+                       <div class="slds-form-element__control">
+                           <span class="slds-radio">
+                               <input type="radio" id="radio2" value="radio2" name="options" disabled="" checked="" />
+                               <label class="slds-radio__label"  for="radio2">
+                                   <span class="slds-radio_faux"></span>
+                                   <span class="slds-form-element__label">Create new student</span>
+                               </label>
+                           </span>
+                       </div>
+                   </div>
+               </div>                    
+            </div>-->
+        </div>
+        
+        
+        <div class="slds-grid slds-wrap slds-p-around_small sticky" id="myHeader" style="background-color:#f9f9fb; transition:all 0.3s ease-out;">
+                    <div class="slds-size_1-of-2 "><span>
+                         <a class="slds-button btn-gray slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-p-horizontal_large slds-m-bottom_small" onClick="backBtn();" href="javascript:void(0)" id="back_step1">Back</a></span>  
+                    </div>
+                    
+                    <div class="slds-size_1-of-2 slds-text-align_right"><span id="j_id0:frm:nextRefresh">
+                        <a class="slds-button btn-gray slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-m-bottom_small slds-p-horizontal_large" onClick="validatePage('{!enrModelList.size}');"   href="javascript:void(0)" id="next_step3" style="pointer-events:none;" >Next</a></span>
+                    </div>
+                </div>
+                </div>
+        </apex:form>  
+    </body>
+</apex:page>

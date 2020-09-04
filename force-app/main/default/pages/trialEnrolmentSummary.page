@@ -1,0 +1,1068 @@
+<apex:page id="pg" Controller="TrialEnrolmentSummaryController" showHeader="false" standardStylesheets="true" sidebar="false" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False">
+    
+    <head>
+        <title>Aureus Academy – EnrolmentSummary</title>
+        
+        <!--<apex:slds /> -->
+        <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <apex:stylesheet value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.css')}"/>
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous" />
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery/jquery.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.js')}"/>
+        
+        <!--<script src="https://checkout.stripe.com/checkout.js"></script>-->
+        <script src="https://js.stripe.com/v3/"></script>
+        
+        <link rel="stylesheet" href="{!URLFOR($Resource.Signature,'Signature/signature-pad.css')}"/>  
+            <script src="{!URLFOR($Resource.Signature,'Signature/signature_pad.js')}"></script>
+        
+        <script>    
+        $(document).ready(function() {        
+            var slcdErr = '{!isErrorOnLoad}';
+            var slcdErroMsg = '{!errorMsg}';
+            
+            if(slcdErr == 'true' && slcdErroMsg.length > 0){
+                $('.firstCmpErrDiv').removeClass('slds-hide');
+                $('.contentDivFirst').html(slcdErroMsg );
+                
+                $('.custom-btn').attr('disabled',true);
+                return false;
+            }
+        });
+        </script>    
+        
+    </head>
+    
+    <body class="slds-scope ">  
+        <apex:form id="frm">
+            <apex:actionStatus id="spinner">
+                <apex:facet name="start"> 
+                    <apex:outputPanel id="backdrop" styleClass="popupBackground">
+                        <div role="status" class="slds-spinner slds-spinner_brand slds-spinner_large"> 
+                            <div class="slds-spinner__dot-a"></div>
+                            <div class="slds-spinner__dot-b"></div>
+                        </div>
+                    </apex:outputPanel>
+                </apex:facet>
+            </apex:actionStatus>
+            
+            <apex:actionFunction name="completeEnrolment" action="{!completeEnrolment}" oncomplete="checkError();return false;"  reRender="ThirdScreenPanel" status="spinner">
+                <apex:param name="arg" value="" assignTo="{!base64SignImg}"/>
+                <apex:param name="arg1" value="" assignTo="{!stripeToken}"/>
+            </apex:actionFunction>    
+        </apex:form>    
+        <div class="-content">
+            <div class="slds-grid slds-wrap slds-grid--align-center">
+                <div class="slds-col content-box">
+                    <div class="header slds-col">
+                        <div class="slds-col">
+                            <a href="#" class="logo">
+                                <img src="https://aureusacademy.com/wp-content/uploads/2017/03/cropped-Aureus-Logo-Small.png"/>
+                            </a>
+                        </div>
+                    </div>
+                    <!-------  First block  Start ------------------->
+                    <div class="firstCmpcls" id="firstCmpId">
+                        <div class="content-body slds-col">
+                            <div class="slds-form-element">
+                                <div class="slds-notify_container slds-is-relative slds-hide firstCmpErrDiv">
+                                    <div class="slds-notify slds-notify_toast slds-theme_error slds-m-left_none slds-m-right_medium" role="status">
+                                        <div class="slds-notify__content">
+                                            <h2 class="slds-text-heading_small contentDivFirst"></h2>
+                                        </div>
+                                        <div class="slds-notify__close">
+                                            <button class="slds-button slds-button_icon slds-button_icon-inverse" onclick=" $('.firstCmpErrDiv').addClass('slds-hide');return false;" title="Close">
+                                                X
+                                                <span class="slds-assistive-text">Close</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                               <div class="slds-form-element">
+                                    <label class="slds-form-element__label field-title slds-size_1-of-1 slds-p-horizontal_medium" for="form-element-help-01">Parent Details</label>
+                                    <div class="slds-grid slds-wrap slds-p-horizontal_medium">
+                                        <div class="slds-col dark-bg billig-info slds-grid">
+                                            <ul class="slds-grid slds-wrap slds-size_1-of-1">
+                                                <li class="slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                    <div><strong>Parent Name</strong> {!parentAcc.FirstName} {!parentAcc.LastName}</div></li>
+                                                <li class="slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                    <div><strong>Address</strong>  {!parentAcc.BillingStreet}</div></li>
+                                                <li class="slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                    <div><strong>Email</strong>  {!parentAcc.PersonEmail}</div></li>
+                                                <li class="slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                    <div><strong>Postal</strong>  {!parentAcc.BillingPostalCode}</div></li>
+                                                <li class="slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                    <div><strong>Mobile</strong>  {!parentAcc.PersonMobilePhone}</div></li>
+                                                <li class="slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                    <div style="border:none;"><strong>Country</strong>  {!parentAcc.BillingCountry}</div></li>
+                                               <!-- <li class="slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium"  style="border:none;">
+                                                    <div style="border:none;"><strong>Start Date</strong>  
+                                                        <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                                                            <apex:param value="{!freeTrailEnr.Lessons_Start_Date__c}" /> 
+                                                        </apex:outputText> 
+                                                    </div>
+                                                </li>-->
+                                            </ul>
+                                            
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                               <!-- <fieldset class="slds-form-element final-step">-->
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label field-title slds-size_1-of-1 slds-p-horizontal_medium" for="form-element-help-01">Enrolment Details</label>
+                                        <div class="slds-grid slds-wrap slds-p-horizontal_medium">
+                                            <div class="slds-col dark-bg billig-info slds-grid">
+                                                <ul class="slds-grid slds-wrap slds-size_1-of-1">
+                                                    <li class="slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                        <div><strong>Student Name</strong> {!student.FirstName} {!student.LastName}</div></li>
+                                                    <li class="slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                        <div><strong>Teacher Name</strong>  {!freeTrailEnr.Teacher__r.name}</div></li>
+                                                    <li class="slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                        <div><strong>Centre</strong>  {!freeTrailEnr.Center__r.CentreName_Cust__c}</div></li>
+                                                    <li class="slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                        <div><strong>Package</strong>  {!freeTrailEnr.Package__r.Name}</div></li>
+                                                    <li class="slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                        <div style="border:none;"><strong>Lesson Day and Time</strong>  {!lessTime}</div></li>
+                                                    <li class="slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium" >
+                                                        <div style="border:none;"><strong>Start Date</strong>  
+                                                            <apex:outputText value="{0, date,EE,  MMM dd yyyy}">
+                                                                <apex:param value="{!freeTrailEnr.Lessons_Start_Date__c}" /> 
+                                                            </apex:outputText> 
+                                                        </div>
+                                                    </li>
+                                                </ul>
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="slds-form-element">
+                                        <div class="slds-grid slds-wrap ">
+                                            <div class="slds-col slds-size_1-of-1 slds-p-horizontal_medium">
+                                                <div class="slds-form-element slds-grid slds-wrap radio-list">
+                                                    <label class="slds-form-element__label field-title slds-size_1-of-1  " for="form-element-help-01">Billing Details</label>
+                                                    <table class="slds-table slds-table_cell-buffer">
+                                                        <tr class="slds-line-height_reset slds-border_bottom">
+                                                            <th>Package Name</th>
+                                                            <th>Student</th>
+                                                            <th style="text-align:center;">Qty</th>
+                                                            <th style="text-align:right;">Rate</th>
+                                                            <th style="text-align:right;">Total</th>
+                                                        </tr>
+                                                        <tr class="slds-hint-parent  slds-border_bottom">
+                                                            <td>{!freeTrailEnr.Package__r.Name}</td>
+                                                            <td>{!student.FirstName} {!student.LastName}</td>
+                                                            <td style="text-align:center;">1</td>
+                                                            <td style="text-align:right;">${!prgFees} </td>
+                                                            <td style="text-align:right;">${!prgFees} </td>
+                                                        </tr>
+                                                        <tr class="slds-hint-parent  slds-border_bottom">
+                                                            <td>Registration Fee</td>
+                                                            <td>{!student.FirstName} {!student.LastName}</td>
+                                                            <td style="text-align:center;">1</td>
+                                                            <td style="text-align:right;">${!regiFees} </td>
+                                                            <td style="text-align:right;">${!regiFees} </td>
+                                                        </tr>
+                                                        <tr class="slds-border_bottom">
+                                                            <td colspan="5">
+                                                                <table style="width:100%;">
+                                                                    <tr>
+                                                                        <td style="width:60%;"><!--Based on Start Date -       
+                                                                            <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                                                                            <apex:param value="{!freeTrailEnr.Lessons_Start_Date__c}" /> 
+                                                                            </apex:outputText>-->
+                                                                        </td>
+                                                                        <td>
+                                                                            <table style="width:100%; border: none !important;margin-left: 17px;">
+                                                                                <tr>
+                                                                                    <td >Total</td>
+                                                                                    <td style="text-align:right;">${!totAmt}</td>
+                                                                                </tr>
+                                                                                <tr style="{!IF(pkgFeesPromtnalDis > 0,'','display:none;')}">
+                                                                                    <td >Discount</td>
+                                                                                    <td style="text-align:right;"><span style="color:red;">(${!disTot})</span></td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td >GST</td>
+                                                                                    <td style="text-align:right;">${!gstAmt}</td>
+                                                                                </tr>
+                                                                                <tr style="border-top: 1px solid !important; border-bottom: none !important; border-color: #dddbda !important;">
+                                                                                    <td>Total Subscription</td>
+                                                                                    <td style="text-align:right;">${!subsTot}</td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td>Total Deposit</td>
+                                                                                    <td style="text-align:right;">${!depFees}</td>
+                                                                                </tr>
+                                                                                <tr style="border-top: 1px solid !important; border-bottom: none !important; border-color: #dddbda !important;">
+                                                                                    <td >Grand Total</td>
+                                                                                    <td style="text-align:right;">${!grandTot}</td>
+                                                                                </tr>
+                                                                            </table>
+                                                                        </td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-1  slds-p-horizontal_medium">
+                                                <div class="slds-form-element">
+                                                    <div class="slds-form-element__control">
+                                                        <label class="slds-form-element__label  field-title">Student Policies </label>
+                                                        <div class="slds-checkbox">
+                                                            <input type="checkbox" name="options" id="checkbox-3" value="checkbox-3" class="inputchk"/>
+                                                            <label class="slds-checkbox__label" for="checkbox-3">
+                                                                <span class="slds-checkbox_faux"></span>
+                                                                <span class="slds-form-element__label">By checking thix box and enrolling into Aureus Academy you agree to all of our policies and accept that they may be subject to change. To see our full student policies, please <a href="#" style="text-decoration: underline !important;">click here</a></span>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                </div>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-1 slds-p-horizontal_medium">
+                                                <div class="slds-form-element">
+                                                    <label class="slds-form-element__label  field-title">Terms and Conditions</label>
+                                                    <div class="slds-form-element__control">
+                                                        <div class="terms-info"><h4 class="f-title">1.  Tuition fees and frequency of lessons:</h4>
+                                                            <p>Tuition fees are charged on a monthly basis and will be auto-deducted prior to commencement of the first lesson each month. Under normal circumstances, monthly tuition fees would cover your course description whether it be 4 x 30 min, 4 x45 min, or 4 x 60 min lessons per month. Lessons in the fifth week (29th, 30th, and 31st) of each month are not mandatory, however, should you wish to have a 5th monthly lesson (when applicable) it can be arranged as preferred with additional payment.</p>
+                                                            <h4 class="f-title">a.  Security Deposit </h4>
+                                                            <p>A one-month security deposit is required="" to secure your lesson time(s) and teacher. Aureus Academy requires one-month (4 lessons) advanced notice for termination of lessons. This security deposit will be refunded to you with one-month (4 lessons) notice or will serve in- lieu of any remaining unpaid lessons within the one-month (4 lesson) notice. Should lessons be terminated without a 30 day advanced notice, the security deposit will be forfeited.</p>
+                                                            
+                                                            <h4 class="f-title">2.  Missed lessons</h4>
+                                                            <p>For individual lessons there will be no make up for any cancellation of lessons by the student unless given sufficient notice (a minimum of 24 hours) and supporting documents, such as a Medical Certificate. The lesson will be made up at the discretion of management and availability of the teacher. Should the instructor need to cancel a lesson, it will be replaced. This replacement will be re-scheduled accordingly to accommodate the time schedule of both parties.</p>
+                                                            <p>a.  All make up lessons must be completed within the 30-day notice of withdrawl, otherwise, they are forfeited at the end of the notice.</p>
+                                                            
+                                                            <h4 class="f-title">3.  Student Absence Policy</h4>
+                                                            <p>Tuition fees will be due as per normal, regardless of scheduling changes or student absence. For extended periods of absence and advanced scheduling changes, Aureus Academy will arrange make up lessons either before or after the period of absence. All efforts will be made to ensure that the student receives their entitled makeup lessons with their respective teacher. Compliance with our Student Absence policy allows the student to guarantee their time slot, and their respective teacher during periods of extended absence.</p>
+                                                            
+                                                            <h4 class="f-title">4.  Public Holidays and Annual Leave</h4>
+                                                            <p>There will be lessons conducted on the following public holidays (Good Friday, Vasek Day, Hari Raya Puasa, Hari Raya Haji, and Deepavali). If the lesson falls on a public holiday that we are closed, it will be deducted from the lesson fees or credited, if billed, to the following month.</p>
+                                                            
+                                                            <h4 class="f-title">5.  Punctuality</h4>
+                                                            <p>Students must make the effort to come on time for their lessons. There will not be any make up for any time lost. Strict punctuality is also expected of the instructor, however, should the instructor be late time will be made up accordingly.</p>
+                                                            
+                                                            <h4 class="f-title">6.  Termination</h4>
+                                                            <p>Aureus Academy reserves the right to dismiss any student due to frequent absences, disciplinary reasons, overdue tuition payments or parental non-compliance with policies and procedures listed here. Informing an instructor of intent to withdraw, or not attending classes, does not constitute withdrawal from lessons. Should a student wish to terminate his or her lessons, Aureus Academy must be given 30-day notice via email to admin@aureusacademy.com or the deposit and make up lessons are forfeited.</p>
+                                                            
+                                                            <h4 class="f-title">7.  Personal Property</h4>
+                                                            <p>Aureus Academy does not assume any responsibility for personal property (including, but not limited to clothing, cameras, cell phones, purses, wallets, vehicles, etc.) lost, damaged or left unattended on school premises and in common areas. Should any of Aureus Academy’s materials or goods be damaged by the student, the student/family is responsible for full replacement. If replacement is not made, then the remaining lessons for the month and deposit are forfeited.</p>
+                                                            
+                                                            <h4 class="f-title">8.  Refund</h4>
+                                                            <p>Aureus Academy has a strict no refund policy. Should you pay for the lessons and terminate within the same month, you are entitled to the remaining lessons but there will not be any refund.</p>
+                                                            
+                                                            <h4 class="f-title">9.  Official Matters</h4>
+                                                            <p>All official matters, regarding questions, comments, or concerns are to be communicated directly with the Administrative Office. Should there be any issues, it is best to communicate them to admin@aureusacademy.com or +65 6235 6488. We appreciate, and even welcome parental input, as it allows us to serve all of our families better</p>
+                                                            
+                                                            
+                                                            <h4 class="f-title">10. Liability</h4>
+                                                            <p>By signing this contract, the signee and all associated parties waives any responsibility for illness, personal injury, or death anywhere in the premises of Aureus Group Pte. Ltd. facilities. Aureus Group Pte. Ltd. any associated parties are not responsible for any of the above mentioned nor damage of personal goods.</p>
+                                                            
+                                                            <h4 class="f-title">11. Personal Data</h4>
+                                                            <p>By signing this document, you hereby agree that Aureus Group Pte. Ltd. (or Aureus Academy) may collect, obtain, store and process your personal data that you provide in this form for the purpose of considering your feedback as described in this Form and/or for receiving updates, news, promotional and marketing mails or materials from Aureus Group Pte. Ltd/Aureus Academy.</p>
+                                                            
+                                                            <p>You hereby give your consent to the Aureus Group Pte. Ltd. and/or the Aureus Academy to:</p>
+                                                            <p>i.  Store and process your Personal Data;</p>
+                                                            <p>ii. Use provided Personal Data for the purposes of marketing, promotion, and updates.</p>
+                                                            
+                                                            <p>In addition, your personal data may be transferred to any company within the Aureus Group Pte. Ltd. For the purpose of updating or correcting such data, you may at any time apply to the Aureus Group Pte. Ltd. to have access to your personal data which are stored by the company.</p>
+                                                            
+                                                            <p>For the avoidance of doubt, Personal Data includes all data defined within the Personal Data Protection Act (2012) including all data you have disclosed to the Company in this Form.</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-1 slds-p-horizontal_medium">
+                                                <div class="slds-form-element">
+                                                    <label class="slds-form-element__label  field-title">Signature</label>
+                                                    <div class="slds-form-element__control">
+                                                        <div id="signature-pad" class="m-signature-pad" >
+                                                            <div class="m-signature-pad--body"> 
+                                                                <canvas></canvas>
+                                                            </div> 
+                                                            <div class="m-signature-pad--footer">
+                                                                <div class="description">Sign above</div>
+                                                                <button type="button" class="button clear" data-action="clear">Clear</button>
+                                                             </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!--<div class="slds-col slds-size_1-of-1 slds-p-horizontal_medium">
+                                                <button class="slds-button custom-btn"  onclick="completeEnr({!totAmt*100}); return false;" >Complete Enrollment</button>
+                                            </div>-->
+                                        </div>
+                                    </div>
+                                    
+                                     <!-- Stripe Form Start     --->
+                                    <form method="post" id="payment-form">
+                                        <div class="slds-p-around_x-small slds-col slds-size_1-of-1 slds-p-horizontal_medium"  style="background-color: #f2f2f2;">
+                                            <p><b>Card Detail</b></p>
+                                            <div id="card-element">
+                                            </div>
+                                            <div id="card-errors" role="alert"></div>
+                                        </div>
+                                        
+                                        <div class="footer slds-p-around_medium slds-float_right" >
+                                            <button  class="slds-button slds-button_neutral custom-btn" >
+                                                Pay Now
+                                                <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
+                                                    <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
+                                                        <use fill="White" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#chevronright')}" />
+                                                    </svg>
+                                                </span>
+                                            </button>
+                                        </div>
+                                    </form>   
+                                    <!-- Stripe Form End     --->   
+                                    
+                                    <script>
+                                    /* var handler = StripeCheckout.configure({
+                                            key: 'pk_test_VpHaPC4hNcQ5h0l3wB3Y90ws',
+                                            image: 'https://aureusacademy--dev--c.documentforce.com/servlet/servlet.ImageServer?id=0150k000000L12L&oid=00D0k000000Dsbn',
+                                            locale: 'auto',
+                                            'currency': 'sgd',
+                                            token: function(token) {
+                                                completeEnrolment(signaturePad.toDataURL(), token.id);
+                                                return false;
+                                            }
+                                        });
+                                        
+                                        // Close Checkout on page navigation:
+                                        window.addEventListener('popstate', function() {
+                                            handler.close();
+                                        });*/
+                                    
+                                        var stripe = Stripe('{!apiKey}');
+                                    
+                                        var elements = stripe.elements();
+                                        var style = {
+                                          base: {
+                                                color: '#32325d',
+                                                fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                                                fontSmoothing: 'antialiased',
+                                                fontSize: '16px',
+                                                '::placeholder': {
+                                                  color: '#aab7c4'
+                                                }
+                                            },
+                                            invalid: {
+                                                color: '#fa755a',
+                                                iconColor: '#fa755a'
+                                            }
+                                        };
+                                        var card = elements.create('card', {style: style,hidePostalCode:true});
+                                        card.mount('#card-element');
+                                        card.addEventListener('change', function(event) {
+                                            var displayError = document.getElementById('card-errors');
+                                          if (event.error) {
+                                              console.log(event.error);
+                                              displayError.textContent = event.error.message;
+                                          } else {
+                                              displayError.textContent = '';
+                                          }
+                                        });
+                                        
+                                        // Handle form submission.
+                                        var form = document.getElementById('payment-form');
+                                        form.addEventListener('submit', function(event) {
+                                            event.preventDefault();
+                                            
+                                            stripe.createToken(card).then(function(result) {
+                                                console.log('result token ',result);
+                                               
+                                                if (result.error) {
+                                                    var errorElement = document.getElementById('card-errors');
+                                                    errorElement.textContent = result.error.message;
+                                                } else {
+                                                    //document.getElementById('pg:spinner.start').style.display = 'block';
+                                                    stripeTokenHandler(result.token);
+                                                }
+                                            });
+                                          
+                                        });
+                                        function stripeTokenHandler(token){
+                                            var form = document.getElementById('payment-form');
+                                            var hiddenInput = document.createElement('input');
+                                            hiddenInput.setAttribute('type', 'hidden');
+                                            hiddenInput.setAttribute('name', 'stripeToken');
+                                            hiddenInput.setAttribute('value', token.id);
+                                            form.appendChild(hiddenInput);
+                                            console.log(token.card.id); 
+                                            
+                                            var checkErr = checkErrorOnSummaryPage();
+                                           
+                                            if(!checkErr){
+                                                completeEnrolment(signaturePad.toDataURL(), token.id);
+                                            }
+                                              
+                                        }
+                                        
+                                        function checkErrorOnSummaryPage(){
+                                            var isErr = false;
+                                            
+                                            if (signaturePad.isEmpty()) {
+                                                alert("Please provide signature first.");
+                                                isErr = true;
+                                            } else {                                            
+                                                $('.inputchk').each(function(){
+                                                    
+                                                    if(!$(this).prop('checked')){
+                                                        $(this).parent().parent().parent().addClass('slds-has-error');
+                                                        $(this).parent().parent().next().removeClass('slds-hide');
+                                                        isErr = true;        
+                                                    }else{
+                                                        $(this).parent().parent().parent().removeClass('slds-has-error');
+                                                        $(this).parent().parent().next().addClass('slds-hide');
+                                                    }
+                                                });
+                                            }
+                                            return isErr;
+                                        }
+                                    </script>
+                                    
+                                    <script>
+                                        //----------------------Signature script
+                                        var wrapper = document.getElementById("signature-pad"),
+                                            clearButton = wrapper.querySelector("[data-action=clear]"),
+                                            saveButton = wrapper.querySelector("[data-action=completeEnrl]"),
+                                            canvas = wrapper.querySelector("canvas"),
+                                            signaturePad;
+                                        
+                                        function resizeCanvas() {
+                                            // When zoomed out to less than 100%, for some very strange reason,
+                                            // some browsers report devicePixelRatio as less than 1
+                                            // and only part of the canvas is cleared then.
+                                            var ratio =  Math.max(window.devicePixelRatio || 1, 1);
+                                             canvas.width = canvas.offsetWidth * ratio;
+                                            canvas.height = canvas.offsetHeight * ratio;
+                                            //canvas.width = 615;
+                                            //canvas.height = 300;
+                                            canvas.getContext("2d").scale(ratio, ratio);
+                                        }
+                                        
+                                        window.onresize = resizeCanvas;
+                                        resizeCanvas();
+                                        
+                                        signaturePad = new SignaturePad(canvas);
+                                        
+                                        clearButton.addEventListener("click", function (event) {
+                                            signaturePad.clear();
+                                        });
+                                        
+                                        // saveButton.addEventListener("click", function (event) {
+                                        function completeEnr(amt){
+                                            if (signaturePad.isEmpty()) {
+                                                alert("Please provide signature first.");
+                                            } else {
+                                                //window.open(signaturePad.toDataURL());
+                                                //save(signaturePad.toDataURL());
+                                                //return false;
+                                                $('.inputchk').each(function(){
+                                                    
+                                                    if(!$(this).prop('checked')){
+                                                        $(this).parent().parent().parent().addClass('slds-has-error');
+                                                        $(this).parent().parent().next().removeClass('slds-hide');                                                                    
+                                                    }else{
+                                                        $(this).parent().parent().parent().removeClass('slds-has-error');
+                                                        $(this).parent().parent().next().addClass('slds-hide');
+                                                        
+                                                        handler.open({
+                                                            name: 'Aureus Academy',
+                                                            description: 'Studio Rental',
+                                                            amount: amt
+                                                        });
+                                                        //completeEnrolment(signaturePad.toDataURL());
+                                                        return false;
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    
+                                    </script>
+                                    
+                               <!-- </fieldset>-->
+                                
+                            </div>
+                        </div>
+                    </div>
+                    <!-------  First block  End ------------------->
+                    
+                </div>
+            </div>
+        </div>
+        
+    </body>
+    
+    <style>
+        .dateFormat{
+        display: none;
+        }
+        body{
+        background-image: url("{!$Resource.music}") !important;
+        background-size:100% 100% !important;
+        background-repeat:no-repeat !important;
+        background-position:left !important;
+        background-color: #f3613c !important;
+        
+        }
+        .main-content {
+        min-height: 100vh;
+        background-image:none !important;
+        background-size: contain !important;
+        background-repeat: no-repeat !important;
+        background-color: transparent !important;
+        }
+        .container {
+        max-width:650px;
+        }
+        span.main-title {
+        color: #200a28;
+        font-size: 24px;
+        border-radius: 0;
+        font-weight: bold;
+        margin-bottom: 10px;
+        display: block;
+        line-height: 30px;
+        padding-bottom:10px;
+        text-align:center;
+        }
+        .content-box {
+        margin: 50px 0 ;
+        width: 90%;
+        max-width: 700px;
+        background: rgba(255, 255, 255, 1);
+        border-radius: 10px;
+        }
+        .locations-list {
+        text-align:left;
+        }
+        form legend {
+        font-size: 16px !important;
+        }
+        .header {
+        background: #fff;
+        border-radius: 10px 10px 0 0px;
+        padding: 10px 10px 0;
+        text-align: center;
+        }
+        form {
+        padding: 0 10px;
+        }
+        .field-title {
+        font-size: 20px !important;
+        font-weight: bold;
+        }
+        .info-box {
+        border: 1px solid #eee;
+        color: #333;
+        font-size: 13px;
+        padding: 10px 10px !important;
+        border-radius: 5px;
+        margin: 10px 0;
+        background: #f7f7f7;
+        }
+        .content-body span.slds-form-element__label {
+        display: block;
+        font-size: 14px !important;
+        }
+        
+        .content-body span.slds-radio {
+        margin: 10px 0;
+        }
+        form .custom-btn {
+        padding: 5px 10px 3px !important;
+        color: #fff !important;
+        background: #f79c1a !important;
+        font-size: 16px !important;
+        text-transform: uppercase;
+        line-height: 20px !important;
+        margin: 15px 0 20px;
+        float:right;
+        }
+        .slds-form-element {
+        margin-bottom: 5px;
+        }
+        .user-img {
+        width: 80px;
+        border: 1px solid #eee;
+        border-radius: 50%;
+        height: 80px;
+        min-width:80px;
+        margin-right:10px;
+        overflow:hidden;
+        }
+        .teacher-details {
+        display: flex;
+        }
+        
+        .teacher-details div {
+        display: inline-block;
+        float: left;
+        }
+        .info-box h2 {
+        font-size: 16px;
+        font-weight: bold;
+        }
+        .custom-calendar .calc {
+        border: 1px solid rgb(221, 219, 218);
+        border-radius: .25rem;
+        padding: .25rem 0;
+        background: rgb(255, 255, 255);
+        box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.16);
+        width: 100%;
+        }
+        .custom-btn.prev-btn {
+        float: none;
+        background: #fbbf0d !important;
+        float: left;
+        }
+        .f-title {
+        font-size: 14px !important;
+        }
+        .student-box {
+        border: 1px solid #f79c1a;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        background: #fed217;
+        border-radius: 5px;
+        position: relative;
+        margin: 0 0 20px;
+        }
+        @font-face {
+        font-family: "Font Awesome 5 Pro";
+        src: url(https://use.fontawesome.com/releases/v5.5.0/css/all.css);
+        }
+        .edit-del {
+        position: absolute;
+        right: 15px;
+        top: 15px;
+        }
+        .edit-del i {
+        padding: 5px;
+        }
+        .edit-del a {
+        margin: 0 5px;
+        display: inline-block;
+        color: #4d4d4d;
+        font-size: 16px;
+        }
+        .content-body {
+        overflow-y: auto;
+        }
+        fieldset{
+        overflow-y: auto;
+        }
+        .terms-info p {
+        margin-bottom: 10px;
+        }
+        
+        .terms-info h4.f-title {
+        font-weight: bold;
+        font-size: 14px !important;
+        }
+        .terms-info {
+        border: 15px solid #f2f2f2;
+        background: #f2f2f2;
+        height: 145px;
+        overflow-y: scroll;
+        outline: 1px solid #eee;
+        }
+        
+        .field-title + .student-box .del-btn {
+        display: none;
+        }
+        input.slds-input {
+        }
+        
+        input.slds-input,select {
+        border-color: #f79c1a !important;
+        }
+        
+        .content-box {
+        box-shadow: 1px 2px 10px #f79c1a;
+        }
+        .content-body{
+        overflow-x:hidden;
+        }
+        .add-more button {
+        background: #f79c1a;
+        border: 1px solid #f79c1a;
+        padding: 5px 20px 5px 20px;
+        float: right;
+        color: #fff;
+        text-transform: uppercase;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 5px;
+        margin:20px 0 10px;
+        }
+        .add-more {
+        float: left;
+        }
+        .add-more button  i {
+        position: relative;
+        margin-left: 10px;
+        }
+        .student-list th, .student-list td {
+        width: 20% !important;
+        white-space: unset !important;
+        padding: 10px 5px!important;
+        text-transform: none !important;
+        letter-spacing: 0.2px !important;
+        }
+        .edit-del button {
+        background: transparent;
+        border: none;
+        color: #4d4d4d;
+        font-size: 16px;
+        }
+        .custom-calendar td {
+        padding: 0 !important;
+        }
+        .billig-info {
+        background: #f2f2f2;
+        float: left;
+        width: 100%;
+        padding: 10px 0;
+        font-size: 14px;
+        margin: 0 0 10px;
+        }
+        .billig-info li {
+        margin:0;
+        }
+        .billig-info li > div {
+        padding-top: 5px;
+        padding-bottom: 5px;
+        line-height: 26px;
+        display: block;
+        border-bottom: 1px solid #ccc;
+        margin-left:0;
+        width:100%;
+        }
+        
+        .billig-info:last-child {
+        margin-bottom: 0;
+        }
+        
+        .billig-info li strong {
+        /*width: 120px;
+        display: inline-block;*/
+        width:100%;
+        display:block; 
+        }
+        .after-noon {
+        padding-bottom: 50px;
+        }
+        
+        button.save-btn {
+        position: absolute !important;
+        bottom: 0 !important;
+        right: 1rem;
+        }
+        .more-lesson {
+        width: 100%;
+        }
+        .available i {
+        display: inline-block;
+        background: #eee;
+        height: 100%;
+        float: left;
+        width: 20px;
+        margin: 0 2px;
+        }
+        .available {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        bottom: 0px;
+        height: 5px;
+        text-align: center;
+        justify-content: center;
+        display: flex;
+        }
+        
+        form .custom-btn.more-lesson {
+        margin-bottom: 10px;
+        }
+        .another-box {
+        background: rgba(255, 255, 255, 0.5);
+        width: calc(100% - 30px);
+        margin: 0 15px 15px;
+        padding: 10px 0 20px;
+        }
+        .time-list span.slds-button.slds-radio_button {
+        width: 100%;
+        margin-bottom: 5px;
+        border: 1px solid #eee;
+        }
+        
+        .time-list label.slds-radio_button__label {
+        width: 100%;
+        text-align: center;
+        }
+        
+        .time-list {
+        background: #f7f7f7;
+        padding: 15px 15px 5px;
+        border: 1px solid #eee;
+        width: calc(100% - 15px);
+        margin: 0 auto 10px;
+        }
+        
+        .afternoon .time-list {
+        float: right;
+        }
+        
+        span.slds-radio label {
+        padding: 10px;
+        border: 1px solid #eee;
+        background: #f7f7f7;
+        border-radius: 5px;
+        display: block;
+        }
+        
+        span.slds-radio input:checked + label {
+        background: #1b5297;
+        }
+        
+        span.slds-radio input:checked + label span.slds-form-element__label {
+        color: #fff;
+        }
+        .slds-scope .slds-datepicker td {
+        border: 1px solid #eee;
+        }
+        td.slds-is-today {
+        background: #ecebea;
+        }
+        .date-list {
+        padding: 0 10px !important;
+        }
+        
+        .date-list label {
+        padding: 0 5px;
+        }
+        i.morning-availablity, i.afternoon-availablity{
+        background:#61c461
+        }
+        .content-body > div > fieldset {
+        
+        overflow-y: auto;
+        overflow-x: hidden;
+        }
+        .calc > div fieldset {
+        overflow: hidden;
+        }
+        .slds-scope .slds-datepicker th {
+        padding: 0;
+        }
+        
+        .popupBackground{ 
+        background-color: lightgrey;
+        opacity: 0.80;
+        
+        position:fixed;
+        padding:0;
+        margin:0;
+        
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        z-index: 9998;
+        border-radius: 5px; 
+        }
+        
+        /*  Date picker css   */
+        .ui-datepicker {
+        width: 17em;
+        padding: 0;
+        display: none;
+        background:#846733;  
+        }
+        .ui-datepicker .ui-datepicker-title {
+        margin: 0;
+        line-height: 36px;
+        text-align: center;
+        }
+        .ui-datepicker table {
+        background:#fff;    
+        }
+        .ui-datepicker td {
+        padding: 0px;
+        border: 1px solid #eee;
+        font-size: .75rem;
+        position: relative;
+        width: 2rem;
+        min-height: 2rem;
+        line-height: 2.5rem;
+        }
+        .ui-datepicker td span,
+        .ui-datepicker td a {
+        display: block;
+        padding: 0em;
+        text-align: center;
+        text-decoration: none;
+        }
+        #datepicker,
+        .ui-datepicker,
+        .ui-datepicker-header,
+        .ui-datepicker-calendar {
+        width: 100%;
+        }
+        .loc-maps span {
+        width: 100%;
+        }
+        .ui-datepicker td span, .ui-datepicker td a {
+        
+        background: #fff !important;
+        border:2px solid #fff !important;
+        }
+        .ui-state-highlight, .ui-widget-content .ui-state-highlight, .ui-widget-header .ui-state-highlight {
+        background: rgb(236, 235, 234) !important;
+        border-color: rgb(236, 235, 234) !important;
+        border-width: 2px !important;
+        border-style: solid !important
+        }
+        .ui-datepicker table{
+        margin:0 !important;
+        }
+        .ui-widget.ui-widget-content {
+        border: none;
+        }
+        
+        table.ui-datepicker-calendar thead {
+        border: 1px solid #eee;
+        }
+        .ui-datepicker .ui-datepicker-header{
+        border-radius:0;
+        }
+        .ui-datepicker td a.ui-state-active {
+        background: #fff!important;
+        border: 2px solid #f6911d !important;
+        color: #f6911d !important;
+        }
+        .ui-datepicker td a:before, .ui-datepicker td span:before {
+        content: "";
+        position: absolute;
+        max-width: 12px;
+        height: 5px;
+        background: #eee;
+        bottom: 5px;
+        left: 4px;
+        width: 100%;
+        }
+        .ui-datepicker td a:after, .ui-datepicker td span:after {
+        content: "";
+        position: absolute;
+        max-width: 12px;
+        height: 5px;
+        background: #eee;
+        bottom: 5px;
+        right: 4px;
+        width: 100%;
+        }
+        .ui-datepicker .ui-datepicker-prev span, .ui-datepicker .ui-datepicker-next span {
+        display: block;
+        position: absolute;
+        left: 50%;
+        margin-left: -8px;
+        top: 15%;
+        margin-top: 0;
+        transform: translateY(50%);
+        }
+        
+        .day-availability--morning .ui-state-default:before, .ui-widget-content .day-availability--morning .ui-state-default:before, .ui-widget-header .day-availability--morning .ui-state-default:before {
+        background: #61c461;
+        }
+        .day-availability--afternoon .ui-state-default:after, .ui-widget-content .day-availability--afternoon .ui-state-default:after, .ui-widget-header .day-availability--afternoon .ui-state-default:after {
+        background: #61c461;
+        } 
+        .ui-datepicker .ui-datepicker-next, .ui-datepicker .ui-datepicker-prev{
+        height: 100%;
+        }   
+        .time-list:empty {
+        display: none;
+        }
+        div#signature-pad {
+        position: relative;
+        top: 0;
+        margin: auto;
+        left: 0;
+        width: 100%;
+        margin-top: 10px;
+        box-shadow: none;
+        background: #f2f2f2;
+        border-radius: 0;
+        }
+        .m-signature-pad--body canvas {
+        border: 1px solid #ccc;
+        background: #fff;
+        }
+        .dark-bg {
+        background: #f2f2f2;
+        width: 100%;
+        }
+        .m-signature-pad--footer .button.clear {
+        background: #f79c1a;
+        border: 0 !important;
+        padding: 5px 15px;
+        color: #fff;
+        text-transform: uppercase;
+        left: auto;
+        right: 0; 
+        } 
+        .grand-total-section li {
+        margin-left:1rem;
+        margin-right:1rem;
+        width:calc(50% - 2rem);
+        }
+        .slds-checkbox__label span.slds-form-element__label {
+        display: inherit;
+        }
+        .slds-table td, .slds-table th {
+        padding: .25rem .5rem !important;
+        }
+        table tr th {
+            border-top: 1px solid #f79c1a !important;
+            border-bottom: 1px solid #f79c1a !important;
+        }
+        
+         #card-errors{
+            color:red;
+        }
+        .StripeElement {
+            box-sizing: border-box;
+            
+            height: 40px;
+            
+            padding: 10px 12px;
+            
+            border: 1px solid transparent;
+            border-radius: 4px;
+            background-color: white;
+            
+            box-shadow: 0 1px 3px 0 #e6ebf1;
+            -webkit-transition: box-shadow 150ms ease;
+            transition: box-shadow 150ms ease;
+        }
+        
+        .StripeElement--focus {
+            box-shadow: 0 1px 3px 0 #cfd7df;
+        }
+        
+        .StripeElement--invalid {
+            border-color: #fa755a;
+        }
+        
+        .StripeElement--webkit-autofill {
+            background-color: #fefde5 !important;
+        }
+    </style>
+    
+</apex:page>

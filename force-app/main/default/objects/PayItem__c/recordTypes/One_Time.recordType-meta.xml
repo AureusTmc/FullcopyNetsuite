@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RecordType xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>One_Time</fullName>
+    <active>true</active>
+    <label>One Time</label>
+    <picklistValues>
+        <picklist>CPF__c</picklist>
+        <values>
+            <fullName>AW</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Non-CPF</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>OW</fullName>
+            <default>false</default>
+        </values>
+    </picklistValues>
+    <picklistValues>
+        <picklist>Prorate__c</picklist>
+        <values>
+            <fullName>No</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Yes</fullName>
+            <default>false</default>
+        </values>
+    </picklistValues>
+    <picklistValues>
+        <picklist>Type__c</picklist>
+        <values>
+            <fullName>Amount</fullName>
+            <default>true</default>
+        </values>
+        <values>
+            <fullName>Days</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Hours</fullName>
+            <default>false</default>
+        </values>
+    </picklistValues>
+</RecordType>

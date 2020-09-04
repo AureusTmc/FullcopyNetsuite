@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Queue xmlns="http://soap.sforce.com/2006/04/metadata">
+    <doesSendEmailToMembers>false</doesSendEmailToMembers>
+    <email>kinex@aureusacademy.com</email>
+    <name>Aureus Kinex</name>
+    <queueMembers>
+        <users>
+            <user>ainee@aureusacademy.com</user>
+            <user>angela.cortez@aureusacademy.com</user>
+            <user>cheryl.lai@aureusacademy.com</user>
+            <user>chiara@aureusacademy.com</user>
+            <user>chi.cherng@aureusacademy.com</user>
+            <user>dahlia.nazir@aureusacademy.com</user>
+            <user>ivy@aureusacademy.com</user>
+            <user>kentngau@aureusacademy.com</user>
+            <user>kristy.chan@aureusacademy.com</user>
+        </users>
+    </queueMembers>
+    <queueSobject>
+        <sobjectType>Case</sobjectType>
+    </queueSobject>
+</Queue>

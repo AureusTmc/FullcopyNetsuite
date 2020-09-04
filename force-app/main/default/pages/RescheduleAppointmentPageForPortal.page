@@ -1,0 +1,1426 @@
+<apex:page id="pg" showHeader="false" standardStylesheets="true" sidebar="false" docType="html-5.0" Controller="RescheduleAppointmentForPortalCntrl" cache="false" applyBodyTag="False" applyHtmlTag="False">    
+    <head>
+        <meta http-equiv='cache-control' content='no-cache' />
+        <meta http-equiv='expires' content='0' />
+        <meta http-equiv='pragma' content='no-cache' />
+        <title>Aureus Academy – Reschedule Lesson</title>
+        <apex:slds />
+        <!--<apex:stylesheet value="{!URLFOR($Resource.fontawesome,'/font-awesome/css/font-awesome.css')}"/>-->
+        <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}"/>
+        <link href="{!URLFOR($Resource.iconcss,'iconcss/material-icons.css')}" rel="stylesheet"/>
+        <!-- Updated by Rajesh, 31st July 2019: To Solve increase field length when click in inputfield in mobile devices-->
+        <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0"/>-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <apex:stylesheet value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.css')}"/>
+        <!--<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous" />-->
+        <!--<script src="https://kit.fontawesome.com/8555687961.js"></script>-->
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery/jquery.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.js')}"/>        
+        <script>        
+            $(document).ready(function() {                
+                if('{!isError}' == 'false'){
+                    //console.log('ssss');
+                    loadCalendarOnTchrSelect();                    
+                }
+            //$('.secondCmpcls').css('height',$('.secondCmpcls').height()+'px');
+            });         
+            function scrolltoptothepage(){
+                window.parent.postMessage("", "*");
+            }
+            function  saveAppointment(){
+                $('.confirmBox').css('display','none');                
+                var slcdTSlot = "";
+                //var selectlistselectedslot = "";
+                //console.log($('.time-Slot').is(':visible'));
+                // if($('.time-Slot').is(':visible')){
+                if($('.morning').is(':visible')){
+                    slcdTSlot = $("input[name='tSlotOpt']:checked").val();
+                }else{
+                    slcdTSlot = $('.alltimeslotlist').val();
+                }
+                //console.log('selectlistselectedslot'+selectlistselectedslot);
+                //slcdTSlot = '10:00';
+                console.log('slcdTSlot'+slcdTSlot);
+                if(!slcdTSlot){
+                    $('.secondCmpErrDiv').removeClass('slds-hide');
+                    $('.contentDivSecond').html('Please select a time slot.');
+                    return;
+                }else{
+                    $('.secondCmpErrDiv').addClass('slds-hide');
+                }                
+                //$('.confirmBox').css('display','block');
+                //rescheduleBook(slcdTSlot);
+                
+                refSummary(slcdTSlot);
+                //$("#header-div-for-focus").focus();
+                //$(window).scrollTop($('#header-div-for-focus').offset().top);
+                //window.$("body").animate({scrollTop:0}, 'slow');
+                //scrollTopOfPage();
+            }    
+            
+            function onCompleteNext(){
+                document.getElementById('summCmpId').style.display = 'block';
+                //document.getElementById('summCmpId').style.height = $('.summCmpcls').height()+'px';
+                document.getElementById('secondCmpId').style.display = 'none';
+                document.getElementById('myfocusdiv').focus();
+                //$('#summCmpId').removeAttr('style');
+                //$('#summCmpId').css({'height':$('.summCmpcls').height()+'px','display':'block'});
+                scrollTopOfPage();
+                //$(window).scrollTop($('#header-div-for-focus').offset().top);
+                //window.$("body").animate({scrollTop:0}, 'slow');
+            }
+        
+            function saveChanges(){
+                var slcdTSlot = "";
+                console.log('value = '+$("input[name='tSlotOpt']:checked").val());
+                if(typeof $("input[name='tSlotOpt']:checked").val() !== "undefined"){                    
+                    slcdTSlot = $("input[name='tSlotOpt']:checked").val();
+                }else{
+                    console.log('a gaya');
+                    slcdTSlot = $('.alltimeslotlist').val();
+                }                
+                //slcdTSlot = '10:00';
+                console.log('time slot = '+slcdTSlot);
+                rescheduleBook(slcdTSlot);
+                scrolltoptothepage();
+            }
+            function refreshParentPage(flag){
+                if(flag==true){
+                    setTimeout(function(){
+                        //window.top.location.reload("https://aureus-sandbox.herokuapp.com/dashboard.php");
+                        //window.location.reload(true);
+                        window.top.location = "https://aureus-sandbox.herokuapp.com/dashboard.php";
+                    },5000)
+                }else{
+                    //window.top.location.reload("https://aureus-sandbox.herokuapp.com/dashboard.php");
+                    //window.location.reload(true);
+                    window.top.location = "https://aureus-sandbox.herokuapp.com/dashboard.php";
+                }
+            }
+                    
+        </script>        
+    </head>
+    <body class="slds-scope">
+        <input type="text" class="hiddeninput" style="position:absolute;top:-100px"/>
+        <apex:form id="frm" styleClass="slds-col">
+            
+            <apex:actionStatus id="spinner">
+                <apex:facet name="start"> 
+                    <apex:outputPanel id="backdrop" styleClass="popupBackground">
+                        <div role="status" class="slds-spinner slds-spinner_brand" style="transform: translate(-50%, -50%) rotate(0deg);"> 
+                            <img src="{!URLFOR($Resource.cardImages,'cardImages/aureus-loader.gif')}"/>
+                        </div>
+                    </apex:outputPanel>
+                </apex:facet>
+            </apex:actionStatus>
+            
+            <apex:outputPanel id="loadCalendarPanel">
+                <apex:outputPanel id="loadCalendarPanel1">
+                    <script>                                 
+                    var slot='';                    
+                    function loadCalendarOnTchrSelect(){ 
+                        var tSl = '{!slcdSlot}';                                            
+                        if(tSl){
+                            $("input[name='tSlotOpt'][value='"+tSl+"']").attr('checked', 'checked');
+                        }                        
+                        slot = {!tSlotStr};
+                        //console.log('{!tSlotStr}');
+                        $( "#datepicker" ).datepicker({
+                            inline: true,
+                            minDate:0,
+                            dateFormat: 'd/m/yy',
+                            beforeShowDay: highlightDays,
+                            defaultDate : '{!slcdDate}',
+                            onSelect: function(dateText, inst) {
+                                refreshSlotsTcr(dateText);
+                            }
+                        });                        
+                        var aslot = '{!tSlotMap.afternoonSlot}';
+                        var mslot = '{!tSlotMap.morningSlot}';
+                        console.log(Array.isArray(aslot));
+                        console.log(mslot.length);
+                        /*if((Array.isArray(aslot) && aslot.length) || (Array.isArray(mslot) && mslot.length)){
+                            $('.alltimeslotlist').prop('disabled',false);
+                        }else{
+                            $('.alltimeslotlist').prop('disabled',true);
+                        }*/
+                    }
+                    
+                    function highlightDays(date) {
+                        //alert('sdfsdf');
+                        var st = date.getDate()+'/'+(date.getMonth()+1)+'/'+date.getFullYear();
+                        
+                        if(slot[st]){
+                            var isMrgAvl = slot[st].isAvlMrgSlot;
+                            var isAfternoonAvl = slot[st].isAvlAfternoonSlot;  
+                            
+                            if(isMrgAvl && isAfternoonAvl){
+                                return [true, 'day-availability--morning day-availability--afternoon'];
+                            }else if(isMrgAvl){
+                                return [true, 'day-availability--morning'];
+                            }else if(isAfternoonAvl){
+                                return [true, 'day-availability--afternoon'];
+                            }
+                        }
+                        
+                        return [true, 'ui-datepicker-unselectable ui-state-disabled'];
+                    }
+                    /*function scrollTopOfPage(){
+                        $('.hiddeninput').focus();
+                    }*/
+                    </script>
+                    
+                </apex:outputPanel>
+            </apex:outputPanel>            
+            <apex:actionFunction name="getTimeSlot" action="{!fetchTimeSlot}"  reRender="refreshFrm,loadCalendarPanel,loadCalendarPanel1" oncomplete="loadCalendarOnTchrSelect();" status="spinner"/>
+            <apex:actionFunction name="refreshSlotsTcr" action="{!fetchTimeSlot}" reRender="refreshTimeSlot,refreshTimeSlot1,refreshTimeSlotForList" status="spinner">
+                <apex:param name="slcdDt" value="xy" assignTo="{!slcdDate}"/> 
+            </apex:actionFunction>
+            <apex:actionFunction name="refSummary" action="{!refreshSummary}" oncomplete="onCompleteNext();" reRender="SummaryScreenPanel" status="spinner">
+                <apex:param name="slcdSlot" value="xy" assignTo="{!slcdSlot}"/>
+            </apex:actionFunction>    
+            
+             <apex:actionFunction name="rescheduleBook" action="{!saveBooking}" reRender="completeFrm,loadCalendarPanel,loadCalendarPanel1,isSuccessRefresh" status="spinner">
+                 <apex:param name="slcdSlot" value="xy" assignTo="{!slcdSlot}"/> 
+            </apex:actionFunction>
+            
+            <apex:actionFunction name="getTeachersForSelectedLesson" action="{!getTeachersForSelectedLesson}" status="spinner" reRender="makeupRefresh,loadCalendarPanel,loadCalendarPanel1,refreshFrm" onComplete="loadCalendarOnTchrSelect();"/>
+             
+            <div class="main-content">
+                <div class="slds-grid--align-center">
+                    <div class="slds-col content-box">            
+                        <div class="header slds-col">
+                            <!--<div class="slds-col">
+                                <a href="#" class="logo">
+                                    <img src="https://aureusacademy.com/wp-content/uploads/2017/03/cropped-Aureus-Logo-Small.png"/>
+                                </a>
+                            </div>-->
+                            <div class="slds-col">
+                                <span class="main-title">Reschedule Lesson</span>
+                            </div>
+                        </div>                        
+                        <!--<div class="slds-grid">-->
+                        <apex:outputPanel id="isSuccessRefresh">
+                        <apex:outputPanel rendered="{!!isSuccess}">
+                            <div class="slds-col slds-p-around_small info-alert-div">
+                                <div class="slds-notify slds-notify_alert" role="alert" style="background-color:#3fa6fb;font-size:14px;font-weight:bold;font-style:normal;font-stretch:normal;">                                  
+                                  <h1>You are currently rescheduling {!stuName} {!instrumentName} Lesson on&nbsp;<apex:outputText value="{0, date,EE,  MMM dd yyyy}"><apex:param value="{!bookDate}"/></apex:outputText> {!bookTime}. Please select a new day and time from the options below.</h1>
+                                  <div class="slds-notify__close">
+                                    <button class="slds-button slds-button_icon slds-button_icon-small slds-button_icon-inverse" title="Close" onclick="$('.info-alert-div').addClass('slds-hide');return false;">
+                                      <svg class="slds-button__icon" aria-hidden="true">
+                                        <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#close')}"/>
+                                      </svg>
+                                      <span class="slds-assistive-text">Close</span>
+                                    </button>
+                                  </div>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        </apex:outputPanel>    
+                        <!--</div>-->
+                        <apex:outputPanel id="completeFrm">
+                            <apex:outputPanel rendered="{!isError}" >
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_1-of-1 slds-p-horizontal_medium" style="text-align: center;padding: 50px;">
+                                        <label class="slds-form-element__label field-title" for="form-element-help-01" style="font-size: 18px;">{!errorMsg}
+                                        </label>
+                                    </div>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel id="successMsg" rendered="{!isSuccess}" >
+                                 <div class="slds-col slds-p-around_small success-alert-div">
+                                    <div class="slds-notify slds-notify_alert" role="alert" style="background-color:#63CE63;font-size:14px;font-weight:bold;font-style:normal;font-stretch:normal;">                                  
+                                      <h1>Your Lesson has been Rescheduled!</h1>
+                                      <div class="slds-notify__close">
+                                        <button class="slds-button slds-button_icon slds-button_icon-small slds-button_icon-inverse" title="Close" onclick="$('.success-alert-div').addClass('slds-hide');return false;">
+                                          <svg class="slds-button__icon" aria-hidden="true">
+                                            <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#close')}"/>
+                                          </svg>
+                                          <span class="slds-assistive-text">Close</span>
+                                        </button>
+                                      </div>
+                                    </div>
+                                </div>                                 
+                            </apex:outputPanel>                            
+                            <div class="secondCmpcls" id="secondCmpId">
+                                <div class="content-body slds-col">
+                                    <div class="slds-form-element">                                        
+                                        <div class="slds-col slds-p-around_small info-alert-div slds-hide secondCmpErrDiv">
+                                            <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error" role="alert">                                  
+                                              <h2 class="slds-text-heading_small contentDivSecond"></h2>
+                                              <div class="slds-notify__close">
+                                                <button class="slds-button slds-button_icon slds-button_icon-inverse" onclick=" $('.secondCmpErrDiv').addClass('slds-hide');return false;" title="Close">
+                                                    X
+                                                    <span class="slds-assistive-text">Close</span>
+                                                </button>
+                                              </div>
+                                            </div>
+                                        </div>                                        
+                                        <!-- Lesson plan -->
+                                        <apex:outputPanel id="refreshFrm" rendered="{!!OR(isError,isSuccess)}">
+                                            <div class="slds-grid slds-wrap"> 
+                                                <div class="slds-col slds-medium-size_4-of-12 slds-small-size--12-of-12 slds-p-horizontal_medium border-right">                                                                             
+                                                    <apex:outputPanel rendered="{!!isMakeupType}">
+                                                        <div class="slds-grid slds-wrap slds-size_1-of-1"> 
+                                                            <div class="slds-col slds-size_12-of-12">                                    
+                                                                <p class="slds-page-header__title" style="padding-top:10px;">
+                                                                    Current Lesson Details
+                                                                </p>                                    
+                                                                <hr/>
+                                                            </div>   
+                                                            <div class="slds-col slds-size_1-of-12">  
+                                                                <i class="material-icons icon-font-size">
+                                                                    account_circle
+                                                                </i>
+                                                            </div>                                                                 
+                                                            <div class="slds-col slds-size_11-of-12 slds-small-size_11-of-12">
+                                                                <div class="slds-form-element__control">
+                                                                    <div class="slds-select_container">                                                                        
+                                                                        <apex:selectList styleClass="slds-select lessDetClass" multiselect="false" size="1" value="{!slcdTechr}" onchange="getTimeSlot();"> 
+                                                                            <apex:selectOptions value="{!Teachers}"/>
+                                                                        </apex:selectList>
+                                                                    </div>
+                                                                </div>                                    
+                                                            </div>  
+                                                            <div class="slds-col slds-size_12-of-12">
+                                                                <hr/>
+                                                            </div>
+                                                            <div class="slds-col slds-size_1-of-12">                                     
+                                                                <i class="material-icons icon-font-size">
+                                                                    music_note
+                                                                </i>
+                                                            </div>    
+                                                            <div class="slds-col slds-size_11-of-12 slds-small-size_11-of-12">
+                                                                <div class="slds-form-element__control">
+                                                                    <div class="slds-select_container">
+                                                                        <input type="text" class="slds-input input-readonly" value="{!instrumentName}" readonly="readonly"/>
+                                                                    </div>
+                                                                </div> 
+                                                            </div>
+                                                            <div class="slds-col slds-size_12-of-12">
+                                                                <hr/>                               
+                                                            </div>                                                                    
+                                                            <div class="slds-col slds-size_1-of-12">  
+                                                                <i class="material-icons icon-font-size">
+                                                                    location_on
+                                                                </i>
+                                                            </div>  
+                                                            <div class="slds-col slds-size_11-of-12 slds-small-size_11-of-12">
+                                                                <div class="slds-form-element__control">
+                                                                    <div class="slds-select_container">
+                                                                        <input type="text" class="slds-input input-readonly" value="{!slcdCenterName}" readonly="readonly"/>
+                                                                    </div>
+                                                                </div>  
+                                                            </div>  
+                                                            <div class="slds-col slds-size_12-of-12">
+                                                                <hr/>                               
+                                                            </div>                                                                   
+                                                        </div>
+                                                    </apex:outputPanel>
+                                                    <apex:outputPanel rendered="{!isMakeupType}" id="makeupRefresh">
+                                                        <div class="slds-grid slds-wrap slds-size_1-of-1"> 
+                                                            <div class="slds-col slds-size_12-of-12">                                    
+                                                                <p class="slds-page-header__title" style="padding-top:10px;">
+                                                                    Current Lesson Details
+                                                                </p>                                    
+                                                                <hr/>
+                                                            </div>   
+                                                            <div class="slds-col slds-size_1-of-12">                                     
+                                                                <i class="material-icons icon-font-size">
+                                                                    music_note
+                                                                </i> 
+                                                            </div>    
+                                                            <div class="slds-col slds-size_11-of-12 slds-small-size_11-of-12">
+                                                                <div class="slds-form-element__control">
+                                                                    <div class="slds-select_container">
+                                                                        <!--<input type="text" class="slds-input input-readonly" value="{!instrumentName}" readonly="readonly"/>-->
+                                                                        <apex:selectList styleClass="slds-select inputsel" multiselect="false" size="1" value="{!instrumentName}" onchange="getTeachersForSelectedLesson();"> 
+                                                                            <apex:selectOptions value="{!Lessons}"/>
+                                                                        </apex:selectList>
+                                                                    </div>
+                                                                </div> 
+                                                            </div>
+                                                            <div class="slds-col slds-size_12-of-12">
+                                                                <hr/>                               
+                                                            </div> 
+                                                            <div class="slds-col slds-size_1-of-12">  
+                                                                <i class="material-icons icon-font-size">
+                                                                    account_circle
+                                                                </i>                                   
+                                                            </div>     
+                                                            <div class="slds-col slds-size_11-of-12 slds-small-size_11-of-12">
+                                                                <div class="slds-form-element__control">
+                                                                    <div class="slds-select_container">
+                                                                        <apex:selectList styleClass="slds-select lessDetClass" multiselect="false" size="1" value="{!slcdTechr}" onchange="getTimeSlot();"> 
+                                                                            <apex:selectOptions value="{!Teachers}"/>
+                                                                        </apex:selectList>
+                                                                    </div>
+                                                                </div>                                    
+                                                            </div>  
+                                                            <div class="slds-col slds-size_12-of-12">
+                                                                <hr/>
+                                                            </div>                                                                                                                               
+                                                            <div class="slds-col slds-size_1-of-12">  
+                                                                <i class="material-icons icon-font-size">
+                                                                    location_on
+                                                                </i>
+                                                            </div>  
+                                                            <div class="slds-col slds-size_11-of-12 slds-small-size_11-of-12">
+                                                                <div class="slds-form-element__control">
+                                                                    <div class="slds-select_container">
+                                                                        <input type="text" class="slds-input input-readonly" value="{!slcdCenterName}" readonly="readonly"/>
+                                                                    </div>
+                                                                </div>  
+                                                            </div>  
+                                                            <div class="slds-col slds-size_12-of-12">
+                                                                <hr/>                               
+                                                            </div>                                                                  
+                                                        </div>
+                                                    </apex:outputPanel>
+                                                </div> 
+                                               
+                                                
+                                                <!-- Datepicker -->
+                                                <div class=" slds-col slds-size_1-of-1 slds-medium-size_8-of-12 slds-small-size--12-of-12 slds-p-horizontal_medium">
+                                                    <p class="slds-page-header__title slds-p-around_x-small">
+                                                        Select New Lesson Date &amp; Time
+                                                    </p>
+                                                    <hr style="margin-top:9px"/>
+                                                    <div class="slds-grid slds-wrap">
+                                                            <!--<div class="slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium remove-padding-left-right-mobile slds-grid slds-gutters">
+                                                                 <div class="slds-col slds-size_12-of-12 calander-div-padding">
+                                                                    <label class="slds-form-element__label field-title" for="form-element-help-01">Select New Lesson Date &amp; Time</label>
+                                                                    <apex:outputPanel id="datePickPanel">
+                                                                        <div id="datepicker" class=""></div>
+                                                                    </apex:outputPanel>       
+                                                                </div>
+                                                            </div> -->
+                                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-small-size--12-of-12">  
+                                                                <div id="datepicker" class="slds-p-top_small"></div>                                   
+                                                            </div>
+                                                            <!--<div class="slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium remove-padding-left-right-mobile slds-grid slds-gutters time-Slot"> -->
+                                                            <div class="slds-col slds-medium-size_6-of-12 slds-small-size--12-of-12">
+                                                               <div class="slds-grid slds-wrap time-Slot"> 
+                                                               <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 main-time-list morning"> 
+                                                                    <fieldset class="slds-form-element">                                                                
+                                                                        <label class="sslds-form-element__label field-title time-title" for="form-element-help-01">Morning</label>
+                                                                        <apex:outputPanel id="refreshTimeSlot">                                                                    
+                                                                            <apex:outputPanel rendered="{!IF(tSlotMap.morningSlot != null && tSlotMap.morningSlot.size > 0,true,false)}">
+                                                                            <div class="slds-form-element__control">
+                                                                                <div class="time-list">
+                                                                                    <apex:repeat value="{!tSlotMap.morningSlot}" var="ins">
+                                                                                        <span class="slds-button slds-radio_button">
+                                                                                            <input name="tSlotOpt" type="radio" id="{!ins}" value="{!ins}"/>
+                                                                                            <label class="slds-radio_button__label" for="{!ins}">
+                                                                                                <span class="slds-radio_faux">{!ins}</span>
+                                                                                            </label>
+                                                                                        </span>
+                                                                                    </apex:repeat>
+                                                                                </div>
+                                                                            </div>
+                                                                            </apex:outputPanel>    
+                                                                        </apex:outputPanel>    
+                                                                    </fieldset>  
+                                                                </div>
+                                                                <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 main-time-list afternoon"> 
+                                                                    <fieldset class="slds-form-element">
+                                                                        <div class="slds-form-element__control">
+                                                                            <label class="slds-form-element__label field-title time-title" for="form-element-help-01">Afternoon</label>
+                                                                            <apex:outputPanel id="refreshTimeSlot1">                                                                              
+                                                                            <apex:outputPanel rendered="{!IF(tSlotMap.afternoonSlot != null && tSlotMap.afternoonSlot.size > 0,true,false)}">    
+                                                                            <div class="time-list">
+                                                                                <apex:repeat value="{!tSlotMap.afternoonSlot}" var="ins">
+                                                                                    <span class="slds-button slds-radio_button">
+                                                                                        <input name="tSlotOpt" type="radio" id="{!ins}" value="{!ins}"/>
+                                                                                        <label class="slds-radio_button__label" for="{!ins}">
+                                                                                            <span class="slds-radio_faux">{!ins}</span>
+                                                                                        </label>
+                                                                                    </span>
+                                                                                </apex:repeat>                                           
+                                                                            </div>
+                                                                            </apex:outputPanel>    
+                                                                            </apex:outputPanel>    
+                                                                        </div>
+                                                                    </fieldset>
+                                                                </div>
+                                                                </div>
+                                                            </div>  
+                                                        </div>
+                                                        <div class="slds-grid slds-wrap slds-size_1-of-1 timeselectlist">
+                                                           <div class="slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium remove-padding-left-right-mobile">
+                                                                <!--<div class="slds-col slds-size_2-of-12"></div>select-list-for-mobile-->
+                                                                <div class="slds-col slds-size_12-of-12 slds-p-top_x-small select-list-for-mobile">
+                                                                    <b>Select a Time</b>
+                                                                    <apex:outputPanel id="refreshTimeSlotForList">
+                                                                    <div class="slds-form-element__control">
+                                                                        <div class="slds-select_container">
+                                                                            <apex:selectList styleClass="slds-select alltimeslotlist" multiselect="false" size="1"> 
+                                                                                <apex:selectOptions value="{!allslotslist}"/>
+                                                                            </apex:selectList>
+                                                                        </div>
+                                                                    </div>
+                                                                    </apex:outputPanel>    
+                                                                </div>    
+                                                           </div>
+                                                        </div> 
+                                                </div>
+                                                <div class=" slds-col slds-size_1-of-1 slds-float_right">
+                                                    <a onclick="saveAppointment();scrolltoptothepage();" class="slds-button custom-btn margin-mobile-next-button">Next</a>
+                                                </div>     
+                                            </div>
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="summCmpcls" id="summCmpId" style="display:none;"> 
+                                <apex:outputPanel id="SummaryScreenPanel"  rendered="{!!OR(isError,isSuccess)}">
+                                    <div class="slds-grid slds-wrap">
+                                        <!--<div class="slds-form-element">-->
+                                            <!--<div class="">-->
+                                                <div class="slds-col slds-size_1-of-1 slds-medium-size_8-of-12 slds-large-size_8-of-12 slds-p-horizontal_medium border-right" style="">
+                                                    <p class="slds-page-header__title slds-p-around_x-small mobile-font-size" style="font-weight:bold">
+                                                        {!stuName} - New Lesson Details
+                                                        <button class="slds-button slds-button_neutral status-button slds-float_right "><!--{!bookingStatus}-->Scheduled</button>                                                           
+                                                    </p>
+                                                    <hr style="margin: 1rem 0"/>
+                                                    <ul class="slds-grid slds-wrap">
+                                                        <!--<li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-left-mobile-none">
+                                                            <i class="fas fa-user-circle icon-font-size margin-from-right icon-vertical-align"></i> 
+                                                            <div class="margin-top"><b>Student Name</b>
+                                                                <div class="">{!stuName}</div>
+                                                            </div>
+                                                        </li>-->
+                                                        <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-right-mobile-none">
+                                                            <i class="material-icons icon-font-size margin-from-right icon-vertical-align">
+                                                                calendar_today
+                                                            </i>
+                                                            <p class="margin-top"><b>Date</b><br/>
+                                                                <apex:outputText value="{0, date,EE,  MMM dd yyyy}">
+                                                                    <apex:param value="{!slcdDateNew}" /> 
+                                                                </apex:outputText>
+                                                            </p>
+                                                        </li>
+                                                        <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-left-mobile-none">                                                            
+                                                            <i class="material-icons icon-font-size margin-from-right icon-vertical-align">
+                                                                access_time
+                                                            </i>                                                                            
+                                                            <p class="margin-top"><b>Time</b><br/>{!slcdTimeNew}</p>
+                                                        </li>
+                                                        <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-right-mobile-none">
+                                                            <!--<i class="fas fa-user icon-font-size margin-from-right icon-vertical-align"></i>                                                                            
+                                                            <div class="margin-top"><b>Teacher</b>
+                                                                <div class="">
+                                                                    {!slcdTechrNameNew}
+                                                                </div>
+                                                            </div>-->
+                                                            <i class="material-icons icon-font-size margin-from-right icon-vertical-align">
+                                                                music_note
+                                                            </i>                                                                            
+                                                            <div class="margin-top"><b>Lesson Type</b>
+                                                                <div class="">
+                                                                    {!instrumentName}
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                        <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-left-mobile-none">
+                                                            <!--<i class="fa fa-clock-o icon-font-size margin-from-right icon-vertical-align" aria-hidden="true"></i>                                                                            
+                                                            <p class="margin-top"><b>Time</b><br/>{!slcdTimeNew}</p>-->
+                                                            <i class="material-icons icon-font-size margin-from-right icon-vertical-align">
+                                                                timelapse
+                                                            </i>                                                                            
+                                                            <p class="margin-top"><b>Duration</b><br/>{!durationInMin} min</p>
+                                                        </li>
+                                                        <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-right-mobile-none">
+                                                            <!--<i class="fa fa-clock-o icon-font-size margin-from-right icon-vertical-align" aria-hidden="true"></i>                                                                            
+                                                            <p class="margin-top"><b>Duration</b><br/>{!durationInMin} min</p>-->
+                                                            <i class="material-icons icon-font-size margin-from-right icon-vertical-align">
+                                                                person
+                                                            </i>                                                                            
+                                                            <div class="margin-top"><b>Teacher</b>
+                                                                <div class="">
+                                                                    {!slcdTechrNameNew}.
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                        <!--<li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-left-mobile-none">
+                                                            <i class="fa fa-check-square icon-font-size margin-from-right icon-vertical-align" aria-hidden="true"></i>                                                                            
+                                                            <p class="margin-top"><b>Status</b><br/><button class="slds-button slds-button_neutral status-button">{!bookingStatus}</button></p>
+                                                        </li>-->
+                                                        <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-right-mobile-none">
+                                                            <i class="material-icons icon-font-size margin-from-right icon-vertical-align">
+                                                                location_on
+                                                            </i>                                                                            
+                                                            <div class="margin-top"><b>Location</b>
+                                                                <div class="">                                                                    
+                                                                    {!slcdCenterName}
+                                                                </div>    
+                                                            </div>
+                                                        </li>
+                                                    </ul>
+                                                    <br/><br/>
+                                                    <p class="slds-page-header__title slds-p-around_x-small mobile-font-size" style="font-weight:bold;background-color:#dcdcdc !important;border-radius:5px;">
+                                                        {!stuName} - Previous Lesson Details   
+                                                        <!--<button class="slds-button slds-button_neutral status-button slds-float_right ">{!bookingStatus}</button>-->
+                                                    </p>
+                                                    <hr style="margin: 1rem 0"/>
+                                                    <ul class="slds-grid slds-wrap" style="background-color:#dcdcdc !important;padding-bottom:10px;border-radius:5px;">
+                                                        <!--<li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-left-mobile-none">
+                                                            <i class="fas fa-user-circle icon-font-size margin-from-right icon-vertical-align"></i> 
+                                                            <div class="margin-top"><b>Student Name</b>
+                                                                <div class="">
+                                                                    {!stuName}
+                                                                </div>
+                                                            </div>
+                                                        </li>-->
+                                                        <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-right-mobile-none">
+                                                            <i class="material-icons icon-font-size margin-from-right icon-vertical-align">
+                                                                calendar_today
+                                                            </i>
+                                                            <p class="margin-top"><b>Date</b><br/><apex:outputText value="{0, date,EE,  MMM dd yyyy}"><apex:param value="{!bookDate}"/></apex:outputText></p>
+                                                        </li>
+                                                        <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-left-mobile-none">
+                                                            <i class="material-icons icon-font-size margin-from-right icon-vertical-align">
+                                                                access_time
+                                                            </i>                                                                            
+                                                            <p class="margin-top"><b>Time</b><br/>{!bookTime}</p>
+                                                            <!--<i class="fas fa-music icon-font-size margin-from-right icon-vertical-align"></i>                                                                            
+                                                            <div class="margin-top"><b>Lesson Type</b>
+                                                                <div class="">
+                                                                    {!instrumentName}
+                                                                </div>
+                                                            </div>-->
+                                                        </li>
+                                                        <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-right-mobile-none">
+                                                            <i class="material-icons icon-font-size margin-from-right icon-vertical-align">
+                                                                music_note
+                                                            </i>                                                                            
+                                                            <div class="margin-top"><b>Lesson Type</b>
+                                                                <div class="">
+                                                                    {!instrumentName}
+                                                                </div>
+                                                            </div>                                                            
+                                                        </li>
+                                                        <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-left-mobile-none">
+                                                            <i class="material-icons icon-font-size margin-from-right icon-vertical-align">
+                                                                timelapse
+                                                            </i>                                                                            
+                                                            <p class="margin-top"><b>Duration</b><br/>{!durationInMin} min</p>
+                                                        </li>
+                                                        <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-right-mobile-none">
+                                                            <i class="material-icons icon-font-size margin-from-right icon-vertical-align">
+                                                                person
+                                                            </i>                                                                            
+                                                            <div class="margin-top"><b>Teacher</b>
+                                                                <div class="">
+                                                                    {!previousTeacher}.
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                        <!--<li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-left-mobile-none">
+                                                            <i class="fa fa-check-square icon-font-size margin-from-right icon-vertical-align" aria-hidden="true"></i>                                                                            
+                                                            <p class="margin-top"><b>Status</b><br/><button class="slds-button slds-button_neutral status-button">{!bookingStatus}</button></p>
+                                                        </li>-->
+                                                        <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-right-mobile-none">
+                                                            <i class="material-icons icon-font-size margin-from-right icon-vertical-align">
+                                                                location_on
+                                                            </i>                                                                            
+                                                            <div class="margin-top"><b>Location</b>
+                                                                <div class="">
+                                                                    {!slcdCenterName}
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-1 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_medium margin-top-mobile">
+                                                    <p class="slds-page-header__title slds-p-around_x-small">
+                                                        Lesson Options
+                                                    </p>
+                                                    <hr style="margin: 1rem 0"/>
+                                                    <div class="slds-col slds-size_1-of-1">
+                                                        <button type="button" onclick="saveChanges();return false;" class="slds-button slds-button_success" style="width:100%;color:#fff;height:40px">Confirm Changes</button>    
+                                                    </div>
+                                                    <br/>
+                                                    <div class="slds-col slds-size_1-of-1">
+                                                        <button type="button" onclick="document.getElementById('pg:frm:spinner.start').style.display = 'block';document.getElementById('summCmpId').style.display = 'none';document.getElementById('secondCmpId').style.display = 'block';document.getElementById('pg:frm:spinner.start').style.display = 'none';scrolltoptothepage();" class="slds-button slds-button_destructive" style="width:100%;height:40px;">Cancel Changes</button>    
+                                                    </div> 
+                                                    <br/><br/><br/><br/>
+                                                </div>    
+                                            <!--</div>-->
+                                        <!--</div>-->
+                                    </div>
+                                </apex:outputPanel> 
+                                <!--<a onclick="document.getElementById('pg:frm:spinner.start').style.display = 'block';document.getElementById('summCmpId').style.display = 'none';document.getElementById('secondCmpId').style.display = 'block';document.getElementById('pg:frm:spinner.start').style.display = 'none';window.scrollTo(0,0);" class="slds-button custom-btn prev-btn">Previous</a> 
+                                <a onclick="saveChanges();return false;"  class="slds-button custom-btn">Confirm</a>-->
+                            </div>
+                            <apex:outputPanel rendered="{!isSuccess}">
+                                <div class="slds-grid slds-wrap" id="completedivid">
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_12-of-12 slds-large-size_12-of-12 slds-p-horizontal_medium">
+                                        <p class="slds-page-header__title slds-p-around_x-small mobile-font-size">
+                                            {!stuName} - New Lesson Detail  
+                                            <button class="slds-button slds-button_neutral status-button slds-float_right ">{!bookingStatus}</button>
+                                        </p>
+                                        <hr style="margin: 1rem 0"/>
+                                        <ul class="slds-grid slds-wrap">
+                                            <!--<li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-left-mobile-none">
+                                                <i class="fas fa-user-circle icon-font-size margin-from-right icon-vertical-align"></i> 
+                                                <div class="margin-top"><b>Student Name</b>
+                                                    <div class="">
+                                                        {!stuName}
+                                                    </div>
+                                                </div>
+                                            </li>-->
+                                            <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-right-mobile-none">
+                                                <i class="material-icons icon-font-size margin-from-right icon-vertical-align">
+                                                    calendar_today   
+                                                </i>
+                                                <p class="margin-top"><b>Date</b><br/><apex:outputText value="{0, date,EE,  MMM dd yyyy}">
+                                                    <apex:param value="{!slcdDateNew}" /> 
+                                                    </apex:outputText></p>
+                                            </li>
+                                            <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-left-mobile-none">
+                                                <!--<i class="fas fa-music icon-font-size margin-from-right icon-vertical-align"></i>                                                                            
+                                                <div class="margin-top"><b>Lesson Type</b>
+                                                    <div class="">
+                                                        {!instrumentName}
+                                                    </div>
+                                                </div>-->
+                                                <i class="material-icons icon-font-size margin-from-right icon-vertical-align">
+                                                    access_time
+                                                </i>                                                                            
+                                                <p class="margin-top"><b>Time</b><br/>{!slcdTimeNew}</p>
+                                            </li>
+                                            <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-right-mobile-none">
+                                                <!--<i class="fas fa-user icon-font-size margin-from-right icon-vertical-align"></i>                                                                            
+                                                <div class="margin-top"><b>Teacher</b>
+                                                    <div class="">
+                                                        {!slcdTechrNameNew}    
+                                                    </div>
+                                                </div>-->
+                                                <i class="material-icons icon-font-size margin-from-right icon-vertical-align">
+                                                    music_note
+                                                </i>                                                                            
+                                                <div class="margin-top"><b>Lesson Type</b>
+                                                    <div class="">
+                                                        {!instrumentName}
+                                                    </div>
+                                                </div>
+                                            </li>
+                                            <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-left-mobile-none">
+                                                <!--<i class="fa fa-clock-o icon-font-size margin-from-right icon-vertical-align" aria-hidden="true"></i>                                                                            
+                                                <p class="margin-top"><b>Time</b><br/>{!slcdTimeNew}</p>-->
+                                                <i class="material-icons icon-font-size margin-from-right icon-vertical-align">
+                                                    timelapse
+                                                </i>                                                                            
+                                                <p class="margin-top"><b>Duration</b><br/>{!durationInMin} min</p>
+                                            </li>
+                                            <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-right-mobile-none">
+                                                <i class="material-icons icon-font-size margin-from-right icon-vertical-align">
+                                                    person
+                                                </i>                                                                            
+                                                <div class="margin-top"><b>Teacher</b>
+                                                    <div class="">
+                                                        {!slcdTechrNameNew}    
+                                                    </div>
+                                                </div>
+                                            </li>
+                                            <!--<li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-left-mobile-none">
+                                                <i class="fa fa-check-square icon-font-size margin-from-right icon-vertical-align" aria-hidden="true"></i>                                                                            
+                                                <p class="margin-top"><b>Status</b><br/><button class="slds-button slds-button_neutral status-button">{!bookingStatus}</button></p>
+                                            </li>-->
+                                            <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_small inline-flex padding-right-mobile-none">
+                                                <i class="material-icons icon-font-size margin-from-right icon-vertical-align">
+                                                    location_on
+                                                </i>                                                                            
+                                                <div class="margin-top"><b>Location</b>
+                                                    <div class="">
+                                                        {!slcdCenterName}
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        </ul>   
+                                    </div>    
+                                </div>    
+                            </apex:outputPanel>    
+                        </apex:outputPanel>
+                    </div>
+                </div>
+            </div>
+        </apex:form>
+    </body>
+    
+    <style>
+        .ellipses-text{
+            white-space: nowrap;
+            width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .status-button{
+            background:#FFBF2F !important;
+            color:#fff !important;
+            border:1px solid #FFBF2F !important;
+            line-height:1.5rem !important;
+            padding-left:0.5rem !important;
+            padding-right:0.5rem !important;
+            font-weight:normal !important;
+            font-size:14px !important;
+        }
+        .margin-from-right{
+            margin-right:10px !important;
+        }
+        .inline-flex{
+            display: inline-flex !important;
+        }
+        .margin-top{
+            margin-top:13px !important;
+        }
+        .dateFormat{
+        display:none;
+        }
+        body{
+            /*background-image: url("{!$Resource.img2}") !important;
+            background-size:contain !important;
+            background-repeat:no-repeat !important;
+            background-position:left !important;
+            background-color: #f3613c !important;*/
+        
+            /*Added for background image set 13th May 2019 */
+            /*background-position: center !important;
+            background-repeat: no-repeat !important;
+            background-size: cover !important;*/            
+        }
+        .main-content {
+        /*min-height: 100vh;*/
+        background-image:none !important;
+        background-size: contain !important;
+        background-repeat: no-repeat !important;
+        /*background-color: transparent !important;*/
+        }
+        .container {
+        max-width:650px;
+        }
+        span.main-title {
+        color: #200a28;
+        font-size: 24px;
+        border-radius: 0;
+        font-weight: bold;
+        margin-bottom: 10px;
+        display: block;
+        line-height: 30px;
+        padding-bottom:10px
+        }
+        .content-box {
+        /*margin: 50px 0;*/
+        /*width: 80%;*/
+        /*max-width: 700px;*/
+        background: rgba(255, 255, 255, 1);
+        border-radius: 10px;
+        }
+        .locations-list {
+        text-align:left;
+        }
+        form legend {
+        font-size: 16px !important;
+        }
+        .header {
+        background: #fff;
+        border-radius: 10px 10px 0 0px;
+        padding: 10px 10px 0;
+        text-align: center;
+        }
+        form {
+        padding: 0 0px;
+        }
+        .content-body .field-title {
+        font-size: 20px !important;
+        font-weight: bold;
+        padding: 0;
+        margin: 0;
+        }
+        .info-box {
+        border: 1px solid #eee;
+        color: #333;
+        font-size: 13px;
+        padding: 10px 10px !important;
+        border-radius: 5px;
+        margin: 5px 0 5px;
+        background: #f7f7f7;
+        }
+        .content-body span.slds-form-element__label {
+        display: block;
+        font-size: 12px !important;
+        }
+        
+        .content-body span.slds-radio {
+        margin:0 0 5px;
+        }
+        form .custom-btn {
+        padding: 5px 55px 3px !important;
+        color: #fff !important;
+        background: #FFBF2F !important;
+        font-size: 16px !important;
+        text-transform: uppercase;
+        line-height: 20px !important;
+        margin: 15px 15px 20px;
+        float:right;
+        }
+        .slds-form-element {
+        margin-bottom:5px;
+        }
+        .user-img {
+        width: 130px;
+        border: 2px solid #ffffff;
+        border-radius: 12px;
+        height: 135px;
+        min-width: 80px;
+        margin-right: 10px;
+        overflow: hidden;
+        float:left;
+        } 
+        .teacher-details {
+        display: flex;
+        margin-left: -20px;
+        display: -webkit-flex;
+        margin-top:10px;
+        }
+        .teacher-details div {
+        display: inline-block;
+        float: left;
+        }
+        .info-box h2 {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 0;
+        }
+        .custom-calendar > div {
+        border: 1px solid rgb(221, 219, 218);
+        border-radius: .25rem;
+        padding: .25rem 0;
+        background: rgb(255, 255, 255);
+        box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.16);
+        width: 100%;
+        }
+        .custom-btn.prev-btn {
+        border:1px solid grey;
+        color:black !important;
+        float: none;
+        background: rgb(255,255,255) !important;
+        float: left;
+        }
+        .final-step label {
+        font-size: 14px !important;
+        }
+        /*fieldset{
+        max-height: 60vh;
+        overflow-y: auto;
+        }*/
+        .available i {
+        display: inline-block;
+        background: #ebebeb;
+        height: 100%;
+        float: left;
+        width: 20px;
+        margin: 0 2px;
+        }
+        .available {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        bottom: 0px;
+        height: 5px;
+        justify-content: center;
+        display: flex;
+        }
+        
+        i.morning-availablity, i.afternoon-availablity{
+        background:#61c461
+        }
+        .afternoon{
+        /*padding-right: 30px !important;*/
+        }
+        .time-list span.slds-button.slds-radio_button {
+        width: 100%;
+        margin-bottom: 5px;
+        border: 1px solid #eee;
+        }
+        
+        .time-list label.slds-radio_button__label {
+        width: 100%;
+        text-align: center;
+        }
+        .time-list.morning {
+        padding-right: 10px;
+        }
+        .time-list.afternoon{
+        padding-left: 10px;
+        }
+        .time-list {
+        background: #f7f7f7;
+        padding: 10px 10px 5px;
+        border: 1px solid #eee;
+        width: calc(100% - 10px);
+        margin-bottom: 10px;
+        }
+        
+        .afternoon .time-list {
+        float: right;
+        }
+        .afternoon label.field-title.time-title {
+        padding-left: 10px;
+        }
+        span.slds-radio .slds-radio__label {
+        padding: 10px;
+        border: 1px solid #eee;
+        background: #f7f7f7;
+        border-radius: 5px;
+        display: block;
+        }
+        
+        span.slds-radio input:checked + .slds-radio__label {
+        background: #1b5297;
+        }
+        
+        span.slds-radio input:checked + .slds-radio__label span.slds-form-element__label {
+        color: #fff;
+        }
+        .slds-scope .slds-datepicker td {
+        border: 1px solid #eee;
+        }
+        td.slds-is-today {
+        background: #ecebea;
+        }
+        .info-box.student-panel {
+        margin: 10px 0px 5px;
+        }
+        .text{
+        display:none;
+        }
+        span.slds-radio input:checked + label .read-more{
+        color: #fff;
+        background: #1b5297;
+        }
+        .read-more {
+        color: rgb(62, 62, 60);
+        font-size: 12px;
+        line-height: normal;            
+        z-index: 1;
+        }
+        span.slds-radio input:checked + label .read-more a#toggle {
+        bottom: 0;
+        color: #fff;
+        }
+        
+        span.slds-radio {
+        position: relative;
+        }
+        .radio-list > div {
+        padding: 0 3px;
+        }
+        
+        .radio-list {
+        margin: 0 -3px;
+        }
+        .time-title {
+        text-align: center;
+        display: block !important;
+        }
+        
+        .teacher-list span.slds-radio_faux {
+        position: absolute  !important;
+        left: 10px;
+        top: 70px;
+        }
+        
+        .teacher-list input[type=radio]:checked + label, .teacher-list input[type=radio]:checked + label div {
+        color: #fff;
+        }
+        .teacher-list a {
+        font-weight: bold;
+        position: relative;
+        z-index: 1;
+        color: inherit !important;
+        }
+        .info-box.teacher-box {
+        background: transparent;
+        border: navajowhite;
+        padding: 0 0 0 20px !important;
+        margin: 0;
+        text-align: justify;
+        display:flow-root;
+        }
+        .teacher-details{
+        display:none;
+        }
+        .show{   
+        display:flex !important;
+        }
+        .content-body > div > fieldset {
+        max-height: 450px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 0 15px;
+        }
+        a:hover, a, a:active{
+        text-decoration:none !important;
+        }
+        /*  Date picker css   */
+        .ui-datepicker {
+        width: 17em;
+        padding: 0;
+        display: none;
+        background:#846733;  
+        }
+        .ui-datepicker .ui-datepicker-title {
+        margin: 0;
+        line-height: 36px;
+        text-align: center;
+        }
+        .ui-datepicker table {
+        background:#fff;    
+        }
+        .ui-datepicker td {
+        padding: 0px;
+        border: 1px solid #eee;
+        font-size: .75rem;
+        position: relative;
+        width: 2rem;
+        min-height: 2rem;
+        line-height: 2.5rem;
+        }
+        .ui-datepicker td span,
+        .ui-datepicker td a {
+        display: block;
+        padding: 0em;
+        text-align: center;
+        text-decoration: none;
+        }
+        #datepicker,
+        .ui-datepicker,
+        .ui-datepicker-header,
+        .ui-datepicker-calendar {
+        width: 100%;
+        }
+        .loc-maps span {
+        width: 100%;
+        }
+        .ui-datepicker td span, .ui-datepicker td a {
+        background: #fff !important;
+        border:2px solid #fff !important;
+        }
+        .ui-state-highlight, .ui-widget-content .ui-state-highlight, .ui-widget-header .ui-state-highlight {
+        background: rgb(236, 235, 234) !important;
+        border-color: rgb(236, 235, 234) !important;
+        border-width: 2px !important;
+        border-style: solid !important
+        }
+        .ui-datepicker table{
+        margin:0 !important;
+        }
+        .ui-widget.ui-widget-content {
+        border: none;
+        }
+        
+        table.ui-datepicker-calendar thead {
+        border: 1px solid #eee;
+        }
+        .ui-datepicker .ui-datepicker-header{
+        border-radius:0;
+        }
+        .ui-datepicker td a.ui-state-active {
+        background: #fff !important;
+        /*border: 2px solid #f6911d !important;*/
+        border: 2px solid #FFBF2F !important;
+        color: #FFBF2F !important;
+        /*color: #f6911d !important;*/
+        }
+        .ui-datepicker td a:before, .ui-datepicker td span:before {
+        content: "";
+        position: absolute;
+        max-width: 12px;
+        height: 5px;
+        background: #eee;
+        bottom: 5px;
+        left: 8px;
+        width: 100%;
+        }
+        .ui-datepicker td a:after, .ui-datepicker td span:after {
+        content: "";
+        position: absolute;
+        max-width: 12px;
+        height: 5px;
+        background: #eee;
+        bottom: 5px;
+        right: 8px;
+        width: 100%;
+        }
+        .ui-datepicker .ui-datepicker-prev span, .ui-datepicker .ui-datepicker-next span {
+        display: block;
+        position: absolute;
+        left: 50%;
+        margin-left: -8px;
+        top: 15%;
+        margin-top: 0;
+        transform: translateY(50%);
+        }
+        .teacher-list label {
+        float: left;
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        }
+        
+        .slds-scope .slds-radio [type=radio]:checked + div .info-box, .slds-scope .slds-radio [type=radio]:checked + div .info-box p , .slds-scope .slds-radio [type=radio]:checked + div .info-box a.read-more {
+        color: #fff !important;
+        }
+        a.read-more {
+        color: #8795d9 !important;
+        font-weight: normal;
+        }
+        .day-availability--morning .ui-state-default:before, .ui-widget-content .day-availability--morning .ui-state-default:before, .ui-widget-header .day-availability--morning .ui-state-default:before {
+        background: #61c461;
+        }
+        .day-availability--afternoon .ui-state-default:after, .ui-widget-content .day-availability--afternoon .ui-state-default:after, .ui-widget-header .day-availability--afternoon .ui-state-default:after {
+        background: #61c461;
+        } 
+        .ui-datepicker .ui-datepicker-next, .ui-datepicker .ui-datepicker-prev{
+        height: 100%;
+        }
+        .popupBackground{ 
+        background-color: lightgrey;
+        opacity: 0.80;
+        
+        position:fixed;
+        padding:0;
+        margin:0;
+        
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        z-index: 9998;
+        border-radius: 5px; 
+        }
+        .disabled-text {
+        position: absolute;
+        right: 10px;
+        top: 13px;
+        background: #000 !important;
+        color: #fff !important;
+        padding: 2px 6.5px;
+        line-height: 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        }
+        a.disabled-text:hover + div {
+        display: block !important;
+        }
+        .teacher-box p {
+        width: 100%;
+        }
+        
+        .teach-desc .teacher-details {
+        margin: 0;
+        }
+        label.slds-radio__label span {
+        display: inline-block !important;
+        }
+        .slds-checkbox label.slds-checkbox__label {
+        display: flex;
+        }
+        
+        .slds-checkbox label.slds-checkbox__label span.slds-checkbox_faux {
+        min-width: 16px !important;
+        }
+        
+        .slds-checkbox label.slds-checkbox__label span.slds-form-element__label {
+        padding-top: 0;
+        padding-right: 0;
+        }
+        .user-img img{
+        width:100%;
+        height: 100%;
+        }
+        .time-Slot{
+        max-height: 350px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 0 15px;
+        }
+        
+         .billig-info {
+        /*background: #f2f2f2;*/
+        float: left;
+        width: 100%;
+        padding: 10px 0;
+        font-size: 14px;
+        margin: 0 0 10px;
+        }
+        .billig-info li {
+        margin:0;
+        }
+        .billig-info li > div {
+        padding-top: 5px;
+        padding-bottom: 5px;
+        line-height: 30px;
+        display: block;
+        /*border-bottom: 1px solid #ccc;*/
+        margin-left:0;
+        width:100%;
+        }
+        
+        .billig-info:last-child {
+        margin-bottom: 0;
+        }
+        
+        .billig-info li strong {
+        /*width: 120px;
+        display: inline-block;*/
+        width:100%;
+        display:block; 
+        }
+        /* css add by sakib on 25/6/2019*/
+        /*.icon-font-size{
+           font-size: 23px;
+           margin-top: 21px;
+        }*/
+        /* css add by Rajesh on 1/8/2019*/
+        .icon-font-size{
+            margin-top: 5px;
+            font-size: 21px;
+        }
+        .icon-vertical-align{
+            margin-top: 21px;
+        }
+        
+        .ui-widget-header,ui-datepicker-title{
+            background:white;
+        }
+        .ui-datepicker-title{
+            color: #FFBF2F;
+            font-size:16px;
+        }
+        .slds-scope .slds-radio_button [type=radio]:checked+.slds-radio_button__label{
+            background: #FFBF2F !important;
+            color:white;
+            box-shadow: 1px 1px 1px lightgrey;
+        }
+        input.input-readonly{
+            padding-left:7px !important;
+            background-color:#ECECEE !important;
+        }        
+        .timeselectlist{
+            display:none !important;
+        }
+        /*.time-Slot{
+            display:block !important;
+        }*/
+        .calander-div-padding{
+            padding-left: 25px !important;
+        }   
+        html{
+            background:white !important;
+        }
+        
+        .slds-scope hr{
+            margin: 1rem 0;
+        }
+        .border-right{
+            border-right: 1px solid lightgray;
+        }
+        p.slds-page-header__title{
+                font-weight:bold !important;
+            }
+         @media (min-width: 320px) and (max-width: 580px){
+                .status-button{
+                    font-size:10px !important;
+                }
+                .margin-mobile-next-button{
+                    margin-right:0px !important;
+                }
+                .border-right{
+                    border-right: none;
+                }
+                .previous-button-responsive,.next-confirm-button-responsive{
+                    padding:3px 35px !important;
+                }  
+                .main-time-list{
+                    padding: 0 0px !important;
+                    display:none !important;    
+                }
+                .timeselectlist{
+                   display:block !important;
+                }
+                .time-Slot{
+                    padding:0 1px !important;                   
+                }
+                .next-confirm-button-for-tab,.previous-button-for-tab{
+                    padding:3px 35px !important;
+                }
+            }
+            @media (min-width: 768px) and (max-width:1024px){
+                .next-confirm-button-for-tab,.previous-button-for-tab{
+                    padding:3px 35px !important;
+                }
+            }
+        
+        @media (min-width: 320px) and (max-width: 580px){  
+          .slds-spinner{
+                    top:30% !important;
+                }  
+          .mobile-font-size{
+            font-size:14px !important;
+          } 
+          .slds-p-around_small,.slds-p-horizontal_medium{
+            padding-right:0px !important;
+            padding-left:0px !important;
+          } 
+          .padding-right-mobile-none{
+            padding-right:0px !important;
+          }
+        /*.padding-left-mobile-none{
+            padding-left:0px !important;
+        }*/
+          .main-div-right-padding-mobile{
+            padding-right:0px !important;
+          } 
+          .remove-padding-left-right-mobile{
+            padding-left:0px !important;
+            padding-right:0px !important;
+          } 
+          .margin-top-mobile{
+            margin-top:35px !important;
+          }
+          .margin-top{
+            margin-top:10px !important;
+          } 
+          .ui-datepicker td a:after, .ui-datepicker td span:after,.ui-datepicker td a:before, .ui-datepicker td span:before{
+              width:20% !important;     
+          }
+          
+          .remove-padding-mobile{
+              padding-right: 0px !important;
+          } 
+          .afternoon .time-list{
+              float:none !important;
+          }
+          .time-Slot{
+              padding: 0 0px !important;
+              display:none !important;  
+          }
+          .timeselectlist{
+             display:block !important;
+          }
+          .calander-div-padding{
+            padding-left: 25px !important;
+            padding-right:0px !important;
+          } 
+          .select-list-for-mobile{
+        /*padding-left:25px !important;*/
+            padding-right:0px !important;
+          }     
+        }
+    </style>
+</apex:page>

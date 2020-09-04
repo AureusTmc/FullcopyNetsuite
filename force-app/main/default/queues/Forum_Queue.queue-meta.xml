@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Queue xmlns="http://soap.sforce.com/2006/04/metadata">
+    <doesSendEmailToMembers>false</doesSendEmailToMembers>
+    <name>Forum Queue</name>
+    <queueMembers>
+        <users>
+            <user>ainee@aureusacademy.com</user>
+            <user>alex@aureusacademy.com</user>
+            <user>alyssa.lim@aureusacademy.com</user>
+            <user>aureusacademy@aureusgroup.force.com</user>
+            <user>ines@aircall.io.prod</user>
+            <user>ivy@aureusacademy.com</user>
+            <user>juanita.joe@aureusacademy.com</user>
+            <user>julius@aureusacademy.com</user>
+            <user>terence.chin@aureusacademy.com</user>
+            <user>aureus@techmatrixconsulting.com</user>
+            <user>yingda@aureusacademy.com</user>
+        </users>
+    </queueMembers>
+    <queueSobject>
+        <sobjectType>Case</sobjectType>
+    </queueSobject>
+</Queue>

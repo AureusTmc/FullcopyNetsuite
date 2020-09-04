@@ -1,0 +1,342 @@
+<apex:page showHeader="false" id="pg" controller="searchTrialIpadCntrl" standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False">
+    <head>
+        <title>Aureus IPAD Enrolment</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0"/>
+        <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}"/>      
+        <apex:stylesheet value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.css')}"/>
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous" />
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery/jquery.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.js')}"/>
+        
+        <script>
+            function getEnrolments(thisObj){
+                
+                var searchKey = thisObj.val();
+                var cntryCode = '{!countryCode}';
+                $('#searchEnrol').empty();
+                $('#validateSameParent').addClass('slds-hide');
+                $('#listempty').empty(); //By Ravi
+                if(searchKey.length > 2){
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.searchTrialIpadCntrl.fetchEnrolments}',
+                        searchKey,cntryCode,   
+                        function(result, event){
+                            $('#searchEnrol').empty();
+                            console.log('result', result.length);
+                            console.log('-----');
+                            var enrolments = '';
+                            $(result).each(function(index, value){
+                                //console.log('Value'+value);
+                                // console.log(value);
+                                enrolments += '<div class="slds-grid slds-p-around_small box-info" >';
+                                enrolments += '<div class="slds-size_11-of-12" >';
+                                enrolments += '<p class="text-yellow" id="check">'+ value.enrTrialSlot +' - '+ value.enr.Student__r.Name +' ('+value.enr.Parent_Email__c+') </p>';
+                                enrolments += '<small><b>'+value.enr.Name+' - '+value.enr.Parent__r.Name+' -</b> '+ value.enr.Package__r.Name +' with Teacher '+value.enr.Teacher__r.Name +' at '+value.enr.Center__r.Name +'</small>';
+                                enrolments += '</div>';
+                                enrolments += '<div class="slds-size_1-of-12"> <div dir="rtl"> <div class="slds-form-element">';
+                                enrolments += '<div class="slds-form-element__control">';
+                                enrolments += '<div class="slds-checkbox slds-text-heading_medium">';
+                                enrolments += '<input type="checkbox" class="checkBoxes" name="searchOption" id="'+value.enr.Id+'" value="'+value.enr.Id+'" />';
+                                enrolments += '<label class="slds-checkbox__label" for="'+value.enr.Id+'">';
+                                enrolments += '<span class="slds-checkbox_faux"></span>';
+                                enrolments += '</label>';
+                                enrolments += '</div> </div> </div></div></div>';
+                                enrolments += '</div>';
+                            });
+                            
+                            $('#searchEnrol').append(enrolments);
+                        }
+                    );
+                }
+                /*$(thisObj).removeAttr('disabled');
+                 document.getElementById('pg:frm:spinner.start').style.display = 'none';*/
+            }
+        
+        function processEnrolment(){
+            var parentEmail=[];
+            var i=1;
+            var email;
+            var isValidate=true;
+            $('#validateSameParent').addClass('slds-hide');
+            //$('#searchInput').val()='';
+            var srcIds = '';
+            $.each($("input[name='searchOption']:checked"), function(){            
+                srcIds += $(this).val() +',';
+                if(i==1){
+                    email = $(this).parent().parent().parent().parent().parent().prev().find('.text-yellow').text().split('(')[1].split(')')[0];
+                    i=2;
+                }
+                if($(this).parent().parent().parent().parent().parent().prev().find('.text-yellow').text().split('(')[1].split(')')[0] == email)
+                {
+                    parentEmail.push(email);
+                }else{
+                    isValidate=false;  
+                }
+            });
+            $.each($("input[name='centerEnrOptions']:checked"), function(){            
+                srcIds += $(this).val() +',';
+                if(i==1){
+                    email = $(this).parent().parent().parent().parent().parent().prev().find('.text-yellow').text().split('(')[1].split(')')[0];
+                    i=2;
+                }
+                if($(this).parent().parent().parent().parent().parent().prev().find('.text-yellow').text().split('(')[1].split(')')[0] == email)
+                {
+                    parentEmail.push(email);
+                }else{
+                    isValidate=false;  
+                }
+            });
+            if(isValidate){
+                prcEnrolment(srcIds);
+            }else{
+                $('#validateSameParent').removeClass('slds-hide');
+            }
+        }
+        function removesearchEnrol(){
+            $('.searchInput').attr('value', '');
+				 $('#searchEnrol').empty();            
+        }
+        
+        function addDate() {
+            getTodayDate();
+        }
+        function subtractDate() {
+            subTodayDate();
+        }
+        </script>
+        
+        <style>
+            body{
+            font-size:16px;
+            
+            }
+            ul li{margin-left:0px;}
+            @media(min-width:999px){
+            .m-lg-right{margin-right: .75rem;}}
+            @media(min-width:767px){
+            .text-lg-left{ text-align:left;}
+            .text-lg-right{text-align:right;}
+            .slds-large-p-around_large{padding:1.5rem;}
+            }
+         
+            .btn-yellow, .btn-yellow:hover, .btn-yellow:focus {
+            background-color:#ffbf2f;
+            color:#fff;
+            }
+        
+            .slds-button_success{
+            color:#fff !important;
+            padding-left:12px;
+            padding-right:12px;}
+            .text-yellow{color:#ffbf2f;}
+            .btn-block{
+            display:block;
+            font-size:1.2rem; 
+            }
+            .btn-gray{
+            background-color:#ccced0;
+            color:#fff;
+            }
+            .slds-checkbox .slds-checkbox--faux, .slds-checkbox .slds-checkbox_faux{
+            font-size:16px;
+            border-color:#000;
+            box-shadow: 0 1px 0 0 #ececee;
+            top:4px;
+            }
+            .box-info{
+            box-shadow: 0 1px 0 0 #ececee;
+            background-color:#fff;
+            margin-bottom:4px;
+            }
+            #step-2{background-color:#fff;}
+        </style>
+    </head>
+    <body class="">
+        <apex:form id="frm">
+            <apex:actionStatus id="spinner">
+                <apex:facet name="start"> 
+                    <apex:outputPanel id="backdrop" styleClass="popupBackground">
+                        <div role="status" class="slds-spinner slds-spinner_brand slds-spinner_large"> 
+                            <div class="slds-spinner__dot-a"></div>
+                            <div class="slds-spinner__dot-b"></div>
+                        </div>
+                    </apex:outputPanel>
+                </apex:facet>
+            </apex:actionStatus>
+            
+            <apex:actionFunction name="prcEnrolment" action="{!redirectToEnrolment}" reRender="frm">
+                <apex:param name="slcdEnrolmentIds" value="" assignTo="{!slcdEnrIds}"/> 
+            </apex:actionFunction>
+            <apex:actionFunction name="getTodayDate" action="{!addDate}" reRender="forDate,enr_cen">
+            </apex:actionFunction>
+            <apex:actionFunction name="subTodayDate" action="{!subDate}" reRender="forDate,enr_cen">
+            </apex:actionFunction>
+            
+            <div id="step-1" class="container slds-p-around_small slds-large-p-around_large">
+                 <div id="validateSameParent" Class="slds-hide" style="text-align:center;">
+                        <Span  style="color:red;">Please Select the Enrolment From Same Parent</Span>
+                    </div>
+                <div class="slds-grid slds-wrap">
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-text-align_center slds-large-order_2 slds-p-bottom_large">
+                        <h3 class="slds-text-heading_large" style="font-weight:bold;">Select a Trial to Enrol</h3>
+                    </div>
+                    <div class="slds-size_1-of-2 slds-large-size_1-of-3 slds-large-order_1  slds-p-bottom_large">
+                        <a href="/lightning/n/Admin_Home" class="slds-button btn-gray slds-p-vertical_xxx-small slds-p-horizontal_xx-large slds-m-bottom_small" >Back</a>
+                    </div>
+                    
+                    <div class="slds-size_1-of-2 slds-large-size_1-of-3 slds-text-align_right slds-large-order_3  slds-p-bottom_large" >
+                        <a href="javascript:void(0)" id="next_step2" class="slds-button btn-yellow slds-p-vertical_xxx-small slds-p-horizontal_xx-large slds-m-bottom_small" onclick="processEnrolment();" style="">Next</a>
+                    </div>
+                    
+                </div>
+                <div class="slds-grid slds-grid_align-center slds-p-vertical_small" style="background-color:#f9f9fb;" >
+                    <div class="slds-size_1-of-1 slds-large-size_9-of-12" >
+                        <div class="slds-p-around_small box-info" >
+                            <!--<input type="text" id="searchInput" placeholder="Search for Enrolment..."  onkeyup="{!c.searchEnrolments}" class="slds-input" />-->
+                            <apex:inputText id="searchInput"  html-placeholder="Search for Enrolment..." styleclass="slds-input searchInput"  onkeyup="getEnrolments($(this));"/>
+                        </div>
+                        <div id="searchEnrol"/>
+                        
+                        
+                        <div class="slds-form-element slds-m-vertical_xx-large">
+                            <div class="slds-form-element__control">
+                                <div class="slds-select_container">
+                                    <!--<select class="slds-select" id="select-01" style="height: calc(1.875rem + (1px * 10));">
+                                        <option value="">Centre Name (Default)</option>
+                                        <option>Option One</option>
+                                        <option>Option Two</option>
+                                        <option>Option Three</option>
+                                    </select>-->
+                                    <apex:selectList size="1" styleClass="slds-select" value="{!slcdCenter}" id="centersel">
+                                        <apex:selectOptions value="{!Centers}"/>
+                                        <apex:actionSupport event="onchange" onsubmit="removesearchEnrol();" reRender="enr_cen"/>
+                                    </apex:selectList>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="slds-p-around_small box-info slds-m-bottom_large" >
+                            <div class="slds-grid slds-gutters">
+                                  <div class="slds-col slds-size_2-of-12">
+                                    <span style="float: left;" onclick="subtractDate();"><apex:image value="{!$Resource.Arrows_Left}" width="30" height="30" /><!--a href="javascript:void(0)" class="slds-button btn-yellow slds-p-vertical_xxx-small slds-p-horizontal_xx-large slds-m-bottom_small" onclick="subtractDate();" style="">Prev</a --> </span>
+                                </div>
+                                <div class="slds-col slds-size_8-of-12">
+                                    <apex:outputPanel id="forDate">
+                                        <span> 
+                                            <p class="text-yellow slds-text-align_center slds-text-heading_medium" >
+                                                Trials on<apex:outputText value="{0, date, d MMMM','  yyyy}">
+                                                    <apex:param value="{!GetToday}" /> 
+                                                </apex:outputText>
+                                            </p>
+                                        </span>
+                                    </apex:outputPanel>
+                                </div>
+                                <div class="slds-col slds-size_2-of-12">
+                                    <span style="float: right;" onclick="addDate();" ><apex:image id="theImage" value="{!$Resource.Arrows_Right}" width="30" height="30" /><!--a href="javascript:void(0)" class="slds-button btn-yellow slds-p-vertical_xxx-small slds-p-horizontal_xx-large slds-m-bottom_small" onclick="addDate();" style="">Next</a --></span>
+                                </div>
+                            </div>
+                            <!--<p class="text-yellow slds-text-align_center slds-text-heading_medium" >Trials on 10 Aug, 2019 </p>-->
+                            
+                        </div>
+                            <apex:outputPanel id="enr_cen">
+                                <Div id="listempty">
+                            <apex:repeat value="{!Enrolments}" var="enrMod">
+                                <div class="slds-grid slds-p-around_small box-info">
+                                    <div class="slds-size_11-of-12"><p class="text-yellow" > {!enrMod.enrTrialSlot} - {!enrMod.enr.Student__r.Name} ({!enrMod.enr.Parent__r.Personemail}) </p>
+                                        <small><b>{!enrMod.enr.Name} - {!enrMod.enr.Parent__r.Name} -</b> {!enrMod.enr.Package__r.Name} with Teacher {!enrMod.enr.Teacher__r.Name}  at {!enrMod.enr.Center__r.Name}</small>
+                                    </div>
+                                    <div class="slds-size_1-of-12">
+                                        <div dir="rtl">
+                                            <div class="slds-form-element">
+                                                <div class="slds-form-element__control">
+                                                    <div class="slds-checkbox slds-text-heading_medium">
+                                                        <input type="checkbox" name="centerEnrOptions" id="{!enrMod.enr.Id}" value="{!enrMod.enr.Id}" checked="" />
+                                                        <label class="slds-checkbox__label" for="{!enrMod.enr.Id}">
+                                                            <span class="slds-checkbox_faux"></span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </apex:repeat>
+                                </Div>
+                        </apex:outputPanel>
+                        
+                        <!--
+                        <div class="slds-grid slds-p-around_small box-info" >
+                            <div class="slds-size_11-of-12"><p class="text-yellow" > 9:00am - Student Name (parent email) </p>
+                                <small><b>Julius Holmefjord-Sarabi -</b> Piano Lesson (30 min) with Teacher Jin Yee at Forum the Shopping Mall</small>
+                            </div>
+                            <div class="slds-size_1-of-12">
+                                <div dir="rtl">
+                                    <div class="slds-form-element">
+                                        <div class="slds-form-element__control">
+                                            <div class="slds-checkbox slds-text-heading_medium">
+                                                <input type="checkbox" name="options" id="checkbox-46" value="checkbox-46" checked="" />
+                                                <label class="slds-checkbox__label" for="checkbox-46">
+                                                    <span class="slds-checkbox_faux"></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="slds-grid slds-p-around_small box-info" >
+                            <div class="slds-size_11-of-12"><p class="text-yellow" > 9:00am - Student Name (parent email) </p>
+                                <small><b>Julius Holmefjord-Sarabi -</b> Piano Lesson (30 min) with Teacher Jin Yee at Forum the Shopping Mall</small>
+                            </div>
+                            <div class="slds-size_1-of-12">
+                                <div dir="rtl">
+                                    <div class="slds-form-element">
+                                        <div class="slds-form-element__control">
+                                            <div class="slds-checkbox slds-text-heading_medium">
+                                                <input type="checkbox" name="options" id="checkbox-46" value="checkbox-46" checked="" />
+                                                <label class="slds-checkbox__label" for="checkbox-46">
+                                                    <span class="slds-checkbox_faux"></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="slds-grid slds-p-around_small box-info" >
+                            <div class="slds-size_11-of-12"><p class="text-yellow" > 9:00am - Student Name (parent email) </p>
+                                <small><b>Julius Holmefjord-Sarabi -</b> Piano Lesson (30 min) with Teacher Jin Yee at Forum the Shopping Mall</small>
+                            </div>
+                            <div class="slds-size_1-of-12">
+                                <div dir="rtl">
+                                    <div class="slds-form-element">
+                                        <div class="slds-form-element__control">
+                                            <div class="slds-checkbox slds-text-heading_medium">
+                                                <input type="checkbox" name="options" id="checkbox-46" value="checkbox-46" checked="" />
+                                                <label class="slds-checkbox__label" for="checkbox-46">
+                                                    <span class="slds-checkbox_faux"></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>-->
+                        
+                        <!-- <div class="slds-grid slds-grid_align-center slds-p-vertical_large">
+                            <div class="slds-size_1-of-1 slds-large-size_1-of-3">
+                                <a class="slds-button btn-block btn-yellow slds-p-around_x-small slds-m-bottom_large" href="#" >Add a Fresh Enrolment</a>
+                            </div>
+                        </div>-->  
+                    </div>
+                    
+                    
+                    
+                </div>
+            </div>
+            <!-- End of step One -->        
+        </apex:form>
+    </body>
+</apex:page>

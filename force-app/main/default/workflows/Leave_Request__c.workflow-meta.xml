@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workflow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <alerts>
+        <fullName>Employee_Leave_approval_notification</fullName>
+        <description>Employee Leave approval notification</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Employee_email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus_HR/Employee_Leave_Approval</template>
+    </alerts>
+    <alerts>
+        <fullName>Employee_Leave_rejection_notification</fullName>
+        <description>Employee Leave rejection notification</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Employee_email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus_HR/Employee_Leave_Rejection</template>
+    </alerts>
+    <alerts>
+        <fullName>Sick_leave_approval</fullName>
+        <description>Sick leave approval</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Employee_email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus_HR/Approved_Sick_Leave</template>
+    </alerts>
+    <alerts>
+        <fullName>Sick_leave_email_alert</fullName>
+        <description>Sick leave email alert</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Employee_email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderType>DefaultWorkflowUser</senderType>
+        <template>Aureus_HR/Sick_Leave_Email</template>
+    </alerts>
+    <alerts>
+        <fullName>Sick_leave_rejection</fullName>
+        <description>Sick leave rejection</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Employee_email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus_HR/Rejected_Sick_Leave</template>
+    </alerts>
+    <fieldUpdates>
+        <fullName>Copy_Employee_Email_field</fullName>
+        <field>Employee_email__c</field>
+        <formula>Employee__r.PersonEmail</formula>
+        <name>Copy Employee Email field</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Leave_status_to_Draft</fullName>
+        <field>Status__c</field>
+        <literalValue>Draft</literalValue>
+        <name>Leave status to Draft</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Leave_status_to_Pending</fullName>
+        <field>Status__c</field>
+        <literalValue>Pending</literalValue>
+        <name>Leave status to Pending</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Leave_status_to_Rejected</fullName>
+        <field>Status__c</field>
+        <literalValue>Rejected</literalValue>
+        <name>Leave status to Rejected</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Leave_status_to_approved</fullName>
+        <field>Status__c</field>
+        <literalValue>Approved</literalValue>
+        <name>Leave status to approved</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+        <reevaluateOnChange>true</reevaluateOnChange>
+    </fieldUpdates>
+    <rules>
+        <fullName>Copy Employee Email</fullName>
+        <actions>
+            <name>Copy_Employee_Email_field</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Leave_Request__c.Name</field>
+            <operation>notEqual</operation>
+        </criteriaItems>
+        <description>This workflow copies Employee email from account to leave request</description>
+        <triggerType>onCreateOnly</triggerType>
+    </rules>
+    <rules>
+        <fullName>Employee Leave Approval</fullName>
+        <actions>
+            <name>Employee_Leave_approval_notification</name>
+            <type>Alert</type>
+        </actions>
+        <active>false</active>
+        <criteriaItems>
+            <field>Leave_Request__c.RecordTypeId</field>
+            <operation>equals</operation>
+            <value>NSMen Leave,Paid Leave,Sick Leave</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Leave_Request__c.Employee_Recordtype__c</field>
+            <operation>equals</operation>
+            <value>Employee</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Leave_Request__c.Status__c</field>
+            <operation>equals</operation>
+            <value>Approved</value>
+        </criteriaItems>
+        <description>This is for employee leave request</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Employee Leave Rejection</fullName>
+        <actions>
+            <name>Employee_Leave_rejection_notification</name>
+            <type>Alert</type>
+        </actions>
+        <active>false</active>
+        <criteriaItems>
+            <field>Leave_Request__c.RecordTypeId</field>
+            <operation>equals</operation>
+            <value>NSMen Leave,Paid Leave,Sick Leave</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Leave_Request__c.Employee_Recordtype__c</field>
+            <operation>equals</operation>
+            <value>Employee</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Leave_Request__c.Status__c</field>
+            <operation>equals</operation>
+            <value>Rejected</value>
+        </criteriaItems>
+        <description>This is for Employee leave request rejection</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Leave reminder for HR to the govt reimbursement</fullName>
+        <actions>
+            <name>Reminder_to_the_govt_for_reimbursement</name>
+            <type>Task</type>
+        </actions>
+        <active>true</active>
+        <booleanFilter>1 OR 2 OR 3</booleanFilter>
+        <criteriaItems>
+            <field>Leave_Request__c.RecordTypeId</field>
+            <operation>equals</operation>
+            <value>Extended Child Care Leave</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Leave_Request__c.RecordTypeId</field>
+            <operation>equals</operation>
+            <value>Child Care Leave</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Leave_Request__c.RecordTypeId</field>
+            <operation>equals</operation>
+            <value>Maternity Leave</value>
+        </criteriaItems>
+        <description>Create task for CCL/ECL/Maternity leaves for HR as a reminder to the govt for reimbursement.</description>
+        <triggerType>onCreateOnly</triggerType>
+    </rules>
+    <rules>
+        <fullName>Sick Leave email notification</fullName>
+        <actions>
+            <name>Sick_leave_email_alert</name>
+            <type>Alert</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Leave_Request__c.Status__c</field>
+            <operation>equals</operation>
+            <value>Draft</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Leave_Request__c.RecordTypeId</field>
+            <operation>equals</operation>
+            <value>Sick Leave</value>
+        </criteriaItems>
+        <description>This workflow triggers email to employee</description>
+        <triggerType>onCreateOnly</triggerType>
+    </rules>
+    <rules>
+        <fullName>Teacher Leave Rejection</fullName>
+        <actions>
+            <name>Employee_Leave_rejection_notification</name>
+            <type>Alert</type>
+        </actions>
+        <active>false</active>
+        <criteriaItems>
+            <field>Leave_Request__c.RecordTypeId</field>
+            <operation>equals</operation>
+            <value>NSMen Leave,Paid Leave,Sick Leave</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Leave_Request__c.Employee_Recordtype__c</field>
+            <operation>equals</operation>
+            <value>Teacher</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Leave_Request__c.Status__c</field>
+            <operation>equals</operation>
+            <value>Rejected</value>
+        </criteriaItems>
+        <description>This is for teacher leave request rejection</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <tasks>
+        <fullName>Reminder_to_the_govt_for_reimbursement</fullName>
+        <assignedToType>owner</assignedToType>
+        <description>A reminder to the govt for reimbursement.</description>
+        <dueDateOffset>1</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <offsetFromField>Leave_Request__c.Leave_End_Date__c</offsetFromField>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Open</status>
+        <subject>Reminder to the govt for reimbursement</subject>
+    </tasks>
+    <tasks>
+        <fullName>Submit_a_claim_to_MINDEF</fullName>
+        <assignedToType>owner</assignedToType>
+        <description>Submit a claim to MINDEF for employee payout</description>
+        <dueDateOffset>-30</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <offsetFromField>Leave_Request__c.Leave_Start_Date__c</offsetFromField>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Open</status>
+        <subject>Submit a claim to MINDEF</subject>
+    </tasks>
+</Workflow>

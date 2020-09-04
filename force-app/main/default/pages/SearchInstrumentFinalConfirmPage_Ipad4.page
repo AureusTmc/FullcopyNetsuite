@@ -1,0 +1,1314 @@
+<apex:page showHeader="false" id="pg" controller="SearchInstrumentRental_IpadCntrl" standardStylesheets="true" docType="html-5.0"
+    applyBodyTag="False" applyHtmlTag="False">
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+
+    <head>
+        <title>Final Confirmation</title>
+        <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0" />
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.js')}" />
+        <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700&display=swap" rel="stylesheet" />
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/"
+            crossorigin="anonymous" />
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery/jquery.js')}" />
+        <script src="https://js.stripe.com/v3/"></script>
+        <style>
+            body a:hover {
+                text-decoration: none;
+            }
+
+            body,
+            html {
+                font-size: 16px !important;
+                font-family: 'Lato', sans-serif !important;
+                font-weight: 300 !important;
+                line-height: 24px;
+            }
+
+            .slds-button_success:link,
+            .slds-button_success:visited {
+                color: #fff;
+            }
+
+            .btn-block {
+                display: block;
+            }
+
+            .btn-gray,
+            .btn-gray:hover,
+            .btn-gray:focus {
+                background-color: #ccced0;
+                color: #fff;
+            }
+
+            .btn-yellow,
+            .btn-yellow:hover,
+            .btn-yellow:focus {
+                background-color: #ffbf2f;
+                color: #fff;
+            }
+
+            .bg_white {
+                background-color: #fff;
+            }
+
+            @media screen and (min-width:778px) {
+                .slds-large-p-horizontal_xx-large {
+                    padding-left: 3rem;
+                    padding-right: 3rem;
+                }
+                .m-lg-right {
+                    margin-right: .75rem;
+                }
+            }
+
+            input {
+                height: calc(1.875rem + (1px * 10));
+            }
+
+            .sticky {
+                position: fixed;
+                bottom: 0;
+                width: 100%;
+                z-index: 99;
+            }
+
+            .slds-checkbox .slds-form-element__label {
+                font-size: 16px;
+                padding-top: 0px;
+            }
+
+            .box-info {
+                padding-top: 8px;
+            }
+
+            .box-price {
+                box-shadow: 0 1px 0 0 #ececee;
+                background-color: #fff;
+                margin-bottom: 6px;
+                padding-bottom: 6px;
+            }
+
+            #card-errors {
+                color: red;
+            }
+
+            .StripeElement {
+                box-sizing: border-box;
+
+                height: 40px;
+
+                padding: 10px 12px;
+
+                border: 1px solid transparent;
+                border-radius: 4px;
+                background-color: white;
+
+                box-shadow: 0 1px 3px 0 #e6ebf1;
+                -webkit-transition: box-shadow 150ms ease;
+                transition: box-shadow 150ms ease;
+            }
+
+            .StripeElement--focus {
+                box-shadow: 0 1px 3px 0 #cfd7df;
+            }
+
+            .StripeElement--invalid {
+                border-color: #fa755a;
+            }
+
+            .StripeElement--webkit-autofill {
+                background-color: #fefde5 !important;
+            }
+
+
+            .student-policy-class {
+                height: 260px;
+                overflow-y: scroll;
+                background-color: #f7f7f7 !important;
+            }
+
+            .disableButton {
+                pointer-events: none !important;
+                opacity: 0.5 !important;
+            }
+
+            .requiredInput {
+                border-left: 2px solid #F44336;
+            }
+        </style>
+    </head>
+
+    <body style="background-color:#fff;">
+        <apex:form id="frm">
+            <apex:actionStatus id="spinner" styleClass="status">
+                <apex:facet name="start">
+                    <div class="demo-only demo--inverse " style="height:100%;width:100%;z-index:200;position:fixed">
+                        <div class="slds-spinner_container" style="height:100%;width:100%;">
+                            <div role="status" class="slds-spinner slds-spinner_large slds-spinner_brand">
+                                <span class="slds-assistive-text">Loading</span>
+                                <div class="slds-spinner__dot-a"></div>
+                                <div class="slds-spinner__dot-b"></div>
+                            </div>
+                        </div>
+                    </div>
+                </apex:facet>
+            </apex:actionStatus>
+
+            <apex:actionFunction name="updateCustomer" status="spinner" action="{!updateCstmrDetail}" reRender="enrolBillDetailsPanel"
+                oncomplete="signAgreement();return false;" />
+            <apex:actionFunction name="signAgreement" status="spinner" action="{!signAgreement}" oncomplete="waitForTwoSecond();return false;"
+            />
+            <apex:actionFunction name="waitAgreement" status="spinner" action="{!waitAgreement}" reRender="frm" oncomplete="sendAgreement();return false;"
+            />
+            <apex:actionFunction name="sendAgreement" status="spinner" action="{!sendAgreement}" oncomplete="getSession();return false;"
+            />
+            <apex:actionFunction name="getSession" status="spinner" action="{!createSession}" reRender="framePanel,refreshScript" oncomplete="showModal();"
+            />
+            <apex:actionFunction name="createSessForAureusRep" status="spinner" action="{!createSessForAureusGrp}" reRender="framePanel"
+                oncomplete="showModal();" />
+
+            <apex:actionFunction name="prcEnrolment" action="{!saveAndCompleteProcess}" status="spinner" oncomplete="checkError();return false;"
+                reRender="frm,refreshScript">
+                <apex:param name="arg1" value="" assignTo="{!stripeToken}" />
+            </apex:actionFunction>
+            <apex:actionFunction name="prcEnrolmentViaRefId" action="{!SaveAndCompleteProcessViaReferenceId}" status="spinner" oncomplete="checkError();return false;"
+                reRender="frm,refreshScript">
+            </apex:actionFunction>
+            <apex:actionFunction name="backBtn" action="{!backBtnCmp4}" />
+
+
+            <div class="slds-text-heading_large  slds-p-around_small slds-text-align_center" style="font-weight:bold;">Final Confirmation</div>
+            <div class="slds-grid slds-wrap slds-p-around_small sticky" id="myHeader" style="background-color:#f9f9fb; transition:all 0.3s ease-out;">
+                <div class="slds-size_1-of-2 ">
+                    <span>
+                        <a class="slds-button btn-gray slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-p-horizontal_large slds-m-bottom_small"
+                            href="javascript:void(0)" id="back_step1" onclick="backBtn();">Back</a>
+                    </span>
+                </div>
+                <!--                    
+                    <div class="slds-size_1-of-2 slds-text-align_right"><span id="#">
+                        <a class="slds-button btn-yellow slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-m-bottom_small slds-p-horizontal_large" href="javascript:void(0)" id="next_step3" onclick="nextBtn();">Next</a></span>
+                    </div>-->
+            </div>
+
+            <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error slds-hide cmpErrDiv" style="margin-bottom: 6px;"
+                role="alert">
+                <span class="slds-assistive-text">error</span>
+                <span class="slds-icon_container slds-icon-utility-error slds-m-right_x-small" title="Description of icon when needed">
+                    <h2 class="slds-text-heading_small contentErrorDiv"></h2>
+                </span>
+                <div class="slds-notify__close">
+                    <button class="slds-button slds-button_icon slds-button_icon-inverse" title="Close" onclick="$('.cmpErrDiv').addClass('slds-hide');return false;">
+                        X
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                </div>
+            </div>
+            <hr style="margin:0px;" />
+            <div class="slds-p-horizontal_medium slds-p-bottom_xx-large">
+                <div class="slds-grid slds-wrap slds-p-vertical_small">
+                    <div class="slds-size_1-of-2 ">
+                        <h3 class="slds-text-heading_medium slds-text-align_center" style="font-weight:bold;">Customer Details</h3>
+                    </div>
+
+                    <div class="slds-size_1-of-2 slds-text-align_right">
+                        <!--<a class="slds-m-bottom_small slds-p-horizontal_large" href="javascript:void(0)" style="font-weight:bold;" >Edit</a>-->
+                    </div>
+                </div>
+                <hr style="margin: 0px 0px 20px;" />
+                <div class="slds-grid slds-wrap ">
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                        <p class="">
+                            <strong>First Name</strong>
+                        </p>
+                        <div class="box-info m-lg-right">
+                            {!parentAcc.firstName}
+                        </div>
+                    </div>
+
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                        <p class="">
+                            <strong>Last Name</strong>
+                        </p>
+                        <div class="box-info">
+                            {!parentAcc.lastName}
+                        </div>
+                    </div>
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                        <p class="">
+                            <strong>Email</strong>
+                        </p>
+                        <div class="box-info m-lg-right">
+                            {!parentAcc.PersonEmail}
+                        </div>
+                    </div>
+
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                        <p class="">
+                            <strong>Phone</strong>
+                        </p>
+                        <div class="box-info">
+                            {!parentAcc.Phone}
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="slds-text-heading_medium" style="font-weight:bold; display:block; padding-top: 15px;">Instrument Details</h3>
+                <hr style="margin: 10px 0px 0px;" />
+                <div class="slds-grid slds-wrap slds-p-vertical_small">
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                        <p class="">
+                            <strong>Brand</strong>
+                        </p>
+                        <div class="box-info m-lg-right">
+                            {!slcdPiano.brand}
+                        </div>
+                    </div>
+
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                        <p class="">
+                            <strong>Model</strong>
+                        </p>
+                        <div class="box-info">
+                            {!slcdPiano.modelNo}
+                        </div>
+                    </div>
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                        <p class="">
+                            <strong>Serial No.</strong>
+                        </p>
+                        <div class="box-info m-lg-right">
+                            {!slcdPiano.serNo}
+                        </div>
+                    </div>
+
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                        <p class="">
+                            <strong>Rental/Sale Price(GST Inc.)</strong>
+                        </p>
+                        <div class="box-info">
+                            ${!slcdPiano.rentalPrice}/{!slcdPiano.salesPrice}
+                        </div>
+                    </div>
+                </div>
+                <!--     <hr style="margin: 0px 0px 15px;" />
+                   <p class="">This is where the additional comments would go for the parent that adds it. For example, they may include information that the student is on G5 but no longer wants to do exams. </p>
+                    
+                    
+                    <h3 class="slds-text-heading_medium" style="font-weight:bold; display:block; padding-top: 25px;">Instrument Inspection Report</h3>
+                    <hr style="margin: 10px 0px 0px;" />
+                    <br/>
+                    <br/>
+                    <br/>-->
+
+                <h3 class="slds-text-heading_medium " style="font-weight:bold; display:block; padding-top: 25px;">Delivery Details</h3>
+                <hr style="margin: 10px 0px 0px;" />
+                <div class="slds-grid slds-wrap slds-p-vertical_small">
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                        <p class="">
+                            <strong>Postal Code</strong>
+                        </p>
+                        <div class="box-info m-lg-right">
+                            {!parentAcc.BillingPostalCode}
+                        </div>
+                    </div>
+
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                        <p class="">
+                            <strong>City</strong>
+                        </p>
+                        <div class="box-info">
+                            {!parentAcc.BillingCity}
+                        </div>
+                    </div>
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                        <p class="">
+                            <strong>Address</strong>
+                        </p>
+                        <div class="box-info m-lg-right">
+                            {!parentAcc.BillingStreet}
+                        </div>
+                    </div>
+
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                        <p class="">
+                            <strong>Country</strong>
+                        </p>
+                        <div class="box-info">
+                            {!parentAcc.BillingCountryCode}
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-grid slds-wrap slds-p-top_small">
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                        <p class="">
+                            <strong>Residence Type</strong>
+                        </p>
+                        <div class="box-info m-lg-right">
+                            {!slcdEnrolment.House_type__c}
+                        </div>
+                    </div>
+
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                        <p class="">
+                            <strong>Stairs</strong>
+                        </p>
+                        <div class="box-info">
+                            {!nostairs}
+                        </div>
+                    </div>
+                    <apex:variable value="{!1}" var="index" />
+                    <apex:repeat value="{!dtimeslot}" var="dslot">
+                        <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                            <p class="">
+                                <strong>Delivery Option {!index}</strong>
+                            </p>
+                            <div class="box-info m-lg-right">
+                                {!dslot.dttime}
+                            </div>
+                        </div>
+                        <apex:variable value="{!index+1}" var="index" />
+                    </apex:repeat>
+                    <!--
+                        <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                            <p class=""><strong>Delivery Option 2</strong></p>
+                            <div class="box-info" >
+                                8934753589
+                            </div> 
+                        </div>
+                        <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                            <p class=""><strong>Delivery Option 3</strong></p>
+                            <div class="box-info" >
+                                8934753589
+                            </div> 
+                        </div>-->
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                        <p class="">
+                            <strong>Standard Accessories</strong>
+                        </p>
+                        <div class="box-info">
+                            {!slcdEnrolment.Standard_Accessories__c}
+                        </div>
+                    </div>
+
+                </div>
+                <!--<div class="slds-grid slds-wrap">
+                        <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                            <p class=""><strong>Delivery Option 3</strong></p>
+                            <div class="box-info m-lg-right">
+                                Rajesh
+                            </div> 
+                        </div>
+                    </div>-->
+
+                <h3 class="slds-text-heading_medium" style="font-weight:bold; display:block; padding-top: 15px;">Rental/Sales Agreement</h3>
+                <hr style="margin: 10px 0px 0px;" />
+                <!--
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <div class="slds-checkbox"> 
+                                <div class="slds-grid slds-wrap slds-checkbox__label slds-p-vertical_small" for="checkbox-unique-id-72">
+                                    <div class="slds-medium-size_11-of-12">
+                                        <span class="slds-form-element__label ">By Checking this box you agree to all of our policies related to sales and rental of instrument and accept that they may be subject to change. To see our full policies, please see below or click here.</span>
+                                    </div>
+                                    <div class="slds-size_1-of-12">
+                                        <div dir="rtl">
+                                            <div class="slds-form-element">
+                                                <div class="slds-form-element__control">
+                                                    <div class="slds-checkbox slds-text-heading_medium">
+                                                        <apex:inputCheckbox value="{!agreementCheckbox}" id="policyAgree" styleclass="inputchk" />
+                                                        <label class="slds-checkbox__label" for="pg:frm:policyAgree">
+                                                            <span class="slds-checkbox_faux"></span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>-->
+
+                <!--<h3 class="slds-text-heading_small" style="font-weight:bold; display:block; padding-top: 15px;">1. Tuition Fees and frequency of lessons</h3>
+                    <p>By signing up for a trial lesson at Aureus Academy, you will be subscribed to our latest news and updates. By signing up for a trial lesson at Aureus Academy, you will be subscribed to our latest news and updates. By signing up for a trial lesson at Aureus Academy, you will be subscribed to our latest news and updates. By signing up for a trial lesson at Aureus Academy, you will be subscribed to our latest news and updates.</p>
+                    
+                    <h3 class="slds-text-heading_small" style="font-weight:bold; display:block; padding-top: 15px;">2. Security Deposit</h3>
+                    <p>By signing up for a trial lesson at Aureus Academy, you will be subscribed to our latest news and updates.</p>
+                    <div class="slds-box slds-box_small bg-light slds-m-top_large student-policy-class">
+                        <div class="slds-form-element__control">
+                            <div class="terms-info">
+                                <c:PianoRentalPolicyForSg/>
+                            </div>
+                        </div>
+                    </div>-->
+                <div class="policyform">
+                    <div class="slds-grid">
+                        <div class="slds-size_11-of-12">
+                            <p>By checking this box and you agree to all of our policies related to Sales and rental of instruments
+                                and accept that they may be subject to change. To see our full policies, please see below
+                                on click here. </p>
+                        </div>
+                        <div class="slds-size_1-of-12">
+                            <div dir="rtl">
+                                <div class="slds-form-element">
+                                    <div class="slds-form-element__control">
+                                        <div class="slds-checkbox slds-text-heading_medium">
+
+                                            <apex:inputCheckbox value="{!agreementCheckbox}" id="policyAgree" styleclass="inputchk requiredInput" />
+                                            <label class="slds-checkbox__label" for="pg:frm:policyAgree">
+                                                <span class="slds-checkbox_faux"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-box slds-box_small bg-light slds-m-top_large student-policy-class">
+                        <div class="slds-form-element__control">
+                            <div class="terms-info">
+                                <c:PianoRentalPolicyForSg rendered="{!isRentalOrSellType=='Rent'}" />
+                                <c:PianoPurchasePolicyForSg rendered="{!isRentalOrSellType=='Sell'}" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slds-grid slds-grid_align-center slds-p-top_xx-large">
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-medium-size_1-of-2">
+                        <!--<a class="slds-button btn-block slds-button_success  slds-p-around_x-small slds-m-bottom_large" href="#">Click Here to Sign</a>-->
+                        <a class="slds-button btn-block slds-button_success  slds-p-around_x-small slds-m-bottom_large" href="#" id="signAgreementBtn"
+                            onclick="validateCheckbox('customer');return false;">Click Here to Sign</a>
+                        <!--<a class="slds-button btn-block slds-button_success  slds-p-around_x-small slds-m-bottom_large disableButton" href="#" id="signAgreementByAureusBtn" onclick="validateCheckbox('aureusGrp');return false;">Click Here to Aureus Representative Sign</a>-->
+                    </div>
+                </div>
+
+                <h3 class="slds-text-heading_medium" style="font-weight:bold; display:block; padding-top: 15px;">Fees and Charges Summary</h3>
+                <hr style="margin: 10px 0px 0px;" />
+
+                <div class="slds-grid slds-wrap slds-p-top_small">
+                    <div class="slds-size_6-of-12 slds-large-size_1-of-2 slds-p-bottom_small">
+                        <p class="">{!slcdPiano.brand} (Commencement Date)</p>
+                    </div>
+                    <div class="slds-size_6-of-12 slds-large-size_1-of-2 slds-p-bottom_small slds-text-align_right">
+                        <p class="">{!fm.instrumentChrg}</p>
+                    </div>
+                </div>
+                <apex:outputPanel rendered="{!isRentalOrSellType=='Rent'}">
+                    <div class="slds-grid slds-wrap">
+                        <div class="slds-size_6-of-12 slds-large-size_1-of-2 slds-p-bottom_small">
+                             <!-- //Start: nishi: 27-Jul-2020: Existing Student – one month (with any active enrolment) ; 
+                            others – two months
+                            <p class="">Deposit (1-month)</p>
+                            -->
+                            <p class="">Deposit (
+                                <apex:outputText value="{!IF(isAlreadyStripCstmr,'1',' 2')}" />-month)</p>
+                            <!-- //End: nishi: 27-Jul-2020: Existing Student – one month (with any active enrolment) ; others – two months -->
+
+                        </div>
+                        <div class="slds-size_6-of-12 slds-large-size_1-of-2 slds-p-bottom_small slds-text-align_right">
+                            <p class="">${!fm.depFee}</p>
+                        </div>
+                    </div>
+                    <div class="slds-grid slds-wrap">
+                        <div class="slds-size_6-of-12 slds-large-size_1-of-2 slds-p-bottom_small">
+                            <p class="">Delivery Charges (
+                                <apex:outputText value="{!IF(isRentalOrSellType=='Rent',' 2-way',' 1-way')}" />)</p>
+                        </div>
+                        <div class="slds-size_6-of-12 slds-large-size_1-of-2 slds-p-bottom_small slds-text-align_right">
+                            <p class="">${!fm.deliCharges}</p>
+                        </div>
+                    </div>
+                    <div class="slds-grid slds-wrap">
+                        <div class="slds-size_6-of-12 slds-large-size_1-of-2 slds-p-bottom_small">
+                            <p class="">Tuning Fee</p>
+                        </div>
+                        <div class="slds-size_6-of-12 slds-large-size_1-of-2 slds-p-bottom_small slds-text-align_right">
+                            <p class="">${!fm.tuningFee}</p>
+                        </div>
+                    </div>
+                    <div class="slds-grid slds-wrap">
+                        <div class="slds-size_6-of-12 slds-large-size_1-of-2 slds-p-bottom_small">
+                            <p class="">Stair Delivery Charges (
+                                <apex:outputText value="{!IF(isRentalOrSellType=='Rent',' 2-way',' 1-way')}" />, {!nostairs} Steps-${!fm.perStairCharges}/step)</p>
+                        </div>
+                        <div class="slds-size_6-of-12 slds-large-size_1-of-2 slds-p-bottom_small slds-text-align_right">
+                            <p class="">${!fm.stairDelCharges}</p>
+                        </div>
+                    </div>
+                    <div class="slds-grid slds-wrap">
+                        <div class="slds-size_6-of-12 slds-large-size_1-of-2 slds-p-bottom_small">
+                            <p class="">Heating Rod Installation (Free)</p>
+                        </div>
+                        <div class="slds-size_6-of-12 slds-large-size_1-of-2 slds-p-bottom_small slds-text-align_right">
+                            <p class="">${!fm.heatingRodInsFee}</p>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+                <div class="slds-grid slds-wrap slds-p-top_small">
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-2 ">
+
+                    </div>
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                        <p class="box-price">
+                            <strong>Total
+                                <span style="float:right;">${!fm.totFee}</span>
+                            </strong>
+                        </p>
+                        <p class="box-price">
+                            <strong>GST
+                                <span style="float:right;">${!fm.gstAmt}</span>
+                            </strong>
+                        </p>
+                        <p class="box-price">
+                            <strong>Grand Total
+                                <span style="float:right;">${!fm.grandTot}</span>
+                            </strong>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </apex:form>
+
+        <apex:form id="payment">
+            <apex:outputPanel rendered="{!isAlreadyStripCstmr}">
+                <!-- jatin: 20-feb-2020: start :for manage offline and online card payment if customer click  'rental to  purchase' -->
+
+                <!-- jatin: 20-feb-2020: start :for manage if customer click  'rental' button then worked(as previously worked)-->
+                <apex:outputPanel rendered="{!if(isRentalOrSellType=='Rent',true,false)}">
+                    <div class="slds-form-element">
+                        <div class="slds-grid slds-wrap">
+                            <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                <div class="slds-form-element  m-lg-right">
+                                    <div class="slds-form-element__control">
+                                        <div>
+                                            <strong>Card Info</strong>
+                                            <apex:outputText value="{!cardImage}" escape="false" /> x {!cardNumber}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="slds-grid slds-grid_align-center slds-p-top_x-large" style="padding-bottom:80px;">
+                            <div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-medium-size_1-of-2">
+                                <div class="slds-form-element">
+                                    <div class="slds-form-element__control">
+                                        <a onclick="paymentNow();return false;" id="payNowAlrdyCstmr" style="color: white;" class="slds-button btn-block slds-button_success  slds-p-around_x-small slds-m-bottom_large disableButton">
+                                            Confirm
+                                            <apex:outputText value="{!IF(isRentalOrSellType=='Rent',' Rental',' Purchase')}" />
+                                            <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
+                                                <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
+                                                    <use fill="White" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#chevronright')}"
+                                                    />
+                                                </svg>
+                                            </span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+                <!-- jatin: 20-feb-2020: end :for manage if customer click  'rental' button then worked(as previously worked)-->
+
+                <!-- jatin: 20-feb-2020: start :for manage if customer click  'purchase' button then  manage offline and online card payment-->
+                <apex:outputPanel rendered="{!if(isRentalOrSellType=='Rent',false,true)}">
+                    <div id="pamentMethod" style="padding-bottom: 68px;">
+                        <div class="slds-form-element slds-p-around_x-large" id="showCardOptionsNowAlrdyCstmr">
+                            <article class="slds-card mainContainer">
+                                <div class="slds-card__header slds-grid slds-box" style="background: rgba(221, 219, 218, 0.29);">
+                                    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                        <div class="slds-media__body">
+                                            <h2 class="slds-card__header-title">
+                                                <span>Payment Card Methods</span>
+                                            </h2>
+                                        </div>
+                                    </header>
+                                </div>
+                                <div class="slds-card__body slds-card__body_inner slds-p-around_medium ">
+                                    <div class="slds-form-element__control slds-grid slds-wrap">
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_3-of-12 slds-grid slds-wrap">
+                                            <span class="slds-radio slds-size_1-of-1">
+                                                <input id="viaCardNowAlrdyCstmr" name="paymentMethod" onclick="selectedPaymentMethodNowAlrdyCstmr();" type="radio" value="viaCard"
+                                                />
+                                                <label class="slds-radio__label" for="viaCardNowAlrdyCstmr">
+                                                    <span class="slds-radio_faux"></span>
+                                                    <span class="slds-form-element__label">Payment Via Card</span>
+                                                </label>
+                                            </span>
+                                            <span class="slds-radio slds-size_1-of-1">
+                                                <input id="viaRefIdNowAlrdyCstmr" name="paymentMethod" onclick="selectedPaymentMethodNowAlrdyCstmr();" type="radio" value="viaRefId"
+                                                    maxlength="20" />
+                                                <label class="slds-radio__label" for="viaRefIdNowAlrdyCstmr">
+                                                    <span class="slds-radio_faux"></span>
+                                                    <span class="slds-form-element__label">Payment Via Offline Card</span>
+                                                </label>
+                                            </span>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_9-of-12  ">
+                                            <div class="slds-form-element slds-p-bottom_xx-large slds-box slds-hide" id="showRefDetailsNowAlrdyCstmr">
+                                                <div class="slds-card__header slds-grid slds-box">
+                                                    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                                        <div class="slds-media__body">
+                                                            <h2 class="slds-card__header-title">
+                                                                <span>Add Offline Card Details</span>
+                                                            </h2>
+                                                        </div>
+                                                    </header>
+                                                </div>
+                                                <div class="slds-card__body slds-card__body_inner slds-p-around_medium ">
+                                                    <div class="slds-form-element slds-size_1-of-1 ">
+                                                        <label class="slds-form-element__label">Enter Charge Id
+                                                            <abbr class="slds-required slds-m-horizontal_none" title="required" style="cursor: default;">* </abbr>
+                                                        </label>
+                                                        <div class="slds-form-element__control">
+                                                            <apex:inputText value="{!customerRefId}" styleclass="slds-input inputtxt parNameCls" maxlength="30" />
+                                                        </div>
+                                                        <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                    </div>
+                                                    <!-- addedby jatin: 19-feb-2020 :start:  add Payment mode for Offline cards-->
+                                                    <div class="slds-form-element slds-size_1-of-1">
+                                                        <label class="slds-form-element__label f-title">Payment Mode
+                                                            <abbr class="slds-required" title="required">* </abbr>
+                                                        </label>
+                                                        <div class="slds-form-element__control">
+                                                            <div class="slds-select_container">
+                                                                <apex:selectList id="paymentType" value="{!paymentType}" size="1" styleclass="slds-select inputsel">
+                                                                    <apex:selectOptions value="{!PaymentTypePicklist}" />
+                                                                </apex:selectList>
+                                                            </div>
+                                                            <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                        </div>
+                                                    </div>
+                                                    <!-- addedby jatin: 19-feb-2020 :end:  add Payment mode for Offline cards-->
+                                                </div>
+                                                <div class="slds-grid slds-wrap slds-grid--align-spread slds-size_1-of-1">
+                                                    <div class="slds-col slds-size_1-of-1  slds-p-horizontal_medium">
+                                                        <a class="slds-button btn-block slds-button_success  slds-p-around_x-small slds-m-bottom_large disableButton" id="payViaRefIdNowAlrdyCstmrBtn"
+                                                            onclick="createInvoiceViaRefId();return false;">
+                                                            Confirm
+                                                            <apex:outputText value="{!IF(isRentalOrSellType=='Rent',' Rental',' Purchase')}" />
+                                                            <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
+                                                                <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
+                                                                    <use fill="White" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#chevronright')}"
+                                                                    />
+                                                                </svg>
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="slds-form-element slds-p-bottom_xx-large slds-box slds-hide" id="showCardDetailsNowAlrdyCstmr">
+                                                <div class="slds-card__header slds-grid slds-box">
+                                                    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                                        <div class="slds-media__body">
+                                                            <h2 class="slds-card__header-title">
+                                                                <span>Add Card Details</span>
+
+                                                            </h2>
+                                                        </div>
+                                                    </header>
+                                                </div>
+                                                <div class="slds-card__body slds-card__body_inner">
+                                                    <div class="slds-col dark-bg billig-info slds-grid">
+                                                        <ul class="slds-grid slds-wrap slds-size_1-of-1">
+                                                            <li class="slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                                <strong>Card Info</strong>
+                                                                <apex:outputText value="{!cardImage}" escape="false" /> x {!cardNumber}
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                                <div class="slds-grid slds-wrap slds-grid--align-spread slds-size_1-of-1">
+                                                    <div class="slds-col slds-size_1-of-1  slds-p-horizontal_medium">
+                                                        <a onclick="paymentNow();return false;" id="payNowAlrdyCstmr" style="color: white;" class="slds-button btn-block slds-button_success  slds-p-around_x-small slds-m-bottom_large disableButton">
+                                                            Confirm
+                                                            <apex:outputText value="{!IF(isRentalOrSellType=='Rent',' Rental',' Purchase')}" />
+                                                            <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
+                                                                <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
+                                                                    <use fill="White" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#chevronright')}"
+                                                                    />
+                                                                </svg>
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+                <!-- jatin: 20-feb-2020: end :for manage if customer click  'purchase' button then  manage offline and online card payment-->
+
+                <!-- jatin: 20-feb-2020: start :for manage offline and online card payment if customer click  'rental to  purchase' -->
+            </apex:outputPanel>
+
+            <apex:outputPanel rendered="{!!isAlreadyStripCstmr}">
+                <!-- jatin: 20-feb-2020: start :for manage offline and online card payment if customer click  'rental to  purchase' -->
+
+                <!-- jatin: 20-feb-2020: start :for manage if customer click  'rental' button then worked(as previously worked)-->
+                <apex:outputPanel rendered="{!if(isRentalOrSellType=='Rent',true,false)}">
+                    <form method="post" id="payment-form">
+                        <div class="slds-p-around_small slds-col slds-size_1-of-1 slds-p-horizontal_medium" style="background-color: #f2f2f2;">
+                            <p>
+                                <b>Card Detail</b>
+                            </p>
+                            <p style="padding:8px 0px;">The payment methods accepted at Aureus Academy are credit cards via Visa, Mastercard, and American
+                                Express.
+                            </p>
+                            <div id="card-element">
+                            </div>
+                            <div id="card-errors" role="alert"></div>
+                        </div>
+
+                        <div class="slds-grid slds-grid_align-center slds-p-vertical_x-large">
+                            <div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-medium-size_1-of-2">
+                                <!--<button id="payBtn" class="slds-button btn-block slds-button_success  slds-p-around_x-small slds-m-bottom_large disableButton" >-->
+                                <button id="payBtn" class="slds-button btn-block slds-button_success slds-p-around_x-small slds-m-bottom_large disableButton"
+                                    style="color: white;">
+                                    Confirm
+                                    <apex:outputText value="{!IF(isRentalOrSellType=='Rent',' Rental',' Purchase')}" />
+                                    <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
+                                        <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
+                                            <use fill="White" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#chevronright')}"
+                                            />
+                                        </svg>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </apex:outputPanel>
+                <!-- jatin: 20-feb-2020: end :for manage if customer click  'rental' button then worked(as previously worked)-->
+
+                <!-- jatin: 20-feb-2020: start :for manage if customer click  'purchase' button then  manage offline and online card payment-->
+                <apex:outputPanel rendered="{!if(isRentalOrSellType=='Rent',false,true)}">
+                    <div id="pamentMethod" style="padding-bottom: 68px;">
+                        <div class="slds-form-element slds-p-around_x-large" id="showCardOptionsNowAlrdyCstmr">
+                            <article class="slds-card mainContainer">
+                                <div class="slds-card__header slds-grid slds-box" style="background: rgba(221, 219, 218, 0.29);">
+                                    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                        <div class="slds-media__body">
+                                            <h2 class="slds-card__header-title">
+                                                <span>Payment Card Methods</span>
+                                            </h2>
+                                        </div>
+                                    </header>
+                                </div>
+                                <div class="slds-card__body slds-card__body_inner slds-p-around_medium ">
+                                    <div class="slds-form-element__control slds-grid slds-wrap">
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_3-of-12 slds-grid slds-wrap">
+                                            <span class="slds-radio slds-size_1-of-1">
+                                                <input id="viaCardNowAlrdyCstmr" name="paymentMethod" onclick="selectedPaymentMethodNowAlrdyCstmr();" type="radio" value="viaCard"
+                                                />
+                                                <label class="slds-radio__label" for="viaCardNowAlrdyCstmr">
+                                                    <span class="slds-radio_faux"></span>
+                                                    <span class="slds-form-element__label">Payment Via Card</span>
+                                                </label>
+                                            </span>
+                                            <span class="slds-radio slds-size_1-of-1">
+                                                <input id="viaRefIdNowAlrdyCstmr" name="paymentMethod" onclick="selectedPaymentMethodNowAlrdyCstmr();" type="radio" value="viaRefId"
+                                                    maxlength="20" />
+                                                <label class="slds-radio__label" for="viaRefIdNowAlrdyCstmr">
+                                                    <span class="slds-radio_faux"></span>
+                                                    <span class="slds-form-element__label">Payment Via Offline Card</span>
+                                                </label>
+                                            </span>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_9-of-12  ">
+                                            <div class="slds-form-element slds-p-bottom_xx-large slds-box slds-hide" id="showRefDetailsNowAlrdyCstmr">
+                                                <div class="slds-card__header slds-grid slds-box">
+                                                    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                                        <div class="slds-media__body">
+                                                            <h2 class="slds-card__header-title">
+                                                                <span>Add Offline Card Details</span>
+                                                            </h2>
+                                                        </div>
+                                                    </header>
+                                                </div>
+                                                <div class="slds-card__body slds-card__body_inner slds-p-around_medium ">
+                                                    <div class="slds-form-element slds-size_1-of-1 ">
+                                                        <label class="slds-form-element__label">Enter Charge Id
+                                                            <abbr class="slds-required slds-m-horizontal_none" title="required" style="cursor: default;">* </abbr>
+                                                        </label>
+                                                        <div class="slds-form-element__control">
+                                                            <apex:inputText value="{!customerRefId}" styleclass="slds-input inputtxt parNameCls" maxlength="30" />
+                                                        </div>
+                                                        <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                    </div>
+                                                    <!-- addedby jatin: 19-feb-2020 :start:  add Payment mode for Offline cards-->
+                                                    <div class="slds-form-element slds-size_1-of-1">
+                                                        <label class="slds-form-element__label f-title">Payment Mode
+                                                            <abbr class="slds-required" title="required">* </abbr>
+                                                        </label>
+                                                        <div class="slds-form-element__control">
+                                                            <div class="slds-select_container">
+                                                                <apex:selectList value="{!paymentType}" size="1" styleclass="slds-select inputsel">
+                                                                    <apex:selectOptions value="{!PaymentTypePicklist}" />
+                                                                </apex:selectList>
+                                                            </div>
+                                                            <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                        </div>
+                                                    </div>
+                                                    <!-- addedby jatin: 19-feb-2020 :end:  add Payment mode for Offline cards-->
+                                                </div>
+                                                <div class="slds-grid slds-wrap slds-grid--align-spread slds-size_1-of-1">
+                                                    <div class="slds-col slds-size_1-of-1  slds-p-horizontal_medium">
+                                                        <a class="slds-button btn-block slds-button_success  slds-p-around_x-small slds-m-bottom_large disableButton" id="payViaRefIdNowAlrdyCstmrBtn"
+                                                            onclick="createInvoiceViaRefId();return false;">Confirm
+                                                            <apex:outputText value="{!IF(isRentalOrSellType=='Rent',' Rental',' Purchase')}" />
+                                                            <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
+                                                                <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
+                                                                    <use fill="White" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#chevronright')}"
+                                                                    />
+                                                                </svg>
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="slds-form-element slds-p-bottom_xx-large slds-box slds-hide" id="showCardDetailsNowAlrdyCstmr">
+                                                
+                                                    <div class="slds-card__header slds-grid slds-box">
+                                                        <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                                            <div class="slds-media__body">
+                                                                <h2 class="slds-card__header-title">
+                                                                    <span>Add Card Details</span>
+
+                                                                </h2>
+                                                            </div>
+                                                        </header>
+                                                    </div>
+                                                    <div class="slds-card__body slds-card__body_inner">
+
+                                                        <form method="post" id="payment-form">
+                                                            <div class="slds-p-around_small slds-col slds-size_1-of-1 slds-p-horizontal_medium" style="background-color: #f2f2f2;">
+                                                                <p>
+                                                                    <b>Card Detail</b>
+                                                                </p>
+                                                                <p style="padding:8px 0px;">The payment methods accepted at Aureus Academy are credit cards via Visa, Mastercard, and American
+                                                                    Express.
+                                                                </p>
+                                                                <div id="card-element">
+                                                                </div>
+                                                                <div id="card-errors" role="alert"></div>
+                                                            </div>
+                                    
+                                                            <div class="slds-grid slds-grid_align-center slds-p-vertical_x-large">
+                                                                <div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-medium-size_1-of-2">
+                                                                    <!--<button id="payBtn" class="slds-button btn-block slds-button_success  slds-p-around_x-small slds-m-bottom_large disableButton" >-->
+                                                                    <button id="payBtn" class="slds-button btn-block slds-button_success slds-p-around_x-small slds-m-bottom_large disableButton"
+                                                                        style="color: white;">
+                                                                        Confirm
+                                                                        <apex:outputText value="{!IF(isRentalOrSellType=='Rent',' Rental',' Purchase')}" />
+                                                                        <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
+                                                                            <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
+                                                                                <use fill="White" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#chevronright')}"
+                                                                                />
+                                                                            </svg>
+                                                                        </span>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+                <!-- jatin: 20-feb-2020: end :for manage if customer click  'purchase' button then  manage offline and online card payment-->
+            </apex:outputPanel>
+        </apex:form>
+        <div id="modalForDocument" style="height:640px" class="slds-hide">
+            <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open slds-modal_medium" aria-labelledby="modal-heading-01"
+                aria-modal="true" aria-describedby="modal-content-id-1">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick="$('#modalForDocument').addClass('slds-hide');">
+                            <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                                <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#close')}"
+                                />
+                            </svg>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate"></h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <apex:outputPanel id="framePanel">
+                            <apex:iframe src="https://app.pandadoc.com/s/{!sessionId}" height="500px" width="100%"></apex:iframe>
+                        </apex:outputPanel>
+                    </div>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </div>
+
+        <!--  <div class="slds-grid slds-wrap slds-p-top_small">            
+                <div class="slds-size_1-of-1 slds-large-size_6-of-12 slds-p-bottom_small">
+                    <p class="m-lg-right"><input type="text" id="text-input-id-1" required="" class="slds-input " placeholder="Credit Card Details" /></p>
+                </div>
+                <div class="slds-size_1-of-1 slds-large-size_3-of-12 slds-p-bottom_small">
+                    <p class="m-lg-right"> <input type="text" id="text-input-id-1" required="" class="slds-input m-lg-right" placeholder="MM/YYYY" /></p>
+                </div>
+                <div class="slds-size_1-of-1 slds-large-size_3-of-12 slds-p-bottom_small">
+                    <p class="m-lg-right"><input type="text" id="text-input-id-1" required="" class="slds-input" placeholder="CVC" /> </p>
+                </div>
+            </div>
+            
+            <hr style="margin:20px 0px;" />
+            <div class="slds-grid slds-grid_align-center slds-p-top_small">
+                <div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-medium-size_1-of-2">
+                    <a class="slds-button btn-block slds-button_success  slds-p-around_x-small slds-m-bottom_large" href="#">Confirm Rental / Purchase</a>
+                </div>
+            </div>-->
+        <apex:outputPanel id="refreshScript">
+            <script>
+                var eventMethod = window.addEventListener ? 'addEventListener' : 'attachEvent',
+                    messageEvent = eventMethod === 'attachEvent' ? 'onmessage' : 'message';
+
+                window[eventMethod](messageEvent, function (e) {
+                    if (e && e.data) {
+                        try {
+                            var message = JSON.parse(e.data);
+                            if (message && message.event) {
+                                console.log(message.event, message.data);
+                                if (message.event == 'session_view.document.completed') {
+                                    hideModal();
+                                }
+                            }
+                        } catch (e) {
+                            console.log(e);
+                        }
+                    }
+                }, false);
+
+                var stripe = Stripe('{!apiKey}');
+
+                var elements = stripe.elements();
+                var style = {
+                    base: {
+                        color: '#32325d',
+                        fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                        fontSmoothing: 'antialiased',
+                        fontSize: '16px',
+                        '::placeholder': {
+                            color: '#aab7c4'
+                        }
+                    },
+                    invalid: {
+                        color: '#fa755a',
+                        iconColor: '#fa755a'
+                    }
+                };
+                var card = elements.create('card', { style: style, hidePostalCode: true });
+                card.mount('#card-element');
+                card.addEventListener('change', function (event) {
+                    var displayError = document.getElementById('card-errors');
+                    if (event.error) {
+                        console.log(event.error);
+                        displayError.textContent = event.error.message;
+                    } else {
+                        displayError.textContent = '';
+                    }
+                });
+
+                // Handle form submission.
+                var form = document.getElementById('pg:payment');//document.getElementById('payment-form');
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault();
+
+                    //   alert('result token ');
+                    //Added by Rajesh 26th June 2019, for disable pay button on submit button
+                    //  disablePayBtn(true);
+
+                    stripe.createToken(card).then(function (result) {
+                        console.log('result token ', result);
+
+                        if (result.error) {
+                            var errorElement = document.getElementById('card-errors');
+                            errorElement.textContent = result.error.message;
+
+                            //Added by Rajesh 26th June 2019, for enable pay button if any card error 
+                            disablePayBtn(false);
+                        } else {
+                            //document.getElementById('pg:spinner.start').style.display = 'block';
+                            stripeTokenHandler(result.token);
+                        }
+                    });
+
+                });
+                
+                
+                function stripeTokenHandler(token) {
+                    var form = document.getElementById('pg:payment');//document.getElementById('payment-form');
+                    var hiddenInput = document.createElement('input');
+                    hiddenInput.setAttribute('type', 'hidden');
+                    hiddenInput.setAttribute('name', 'stripeToken');
+                    hiddenInput.setAttribute('value', token.id);
+                    form.appendChild(hiddenInput);
+                    console.log(token.card.id);
+
+                    var checkErr = checkErrorOnSummaryPage();
+                    //var checkErr = false;
+
+                    if (!checkErr) {
+                        //Added by Rajesh 26th June 2019, for disable pay button if no error on page validation 
+                        //  disablePayBtn(true);
+
+                        // var concatePhoneNo = '+' + $('[class$=btn-cc]').html().match(/\d+/);
+                        //concatePhoneNo += $('[id$=phoneNumber]').val();
+                        //alert(token.id);
+                        console.log('getStripeId',getStripeId);
+                        if(getStripeId == false){
+                            getStripeId = true;
+                            prcEnrolment(token.id);
+                        }
+                    } else {
+                        $('#payBtn').before('<div class="slds-form-element__help errortxt" style="color:#F44336">Please fill all mandatory fields.</div>');
+                        //Added by Rajesh 26th June 2019, for enable pay button if any error 
+                        disablePayBtn(false);
+                    }
+                }
+
+                function checkErrorOnSummaryPage() {
+                    var isErr = false;
+
+                    $('.errortxt').remove();
+                    $('.inputchk').each(function () {
+                        if (!$(this).prop('checked')) {
+                            $(this).parent().parent().after('<div class="slds-form-element__help errortxt" style="color:#F44336">This field is required</div>');
+                            isErr = true;
+                        }
+                    });
+                    return isErr;
+
+                    /*   $('.inputchk').each(function(){
+                        
+                        if(!$(this).prop('checked')){
+                            $(this).parent().parent().parent().addClass('slds-has-error');
+                            $(this).parent().parent().next().removeClass('slds-hide');
+                            isErr = true;        
+                        }else{
+                            $(this).parent().parent().parent().removeClass('slds-has-error');
+                            $(this).parent().parent().next().addClass('slds-hide');
+                        }
+                    });
+                    $('.errortxt').remove();
+                    $('.requiredInput').each(function(){
+                          $(this).css('border-left','1px solid #dddbda');
+                          $(this).css('border-left','1px solid #F44336');
+                          if(!$(this).val()){
+                              $(this).after('<div class="slds-form-element__help errortxt" style="color:#F44336">This field is required</div>');
+                              $(this).css('border','1px solid #F44336');
+                              isErr = true;
+                          }
+                    });
+                    
+                     $('.inputchk').each(function(){                              
+                        if(!$(this).prop('checked')){
+                            $(this).parent().parent().after('<div class="slds-form-element__help errortxt" style="color:#F44336">This field is required</div>');
+                            isErr = true;        
+                        }
+                     });*/
+
+                    /* var today = new Date();
+                    var birthDate = $('[id$=datepicker]').val();
+                    var temoBirthDay = birthDate.split('/');
+                    var birthDay = new Date(temoBirthDay[2], temoBirthDay[1]-1, temoBirthDay[0])
+                    
+                    if(birthDay>today){                              
+                        $('[id$=datepicker]').after('<div class="slds-form-element__help errortxt" style="color:#F44336">Birthdate should not be in future.</div>');
+                        isErr = true;  
+                    }*/
+
+                    //return isErr;
+                }
+
+                /* function calculate_age(dob) { 
+                    var diff_ms = Date.now() - dob.getTime();
+                    var age_dt = new Date(diff_ms); 
+                    
+                    return Math.abs(age_dt.getUTCFullYear() - 1970);
+                }
+                */
+                function checkError() {
+                    var isErrOnSave = '{!isError}';
+
+                    if (isErrOnSave == 'true') {
+                        //Added by Rajesh 26th June 2019, for enable pay button if any error
+                        disablePayBtn(false);
+
+                        $('.cmpErrDiv').removeClass('slds-hide');
+                        $('.contentErrorDiv').html('{!errorMsg}');
+                    } else {
+                        $('.cmpErrDiv').addClass('slds-hide');
+                    }
+                }
+
+                //Added by Rajesh 26th June 2019, for enable/disable pay button for stop double click
+                function disablePayBtn(isDisable) {
+                    if (isDisable)
+                        $('#payBtn').css('pointer-events', 'none');
+                    else
+                        $('#payBtn').css('pointer-events', '');
+                }
+
+                function showHideSections(element, currentEle) {
+                    console.log('@@@element', element);
+                    $("." + element).slideToggle(1000);
+                    $(currentEle).toggleClass("fa-angle-up fa-angle-down");
+
+                }
+
+                function showModal() {
+                    //alert('show model');
+                    $('#modalForDocument').removeClass('slds-hide');
+                }
+
+                function hideModal() {
+                    $('#signAgreementBtn').addClass('disableButton');
+                    // $('#signAgreementByAureusBtn').removeClass('disableButton');  
+                    $('#modalForDocument').addClass('slds-hide');
+                    $('#payBtn').removeClass('disableButton');
+                    $('#payNowAlrdyCstmr').removeClass('disableButton');
+                    $('#payViaRefIdNowAlrdyCstmrBtn').removeClass('disableButton');
+
+                    $('#payAmericanCstmr').removeClass('disableButton');
+                }
+
+                function paymentNow() {
+                    //$('#payNowAlrdyCstmr').css('pointer-events', 'none');                          
+                    var checkErr = checkErrorOnSummaryPage();
+
+                    //var checkErr = false;
+                    if (!checkErr) {
+                        if(getStripeId == false){
+                            getStripeId = true;
+                            prcEnrolment('');
+                        }
+                    } else {
+                        $('#payNowAlrdyCstmr').before('<div class="slds-form-element__help errortxt" style="color:#F44336">Please fill all mandatory fields.</div>');
+                        $('#payNowAlrdyCstmr').css('pointer-events', '');
+                    }
+                }
+                /* 
+       function completeEnrolmentNow(){
+           $('#payAmericanCstmr').css('pointer-events', 'none');                          
+           var checkErr = checkErrorOnSummaryPage();
+           
+           if(!checkErr){
+               saveParentStudents('');
+           }else{
+               $('#payAmericanCstmr').before('<div class="slds-form-element__help errortxt" style="color:#F44336">Please fill all mandatory fields.</div>');
+               $('#payAmericanCstmr').css('pointer-events', '');
+           }
+       }
+ 
+       function sendEmail(){
+           var blockingHour = {!$Label.Enrolment_expiry_period};
+           var confirmMessage = 'Please note this action will block the timeslot for '+blockingHour+' hours. Do you still want  to send an email';
+           if (confirm(confirmMessage)) {
+               blockSlotAndSendEmail(); 
+           }
+       }
+ 
+     function checkRequiredPostalCode(cntryVal){
+         if(cntryVal && cntryVal == 'HK'){
+             $('.postalCode').removeClass('requiredInput');
+             $('.address').css('background-color', '#fff');
+             $('.city').css('background-color', '#fff');
+         }else{
+             $('.postalCode').addClass('requiredInput');
+             $('.address').css('background-color', '#e0dddb');
+             $('.city').css('background-color', '#e0dddb');
+         }
+     }*/
+
+                function waitForTwoSecond() {
+                    setTimeout(function () {
+                        waitAgreement();
+                    }, 2000);
+                }
+
+                function validateCheckbox(signBy) {
+                    var isErr = false;
+
+                    $('.errortxt').remove();
+                    $('.inputchk').each(function () {
+                        if (!$(this).prop('checked')) {
+                            $(this).parent().parent().after('<div class="slds-form-element__help errortxt" style="color:#F44336">This field is required</div>');
+                            isErr = true;
+                        }
+                    });
+
+                    if (!isErr) {
+                        if (signBy == 'customer')
+                            updateCustomer();
+                        else
+                            createSessForAureusRep();
+                    }
+                }
+            </script>
+        </apex:outputPanel>
+        <script>
+            var getStripeId = false;
+            /* 20-Feb-2020:jatin:start: show model for payment via online and offline card */
+            function selectedPaymentMethodNowAlrdyCstmr() {
+                $.each($("input[name='paymentMethod']:checked"), function () {
+                    console.log($(this).val());
+                    if ($(this).val() == 'viaRefId') {
+                        $('#showRefDetailsNowAlrdyCstmr').removeClass('slds-hide');
+                        $('#showCardDetailsNowAlrdyCstmr').addClass('slds-hide');
+                    } else if ($(this).val() == 'viaCard') {
+                        $('#showCardDetailsNowAlrdyCstmr').removeClass('slds-hide');
+                        $('#showRefDetailsNowAlrdyCstmr').addClass('slds-hide');
+                    }
+                });
+            }
+            /* 20-Feb-2020:jatin:end: show model for payment via online and offline card */
+
+            /* 20-Feb-2020:jatin:start: for payment via  offline card with reference id*/
+            function createInvoiceViaRefId() {
+                var refIdValExist = false;
+                $('.inputtxt').each(function () {
+                    if (!$(this).val()) {
+                        $(this).parent().parent().addClass('slds-has-error');
+                        $(this).parent().next().removeClass('slds-hide');
+                        refIdValExist = true;
+                    } else {
+                        $(this).parent().parent().removeClass('slds-has-error');
+                        $(this).parent().next().addClass('slds-hide');
+                    }
+                });
+                // 20-feb-2020: for check select list is selected or not
+                $('.inputsel').each(function () {
+                    if (!$(this).val()) {
+                        $(this).parent().parent().addClass('slds-has-error');
+                        $(this).parent().next().removeClass('slds-hide');
+                        refIdValExist = true;
+                    } else {
+                        $(this).parent().parent().removeClass('slds-has-error');
+                        $(this).parent().next().addClass('slds-hide');
+                    }
+                })
+                if (!refIdValExist) {
+                    prcEnrolmentViaRefId();
+                }
+            }
+        /* 20-Feb-2020:jatin:end: for payment via  offline card with reference id*/
+        </script>
+    </body>
+
+    </html>
+</apex:page>

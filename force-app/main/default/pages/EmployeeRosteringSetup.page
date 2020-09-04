@@ -1,0 +1,983 @@
+<apex:page lightningStylesheets="true" standardStylesheets="false" controller="EmployeeRosteringSetupController"> 
+    <html xmlns:xlink="http://www.w3.org/1999/xlink">
+        <head>
+            <!-- full calender link -->
+            <apex:stylesheet value="{!URLFOR($Resource.RosteringSetup, '/Rostering/css/fullcalendar.min.css')}" />
+            <apex:stylesheet value="{!URLFOR($Resource.RosteringSetup, '/Rostering/css/daterangepicker.css')}" />
+            <apex:stylesheet value="{!URLFOR($Resource.RosteringSetup, '/Rostering/css/scheduler.min.css')}" />
+            <apex:includeScript value="{!URLFOR($Resource.RosteringSetup, '/Rostering/js/jquery.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.RosteringSetup, '/Rostering/js/moment.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.RosteringSetup, '/Rostering/js/fullcalendar.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.RosteringSetup, '/Rostering/js/scheduler.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.RosteringSetup, '/Rostering/js/daterangepicker.min.js')}" />
+            <apex:slds />
+            <style>
+                 .fc-head{
+                    background:#F3F2F2 !important;
+                    position: fixed;
+                    width: 100%;
+                    z-index: 999;
+                }
+                .fc-body{
+                    position: absolute;
+                    width: 100%;
+                    z-index: 1;
+                    padding-top:30px;
+                }
+                
+                .fc-view{
+                    top:60px;
+                }
+                
+                .fc-header-toolbar{
+                    position: fixed;
+                    width: 100%;
+                    z-index: 999;
+                }
+                
+                .fullday_Regular_Hours{ 
+                    background: {!settings.Regular_Hours_Color__c} !important;
+                    border-color: {!settings.Regular_Hours_Color__c}; 
+                }
+                .fullday_Opening_Hours{ 
+                    background: {!settings.Opening_Hours_Color__c} !important;
+                    border-color: {!settings.Opening_Hours_Color__c}; 
+                }
+                .fullday_Closing_Hours{ 
+                    background: {!settings.Closing_Hours_Color__c} !important;
+                    border-color: {!settings.Closing_Hours_Color__c}; 
+                }
+                .fullday_Exam_Day{ 
+                    background: {!settings.Exam_Day_Color__c} !important;
+                    border-color: {!settings.Exam_Day_Color__c}; 
+                }
+                .halfday_Regular_Hours{ 
+                    background: linear-gradient(100deg, {!settings.Regular_Hours_Color__c}, transparent);
+                    border-color: {!settings.Regular_Hours_Color__c}; 
+                }
+                .halfday_Opening_Hours{ 
+                    background: linear-gradient(100deg,  {!settings.Opening_Hours_Color__c}, transparent);
+                    border-color: {!settings.Opening_Hours_Color__c}; 
+                }
+                .halfday_Closing_Hours{ 
+                    background: linear-gradient(100deg, {!settings.Closing_Hours_Color__c}, transparent);
+                    border-color: {!settings.Closing_Hours_Color__c}; 
+                }
+                .halfday_Exam_Day{ 
+                    background: linear-gradient(100deg, {!settings.Exam_Day_Color__c} , transparent);
+                    border-color: {!settings.Exam_Day_Color__c} ; 
+                }
+                
+                .halfday_Sick_Leave{ 
+                    background: linear-gradient(100deg, {!settings.Sick_Leave_Event_Color__c} , transparent);
+                    border-color: {!settings.Sick_Leave_Event_Color__c}; 
+                }
+                .fullday_Sick_Leave{ 
+                    background: {!settings.Sick_Leave_Event_Color__c} !important;
+                    border-color: {!settings.Sick_Leave_Event_Color__c} ; 
+                }
+                .halfday_Other_Leave{ 
+                    background: linear-gradient(100deg, {!settings.Leave_Event_Color__c}, transparent);
+                    border-color: {!settings.Leave_Event_Color__c}; 
+                }
+                .fullday_Other_Leave{ 
+                    background: {!settings.Leave_Event_Color__c} !important;
+                    border-color: {!settings.Leave_Event_Color__c} ; 
+                }
+                
+                .event-highlight_halfday{ 
+                    background: linear-gradient(100deg, lightcoral , transparent);
+                    border-color: lightcoral !important; 
+                }
+                .event-public-holiday{ 
+                    background-color: #827c7c !important;
+                    border-color: #827c7c !important; 
+                }
+                .event-highlight_fullday{ 
+                    background-color: lightcoral !important; 
+                    border-color: lightcoral !important; 
+                }
+                .event-not-highlight_halfday{ 
+                    background: linear-gradient(100deg, cornflowerblue, transparent); 
+                    border-color: cornflowerblue !important; 
+                }
+                .event-not-highlight_fullday{ 
+                    background-color: cornflowerblue !important; 
+                    border-color: cornflowerblue !important; 
+                }
+                .lookupInput {
+                    display: flex !important;
+                }
+                .lookupInput input {
+                    width: 100% !important;
+                }
+                .lookupInput a {
+                    width: 1% !important;padding: 0px !important;
+                }
+                .event-not-highlight{ 
+                    background-color: #80808021 !important; 
+                    border-color: #80808021 !important; 
+                }
+                .event-highlight{ 
+                    background-color: #f79c1a6b !important; 
+                    border-color: #f79c1a6b !important; 
+                }
+                body{
+                    margin: 0px !important;
+                }
+                .fc-center h2, .fc-left{
+                    padding-top: 10px;
+                    font-size: 15px;
+                }
+                .fc-toolbar.fc-header-toolbar {
+                    margin-bottom: 0px !important;;
+                    background: white!important;; 
+                }
+                .fc-scroller {
+                    height: auto !important;
+                }
+                .fc-today-button{
+                    text-transform: capitalize !important;
+                }
+                .dateFormat {
+                    display: none;
+                }
+                .daterangepicker {
+                    z-index: 9999 !important;
+                }
+                .slds-text-title_caps {
+                    color: white !important;
+                }
+                .slds-table tr,td:hover {
+                    backgroud-color: white !important;
+                }
+                .slds-table td {
+                    padding: 0px !important;
+                }
+                .fc-view {
+                    box-shadow: 0 0 2px grey !important;
+                }
+                .fc-timeline-event {
+                    font-size: 12px !important;
+                    font-weight: 600 !important;
+                    color: black !important;
+                    border-radius: 1px !important;
+                } 
+                .fc-time{
+                    display:none;
+                }
+                fieldset {
+                    margin: 5px !important;
+                }
+                #calendar th, #calendar .fc-time,#calendar .fc-axis {
+                    box-shadow: 0 0 5px #F3F2F2 !important;
+                    background: #F3F2F2 !important;
+                    color: black !important;
+                    font-weight: 600;
+                    text-align: center;
+                }
+                .fc-title {
+                    font-family: sans-serif !important;
+                }
+                .fc-time-grid-event, .fc-day-grid-event, .fc-timeline-event {
+                    border-radius: 2px !important;
+                    margin: 1px !important;
+                }
+                .word_break_450px{
+                    overflow-wrap: break-word !important;
+                    word-wrap: break-word !important;
+                    max-width: 450px !important;
+                    overflow: unset !important;
+                    text-overflow: unset !important;
+                    white-space: inherit !important;
+                }
+                .fc-today{
+                  background-color:inherit !important;
+                }
+                .event-custom-new{
+                    box-shadow: 0 0 0px black !important;
+                    color: gray !important;
+                    border: none !important;
+                    text-align: center !important;
+                }
+                .event-custom-new .fc-title{
+                    font-size: 18px !important;
+                }
+            </style>
+            <script>
+                var resourcesList = [];
+                var eventList = [];
+                var refreshWithDate = '';
+                var refresh = false;
+                var centre = [];
+                var cIndicator = '<div class="colorIndecator" style="font-size: small;text-align: initial;">'+
+                                 '<div><div class="" style="background-color: {!settings.Regular_Hours_Color__c};width: 8px;display: inline-block;height: 8px;"></div> Regular Hours'+
+                                 '<br/><div class="" style="background-color: {!settings.Exam_Day_Color__c};width: 8px;display: inline-block;height: 8px;"></div> Exam Day</div>'+
+                                 '</div>'+
+                                 '<div class="colorIndecator" style="font-size: small;text-align: initial;">'+
+                                 '<div><div class="" style="background-color: {!settings.Opening_Hours_Color__c};width: 8px;display: inline-block;height: 8px;"></div> Opening Hours'+
+                                 '<br/><div class="" style="background: {!settings.Sick_Leave_Event_Color__c};width: 8px;display: inline-block;height: 8px;"></div> Sick Leave</div>'+
+                                 '</div>'+
+                                 '<div class="colorIndecator" style="font-size: small;text-align: initial;">'+
+                                 '<div><div class="" style="background-color: {!settings.Closing_Hours_Color__c};width: 8px;display: inline-block;height: 8px;"></div> Closing Hours'+
+                                 '<br/><div class="" style="background-color: {!settings.Leave_Event_Color__c};width: 8px;display: inline-block;height: 8px;"></div> Leave</div>'+
+                                 '</div>'+
+                                 '<div class="colorIndecator" style="font-size: small;text-align: initial;">'+
+                                 '<div><div class="" style="background-color: #827c7c;width: 8px;display: inline-block;height: 8px;"></div> Public Holiday</div>'+
+                                 '</div>';
+                $( document ).ready(function() {
+                    <apex:repeat value="{!centreList}" var="ctr">
+                        centre.push('{!ctr.Id}');
+                        var o ={};
+                        o.id = '{!ctr.Id}';
+                        o.title = '{!ctr.Name}';
+                        resourcesList.push(o);
+                    </apex:repeat>
+                    getEmployeeAssigned();
+                    $('.rosteringsetupModal').click(function(){
+                        if(!$(".liDivContainer").hasClass('slds-hide')) $(".liDivContainer").addClass('slds-hide');
+                    });
+                });
+                function initCaledar(){
+                    if(refresh) $('#calendar').fullCalendar('destroy');
+                    var today = new Date();
+                    var dd = String(today.getDate()).padStart(2, '0');
+                    var mm = String(today.getMonth() + 1).padStart(2, '0');
+                    var yyyy = today.getFullYear();
+                    today = mm + '/' + dd + '/' + yyyy;
+                    if(refreshWithDate == '')  refreshWithDate = today;
+                    
+                    $('#calendar').fullCalendar({
+                        schedulerLicenseKey: 'GPL-My-Project-Is-Open-Source',
+                        resourceAreaWidth: 230,
+                        editable: true, 
+                        aspectRatio: 1.8,
+                        selectable: true,
+                        Resize: false,
+                        defaultDate: refreshWithDate,
+                        slotLabelInterval: "24:00",
+                        slotLabelFormat: 'ddd, DD MMM',
+                        titleFormat: 'ddd, MMM DD YYYY',
+                        scrollTime: '00:00', 
+                        header: { left: 'prev,next today', center: 'title', right: '' },
+                        views: { week: { titleFormat: 'D MMMM YYYY', titleRangeSeparator: ' to ', } },
+                        defaultView: 'timelineWeek',
+                        resourceLabelText: 'Centre',
+                        resources: resourcesList ,
+                        events: eventList,
+                        eventDrop: function(event, delta, revertFunc) {
+                            console.log('event.className'+event.className);
+                            console.log('event.className'+typeof event.className);
+                            var leaveArray=["fullday_Sick_Leave","fullday_Other_Leave","halfday_Sick_Leave","halfday_Other_Leave","event-public-holiday"];
+                            var eventClass =String(event.className);
+                            console.log('eventClass'+typeof eventClass);
+                            if(eventClass !== "fullday_Sick_Leave" && eventClass !== "fullday_Other_Leave" && eventClass !== "halfday_Sick_Leave"
+                            && eventClass !== "halfday_Other_Leave" && eventClass !== "event-public-holiday"){
+                                console.log('event.className test ---'+eventClass);
+                                var lstDate = new Date('{!endDateOfRostering}T00:00:00');
+                                var start = new Date(event.start.format());
+                                var today = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0, 0);
+                                var oldDt = new Date(event.oldDate);
+                                var dtOld = new Date(oldDt.getFullYear(), oldDt.getMonth(), oldDt.getDate(), 0, 0, 0, 0);
+                                if(event.editable){
+                                    $('#defaultCentre'). prop("checked", false);
+                                    $('.modalExtendDate').removeClass('slds-hide');
+                                    var d = new Date();
+                                    var startYear = d.getFullYear();
+                                    eventstartformat = event.start.format();
+                                    eventresourceId = event.resourceId;
+                                    eventid = event.id;
+                                    uptoRangeDate = event.start.format();
+                                    $('#uptoDate').daterangepicker({
+                                        singleDatePicker: true,
+                                        showDropdowns: true,
+                                        minYear: startYear,
+                                        maxYear: startYear + 10,
+                                        startDate: start,
+                                        "minDate": today,
+                                        "maxDate":lstDate
+                                    }, function(start, end, label) {
+                                        uptoRangeDate = end.format('YYYY-MM-DD')+'T00:00:00Z';
+                                    });
+                                }else{
+                                    revertFunc();
+                                }
+                            }else{
+                                    revertFunc();
+                                }
+                        },
+                        eventResize: function(event, delta, revertFunc) {revertFunc();},
+                        eventRender: function(event, element) {
+                            if(event.editable === true){
+                                var title = '';
+                                var des = '';
+                                var addHt = '<label style="text-align: end !important; width: 90%; font-size: 10px; color: black; margin-bottom: 0px;">Additional</label>';
+                                if(event.additional === false) addHt = '';
+                                if(event.description != null && event.description != '' && event.description != 'undefined') des  = event.description;
+                                if(event.title != null && event.title != '' && event.title != 'undefined') title = event.title;
+                                var ht = addHt+'<div class="slds-card__header slds-grid" style="white-space: normal; overflow: unset;margin-top: 0px; padding-top: 0px;"><span>'+title+'</span></div>'+
+                                         '<div class="slds-card__body slds-card__body_inner" style="white-space: normal; overflow: unset;font-size: 10px;">'+des+'</div>';
+                                element.html(ht);
+                            }
+                            $('.colorIndecator').remove();
+                            $('.fc-today-button').after(cIndicator);
+                        },
+                        select: function(startDate, endDate, jsEvent, view, resource) {},
+                        dayClick: function(date, jsEvent, view, resourceObj) {
+                            $('[id$=centreId]').val(resourceObj.id);
+                            $('[id$=dateString]').val(date.format());
+                            console.log(date.format());
+                            console.log(resourceObj.id);
+                            openSetupModal();
+                            return false;
+                        },
+                        eventClick: function(event, info) {
+                            console.log('event.className'+event.className);
+                            $('[id$=centreId]').val(event.resourceIdCustom);
+                            $('[id$=dateString]').val(event.start.format());
+                            console.log(event.start.format());
+                            console.log(event.resourceIdCustom);
+                            openSetupModal();
+                            return false; 
+                        },
+                    });
+                    convertToLightning();
+                }
+                var eventstartformat;
+                var eventresourceId;
+                var eventid;
+                var uptoRangeDate ;
+                function updateEventWithRange(){
+                    console.log('eventstartformat',eventstartformat);
+                    console.log('eventresourceId',eventresourceId);
+                    console.log('eventid',eventid);
+                    console.log('test',$('#defaultCentre').prop("checked"));
+                    eventUpdate(eventstartformat, eventresourceId, eventid, uptoRangeDate,$('#defaultCentre').prop("checked"));
+                }
+                function convertToLightning(){
+                    // For calendar button
+                    $('.fc-button').addClass('slds-button slds-button_neutral');
+                    $('.fc-icon-chevron-right').text('Next');
+                    $('.fc-icon-chevron-left').text('Pre');
+                    $('.fc-left').addClass('slds-p-bottom_x-small'); 
+                    
+                    //init date picker
+                    $('.dateButton').remove();
+                    $('.fc-prev-button').after('<button type="button" class="dateButton slds-button" style="border: 1px solid lightgray;"> <span class="fc-iconDatePicker"><input class="slds-input" type="text" style="text-align: center;font-weight: 600;color: rgba(27, 82, 151, 1);" id="fullCalendarDate" readonly/></span> </button>');
+                    $('#fullCalendarDate').daterangepicker({
+                        singleDatePicker: true, showDropdowns: true, minYear: 1901, maxYear: 2050, startDate: refreshWithDate
+                    }, function(start, end, label) {
+                        changeCalendarDate(end.format('MM-DD-YYYY'));
+                    });
+                    $('.fc-prev-button, .fc-next-button, .fc-today-button').click(function (){
+                        changeDateCalendar();
+                        refreshCalendar();
+                    });
+                    refresh = false;
+                    refreshWithDate = '';
+                }
+                
+                function changeCalendarDate(dtstring){
+                    $('#fullCalendarDate').daterangepicker({
+                        singleDatePicker: true, showDropdowns: true, minYear: 1901, maxYear: 2050, startDate: dtstring
+                    },function(start, end, label) {
+                        changeCalendarDate(end.format('MM-DD-YYYY'));
+                    });
+                    refresh = true;
+                    refreshWithDate = dtstring;
+                    getEmployeeAssigned();
+                }
+                function changeDateCalendar(){
+                    var b = $('#calendar').fullCalendar('getDate');
+                    if(b){
+                        b = b.toISOString();
+                        var dateVal = b.split('T')[0];
+                        var splitedValue = dateVal.split('-');
+                        
+                        $('#fullCalendarDate').daterangepicker({
+                            singleDatePicker: true, showDropdowns: true, minYear: 1901, maxYear: 2050,
+                            startDate: splitedValue[1]+'/'+splitedValue[2]+'/'+splitedValue[0] 
+                        },function(start, end, label) {
+                            changeCalendarDate(end.format('MM-DD-YYYY'));
+                        });
+                    }
+                }
+                function showHideModal(){
+                    if($('.rosteringsetupModal').hasClass( "slds-hide")) $('.rosteringsetupModal').removeClass( "slds-hide" );
+                    else $('.rosteringsetupModal').addClass( "slds-hide" ); 
+                }
+                function getEmployeeAssigned() {
+                    showSpinner(); eventList = []; var month = '';
+                    var b = $('#fullCalendarDate').val();
+                    var dt = moment();
+                    if(b)  dt.year(b.split('/')[2]).month(b.split('/')[0] - 1).date(b.split('/')[1]);
+                    var beginOfWeek = dt.startOf('week');
+                    var start = beginOfWeek.format('YYYY-MM-DD');
+                    refreshWithDate = beginOfWeek.format('MM/DD/YYYY');
+                    
+                    var d = new Date(dt);; 
+                    for (var i = 0; i < 7; i++) {
+                        d.setDate(d.getDate() + 1);
+                        for(var j=0; j < centre.length; j++){
+                            var evt = {};
+                            evt.id = centre[j]+''+j+''+i;
+                            evt.resourceId = centre[j] ;
+                            evt.title = '+';
+                            evt.start = new Date(d).toISOString();
+                            evt.className = 'event-custom-new';
+                            evt.editable = false;
+                            evt.resourceIdCustom = centre[j];
+                            eventList.push(evt);
+                        }
+                    }
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.EmployeeRosteringSetupController.getAssignedEmployee}',
+                        start, 
+                        function(result, event){
+                            if (event.status) {
+                                /*Commented by arpit 2-Dec-2019
+                                for(var i=0; i < result.length; i++){
+                                    var type = result[i].leaveType;
+                                    var rostering = result[i].rostering;
+                                    var evt = {};
+                                    evt.id = rostering.Id;
+                                    evt.resourceId = rostering.Centre__c ;
+                                    evt.title = rostering.Employee__r.Name;
+                                    evt.start = rostering.Effective_Date__c;
+                                    evt.description = rostering.Notes__c;
+                                    //evt.className = 'event-not-highlight';
+                                    evt.editable = true;
+                                    evt.oldDate = rostering.Effective_Date__c;
+                                    evt.resourceIdCustom = rostering.Centre__c;
+                                    if(rostering.Additional_Work_Day__c && rostering.Work_Day__c === 'Full Day'){
+                                        var className = 'fullday_';
+                                        if(rostering.Shift__c === 'Regular Hours'){
+                                            className += 'Regular_Hours';
+                                        }else if(rostering.Shift__c === 'Opening Hours'){
+                                            className += 'Opening_Hours';
+                                        }else if(rostering.Shift__c === 'Closing Hours'){
+                                            className += 'Closing_Hours';
+                                        }else if(rostering.Shift__c === 'Exam Day'){
+                                            className += 'Exam_Day';
+                                        }else{
+                                            className = 'event-highlight_fullday';
+                                        }
+                                        
+                                        if(type != '' && type != null && type != 'undefined'){
+                                            evt.description = type ;
+                                            if(type === 'Sick Leave'){
+                                                className = 'fullday_Sick_Leave';
+                                            }else{
+                                                className = 'fullday_Other_Leave';
+                                            }
+                                        }
+                                        evt.className = className;
+                                        evt.additional = true;
+                                    }
+                                    if(rostering.Additional_Work_Day__c && rostering.Work_Day__c === 'Half Day'){
+                                        var className = 'halfday_';
+                                        if(rostering.Shift__c === 'Regular Hours'){
+                                            className += 'Regular_Hours';
+                                        }else if(rostering.Shift__c === 'Opening Hours'){
+                                            className += 'Opening_Hours';
+                                        }else if(rostering.Shift__c === 'Closing Hours'){
+                                            className += 'Closing_Hours';
+                                        }else if(rostering.Shift__c === 'Exam Day'){
+                                            className += 'Exam_Day';
+                                        }else{
+                                            className = 'event-highlight_halfday';
+                                        }
+                                        
+                                        if(type != '' && type != null && type != 'undefined'){
+                                            evt.description = type ;
+                                            if(type === 'Sick Leave'){
+                                                className = 'halfday_Sick_Leave';
+                                            }else{
+                                                className = 'halfday_Other_Leave';
+                                            }
+                                        }
+                                        
+                                        evt.className = className;
+                                        evt.additional = true;
+                                    }
+                                    
+                                    if(!rostering.Additional_Work_Day__c && rostering.Work_Day__c === 'Full Day'){
+                                        var className = 'fullday_';
+                                        if(rostering.Shift__c === 'Regular Hours'){
+                                            className += 'Regular_Hours';
+                                        }else if(rostering.Shift__c === 'Opening Hours'){
+                                            className += 'Opening_Hours';
+                                        }else if(rostering.Shift__c === 'Closing Hours'){
+                                            className += 'Closing_Hours';
+                                        }else if(rostering.Shift__c === 'Exam Day'){
+                                            className += 'Exam_Day';
+                                        }else{
+                                            className = 'event-not-highlight_fullday';
+                                        }
+                                        
+                                        if(type != '' && type != null && type != 'undefined'){
+                                            evt.description = type ;
+                                            if(type === 'Sick Leave'){
+                                                className = 'fullday_Sick_Leave';
+                                            }else{
+                                                className = 'fullday_Other_Leave';
+                                            }
+                                        }
+                                        
+                                        evt.className = className;
+                                        evt.additional = false;
+                                    }//evt.className = 'event-not-highlight_fullday';
+                                    if(!rostering.Additional_Work_Day__c && rostering.Work_Day__c === 'Half Day'){
+                                        var className = 'halfday_';
+                                        if(rostering.Shift__c === 'Regular Hours'){
+                                            className += 'Regular_Hours';
+                                        }else if(rostering.Shift__c === 'Opening Hours'){
+                                            className += 'Opening_Hours';
+                                        }else if(rostering.Shift__c === 'Closing Hours'){
+                                            className += 'Closing_Hours';
+                                        }else if(rostering.Shift__c === 'Exam Day'){
+                                            className += 'Exam_Day';
+                                        }else{
+                                            className = 'event-not-highlight_halfday';
+                                        }
+                                        
+                                        if(type != '' && type != null && type != 'undefined'){
+                                            evt.description = type ;
+                                            if(type === 'Sick Leave'){
+                                                className = 'halfday_Sick_Leave';
+                                            }else{
+                                                className = 'halfday_Other_Leave';
+                                            }
+                                        }
+                                        
+                                        evt.className = className;
+                                        evt.additional = false;
+                                    }//evt.className = 'event-not-highlight_halfday';
+                                    
+                                    eventList.push(evt);
+                                }*/
+                                console.log('WWWresult',result);
+                                for(var i=0; i < result.length; i++){
+                                    var rostering = result[i];
+                                    
+                                    if(rostering.className == 'event-public-holiday'){
+                                        console.log(rostering.resourceId);
+                                    }
+                                    rostering.editable = true;
+                                    eventList.push(rostering);
+                                }
+                                //console.log('eventList',eventList);
+                                initCaledar();
+                                hideSpinner();
+                            } else if (event.type === 'exception') {} else {}
+                        }, 
+                        {escape: true} 
+                    );
+                }
+                
+                function showError(msg){
+                    $('.toastMessage span').remove();
+                    $('.toastMessage').append('<span>'+msg+'</span>');    
+                    if($('.errorToast').hasClass('slds-hide')) $('.errorToast').removeClass('slds-hide');
+                    setTimeout(function(){hideError();}, 5000);
+                }
+                function refreshCalendar(){ refreshWithDate = $('#fullCalendarDate').val(); refresh = true; getEmployeeAssigned(); }
+                function showSpinner() { if ($('#spinner').hasClass('slds-hide')) $('#spinner').removeClass('slds-hide'); }
+                function hideSpinner() { if (!$('#spinner').hasClass('slds-hide')) $('#spinner').addClass('slds-hide'); }
+                function eventUpdate(date, resourceId, id, uptoDt, isDefaultCentre) { 
+                    eventUpdateAction(date, resourceId, id, uptoDt, isDefaultCentre); }
+                function hideError(){ if(!($('.errorToast').hasClass('slds-hide'))) $('.errorToast').addClass('slds-hide'); }
+                
+                function getLookupResult() {
+                    var nameLikeString = $('#txt_search').val();
+                    if(!$(".liDivContainer").hasClass('slds-hide')) $(".liDivContainer").addClass('slds-hide');
+                    $('.searchItems').remove();
+                    if(nameLikeString && nameLikeString.length > 2){
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.EmployeeRosteringSetupController.getRemoteSearchResult}',
+                            nameLikeString, 
+                            function(result, event){
+                                if (event.status) {
+                                    var html = '<li role="presentation" class="slds-listbox__item"> <div aria-selected="true" id="option0" class="slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_term slds-has-focus" role="option"> <span class="slds-media__figure slds-listbox__option-icon"> <span class="slds-icon_container slds-icon-utility-search" title="Search for term: "> <svg class="slds-icon slds-icon_x-small slds-icon-text-default" aria-hidden="true"> <use xlink:href="/_slds/icons/utility-sprite/svg/symbols.svg#search"></use> </svg> <span class="slds-assistive-text">Search Employee</span> </span> </span> <span class="slds-media__body"> <span class="slds-listbox__option-text slds-listbox__option-text_entity">'+nameLikeString+'</span> </span> </div> </li>';
+                                    for(var i=0; i< result.length; i++){
+                                        html +='<li role="presentation" class="slds-listbox__item searchItems" onClick="selectLookup(\''+result[i].Id+'\',\''+result[i].Name+'\')">';
+                                        html +='<div id="option1" class="slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_has-meta" role="option">';
+                                        html +='<span class="slds-media__figure slds-listbox__option-icon">';
+                                        html +='<span class="slds-icon_container slds-icon-standard-account">';
+                                        html +='<svg class="slds-icon slds-icon_small" aria-hidden="true">';
+                                        html +='<use xlink:href="/_slds/icons/standard-sprite/svg/symbols.svg#account"></use>';
+                                        html +='</svg>';
+                                        html +='</span>';
+                                        html +='</span>';
+                                        html +='<span class="slds-media__body">';
+                                        html +='<span class="slds-listbox__option-text slds-listbox__option-text_entity">';
+                                        html +='<span>';
+                                        html +='<mark>'+result[i].Name+'</span>';
+                                        html +='</span>';
+                                        var nat = result[i].Employee_Nationality__c ? 'Account • '+result[i].Employee_Nationality__c : '';
+                                        html +='<span class="slds-listbox__option-meta slds-listbox__option-meta_entity">'+nat +'</span>';
+                                        html +='</span>';
+                                        html +='</div>';
+                                        html +='</li>';
+                                    }
+                                } else if (event.type === 'exception') {
+                                    
+                                } else {
+                                    
+                                }
+                                
+                                $(".ulMainHeader").html(html);
+                                if($(".liDivContainer").hasClass('slds-hide')) $(".liDivContainer").removeClass('slds-hide');
+                            }, 
+                            {escape: true}
+                        );
+                    }
+                }
+                function selectLookup(idval, name){
+                    if(!$(".liDivContainer").hasClass('slds-hide')) $(".liDivContainer").addClass('slds-hide');
+                    $('#lookupSelectedValue').val(name);
+                    $('[id$=selectedEmployee]').val(idval);
+                    if(!$('.lookupNotSelected').hasClass('slds-hide')) $('.lookupNotSelected').addClass('slds-hide')
+                    if($('.lookupSelected').hasClass('slds-hide')) $('.lookupSelected').removeClass('slds-hide')
+                }
+                function unSelectLookup(idval, name){
+                    $('[id$=selectedEmployee]').val('');
+                    if($('.lookupNotSelected').hasClass('slds-hide')) $('.lookupNotSelected').removeClass('slds-hide')
+                    if(!$('.lookupSelected').hasClass('slds-hide')) $('.lookupSelected').addClass('slds-hide')
+                }
+            </script>
+        </head>
+        <apex:form >
+            <!-- Page Action Functions -->
+            <apex:actionFunction name="saveRostering" action="{!saveRosteringSetup}" reRender="renderModal" oncomplete="refreshCalendar();showHideModal();" status="spStatus"/><!---->
+            <apex:actionFunction name="addRostering" action="{!addRosteringSetup}" reRender="renderModalHeader" oncomplete="" status="spStatus"/>
+            <apex:actionFunction name="openSetupModal" action="{!setupRosteringData}" reRender="renderModal" oncomplete="showHideModal();console.log('call setupRosteringData');" status="spStatus"/>
+            <apex:actionFunction name="deleteAssigned" action="{!removeAssignEmployee}" reRender="renderModal" status="spStatus">
+                <apex:param name="param2" value="" assignTo="{!removeIndex}" />
+            </apex:actionFunction>
+            <apex:actionFunction name="editAssigned" action="{!editAssignEmployee}" reRender="renderModal" status="spStatus">
+                <apex:param name="param9" value="" assignTo="{!editIndex}" />
+            </apex:actionFunction>
+            <apex:actionFunction name="validateOnChangeWD" action="{!validateOnWorkDayChange}" reRender="renderModal,renderModalHeader" status="spStatus">
+                <apex:param name="param10" value="" assignTo="{!editIndex}" />
+                <apex:param name="param11" value="" assignTo="{!workDayOldValue}" />
+            </apex:actionFunction>
+            <apex:actionFunction name="eventUpdateAction" action="{!updateCalendarEvent}" status="spStatus" reRender="errorPanel" oncomplete="afterEvent();">
+                <apex:param name="param3" value="" assignTo="{!updateDate}" />
+                <apex:param name="param4" value="" assignTo="{!updateResourceId}" />
+                <apex:param name="param5" value="" assignTo="{!updateId}" />
+                <apex:param name="param6" value="" assignTo="{!uptoDate}" />
+                <apex:param name="param7" value="" assignTo="{!isDefaultCentre}" />
+            </apex:actionFunction>
+            <apex:actionFunction name="afterEvent" action="{!afterUpdateEvent}" reRender="errorPanel" status="spStatus" oncomplete="refreshCalendar();"/>
+            <apex:actionFunction name="renderModalTable" reRender="renderModal" status="spStatus"/><!---->
+            <apex:outputPanel id="errorPanel">
+                <script>
+                    if('{!isDuplicate}' == 'true'){
+                        showError('Working day slot not available for selected employee. [Full Day, Half Day] ');
+                        refreshCalendar();
+                    }
+                </script>
+            </apex:outputPanel>
+            <!-- Status -->
+            <apex:actionstatus id="spStatus" onstart="showSpinner();" onstop="hideSpinner();"></apex:actionstatus> 
+            <div id="spinner" class="slds-spinner_container slds-hide" style="position: fixed;">
+                <div role="status" class="slds-spinner slds-spinner--large slds-spinner--brand" style="transform: rotate(0deg); padding-top: 26px;">
+                    <div class="slds-spinner__dot-a"></div>
+                    <div class="slds-spinner__dot-b"></div>
+                </div>
+                <div class="slds-spinner" role="status" style="transform: rotate(0deg);padding-top: 26px;width: 100%;">
+                    <span class="textSpinner" style="position: initial"></span>
+                </div>
+           </div>
+           
+           <div class="errorToast slds-notify_container slds-hide">
+            <div class="slds-notify slds-notify_toast slds-theme_error" role="status">
+                <span class="slds-assistive-text">error</span>
+                    <span class="slds-icon_container slds-icon-utility-error slds-m-right_small slds-no-flex slds-align-top" title="Description of icon when needed">
+                    <svg class="slds-icon slds-icon_small" aria-hidden="true">
+                        <use xlink:href="/_slds/icons/utility-sprite/svg/symbols.svg#error"></use>
+                    </svg>
+                </span>
+                <div class="slds-notify__content">
+                    <h2 class="slds-text-heading_small toastMessage"><span></span></h2>
+                </div>
+                <div class="slds-notify__close">
+                    <button class="slds-button slds-button_icon slds-button_icon-inverse" title="Close" onclick="hideError(); return false;">
+                        <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                            <use xlink:href="/_slds/icons/utility-sprite/svg/symbols.svg#close"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                </div>
+            </div>
+          </div>
+           
+           <!-- Main Calendar Element-->
+           <div id="calendar"></div>
+           
+           <div class="modalExtendDate slds-hide">
+                <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                    <div class="slds-modal__container">
+                        <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                            <div class="slds-form-element slds-dropdown-trigger slds-dropdown-trigger_click slds-is-open">
+                                <label class="slds-form-element__label" for="date-input-id">Change All Record upto Selected Date</label>
+                                <div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_right">
+                                    <input type="text" id="uptoDate" placeholder=" " class="slds-input" />
+                                    <button class="slds-button slds-button_icon slds-input__icon slds-input__icon_right" title="Select a date" onclick="$('#uptoDate').click(); return false;">
+                                        <svg class="slds-button__icon" aria-hidden="true">
+                                        <use xlink:href="/_slds/icons/utility-sprite/svg/symbols.svg#event"></use>
+                                        </svg>
+                                        <span class="slds-assistive-text">Select a date</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="slds-form-element slds-dropdown-trigger slds-dropdown-trigger_click slds-is-open">
+                                <label class="slds-form-element__label" for="date-input-id">Shift</label>
+                                <apex:selectList id="shiftRostering" value="{!rosteringShift}" size="1"  styleClass="slds-input">
+                                    <apex:selectoption itemLabel="--None--" itemvalue=""></apex:selectoption>
+                                    <apex:selectOptions value="{!rosteringSetupObject.shifts}"/>
+                                </apex:selectList>
+                            </div>
+                            <br/><br/>
+                            <div class="slds-form-element__control">
+                            <div class="slds-checkbox">
+                                  <input type="checkbox" name="options" id="defaultCentre" value="checkbox-unique-id-72" checked="" />
+                                  <label class="slds-checkbox__label" for="defaultCentre">
+                                    <span class="slds-checkbox_faux"></span>
+                                    <span class="slds-form-element__label">Set Default Centre</span>
+                                  </label>
+                            </div>
+                            </div>
+                        </div>
+                        <footer class="slds-modal__footer">
+                            <button class="slds-button slds-button_neutral" onClick="$('.modalExtendDate').addClass('slds-hide'); refreshCalendar(); return false;">Cancel</button>
+                            <button class="slds-button slds-button_brand" onClick="updateEventWithRange(); $('.modalExtendDate').addClass('slds-hide'); return false;">Save</button>
+                        </footer>
+                    </div>
+                </section>
+                <div class="slds-backdrop slds-backdrop_open"></div>
+            </div>
+           
+           <!-- Create Record and Show Details of Rostering -->
+           <div class="rosteringsetupModal slds-hide"><!--slds-hide-->
+               <apex:inputHidden value="{!rosteringSetupObject.rosteringSetupObject.Centre__c}" id="centreId"/>
+               <apex:inputHidden value="{!rosteringSetupObject.dateString}" id="dateString"/>
+               <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-modal_large slds-fade-in-open">
+                    <div class="slds-modal__container">
+                        <header class="slds-modal__header">
+                            <h2 id="modal-heading" class="slds-text-heading_small slds-hyphenate">Rostering Setup </h2>
+                        </header>
+                        <apex:outputPanel id="renderModalHeader">
+                                <script>
+                                    var isFullRender = true;
+                                    if('{!isError}' == 'true'){
+                                        showError('Required field missing. [Employee, Shift, Work Day, Shift]');
+                                        isFullRender = false;
+                                    }
+                                    if('{!isDuplicate}' == 'true'){
+                                        showError('Error! You are adding employee on same time slot or, Working day slot not available for current employee. [Full Day, Half Day, Shift, Date] ');
+                                        isFullRender = false;
+                                    }
+                                    if(isFullRender ){
+                                        $('[id$=selectedEmployee]').val('');
+                                        renderModalTable();
+                                    }
+                                    
+                                </script>
+                            </apex:outputPanel>
+                        <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                            <apex:outputPanel id="renderModal">
+                                <script>
+                                    console.log('{!rosteringSetupObject.rosteringSetupObject.Employee__c}');
+                                    if('{!rosteringSetupObject.rosteringSetupObject.Employee__c}' !== ''){
+                                        selectLookup('{!employeeDetails.Id}','{!employeeDetails.Name}');
+                                    }else{
+                                        $('.search_text').val('');
+                                        $('[id$=selectedEmployee]').val('');
+                                    }
+                                </script>
+                                <fieldset class="slds-form-element slds-p-bottom_large">
+                                    <apex:pageMessages />
+
+                                    <legend class="slds-form-element__label slds-form-element__label--top"><h2 class="slds-text-heading_small">Add New Roster</h2></legend>
+                                    <div class="slds-grid slds-wrap">
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_3-of-12 slds-p-around_xxx-small">
+                                            <div class="slds-form-element">
+                                                <label class="slds-form-element__label" for="text-input-id-1"><abbr class="slds-required" title="required">* </abbr>Employee</label>
+                                                <div class="slds-form-element__control">
+                                                    <!--<apex:inputField value="{!rosteringSetupObject.rosteringSetupObject.Employee__c}" styleClass="slds-input" html-placeholder="Select Employee" required="false"/>-->
+                                                    <apex:inputHidden value="{!rosteringSetupObject.rosteringSetupObject.Employee__c}" id="selectedEmployee"/>
+                                                    <!-- lookup Stated --> 
+                                                    <div class="lookupComponent">
+                                                        <div class="slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-is-open" aria-expanded="true" aria-haspopup="listbox" role="combobox">
+                                                            <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right lookupNotSelected" role="none">
+                                                                
+                                                                <input type="text" class="slds-input slds-combobox__input slds-has-focus slds-combobox__input-value" id="txt_search" aria-activedescendant="option1" aria-autocomplete="list" aria-controls="listbox-id-4" autoComplete="off" role="textbox" placeholder="Search..."
+                                                                value="" onKeyup="getLookupResult(); return false;" onFocus="getLookupResult(); return false;" />
+                                                                
+                                                                <span class="slds-icon_container slds-icon-utility-search slds-input__icon slds-input__icon_right" onClick="getLookupResult(); return false;">
+                                                                    <svg class="slds-icon slds-icon slds-icon_x-small slds-icon-text-default" aria-hidden="true" onClick="getLookupResult(); return false;">
+                                                                        <use xlink:href="/_slds/icons/utility-sprite/svg/symbols.svg#search"></use>
+                                                                    </svg>
+                                                                </span>
+                                                            </div>
+                                                            <div class="slds-combobox_container slds-has-selection slds-hide lookupSelected">
+                                                                <div class="slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click" aria-expanded="false" aria-haspopup="listbox" role="combobox">
+                                                                  <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_left-right" role="none">
+                                                                    <span class="slds-icon_container slds-icon-standard-account slds-icon-standard-accountIcon slds-combobox__input-entity-icon" title="Account">
+                                                                      <svg class="slds-icon slds-icon_small" aria-hidden="true">
+                                                                        <use xlink:href="/_slds/icons/standard-sprite/svg/symbols.svg#account"></use>
+                                                                      </svg>
+                                                                      <span class="slds-assistive-text">Employee</span>
+                                                                    </span>
+                                                                    <input type="text" class="slds-input slds-combobox__input slds-combobox__input-value" id="lookupSelectedValue" aria-controls="listbox-id-5" autoComplete="off" role="textbox" placeholder="Select an Option" readonly="true" value=""/>
+                                                                    <button class="slds-button slds-button_icon slds-input__icon slds-input__icon_right closeIcon" title="Remove selected option" onClick="unSelectLookup(); return false;">
+                                                                      <svg class="slds-button__icon" aria-hidden="true">
+                                                                        <use xlink:href="/_slds/icons/utility-sprite/svg/symbols.svg#close"></use>
+                                                                      </svg>
+                                                                      <span class="slds-assistive-text">Remove selected Employee</span>
+                                                                    </button>
+                                                                  </div>
+                                                              </div>
+                                                            </div>
+                                                            
+                                                            <div id="listbox-id-4" class="slds-dropdown slds-dropdown_length-with-icon-7 slds-dropdown_fluid liDivContainer slds-hide" role="listbox">
+                                                                <ul class="slds-listbox slds-listbox_vertical ulMainHeader" role="presentation" style="font-size:11px;max-height: 150px;"></ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <script>
+                                                       $('.slds-icon-utility-search').html('<svg class="slds-icon slds-icon slds-icon_x-small slds-icon-text-default" aria-hidden="true" onClick="getLookupResult(); return false;"> <use xlink:href="/_slds/icons/utility-sprite/svg/symbols.svg#search"></use> </svg>');
+                                                       $('.closeIcon').html('<svg class="slds-button__icon" aria-hidden="true"> <use xlink:href="/_slds/icons/utility-sprite/svg/symbols.svg#close"></use> </svg> <span class="slds-assistive-text">Remove selected Employee</span>');
+                                                       $('.slds-icon-standard-accountIcon').html('<svg class="slds-icon slds-icon_small" aria-hidden="true"> <use xlink:href="/_slds/icons/standard-sprite/svg/symbols.svg#account"></use> </svg>');
+                                                    </script>
+                                                    <!-- Lookup end -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_3-of-12 slds-p-around_xxx-small">
+                                            <div class="slds-form-element">
+                                                <label class="slds-form-element__label" for="text-input-id-1"><abbr class="slds-required" title="required">* </abbr>Shift</label>
+                                                <div class="slds-form-element__control">
+                                                    <apex:selectList id="shiftMain" value="{!rosteringSetupObject.rosteringSetupObject.Shift__c}" size="1" required="true"  styleClass="slds-input">
+                                                        <apex:selectOptions value="{!rosteringSetupObject.shifts}"/>
+                                                    </apex:selectList>
+                                                
+                                                    <!--<apex:inputField value="{!rosteringSetupObject.rosteringSetupObject.Shift__c}" styleClass="slds-input search_text" html-placeholder="Select Shift" required="false"/>-->
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_2-of-12 slds-p-around_xxx-small">
+                                            <div class="slds-form-element">
+                                                <label class="slds-form-element__label" for="text-input-id-1"><abbr class="slds-required" title="required">* </abbr>Work Day</label>
+                                                <div class="slds-form-element__control">
+                                                    
+                                                    <apex:selectList id="workDayMain" value="{!rosteringSetupObject.rosteringSetupObject.Work_Day__c}" size="1" required="true" styleClass="slds-input">
+                                                        <apex:selectOptions value="{!rosteringSetupObject.workDays}"/>
+                                                    </apex:selectList>
+                                                    <!--<apex:inputField value="{!rosteringSetupObject.rosteringSetupObject.Work_Day__c}" styleClass="slds-select search_text" required="false"/>-->
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_4-of-12 slds-p-around_xxx-small">
+                                            <div class="slds-form-element">
+                                                <label class="slds-form-element__label" for="text-input-id-1">Notes</label>
+                                                <div class="slds-form-element__control">
+                                                    <apex:inputField styleclass="slds-input search_text" value="{!rosteringSetupObject.rosteringSetupObject.Notes__c}" style="width: 100%;"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_4-of-12 slds-p-around_xxx-small">
+                                            <button class="slds-button slds-button_brand" onClick="addRostering(); return false;">Add</button>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                                <fieldset class="slds-form-element slds-p-bottom_large">
+                                    <legend class="slds-form-element__label slds-form-element__label--top"><h2 class="slds-text-heading_small">Assigned</h2></legend>
+                                    <table class="slds-table slds-max-medium-table_stacked-horizontal slds-table_bordered slds-table_cell-buffer" id="table">
+                                      <thead>
+                                        <tr class="slds-text-title_caps">
+                                            <th scope="col" class="slds-cell-wrap" style="padding-left: 0px;">
+                                                <div class="slds-truncate" title="Employee Name">Employee Name</div>
+                                            </th>
+                                            <th scope="col" class="slds-cell-wrap" style="padding-left: 0px;">
+                                                <div class="slds-truncate" title="Shift">Shift</div>
+                                            </th>
+                                            <th scope="col" class="slds-cell-wrap" style="padding-left: 0px;">
+                                                <div class="slds-truncate" title="Work Day">Work Day</div>
+                                            </th>
+                                            <th scope="col" class="slds-cell-wrap" style="padding-left: 0px;" width="30%">
+                                                <div class="slds-truncate" title="Notes">Notes</div>
+                                            </th>
+                                            <th scope="col" class="slds-cell-wrap" style="padding-left: 0px;" width="5%">
+                                                <div class="slds-truncate" title="Notes">Action</div>
+                                            </th>
+                                        </tr> 
+                                      </thead>
+                                      <tbody>{!existingRosteringList}
+                                        <apex:variable var="index" value="{!0}"/>
+                                        <apex:repeat value="{!existingRosteringList}" var="rost" id="asEmp">
+                                            <apex:outputPanel layout="none" rendered="{! !rost.isDeleted && rosteringSetupObject.rosteringSetupObject.Centre__c == rost.roster.Centre__c }">
+                                                <tr>
+                                                    <td data-label="Employee Name" class="slds-cell-wrap">
+                                                        <div class="slds-truncate" title="{!rost.employeeName}">{!rost.employeeName}</div>
+                                                    </td>
+                                                    <td data-label="Shift" class="slds-cell-wrap">
+                                                        <div class="slds-truncate slds-p-around_xxx-small">
+                                                            <apex:selectList id="shifti" value="{!rost.roster.Shift__c}" size="1" required="true"  styleClass="slds-input">
+                                                                <apex:selectOptions value="{!rosteringSetupObject.shifts}"/>
+                                                            </apex:selectList>
+                                                            <!--<apex:inputField value="{!rost.roster.Shift__c}" styleClass="slds-select" required="false"/>-->
+                                                            <!--<apex:outputField value="{!rost.roster.Shift__c}" styleClass="slds-input"/>-->
+                                                        </div>
+                                                    </td>
+                                                    <td data-label="Shift" class="slds-cell-wrap">
+                                                        <div class="slds-truncate slds-p-around_xxx-small" >
+                                                            <apex:selectList id="workdayi" value="{!rost.roster.Work_Day__c}" size="1" required="true" onchange="validateOnChangeWD('{!index}','{!rost.roster.Work_Day__c}'); return false;" styleClass="slds-input">
+                                                                <apex:selectOptions value="{!rosteringSetupObject.workDays}"/>
+                                                            </apex:selectList>
+                                                            <!--<apex:inputField value="{!rost.roster.Work_Day__c}" styleClass="slds-select" required="false" onchange="validateOnChangeWD('{!index}','{!rost.roster.Work_Day__c}'); return false;"/>-->
+                                                            <!--<apex:outputField value="{!rost.roster.Work_Day__c}" styleClass="slds-input"/>-->
+                                                        </div>
+                                                    </td>
+                                                    <td data-label="Shift" class="slds-cell-wrap">
+                                                        <div class="slds-truncate word_break_450px slds-p-around_xxx-small">
+                                                            <apex:inputField value="{!rost.roster.Notes__c}" styleClass="slds-select" required="false" style="margin-top: 5px; height: 75px;"/>
+                                                            <!--<apex:outputField value="{!rost.roster.Notes__c}" styleClass="slds-input"/>-->
+                                                        </div>
+                                                    </td>
+                                                    <td data-label="Shift" class="slds-cell-wrap">
+                                                        <apex:outputPanel rendered="{!rost.roster.Additional_Work_Day__c}">
+                                                            <div class="slds-truncate">
+                                                                <!--<button class="slds-button slds-button_icon" title="Edit" onClick="editAssigned('{!index}'); return false;">
+                                                                    <apex:image url="{!URLFOR($Resource.RosteringSetup, '/Rostering/img/editIcon.png')}" style="height:20px;"/>
+                                                                </button>-->
+                                                                <button class="slds-button slds-button_icon" title="Delete" onClick="deleteAssigned('{!index}'); return false;">
+                                                                    <apex:image url="{!URLFOR($Resource.RosteringSetup, '/Rostering/img/deleteIcon.png')}" style="height:24px;"/>
+                                                                </button>
+                                                            </div>
+                                                        </apex:outputPanel>
+                                                    </td>
+                                                </tr>
+                                            </apex:outputPanel>
+                                            <apex:variable var="index" value="{!index + 1}"/>
+                                        </apex:repeat>
+                                        <apex:variable var="index" value="{!0}"/>
+                                      </tbody>
+                                    </table>
+                                </fieldset>
+                            </apex:outputPanel>
+                        </div>
+                        <footer class="slds-modal__footer">
+                            <button class="slds-button slds-button_neutral" onClick="showHideModal(); return false;">Cancel</button>
+                            <button class="slds-button slds-button_brand" onCLick="saveRostering(); return false;">Save</button>
+                        </footer>
+                    </div>
+                </section>
+                <div class="slds-backdrop slds-backdrop_open"></div>
+            </div> 
+        </apex:form>
+    </html>
+</apex:page>

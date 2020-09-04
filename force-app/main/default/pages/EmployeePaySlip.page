@@ -1,0 +1,283 @@
+<apex:page standardController="Payout__c" extensions="EmployeePaySlipController">
+    <head>
+        <apex:slds />
+        <title>Payslip - <apex:outputText value="{0,date, MMM, yyyy}"> <apex:param value="{!payslip.fromDate}" /> </apex:outputText></title>
+        <style>
+            .box-shadow{ box-shadow: 7px 0px 16px 6px rgba(159,173,171,1);}
+            .border-bottom{ border-bottom: 1px solid rgb(221, 219, 218);}
+            .dateLabel{ font-size: large;font-weight: 400;color: green;}
+            .hLabelOtherContent{font-size: x-small;font-weight: 600;}
+            .labelbreakdownshownbelow{font-size: x-small;}
+            .text-align-end{ text-align: end;}
+        </style>
+        <script>
+            function closethecurrentTab(){
+                window.close();
+            }
+        </script>
+    </head>
+    <body>
+        <div class="slds-m-around_medium box-shadow slds-p-bottom_large">
+            <div class="slds-m-around_medium">
+                <!-- Header of the page -->
+                <div class="slds-grid slds-wrap slds-m-around_x-small">
+                    <div class="slds-col slds-size_1-of-1 slds-large-size_8-of-12">
+                        <h2 class="slds-text-heading_medium slds-m-top_large"><Label class="dateLabel">PAYSLIP</label> - <label class="dateLabel"><apex:outputText value="{0,date, MMM, yyyy}"> <apex:param value="{!payslip.fromDate}" /> </apex:outputText></label></h2>
+                        <label class="hLabelOtherContent"><apex:outputText value="{0,date, dd-MMM-yyyy}"> <apex:param value="{!payslip.fromDate}" /> </apex:outputText> - <apex:outputText value="{0,date, dd-MMM-yyyy}"> <apex:param value="{!payslip.toDate}" /> </apex:outputText> &nbsp; | &nbsp; Main Run PayDay - <apex:outputText value="{0,date, dd-MMM-yyyy}"> <apex:param value="{!payslip.toDate}" /> </apex:outputText> <br/>Aureus Group Pte Ltd, Singapore</label>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-large-size_4-of-12">
+                        <apex:image styleclass="slds-float_right slds-m-top_small" url="{!$Resource.Aureus_logo}" width="220" height="55"/>
+                    </div>
+                </div>
+                <fieldset class="slds-form-element">
+                    <!-- Employee details -->
+                    <div class="slds-grid slds-wrap">
+                        <div class="slds-col slds-size_1-of-1 slds-large-size_6-of-12">
+                            <div class="slds-col slds-size_1-of-1"> <h2 class="slds-text-heading_xxx-small slds-m-around_small"><b>Employee Id</b> : {!payslip.employeeId} </h2></div>
+                            <div class="slds-col slds-size_1-of-1"> <h2 class="slds-text-heading_xxx-small slds-m-around_small"><b>Name</b> : {!payslip.employeeName}</h2></div>
+                            <div class="slds-col slds-size_1-of-1 slds-m-around_small">
+                                <h2 class="slds-text-heading_xxx-small"><b>Hire Date</b> : 
+                                    <apex:outputText value="{0,date, EEEEE, dd MMM yyyy}"> <apex:param value="{!payslip.hireDate}" /> </apex:outputText>
+                                </h2>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-m-around_small"><h2 class="slds-text-heading_xxx-small"> <b>Mode of Payment</b> : {!payslip.modeofPayment}</h2></div>
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 slds-large-size_6-of-12">
+                            <div class="slds-col slds-size_1-of-1 slds-m-around_small"> <h2 class="slds-text-heading_xxx-small"><b>Department</b> : {!payslip.department}</h2></div>
+                            <div class="slds-col slds-size_1-of-1 slds-m-around_small"> <h2 class="slds-text-heading_xxx-small"><b>Job Title</b> : {!payslip.jobTitle}</h2></div>
+                            <!--<div class="slds-col slds-size_1-of-1 slds-m-around_small">
+                                <h2 class="slds-text-heading_xxx-small"><b>Termination Date</b> : 
+                                    <apex:outputText value="{0,date,EEEEE, dd MMM yyyy}"> <apex:param value="{!payslip.terminationDate}" /></apex:outputText>
+                                </h2>
+                            </div>-->
+                        </div>
+                    </div>
+                </fieldset>
+                <fieldset class="slds-form-element">
+                    <!-- Employee Account details -->
+                    <div class="slds-grid slds-wrap slds-box_xx-small">
+                        <div class="slds-col slds-size_1-of-1">
+                            <div class="slds-grid slds-wrap" style="background: lightgray;">
+                                <div class="slds-col slds-size_1-of-1">
+                                    <div class="slds-grid slds-wrap slds-m-around_x-small">
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_3-of-12">Beneficiary Name</div>
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_3-of-12">Bank Name</div>
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_3-of-12">Account Number</div>
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_3-of-12">Amount ({!payslip.orgCurrency})</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slds-grid slds-wrap" style="border: 1px solid lightgray;">
+                                <div class="slds-col slds-size_1-of-1">
+                                    <div class="slds-grid slds-wrap slds-m-around_x-small">
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_3-of-12">{!payslip.beneficiaryName}</div>
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_3-of-12">{!payslip.bankName}</div>
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_3-of-12">{!payslip.accountNumber}</div>
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_3-of-12">{!payslip.amount}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+                <fieldset class="slds-form-element">
+                    <div class="slds-grid slds-wrap slds-box_xx-small">
+                        <div class="slds-col slds-size_1-of-1">
+                            <div class="slds-grid slds-wrap" style="background: #f79c1a; color: white;">
+                                <div class="slds-col slds-size_1-of-1">
+                                    <div class="slds-grid slds-wrap slds-m-around_x-small">
+                                        Monthly Payments
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 6 block of 1 -->
+                    <div class="slds-grid slds-wrap slds-box_xx-small">
+                        <div class="slds-col slds-size_1-of-1 slds-large-size_6-of-12">
+                            <div style="background: linear-gradient(45deg, black, transparent); color: white;">
+                                <div class="slds-grid slds-wrap slds-m-around_small">
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_9-of-12"><b>Item</b></div>
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_2-of-12 text-align-end"><b>Amount</b></div>
+                                </div>
+                            </div>
+                            <apex:outputPanel rendered="{!IF(payslip.basicSalary != null && payslip.basicSalary > 0 , true , false)}">
+                                <div style="background: linear-gradient(45deg, #ccc, transparent);">
+                                    <div class="slds-grid slds-wrap slds-m-around_small">
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_9-of-12"> Basic Salary ({!payslip.orgCurrency})</div>
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_2-of-12 text-align-end">{!payslip.basicSalary}</div>
+                                    </div>
+                                </div>
+                            </apex:outputPanel>
+                            <div style="background: linear-gradient(45deg, #ccc, transparent);">
+                                <div class="slds-grid slds-wrap slds-m-around_small">
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_9-of-12"> Total Allowances ({!payslip.orgCurrency})<br/><label class="labelbreakdownshownbelow">(Breakdown shown below)</label></div>
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_2-of-12 text-align-end">{!payslip.totalAllowances}</div>
+                                </div>
+                            </div>
+                            <apex:repeat var="ta" value="{!payslip.totalAllowancesList}">
+                                <div class="slds-grid slds-wrap slds-m-around_small">
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_8-of-12">{!ta.type}</div>
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_3-of-12 text-align-end">{!ta.amount}</div>
+                                </div>
+                            </apex:repeat>
+                            
+                            <div style="background: linear-gradient(45deg, #ccc, transparent);">
+                                <div class="slds-grid slds-wrap slds-m-around_small">
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_9-of-12">Other Additional Payments ({!payslip.orgCurrency})<br/><label class="labelbreakdownshownbelow">(Breakdown shown below)</label></div>
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_2-of-12 text-align-end">{!payslip.otherAdditionalPayments}</div>
+                                </div>
+                            </div>
+                            <apex:repeat var="awd" value="{!payslip.additionalPaymentList}">
+                                <div class="slds-grid slds-wrap slds-m-around_small">
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_8-of-12">{!awd.type}</div>
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_3-of-12 text-align-end">{!awd.amount}</div>
+                                </div>
+                            </apex:repeat>
+                            
+                            <div style="background: linear-gradient(45deg, #ccc, transparent);">
+                                <div class="slds-grid slds-wrap slds-m-around_small">
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_9-of-12">Total NON-CPF Allowances ({!payslip.orgCurrency})<br/><label class="labelbreakdownshownbelow">(Breakdown shown below)</label></div>
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_2-of-12 text-align-end">{!payslip.nonCPFPayments}</div>
+                                </div>
+                            </div>
+                            <apex:repeat var="awd" value="{!payslip.nonCPFPaymentList}">
+                                <div class="slds-grid slds-wrap slds-m-around_small">
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_8-of-12">{!awd.type}</div>
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_3-of-12 text-align-end">{!awd.amount}</div>
+                                </div>
+                            </apex:repeat>
+                            
+                            <fieldset class="slds-form-element">
+                                <div style="background: linear-gradient(45deg, black, transparent); color: white;">
+                                    <div class="slds-grid slds-wrap slds-m-around_small">
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_11-of-12"><b>Overtime Details*</b></div>
+                                    </div>
+                                </div>
+                                <div style="background: linear-gradient(45deg, #ccc, transparent);">
+                                    <div class="slds-grid slds-wrap slds-m-around_small">
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_9-of-12">Total Overtime Hours Worked</div>
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_2-of-12 text-align-end">{!payslip.totalOvertimeHoursWorked}</div>
+                                    </div>
+                                </div>
+                                <div style="background: linear-gradient(45deg, #ccc, transparent);">
+                                    <div class="slds-grid slds-wrap slds-m-around_small">
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_9-of-12">Total Overtime Pay ({!payslip.orgCurrency})<br/><label class="labelbreakdownshownbelow">(Breakdown shown below)</label></div>
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_2-of-12 text-align-end">{!payslip.totalOvertimePay}</div>
+                                    </div>
+                                </div>
+                            </fieldset>
+                        </div>
+                        <!-- 6 block of 2 -->
+                        <div class="slds-col slds-size_1-of-1 slds-large-size_6-of-12">
+                            <div style="background: linear-gradient(45deg, black, transparent); color: white;">
+                                <div class="slds-grid slds-wrap slds-m-around_small">
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_9-of-12"><b>Item</b></div>
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_2-of-12 text-align-end"><b>Amount</b></div>
+                                </div>
+                            </div>
+                            <div style="background: linear-gradient(45deg, #ccc, transparent);">
+                                <div class="slds-grid slds-wrap slds-m-around_small">
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_9-of-12">Total Deductions ({!payslip.orgCurrency})<br/><label class="labelbreakdownshownbelow">(Breakdown shown below)</label></div>
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_2-of-12 text-align-end">{!payslip.totalDeductions}</div>
+                                </div>
+                            </div>
+                            <apex:repeat var="tec" value="{!payslip.totalDeductionList}">
+                                <div class="slds-grid slds-wrap slds-m-around_small">
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_8-of-12">{!tec.type}</div>
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_3-of-12 text-align-end">{!tec.amount}</div>
+                                </div>
+                            </apex:repeat>
+                            <div style="background: linear-gradient(45deg, #ccc, transparent);">
+                                <div class="slds-grid slds-wrap slds-m-around_small">
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_9-of-12">Total Reimbursements ({!payslip.orgCurrency})<br/><label class="labelbreakdownshownbelow">(Breakdown shown below)</label></div>
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_2-of-12 text-align-end">{!payslip.totalReimbursements}</div>
+                                </div>
+                            </div>
+                            <div style="background: linear-gradient(45deg, #ccc, transparent);">
+                                <div class="slds-grid slds-wrap slds-m-around_small">
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_9-of-12">Netpay</div>
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_2-of-12 text-align-end">{!payslip.netpay}</div>
+                                </div>
+                            </div>
+                            <fieldset class="slds-form-element">
+                                <div style="background: linear-gradient(45deg, black, transparent); color: white;">
+                                    <div class="slds-grid slds-wrap slds-m-around_small">
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_9-of-12"><b>Employer Contribution</b></div>
+                                    </div>
+                                </div>
+                                <div style="background: linear-gradient(45deg, #ccc, transparent);">
+                                    <div class="slds-grid slds-wrap slds-m-around_small">
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_9-of-12">Total Employer Contribution ({!payslip.orgCurrency})<br/><label class="labelbreakdownshownbelow">(Breakdown shown below)</label></div>
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_2-of-12 text-align-end">{!payslip.totalEmployerContribution}</div>
+                                    </div>
+                                </div>
+                                <apex:repeat var="tec" value="{!payslip.employerContributionList}">
+                                    <div class="slds-grid slds-wrap slds-m-around_small">
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_8-of-12">{!tec.type}</div>
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_3-of-12 text-align-end">{!tec.amount}</div>
+                                    </div>
+                                </apex:repeat>
+                            </fieldset>
+                        </div>
+                    </div>
+                </fieldset>
+                <fieldset class="slds-form-element">
+                    <div class="slds-grid slds-wrap slds-box_xx-small">
+                        <div class="slds-col slds-size_1-of-1">
+                            <div class="slds-grid slds-wrap" style="background: #f79c1a; color: white;">
+                                <div class="slds-col slds-size_10-of-12">
+                                    <div class="slds-grid slds-wrap slds-m-around_x-small">
+                                        Year to Date Data
+                                    </div>
+                                </div>
+                                <div class="slds-col slds-size_2-of-12">
+                                    <div class="slds-grid slds-wrap slds-m-around_x-small" style="float: right;">
+                                        <apex:outputText value="{0,date, MMMM, yyyy}"> <apex:param value="{!payslip.yearStartDate }" /> </apex:outputText> - <apex:outputText value="{0,date, MMMM, yyyy}"> <apex:param value="{!payslip.toDate}" /> </apex:outputText>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-grid slds-wrap slds-box_xx-small">
+                        <div class="slds-col slds-size_1-of-1">
+                            <div class="slds-grid slds-wrap" style="background: lightgray;">
+                                <div class="slds-col slds-size_10-of-12">
+                                    <div class="slds-grid slds-wrap slds-m-around_x-small">
+                                        Tax Grouping
+                                    </div>
+                                </div>
+                                <div class="slds-col slds-size_2-of-12">
+                                    <div class="slds-grid slds-wrap slds-m-around_x-small"  style="float: right;">
+                                        Amount
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-grid slds-wrap slds-box_xx-small">
+                        <div class="slds-col slds-size_10-of-12 ">Gross Salary, Fees, Leave Pay, Wages and Overtime</div>
+                        <div class="slds-col slds-size_2-of-12 text-align-end slds-box_xx-small" style="float: right;"> {!payslip.gross} {!payslip.orgCurrency}</div>
+                    </div>
+                    <div class="slds-grid slds-wrap slds-box_xx-small">
+                        <div class="slds-col slds-size_10-of-12"> Donation</div>
+                        <div class="slds-col slds-size_2-of-12 text-align-end slds-box_xx-small" style="float: right;">{!payslip.donationAmount} {!payslip.orgCurrency}</div>
+                    </div>
+                    <div class="slds-grid slds-wrap slds-box_xx-small">
+                        <div class="slds-col slds-size_10-of-12"> Employee Compulsory CPF Contribution</div>
+                        <div class="slds-col slds-size_2-of-12 text-align-end slds-box_xx-small" style="float: right;">{!payslip.employeeCPFAmount} {!payslip.orgCurrency}</div>
+                    </div>
+                    <div class="slds-grid slds-wrap slds-box_xx-small">
+                        <div class="slds-col slds-size_10-of-12"> Employer Compulsory CPF Contribution</div>
+                        <div class="slds-col slds-size_2-of-12 text-align-end slds-box_xx-small" style="float: right;">{!payslip.employerCPFAmount} {!payslip.orgCurrency}</div>
+                    </div>
+                </fieldset>
+            <!-- BodyEnd -->
+            </div>
+            
+            <div class="slds-box_xx-small" style="text-align: center;">
+                <button class="slds-button slds-button_neutral" onclick="closethecurrentTab(); return false;">Close</button>
+            </div>
+        </div>
+    </body>
+</apex:page>

@@ -1,0 +1,778 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workflow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <alerts>
+        <fullName>Credit_card_updated_alert</fullName>
+        <description>Credit card updated alert</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Customer_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderAddress>noreply@aureusacademy.com</senderAddress>
+        <senderType>OrgWideEmailAddress</senderType>
+        <template>Aureus_Portal_Notifications/Card_Details_updated</template>
+    </alerts>
+    <alerts>
+        <fullName>Employee_Contract_Expiry</fullName>
+        <description>Employee Contract Expiry</description>
+        <protected>false</protected>
+        <recipients>
+            <recipient>HR_Manager</recipient>
+            <type>role</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus_HR/Employee_Contract_Expiry</template>
+    </alerts>
+    <alerts>
+        <fullName>Employee_Pass_Expiry</fullName>
+        <description>Employee Pass Expiry</description>
+        <protected>false</protected>
+        <recipients>
+            <recipient>HR_Manager</recipient>
+            <type>role</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus_HR/Pass_Expiry_Email</template>
+    </alerts>
+    <alerts>
+        <fullName>Employee_Portal_Invitation</fullName>
+        <description>Employee Portal Invitation</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Teacher_Email_Backend__c</field>
+            <type>email</type>
+        </recipients>
+        <senderAddress>noreply@aureusacademy.com</senderAddress>
+        <senderType>OrgWideEmailAddress</senderType>
+        <template>Aureus_Portal_Notifications/Employee_Portal_On_boarding_Email</template>
+    </alerts>
+    <alerts>
+        <fullName>Login_Email_Stripo_Effective_1st_Oct_2019</fullName>
+        <description>Login Email Stripo - Effective 1st Oct 2019</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Customer_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderAddress>noreply@aureusacademy.com</senderAddress>
+        <senderType>OrgWideEmailAddress</senderType>
+        <template>Aureus_New_Email_Template/Login_Email_Stripo_Oct2019</template>
+    </alerts>
+    <alerts>
+        <fullName>Login_Email_Welcome</fullName>
+        <description>Login Email Welcome</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Customer_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderAddress>noreply@aureusacademy.com</senderAddress>
+        <senderType>OrgWideEmailAddress</senderType>
+        <template>Aureus_Portal_Notifications/Login_Email_Stripo</template>
+    </alerts>
+    <alerts>
+        <fullName>Login_Email_Welcome_For_HK</fullName>
+        <description>Login Email Welcome For HK</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Customer_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderAddress>noreply@aureusacademy.com</senderAddress>
+        <senderType>OrgWideEmailAddress</senderType>
+        <template>Aureus_Portal_Notifications/Login_Email_Stripo_For_HK</template>
+    </alerts>
+    <alerts>
+        <fullName>Password_Reset_from_Portal_or_App</fullName>
+        <description>Password Reset from Portal or App</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Customer_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderAddress>noreply@aureusacademy.com</senderAddress>
+        <senderType>OrgWideEmailAddress</senderType>
+        <template>Aureus_Portal_Notifications/Password_Reset_Confirmation_Email_Stripo</template>
+    </alerts>
+    <alerts>
+        <fullName>Successful_Signup_from_Portal</fullName>
+        <description>Successful Signup from Portal</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Customer_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderAddress>noreply@aureusacademy.com</senderAddress>
+        <senderType>OrgWideEmailAddress</senderType>
+        <template>Aureus_Portal_Notifications/Log_in_Successful</template>
+    </alerts>
+    <alerts>
+        <fullName>Teacher_Portal_Invitation</fullName>
+        <description>Teacher Portal Invitation</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Teacher_Email_Backend__c</field>
+            <type>email</type>
+        </recipients>
+        <senderAddress>noreply@aureusacademy.com</senderAddress>
+        <senderType>OrgWideEmailAddress</senderType>
+        <template>Aureus_Portal_Notifications/Teachers_Portal_Onboarding_Email</template>
+    </alerts>
+    <fieldUpdates>
+        <fullName>Email_Requested_Date_Blank</fullName>
+        <field>Email_Requested_Date__c</field>
+        <name>Email Requested Date Blank</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Null</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Fill_Email_Requested_Date</fullName>
+        <field>Email_Requested_Date__c</field>
+        <formula>TODAY()</formula>
+        <name>Fill Email Requested Date</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Populate_Person_Account_Email</fullName>
+        <field>Person_Email__c</field>
+        <formula>PersonEmail</formula>
+        <name>Populate Person Account Email</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Customer_Email</fullName>
+        <field>Customer_Email__c</field>
+        <formula>PersonEmail</formula>
+        <name>Update Customer Email</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Customer_Type_as_Parent</fullName>
+        <description>Update Customer Type as Parent</description>
+        <field>Customer_Type__c</field>
+        <literalValue>Parent</literalValue>
+        <name>Update Customer Type as Parent</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Customer_Type_as_Student</fullName>
+        <description>Update Customer Type as Student</description>
+        <field>Customer_Type__c</field>
+        <literalValue>Student</literalValue>
+        <name>Update Customer Type as Student</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Enroled_Date</fullName>
+        <description>Update this field when Enroled is updated as checked</description>
+        <field>Enroled_Date__c</field>
+        <formula>TODAY()</formula>
+        <name>Update Enroled Date</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Exit_Stage</fullName>
+        <field>Exit_Stages__c</field>
+        <literalValue>Completed</literalValue>
+        <name>Update Exit Stage</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+        <reevaluateOnChange>true</reevaluateOnChange>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_PI_Data_Sync_Date_Time</fullName>
+        <description>Update PI Data Sync Date/Time</description>
+        <field>PI_Data_Sync_Date_Time__pc</field>
+        <formula>NOW() - (55)/1440</formula>
+        <name>Update PI Data Sync Date/Time</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_PI_to_SF_Sync</fullName>
+        <description>Update PI to SF sync field for Pardot</description>
+        <field>PI_to_SF_Sync__pc</field>
+        <literalValue>TRUE</literalValue>
+        <name>Update PI to SF Sync</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Status</fullName>
+        <field>Employee_Status__c</field>
+        <literalValue>Confirm</literalValue>
+        <name>Update Status</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_employee_status_to_left</fullName>
+        <field>Employee_Status__c</field>
+        <literalValue>Left</literalValue>
+        <name>Update employee status to left</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_teacher_email</fullName>
+        <description>Update Employee Email (Backend)</description>
+        <field>Teacher_Email_Backend__c</field>
+        <formula>PersonEmail</formula>
+        <name>Update Employee Email</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <rules>
+        <fullName>Automated Portal Invitation to Employee</fullName>
+        <active>true</active>
+        <criteriaItems>
+            <field>Account.RecordTypeId</field>
+            <operation>equals</operation>
+            <value>Teacher,Employee</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Account.Teacher_Portal_Invitation__c</field>
+            <operation>equals</operation>
+            <value>False</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Account.Employee_Status__c</field>
+            <operation>equals</operation>
+            <value>Probation</value>
+        </criteriaItems>
+        <description>Send a Portal invite 14 days after the Probation If they are not Signed Up yet</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+        <workflowTimeTriggers>
+            <actions>
+                <name>Teacher_Portal_Invitation</name>
+                <type>Alert</type>
+            </actions>
+            <actions>
+                <name>Portal_Signup_Invitation_Sent</name>
+                <type>Task</type>
+            </actions>
+            <timeLength>14</timeLength>
+            <workflowTimeTriggerUnit>Days</workflowTimeTriggerUnit>
+        </workflowTimeTriggers>
+    </rules>
+    <rules>
+        <fullName>Blank Email Requested Date</fullName>
+        <actions>
+            <name>Email_Requested_Date_Blank</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Account.Want_Invoice_As_Email__c</field>
+            <operation>equals</operation>
+            <value>False</value>
+        </criteriaItems>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Change Duty Type</fullName>
+        <active>true</active>
+        <description>90 days after joining, task for HR to change Duty type</description>
+        <formula>AND(NOT(ISBLANK(Joining_Date__c)), ISBLANK(TEXT( Employee_Duty_Type__c )))</formula>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+        <workflowTimeTriggers>
+            <actions>
+                <name>Change_Duty_Type</name>
+                <type>Task</type>
+            </actions>
+            <offsetFromField>Account.Joining_Date__c</offsetFromField>
+            <timeLength>90</timeLength>
+            <workflowTimeTriggerUnit>Days</workflowTimeTriggerUnit>
+        </workflowTimeTriggers>
+    </rules>
+    <rules>
+        <fullName>Confirm Employee after probation</fullName>
+        <active>true</active>
+        <criteriaItems>
+            <field>Account.RecordTypeId</field>
+            <operation>equals</operation>
+            <value>Teacher,Employee</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Account.Probation_End_Date__c</field>
+            <operation>notEqual</operation>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Account.Employee_Status__c</field>
+            <operation>equals</operation>
+            <value>Probation</value>
+        </criteriaItems>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+        <workflowTimeTriggers>
+            <actions>
+                <name>Update_Status</name>
+                <type>FieldUpdate</type>
+            </actions>
+            <offsetFromField>Account.Probation_End_Date__c</offsetFromField>
+            <timeLength>0</timeLength>
+            <workflowTimeTriggerUnit>Hours</workflowTimeTriggerUnit>
+        </workflowTimeTriggers>
+    </rules>
+    <rules>
+        <fullName>Credit card updated</fullName>
+        <actions>
+            <name>Credit_card_updated_alert</name>
+            <type>Alert</type>
+        </actions>
+        <active>false</active>
+        <description>When customer update exiting expired credit card</description>
+        <formula>TRUE</formula>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Employee Portal Invitation Notification</fullName>
+        <actions>
+            <name>Employee_Portal_Invitation</name>
+            <type>Alert</type>
+        </actions>
+        <actions>
+            <name>Employee_Portal_Invitation_Sent</name>
+            <type>Task</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Account.Teacher_Portal_Invitation__c</field>
+            <operation>equals</operation>
+            <value>True</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Account.RecordTypeId</field>
+            <operation>equals</operation>
+            <value>Employee</value>
+        </criteriaItems>
+        <description>Employee Portal Invitation Notification</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Login Email Welcome Portal Stripo %28HK%29</fullName>
+        <actions>
+            <name>Login_Email_Welcome_For_HK</name>
+            <type>Alert</type>
+        </actions>
+        <actions>
+            <name>Portal_Signup_Invitation_Sent_For_HK</name>
+            <type>Task</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Account.Enroled__c</field>
+            <operation>equals</operation>
+            <value>True</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Account.Location__c</field>
+            <operation>equals</operation>
+            <value>Aureus Island Resort,Aureus Olympian City 2,Aureus Citywalk 2</value>
+        </criteriaItems>
+        <description>This will be sent to the customer upon first time enrolment for HK</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Login Email Welcome Portal Stripo %28SG%29</fullName>
+        <actions>
+            <name>Login_Email_Welcome</name>
+            <type>Alert</type>
+        </actions>
+        <actions>
+            <name>Portal_Signup_Invitation_Sent</name>
+            <type>Task</type>
+        </actions>
+        <active>false</active>
+        <booleanFilter>1 AND 2 AND (3 OR 4)</booleanFilter>
+        <criteriaItems>
+            <field>Account.Enroled__c</field>
+            <operation>equals</operation>
+            <value>True</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Account.Location__c</field>
+            <operation>notEqual</operation>
+            <value>Aureus Island Resort,Aureus Olympian City 2,Aureus Citywalk 2</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Account.Enroled_Date__c</field>
+            <operation>lessThan</operation>
+            <value>10/1/2019</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Account.Enroled_Date__c</field>
+            <operation>equals</operation>
+        </criteriaItems>
+        <description>This will be sent to the customer upon first time enrolment
+Enroled Date before Oct 1st</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Login Email Welcome Portal Stripo %28SG%29 1st Oct 2019 Onward</fullName>
+        <actions>
+            <name>Login_Email_Stripo_Effective_1st_Oct_2019</name>
+            <type>Alert</type>
+        </actions>
+        <actions>
+            <name>Portal_Signup_Invitation_Sent</name>
+            <type>Task</type>
+        </actions>
+        <active>true</active>
+        <booleanFilter>1 AND 2</booleanFilter>
+        <criteriaItems>
+            <field>Account.Enroled__c</field>
+            <operation>equals</operation>
+            <value>True</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Account.Location__c</field>
+            <operation>notEqual</operation>
+            <value>Aureus Island Resort,Aureus Olympian City 2,Aureus Citywalk 2</value>
+        </criteriaItems>
+        <description>This will be sent to the customer upon first time enrolment
+Enroled Date Oct 1st onward</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Notify for Contract Expiry</fullName>
+        <active>true</active>
+        <formula>AND( OR(RecordType.Name ==&apos;Employee&apos;, RecordType.Name ==&apos;Teacher&apos;), Contract_End_Date__c!=null  )</formula>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+        <workflowTimeTriggers>
+            <actions>
+                <name>Contract_expiring_in_6_months</name>
+                <type>Task</type>
+            </actions>
+            <offsetFromField>Account.Contract_End_Date__c</offsetFromField>
+            <timeLength>-180</timeLength>
+            <workflowTimeTriggerUnit>Days</workflowTimeTriggerUnit>
+        </workflowTimeTriggers>
+    </rules>
+    <rules>
+        <fullName>Notify for Pass expiry</fullName>
+        <active>true</active>
+        <formula>AND( OR(RecordType.Name ==&apos;Employee&apos;, RecordType.Name ==&apos;Teacher&apos;), Expiry_Date__c!=null )</formula>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+        <workflowTimeTriggers>
+            <actions>
+                <name>Pass_expiring_in_90_Days</name>
+                <type>Task</type>
+            </actions>
+            <offsetFromField>Account.Expiry_Date__c</offsetFromField>
+            <timeLength>-90</timeLength>
+            <workflowTimeTriggerUnit>Days</workflowTimeTriggerUnit>
+        </workflowTimeTriggers>
+    </rules>
+    <rules>
+        <fullName>Password Reset From Portal - Stripo</fullName>
+        <actions>
+            <name>Password_Reset_from_Portal_or_App</name>
+            <type>Alert</type>
+        </actions>
+        <actions>
+            <name>Email_Password_Reset_Notification_Sent_Portal_App</name>
+            <type>Task</type>
+        </actions>
+        <active>true</active>
+        <description>When customer Reset the Password from Portal or Mobile App</description>
+        <formula>AND (  NOT(ISBLANK(PRIORVALUE(Customer_Password__c))), ISCHANGED( Customer_Password__c ),  RecordType.DeveloperName = &quot;Customer&quot; )</formula>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Set Email Requested Date</fullName>
+        <actions>
+            <name>Fill_Email_Requested_Date</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Account.Want_Invoice_As_Email__c</field>
+            <operation>equals</operation>
+            <value>True</value>
+        </criteriaItems>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Successful Signup From Portal</fullName>
+        <actions>
+            <name>Successful_Signup_from_Portal</name>
+            <type>Alert</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Account.Customer_Password__c</field>
+            <operation>notEqual</operation>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Account.RecordTypeId</field>
+            <operation>equals</operation>
+            <value>Customer</value>
+        </criteriaItems>
+        <description>When customer Signup on the Portal or Mobile App for first time</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Teacher Portal Invitation Notification</fullName>
+        <actions>
+            <name>Teacher_Portal_Invitation</name>
+            <type>Alert</type>
+        </actions>
+        <actions>
+            <name>Teacher_Portal_Invitation_Sent</name>
+            <type>Task</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Account.Teacher_Portal_Invitation__c</field>
+            <operation>equals</operation>
+            <value>True</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Account.RecordTypeId</field>
+            <operation>equals</operation>
+            <value>Teacher</value>
+        </criteriaItems>
+        <description>Teacher Portal Invitation Notification</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Customer Email</fullName>
+        <actions>
+            <name>Update_Customer_Email</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Account.PersonEmail</field>
+            <operation>notEqual</operation>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Account.RecordTypeId</field>
+            <operation>equals</operation>
+            <value>Customer</value>
+        </criteriaItems>
+        <description>Update Customer Email</description>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Customer Type as Parent</fullName>
+        <actions>
+            <name>Update_Customer_Type_as_Parent</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <formula>Parent__c = &quot;&quot; &amp;&amp;  RecordType.Name = &quot;Customer&quot;</formula>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Customer Type as Student</fullName>
+        <actions>
+            <name>Update_Customer_Type_as_Student</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <description>Update Customer Type as Student</description>
+        <formula>Parent__c != &quot;&quot; &amp;&amp;  RecordType.Name = &quot;Customer&quot;</formula>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Employee Email</fullName>
+        <actions>
+            <name>Update_teacher_email</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Account.PersonEmail</field>
+            <operation>notEqual</operation>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Account.RecordTypeId</field>
+            <operation>equals</operation>
+            <value>Teacher,Employee</value>
+        </criteriaItems>
+        <description>Update Employee Email for backend use</description>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Enroled Date</fullName>
+        <actions>
+            <name>Update_Enroled_Date</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Account.Enroled__c</field>
+            <operation>equals</operation>
+            <value>True</value>
+        </criteriaItems>
+        <description>Update this field when Enroled checkbox is updated</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update PI Data Sync Date%2FTime</fullName>
+        <actions>
+            <name>Update_PI_Data_Sync_Date_Time</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Account.PI_Data_Sync__pc</field>
+            <operation>equals</operation>
+            <value>TRUE</value>
+        </criteriaItems>
+        <description>Update PI Data Sync Date/Time</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update PI to SF Sync</fullName>
+        <active>true</active>
+        <criteriaItems>
+            <field>Account.PI_Data_Sync_Date_Time__pc</field>
+            <operation>notEqual</operation>
+        </criteriaItems>
+        <description>Update PI to SF Sync 
+This is managed by a Time-based workflow 
+Created for Pardot Case creation process</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+        <workflowTimeTriggers>
+            <actions>
+                <name>Update_PI_to_SF_Sync</name>
+                <type>FieldUpdate</type>
+            </actions>
+            <offsetFromField>Account.PI_Data_Sync_Date_Time__pc</offsetFromField>
+            <timeLength>1</timeLength>
+            <workflowTimeTriggerUnit>Hours</workflowTimeTriggerUnit>
+        </workflowTimeTriggers>
+    </rules>
+    <rules>
+        <fullName>Update status on Last Working Date</fullName>
+        <active>true</active>
+        <criteriaItems>
+            <field>Account.Last_Working_Date__c</field>
+            <operation>notEqual</operation>
+        </criteriaItems>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+        <workflowTimeTriggers>
+            <actions>
+                <name>Update_Exit_Stage</name>
+                <type>FieldUpdate</type>
+            </actions>
+            <actions>
+                <name>Update_employee_status_to_left</name>
+                <type>FieldUpdate</type>
+            </actions>
+            <offsetFromField>Account.Last_Working_Date__c</offsetFromField>
+            <timeLength>1</timeLength>
+            <workflowTimeTriggerUnit>Days</workflowTimeTriggerUnit>
+        </workflowTimeTriggers>
+    </rules>
+    <tasks>
+        <fullName>Change_Duty_Type</fullName>
+        <assignedTo>HR_Executive</assignedTo>
+        <assignedToType>role</assignedToType>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Open</status>
+        <subject>Change Duty Type</subject>
+    </tasks>
+    <tasks>
+        <fullName>Contract_expiring_in_6_months</fullName>
+        <assignedTo>HR_Executive</assignedTo>
+        <assignedToType>role</assignedToType>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Open</status>
+        <subject>Contract expiring in 6 months</subject>
+    </tasks>
+    <tasks>
+        <fullName>Email_Password_Reset_Notification_Sent_Portal_App</fullName>
+        <assignedToType>owner</assignedToType>
+        <description>Email: Password Reset Notification Sent (Portal/App)
+This is sent out when customer reset the password from Portal/App</description>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Completed</status>
+        <subject>Email: Password Reset Notification Sent (Portal/App)</subject>
+    </tasks>
+    <tasks>
+        <fullName>Employee_Portal_Invitation_Sent</fullName>
+        <assignedTo>admin@aureusacademy.com</assignedTo>
+        <assignedToType>user</assignedToType>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Completed</status>
+        <subject>Employee Portal Invitation Sent</subject>
+    </tasks>
+    <tasks>
+        <fullName>Pass_expiring_in_90_Days</fullName>
+        <assignedTo>HR_Executive</assignedTo>
+        <assignedToType>role</assignedToType>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <priority>High</priority>
+        <protected>false</protected>
+        <status>Open</status>
+        <subject>Pass expiring in 90 Days</subject>
+    </tasks>
+    <tasks>
+        <fullName>Portal_Signup_Invitation_Sent</fullName>
+        <assignedTo>admin@aureusacademy.com</assignedTo>
+        <assignedToType>user</assignedToType>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Completed</status>
+        <subject>Portal Signup Invitation Sent</subject>
+    </tasks>
+    <tasks>
+        <fullName>Portal_Signup_Invitation_Sent_For_HK</fullName>
+        <assignedTo>admin@aureusacademy.com</assignedTo>
+        <assignedToType>user</assignedToType>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Completed</status>
+        <subject>HK Portal Signup Invitation Sent</subject>
+    </tasks>
+    <tasks>
+        <fullName>Teacher_Portal_Invitation_Sent</fullName>
+        <assignedTo>admin@aureusacademy.com</assignedTo>
+        <assignedToType>user</assignedToType>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Completed</status>
+        <subject>Teacher Portal Invitation Sent</subject>
+    </tasks>
+</Workflow>

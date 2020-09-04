@@ -1,0 +1,880 @@
+<apex:page showHeader="false"  controller="EnrolmentProcessIpadCntrl" standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False">
+    <head>
+        <title>Aureus IPAD Enrolment</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0"/>
+        <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}"/>      
+        <apex:stylesheet value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.css')}"/>
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous" />
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery/jquery.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.js')}"/>               
+        
+        <style>
+            body{ font-size:16px; }
+            .ui-state-default{margin:0 4px;}
+            .ui-datepicker-today .ui-state-highlight {
+            background: #d5d5d5 !important;
+            
+            }
+            .ui-datepicker-calendar th, .ui-datepicker-calendar td{width:14.28%;}
+            @media(min-width:991px){.class-true{margin:0px 120px;}}
+            .ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default, .ui-button, html .ui-button.ui-state-disabled:hover, html .ui-button.ui-state-disabled:active{background-color:#fff;}
+            @media(max-width:769px){.ui-datepicker { width: 100% !important; margin: 0 auto;}}
+            @media(min-width:999px){.slds-modal__container {width: 40%;}}
+            blocklist{ margin:0px;}
+            .icon-collapse,.icon-collapse:focus, .icon-collapse:hover {color:#000; font-weight:bold; font-size:26px;text-decoration: none;}
+            input{
+            height: calc(1.875rem + (1px * 10));}
+            ul li{margin-left:0px;}
+            @media(min-width:999px){
+            .m-lg-right{margin-right: .75rem;}}
+            @media(min-width:767px){
+            .text-lg-left{ text-align:left;}
+            .text-lg-right{text-align:right;}
+            .slds-large-p-around_large{padding:1.5rem;}
+            .slds-large-p-horizontal_xx-large{padding-left: 3rem; padding-right: 3rem;}
+            }
+            @media(max-width:444px){ .m-sm-0{margin:0px;} .slds-text-heading_medium{font-size:1.1rem;} .title-no{padding: 2px 6px !important;}}
+            .ui-datepicker-title{font-size:16px; color:#ffbf2f;background: #fff;}
+            .ui-datepicker-header{background: #fff;border: 0px;}
+            .ui-datepicker td {
+            border: 0;
+            padding: 3px;
+            }
+            .ui-widget.ui-widget-content {
+            border: 0px solid #c5c5c5;
+            }
+            
+            .ui-state-highlight, .ui-widget-content .ui-state-highlight, .ui-widget-header .ui-state-highlight, .day-availability--morning .ui-state-active, .day-availability--morning .ui-state-default.ui-state-active, .day-availability--afternoon .ui-state-active, .day-availability--afternoon .ui-state-default.ui-state-active {
+            border: 0px;
+            background: #3fa6fb;
+            position:relative;
+            color: #fff;
+            }
+            .ui-state-default, .ui-state-default {
+            border: 0px;
+           
+            background: #c8c0c0;
+            position:relative;
+            }
+            .ui-state-default:after, .ui-state-default:after {
+            position: absolute;
+            content: "";
+            padding: 3px;
+            background-color: #c8c0c0;
+            border-radius: 4px;
+            bottom: 5px;
+            right: 10px;
+            }
+            .day-availability--afternoon .ui-state-default:after {
+            background-color: #63ce63 !important;
+            }
+            .day-availability--morning .ui-state-default:before {
+            background-color: #63ce63 !important;
+            }
+            .ui-state-default:before{
+            position: absolute;
+            content: "";
+            padding: 3px;
+            background-color: #c8c0c0;
+            border-radius: 4px;
+            bottom: 5px;
+            left: 9px;
+            }
+            
+            
+            .day-availability--afternoon .ui-state-active:after, .day-availability--afternoon .ui-state-default.ui-state-active:after{
+            background-color: #63ce63 !important;
+            }
+            .day-availability--morning .ui-state-active:before, .day-availability--morning .ui-state-default::before{
+            background-color: #63ce63 !important;
+            }
+            
+            .ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default, .ui-button, html .ui-button.ui-state-disabled:hover, html .ui-button.ui-state-disabled:active {
+            border: 0px;
+            margin:0px 4px;
+            }
+             @media(max-width:560px){
+             .ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default, .ui-button, html .ui-button.ui-state-disabled:hover, html .ui-button.ui-state-disabled:active {
+            margin:0px 7px;
+            }
+            }
+            .ui-datepicker {
+            width: 19em;
+            margin:0 auto;
+            }
+            .ui-datepicker td span, .ui-datepicker td a {
+            border-radius: 50%;
+            padding: 0.4rem 0rem;
+            text-align: center;
+            margin: 0px 2px;
+            }
+            .btn-yellow, .btn-yellow:hover, .btn-yellow:focus {
+            background-color:#ffbf2f;
+            color:#fff;
+            }
+            .date-list .date-cell{
+            box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0), 0 2px 6px 0 rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            cursor:pointer;
+            color:#ffbf2f;
+            padding:8px 35px;
+            margin:5px 5px 18px;
+            border-radius:4px;
+            display: inline-block;
+            }
+            .date-list .date-cell.active{
+            color: #ffffff;
+            background-color:#ffbf2f;
+            }
+            .slds-button_success{
+            color:#fff !important;
+            padding-left:12px;
+            padding-right:12px;}
+            .text-yellow{color:#ffbf2f;}
+            .btn-block{
+            display:block;
+            font-size:1.2rem; 
+            }
+            .btn-gray,.btn-gray:hover, .btn-gray:focus{
+            background-color:#ccced0;
+            color:#fff;
+            }
+            .slds-checkbox .slds-checkbox--faux, .slds-checkbox .slds-checkbox_faux{
+            font-size:16px;
+            border-color:#000;
+            box-shadow: 0 1px 0 0 #ececee;
+            top:4px;
+            }
+            .box-info{
+            box-shadow: 0 1px 0 0 #ececee;
+            background-color:#fff;
+            margin-bottom:4px;
+            }
+            #step-2, #step-3{background-color:#fff;}
+            .title-no{border: solid 1px #353c43; border-radius:50%; padding: 4px 9px;} 
+            .bg-light{background-color:#f7f7f7 !important;}
+            .w-50{width:50%;}
+            .font-bold{font-weight:bold;}
+            
+            .time-list span.slds-button.slds-radio_button {
+            width: 100%;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0), 0 2px 6px 0 rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            color: #ffbf2f;
+            font-weight:bold;
+            }
+            
+            .time-list label.slds-radio_button__label{
+            width: 100%;
+            text-align: center;
+            padding:5px 0px;
+            border-radius:3px;
+            }
+            .time-list label.slds-radio__label {
+            display:block;
+            padding:5px 8px;
+            border-radius:3px;
+            color:#ffbf2f;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0), 0 2px 6px 0
+            rgba(0, 0, 0, 0.1);
+            background-color:#ffffff;
+            color:#ffbf2f;
+            }
+            .slds-radio [type="radio"]:checked + .slds-radio__label, .slds-radio [type="radio"]:checked + .slds-radio__label:focus{
+            color: #fff;
+            box-shadow:none;
+            background-color: #ffbf2f;
+            }
+            .slds-radio [type="radio"]:checked + .slds-radio__label .slds-form-element__label {color: #fff;}
+            .date-list{max-height:320px; overflow-y:auto;}
+            .time-list {
+            padding: 15px 15px 5px;
+            width: calc(100% - 15px);
+            margin: 0 auto 10px;
+            }
+            .slds-radio .slds-form-element__label {font-size: 16px;}
+            .slds-radio--button [type="radio"]:checked + .slds-radio--button__label:focus, .slds-radio--button [type="radio"]:checked + .slds-radio--button__label:hover, .slds-radio--button [type="radio"]:checked + .slds-radio--faux:focus, .slds-radio--button [type="radio"]:checked + .slds-radio--faux:hover, .slds-radio--button [type="radio"]:checked + .slds-radio_button__label:focus, .slds-radio--button [type="radio"]:checked + .slds-radio_button__label:hover, .slds-radio--button [type="radio"]:checked + .slds-radio_faux:focus, .slds-radio--button [type="radio"]:checked + .slds-radio_faux:hover, .slds-radio--button [type="radio"]:checked ~ .slds-radio--faux:focus, .slds-radio--button [type="radio"]:checked ~ .slds-radio--faux:hover, .slds-radio--button [type="radio"]:checked ~ .slds-radio_faux:focus, .slds-radio--button [type="radio"]:checked ~ .slds-radio_faux:hover, .slds-radio_button [type="radio"]:checked + .slds-radio--button__label:focus, .slds-radio_button [type="radio"]:checked + .slds-radio--button__label:hover, .slds-radio_button [type="radio"]:checked + .slds-radio--faux:focus, .slds-radio_button [type="radio"]:checked + .slds-radio--faux:hover, .slds-radio_button [type="radio"]:checked + .slds-radio_button__label:focus, .slds-radio_button [type="radio"]:checked + .slds-radio_button__label:hover, .slds-radio_button [type="radio"]:checked + .slds-radio_faux:focus, .slds-radio_button [type="radio"]:checked + .slds-radio_faux:hover, .slds-radio_button [type="radio"]:checked ~ .slds-radio--faux:focus, .slds-radio_button [type="radio"]:checked ~ .slds-radio--faux:hover, .slds-radio_button [type="radio"]:checked ~ .slds-radio_faux:focus, .slds-radio_button [type="radio"]:checked ~ .slds-radio_faux:hover, .slds-radio--button [type=radio]:checked + .slds-radio--button__label, .slds-radio--button [type=radio]:checked + .slds-radio--faux, .slds-radio--button [type=radio]:checked + .slds-radio_button__label, .slds-radio--button [type=radio]:checked + .slds-radio_faux, .slds-radio--button [type=radio]:checked ~ .slds-radio--faux, .slds-radio--button [type=radio]:checked ~ .slds-radio_faux, .slds-radio_button [type=radio]:checked + .slds-radio--button__label, .slds-radio_button [type=radio]:checked + .slds-radio--faux, .slds-radio_button [type=radio]:checked + .slds-radio_button__label, .slds-radio_button [type=radio]:checked + .slds-radio_faux, .slds-radio_button [type=radio]:checked ~ .slds-radio--faux, .slds-radio_button [type=radio]:checked ~ .slds-radio_faux,  {
+            color: #fff;
+            box-shadow:none;
+            background-color: #ffbf2f;
+            }
+            .slds-radio--button + .slds-radio--button, .slds-radio--button + .slds-radio_button, .slds-radio_button + .slds-radio--button, .slds-radio_button + .slds-radio_button {
+            border-left: 0px solid #dddbda;
+            }
+            @media(min-width:998px){
+            .ui-datepicker {
+            width: 28em;
+            }
+            .ui-datepicker td {
+            border: 0;
+            padding: 5px 10px;
+            }
+            }
+            .modelErrDiv{
+            border-radius: 10px;
+            }
+        </style>
+        
+        <script>
+        $(document).ready(function(){
+            /*  $('#next_step2').click(function(){
+                    $('#step-1').addClass('slds-hide').removeClass('slds-show');
+                    $('#step-2').addClass('slds-show').removeClass('slds-hide');
+                });
+                $('#back_step1').click(function(){
+                    $('#step-2').addClass('slds-hide').removeClass('slds-show');
+                    $('#step-1').addClass('slds-show').removeClass('slds-hide');
+                });
+                $('#next_step3').click(function(){
+                    $('#step-2').addClass('slds-hide').removeClass('slds-show');
+                    $('#step-3').addClass('slds-show').removeClass('slds-hide');
+                });
+                $('#back_step2').click(function(){
+                    $('#step-3').addClass('slds-hide').removeClass('slds-show');
+                    $('#step-2').addClass('slds-show').removeClass('slds-hide');
+                });*/
+                $( "#datepicker" ).datepicker({
+                    inline: true,
+                    minDate:0,
+                    dateFormat: 'dd/mm/yy'
+                });
+            });
+        
+        function saveProcess(enrlSize){
+            $('.cmpErrDiv').addClass('slds-hide');
+            
+            var firstCheck = false;
+            $('.enrlSelectClass').each(function(){
+                if(!$(this).val()){
+                    $(this).parent().parent().addClass('slds-has-error');
+                    $(this).parent().next().removeClass('slds-hide');
+                    firstCheck = true;
+                }else{
+                    $(this).parent().parent().removeClass('slds-has-error');
+                    $(this).parent().next().addClass('slds-hide');
+                }
+            });
+            
+            if(firstCheck){
+                if(parseInt(enrlSize) > 1){
+                    $('.cmpErrDiv').removeClass('slds-hide');
+                    $('.contentErrorDiv').html('Please fill the enrolment details.');
+                }
+                return;                
+            }else{
+                
+                var isError = false;
+                for(i=1; i<=parseInt(enrlSize); i++){
+                    var currRadio = 'radio'+i;
+                    var tempTSlot = $("input[name='"+currRadio+"']:checked").val();
+                    
+                    if(!tempTSlot){
+                        isError = true;
+                    }     
+                }   
+                
+                if(isError){
+                    $('.cmpErrDiv').removeClass('slds-hide');
+                    $('.contentErrorDiv').html('Please select a time slot.');
+                    return;
+                }else{
+                    savePrc();
+                }
+            }
+        }
+        
+        function saveAndSend(enrlSize){
+            /*  $('.cmpErrDiv').addClass('slds-hide');
+                
+                var firstCheck = false;
+                $('.enrlSelectClass').each(function(){
+                    if(!$(this).val()){
+                        $(this).parent().parent().addClass('slds-has-error');
+                        $(this).parent().next().removeClass('slds-hide');
+                        firstCheck = true;
+                    }else{
+                        $(this).parent().parent().removeClass('slds-has-error');
+                        $(this).parent().next().addClass('slds-hide');
+                    }
+                });
+                
+                if(firstCheck){
+                    return;                
+                }else{
+                    var slcdTSlot = $("input[name='radio']:checked").val();
+                    
+                    if(!slcdTSlot){
+                        $('.cmpErrDiv').removeClass('slds-hide');
+                        $('.contentErrorDiv').html('Please select a time slot.');
+                        return;
+                    }                    
+                    saveStudentAndSend();
+                }*/
+                //saveStudentAndSend();
+                
+                var checkErrSelOpt = false;
+                $('.enrlSelectClass').each(function(){
+                    if(!$(this).val())                       
+                        CheckErrSelOpt = true;
+                });
+                  
+                var checkErrTimeSlotOpt = false;
+                for(i=1; i<=parseInt(enrlSize); i++){
+                    var currRadio = 'radio'+i;
+                    var tempTSlot = $("input[name='"+currRadio+"']:checked").val();
+                    
+                    if(!tempTSlot){
+                        checkErrTimeSlotOpt = true;
+                    }     
+                }   
+                
+                if(checkErrSelOpt || checkErrTimeSlotOpt){
+                   sendMailToCstmr();
+                }else{
+                    var blockingHour = {!$Label.Enrolment_expiry_period};
+                    var confirmMessage = 'Please note this action will block the timeslot for '+blockingHour+' hours. Do you still want  to send an email';
+                    if (confirm(confirmMessage)) {
+                        saveStudentAndSend(); 
+                    }
+                }
+                
+            }
+        
+            function setLsnType(sltdType, countInd){
+                slcdLssnType(sltdType, countInd);
+            }
+        </script>
+    </head>
+    <body class="">
+        <apex:form id="frm">  
+            <apex:actionStatus id="spinner">
+                <apex:facet name="start"> 
+                    <apex:outputPanel id="backdrop" styleClass="popupBackground">
+                        <div role="status" class="slds-spinner slds-spinner_brand slds-spinner_large"> 
+                            <div class="slds-spinner__dot-a"></div>
+                            <div class="slds-spinner__dot-b"></div>
+                        </div>
+                    </apex:outputPanel>
+                </apex:facet>
+            </apex:actionStatus>    
+            <apex:actionFunction name="refreshSlot" action="{!refreshSlots}" reRender="refreshSlotPanel" status="spinner">
+                <apex:param name="slcdInd" value="" assignTo="{!selectedIndex}"/> 
+                <apex:param name="slcdDt" value="" assignTo="{!slcdDate}"/> 
+            </apex:actionFunction>   
+            <apex:actionFunction name="passSlot" action="{!assignSlots}" reRender="tempPanel" status="spinner">
+                <apex:param name="slcdInd" value="" assignTo="{!selectedIndex}"/> 
+                <apex:param name="slcdSlot" value="" assignTo="{!slcdSlot}"/> 
+            </apex:actionFunction>      
+            <apex:actionFunction name="savePrc" action="{!saveAndNextProcess}" reRender="frm" status="spinner"/>
+            <apex:actionFunction name="sendMailToCstmr" action="{!sendEmail}" oncomplete="checkError();return false;"  reRender="frm" status="spinner"/>
+            <apex:actionFunction name="saveStudentAndSend" action="{!saveStudentAndSendEmail}" oncomplete="checkError();return false;"  reRender="frm" status="spinner"/>
+            
+            <apex:actionFunction name="redirectOnSearch" action="{!redirectOnSrch}" reRender="frm" status="spinner"/>
+            <apex:actionFunction name="slcdLssnType" action="{!slcdLessonType}" oncomplete="refreshSlcdLsnType();" reRender="refreshSlotPanel,refreshScript" status="spinner">   
+                <apex:param name="sltdType" value="" assignTo="{!slcdLsnType}"/>
+                <apex:param name="slcdInd" value="" assignTo="{!selectedIndex}"/> 
+            </apex:actionFunction>
+            
+            <apex:actionFunction name="getTeachers" action="{!fetchTchrs}" oncomplete="refreshSlcdLsnType();" reRender="refreshSlotPanel,refreshScript" status="spinner">
+                <apex:param name="slcdInd" value="" assignTo="{!selectedIndex}"/> 
+            </apex:actionFunction>
+            <apex:actionFunction name="getPlans" action="{!fetchPkgPlans}"  oncomplete="refreshSlcdLsnType();" reRender="refreshSlotPanel,refreshScript" status="spinner">
+                <apex:param name="slcdInd" value="" assignTo="{!selectedIndex}"/> 
+            </apex:actionFunction>
+            <apex:actionFunction name="getTimeSlot" action="{!fetchTSlots}" oncomplete="refreshSlcdLsnType();" reRender="refreshSlotPanel,refreshScript" status="spinner">
+                <apex:param name="slcdInd" value="" assignTo="{!selectedIndex}"/> 
+            </apex:actionFunction>
+            <apex:actionFunction name="showSlcdEnr" action="{!showSlcdEnrolment}" oncomplete="refreshSlcdLsnType();" reRender="refreshSlotPanel,refreshScript" status="spinner">
+                <apex:param name="slcdInd" value="" assignTo="{!selectedIndex}"/> 
+            </apex:actionFunction>
+            <apex:actionFunction name="addFreshEnr" action="{!addFreshEnrolment}" reRender="refreshSlotPanel,nextRefresh" status="spinner">
+            </apex:actionFunction>
+            <apex:actionFunction name="removeEnrolment" action="{!deleteEnrolment}" reRender="refreshSlotPanel,nextRefresh" status="spinner">
+                <apex:param name="slcdInd" value="" assignTo="{!selectedIndex}"/> 
+            </apex:actionFunction>
+            <apex:outputPanel id="tempPanel"></apex:outputPanel>
+            <apex:outputPanel rendered="{!isSiteGuestUser}"> 
+                <div class="slds-p-around_medium" style="font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;">Aureus Academy Enrolment Process       
+                </div>
+                <p style="text-align:center;"><apex:image url="{!$Resource.Aureus_logo_png}" /></p>
+            </apex:outputPanel>    
+            <div id="step-2" class="container slds-p-around_small slds-large-p-around_large {!IF(isSiteGuestUser, 'class-true','')}">
+                
+                <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error slds-hide cmpErrDiv"  style="margin-bottom: 6px;"  role="alert">
+                    <span class="slds-assistive-text">error</span>
+                    <span class="slds-icon_container slds-icon-utility-error slds-m-right_x-small" title="Description of icon when needed">
+                        <h2 class="slds-text-heading_small contentErrorDiv"></h2>
+                    </span>
+                    <div class="slds-notify__close">
+                        <button class="slds-button slds-button_icon slds-button_icon-inverse" title="Close" onclick="$('.cmpErrDiv').addClass('slds-hide');return false;">
+                            X
+                            <span class="slds-assistive-text" >Close</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_success slds-hide cmpSuccDiv" style="margin-bottom: 6px;" role="alert">
+                    <span class="slds-assistive-text">success</span>
+                    <span class="slds-icon_container slds-icon-utility-error slds-m-right_x-small" title="Description of icon when needed">
+                        <h2 class="slds-text-heading_small contentSuccDiv"></h2>
+                    </span>
+                    <div class="slds-notify__close">
+                        <button class="slds-button slds-button_icon slds-button_icon-inverse" title="Close" onclick="$('.cmpSuccDiv').addClass('slds-hide');return false;">
+                            X
+                            <span class="slds-assistive-text" >Close</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="contentDiv">
+                    
+                    
+                    <div class="slds-grid slds-wrap">
+                        <div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-text-align_center slds-large-order_2 slds-p-bottom_large">
+                            <h3 class="slds-text-heading_large" style="font-weight:bold;">Enrolment Details</h3>
+                        </div>
+                        <div class="slds-size_1-of-3 slds-large-size_1-of-3 slds-large-order_1  slds-p-bottom_large">
+                            <apex:outputPanel rendered="{!!isSiteGuestUser}">
+                                <a href="javascript:void(0)" id="back_step1" class="slds-button btn-gray slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-p-horizontal_large slds-m-bottom_small" style="margin-bottom: .75rem;" onclick="$('#authKeyId').val('');$('#authModel').toggle();">Back</a>
+                            </apex:outputPanel>  
+                        </div>
+                        
+                        <div class="slds-size_2-of-3 slds-large-size_1-of-3 slds-text-align_right slds-large-order_3  slds-p-bottom_large" >
+                            <apex:outputPanel rendered="{!!isSiteGuestUser}">
+                                <a href="javascript:void(0)"  class="slds-button slds-button_brand slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-m-bottom_small slds-p-horizontal_large slds-m-right_small" style="margin-bottom: 0px;" onclick="saveAndSend('{!studentWrapList.size}');">Email</a>
+                            </apex:outputPanel>    
+                            <apex:outputPanel id="nextRefresh">
+                                <a href="javascript:void(0)" id="next_step3" class="slds-button btn-yellow slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-m-bottom_small slds-p-horizontal_large" onclick="saveProcess('{!studentWrapList.size}');">Next</a>
+                            </apex:outputPanel>
+                        </div>
+                    </div>
+                    
+                    <!--<p class="slds-m-bottom_small"><strong>Select Lesson Type</strong></p>
+                    <div class="slds-grid slds-wrap date-list slds-p-bottom_small" >
+                       <div class="slds-size_12-of-12 slds-medium-size_1-of-2">
+                            <div class="time-list m-lg-right">
+                                <div class="slds-form-element__control">
+                                    <span class="slds-radio">
+                                        <input type="radio" id="lsnType" value="Individual" onClick="setLsnType('Individual');" name="lsnType" disabled="" checked="checked" />
+                                        <label class="slds-radio__label" for="lsnType">
+                                            <span class="slds-radio_faux"></span>
+                                            <span class="slds-form-element__label">Individual Lesson</span>
+                                        </label>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="slds-size_12-of-12 slds-medium-size_1-of-2">
+                            <div class="time-list">
+                                <div class="slds-form-element__control">
+                                    <span class="slds-radio">
+                                        <input type="radio" id="grpType" value="group" onClick="setLsnType('Group');" name="lsnType" disabled="" checked="" />
+                                        <label class="slds-radio__label"  for="grpType">
+                                            <span class="slds-radio_faux"></span>
+                                            <span class="slds-form-element__label">Group Lessons</span>
+                                        </label>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>                   
+                    </div>-->
+                    
+                    <hr style="margin-top:0px;"/> 
+                    
+                    <apex:outputPanel Id="refreshSlotPanel">                
+                        <apex:variable var="count" value="{!1}"/>
+                        <apex:repeat value="{!studentWrapList}" var="stuWrap">
+                            <div class="slds-grid slds-nowrap">
+                                <div class="slds-col slds-large-size_2-of-3 slds-p-bottom_large">
+                                    <span class="title-no">{!count}</span><h3 class="slds-m-left_small slds-text-heading_medium" style="font-weight:bold;">{!stuWrap.stuAcc.Name}</h3>
+                                </div>
+                                <div class="slds-col slds-large-size_1-of-3 slds-text-align_right slds-p-bottom_large">
+                                    
+                                    <apex:outputPanel rendered="{!studentWrapList.size > 1}">
+                                        <a href="#" class="slds-button slds-button_success slds-m-bottom_none slds-p-vertical_xxx-small slds-p-horizontal_xx-large slds-m-bottom_small" onclick="removeEnrolment('{!count}');">Remove</a>
+                                    </apex:outputPanel>    
+                                    <a class="icon-collapse fa fa-angle-up slds-m-horizontal_small" href="#accordianSection{!count}" onclick="showHideSections('{!count}', this);"></a>
+                                </div>                
+                            </div>
+                            <hr style="margin-top:0px;" />
+                            
+                            <div id="accordianSection{!count}" class="toggle"  style="display:{!IF(currSlcd=count, 'block' ,'none;')}">                     
+                                <p class="slds-m-bottom_small"><strong>Select Lesson Type</strong></p>
+                                <div class="slds-grid slds-wrap date-list slds-p-bottom_small" >
+                                    <div class="slds-size_12-of-12 slds-medium-size_1-of-2">
+                                        <div class="time-list m-lg-right">
+                                            <div class="slds-form-element__control">
+                                                <span class="slds-radio">  
+                                                    <input type="radio" id="lsnType{!count}" value="Individual" onClick="setLsnType('Individual','{!count}');" name="lsnType{!count}" disabled="" checked="checked"/>
+                                                    <label class="slds-radio__label" for="lsnType{!count}">
+                                                        <span class="slds-radio_faux"></span>
+                                                        <span class="slds-form-element__label">Individual Lesson</span>
+                                                    </label>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="slds-size_12-of-12 slds-medium-size_1-of-2">
+                                        <div class="time-list">
+                                            <div class="slds-form-element__control">
+                                                <span class="slds-radio">
+                                                    <input type="radio" id="grpType{!count}" value="Group" onClick="setLsnType('Group', '{!count}');" name="lsnType{!count}" disabled="" checked='' />
+                                                    <label class="slds-radio__label"  for="grpType{!count}">
+                                                        <span class="slds-radio_faux"></span>
+                                                        <span class="slds-form-element__label">Group Lessons</span>
+                                                    </label>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>                   
+                                </div>
+                                <div  class="slds-grid slds-wrap">                             
+                                    <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_large">
+                                        <div class="slds-form-element m-lg-right">
+                                            <div class="slds-form-element__control">
+                                                <div class="slds-select_container">
+                                                    <apex:selectList value="{!stuWrap.lesson.selectedCenter}" size="1" styleClass="slds-select enrlSelectClass slcOpt{!count}" onchange="getTeachers('{!count}');" style="height: calc(1.875rem + (1px * 10));">
+                                                        <apex:selectOptions value="{!stuWrap.lesson.centerOptions}"/>
+                                                    </apex:selectList>
+                                                </div>
+                                                <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_large">
+                                        <div class="slds-form-element">
+                                            <div class="slds-form-element__control">
+                                                <div class="slds-select_container">
+                                                    <apex:selectList value="{!stuWrap.lesson.selectedTeacher}" size="1" styleClass="slds-select enrlSelectClass slcOpt{!count}" onchange="getPlans('{!count}');" style="height: calc(1.875rem + (1px * 10));">
+                                                        <apex:selectOptions value="{!stuWrap.lesson.teacherOptions}"/>
+                                                    </apex:selectList>
+                                                </div>
+                                                <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                                <div class="slds-form-element">
+                                    <div class="slds-form-element__control">
+                                        <div class="slds-select_container">
+                                            <apex:selectList value="{!stuWrap.lesson.selectedPlan}" size="1" styleClass="slds-select enrlSelectClass slcOpt{!count}" onchange="getTimeSlot('{!count}');" style="height: calc(1.875rem + (1px * 10));">
+                                                <apex:selectOptions value="{!stuWrap.lesson.planOptions}"/>
+                                            </apex:selectList>
+                                        </div>
+                                        <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                    </div>
+                                </div>
+                                
+                                
+                                <div class="slds-grid slds-wrap slds-p-top_large slds-p-top_large slds-grid_align-center">
+                                    <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-medium-size_1-of-2 slds-p-bottom_large">
+                                        <div id="datepicker{!count}" class=""></div>
+                                    </div>
+                                    <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-medium-size_1-of-2 slds-p-bottom_large">
+                                        <div class="slds-grid slds-wrap slds-text-align_center date-list">
+                                            <div class="slds-size_1-of-2">
+                                                
+                                                <div class="time-list morning">
+                                                    <apex:repeat value="{!stuWrap.lesson.tSlotMap.morningSlot}" var="mor">
+                                                        <!-- <li>
+<input id="{!mor}" name="{!stuWrap.stuAcc.Id}radio" type="radio" value="{!mor}"/>
+<span class="date-cell">{!mor}</span>
+</i>-->
+                                                        <span class="slds-button slds-radio_button">
+                                                            <!--<input id="{!mor}" name="{!stuWrap.stuAcc.Id}radio" type="radio" value="{!mor}" onclick="passSlot('{!count}',this.value);"/>-->
+                                                            <input id="{!mor}{!count}" name="radio{!count}" type="radio" value="{!mor}" onclick="passSlot('{!count}',this.value);"/>
+                                                            <label class="slds-radio_button__label" for="{!mor}{!count}">
+                                                                <span class="slds-radio_faux">{!mor}</span>
+                                                            </label>
+                                                        </span>
+                                                    </apex:repeat>
+                                                </div>
+                                                
+                                            </div>
+                                            <div class="slds-size_1-of-2">
+                                                <div class="time-list afternoon">
+                                                    <apex:repeat value="{!stuWrap.lesson.tSlotMap.afternoonSlot}" var="opt">
+                                                        <!--<li>
+<span class="date-cell">{!opt}</span>
+</li>-->
+                                                        <span class="slds-button slds-radio_button">
+                                                            <!--<input id="{!opt}" name="{!stuWrap.stuAcc.Id}radio" type="radio" value="{!opt}" onclick="passSlot('{!count}',this.value);"/>-->
+                                                            <input id="{!opt}{!count}" name="radio{!count}" type="radio" value="{!opt}" onclick="passSlot('{!count}',this.value);"/>
+                                                            <label class="slds-radio_button__label" for="{!opt}{!count}">
+                                                                <span class="slds-radio_faux">{!opt}</span>
+                                                            </label>
+                                                        </span>
+                                                    </apex:repeat>
+                                                </div>
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <script>       
+                            
+                            $(document).ready(function() { 
+                                
+                                var slcdDat = '{!stuWrap.lesson.lessonSlcdDate}';
+                                var slcdSlot = '{!stuWrap.lesson.lessonSlctSlot}';
+                                
+                                //  var stuId= '{!stuWrap.stuAcc.Id}';
+                                var radioName = 'radio'+{!count};
+                                $("input[name='"+radioName+"'][value='"+slcdSlot+"']").attr('checked', 'checked');
+                                
+                                var datePickerId = '#datepicker'+'{!count}'; 
+                                var  slfet = {!stuWrap.lesson.tSlotStr} ;
+                                var defaultDate = '{!stuWrap.lesson.lessonSlcdDate}';
+                                
+                                //if(slcdDat.length > 0 && slcdSlot.length > 0){
+                                if(slcdDat.length > 0){
+                                    loadCalendarOnTchrSelect(datePickerId, '{!count}',slfet, defaultDate);
+                                }else{
+                                    
+                                    $(stuids).datepicker({
+                                        inline: true,
+                                        minDate:0,
+                                        dateFormat: 'dd/mm/yy',
+                                        dayNamesMin: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                                        beforeShowDay: disableDayOnIntial
+                                    });
+                                }
+                            });     
+                            
+                            function loadCalendarOnTchrSelect(datePickerId, countInd, slfet, defaultDate){    
+                                
+                               // if(slfet)                                     
+                                //    slot = JSON.parse(slfet);                   
+                                //else
+                                  //  slot = '';
+                                slot = slfet;
+                                
+                                //var  = ;
+                                //  alert(datePickerId);
+                                $( datePickerId ).datepicker({
+                                    inline: true,
+                                    minDate:0,
+                                    dateFormat: 'd/m/yy',
+                                    dayNamesMin: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                                    beforeShowDay: highlightDays,
+                                    defaultDate : defaultDate,
+                                    onSelect: function(dateText, inst) {
+                                        refreshSlot(countInd,dateText);
+                                    }
+                                });  
+                            }
+                            
+                            
+                            function highlightDays(date) {
+                                
+                                var st = date.getDate()+'/'+(date.getMonth()+1)+'/'+date.getFullYear();
+                                //alert( st);
+                                //alert( slot[st]);
+                                
+                                if(slot[st]){
+                                    var isMrgAvl = slot[st].isAvlMrgSlot;
+                                    var isAfternoonAvl = slot[st].isAvlAfternoonSlot;  
+                                    
+                                    /*if(isMrgAvl || isAfternoonAvl){
+                                                return [true, 'day-availability'];
+                                            }*/
+                                    if(isMrgAvl && isAfternoonAvl){
+                                        return [true, 'day-availability--morning day-availability--afternoon'];
+                                    }else if(isMrgAvl){
+                                        return [true, 'day-availability--morning'];
+                                    }else if(isAfternoonAvl){
+                                        return [true, 'day-availability--afternoon'];
+                                    }
+                                }
+                                
+                                return [true, 'ui-datepicker-unselectable ui-state-disabled'];
+                            }
+                            
+                            
+                            function disableDayOnIntial(date) {
+                                return [true, 'ui-datepicker-unselectable ui-state-disabled'];
+                            }
+                            
+                            function checkError(){
+                                var errorMsg = '{!errorMsg}';
+                                
+                                if(errorMsg == 'success'){
+                                    $('.cmpSuccDiv').removeClass('slds-hide');
+                                    $('.contentSuccDiv').html('Email has been sent to '+'{!perEmail}'+' successfully.');
+                                    
+                                    //$('#contentDiv').addClass('slds-hide');
+                                }else{
+                                    $('.cmpErrDiv').removeClass('slds-hide');
+                                    $('.contentErrorDiv').html(errorMsg);
+                                }
+                            }
+                            
+                            function showHideSections(count, currentEle){
+                                /*$('.cmpErrDiv').addClass('slds-hide');
+                                        
+                                        var currSelOpt = 'slcOpt'+'{!selectedIndex}';
+                                        var firstCheck = false;
+                                        $('.'+currSelOpt).each(function(){
+                                            if(!$(this).val()){
+                                                $(this).parent().parent().addClass('slds-has-error');
+                                                $(this).parent().next().removeClass('slds-hide');
+                                                firstCheck = true;
+                                            }else{
+                                                $(this).parent().parent().removeClass('slds-has-error');
+                                                $(this).parent().next().addClass('slds-hide');
+                                            }
+                                        });
+                                        
+                                        if(firstCheck)
+                                            return;                
+                                        
+                                          var currRadio = 'radio'+'{!selectedIndex}';
+                                          console.log(currRadio);
+                                          var slcdTSlot = $("input[name='"+currRadio+"']:checked").val();
+                                          
+                                          if(!slcdTSlot){
+                                              $('.cmpErrDiv').removeClass('slds-hide');
+                                              $('.contentErrorDiv').html('Please select a time slot.');
+                                              return;
+                                          }    */
+                                        
+                                        showHideSctions(count, currentEle)
+                                    }                            	
+                        </script>    
+                       
+                        <apex:variable value="{!count+1}" var="count"/>  <!--increment-->
+                </apex:repeat>   
+                </apex:outputPanel>  
+                <apex:outputPanel id="refreshScript"> 
+                	<script>
+                    	function refreshSlcdLsnType(){
+                            
+                            <apex:variable value="{!1}" var="stuIndex"/>
+                            <apex:repeat value="{!studentWrapList}" var="stuEnr">
+                                var sltdType = '{!stuEnr.lesson.selectedLsnType}';
+                            	var radioName = 'lsnType'+{!stuIndex};
+                            	$("input[name='"+radioName+"'][value='"+sltdType+"']").attr('checked', 'checked'); 
+                            	
+                            	<apex:variable value="{!stuIndex+1}" var="stuIndex"/>
+                            </apex:repeat>
+                        }
+                    </script>
+                </apex:outputPanel>    
+                
+                <!--
+<div class="slds-grid slds-wrap slds-p-top_large">
+<div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+<a class="slds-button m-sm-0 btn-block btn-yellow slds-p-vertical_x-small slds-p-horizontal_x-large slds-m-bottom_large slds-m-horizontal_x-large" href="#" >Add a Fresh Enrolment</a>
+</div>
+<div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+<a class="slds-button m-sm-0 btn-block btn-yellow slds-p-vertical_x-small slds-p-horizontal_x-large  slds-m-horizontal_x-large slds-m-bottom_large" href="#" >Add a Fresh Enrolment</a>
+</div>
+</div>-->
+                <div class="slds-grid slds-grid_align-center slds-p-vertical_large">
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-3">
+                        <a class="slds-button btn-block btn-yellow slds-p-around_x-small slds-m-bottom_large" href="#"  onclick="addFreshEnr();">Add a Fresh Enrolment</a>
+                    </div>
+                </div>                
+                
+            </div>
+            </div>        
+            <!-- End of step2 -->
+            
+            <div id="authModel" style="display: none;">
+                <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                    <div class="slds-modal__container">
+                        
+                        <header class="slds-modal__header" style="padding-top:25px; background: #fff; border-bottom:0px; border-top-right-radius: 1.25rem; border-top-left-radius: 1.25rem;" >
+                            <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                                <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error slds-hide modelErrDiv" style="border-radius: 10px;"  role="alert">
+                                    <span class="slds-assistive-text">error</span>
+                                    <span class="slds-icon_container slds-icon-utility-error slds-m-right_x-small" title="Description of icon when needed">
+                                        <h2 class="slds-text-heading_small contentmodelErrorDiv"></h2> 
+                                    </span>
+                                    <div class="slds-notify__close">
+                                        <button class="slds-button slds-button_icon slds-button_icon-inverse" title="Close" onclick="$('.modelErrDiv').addClass('slds-hide');return false;">
+                                            X
+                                            <span class="slds-assistive-text" >Close</span>
+                                        </button>
+                                    </div>
+                                </div>  
+                            </div>  
+                            <p class="fa fa-user-shield" style="color:#ffbf2f; font-size:3.3rem;"></p><br/>
+                            <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate" style="font-weight:bold;">Enter PIN to Proceed</h2>
+                        </header>
+                        
+                        <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                            <div class="slds-grid slds-wrap slds-p-top_large slds-grid_align-center">
+                                <div class="slds-size_1-of-1 slds-large-size_9-of-12 slds-p-bottom_small">
+                                    <div class="slds-form-element  m-lg-right">
+                                        <div class="slds-form-element__control">
+                                            <input type="password" id="authKeyId" placeholder="Please Enter PIN" value="" class="slds-input" style="box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <footer class="slds-modal__footer" style="border-top:0px; padding-bottom:25px; background: #ffff; border-bottom-right-radius: 1.25rem; border-bottom-left-radius: 1.25rem;">
+                            <div class="slds-grid slds-wrap slds-grid_align-center" style="text-align:center;">
+                                <div class="slds-col slds-large-size_1-of-3 slds-p-bottom_small">
+                                    <button class="slds-button btn-gray slds-p-horizontal_xx-large slds-p-vertical_xx-small" style="color:#000; box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;" onclick="$('#authModel').toggle();return false;">Cancel</button>
+                                </div>
+                                <div class="slds-col slds-large-size_1-of-3 slds-p-bottom_small">
+                                    <button class="slds-button slds-p-vertical_xx-small slds-p-horizontal_xx-large" style="background-color:green; color:#fff;box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;" onclick="userAuthCode();return false;">Verify</button>
+                                </div>
+                            </div>
+                        </footer>
+                    </div>
+                </section>
+                <div class="slds-backdrop slds-backdrop_open"></div>
+            </div>  
+            
+            <script>
+            function userAuthCode(){
+                $('.modelErrDiv').addClass('slds-hide');
+                var keyValue = $('#authKeyId').val();
+                var athKey = '{!userAuthCode}';
+                
+                if(keyValue == athKey){
+                    redirectOnSearch();
+                }else{
+                    //alert("Invalid pin, Please try again.");
+                    $('.modelErrDiv').removeClass('slds-hide');
+                    $('.contentmodelErrorDiv').html('Invalid pin, Please try again.');
+                }
+            }
+            //   $('.toggle').slideUp();
+            
+            function showHideSctions(count, currentEle){    
+                var element = 'accordianSection'+count;
+                
+                console.log('@@@-->'+element);
+                
+                //Hide all except current
+                $("#"+element).slideToggle(1000);
+                $(currentEle).toggleClass("fa-angle-up fa-angle-down");
+                /*
+                var $myelement = $($(currentEle).attr("href"));
+                   //Hide all elements but the selected one 
+                   //and shows it at the same time, since jQuery 
+                   //returns the object right back to allow chaining
+                $('.toggle').not($myelement.slideDown('slow')).slideUp("slow");
+                */
+              showSlcdEnr(count);
+          }
+            
+            
+            
+            </script>
+        </apex:form>       
+    </body>
+</apex:page>

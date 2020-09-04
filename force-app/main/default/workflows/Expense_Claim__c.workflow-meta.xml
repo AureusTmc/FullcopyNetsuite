@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workflow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <alerts>
+        <fullName>Expense_Approval_email_alert</fullName>
+        <description>Expense Approval email alert</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus_HR/Expense_Approval</template>
+    </alerts>
+    <alerts>
+        <fullName>Expense_Rejected</fullName>
+        <description>Expense Rejected</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus_HR/Expense_Rejected</template>
+    </alerts>
+    <fieldUpdates>
+        <fullName>Copy_Employee_Email</fullName>
+        <field>Email__c</field>
+        <formula>Employee__r.PersonEmail</formula>
+        <name>Copy Employee Email</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Expense_claim_status_to_Pending</fullName>
+        <field>Status__c</field>
+        <literalValue>Pending</literalValue>
+        <name>Expense claim status to Pending</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Test_Exp_Claim_AP_Field_Update</fullName>
+        <field>Status__c</field>
+        <literalValue>Approved</literalValue>
+        <name>Test Set Status to Approved</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Test_set_status_to_rejected</fullName>
+        <field>Status__c</field>
+        <literalValue>Rejected</literalValue>
+        <name>Test set status to rejected</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Converted_Amount</fullName>
+        <field>Converted_Amount__c</field>
+        <formula>Approved_Amount__c</formula>
+        <name>Update Converted Amount</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Submit_Date</fullName>
+        <description>When Exp Claim is Submitted for Approval</description>
+        <field>Submit_Date__c</field>
+        <formula>TODAY()</formula>
+        <name>Update Submit Date</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Submit_Date_on_Exp_Claim</fullName>
+        <description>When Exp Claim is created</description>
+        <field>Submit_Date__c</field>
+        <formula>TODAY()</formula>
+        <name>Update Submit Date on Exp Claim</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <rules>
+        <fullName>Copy Employee Email</fullName>
+        <actions>
+            <name>Copy_Employee_Email</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Expense_Claim__c.Name</field>
+            <operation>notEqual</operation>
+        </criteriaItems>
+        <triggerType>onCreateOnly</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Converted Amount</fullName>
+        <actions>
+            <name>Update_Converted_Amount</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>false</active>
+        <criteriaItems>
+            <field>Expense_Claim__c.Currency_Code__c</field>
+            <operation>equals</operation>
+            <value>SGD</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Expense_Claim__c.Status__c</field>
+            <operation>equals</operation>
+            <value>Approved,Partial Approved</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Expense_Claim__c.Approved_Amount__c</field>
+            <operation>notEqual</operation>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Expense_Claim__c.Converted_Amount__c</field>
+            <operation>equals</operation>
+        </criteriaItems>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Submit Date</fullName>
+        <actions>
+            <name>Update_Submit_Date_on_Exp_Claim</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Expense_Claim__c.CreatedDate</field>
+            <operation>notEqual</operation>
+        </criteriaItems>
+        <description>When Expense Claim is Created</description>
+        <triggerType>onCreateOnly</triggerType>
+    </rules>
+</Workflow>

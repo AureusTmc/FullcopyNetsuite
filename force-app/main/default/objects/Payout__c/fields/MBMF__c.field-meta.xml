@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>MBMF__c</fullName>
+    <externalId>false</externalId>
+    <formula>IF(MBMF_Contribution__c , 
+	IF(Total_Amount_CPF__c &gt; 10000 ,26,
+		IF(Total_Amount_CPF__c &gt; 8000 ,24,
+			IF(Total_Amount_CPF__c &gt; 6000 ,22,
+				IF(Total_Amount_CPF__c &gt; 4000 ,19.5,
+					IF(Total_Amount_CPF__c &gt; 3000 ,15, 
+						IF(Total_Amount_CPF__c &gt; 2000 ,6.5, 
+							IF(Total_Amount_CPF__c &gt; 1000 ,4.5, 
+								IF(Total_Amount_CPF__c &gt; 0 ,3, 0)
+							)
+						)
+					)
+				)
+			)
+		)
+	), 0
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>MBMF</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Currency</type>
+</CustomField>

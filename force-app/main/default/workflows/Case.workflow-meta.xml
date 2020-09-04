@@ -1,0 +1,776 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workflow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <alerts>
+        <fullName>Aureus_Academy_Holding_Statement</fullName>
+        <description>Aureus Academy Holding Statement</description>
+        <protected>false</protected>
+        <recipients>
+            <field>ContactEmail</field>
+            <type>email</type>
+        </recipients>
+        <senderAddress>admin@aureusacademy.com</senderAddress>
+        <senderType>OrgWideEmailAddress</senderType>
+        <template>Aureus_New_Email_Template/Aureus_Statement</template>
+    </alerts>
+    <alerts>
+        <fullName>Auto_Response</fullName>
+        <description>Auto Response</description>
+        <protected>false</protected>
+        <recipients>
+            <field>ContactEmail</field>
+            <type>email</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus_New_Email_Template/High_Volume_Auto_Response</template>
+    </alerts>
+    <alerts>
+        <fullName>Book_a_Piano_alert</fullName>
+        <description>Piano Rental/Sales Web Enquiry</description>
+        <protected>false</protected>
+        <recipients>
+            <field>ContactEmail</field>
+            <type>email</type>
+        </recipients>
+        <senderType>DefaultWorkflowUser</senderType>
+        <template>Aureus_New_Email_Template/Book_Piano_Rental</template>
+    </alerts>
+    <alerts>
+        <fullName>Case_Web_enquiry_received_confirmation</fullName>
+        <description>Case Web enquiry received confirmation</description>
+        <protected>false</protected>
+        <recipients>
+            <field>ContactEmail</field>
+            <type>email</type>
+        </recipients>
+        <senderType>DefaultWorkflowUser</senderType>
+        <template>Aureus_New_Email_Template/Web_Enquiry_Received</template>
+    </alerts>
+    <alerts>
+        <fullName>Refer_a_Friend_from_Portal_or_App</fullName>
+        <description>Refer a Friend from Portal or App</description>
+        <protected>false</protected>
+        <recipients>
+            <field>ContactEmail</field>
+            <type>email</type>
+        </recipients>
+        <senderAddress>noreply@aureusacademy.com</senderAddress>
+        <senderType>OrgWideEmailAddress</senderType>
+        <template>Aureus_Portal_Notifications/Refer_a_Friend_from_Portal_or_App</template>
+    </alerts>
+    <alerts>
+        <fullName>Support_New_Bug_Defect_case_assignment_notification</fullName>
+        <description>Support: New Bug/Defect case assignment notification</description>
+        <protected>false</protected>
+        <recipients>
+            <recipient>Bug_Defect_Ticket_Team</recipient>
+            <type>group</type>
+        </recipients>
+        <senderAddress>noreply@aureusacademy.com</senderAddress>
+        <senderType>OrgWideEmailAddress</senderType>
+        <template>Aureus_Portal_Notifications/Support_New_case_assignment_notification_Bug_Defect</template>
+    </alerts>
+    <alerts>
+        <fullName>Thanks_for_contacting_Aureus_Academy</fullName>
+        <description>Thanks for contacting Aureus Academy</description>
+        <protected>false</protected>
+        <recipients>
+            <field>ContactEmail</field>
+            <type>email</type>
+        </recipients>
+        <senderAddress>noreply@aureusacademy.com</senderAddress>
+        <senderType>OrgWideEmailAddress</senderType>
+        <template>Aureus_Portal_Notifications/Support_Ticket_Created_Email_Stripo</template>
+    </alerts>
+    <alerts>
+        <fullName>Trial_Reminder_Notification</fullName>
+        <description>Trial Reminder Notification</description>
+        <protected>false</protected>
+        <recipients>
+            <field>ContactEmail</field>
+            <type>email</type>
+        </recipients>
+        <senderType>DefaultWorkflowUser</senderType>
+        <template>Aureus_New_Email_Template/Trial_Reminder</template>
+    </alerts>
+    <alerts>
+        <fullName>Trial_Request_Confirmed_Booked</fullName>
+        <description>Trial Request Confirmed/Booked</description>
+        <protected>false</protected>
+        <recipients>
+            <field>ContactEmail</field>
+            <type>email</type>
+        </recipients>
+        <senderType>DefaultWorkflowUser</senderType>
+        <template>Aureus_New_Email_Template/Trial_Request_Confirmed_Fixed</template>
+    </alerts>
+    <alerts>
+        <fullName>Trial_Request_Received_Notification</fullName>
+        <description>Trial Request Received Notification</description>
+        <protected>false</protected>
+        <recipients>
+            <field>ContactEmail</field>
+            <type>email</type>
+        </recipients>
+        <senderType>DefaultWorkflowUser</senderType>
+        <template>Aureus_New_Email_Template/Trial_Request_Received_Fixed</template>
+    </alerts>
+    <fieldUpdates>
+        <fullName>Teacher_Bio_Update</fullName>
+        <description>Teacher Bio Update on case from Teacher Bio(Teacher record)</description>
+        <field>Teacher_Bio__c</field>
+        <formula>Booking__r.Teacher_Account__r.Teacher_Bio__c</formula>
+        <name>Teacher Bio Update</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Case_Description</fullName>
+        <description>Update Case Description from Case</description>
+        <field>Description</field>
+        <formula>Lead__r.Description</formula>
+        <name>Update Case Description</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Case_Status_as_Open</fullName>
+        <description>Update Case Status as Open</description>
+        <field>Status</field>
+        <literalValue>Open</literalValue>
+        <name>Update Case Status as Open</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Case_Status_as_Pending</fullName>
+        <description>Update Case Status as Pending</description>
+        <field>Status</field>
+        <literalValue>Pending</literalValue>
+        <name>Update Case Status as Pending</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Enquiry_Dates</fullName>
+        <field>Enquiry_Date__c</field>
+        <formula>TODAY()</formula>
+        <name>Update Enquiry Date</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_How_many_days_would_you_like</fullName>
+        <field>How_many_days_would_you_like__c</field>
+        <formula>TEXT( Lead__r.How_many_days_would_you_like__c )</formula>
+        <name>Update How many days would you like?</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_NoShow_Date</fullName>
+        <field>Trial_No_Show_Date__c</field>
+        <formula>TODAY()</formula>
+        <name>Update NoShow Date</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Pending_Date</fullName>
+        <description>Update Pending Date when status is selected as &quot;Pending&quot;</description>
+        <field>Pending_Date__c</field>
+        <formula>Today()</formula>
+        <name>Update Pending Date</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_RT_to_SalesEnq</fullName>
+        <description>Update RT to SalesEnquiry</description>
+        <field>RecordTypeId</field>
+        <lookupValue>Sales_Enquiry</lookupValue>
+        <lookupValueType>RecordType</lookupValueType>
+        <name>Update RT to SalesEnq</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>LookupValue</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Secondary_email</fullName>
+        <description>Update Secondary email</description>
+        <field>Secondary_Email__c</field>
+        <formula>Account.Secondary_Email__c</formula>
+        <name>Update Secondary email</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Trial_Attended_Date</fullName>
+        <description>Update Trial Attended Date</description>
+        <field>Trial_Attended_Date__c</field>
+        <formula>Today()</formula>
+        <name>Update Trial Attended Date</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Trial_Booked_Date</fullName>
+        <description>Update Trial Booked Date</description>
+        <field>Trial_Booked_Date__c</field>
+        <formula>Today()</formula>
+        <name>Update Trial Booked Date</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Trial_Cancel_Date</fullName>
+        <field>Trial_Cancelled_Date__c</field>
+        <formula>TODAY()</formula>
+        <name>Update Trial Cancel Date</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Update_Preferred_Session</fullName>
+        <field>Preferred_Session__c</field>
+        <formula>TEXT( Lead__r.Preferred_Session__c )</formula>
+        <name>Update Update Preferred Session</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>update_Enrolled_Date</fullName>
+        <description>When the Case: Sales Stage is updated as &apos;Enrolled&apos;</description>
+        <field>Enrollment_Date__c</field>
+        <formula>Today()</formula>
+        <name>update Enrolled Date</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <rules>
+        <fullName>Aureus Holding Statement</fullName>
+        <actions>
+            <name>Aureus_Academy_Holding_Statement</name>
+            <type>Alert</type>
+        </actions>
+        <active>false</active>
+        <description>Auto response with the aureus holding statement</description>
+        <formula>AND(RecordType.Name = &quot;Service Request&quot;,ISPICKVAL(Origin, &quot;Email&quot;))</formula>
+        <triggerType>onCreateOnly</triggerType>
+    </rules>
+    <rules>
+        <fullName>Auto Response</fullName>
+        <actions>
+            <name>Auto_Response</name>
+            <type>Alert</type>
+        </actions>
+        <active>false</active>
+        <description>Email template to be sent out when parents email temporarily during high volume periods</description>
+        <formula>AND(RecordType.Name = &quot;Service Request&quot;,ISPICKVAL(Origin, &quot;Email&quot;))</formula>
+        <triggerType>onCreateOnly</triggerType>
+    </rules>
+    <rules>
+        <fullName>Calculate Pending Age</fullName>
+        <actions>
+            <name>Update_Pending_Date</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Case.Status</field>
+            <operation>equals</operation>
+            <value>Pending</value>
+        </criteriaItems>
+        <description>Calculate age how long case is in pending status</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Complete trial process to enroled</fullName>
+        <actions>
+            <name>Future_Enrolment_Created</name>
+            <type>Task</type>
+        </actions>
+        <active>true</active>
+        <description>Create place holder task, if enrolment start after 7 days from today during enrolment</description>
+        <formula>AND(NOT(ISBLANK(Lesson_Start_Date__c)),   ISPICKVAL( Stage__c , &apos;Enrolled&apos;),   (Lesson_Start_Date__c - TODAY()) &gt; 7,  RecordType.DeveloperName = &apos;Sales_Enquiry&apos;)</formula>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Give Enrolment Kit to Student On Complete Enrolment</fullName>
+        <actions>
+            <name>Give_Enrolment_Kit_to_Student</name>
+            <type>Task</type>
+        </actions>
+        <active>true</active>
+        <description>Give Enrolment Kit to Student on completion enrolment</description>
+        <formula>AND(ISPICKVAL( Stage__c , &apos;Enrolled&apos;),   RecordType.DeveloperName = &apos;Sales_Enquiry&apos;)</formula>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>New Bug%2FDefect from Portal%2FApp</fullName>
+        <actions>
+            <name>Support_New_Bug_Defect_case_assignment_notification</name>
+            <type>Alert</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Case.Type</field>
+            <operation>equals</operation>
+            <value>Bug/Defect</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Case.Origin</field>
+            <operation>equals</operation>
+            <value>App</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Case.Status</field>
+            <operation>equals</operation>
+            <value>New</value>
+        </criteriaItems>
+        <description>When the Customer raise a Bug/Defect Ticket from Portal or App</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>New Ticket From Portal%2FApp</fullName>
+        <actions>
+            <name>Thanks_for_contacting_Aureus_Academy</name>
+            <type>Alert</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Case.Type</field>
+            <operation>notEqual</operation>
+            <value>Refer a Friend,Bug/Defect</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Case.Origin</field>
+            <operation>equals</operation>
+            <value>App</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Case.Status</field>
+            <operation>equals</operation>
+            <value>New</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Case.Subject</field>
+            <operation>notEqual</operation>
+            <value>Lesson Cancel within 24 hrs,Lesson Cancellation within 24 hrs</value>
+        </criteriaItems>
+        <description>When the Customer raise a Ticket from the Ticket Tab in Portal or App</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>RT change to Sales Enquiry</fullName>
+        <actions>
+            <name>Update_RT_to_SalesEnq</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <description>Record Type change to Sales Enquiry</description>
+        <formula>AND(
+NOT(ISNEW()),
+ ISPICKVAL(Type, &quot;Sales Enquiry&quot;),
+ RecordType.Name = &quot;Service Request&quot;
+)</formula>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Trial Reminder Notification</fullName>
+        <active>true</active>
+        <description>Trial Reminder Notification</description>
+        <formula>AND( ISPICKVAL(Stage__c, &quot;Trial Booked&quot;),
+
+ NOT(ISNULL(Trial_Date__c )),
+
+ ISPICKVAL(Booking__r.Status__c , &quot;Scheduled&quot;))</formula>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+        <workflowTimeTriggers>
+            <actions>
+                <name>Trial_Reminder_Notification</name>
+                <type>Alert</type>
+            </actions>
+            <actions>
+                <name>Email_Trial_Reminder_Notification</name>
+                <type>Task</type>
+            </actions>
+            <offsetFromField>Case.Trial_Date__c</offsetFromField>
+            <timeLength>-12</timeLength>
+            <workflowTimeTriggerUnit>Hours</workflowTimeTriggerUnit>
+        </workflowTimeTriggers>
+    </rules>
+    <rules>
+        <fullName>Trial Request Confirm Notification</fullName>
+        <actions>
+            <name>Trial_Request_Confirmed_Booked</name>
+            <type>Alert</type>
+        </actions>
+        <actions>
+            <name>Update_Case_Status_as_Pending</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <actions>
+            <name>Email_Trial_Request_Confirm_Notification</name>
+            <type>Task</type>
+        </actions>
+        <active>true</active>
+        <description>Trial Request Confirm Notification
+When Sales Stage = Trial Booked</description>
+        <formula>NOT(  ISBLANK(Booking__c)) &amp;&amp;    ISPICKVAL( Stage__c , &quot;Trial Booked&quot;)</formula>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Trial Request Received Notification</fullName>
+        <actions>
+            <name>Trial_Request_Received_Notification</name>
+            <type>Alert</type>
+        </actions>
+        <actions>
+            <name>Update_Case_Status_as_Open</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <actions>
+            <name>Email_Trial_Request_Received_Notification</name>
+            <type>Task</type>
+        </actions>
+        <active>true</active>
+        <description>Trial Request Received Notification
+When Sales Stage = Trial Requested</description>
+        <formula>NOT(  ISBLANK(Booking__c)) &amp;&amp;    ISPICKVAL( Stage__c , &quot;Trial Requested&quot;) &amp;&amp; NOT(CONTAINS(OwnerId , &quot;00G&quot;))</formula>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Cancel Date</fullName>
+        <actions>
+            <name>Update_Trial_Cancel_Date</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Case.Stage__c</field>
+            <operation>equals</operation>
+            <value>Trial Cancelled</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Case.Trial_Cancelled_Date__c</field>
+            <operation>equals</operation>
+        </criteriaItems>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Description from Case</fullName>
+        <actions>
+            <name>Update_Case_Description</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <description>Update Description from Case</description>
+        <formula>NOT(ISBLANK( Lead__c ))</formula>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Enquiry Date</fullName>
+        <actions>
+            <name>Update_Enquiry_Dates</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Case.Stage__c</field>
+            <operation>equals</operation>
+            <value>Enquiry</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Case.Enquiry_Date__c</field>
+            <operation>equals</operation>
+        </criteriaItems>
+        <description>When Sales Stage is updated as Enquiry</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Enquiry Date with Trial is Booked</fullName>
+        <actions>
+            <name>Update_Enquiry_Dates</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Case.Stage__c</field>
+            <operation>equals</operation>
+            <value>Trial Booked</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Case.Enquiry_Date__c</field>
+            <operation>equals</operation>
+        </criteriaItems>
+        <description>Update Enquiry Date when Trial is Booked Directly without an Enquiry</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Enrollment Date</fullName>
+        <actions>
+            <name>update_Enrolled_Date</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Case.Stage__c</field>
+            <operation>equals</operation>
+            <value>Enrolled</value>
+        </criteriaItems>
+        <description>When the Sales Stage is updated as &apos;Enrolled&apos;</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update No Show Date</fullName>
+        <actions>
+            <name>Update_NoShow_Date</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Case.Stage__c</field>
+            <operation>equals</operation>
+            <value>Trial No Show</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Case.Trial_No_Show_Date__c</field>
+            <operation>equals</operation>
+        </criteriaItems>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Preferred Session and How many Days%3F</fullName>
+        <actions>
+            <name>Update_How_many_days_would_you_like</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <actions>
+            <name>Update_Update_Preferred_Session</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Case.CreatedDate</field>
+            <operation>notEqual</operation>
+        </criteriaItems>
+        <description>Update Preferred Session and How many Days? from related Lead to Case</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Secondary email</fullName>
+        <actions>
+            <name>Update_Secondary_email</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Case.Secondary_Email__c</field>
+            <operation>equals</operation>
+        </criteriaItems>
+        <description>Update Secondary email</description>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Status as Open when Owner is Changed</fullName>
+        <actions>
+            <name>Update_Case_Status_as_Open</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <description>Update Status as Open when Owner is Changed (only when Case is NEW)</description>
+        <formula>ISCHANGED(OwnerId) &amp;&amp;  ISPICKVAL( Status , &quot;NEW&quot;)</formula>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Teacher Bio on Case</fullName>
+        <actions>
+            <name>Teacher_Bio_Update</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <description>Update Teacher Bio on Case</description>
+        <formula>AND(NOT(ISBLANK(Booking__c )),
+ NOT(ISBLANK(Booking__r.Teacher_Account__c )),
+ NOT(ISBLANK( Booking__r.Teacher_Account__r.Teacher_Bio__c )))</formula>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Trial Attended Date</fullName>
+        <actions>
+            <name>Update_Trial_Attended_Date</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Case.Stage__c</field>
+            <operation>equals</operation>
+            <value>Trial Attended</value>
+        </criteriaItems>
+        <description>Update Trial Attended Date</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Trial Booked Date</fullName>
+        <actions>
+            <name>Update_Trial_Booked_Date</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Case.Stage__c</field>
+            <operation>equals</operation>
+            <value>Trial Booked</value>
+        </criteriaItems>
+        <description>Update Trial Booked Date</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Web Enquiry %28Piano Sales %26 Rental%29</fullName>
+        <actions>
+            <name>Book_a_Piano_alert</name>
+            <type>Alert</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Case.RecordTypeId</field>
+            <operation>equals</operation>
+            <value>Sales Enquiry</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Case.Stage__c</field>
+            <operation>equals</operation>
+            <value>Enquiry</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Case.Interested_In__c</field>
+            <operation>notEqual</operation>
+        </criteriaItems>
+        <description>Web Enquiry Received
+Web Enquiry (Piano Sales &amp; Rental)</description>
+        <triggerType>onCreateOnly</triggerType>
+    </rules>
+    <rules>
+        <fullName>Web Enquiry Received</fullName>
+        <actions>
+            <name>Case_Web_enquiry_received_confirmation</name>
+            <type>Alert</type>
+        </actions>
+        <active>false</active>
+        <criteriaItems>
+            <field>Case.RecordTypeId</field>
+            <operation>equals</operation>
+            <value>Sales Enquiry</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Case.Stage__c</field>
+            <operation>equals</operation>
+            <value>Enquiry</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Case.Preferred_Session__c</field>
+            <operation>equals</operation>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Case.Interested_In__c</field>
+            <operation>equals</operation>
+        </criteriaItems>
+        <description>Web Enquiry Received
+when case sales stage = &apos;sales enquiry&apos;</description>
+        <triggerType>onCreateOnly</triggerType>
+    </rules>
+    <rules>
+        <fullName>XXX Refer a Friend From Portal</fullName>
+        <actions>
+            <name>Refer_a_Friend_from_Portal_or_App</name>
+            <type>Alert</type>
+        </actions>
+        <active>false</active>
+        <criteriaItems>
+            <field>Case.Origin</field>
+            <operation>equals</operation>
+            <value>App</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Case.Type</field>
+            <operation>equals</operation>
+            <value>Refer a Friend</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Case.Status</field>
+            <operation>equals</operation>
+            <value>New</value>
+        </criteriaItems>
+        <description>When a Customer Refers a Friend from the Portal or App</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <tasks>
+        <fullName>Email_Trial_Reminder_Notification</fullName>
+        <assignedToType>owner</assignedToType>
+        <description>Email: Trial Reminder Notification</description>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Completed</status>
+        <subject>Email: Trial Reminder Notification</subject>
+    </tasks>
+    <tasks>
+        <fullName>Email_Trial_Request_Confirm_Notification</fullName>
+        <assignedToType>owner</assignedToType>
+        <description>Email: Trial Request Confirm Notification</description>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Completed</status>
+        <subject>Email: Trial Request Confirm Notification</subject>
+    </tasks>
+    <tasks>
+        <fullName>Email_Trial_Request_Received_Notification</fullName>
+        <assignedToType>owner</assignedToType>
+        <description>Email: Trial Request Received Notification</description>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Completed</status>
+        <subject>Email: Trial Request Received Notification</subject>
+    </tasks>
+    <tasks>
+        <fullName>Future_Enrolment_Created</fullName>
+        <assignedToType>owner</assignedToType>
+        <description>Please create Placeholder Appointments.</description>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <priority>High</priority>
+        <protected>false</protected>
+        <status>Open</status>
+        <subject>Future Enrolment (Create Placeholder)</subject>
+    </tasks>
+    <tasks>
+        <fullName>Give_Enrolment_Kit_to_Student</fullName>
+        <assignedToType>owner</assignedToType>
+        <description>Give Enrolment Kit to Student on Enrolment completion.</description>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <priority>High</priority>
+        <protected>false</protected>
+        <status>Open</status>
+        <subject>Give Enrolment Kit to Student</subject>
+    </tasks>
+</Workflow>

@@ -1,0 +1,355 @@
+<apex:page id="pg" showHeader="false" controller="SearchInstrumentRental_IpadCntrl"  standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False"  action="{!getProducts}">
+    <head>
+        <title>Aureus Academy</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0"/>
+        <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}"/>      
+        <apex:stylesheet value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.css')}"/>
+        <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700&display=swap" rel="stylesheet" /> 
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous" />
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery/jquery.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.js')}"/>               
+         <!-- IntlInputPhone CSS/JS -->
+        <apex:stylesheet value="{!URLFOR($Resource.IntlInputPhone, '/css/intlInputPhone.min.css')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.IntlInputPhone, '/js/intlInputPhone.min.js')}"/>
+        
+        <apex:includescript value="//code.jquery.com/jquery-1.11.1.min.js"/>
+        <apex:includescript value="//cdn.datatables.net/1.10.4/js/jquery.dataTables.min.js"/>
+        <apex:stylesheet value="//cdn.datatables.net/1.10.4/css/jquery.dataTables.css"/>
+        
+        <style>
+         .sticky {  position: fixed;  bottom: 0;  width: 100%; z-index:99;}
+         label{font-weight:inherit !important;}
+         #btn-country{padding: 11.7px 22px 9.7px 12px; background:#f0f0f0 !important;border-left: 2px solid #F44336;}
+         #btn-country .caret{position:absolute; top:16px;}
+         #phoneNumber{height:40px; border-radius:0px 0.25rem 0.25rem 0px; position:relative;}
+           body, html{ font-size:16px !important; font-family: 'Lato', sans-serif  !important; font-weight:300 !important; }
+            .slds-select{height: 40px !important;}
+            @media(min-width:999px){.slds-modal__container {width: 40%;}}
+            blocklist{ margin:0px;}
+            .icon-collapse,.icon-collapse:focus, .icon-collapse:hover {color:#000; font-weight:bold; font-size:26px;text-decoration: none;}
+            input{
+            height: calc(1.875rem + (1px * 10));}
+            ul li{margin-left:0px;}
+            @media(min-width:768px){
+            .m-lg-right{margin-right: .75rem;}}
+            @media(min-width:767px){
+            .text-lg-left{ text-align:left;}
+            .text-lg-right{text-align:right;}
+            .slds-large-p-around_large{padding:1.5rem;}
+            .slds-large-p-horizontal_xx-large{padding-left: 3rem; padding-right: 3rem;}
+            }
+            
+            
+            .btn-yellow, .btn-yellow:hover, .btn-yellow:focus {
+            background-color:#ffbf2f;
+            color:#fff;
+            }
+            
+            .slds-button_success{
+            color:#fff !important;
+            padding-left:12px;
+            padding-right:12px;}
+            .text-yellow{color:#ffbf2f;}
+            .btn-block{
+            display:block;
+            font-size:1.2rem; 
+            }
+            .btn-gray,.btn-gray:hover, .btn-gray:focus{
+            background-color:#ccced0;
+            color:#fff;
+            }
+            .slds-checkbox .slds-checkbox--faux, .slds-checkbox .slds-checkbox_faux{
+            font-size:16px;
+            border-color:#000;
+            box-shadow: 0 1px 0 0 #ececee;
+            top:4px;
+            }
+            .box-info{
+            box-shadow: 0 1px 0 0 #ececee;
+            background-color:#fff;
+            margin-bottom:4px;
+            }
+            #step-2, #step-3, .bg-white{background-color:#fff;}
+            .title-no{border: solid 1px #353c43; border-radius:50%; padding: 4px 9px;} 
+            .bg-light{background-color:#f7f7f7 !important;}
+            .w-50{width:50%;}
+            .font-bold{font-weight:bold;}
+            @media(max-width:767px){
+            .text-sm-center{
+            text-align:center;
+            }
+            }
+            
+            .requiredInput{ 
+                border-left: 2px solid #F44336;          
+            } 
+            span.dateFormat{display:none;}   
+            @media(max-width:767px){
+            .d-sm-none{display:none !important;}
+            .d-sm-block{display:block !important;}
+            }
+            .d-none{display:none;}
+            .d-block{display:block;}  
+            
+            // jquery table
+            table.dataTable tbody tr:hover {
+            background-color:#white !important;
+            }
+            
+            // Added by Reena on 23/12/2019         
+            #accTable_length{display:none !important;}
+            #accTable_filter{
+            float:none; 
+            text-align:center; 
+            margin:0 auto; 
+            padding:40px 25px 20px;}
+            #accTable_filter input{height: calc(1.875rem + (1px )); width:55rem; border-radius: 4px;
+            box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0);
+            border: solid 1px #ececee;
+            background-color: #fff;
+            padding:5px;
+            }
+            /*#accTable_filter label{position:relative;}
+            #accTable_filter label:after{
+            position:absolute;
+            font-family:FontAwesome !important;
+            content:"\f002" !important;
+            font-size:16px;
+            right:0px;
+            
+            }*/
+            table.dataTable thead th{color:#000!important;}
+            table.dataTable thead th, table.dataTable thead td{
+             border-bottom: solid 1px #dcdcdc;
+             
+            }
+            table.dataTable thead th, table.dataTable thead td, tbody td{padding:15px;}
+            table.dataTable.no-footer {
+                border-bottom: 0px;
+            }
+            table.dataTable tbody th, table.dataTable tbody td {
+                padding: 15px;
+            }
+            table.dataTable.stripe tbody tr.odd, table.dataTable.display tbody tr.odd, table.dataTable.display tbody tr.odd > .sorting_1, table.dataTable.order-column.stripe tbody tr.odd > .sorting_1, table.dataTable.display tbody tr.even > .sorting_1, table.dataTable.order-column.stripe tbody tr.even > .sorting_1   {
+                background-color: #fff;
+            }
+        </style>
+        
+        <script>
+            $(document).ready(function() {      
+                var cntryCode = '{!countryCode}';
+                $('[id$=inputMobileId]').intlInputPhone({preferred_country: [cntryCode]}); 
+                var mobNumber = '{!PersonMobilePhoneCustom}';
+                $('[id$=phoneNumber]').val(mobNumber.replace(/^\+[0-9]{2}/,'')); 
+                
+                // var accTable = $('[id$="accTable"]').DataTable({});
+            }); 
+        
+            j$ = jQuery.noConflict();
+            j$(document).ready( function () {
+                var accTable = j$('[id$="accTable"]').DataTable({
+                "pageLength": 30,
+                "bInfo" : false,
+                 "lengthChange": false,
+                "language": {
+                    "search": "_INPUT_",
+                    "searchPlaceholder": "Search Brand, Model, Serial No., or Type"
+                }
+                    
+                });
+            });
+        
+            function prcToRentalOnclick(prcType){
+                //var slcdPiano = $("input[name='slcdPianoOptions']:checked").val();
+                var checkErr = validateData();
+                
+                if(!checkErr){
+                    if(prcType=='Rent')
+                    	prcToRental();
+                    else if(prcType=='Sell')
+                    	prcToSell();
+                }
+            }
+        
+            function validateData(){
+                var isErr = false;
+                
+                $('.errortxt').remove();
+                $('.requiredInput').each(function(){
+                    $(this).css('border-left','1px solid #dddbda');
+                    $(this).css('border-left','1px solid #F44336');
+                    if(!$(this).val()){
+                        $(this).after('<div class="slds-form-element__help errortxt" style="color:#F44336">This field is required</div>');
+                        $(this).css('border','1px solid #F44336');
+                        isErr = true;
+                    }
+                });
+                
+                if(isErr){
+                    $('.cmpErrDiv').removeClass('slds-hide');
+                    $('.contentErrorDiv').html('Please fill all mandatory fields.');
+                }else{
+                    var isSelectedTime = $("input[name='slcdPianoOptions']:checked").val();
+                    if(!isSelectedTime){
+                        isErr = true;   
+                        $('.cmpErrDiv').removeClass('slds-hide');
+                        $('.contentErrorDiv').html('Please select a piano.');
+                    }
+                }
+                
+                return isErr;
+            }
+        </script>
+    </head>
+    <body class="bg-white">
+        <apex:form id="frm">
+            <apex:actionStatus id="spinner">
+                <apex:facet name="start"> 
+                    <apex:outputPanel id="backdrop" styleClass="popupBackground">
+                        <div role="status" class="slds-spinner slds-spinner_brand slds-spinner_large"> 
+                            <div class="slds-spinner__dot-a"></div>
+                            <div class="slds-spinner__dot-b"></div>
+                        </div>
+                    </apex:outputPanel>
+                </apex:facet>
+            </apex:actionStatus>
+            
+            
+            <apex:actionFunction name="prcToRental" action="{!prcToRental}"/>
+            <apex:actionFunction name="prcToSell" action="{!prcToSell}"/>
+            <apex:actionFunction name="processBack" action="{!backBtnCmp2}"/> 
+            <apex:actionFunction name="setSlcdPianoIndx" action="{!setSlcdPiano}" reRender="refreshId" status="spinner">
+                <apex:param name="slctdPiano" value="" assignTo="{!slctdPianoOpt}"/> 
+            </apex:actionFunction>
+            
+            <!--
+            <apex:actionFunction name="prcEnrolment" action="{!redirectToEnrolment}" reRender="frm">
+                <apex:param name="slcdEnrolmentIds" value="" assignTo="{!slcdEnrIds}"/> 
+            </apex:actionFunction>
+            -->
+            <apex:outputPanel id="refreshId"></apex:outputPanel>
+            <apex:inputHidden id="phoneCstmId" value="{!PersonMobilePhoneCustom}"/>
+            <div id="step-1" class="container slds-p-around_small slds-large-p-around_large">
+                <div id="validateSameParent" Class="slds-hide" style="text-align:center;">
+                    <Span  style="color:red;">Error message any</Span>
+                </div>
+                <div class="slds-grid slds-wrap">
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-text-align_center slds-large-order_2 slds-p-bottom_large">
+                        <h3 class="slds-text-heading_large" style="font-weight:bold;">Select an Instrument</h3>
+                    </div>
+                    <div class="slds-size_1-of-2 slds-large-size_1-of-3 slds-large-order_1  slds-p-bottom_large">
+                        <a href="javascript:void(0)" onclick="processBack();" class="slds-button btn-gray slds-p-vertical_xxx-small slds-p-horizontal_xx-large slds-m-bottom_small" >Back</a>
+                    </div>
+                    
+                    <div class="slds-size_1-of-2 slds-large-size_1-of-3 slds-text-align_right slds-large-order_3  slds-p-bottom_large" >
+                       <!-- <a href="javascript:void(0)" id="next_step2" class="slds-button btn-yellow slds-p-vertical_xxx-small slds-p-horizontal_xx-large slds-m-bottom_small" onclick="processEnrolment();" style="">Next</a>-->
+                    </div>                    
+                </div>
+            </div>
+         
+            <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error slds-hide cmpErrDiv"  style="width:50%; display:flex; margin: 0 auto;"  role="alert">
+                <span class="slds-assistive-text">error</span>
+                <span class="slds-icon_container slds-icon-utility-error slds-m-right_x-small" title="Description of icon when needed">
+                    <h2 class="slds-text-heading_small contentErrorDiv"></h2>
+                </span>
+                <div class="slds-notify__close">
+                    <button class="slds-button slds-button_icon slds-button_icon-inverse" title="Close" onclick="$('.cmpErrDiv').addClass('slds-hide');return false;">
+                        X
+                        <span class="slds-assistive-text" >Close</span>  
+                    </button>
+                </div>
+            </div>   
+           
+            
+            <div class="container slds-p-around_small slds-large-p-around_large " id="step-2">
+                <h3 id="parentDetials" class="slds-text-heading_medium" style="font-weight:bold;">Customer Details</h3>
+                <hr style="margin-top: 25px;" />
+                <div class="slds-grid slds-wrap date-list ">
+                    <div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                        <p class=""><strong>First Name</strong></p>
+                        <p class="m-lg-right">
+                            <apex:inputText value="{!parentAcc.firstName}" styleclass="slds-input inputtxt parNameCls requiredInput" id="parFirstName"/>
+                        </p>
+                    </div>
+                    
+                    <div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                        <p class=""><strong>Last Name</strong></p>
+                        <apex:inputText value="{!parentAcc.lastName}" styleclass="slds-input inputtxt parNameCls requiredInput" id="parLastName"/>
+                    </div>
+                    <div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                        <p class=""><strong>Email</strong></p>
+                        <p class="m-lg-right">
+                            <apex:inputField value="{!parentAcc.PersonEmail}" styleclass="slds-input inputtxt emailCls requiredInput" id="emailtxt"/>
+                        </p>
+                    </div>
+                    
+                    <div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                        <p class=""><strong>Phone
+                            <abbr class="slds-required slds-m-horizontal_none phoneNumber" title="required" style="cursor: default;"></abbr>
+                       </strong></p>
+                        <div id="slds-form-element__control inputMobileId"></div>
+                    </div>
+                </div>
+                
+                </div>
+                
+                
+                <div class="container slds-border_top" style="background-color:#f9f9fb;" >
+                <table id="accTable" class="display slds-table slds-table_cell-buffer slds-table_bordered" style="background-color:#fff;" >
+                    <thead>
+                        <tr class="slds-line-height_reset">
+                            <th scope="col"></th>
+                            <th scope="col">No.</th>
+                            <th scope="col">Brand</th>
+                            <th scope="col">Model</th>
+                            <th scope="col">Serial No.</th>
+                            <th scope="col">Location</th>
+                            <th scope="col">Rental</th>
+                            <th scope="col">Sales Price</th>
+                            <th scope="col">Cond.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <apex:repeat value="{!sageProducts}" var="sag">
+                            <tr class="slds-hint-parent">
+                                <td>
+                                    <span class="slds-radio">
+                                        <input type="radio" id="radio-{!sag.srNo}" value="{!sag.srNo}" onchange="setSlcdPianoIndx('{!sag.srNo}'); return false;" name="slcdPianoOptions" checked="" />
+                                        <label class="slds-radio__label" for="radio-{!sag.srNo}">
+                                            <span class="slds-radio_faux"></span>
+                                            <span class="slds-form-element__label"></span>
+                                        </label>
+                                    </span>
+                                </td>
+                                <td>{!sag.srNo}</td>
+                                <td>{!sag.brand}</td>
+                                <td>{!sag.modelNo}</td>
+                                <td>{!sag.serNo}</td>
+                                <td>{!sag.location}</td>
+                                <td>{!sag.rentalPrice}</td>
+                                <td>{!sag.salesPrice}</td>
+                                <td>{!sag.condi}</td>
+                            </tr>
+                        </apex:repeat>
+                    </tbody>
+                </table>
+                
+                 <div class="slds-grid slds-wrap slds-text-align_center slds-p-top_x-large">
+                     
+                     <!--CH01 center align button by karan Singh 24 aug 2020
+                    <div class="slds-medium-size_1-of-2 slds-p-bottom_small" -->
+                     <div class="slds-medium-size_1-of-3 slds-p-bottom_small"/>
+                     <div class="slds-medium-size_1-of-3 slds-p-bottom_small">
+                      <a class="slds-button btn-yellow slds-p-horizontal_xx-large slds-m-bottom_large" onclick="prcToRentalOnclick('Rent');return false;">Proceed to Rental</a>    
+                    </div>
+                     <!-- karan Singh 24 aug 2020 commented this button as now we are not doing the purchase process
+                    <div class="slds-medium-size_1-of-2 slds-p-bottom_small">
+                        <a class="slds-button btn-yellow slds-p-horizontal_xx-large  slds-m-bottom_large" onclick="prcToRentalOnclick('Sell');return false;">Proceed to Purchase</a>  
+                    </div -->
+                    <!-- CH01 END -->     
+                </div>
+            </div>
+        </apex:form>
+    </body>
+    
+</apex:page>

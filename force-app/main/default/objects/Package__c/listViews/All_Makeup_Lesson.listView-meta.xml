@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>All_Makeup_Lesson</fullName>
+    <columns>NAME</columns>
+    <columns>Location__c</columns>
+    <columns>of_Units__c</columns>
+    <columns>Active__c</columns>
+    <columns>CREATED_DATE</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>NAME</field>
+        <operation>contains</operation>
+        <value>Makeup Lesson</value>
+    </filters>
+    <label>All Makeup Lesson</label>
+</ListView>

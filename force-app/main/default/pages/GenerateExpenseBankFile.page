@@ -1,0 +1,51 @@
+<apex:page controller="GenExpenseBankFileController" lightningStylesheets="true" docType="html-5.0">
+    <div class="slds-m-around_small">
+        <apex:slds />
+        <apex:sectionHeader title="Expense Bank File" />
+        <apex:form id="frm">
+            <apex:pageMessages />
+            <apex:actionFunction action="{!calculateExpenseDetail}" name="calculateExpenseDetail" reRender="frm" />
+            <div class="slds-scope">
+                <div class="slds-form-element">
+                    <label class="slds-form-element__label" for="select-01" style="font-weight: 600;font-size: 16px;">Organisation</label>
+                    <div class="slds-form-element__control">
+                        <div class="slds-select_container">
+                            <apex:selectList value="{!organisation}" size="1" styleclass="slds-select" onchange="calculateExpenseDetail();return false;">
+                                <apex:selectOptions value="{!OrganisationList}"/>
+                            </apex:selectList>
+                        </div>
+                    </div>    
+                </div>                
+                <apex:outputPanel rendered="{!totalExpenseAmount > 0}">
+                <table class="slds-table slds-table_cell-buffer slds-table_header-hidden slds-table_bordered" style="margin-top:10px;">
+                    <tr>
+                        <td><b>Total Employees</b></td>
+                        <td> <b>:</b> </td>
+                        <td>{!totalEmployees}</td>
+                    </tr>
+                    <tr>
+                        <td><b>Total Expense Amount</b></td>
+                        <td> <b>:</b> </td>
+                        <td>{!currencyCode}&nbsp;&nbsp;<apex:outputText value="{!totalExpenseAmount}"></apex:outputText></td>
+                    </tr>
+                    <tr>
+                        <td colspan="3"><a href="/lightning/r/Report/00O0p000000QE8aEAG/view?queryScope=userFolders&fv2={!OrganisationName}" target="_blank">Report Link</a></td>
+                    </tr>
+                    <tr>
+                        <td><b>File upload date</b></td>
+                        <td> <b>:</b> </td>
+                        <td><apex:input type="date" value="{!uploadDate}" styleclass="slds-select"/></td>
+                    </tr>
+                </table>
+                <br/>
+                <center><apex:commandButton styleClass="slds-button slds-button_brand" action="{!generate}" value="Generate"/></center>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!totalExpenseAmount == 0 && organisation != ''}">
+                    <div style="margin-top:10px;">
+                        <center style="font-size:16px;">No Record Found!</center>
+                    </div>
+                </apex:outputPanel>
+            </div>
+        </apex:form>
+    </div>
+</apex:page>

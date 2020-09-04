@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Netsuite_Payment_Method__c</fullName>
+    <externalId>false</externalId>
+    <formula>CASE(IF(Invoice__c!=null,Invoice__r.Center__r.Organisation__r.Name,Parent_Account__r.Centre_Name__r.Organisation__r.Name), 
+				    &apos;Aureus Academy Singapore&apos;, 
+				        IF( RecordType.DeveloperName==&apos;Payment_As_Deposit&apos;,
+															&apos;AURSG-Use-Deposit&apos;,
+				            CASE(TEXT(Method_of_Payment__c), 
+																    &apos;Card&apos;, &apos;AURSG-Stripe&apos;,
+																    &apos;Cheque&apos;, &apos;AURSG-Cheque&apos;,
+																    &apos;Cash&apos;, &apos;AURSG-Cash/Funds transfer/Paynow&apos;,
+																    &apos;NETS&apos;, &apos;AURSG-Nets&apos;,
+																    &apos;Others&apos;, &apos;AURSG-Cash/Funds transfer/Paynow&apos;,
+																    &apos;Offline Card&apos;, &apos;AURSG-CC Terminals&apos;,
+																&apos;&apos;)
+												),
+				    &apos;Aureus Academy Hong Kong&apos;,
+					        IF( RecordType.DeveloperName==&apos;Payment_As_Deposit&apos;,
+																&apos;AURHK-Use-Deposit&apos;,
+		 		           CASE(TEXT(Method_of_Payment__c), 
+																    &apos;Card&apos;, &apos;AURHK-Stripe&apos;,
+																    &apos;Cheque&apos;, &apos;AURHK-Cheque&apos;,
+																    &apos;Cash&apos;, &apos;AURHK-Cash/Funds Transfer/Paynow&apos;,
+																    &apos;Others&apos;, &apos;AURHK-Cash/Funds Transfer/Paynow&apos;,
+																&apos;&apos;)
+													 ),
+				    &apos;Ossia Music School Singapore&apos;,
+					        IF( RecordType.DeveloperName==&apos;Payment_As_Deposit&apos;,
+																&apos;AUROM-Use-Deposit&apos;,
+				            CASE(TEXT(Method_of_Payment__c), 
+																    &apos;Card&apos;, &apos;AUROM-Stripe&apos;,
+																    &apos;Cheque&apos;, &apos;AUROM-Cheque&apos;,
+																    &apos;Cash&apos;, &apos;AUROM-Cash/Funds Transfer/Paynow&apos;,
+																    &apos;Others&apos;, &apos;AUROM-Cash/Funds Transfer/Paynow&apos;,
+																&apos;&apos;)
+													),
+&apos;&apos;)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Netsuite Payment Method</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

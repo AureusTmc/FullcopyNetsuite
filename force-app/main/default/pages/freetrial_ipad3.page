@@ -1,0 +1,447 @@
+<apex:page showHeader="false"  controller="FreeTrial_IpadCntrl"  standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False">
+    <head>
+        <title>Aureus Academy Trial Booking</title>
+        <c:IpadHeaderJqueryCmp />
+        <!--<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0"/>
+        <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}"/>      
+        <apex:stylesheet value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.css')}"/>
+        <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700&display=swap" rel="stylesheet" /> 
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous" />
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery/jquery.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.js')}"/>               
+        -->
+        <style>
+           .sticky {  position: fixed;  bottom: 0;  width: 100%; z-index:99;}
+           /*@media(min-width:767px){.sticky {  position: fixed;  top: 0;  width: 100%; z-index:99;}}*/
+            body{ font-size:16px; font-family: 'Lato', sans-serif; font-weight:300; }
+           @media(min-width:991px){.new-container.class-true{width:80%; margin:0 auto; background-color:#fff;} .class-true .sticky{width:80%; left:10%;}}
+            @media(min-width:999px){.slds-modal__container {width: 40%;}}
+            .icon-collapse,.icon-collapse:focus, .icon-collapse:hover {color:#000; font-weight:bold; font-size:26px;text-decoration: none;}
+            input{
+            height: calc(1.875rem + (1px * 10));}
+            ul li{margin-left:0px;}
+            @media(min-width:999px){
+            .m-lg-right{margin-right: .75rem;}}
+            @media(min-width:767px){
+            .text-lg-left{ text-align:left;}
+            .text-lg-right{text-align:right;}
+            .slds-large-p-around_large{padding:1.5rem;}
+            .slds-large-p-horizontal_xx-large{padding-left: 3rem; padding-right: 3rem;}
+            }
+            .read-more, .read-more:hover{color:#3fa6fb; text-decoration:none;}
+            .slds-radio [type="radio"]:checked .read-more{color:#fff !important;}
+            
+            .btn-yellow, .btn-yellow:hover, .btn-yellow:focus {
+            background-color:#ffbf2f;
+            color:#fff;
+            }
+            
+            .slds-button_success{
+            color:#fff !important;
+            padding-left:12px;
+            padding-right:12px;}
+            .text-yellow{color:#ffbf2f;}
+            .btn-block{
+            display:block;
+            font-size:1.2rem; 
+            }
+            .btn-gray,.btn-gray:hover, .btn-gray:focus{
+            background-color:#ccced0;
+            color:#fff;
+            }
+            .slds-checkbox .slds-checkbox--faux, .slds-checkbox .slds-checkbox_faux{
+            font-size:16px;
+            border-color:#000;
+            box-shadow: 0 1px 0 0 #ececee;
+            top:4px;
+            }
+            .box-info{
+            box-shadow: 0 1px 0 0 #ececee;
+            background-color:#fff;
+            margin-bottom:4px;
+            }
+            #step-2, #step-3, .bg-white{background-color:#fff;}
+            .title-no{border: solid 1px #353c43; border-radius:50%; padding: 4px 9px;} 
+            .bg-light{background-color:#f7f7f7 !important;}
+            .w-50{width:50%;}
+            .font-bold{font-weight:bold;}
+            @media(max-width:767px){
+            .text-sm-center{
+            text-align:center;
+            }
+            }
+            span.slds-radio input + .slds-radio__label{display: block; border-radius:10px;}
+            span.slds-radio input:checked + .slds-radio__label {
+            background: #ffbf2f;
+            border-radius:10px;
+            color:#fff;
+            }
+            .teach-img{display:inline-block;width:225px; height: 227px; padding-bottom:10px; z-index:3;}
+            @media(max-width:991px){
+            .slds-radio [type="radio"] + .slds-radio__label .slds-radio_faux {margin-right:0px;}
+            .slds-radio__label.slds-p-around_medium{padding: .75rem;}
+            .teach-img{width: 19vw;height: 12rem;}
+            }
+            @media(max-width:767px){
+            .teach-img{width: 45vw !important; display:block; margin:0 auto;}
+            .d-sm-none{display:none !important;}
+            .d-sm-block{display:block !important;}
+            .slds-radio .slds-radio_faux {display:block; margin:5px auto !important;}
+            }
+            .d-none{display:none;}
+            .d-block{display:block;}
+            .slds-radio{border-radius:10px;}
+        </style>
+        <script>
+            $(document).ready(function() { 
+                var isTchrOptSel = false;
+                
+                <apex:variable value="{!1}" var="stuIndex"/>
+                <apex:repeat value="{!enrModelList}" var="enrTrial">
+                    var tSlot = '{!enrTrial.slcdTchrId}';
+                    var radioName = 'teacherOpt'+{!stuIndex};
+                    $("input[name='"+radioName+"'][value='"+tSlot+"']").attr('checked', 'checked');
+                    if(tSlot)
+                        isTchrOptSel = true;
+                    <apex:variable value="{!stuIndex+1}" var="stuIndex"/>
+                </apex:repeat>
+                    
+                if(isTchrOptSel){
+                    $("#next_step3").addClass("btn-yellow").removeClass("btn-gray").css('pointer-events', 'auto');
+                }
+            });
+            function showTeacherDetail(thisObj,teachId){
+                var cuObjVal = thisObj.text(); 
+                if(cuObjVal == 'Read More'){
+                    thisObj.text('Read Less');
+                    
+                    $('.tchDt'+teachId).css('display','contents');
+                }else{
+                    thisObj.text('Read More'); 
+                    $('.tchDt'+teachId).css('display','-webkit-box');
+                }
+            }
+        
+           /* function setTeacher(stuIndx){
+                var optIndx = 'teacherOpt'+stuIndx;
+                var slcdTchr = $("input[name='"+optIndx+"']:checked").val();
+                setTchrForStu(stuIndx,slcdTchr);
+                } */
+        
+        
+            // Added By Reena(21/11/2019)
+            function setTeacher(stuIndx){
+                var optIndx = 'teacherOpt'+stuIndx;
+                var slcdTchr = $("input[name='"+optIndx+"']:checked").val();
+                setTchrForStu(stuIndx,slcdTchr);
+                var countlist= {!enrModelList.size};
+                    var isSuccess = true;
+                    for(var i=1; i<=countlist; i++){
+                        optIndx = 'teacherOpt'+i;
+                        if($("input[name='"+optIndx+"']:checked").length == 0){
+                            isSuccess = false;
+                            break;
+                        }
+                    }
+                    if(isSuccess){
+                        $("#next_step3").addClass("btn-yellow").removeClass("btn-gray").css('pointer-events', 'auto');
+                        
+                    }
+                    else{
+                        $("#next_step3").attr("disabled", "true").addClass("btn-gray").removeClass("btn-yellow").css('pointer-events', 'none');
+                    }
+    
+            }   
+        
+        //cmpErrDiv contentDiv
+            function validatePage(trialSize){
+                var isSlotSameTime = false;
+                var mySet = new Set();
+                <apex:repeat value="{!enrModelList}" var="enrTrial">
+                    var tSlot = '{!enrTrial.slcdFullSlot}' +':'+'{!enrTrial.slcdDate}';//alert(tSlot);
+                    if(mySet.has(tSlot))
+                        isSlotSameTime = true;                    
+                    mySet.add(tSlot);
+                </apex:repeat>
+               
+                
+                if(trialSize > 0){
+                    var isSuccess = true;
+                    var isSameTchr = false;
+                    
+                    var slcdTchrSet = new Set();
+                    for(var i=1; i<=trialSize; i++){
+                        var optIndx = 'teacherOpt'+i;
+                        var slcdInst = $("input[name='"+optIndx+"']:checked").val();
+                        if(!slcdInst){
+                            isSuccess = false;
+                            break;
+                        }
+                         if(slcdTchrSet.has(slcdInst))
+                            isSameTchr = true;                    
+                        slcdTchrSet.add(slcdInst);
+                    }
+                    if(!isSuccess){
+                        $('.cmpErrDiv').removeClass('slds-hide');
+                        $('.contentDiv').html('Please select the teacher.');
+                        return;
+                    }
+                    
+                    if(isSlotSameTime && isSameTchr){
+                        $('.cmpErrDiv').removeClass('slds-hide');
+                        $('.contentDiv').html('You can\'t book the same Teacher for \'the Same Time\'.');
+                        return;
+                    }
+                    
+                    $('.cmpErrDiv').addClass('slds-hide');
+                    nextBtn();
+                }
+            }
+        </script>
+        
+    </head>
+    <body class="">
+        <apex:outputPanel rendered="{!isSiteGuestUser}">     
+            <div  class="slds-p-around_medium" style="font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;">Aureus Academy Enrolment Process       
+            </div>
+            <p style="text-align:center;"><apex:image url="{!$Resource.Aureus_logo_png}" /></p>
+        </apex:outputPanel>  
+        <apex:form >
+            <apex:actionFunction name="nextBtn" action="{!nextBtnCmp3}" status="spinner"/>
+            <apex:actionFunction name="backBtn" action="{!backBtnCmp3}" status="spinner"/>
+            <apex:actionFunction name="setTchrForStu" action="{!slcdTeacher}" reRender="testRen" status="spinner">
+                <apex:param name="slcdIndx" value="0" assignTo="{!slcdStuIndex}"/> 
+                <apex:param name="slcdTchrId" value="" assignTo="{!slcdTchrId}"/> 
+            </apex:actionFunction>
+           <!-- <apex:actionStatus id="spinner">
+                <apex:facet name="start"> 
+                    <apex:outputPanel id="backdrop" styleClass="popupBackground">
+                        <div role="status" class="slds-spinner slds-spinner_brand slds-spinner_large"> 
+                            <div class="slds-spinner__dot-a"></div>
+                            <div class="slds-spinner__dot-b"></div>
+                        </div>
+                    </apex:outputPanel>
+                </apex:facet>
+            </apex:actionStatus>-->
+            <apex:actionStatus id="spinner" styleClass="status">
+                <apex:facet name="start">
+                    <div class="demo-only demo--inverse " style="height:100%;width:100%;z-index:200;position:fixed">
+                        <div class="slds-spinner_container" style="height:100%;width:100%;">
+                            <div role="status" class="slds-spinner slds-spinner_large slds-spinner_brand">
+                                <span class="slds-assistive-text">Loading</span>
+                                <div class="slds-spinner__dot-a"></div>
+                                <div class="slds-spinner__dot-b"></div>
+                            </div>
+                        </div>
+                    </div>
+                </apex:facet>
+            </apex:actionStatus>   
+            <div class="new-container {!IF(isSiteGuestUser, 'class-true','')}">
+            <div  class="slds-text-heading_large  slds-p-around_small slds-text-align_center" style="font-weight:bold;">Teachers Available</div>
+               
+                <!--
+            
+            <div class="slds-grid slds-wrap slds-p-around_small " id="myHeader" style="background-color:#f9f9fb; transition:all 0.3s ease-out;">
+                    <div class="slds-size_1-of-1 slds-medium-size_2-of-4 slds-text-align_center slds-medium-order_2 slds-p-bottom_small">
+                        <h3 class="slds-text-heading_large" style="font-weight:bold;">Teachers Available</h3>
+                    </div>
+                    <div class="slds-size_1-of-3 slds-medium-size_1-of-4 slds-medium-order_1 d-sm-none"><span>
+                        <a class="slds-button btn-gray slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-p-horizontal_large slds-m-bottom_small" onClick="backBtn();" href="javascript:void(0)" id="back_step1" style="margin-bottom: .75rem;">Back</a></span>  
+                    </div>
+                    
+                    <div class="slds-size_2-of-3 slds-medium-size_1-of-4 slds-text-align_right slds-medium-order_3 d-sm-none"><span id="j_id0:frm:nextRefresh">
+                        <a class="slds-button btn-yellow slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-m-bottom_small slds-p-horizontal_large" onClick="validatePage('{!enrModelList.size}');" href="javascript:void(0)" id="next_step3">Next</a></span>
+                    </div>
+                </div>
+            <script>
+                  window.onscroll = function() {myFunction()};
+                        var header = document.getElementById("myHeader");
+                        var sticky = header.offsetTop;
+                        
+                        function myFunction() {
+                            if (window.pageYOffset > sticky) {
+                                header.classList.add("sticky");
+                            } else {
+                                header.classList.remove("sticky");
+                            }
+                        }
+                </script> -->
+            
+            
+            <div class="container slds-p-around_small slds-large-p-horizontal_small " style="padding-bottom:4rem !important;"> 
+                
+                <div class="slds-text-align_center slds-is-relative slds-hide cmpErrDiv">
+                    <div class="slds-notify slds-notify_toast slds-theme_error slds-m-left_none slds-m-right_medium" role="status" style="min-width: auto; max-width:100%;">
+                        <div class="slds-notify__content">
+                            <h2 class="slds-text-heading_small contentDiv"></h2>
+                        </div>
+                        <div class="slds-notify__close">
+                            <button class="slds-button slds-button_icon slds-button_icon-inverse" onclick="$('.cmpErrDiv').addClass('slds-hide');return false;" title="Close">
+                                X
+                                <span class="slds-assistive-text">Close</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <apex:variable value="{!1}" var="stuIndex"/>
+                <apex:repeat value="{!enrModelList}" var="enrTrial">
+                    <h3 class="slds-text-heading_medium slds-m-bottom_small" style="font-weight:bold;">Trial Lesson {!stuIndex}</h3>
+                    <hr style="margin-top: 15px;" />
+                    
+                    <apex:repeat value="{!enrTrial.slcdSlotTchrs}" var="teachMod"> 
+                        <fieldset class="slds-form-element bg-white slds-m-bottom_medium" style="border-radius: 10px;  border: solid 1px #dcdcdc;">
+                            <div class="slds-form-element__control">
+                            
+                                <span class="slds-radio">
+                                    <input type="radio" id="{!teachMod.tecId}{!stuIndex}" value="{!teachMod.tecId}" onChange="setTeacher('{!stuIndex}');"  name="teacherOpt{!stuIndex}" />
+                                    <label class="slds-radio__label slds-p-around_medium" for="{!teachMod.tecId}{!stuIndex}">
+                                         
+                                        <div class="slds-grid slds-wrap ">
+                                            <div class="slds-col slds-medium-size_3-of-12" style="align-self:top;">
+                                                <span class="slds-radio_faux"></span>
+                                                <div class="teach-img">
+                                                <img style="width:100%; height:100%; border-radius:8px;" src="{!IF(teachMod.attachmentId != null, '/servlet/servlet.FileDownload?file='+teachMod.attachmentId, $Resource.teacher)}"/>
+                                                </div>
+                                            </div>
+                                            <div class="slds-col slds-medium-size_9-of-12">
+                                                <h3 class="slds-text-heading_medium" style="font-weight:bold;">{!teachMod.tecName}</h3>
+                                                <p>Piano &amp; Music Exploration Teacher</p>
+                                                
+                                                <p class="" style="font-weight:400;">Qualifications</p>
+                                                <ul>
+                                                    <apex:repeat value="{!teachMod.highestQualificationLst}" var="qual">
+                                                        <li class="ml-md">{!qual}&nbsp;</li>
+                                                    </apex:repeat>
+                                                </ul>
+                                                
+                                                <p class="" style="font-weight:400;"><strong>Teacher Bio</strong></p>
+                                                <!--<p>{!teachMod.teacBioDescribe}</p>-->
+                                                <apex:outputPanel rendered="{!teachMod.teacBio != null}">
+                                                    <div class="tchDt{!teachMod.tecId}" style="text-overflow: ellipsis;overflow: hidden;display: -webkit-box;-webkit-line-clamp: 3;-webkit-box-orient: vertical;">
+                                                        <div class="teacher-des"> {!teachMod.teacBioDescribe} </div>
+                                                    </div>
+                                                    <p style="text-align:center;">
+                                                        <a  class="read-more" id="teach{!teachMod.tecId}" onclick="showTeacherDetail($(this), '{!teachMod.tecId}');">Read More</a>
+                                                    </p>
+                                                </apex:outputPanel>
+                                            </div>
+                                            
+                                        </div>
+                                        
+                                    </label>
+                                </span>
+                                
+                            </div>
+                        </fieldset>
+                    </apex:repeat>
+                    <apex:variable value="{!stuIndex+1}" var="stuIndex"/>
+                </apex:repeat>
+                <!--
+                <fieldset class="slds-form-element bg-white slds-m-bottom_medium" style="border-radius: 10px;  border: solid 1px #dcdcdc;">
+                    <div class="slds-form-element__control">
+                        <span class="slds-radio">
+                            <input type="radio" id="radio-413" value="radio-413" name="options" checked="" />
+                            <label class="slds-radio__label slds-p-around_medium" for="radio-413">
+                                
+                                <div class="slds-grid slds-wrap ">
+                                    <div class="slds-large-size_1-of-4 slds-align-middle">
+                                        <span class="slds-radio_faux"></span>
+                                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTT0o9dIYlbVV2tKg9uIynmXsjTA0qEy2ATGMmmErvPTcWPVyo" />  
+                                    </div>
+                                    <div class="slds-large-size_3-of-4">
+                                        <h3 class="slds-text-heading_medium" style="font-weight:bold;">Martin</h3>
+                                        <p>Piano &amp; Music Exploration Teacher</p>
+                                        
+                                        <p class="slds-m-top_small"><strong>Qualifications</strong></p>
+                                        <ul>
+                                            <li>Orff Schulwerk Level 4 (Highest Level), The Australian National Council of Orff Shulwerk</li>
+                                            <li>Bachelor of Music in Education, The Education University of Hong Kong, Hong Kong</li>
+                                        </ul>
+                                        
+                                        <p class="slds-m-top_small"><strong>Teacher Bio</strong></p>
+                                        <p>Martin Liu is a versatile musician and teacher with extensive teaching experience. He received his Bachelor’s Degree in Music from The Education University, Hong Kong, and has also obtained the highest level of the Orff developmental approach in music education awarded by the Australian National Council of Orff Schulwerk. Martin has performed at various concert venues around the…</p>
+                                    </div>
+                                    
+                                </div>
+                            </label>
+                        </span>
+                    </div>
+                </fieldset>
+               
+                <fieldset class="slds-form-element bg-white slds-m-bottom_medium" style="border-radius: 10px;  border: solid 1px #dcdcdc;">
+                    <div class="slds-form-element__control">
+                        <span class="slds-radio">
+                            <input type="radio" id="radio-412" value="radio-412" name="options" checked="" />
+                            <label class="slds-radio__label slds-p-around_medium" for="radio-412">
+                                
+                                <div class="slds-grid slds-wrap ">
+                                    <div class="slds-large-size_1-of-4 slds-align-middle">
+                                        <span class="slds-radio_faux"></span>
+                                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTT0o9dIYlbVV2tKg9uIynmXsjTA0qEy2ATGMmmErvPTcWPVyo" />  
+                                    </div>
+                                    <div class="slds-large-size_3-of-4">
+                                        <h3 class="slds-text-heading_medium" style="font-weight:bold;">Martin</h3>
+                                        <p>Piano &amp; Music Exploration Teacher</p>
+                                        
+                                        <p class="slds-m-top_small"><strong>Qualifications</strong></p>
+                                        <ul>
+                                            <li>Orff Schulwerk Level 4 (Highest Level), The Australian National Council of Orff Shulwerk</li>
+                                            <li>Bachelor of Music in Education, The Education University of Hong Kong, Hong Kong</li>
+                                        </ul>
+                                        
+                                        <p class="slds-m-top_small"><strong>Teacher Bio</strong></p>
+                                        <p>Martin Liu is a versatile musician and teacher with extensive teaching experience. He received his Bachelor’s Degree in Music from The Education University, Hong Kong, and has also obtained the highest level of the Orff developmental approach in music education awarded by the Australian National Council of Orff Schulwerk. Martin has performed at various concert venues around the…</p>
+                                    </div>
+                                    
+                                </div>
+                            </label>
+                        </span>
+                    </div>
+                </fieldset>
+                
+                <fieldset class="slds-form-element bg-white slds-m-bottom_medium" style="border-radius: 10px;  border: solid 1px #dcdcdc;">
+                    <div class="slds-form-element__control">
+                        <span class="slds-radio">
+                            <input type="radio" id="radio-411" value="radio-411" name="options" checked="" />
+                            <label class="slds-radio__label slds-p-around_medium" for="radio-411">
+                                
+                                <div class="slds-grid slds-wrap ">
+                                    <div class="slds-large-size_1-of-4 slds-align-middle">
+                                        <span class="slds-radio_faux"></span>
+                                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTT0o9dIYlbVV2tKg9uIynmXsjTA0qEy2ATGMmmErvPTcWPVyo" />  
+                                    </div>
+                                    <div class="slds-large-size_3-of-4">
+                                        <h3 class="slds-text-heading_medium" style="font-weight:bold;">Martin</h3>
+                                        <p>Piano &amp; Music Exploration Teacher</p>
+                                        
+                                        <p class="slds-m-top_small"><strong>Qualifications</strong></p>
+                                        <ul>
+                                            <li>Orff Schulwerk Level 4 (Highest Level), The Australian National Council of Orff Shulwerk</li>
+                                            <li>Bachelor of Music in Education, The Education University of Hong Kong, Hong Kong</li>
+                                        </ul>
+                                        
+                                        <p class="slds-m-top_small"><strong>Teacher Bio</strong></p>
+                                        <p>Martin Liu is a versatile musician and teacher with extensive teaching experience. He received his Bachelor’s Degree in Music from The Education University, Hong Kong, and has also obtained the highest level of the Orff developmental approach in music education awarded by the Australian National Council of Orff Schulwerk. Martin has performed at various concert venues around the…</p>
+                                    </div>
+                                    
+                                </div>
+                            </label>
+                        </span>
+                    </div>
+                </fieldset>-->
+            </div>
+            
+             <div class="slds-grid slds-wrap slds-p-around_small sticky" style="background-color:#f9f9fb; ">
+                    <div class="slds-size_1-of-2"><span>
+                        <a class="slds-button btn-gray slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-p-horizontal_large" onClick="backBtn();" href="javascript:void(0)" id="back_step1" style="">Back</a></span>  
+                    </div>
+                    
+                    <div class="slds-size_1-of-2  slds-text-align_right"><span id="j_id0:frm:nextRefresh">
+                        <a class="slds-button btn-gray slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large  slds-p-horizontal_large" onClick="validatePage('{!enrModelList.size}');" href="javascript:void(0)" id="next_step3"  style="pointer-events: none;">Next</a></span>
+                    </div>
+                </div>
+                </div>
+            
+        </apex:form>
+    </body>
+</apex:page>

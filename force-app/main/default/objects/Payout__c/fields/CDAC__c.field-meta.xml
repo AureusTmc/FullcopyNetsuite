@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>CDAC__c</fullName>
+    <externalId>false</externalId>
+    <formula>IF(CDAC_Contribution__c, 
+	IF(Total_Amount_CPF__c &gt; 7500 ,3,
+		IF(Total_Amount_CPF__c &gt; 5000 ,2,
+			IF(Total_Amount_CPF__c &gt; 3500 ,1.5,
+				IF(Total_Amount_CPF__c &gt; 2000 ,1,
+					IF(Total_Amount_CPF__c &gt; 0 ,0.5, 0)
+				)
+			)
+		)
+	), 0
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>CDAC</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Currency</type>
+</CustomField>

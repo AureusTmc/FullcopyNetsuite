@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Active_Duration__c</fullName>
+    <externalId>false</externalId>
+    <formula>IF(ISPICKVAL( Status__c , &apos;Active&apos;),
+	IF((Today() -  Subscription_Start_Date__c ) / 365 * 12 &lt; 1, 1, (Today() -  Subscription_Start_Date__c ) / 365 * 12),
+	IF((Subscription_End_Date__c -  Subscription_Start_Date__c ) / 365 * 12 &lt; 1, 1, (Subscription_End_Date__c -  Subscription_Start_Date__c ) / 365 * 12)
+)</formula>
+    <inlineHelpText>Subscription active duration in months</inlineHelpText>
+    <label>Active Duration</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

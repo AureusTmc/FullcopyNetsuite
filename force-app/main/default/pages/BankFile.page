@@ -1,0 +1,1 @@
+<apex:page standardStylesheets="false" sidebar="false" showHeader="false" controller="BankFileController" contentType="text/plain/#{!fileName}">{!strFile}</apex:page>

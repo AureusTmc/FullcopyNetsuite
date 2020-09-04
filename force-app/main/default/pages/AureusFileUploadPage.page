@@ -1,0 +1,19 @@
+<apex:page sidebar="false" showHeader="false">
+    <apex:includeLightning />
+    
+    <div id="LcDisplayId"></div> 
+    
+    <script>
+    var accountId = "{!$CurrentPage.parameters.id}";
+    console.log(accountId);
+    $Lightning.use("c:AureusFileUploadApp", function() {
+        $Lightning.createComponent("c:AureusFileUploadCmp",
+                                   { 
+                                       "accId": accountId
+                                   },
+                                   "LcDisplayId",
+                                   function(component) {
+                                   });
+    });
+    </script>
+</apex:page>

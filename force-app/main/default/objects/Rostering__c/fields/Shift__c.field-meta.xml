@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Shift__c</fullName>
+    <externalId>false</externalId>
+    <label>Shift</label>
+    <required>true</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Regular Hours</fullName>
+                <default>false</default>
+                <label>Regular Hours</label>
+            </value>
+            <value>
+                <fullName>Opening Hours</fullName>
+                <default>false</default>
+                <label>Opening Hours</label>
+            </value>
+            <value>
+                <fullName>Closing Hours</fullName>
+                <default>false</default>
+                <label>Closing Hours</label>
+            </value>
+            <value>
+                <fullName>Exam Day</fullName>
+                <default>false</default>
+                <label>Exam Day</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

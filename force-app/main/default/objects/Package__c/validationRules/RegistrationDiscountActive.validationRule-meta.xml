@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>RegistrationDiscountActive</fullName>
+    <active>true</active>
+    <description>If registration discount is active then Registration Discount Value not be 0.</description>
+    <errorConditionFormula>AND((Registration_Discount_Active__c = TRUE),ISNULL( Registration_Discount_Value__c ))</errorConditionFormula>
+    <errorMessage>Discount value cant be Null</errorMessage>
+</ValidationRule>

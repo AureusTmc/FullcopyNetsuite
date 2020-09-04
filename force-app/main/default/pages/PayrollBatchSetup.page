@@ -1,0 +1,344 @@
+<apex:page standardController="Payroll_Batch__c" extensions="PayrollBatchSetupController" id="pg" lightningStylesheets="true">
+    <html xmlns:xlink="http://www.w3.org/1999/xlink"> 
+    <head>
+        <apex:stylesheet value="{!URLFOR($Resource.DataTable, '/DataTable/jquery.dataTables.min.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.DataTable, '/DataTable/jquery.dataTables.min.css')}" />
+        <!--<link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css"/>-->
+        <apex:includeScript value="{!URLFOR($Resource.DataTable, '/DataTable/jquery-3.3.1.js')}" />
+        <apex:includeScript value="{!URLFOR($Resource.DataTable, '/DataTable/jquery.dataTables.min.js')}" />
+        <apex:slds />
+        <style>
+            body,html{
+                background: white !important;
+            }
+            .tbl .slds-input{
+                width: auto !important;
+            }
+            .dataTables_wrapper .dataTables_filter{
+                float: left;
+            }
+            .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+                color: #596d90 !important;
+            }
+            .tab div, .tab td{
+                background-image: none !important;
+            }
+        </style>
+        <script>
+            var selectValueOfPaymentMode = '{!getPaymentModePickListValuesIntoList}';
+            $(document).ready(function() {
+                showSpinner();
+                getRemoteResult();
+            });
+            function initDataTable(){
+                $('#dataTable').DataTable( {
+                    "scrollY": 300,
+                    "scrollX": true,
+                    'bLengthChange': false,
+                    "language": {
+                        "zeroRecords": "No related employees records found!!"
+                     },
+                     "pageLength": 50
+                });
+                $('input').addClass('slds-input');
+                initCommanMethods();
+            }
+            function initCommanMethods(){
+                // setup check box change event
+                $('.table_chk').unbind('change');
+                $('.table_chk').change(function(){
+                    var isChecked = $(this).is(":checked");
+                    var dataId = $(this).attr('dataId');
+                    if(dataId){
+                        if(globalResultDataSet.hasOwnProperty(dataId)){
+                            var data = globalResultDataSet[dataId];
+                            data.isChecked = isChecked;
+                            globalResultDataSet[dataId] = data;
+                        }
+                    }
+                });
+                
+                // setup select change event
+                $('#dataTable select').unbind('change');
+                $('#dataTable select').change(function(){
+                    var selectedValue = $(this).val();
+                    var dataId = $(this).attr('dataId');
+                    if(dataId){
+                        if(globalResultDataSet.hasOwnProperty(dataId)){
+                            var data = globalResultDataSet[dataId];
+                            data.paymentMode = selectedValue ;
+                            globalResultDataSet[dataId] = data;
+                        }
+                    }
+                });
+                
+                // Setup select all functionality
+                $('#selectAll_chk').unbind('change');
+                $('#selectAll_chk').change(function(){
+                    var isChecked = $(this).is(":checked");
+                    var data = [];
+                    for(var key in globalResultDataSet){
+                        if(globalResultDataSet.hasOwnProperty(key)){
+                            var obj = globalResultDataSet[key];
+                            obj.isChecked = isChecked ;
+                            data.push(obj);
+                        }
+                    }
+                    generateTableRows(data);
+                });
+                $('.dataTables_paginate a').click(function(){
+                    initCommanMethods();
+                });
+                $('.tab input').change(function(){
+                    initCommanMethods();
+                });
+            }
+            function showSpinner() { if($('#spinner').hasClass('slds-hide')) $('#spinner').removeClass('slds-hide');}
+            function hideSpinner() { if(!$('#spinner').hasClass('slds-hide')) $('#spinner').addClass('slds-hide');}
+            var globalResultDataSet = [];
+            
+            function getRemoteResult() {
+                showSpinner();
+                var Organisation = $('[id$=selectedOrg]').val();
+                var Month = $('[id$=selectedMonth]').val();
+                var Year = $('[id$=selectedYear]').val();
+                var bId = '{!payrollBatchId }';
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.PayrollBatchSetupController.getFilterRemoteResult}',
+                    Organisation ,Month ,Year, bId,
+                    function(result, event){
+                        if (event.status) {
+                            generateTableRows(result);
+                        } else if (event.type === 'exception') {
+                            
+                        } else {
+                            
+                        }
+                    }, 
+                    {escape: true}
+                );
+            }
+            
+            function getRunPayrollBatch() {
+                showSpinner();
+                var Organisation = $('[id$=selectedOrg]').val();
+                var Month = $('[id$=selectedMonth]').val();
+                var Year = $('[id$=selectedYear]').val();
+                var bId = '{!payrollBatchId }';
+                var lmbId= '{!LastMonthPbId}';
+                var data = [];
+                for(var key in globalResultDataSet){
+                    if(globalResultDataSet.hasOwnProperty(key)){
+                        var obj = globalResultDataSet[key];
+                        if(obj.isChecked){
+                            data.push(obj);
+                        }
+                    }
+                }
+                if(data.length > 0){
+                    var JSONString = JSON.stringify(data);
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.PayrollBatchSetupController.getRunBatch}',
+                        JSONString, Organisation ,Month ,Year, bId, lmbId,
+                        function(result, event){
+                            if (event.status) {
+                                if(result != ''){
+                                    showErrorMessage(result);
+                                }else{
+                                    cancel();
+                                }
+                            } else if (event.type === 'exception') {
+                                hideSpinner();    
+                            } else {
+                                hideSpinner();
+                            }
+                            hideSpinner();
+                        }, 
+                        {escape: true}
+                    );
+                }else{
+                    showErrorMessage('Please select at one employee to process current setup.');
+                    hideSpinner();
+                }
+            }
+            function generatePaymentModeHtml(selected, dataId){
+                var select = '<select class="slds-select" dataId="'+dataId+'">';
+                if(selectValueOfPaymentMode){
+                    var elements = selectValueOfPaymentMode.split(',');
+                    for(var i=0 ; i < elements.length; i++){
+                        var selectedTag = '';
+                        if( elements[i] === selected) selectedTag = 'selected';
+                        select += '<option value="'+elements[i]+'" '+selectedTag+'>'+elements[i]+'</option>';
+                    }
+                }
+                select += '</select>';
+                return select ;
+            }
+            function generateTableRows(result){
+                showSpinner();
+                if($.fn.DataTable.isDataTable('#dataTable')) {
+                    $('#dataTable').DataTable().destroy();
+                }
+                var html = '';
+                globalResultDataSet = [];
+                if(result){
+                    var html = '';
+                    for(var i=0 ; i < result.length; i++){
+                        globalResultDataSet[result[i].employee.Id] = result[i];
+                        var checked = '';
+                        if(result[i].isChecked == true){ checked = 'checked'; }
+                        html  += '<tr>';
+                        html  += '<td>';
+                        html  += '<div class="slds-checkbox">';
+                        html  += '<input type="checkbox" class="table_chk" id="chk'+i+'" value="'+result[i].isChecked+'" dataId="'+result[i].employee.Id+'" '+checked+'/>';
+                        html  += '<label class="slds-checkbox__label" for="chk'+i+'">';
+                        html  += '<span class="slds-checkbox_faux"></span>';
+                        html  += '<span class="slds-form-element__label"></span>';
+                        html  += '</label>';
+                        html  += '</div>';
+                        html  += '</td>';
+                        html  += '<td>'+result[i].employee.Name+'</td>';
+                        html  += '<td>'+result[i].employee.Employee_Status__c+'</td>';
+                        var selectHtml = generatePaymentModeHtml(result[i].paymentMode, result[i].employee.Id);
+                        html  += '<td>'+selectHtml+'</td>';
+                        html  += '</tr>';
+                    }
+                }
+                $('#tabletBody').html(html);
+                initDataTable();
+                hideSpinner();
+            }
+            function showErrorMessage(msg){
+                if($('.toast').hasClass('slds-hide')){
+                    $('.errorMessage').text(msg);
+                    $('.toast').removeClass('slds-hide');
+                    setTimeout(function(){ $('.toast').addClass('slds-hide'); }, 5000);
+                }
+            }
+        </script>
+    </head>
+    <apex:form id="frm">
+        <apex:actionFunction name="cancel" action="{!reDirectTo}" status="spStatus">
+        </apex:actionFunction>
+        
+        <apex:actionstatus id="spStatus" onstart="showSpinner();" onstop="hideSpinner();"></apex:actionstatus> 
+        <div id="spinner" class="slds-spinner_container slds-hide" style="position: fixed;">
+            <div role="status" class="slds-spinner slds-spinner--large slds-spinner--brand" style="transform: rotate(0deg); padding-top: 26px;">
+                <div class="slds-spinner__dot-a"></div>
+                <div class="slds-spinner__dot-b"></div>
+            </div>
+            <div class="slds-spinner" role="status" style="transform: rotate(0deg);padding-top: 26px;width: 100%;">
+                <span class="textSpinner" style="position: initial"></span>
+            </div>
+       </div>
+        <div class="toast slds-notify_container slds-hide">
+            <div class="slds-notify slds-notify_toast slds-theme_error" role="status">
+                <span class="slds-assistive-text">error</span>
+                <span class="slds-icon_container slds-icon-utility-error slds-m-right_small slds-no-flex slds-align-top" title="">
+                    <svg class="slds-icon slds-icon_small" aria-hidden="true">
+                        <use xlink:href="/_slds/icons/utility-sprite/svg/symbols.svg#error"></use>
+                    </svg>
+                </span>
+                <div class="slds-notify__content">
+                    <h2 class="slds-text-heading_small errorMessage"></h2>
+                </div>            
+            </div>
+        </div>
+        <apex:outputPanel rendered="{!IF(status  == 'Closed', true, false)}">
+        <div>
+          <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+              <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                Error! <br/> Status Closed - insufficient access to run this configuration.
+              </div>
+              <footer class="slds-modal__footer">
+                <button type="button" class="slds-button slds-button_neutral" onClick="cancel();">Ok</button>
+              </footer>
+            </div>
+          </section>
+          <div class="slds-backdrop slds-backdrop_open"></div>
+        </div>
+        </apex:outputPanel>
+        <div class="lastMonthMsg slds-hide">
+          <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+              <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                Last Month payroll setup not closed, Do you want to close last month and run selected month?
+              </div>
+              <footer class="slds-modal__footer">
+                <button class="slds-button slds-button_neutral" onClick="$('.lastMonthMsg').addClass('slds-hide'); return false;">Cancel</button>
+                <button class="slds-button slds-button_brand" onClick="$('.lastMonthMsg').addClass('slds-hide'); getRunPayrollBatch(); return false;">Save</button>
+              </footer>
+            </div>
+          </section>
+          <div class="slds-backdrop slds-backdrop_open"></div>
+        </div>
+        <body>
+            <div class="slds-m-around_small">
+                <fieldset class="slds-form-element slds-box">
+                    <legend class="slds-form-element__label slds-form-element__label--top"><h2 class="slds-text-heading_small">Filters</h2></legend>
+                    <div class="slds-grid slds-wrap">
+                        <div class="slds-col slds-size_1-of-1 slds-large-size_4-of-12 slds-p-around_xxx-small">
+                            <div class="slds-form-element">
+                              <label class="slds-form-element__label" for="text-input-id-1">Organisation</label>
+                                  <div class="slds-form-element__control">
+                                       <apex:selectList id="selectedOrg" value="{!selectedOrganisations }" multiselect="false" size="1" styleClass="slds-input" onchange="getRemoteResult();" disabled="{!IF(Payroll_Batch__c.Id != null, true,false)}"> <!-- disabled="{!IF(Payroll_Batch__c.Id != null, true,false)}" -->
+                                           <apex:selectOptions value="{!getOrganisations}"/>
+                                       </apex:selectList>
+                                  </div>
+                            </div>
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 slds-large-size_4-of-12 slds-p-around_xxx-small">
+                            <div class="slds-form-element">
+                              <label class="slds-form-element__label" for="text-input-id-1">Month</label>
+                                  <div class="slds-form-element__control">
+                                      <apex:selectList value="{!selectedMonth}" multiselect="false" size="1" styleClass="slds-input" id="selectedMonth" disabled="true">
+                                          <apex:selectOptions value="{!getMonths}"/>
+                                      </apex:selectList>
+                                  </div>
+                            </div>
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 slds-large-size_4-of-12 slds-p-around_xxx-small">
+                            <div class="slds-form-element">
+                              <label class="slds-form-element__label" for="text-input-id-1">Year</label>
+                                  <div class="slds-form-element__control">
+                                      <apex:selectList value="{!selectedYear}" multiselect="false" size="1" styleClass="slds-input" id="selectedYear" onchange="getRemoteResult();" disabled="true">
+                                          <apex:selectOptions value="{!getYearPickListValuesIntoList}"/>
+                                      </apex:selectList>
+                                  </div>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+                <fieldset class="slds-form-element tbl slds-box tab">
+                    <legend class="slds-form-element__label slds-form-element__label--top"><h2 class="slds-text-heading_small">Filter Result</h2></legend>
+                    <table id="dataTable" class="display nowrap slds-table slds-table_cell-buffer slds-table_bordered" style="width:100%">
+                        <thead>
+                            <tr class="slds-line-height_reset">
+                                <th scope="col" width="10">
+                                   <div class="slds-checkbox">
+                                        <input type="checkbox"  id="selectAll_chk"/>
+                                        <label class="slds-checkbox__label" for="selectAll_chk">
+                                            <span class="slds-checkbox_faux"></span>
+                                            <span class="slds-form-element__label"></span>
+                                        </label>
+                                    </div>
+                                </th>
+                                <th scope="col">Name</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Payment Mode</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabletBody"></tbody>
+                    </table>
+                </fieldset>
+                
+            </div>
+        </body>
+        <div class="slds-p-around_small" style="float: right;">
+          <button type="button" class="slds-button slds-button_neutral" onClick="cancel();">Cancel</button>
+          <button type="button" class="slds-button slds-button_brand" onClick="$('.lastMonthMsg').removeClass('slds-hide');" id="btnRun">Run</button>
+        </div>
+    </apex:form>
+    </html>
+</apex:page>

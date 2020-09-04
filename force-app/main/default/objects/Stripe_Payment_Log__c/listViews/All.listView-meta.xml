@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>All</fullName>
+    <columns>NAME</columns>
+    <columns>Invoice__c</columns>
+    <columns>Code__c</columns>
+    <columns>CREATED_DATE</columns>
+    <columns>Type__c</columns>
+    <columns>Status__c</columns>
+    <columns>Message__c</columns>
+    <columns>ChargeId__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>CREATED_DATE</field>
+        <operation>equals</operation>
+        <value>4/3/2020 12:00 AM</value>
+    </filters>
+    <label>All</label>
+</ListView>

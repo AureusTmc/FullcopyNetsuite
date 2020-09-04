@@ -1,0 +1,273 @@
+<apex:page standardController="Enrolment__c" extensions="TerminationEnrolmentProcessController" standardStylesheets="false"
+    sidebar="false" showHeader="false" lightningStylesheets="true" docType="html-5.0">
+    <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/jquery.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/moment.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/fullCalenderCustom.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.FullCalender, '/fullcalendar.min.css')}" />
+    <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.FullCalender, '/scheduler.min.css')}" />
+    <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/scheduler.min.js')}" />
+    <apex:includeScript value="{!$Resource.aljs}" />
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <apex:includeScript value="{!$Resource.datepicker}" />
+    <apex:slds />
+    <apex:outputPanel rendered="{!isRentalNotFound}">
+    <div id="TerminateRentalDetails" class="slds-show">
+        <div class="slds-page-header">
+            <div class="slds-page-header__row">
+                <div class="slds-page-header__col-title">
+                    <div class="slds-media">
+                        <div class="slds-media__body">
+                            <div class="slds-page-header__name">
+                                <div class="slds-page-header__name-title">
+                                    <h1>
+                                        <span class="slds-page-header__title slds-truncate" title="Terminate Rental">Terminate Rental</span>
+                                    </h1>
+                                </div>
+                            </div>
+                            <p class="slds-page-header__name-meta">Terminate Rental Enrolement Details</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <apex:form >
+            <article class="slds-card">
+                <div class="slds-card__body slds-card__body_inner">
+                    <!-- center or teacher-->
+                    <div class="slds-grid slds-gutters margin-top5px" style="margin-top: 20px;">
+                        <div class="slds-col slds-size_2-of-2 slds-grid">
+                            <span class="slds-form-element__label  slds-col slds-size_5-of-12">
+                                <b>Termination date: </b>
+                            </span>
+                            <input id="TerminationRequestEndDate" autocomplete="false" class="slds-col slds-size_7-of-12 slds-input" onchange="getPickUpDate();" />
+                            
+                        </div>
+                    </div>
+                    <div class="slds-grid slds-gutters">
+                        <div class="slds-col slds-size_2-of-2 slds-grid">
+                            <div class="slds-col slds-size_5-of-12">
+                            </div>
+                            <div class="slds-col slds-size_7-of-12">
+                                <p id="errorTerminationRequestEndDate" style="color:red;"></p>
+                            </div> 
+                        </div>
+                    </div>
+                    <div class="slds-grid slds-gutters margin-top5px" style="margin-top: 20px;">    
+                        <div class="slds-col slds-size_2-of-2 slds-grid">
+                            <span class="slds-form-element__label  slds-col slds-size_5-of-12">
+                                <b>Piano pickup Date: </b>
+                            </span>
+                            <input id="PickupRequestEndDate" autocomplete="false" disabled="true" class="slds-col slds-size_7-of-12 slds-input" onchange="CheckPickupDateIsGreater();" />
+                        </div>
+                    </div>
+                    <div class="slds-grid slds-gutters">
+                        <div class="slds-col slds-size_2-of-2 slds-grid">
+                            <div class="slds-col slds-size_5-of-12">
+                            </div>
+                            <div class="slds-col slds-size_7-of-12">
+                                <p id="errorPickupRequestEndDate" style="color:red;"></p>
+                            </div> 
+                        </div>
+                    </div>
+                    <div class="slds-grid slds-gutters margin-top5px" style="margin-top: 20px;">
+                        <div class="slds-col slds-size_2-of-2 slds-grid">
+                            <span class="slds-form-element__label  slds-col slds-size_5-of-12">
+                                <b>Reason for Termination: </b>
+                            </span>
+                            <apex:selectList value="{!TerminationReasonName}" id="TerminationReason" onchange="CheckTerminationReasonIsOther();" size="1" styleClass="slds-select selectBox slds-col slds-size_7-of-12">
+                                <apex:selectOptions value="{!TerminationReason}" />
+                            </apex:selectList>
+                        </div>
+                    </div>
+                    <div class="slds-grid slds-gutters">
+                        <div class="slds-col slds-size_2-of-2 slds-grid">
+                            <div class="slds-col slds-size_5-of-12">
+                            </div>
+                            <div class="slds-col slds-size_7-of-12">
+                                <p id="errorTerminationReason" style="color:red;"></p>
+                            </div> 
+                        </div>
+                    </div>
+                    <div id="TerminationOtherReasonDiv" class="slds-grid slds-gutters margin-top5px slds-hide" style="margin-top: 20px;">
+                        <div class="slds-col slds-size_2-of-2 slds-grid">
+                            <span class="slds-form-element__label  slds-col slds-size_5-of-12">
+                                <b>Other: </b>
+                            </span>
+                            <textarea id="TerminationOtherReason" style="resize: none;" class="slds-col slds-size_7-of-12 slds-textarea"></textarea>
+                        </div>
+                    </div>
+                    <div class="slds-grid slds-gutters">
+                        <div class="slds-col slds-size_2-of-2 slds-grid">
+                            <div class="slds-col slds-size_5-of-12">
+                            </div>
+                            <div class="slds-col slds-size_7-of-12">
+                                <p id="errorTerminationOtherReason" style="color:red;"></p>
+                            </div> 
+                        </div>
+                    </div>
+                </div>
+                <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_brand" id="SubmitTerminateRentalClick" onclick="submitTerminateRental();return false;">Submit Terminate Rental</button>
+                </footer>
+            </article>
+        </apex:form>
+    </div>
+    <div id="TerminateRentalSummary" class="slds-hide">
+        <c:TerminateRentalSummaryCMP isSendToButton="{!isSendToButton}"/>
+    </div>
+        <script>
+            var rentalDateString;
+            $(document).ready(function () {
+                 rentalDateString ='{!rentalDateString}';
+                console.log('rentalDateString'+rentalDateString);
+                var cancelGroupClassRequestEndDate = new Date(rentalDateString);
+                var PickupRequestEndDate = new Date();
+                //cancelGroupClassRequestEndDate.setDate(cancelGroupClassRequestEndDate.getDate());
+                // 26-dec-2019: for group class withdrawl Notice Period End Date
+                $('#TerminationRequestEndDate').datepicker({
+                    initDate: moment(), //Today Date
+                    dateFormat: 'dd/mm/yy' , //Date Format Of Datepicker Input Field
+                    minDate: cancelGroupClassRequestEndDate,
+                    onChange: function (datepicker) {
+                        $('#TerminationRequestEndDate').html('Selected Date: <strong>' + moment(datepicker.selectedFullDate._d).format('dd/mm/yy') + '</strong>');
+                    }
+                });
+            });
+            function CheckPickupDateIsGreater(){
+                console.log('CheckPickupDateIsGreater');
+                var TerminationRequestEndDate =$('#TerminationRequestEndDate').val();
+                var PickupRequestEndDate = $('#PickupRequestEndDate').val();
+                console.log('PickupRequestEndDate',PickupRequestEndDate);
+               TerminationRequestEndDate = new Date(TerminationRequestEndDate.split('/')[1]+'/'+TerminationRequestEndDate.split('/')[0]+'/'+TerminationRequestEndDate.split('/')[2]);
+                
+                if(PickupRequestEndDate !='' && PickupRequestEndDate != undefined){
+                    console.log('PickupRequestEndDate',PickupRequestEndDate);
+                    console.log('TerminationRequestEndDate',TerminationRequestEndDate);
+                    if (moment(PickupRequestEndDate,'DD/MM/YYYY').isValid()) {
+                        PickupRequestEndDate = new Date(PickupRequestEndDate.split('/')[1]+'/'+PickupRequestEndDate.split('/')[0]+'/'+PickupRequestEndDate.split('/')[2]);
+                        if(TerminationRequestEndDate >  PickupRequestEndDate){
+                            $('#PickupRequestEndDate').val('');
+                            $('#errorPickupRequestEndDate').html('Piano Pickup Date is less then Termination Date..');
+                        }else{
+                            $('#errorPickupRequestEndDate').html('');
+                        }
+                    }else{
+                        $('#PickupRequestEndDate').val('');
+                        $('#errorPickupRequestEndDate').html('Piano Pickup Date Format is Invalid');
+                    }
+                }
+            }
+            function CheckTerminationReasonIsOther(){
+                var TerminationReasonName = $('[id$=TerminationReason]').val();
+                console.log('TerminationReason=',TerminationReasonName);
+                if(TerminationReasonName === 'Others'){
+                    $('#TerminationOtherReasonDiv').removeClass('slds-hide');
+                }else{
+                    $('#TerminationOtherReasonDiv').addClass('slds-hide');
+                }
+            }
+            function getPickUpDate(){
+                var TerminationRequestEndDate = $('#TerminationRequestEndDate').val();
+                console.log('TerminationReason=',TerminationRequestEndDate);
+                if (!moment(TerminationRequestEndDate,'DD/MM/YYYY').isValid()) {
+                    $('#PickupRequestEndDate').attr('disabled',true);
+                    $('#TerminationRequestEndDate').val('');
+                    $('#errorTerminationRequestEndDate').html('Termination Date Format is Invalid');
+                } else {    
+                    $('#PickupRequestEndDate').empty();
+                    $('#errorTerminationRequestEndDate').html('');
+                    var PickupRequestEndDate = new Date(TerminationRequestEndDate.split('/')[1]+'/'+TerminationRequestEndDate.split('/')[0]+'/'+TerminationRequestEndDate.split('/')[2]);
+                    console.log('PickupRequestEndDate',PickupRequestEndDate);
+                    $("#PickupRequestEndDate").datepicker("destroy");
+                    $('#PickupRequestEndDate').val('');
+                    $('#PickupRequestEndDate').removeAttr('disabled');
+                    $('#PickupRequestEndDate').datepicker({
+                        initDate: moment(), //Today Date
+                         dateFormat: 'dd/mm/yy' , //Date Format Of Datepicker Input Field
+                        minDate: PickupRequestEndDate,
+                        onChange: function (datepicker) {
+                            $('#PickupRequestEndDate').html('Selected Date: <strong>' + moment(datepicker.selectedFullDate._d).format('dd/mm/yy') + '</strong>');
+                        }
+                    });
+                }
+            }
+            function submitTerminateRental(){
+                $('#errorTerminationOtherReason').html('');
+                $('#errorTerminationRequestEndDate').html('');
+                $('#errorPickupRequestEndDate').html('');
+                $('#errorTerminationReason').html(''); 
+                $('#SubmitTerminateRentalNextClick').removeAttr();
+                var TerminationRequestEndDate = $('#TerminationRequestEndDate').val();
+                var PickupRequestEndDate = $('#PickupRequestEndDate').val();
+                var TerminationReason =$('[id$=TerminationReason]').val();
+                var TerminationOtherReason = $('#TerminationOtherReason').val().trim();
+                var errorFlag= false;
+                if (!TerminationRequestEndDate || TerminationRequestEndDate == '' || TerminationRequestEndDate == undefined) {
+                    $('#errorTerminationRequestEndDate').html('Please Termination Date....');
+                    errorFlag = true;
+                }
+                if (!PickupRequestEndDate || PickupRequestEndDate == '' || PickupRequestEndDate == undefined) {
+                    $('#errorPickupRequestEndDate').html('Please Piano Pickup Date...');
+                    errorFlag = true;
+                }
+                if (!TerminationReason || TerminationReason == '' || TerminationReason == undefined) {
+                    $('#errorTerminationReason').html('Please Reason for Termination...');
+                    errorFlag = true;
+                }else{
+                    if(TerminationReason =='Others'){
+                        if (!TerminationOtherReason || TerminationOtherReason == '' || TerminationOtherReason == undefined) {
+                            $('#errorTerminationOtherReason').html('Please Other Reason for Termination...');
+                            errorFlag = true;
+                        }
+                    }
+                }
+                var objTerminationRequestEndDate = new Date(TerminationRequestEndDate.split('/')[1]+'/'+TerminationRequestEndDate.split('/')[0]+'/'+TerminationRequestEndDate.split('/')[2]);
+                var objPickupRequestEndDate = new Date(PickupRequestEndDate.split('/')[1]+'/'+PickupRequestEndDate.split('/')[0]+'/'+PickupRequestEndDate.split('/')[2]);
+                var rentalDate =  new Date(rentalDateString);
+                console.log('TerminationRequestEndDate',TerminationRequestEndDate);
+                    console.log('PickupRequestEndDate',PickupRequestEndDate); 
+                    console.log('rentalDate',rentalDate);
+                   
+                if(!errorFlag){
+                    if(rentalDate > objTerminationRequestEndDate){
+                        $('#errorTerminationRequestEndDate').html('Selected date is less then Notice Period.');
+                        errorFlag = true;
+                    }
+                    if(rentalDate > objPickupRequestEndDate){
+                        $('#errorPickupRequestEndDate').html('Selected date is less then Notice Period.');
+                        errorFlag = true;
+                    }
+                    if(objTerminationRequestEndDate >  objPickupRequestEndDate){
+                        $('#PickupRequestEndDate').val('');
+                        $('#errorPickupRequestEndDate').html('Piano Pickup Date is less then Termination Date..');
+                        errorFlag = true;
+                    }
+                }
+                var objEnrolmentId = '{!objEnrolment.Id}';
+                console.log('objEnrolmentId',objEnrolmentId);
+                if (objEnrolmentId && objEnrolmentId != undefined && !errorFlag) {
+                    TerminationRequestEndDate =TerminationRequestEndDate.split('/')[1]+'/'+TerminationRequestEndDate.split('/')[0]+'/'+TerminationRequestEndDate.split('/')[2];
+                    PickupRequestEndDate = PickupRequestEndDate.split('/')[1]+'/'+PickupRequestEndDate.split('/')[0]+'/'+PickupRequestEndDate.split('/')[2];
+                    console.log('TerminationRequestEndDate',TerminationRequestEndDate);
+                    console.log('PickupRequestEndDate',PickupRequestEndDate);
+                    $('#TerminateRentalDetails').addClass('slds-hide');
+                    $('#TerminateRentalSummary').removeClass('slds-hide');
+                    $('#SubmitTerminateRentalSummaryClick').attr({'data-TerminationRequestEndDate': TerminationRequestEndDate,
+                                                                'data-PickupRequestEndDate': PickupRequestEndDate,
+                                                                'data-TerminationReason': TerminationReason,
+                                                                'data-TerminationOtherReason': TerminationOtherReason,
+                                                                'data-enrolmentId': objEnrolmentId});
+                   getTerminateRentalSummaryDetails();
+                }
+            }
+        </script>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!!isRentalNotFound}">
+            <div class="slds-align_absolute-center slds-p-around_x-small" style="color:red;">
+                <strong>We cannot process your request at the moment Rental Date not Found. Please contact centre admin for further assistance.
+                </strong>
+            </div>
+        </apex:outputPanel>
+</apex:page>

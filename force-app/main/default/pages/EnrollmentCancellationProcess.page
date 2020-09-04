@@ -1,0 +1,171 @@
+<apex:page standardStylesheets="false" lightningStylesheets="true" showHeader="false" sidebar="false" controller="EnrollmentCancelationProcessController">
+    
+    <style>
+        body{       
+            background-image: url("{!$Resource.music}") !important;     
+            background-size:100% 100% !important;       
+            background-repeat:no-repeat !important;     
+            background-position:left !important;        
+        }       
+        span.main-title {       
+            color: #200a28;     
+            font-size: 24px;        
+            border-radius: 0;       
+            font-weight: bold;      
+            margin-bottom: 10px;        
+            display: block;     
+            line-height: 30px;      
+            padding-bottom:10px;        
+            text-align:center;      
+        }           
+        .content-box {      
+            margin: 50px 0 ;        
+            width: 90%;     
+            background: rgba(255, 255, 255, 1);     
+            border-radius: 10px;        
+        }
+        .outstanding{
+            padding: 20px;
+        }
+        .custom-btn {       
+            padding: 5px 10px 3px !important;       
+            color: #fff !important;     
+            background: #f79c1a !important;     
+            font-size: 16px !important;     
+            text-transform: uppercase;      
+            line-height: 20px !important;       
+            margin: 15px 0 20px;        
+            float: right;       
+            height:40px;        
+        }
+    </style>
+    <apex:slds />
+    <div class="content">
+    <apex:form >
+        <div class="slds-scope" style="width:50%; margin:auto; margin-top:50px;">
+            <div class="slds-panel slds-size_medium slds-panel_docked slds-panel_docked-left slds-is-open content-box" style="width:100%;border-radius:10px;box-shadow:1px 2px 10px #f79c1a" aria-hidden="false">  
+                <div class="slds-grid slds-wrap slds-grid--align-center">
+                    <div class="slds-col">           
+                         <div class="header slds-col">
+                            <div class="slds-col">
+                        <a href="#" class="logo"><img src="https://aureusacademy.com/wp-content/uploads/2017/03/cropped-Aureus-Logo-Small.png"/></a>
+                    </div>
+                </div></div></div>
+             
+                <div class="slds-panel__header">
+                   <div class="slds-col "><span class="main-title">Your Feedback</span></div>
+                </div>
+                <apex:outputPanel styleClass="slds-form-element slds-form-element_compound">
+                    <div class="slds-align_absolute-center">We are sorry to hear that you decided to unsubscribe the &nbsp; 
+                    <b> {!enrollmentObj.Package__r.Name}</b></div>
+                    <div class="outstanding slds-form-element__control">
+                        <div class="slds-form-element__row">
+                            <div class="slds-size_1-of-2 slds-p-vertical_x-small">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label" for="input-01">Parent Name</label>
+                                    <div class="slds-form-element__control">
+                                        {!enrollmentObj.Parent__r.Name}
+
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slds-size_1-of-2 slds-p-vertical_x-small">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label" for="input-02">Student Name</label>
+                                    <div class="slds-form-element__control">
+                                        {!enrollmentObj.Student__r.Name}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-form-element__row">
+                            <div class="slds-size_1-of-2 slds-p-vertical_x-small">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label" for="input-01">Package Name</label>
+                                    <div class="slds-form-element__control">
+                                        {!enrollmentObj.Package__r.Name}
+
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slds-size_1-of-2 slds-p-vertical_x-small">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label" for="input-02">Timeslot</label>
+                                    <div class="slds-form-element__control">
+                                        <apex:outputText value="{!LEFT(enrollmentObj.Lesson_Day__c,3)}"></apex:outputText>
+                                        @ <apex:outputField value="{!enrollmentObj.Lesson_Start_time__c}"></apex:outputfield>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="slds-align_absolute-center">We would request you to fill up the following to help improve our services.</div> 
+                    <div class="outstanding slds-form-element__control">
+                        <div class="slds-form-element__row">
+                            <div class="slds-size_1-of-2 slds-p-vertical_x-small">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label" for="input-01">Reason of Withdraw</label>
+                                    <div class="slds-form-element__control">
+                                        <apex:inputField value="{!enrollmentObj.Reason_of_Withdraw__c}" styleClass="slds-input"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slds-size_1-of-2 slds-p-vertical_x-small">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label" for="input-02">Refund Method(If Applicable)</label>
+                                    <div class="slds-form-element__control">
+                                        <apex:inputField value="{!enrollmentObj.Refund_Method__c}" styleClass="slds-input"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-form-element__row">
+                            <div class="slds-size_1-of-2 slds-p-vertical_x-small">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label" for="input-03">Notice Period Start Date</label>
+                                    <div class="slds-form-element__control">
+                                        <apex:outputText value="{0,date,EEE, MMM dd YYYY}">
+                                            <apex:param value="{!enrollmentObj.Notice_Period_Start_Date__c}" />
+                                        </apex:outputText>
+                                        <!--<apex:inputField value="{!enrollmentObj.Notice_Period_Start_Date__c}" styleClass="slds-input"/>-->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slds-size_1-of-2 slds-p-vertical_x-small">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label" for="input-04">Notice Period End Date</label>
+                                    <div class="slds-form-element__control">
+                                        <apex:outputText value="{0,date,EEE, MMM dd YYYY}">
+                                            <apex:param value="{!enrollmentObj.Notice_Period_End_Date__c}" />
+                                        </apex:outputText>
+                                        <!--<apex:inputField value="{!enrollmentObj.Notice_Period_End_Date__c}" styleClass="slds-input"/>-->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-form-element__row">
+                            <div class="slds-size_1-of-2 slds-p-vertical_x-small">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label" for="input-05">Feedback/Comments</label>
+                                    <div class="slds-form-element__control">
+                                        <apex:inputField value="{!enrollmentObj.Feedback_Comments__c}" styleClass="slds-input"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-form-element__row slds-text-align_right">
+                            <div class="slds-size_1-of-1 slds-p-vertical_x-small">
+                                <div class="slds-form-element">
+                                    
+                                    <apex:commandButton styleClass="slds-button slds-button_neutral custom-btn" value="Save" action="{!saveEnrollment}"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+            </div>
+        </div>
+    </apex:form>
+    </div>
+</apex:page>

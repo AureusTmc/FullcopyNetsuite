@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Available_For_Aureus_Lesson__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>store check list this resourse is  Available For  Aureus Lesson or not</description>
+    <externalId>false</externalId>
+    <label>Available For  Aureus Lesson</label>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

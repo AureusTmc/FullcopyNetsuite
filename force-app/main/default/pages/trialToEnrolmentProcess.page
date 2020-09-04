@@ -1,0 +1,1602 @@
+<apex:page id="pg" Controller="TrialToEnrolmentProcessController" showHeader="false" standardStylesheets="true" sidebar="false" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False">
+    <head>
+        <title>Music SCHOOL</title>
+       
+        <!--<apex:slds /> -->
+        <!-- IntlInputPhone CSS -->
+        <apex:stylesheet value="{!URLFOR($Resource.IntlInputPhone, '/css/intlInputPhone.min.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <apex:stylesheet value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.css')}"/>
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous" />
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery/jquery.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.js')}"/>
+        <!-- IntlInputPhone JS -->
+        <apex:includeScript value="{!URLFOR($Resource.IntlInputPhone, '/js/intlInputPhone.min.js')}"/>
+        <script src="https://checkout.stripe.com/checkout.js"></script>
+        
+        <link rel="stylesheet" href="{!URLFOR($Resource.Signature,'Signature/signature-pad.css')}"/>  
+        <script src="{!URLFOR($Resource.Signature,'Signature/signature_pad.js')}"></script>
+        
+        <script>
+       
+        $(document).ready(function() {        
+            var slcdDat = '{!lessonWrap.lessonSlcdDate}';
+            var slcdSlot = '{!lessonWrap.lessonSlctSlot}';
+            
+            if(slcdDat.length > 0 && slcdSlot.length > 0){
+                loadCalendarOnTchrSelect();
+            }else{
+                $( "#datepicker" ).datepicker({
+                    inline: true,
+                    minDate:0,
+                    dateFormat: 'dd/mm/yy',
+                    beforeShowDay: disableDayOnIntial
+                });
+            }
+            
+            //Increase years in date picker
+            var select = document.getElementById('calYearPicker');
+            if (select){
+                select.innerHTML = '';
+                var startYear = new Date().getFullYear() - 118;
+                for (var year = startYear; year < startYear + 118; year++) {
+                    select.options[select.options.length] = new Option(year, year);
+                }
+            }
+            $('[id$=inputMobileId]').intlInputPhone(); 
+            /*var mobNumber = '{!PersonMobilePhoneCustom}';
+            $('[id$=phoneNumber]').val(mobNumber);*/  
+        });
+        
+        function disableDayOnIntial(date) {
+            return [true, 'ui-datepicker-unselectable ui-state-disabled'];
+        }
+        
+        
+        function showSecondStep(){
+            var firstCheck = true;
+            var secondCheck = true;
+            
+            $('.inputtxt').each(function(){
+                if(!$(this).val()){
+                    $(this).parent().parent().addClass('slds-has-error');
+                    $(this).parent().next().removeClass('slds-hide');
+                    firstCheck = false;
+                }else{
+                    $(this).parent().parent().removeClass('slds-has-error');
+                    $(this).parent().next().addClass('slds-hide');
+                }
+            });                
+            
+            $('.inputsel').each(function(){
+                if(!$(this).val()){
+                    $(this).parent().parent().parent().parent().addClass('slds-has-error');
+                    $(this).parent().parent().next().removeClass('slds-hide');
+                    secondCheck = false;
+                }else{
+                    $(this).parent().parent().parent().parent().removeClass('slds-has-error');
+                    $(this).parent().parent().next().addClass('slds-hide');
+                }
+            });
+            
+            if(!(firstCheck || secondCheck))
+                return;
+            
+            
+            //Validating mobile number
+            /*var mobileNumber = $('[id$=mobilePhn]').val();
+            if(!mobileNumber.match(/^\d+/)){
+                $('.firstCmpErrDiv').removeClass('slds-hide');
+                $('.contentDivFirst').html('Mobile Phone should be in numbers.');
+                return;
+            }else{
+                $('.firstCmpErrDiv').addClass('slds-hide');
+            }*/
+            
+            //Validating Email address
+            var emailVal = $('[id$=emailtxt]').val();
+            var reg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
+            if (reg.test(emailVal) == false){
+                $('.firstCmpErrDiv').removeClass('slds-hide');
+                $('.contentDivFirst').html('Invalid email address.');
+                return;
+            }else{
+                $('.firstCmpErrDiv').addClass('slds-hide');
+            }
+            
+            if(firstCheck && secondCheck){
+                if($('[id$=studentAsCstmr]').prop('checked')){
+                    $('[id$=stuFstNameId]').val($('[id$=parFstNameId]').val());
+                    $('[id$=stuLstNameId]').val($('[id$=parLstNameId]').val());
+                    $('[id$=stuGendrId]').val($('[id$=parGendrId]').val());
+                    $('[id$=stuNationalityId]').val($('[id$=parNationalityId]').val());
+                }
+                fillStuWhenParentAsCstmr();
+                
+                document.getElementById('secondCmpId').style.display = 'block';
+                document.getElementById('firstCmpId').style.display = 'none';
+                /*
+                var slcdDat = '{!lessonWrap.lessonSlcdDate}';
+                var slcdSlot = '{!lessonWrap.lessonSlctSlot}';
+                
+                if(slcdDat.length > 0 && slcdSlot.length > 0){
+                    secondScreenForTrail();
+                }*/
+            }else{
+                return;
+            }
+            // document.getElementById('secondCmpId').style.display = 'block';
+            // document.getElementById('firstCmpId').style.display = 'none';
+        }
+        
+        function fillStuWhenParentAsCstmr(){
+            var stuAsCstmr = $('[id$=studentAsCstmr]').prop('checked');
+           
+            $('[id$=stuFstNameId]').prop('disabled', stuAsCstmr);
+            $('[id$=stuLstNameId]').prop('disabled', stuAsCstmr);
+            $('[id$=stuGendrId]').prop('disabled', stuAsCstmr);
+            $('[id$=stuNationalityId]').prop('disabled', stuAsCstmr);
+        }
+        
+        function editLson(stuIndx, lessIndx){
+            editLsonStu(stuIndx, lessIndx);
+    
+            if(stuIndx == 0){
+                setTimeout(function(){ fillStuWhenParentAsCstmr(); }, 1000);
+            }
+        }
+
+        function addLessonsOnPage(){
+             $('.thirdCmpErrDiv').addClass('slds-hide');
+        
+            var firstCheck = false;
+            var secondCheck = false;
+            
+            $('.stuDetClass').each(function(){
+                var isDisabled = $(this).prop('disabled');
+                if(!isDisabled && !$(this).val()){
+                    $(this).parent().parent().addClass('slds-has-error');
+                    $(this).parent().next().removeClass('slds-hide');
+                    firstCheck = true;
+                }else{
+                    $(this).parent().parent().removeClass('slds-has-error');
+                    $(this).parent().next().addClass('slds-hide');
+                }
+            });
+            
+            $('.lessDetClass').each(function(){
+                var isDisabled = $(this).prop('disabled');
+                if(!isDisabled && !$(this).val()){
+                    $(this).parent().parent().addClass('slds-has-error');
+                    $(this).parent().next().removeClass('slds-hide');
+                    secondCheck = true;
+                }else{
+                    $(this).parent().parent().removeClass('slds-has-error');
+                    $(this).parent().next().addClass('slds-hide');
+                }
+            });
+            
+            var today = new Date();
+            var birthDate = $('[id$=birthdate]').val();
+            var temoBirthDay = birthDate.split('/');
+            var birthDay = new Date(temoBirthDay[2], temoBirthDay[1]-1, temoBirthDay[0])
+            
+            if(birthDay>today){
+                $('.thirdCmpErrDiv').removeClass('slds-hide');
+                $('.contentDivThird').html('Birthdate should not be in future.');
+                return;
+            }else{
+                $('.thirdCmpErrDiv').addClass('slds-hide');
+            }
+             
+            if(!firstCheck && !secondCheck){            
+                var isDisabledStuInput  = $('.stuDetClass').prop('disabled');
+                var isDisabledLessInput = $('.lessDetClass').prop('disabled');
+                
+                if(isDisabledStuInput && isDisabledLessInput){
+                     $('.thirdCmpErrDiv').removeClass('slds-hide');
+                     $('.contentDivThird').html('Please add more student first.');
+                     return false;
+                }
+                 
+                 var slcdTSlot = $("input[name='radio']:checked").val();
+                 
+                 if(!slcdTSlot){
+                     //alert('');
+                     $('.thirdCmpErrDiv').removeClass('slds-hide');
+                     $('.contentDivThird').html('Please select a time slot.');
+                     return;
+                 }
+                
+                addLessons(slcdTSlot);
+            }
+            //addLessons(slcdTSlot);  
+        }
+        
+        function saveStudentOrLesson(){
+            //Check validation 
+            
+            var firstCheck = false;
+            var secondCheck = false;
+            
+            $('.stuDetClass').each(function(){
+                var isDisabled = $(this).prop('disabled');
+                if(!isDisabled && !$(this).val()){
+                    $(this).parent().parent().addClass('slds-has-error');
+                    $(this).parent().next().removeClass('slds-hide');
+                    firstCheck = true;
+                }else{
+                    $(this).parent().parent().removeClass('slds-has-error');
+                    $(this).parent().next().addClass('slds-hide');
+                }
+            });
+            
+            $('.lessDetClass').each(function(){
+                var isDisabled = $(this).prop('disabled');
+                if(!isDisabled && !$(this).val()){
+                    $(this).parent().parent().addClass('slds-has-error');
+                    $(this).parent().next().removeClass('slds-hide');
+                    secondCheck = true;
+                }else{
+                    $(this).parent().parent().removeClass('slds-has-error');
+                    $(this).parent().next().addClass('slds-hide');
+                }
+            });
+            
+            var today = new Date();
+            var birthDate = $('[id$=birthdate]').val();
+            var temoBirthDay = birthDate.split('/');
+            var birthDay = new Date(temoBirthDay[2], temoBirthDay[1]-1, temoBirthDay[0])
+            
+            if(birthDay>today){
+                $('.thirdCmpErrDiv').removeClass('slds-hide');
+                $('.contentDivThird').html('Birthdate should not be in future.');
+                return;
+            }else{
+                $('.thirdCmpErrDiv').addClass('slds-hide');
+            }
+            
+            if(!firstCheck && !secondCheck){        
+                 var slcdTSlot = $("input[name='radio']:checked").val();
+                 
+                 if(!slcdTSlot){
+                     //alert('');
+                     $('.thirdCmpErrDiv').removeClass('slds-hide');
+                     $('.contentDivThird').html('Please select a time slot.');
+                     return;
+                 }
+                    
+                saveStuLsonGrid(slcdTSlot);
+            }
+        }
+        
+        function closeErrorDiv(){
+            $('.thirdCmpErrDiv').addClass('slds-hide');
+        }
+        
+        function clearStudentSection(){
+            $(".stuDetClass").prop('disabled', true);
+            $(".lessDetClass").prop('disabled', true);
+            
+            loadCalendarOnTchrSelect();
+        }
+        
+        function addStudentsAndLess(){            
+            var isDisabledStuInput  = $('.stuDetClass').prop('disabled');
+            var isDisabledLessInput = $('.lessDetClass').prop('disabled');
+            
+            if(isDisabledStuInput && isDisabledLessInput){
+                addStudentsAndLessons();
+            }else{
+                //alert('Please save the current record first.');    
+                $('.thirdCmpErrDiv').removeClass('slds-hide');
+                $('.contentDivThird').html('Please save the current record first.');
+                return;
+            }
+        }
+        
+        //---------------------------Third page functions-----------------------------------------
+        function sendPaymentLink(){
+            var isDisabledStuInput  = $('.stuDetClass').prop('disabled');
+            var isDisabledLessInput = $('.lessDetClass').prop('disabled');
+            
+            if(isDisabledStuInput && isDisabledLessInput){
+                //document.getElementById('thirdCmpId').style.display = 'block';
+                // document.getElementById('secondCmpId').style.display = 'none'; 
+                
+                //thirdScreenFeeCal();
+                //  $('.sendEmail').removeClass('slds-hide');
+                // return;
+                //$('.sendEmail').attr('data-bookingId', '');
+                //$('.sendEmail').removeClass('slds-hide');
+                //return;
+                var concatePhoneNo = '+' + $('[class$=btn-cc]').html().match(/\d+/);
+                concatePhoneNo += $('[id$=phoneNumber]').val();
+                console.log('concatePhoneNo------> '+concatePhoneNo);
+                completeEnr(concatePhoneNo);
+            }else{
+                //alert('Please save the current record first.');    
+                $('.thirdCmpErrDiv').removeClass('slds-hide');
+                $('.contentDivThird').html('Please save the current record first.');
+                return;
+            }
+        }
+        
+        function checkError(){
+            var isErrOnSave = '{!isError}';
+            
+            if(isErrOnSave == 'true'){
+                $('.thirdCmpErrDiv').removeClass('slds-hide');
+                $('.contentDivThird').html('{!errorMsg}');
+            }else{
+                $('.thirdCmpErrDiv').addClass('slds-hide');
+                
+                var enrlId = '{!enrolId}';
+                
+                $('.sendEmail').attr('data-bookingId', enrlId);
+                $('.sendEmail').removeClass('slds-hide');
+            }
+        }
+        
+        /*   function completeEnr(){
+              $('.inputchk').each(function(){
+            
+                if(!$(this).prop('checked')){
+                    $(this).parent().parent().parent().addClass('slds-has-error');
+                    $(this).parent().parent().next().removeClass('slds-hide');
+                    
+                }else{
+                    $(this).parent().parent().parent().removeClass('slds-has-error');
+                    $(this).parent().parent().next().addClass('slds-hide');
+                    
+                    completeEnrolment();
+                }
+            });
+        }*/
+        
+        function sendEmail(){
+            var subject = $('#emailSubject').html();
+            var body = $('#templateOutput').html();
+            var parentId = '{!parentAcc.Id}';
+            console.log(subject, body, parentId);
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.TrialToEnrolmentProcessController.sendEmail}',
+                subject,body, parentId, 
+                function(result, event){
+                    if (event.status) {
+                        console.log('result', result);
+                        window.location.href = "/apex/Thankyoupage";
+                    }else if (event.type === 'exception') {
+                        /*document.getElementById("responseErrors").innerHTML = 
+                        event.message + "<br/>\n<pre>" + event.where + "</pre>";*/
+                        $('.thirdCmpErrDiv').removeClass('slds-hide');
+                        $('.contentDivThird').innerHTML = event.message + "<br/>\n<pre>" + event.where + "</pre>";                        
+                    }else{
+                        // document.getElementById("responseErrors").innerHTML = event.message;
+                        $('.thirdCmpErrDiv').removeClass('slds-hide');
+                        $('.contentDivThird').innerHTML = event.message;  
+                    }
+                }, 
+                {escape: true}
+            );
+        }
+        
+    </script>
+        
+    </head>
+    
+    <body class="slds-scope ">
+        <apex:form id="frm">
+            <apex:actionStatus id="spinner">
+                <apex:facet name="start"> 
+                    <apex:outputPanel id="backdrop" styleClass="popupBackground">
+                        <div role="status" class="slds-spinner slds-spinner_brand slds-spinner_large"> 
+                            <div class="slds-spinner__dot-a"></div>
+                            <div class="slds-spinner__dot-b"></div>
+                        </div>
+                    </apex:outputPanel>
+                </apex:facet>
+            </apex:actionStatus>
+            
+            <apex:outputPanel id="loadCalendarPanel">
+                <script>      
+                    var slot;
+                    
+                    function loadCalendar(){ 
+                         
+                         $( "#datepicker" ).datepicker({
+                            inline: true,
+                            minDate:0,
+                            dateFormat: 'd/m/yy',
+                            beforeShowDay: disableDayOnIntial
+                        });  
+                    }
+                    
+                    function loadCalendarOnTchrSelect(){    
+                        
+                        var tSl = '{!lessonWrap.lessonSlctSlot}';
+                        
+                        if(tSl){
+                            $("input[name='radio'][value='"+tSl+"']").attr('checked', 'checked');
+                        }
+                       
+                        var slfet = '{!tSlotStr}' ;
+                       
+                        if(slfet)                                     
+                            slot = JSON.parse(slfet);                   
+                        else
+                            slot = '';
+                        
+                         $( "#datepicker" ).datepicker({
+                            inline: true,
+                            minDate:0,
+                            dateFormat: 'd/m/yy',
+                            beforeShowDay: highlightDays,
+                            defaultDate : '{!lessonWrap.lessonSlcdDate}',
+                            onSelect: function(dateText, inst) {
+                                refreshSlot(dateText);
+                            }
+                        });  
+                    }
+                    
+                    
+                    function highlightDays(date) {
+                        
+                        var st = date.getDate()+'/'+(date.getMonth()+1)+'/'+date.getFullYear();
+                        //alert( st);
+                        //alert( slot[st]);
+                        
+                        if(slot[st]){
+                            var isMrgAvl = slot[st].isAvlMrgSlot;
+                            var isAfternoonAvl = slot[st].isAvlAfternoonSlot;  
+                        
+                            if(isMrgAvl && isAfternoonAvl){
+                                 return [true, 'day-availability--morning day-availability--afternoon'];
+                            }else if(isMrgAvl){
+                                return [true, 'day-availability--morning'];
+                            }else if(isAfternoonAvl){
+                                return [true, 'day-availability--afternoon'];
+                            }
+                        }
+                        
+                        return [true, 'ui-datepicker-unselectable ui-state-disabled'];
+                    }
+                    
+                    function addLessLoadCalendar(){
+                        $(".stuDetClass").prop('disabled', true);
+                        loadCalendar();
+                    }
+                </script>
+                  
+            </apex:outputPanel>
+            
+            
+            <apex:actionFunction name="getPlans" action="{!fetchPlans}" reRender="lessonPanal,loadCalendarPanel" oncomplete="loadCalendar();" status="spinner">
+                <!--<apex:param name="indexVal" value="" assignTo="{!selectedIndex}"/>-->
+            </apex:actionFunction>
+            
+            <apex:actionFunction name="getTeachers" action="{!fetchTeachers}" reRender="lessonPanal,loadCalendarPanel" oncomplete="loadCalendar();" status="spinner">
+                <!--<apex:param name="indexVal" value="" assignTo="{!selectedIndex}"/>-->
+            </apex:actionFunction>
+            
+            <apex:actionFunction name="getTimeSlot" action="{!fetchTimeSlot}" reRender="lessonPanal,loadCalendarPanel" oncomplete="loadCalendarOnTchrSelect();" status="spinner">
+                <!--<apex:param name="indexVal" value="" assignTo="{!selectedIndex}"/>-->
+            </apex:actionFunction>
+            
+            <apex:actionFunction name="refreshSlot" action="{!refreshSlots}" reRender="refreshSlotPanel" status="spinner">
+                <apex:param name="slcdDt" value="xy" assignTo="{!lessonWrap.lessonSlcdDate}"/> 
+            </apex:actionFunction>
+            
+            <apex:actionFunction name="addStudentsAndLessons" action="{!addMoreStudentsAndLessons}" oncomplete="loadCalendar();" reRender="studentListPnl" status="spinner"/>
+            <apex:actionFunction name="addLessons" action="{!addMoreLessons}" oncomplete="addLessLoadCalendar();" reRender="studentListPnl" status="spinner">
+                <apex:param name="slcdDt" value="xy" assignTo="{!lessonWrap.lessonSlctSlot}"/> 
+            </apex:actionFunction>
+            
+            <apex:actionFunction name="deleteLson" action="{!deleteLesson}" oncomplete="loadCalendar();" reRender="studentListPnl,loadCalendarPanel" status="spinner">
+                <apex:param name="slcdStu" value="0" assignTo="{!selectedStudentIndex}"/> 
+                <apex:param name="slcdLess" value="0" assignTo="{!selectedLessonIndex}"/> 
+                <apex:param name="isDel" value="delRowBtn" assignTo="{!buttonType}"/> 
+            </apex:actionFunction>
+            <apex:actionFunction name="editLsonStu" action="{!editLesson}" oncomplete="loadCalendarOnTchrSelect();" reRender="studentListPnl,loadCalendarPanel" status="spinner">
+                <apex:param name="slcdStu" value="0" assignTo="{!selectedStudentIndex}"/> 
+                <apex:param name="slcdLess" value="0" assignTo="{!selectedLessonIndex}"/> 
+                <apex:param name="isEdit" value="EditRowBtn" assignTo="{!buttonType}"/> 
+            </apex:actionFunction>
+            <apex:actionFunction name="saveStuLsonGrid" action="{!saveStuAndLessonOnGrid}" oncomplete="clearStudentSection();" reRender="studentListPnl,loadCalendarPanel" status="spinner">
+                <apex:param name="slcdDt" value="xy" assignTo="{!lessonWrap.lessonSlctSlot}"/> 
+            </apex:actionFunction>   
+            
+            <apex:actionFunction name="completeEnr" action="{!completeEnrolment}" oncomplete="checkError();return false;"  status="spinner">
+                <apex:param name="arg" value="" assignTo="{!PersonMobilePhoneCustom}"/>
+            </apex:actionFunction> 
+            
+            <!--<apex:actionFunction name="secondScreenForTrail" reRender="loadCalendarPanel"  oncomplete="loadCalendarOnTchrSelect();" status="spinner"/>-->
+            <!--<apex:actionFunction name="thirdScreenFeeCal" action="{!thirdScreenFeeCalculation}"  reRender="ThirdScreenPanel" status="spinner"/>
+            <apex:actionFunction name="completeEnrolment" action="{!completeEnrolment}" oncomplete="checkError();return false;"  reRender="ThirdScreenPanel" status="spinner">
+                <apex:param name="arg" value="" assignTo="{!base64SignImg}"/>
+                <apex:param name="arg1" value="" assignTo="{!stripeToken}"/>
+            </apex:actionFunction>    
+            --> 
+            <!--
+            <apex:actionFunction name="save" action="{!save}" reRender="frm">
+                <apex:param name="arg" value="" assignTo="{!base64Img}"/>
+            </apex:actionFunction>-->
+            
+            <div class="-content">
+                <div class="slds-grid slds-wrap slds-grid--pull-padded0 slds-grid--align-center container">
+                    
+                </div>
+                <div class="slds-grid slds-wrap slds-grid--align-center">
+                    <div class="slds-col content-box">
+                        <div class="header slds-col"><div class="slds-col"><a href="#" class="logo"><img src="https://aureusacademy.com/wp-content/uploads/2017/03/cropped-Aureus-Logo-Small.png"/></a></div>
+                            
+                        </div>
+                        <!--  <form class="slds-col">-->
+                            
+                            <!-------  First block  Start ------------------->
+                            <div class="firstCmpcls" id="firstCmpId">
+                                <div class="slds-col "><span class="main-title">NEW ENROLMENT</span></div>
+                                <div class="content-body slds-col">
+                                    <div class="slds-form-element">
+                                        <div class="slds-notify_container slds-is-relative slds-hide firstCmpErrDiv">
+                                            <div class="slds-notify slds-notify_toast slds-theme_error slds-m-left_none slds-m-right_medium" role="status">
+                                                <div class="slds-notify__content">
+                                                    <h2 class="slds-text-heading_small contentDivFirst"></h2>
+                                                </div>
+                                                <div class="slds-notify__close">
+                                                    <button class="slds-button slds-button_icon slds-button_icon-inverse" onclick=" $('.firstCmpErrDiv').addClass('slds-hide');return false;" title="Close">
+                                                       X
+                                                      <span class="slds-assistive-text">Close</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <fieldset class="slds-form-element final-step">
+                                            <div class="slds-form-element">
+                                                <div class="slds-grid slds-wrap ">
+                                                    <label class="slds-form-element__label field-title slds-col slds-size_1-of-1 slds-p-horizontal_medium">Parent Information</label>
+                                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                        <div class="slds-form-element">
+                                                            <label class="slds-form-element__label f-title">First Name <abbr class="slds-required" title="required">* </abbr></label>
+                                                            <div class="slds-form-element__control">
+                                                                <!--<input type="text" class="slds-input inputtxt" required="" />-->
+                                                                <apex:inputText value="{!parentAcc.FirstName}" id="parFstNameId" styleclass="slds-input inputtxt"/>
+                                                            </div>
+                                                            <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                        <div class="slds-form-element">
+                                                            <label class="slds-form-element__label f-title">Last Name <abbr class="slds-required" title="required">* </abbr></label>
+                                                            <div class="slds-form-element__control">
+                                                                <!--<input type="text" class="slds-input inputtxt" required="" />-->
+                                                                <apex:inputText value="{!parentAcc.LastName}" id="parLstNameId" styleclass="slds-input inputtxt"/>
+                                                            </div>
+                                                            <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                        <div class="slds-form-element">
+                                                            <label class="slds-form-element__label f-title">Gender <abbr class="slds-required" title="required">* </abbr></label>
+                                                            <div class="slds-form-element__control">
+                                                                <div class="slds-select_container">
+                                                                    <apex:inputField value="{!parentAcc.Gender__c}" id="parGendrId" styleclass="slds-select inputsel"/>
+                                                                </div>
+                                                            </div>
+                                                            <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                        <div class="slds-form-element">
+                                                            <label class="slds-form-element__label f-title">Mobile <abbr class="slds-required" title="required">* </abbr></label>
+                                                            <!--<div class="slds-form-element__control">
+                                                                <input type="text" class="slds-input inputtxt" required="" />
+                                                                <apex:inputField value="{!parentAcc.PersonMobilePhone}" styleclass="slds-input inputtxt" id="mobilePhn"/>
+                                                            </div> -->
+                                                            <div id="slds-form-element__control inputMobileId"></div>
+                                                            <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                        <div class="slds-form-element">
+                                                            <label class="slds-form-element__label f-title">Nationality <abbr class="slds-required" title="required">* </abbr></label>
+                                                            <div class="slds-form-element__control">
+                                                                <div class="slds-select_container">
+                                                                    <apex:inputField value="{!parentAcc.Nationality__c}" id="parNationalityId" styleclass="slds-select inputsel"/>
+                                                                </div>
+                                                            </div>
+                                                            <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                        </div>
+                                                    </div>
+                                                    <!--
+                                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                        <div class="slds-form-element">
+                                                            <label class="slds-form-element__label f-title">Phone</label>
+                                                            <div class="slds-form-element__control">
+                                                                <apex:inputField value="{!parentAcc.Phone}" styleclass="slds-input"/>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                        <div class="slds-form-element">
+                                                            <label class="slds-form-element__label f-title">Occupation</label>
+                                                            <div class="slds-form-element__control">
+                                                                <apex:inputField value="{!parentAcc.Occupation__c}" styleclass="slds-input"/>
+                                                            </div>
+                                                        </div>
+                                                    </div>-->
+                                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                        <div class="slds-form-element">
+                                                            <label class="slds-form-element__label f-title">Email <abbr class="slds-required" title="required">* </abbr></label>
+                                                            <div class="slds-form-element__control">
+                                                                <!-- <input type="email" class="slds-input inputtxt" required="" />-->
+                                                                <apex:inputField value="{!parentAcc.PersonEmail}" styleclass="slds-input inputtxt" id="emailtxt"/>
+                                                            </div>
+                                                            <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                        <div class="slds-form-element">
+                                                            <label class="slds-form-element__label  f-title">Address <abbr class="slds-required" title="required">* </abbr></label>
+                                                            <div class="slds-form-element__control">
+                                                                <!--<input type="text" class="slds-input inputtxt" required="" />-->
+                                                                <apex:inputText value="{!parentAcc.BillingStreet}" styleclass="slds-input inputtxt"/>
+                                                            </div>
+                                                            <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                        <div class="slds-form-element">
+                                                            <label class="slds-form-element__label  f-title">City</label>
+                                                            <div class="slds-form-element__control">
+                                                                <!-- <input type="text" class="slds-input" />-->
+                                                                <apex:inputField value="{!parentAcc.BillingCity}" styleclass="slds-input"/>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                        <div class="slds-form-element">
+                                                            <label class="slds-form-element__label  f-title">Postal Code <abbr class="slds-required" title="required">* </abbr></label>
+                                                            <div class="slds-form-element__control">
+                                                                <!--<input type="text" class="slds-input inputtxt" required="" />-->
+                                                                <apex:inputField value="{!parentAcc.BillingPostalCode}" styleclass="slds-input inputtxt"/>
+                                                            </div>
+                                                            <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                        </div>
+                                                    </div>
+                                                    <!--
+                                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                        <div class="slds-form-element">
+                                                            <label class="slds-form-element__label  f-title">Country <abbr class="slds-required" title="required">* </abbr></label>
+                                                            <div class="slds-form-element__control">
+                                                                <apex:inputField value="{!parentAcc.BillingCountry}" styleclass="slds-input inputtxt"/>
+                                                            </div>
+                                                            <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                        </div>
+                                                    </div>
+                                                    -->
+                                                     <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                        <div class="slds-form-element">
+                                                            <label class="slds-form-element__label f-title">Country <abbr class="slds-required" title="required">* </abbr></label>
+                                                            <div class="slds-form-element__control">
+                                                                <div class="slds-select_container">
+                                                                    <apex:inputField value="{!parentAcc.BillingCountryCode}" styleclass="slds-select inputsel"/>
+                                                                </div>
+                                                            </div>
+                                                            <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                        <div class="slds-form-element">
+                                                            <div class="slds-checkbox">
+                                                                <apex:inputCheckbox id="studentAsCstmr" value="{!isParAlsoAStudent}" disabled="{!isFreeTrialOpp}" styleClass="slds-checkbox"/>
+                                                                <label class="slds-checkbox__label" for="pg:frm:studentAsCstmr">
+                                                                    <span class="slds-checkbox_faux"></span>
+                                                                    <span class="slds-form-element__label" style="font-size: 14px !important;">  Also a Student</span>
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </div> 
+                                                </div>
+                                            </div>
+                                        </fieldset>
+                                        <div class="slds-col slds-size_1-of-1  slds-p-horizontal_medium">
+                                            <a class="slds-button custom-btn" onclick="showSecondStep();return false;">Next</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-------  First block  End ------------------->
+                            
+                            <!-------  Second block  Start ------------------->
+                            <div class="secondCmpcls" id="secondCmpId" style="display:none;">
+                                <div class="slds-col "><span class="main-title">NEW ENROLMENT</span></div>
+                                <div class="content-body slds-col">
+                                    <div class="slds-form-element">
+                                        
+                                       <!-- <div class="slds-notify_container slds-is-relative slds-hide thirdCmpErrDiv">
+                                            <div class="slds-notify slds-notify_toast slds-theme_error slds-m-left_none slds-m-right_medium" role="status">
+                                                <div class="slds-notify__content">
+                                                    <h2 class="slds-text-heading_small contentDivThird"></h2>
+                                                </div>
+                                            </div>
+                                        </div>-->
+                                       
+                                          <div class="slds-notify_container slds-is-relative slds-hide thirdCmpErrDiv" style="padding: 0 15px;">
+                                            <div class="slds-notify slds-notify_toast slds-theme_error slds-col" role="status" style="width:100%;margin:0 0 10px;">
+                                              <span class="slds-assistive-text">error</span>
+                                              <div class="slds-notify__content">
+                                                <h2 class="slds-text-heading_small contentDivThird"></h2>
+                                              </div>
+                                              <div class="slds-notify__close">
+                                                <button class="slds-button slds-button_icon slds-button_icon-inverse" title="Close" onclick="closeErrorDiv(); return false;">
+                                                   X
+                                                  <span class="slds-assistive-text" >Close</span>
+                                                </button>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        
+                                        
+                                        <fieldset class="slds-form-element final-step">
+                                            <apex:outputPanel id="studentListPnl">
+                                                <div class=" slds-size_1-of-1 slds-p-horizontal_medium">
+                                                    <div class="slds-form-element">
+                                                        <label class="slds-form-element__label field-title" for="form-element-help-01">Enrolments Information</label>
+                                                        
+                                                        <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                                                            <thead>
+                                                                <tr class="slds-line-height_reset student-list">
+                                                                    <th class="slds-text-title_caps" scope="col">
+                                                                        <div class="slds-truncate" title="Opportunity Name">Student Name</div>
+                                                                    </th>
+                                                                    <th class="slds-text-title_caps" scope="col">
+                                                                        <div class="slds-truncate" title="Account Name">Center/Location</div>
+                                                                    </th>
+                                                                    <th class="slds-text-title_caps" scope="col">
+                                                                        <div class="slds-truncate" title="Close Date">Teacher</div>
+                                                                    </th>
+                                                                    <th class="slds-text-title_caps" scope="col">
+                                                                        <div class="slds-truncate" title="Stage">Lesson Plan</div>
+                                                                    </th>
+                                                                    <th class="slds-text-title_caps" scope="col" style="text-align:center;">
+                                                                        <div class="slds-truncate" title="Confidence">Edit Details</div>
+                                                                    </th>
+                                                                    
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <apex:variable value="{!0}" var="stuIndex"/>
+                                                                <apex:repeat value="{!studentWrapList}" var="student">
+                                                                    <apex:variable value="{!0}" var="lessIndex"/>
+                                                                    <apex:repeat value="{!student.lessonList}" var="lesson">
+                                                                        <tr class="slds-hint-parent student-list">
+                                                                            <td scope="row">
+                                                                                <div class="slds-truncate">{!student.student.FirstName} {!student.student.LastName}</div>
+                                                                            </td>
+                                                                            <td>
+                                                                                <div class="slds-truncate">{!lesson.selectedCenterName}</div>
+                                                                            </td>
+                                                                            <td>
+                                                                                <div class="slds-truncate">{!lesson.selectedTeacherName}</div>
+                                                                            </td>
+                                                                            <td>
+                                                                                <div class="slds-truncate">{!lesson.selectedPlanName}</div>
+                                                                            </td>
+                                                                            <td>
+                                                                                <div class="slds-truncate" style="text-align: center;">
+                                                                                    <a href="#" onclick="editLson('{!stuIndex}','{!lessIndex}')" style="margin-right:10px;"><i class="fas fa-pencil-alt"></i></a>
+                                                                                    <apex:outputPanel rendered="{!!(isFreeTrialOpp && stuIndex == 0  && lessIndex ==0)}">
+                                                                                        <a href="#" onclick="deleteLson('{!stuIndex}','{!lessIndex}')" class="del-btn"><i class="fas fa-times "></i></a>
+                                                                                    </apex:outputPanel>
+                                                                                </div>    
+                                                                                <apex:variable value="{!lessIndex+1}" var="lessIndex"/>  
+                                                                            </td>
+                                                                        </tr>
+                                                                    </apex:repeat>                                                                   
+                                                                    <apex:variable value="{!stuIndex+1}" var="stuIndex"/>
+                                                                </apex:repeat>
+                                                                  
+                                                            </tbody>
+                                                        </table>
+                                                        
+                                                        <div class="slds-col slds-size_1-of-1 add-more ">
+                                                            <button onclick="addStudentsAndLess();return false">Add More Students <i class="fas fa-plus"></i></button>
+                                                        </div>
+                                                        
+                                                    </div>
+                                                    
+                                                    <label class="slds-form-element__label field-title" for="form-element-help-01 slds-size_1-of-1 slds-p-horizontal_medium">Student Information</label>
+                                                    <div class="student-box slds-grid slds-wrap">
+                                                        <div class="edit-del" style="display:none;">
+                                                            <a href="#" class="del-btn"><i class="fas fa-times "></i></a><a href="#"> <i class="fas fa-pencil-alt"></i></a><button class="del-btn" href="#"><i class="fas fa-check"></i></button> 
+                                                        </div>
+                                                        <label class="slds-form-element__label field-title slds-size_1-of-1 slds-p-horizontal_medium" for="form-element-help-01">New Student</label>
+                                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                            <div class="slds-form-element">
+                                                                <div class="slds-form-element">
+                                                                    <label class="slds-form-element__label f-title">First Name <abbr class="slds-required" title="required">* </abbr></label>
+                                                                    <div class="slds-form-element__control">
+                                                                        <apex:inputText value="{!studentWrap.student.FirstName}" id="stuFstNameId" styleClass="slds-input stuDetClass"/>
+                                                                    </div>
+                                                                    <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                            <div class="slds-form-element">
+                                                                <div class="slds-form-element">
+                                                                    <label class="slds-form-element__label f-title">Last Name <abbr class="slds-required" title="required">* </abbr></label>
+                                                                    <div class="slds-form-element__control">
+                                                                        <apex:inputText value="{!studentWrap.student.LastName}" id="stuLstNameId" styleClass="slds-input stuDetClass"/>
+                                                                    </div>
+                                                                    <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                            <div class="slds-form-element">
+                                                                <div class="slds-form-element">
+                                                                    <label class="slds-form-element__label f-title">Birthdate <abbr class="slds-required" title="required">* </abbr></label>
+                                                                    <div class="slds-form-element__control">
+                                                                        <apex:inputField value="{!studentWrap.student.PersonBirthdate}" id="birthdate" styleClass="slds-input stuDetClass" style="width:100%;"/>
+                                                                        <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                                    </div>
+                                                                    
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                            <div class="slds-form-element">
+                                                                <label class="slds-form-element__label f-title" for="form-element-help-01">Gender <abbr class="slds-required" title="required">* </abbr></label>
+                                                                <div class="slds-form-element__control">
+                                                                    <div class="slds-select_container">
+                                                                        <apex:inputField value="{!studentWrap.student.Gender__c}" id="stuGendrId" styleClass="slds-select stuDetClass"/>
+                                                                    </div>
+                                                                    <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                            <div class="slds-form-element">
+                                                                <label class="slds-form-element__label f-title" for="form-element-help-01">Nationality <abbr class="slds-required" title="required">* </abbr></label>
+                                                                <div class="slds-form-element__control">
+                                                                    <div class="slds-select_container">
+                                                                        <apex:inputField value="{!studentWrap.student.Nationality__c}" id="stuNationalityId" styleClass="slds-select stuDetClass"/>
+                                                                    </div>
+                                                                    <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                            <div class="slds-form-element">
+                                                                <div class="slds-form-element">
+                                                                    <label class="slds-form-element__label f-title">School <!--<abbr class="slds-required" title="required">* </abbr>--></label>
+                                                                    <div class="slds-form-element__control">
+                                                                         <apex:selectList value="{!studentWrap.student.School__c}" size="1" id="stuSchId" styleclass="slds-select stuDetClass">
+                                                                            <apex:selectOptions value="{!SchoolPicklist}"/>
+                                                                        </apex:selectList>
+                                                                        <!--<apex:inputField value="{!studentWrap.student.School__c}" styleClass="slds-input stuDetClass"/>-->
+                                                                    </div>
+                                                                    <!--<div class="slds-form-element__help slds-hide errortxt">This field is required</div>-->
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                      <!-- <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                            <div class="slds-form-element">
+                                                                <div class="slds-form-element">
+                                                                    <label class="slds-form-element__label f-title">Grade</label>
+                                                                    <div class="slds-form-element__control">
+                                                                        <div class="slds-select_container">
+                                                                            <apex:inputField value="{!studentWrap.student.Level_Grade__c}" styleClass="slds-select stuDetClass"/>
+                                                                        </div>
+                                                                        <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        -->
+                                                        <label class="slds-form-element__label field-title slds-size_1-of-1 slds-p-horizontal_medium" for="form-element-help-01">Lesson Information</label>
+                                                        <apex:outputPanel id="lessonPanal">
+                                                           <!-- <apex:variable value="{!0}" var="i"/>
+                                                            <apex:repeat value="{!studentWrap.lessonList}" var="lesson">-->
+                                                                <div class="another-box ">
+                                                                    <div class="slds-col  slds-size_1-of-1 slds-grid slds-wrap">
+                                                                        <div class="slds-form-element slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                                            <div class="slds-form-element">
+                                                                                <label class="slds-form-element__label f-title">Center/Location <abbr class="slds-required" title="required">* </abbr></label>
+                                                                                <div class="slds-form-element__control">
+                                                                                    <div class="slds-select_container">
+                                                                                        <apex:selectList styleClass="slds-select lessDetClass" multiselect="false" size="1" value="{!lessonWrap.selectedCenter}" onchange="getPlans();"> 
+                                                                                            <apex:selectOptions value="{!lessonWrap.centerOptions}"/>
+                                                                                        </apex:selectList>
+                                                                                    </div>
+                                                                                    <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                        
+                                                                        <div class="slds-form-element slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                                            <div class="slds-form-element">
+                                                                                <label class="slds-form-element__label f-title">Lesson Plan <abbr class="slds-required" title="required">* </abbr></label>
+                                                                                <div class="slds-form-element__control">
+                                                                                    <div class="slds-select_container">
+                                                                                        <apex:selectList styleClass="slds-select lessDetClass" multiselect="false" size="1" value="{!lessonWrap.selectedPlan}" onchange="getTeachers();"> 
+                                                                                            <apex:selectOptions value="{!lessonWrap.planOptions}"/>
+                                                                                        </apex:selectList>
+                                                                                    </div>
+                                                                                    <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="slds-form-element slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                                            
+                                                                            <div class="slds-form-element">
+                                                                                <label class="slds-form-element__label f-title">Teacher <abbr class="slds-required" title="required">* </abbr></label>
+                                                                                <div class="slds-form-element__control">
+                                                                                    <div class="slds-select_container">
+                                                                                        <apex:selectList styleClass="slds-select lessDetClass" multiselect="false" size="1" value="{!lessonWrap.selectedTeacher}" onchange="getTimeSlot();"> 
+                                                                                            <apex:selectOptions value="{!lessonWrap.teacherOptions}"/>
+                                                                                        </apex:selectList>
+                                                                                    </div>
+                                                                                    <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    <div class="custom-calendar slds-col slds-size_1-of-1 slds-grid slds-wrap">
+                                                                        <label class="slds-form-element__label slds-size_1-of-1 field-title slds-p-horizontal_medium" for="form-element-help-01">Time Available</label>
+                                                                        <div class="slds-form-element slds-dropdown-trigger slds-dropdown-trigger_click slds-is-open  slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                                            <apex:outputPanel id="datePickPanel">
+                                                                                <div id="datepicker" class=""></div>
+                                                                            </apex:outputPanel> 
+                                                                        </div>
+                                                                        
+                                                                       
+                                                                            <div class="slds-grid slds-wrap slds-p-horizontal_medium  slds-size_1-of-1 slds-medium-size_6-of-12">
+                                                                                 <apex:outputPanel id="refreshSlotPanel" style="width:100%;">
+                                                                                <div class="calc slds-grid slds-wrap date-list">
+                                                                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12">
+                                                                                        <fieldset class="slds-form-element">
+                                                                                          <label class="slds-form-element__label field-title time-title" for="form-element-help-01">Morning</label>
+                                                                                          <div class="slds-form-element__control">
+                                                                                            <div class="time-list morning">
+                                                                                              <apex:repeat value="{!tSlotMap.morningSlot}" var="ins">
+                                                                                                 <span class="slds-button slds-radio_button">
+                                                                                                    <input id="{!ins}" name="radio" type="radio" value="{!ins}" />
+                                                                                                    <label class="slds-radio_button__label" for="{!ins}">
+                                                                                                      <span class="slds-radio_faux">{!ins}</span>
+                                                                                                    </label>
+                                                                                                 </span>
+                                                                                              </apex:repeat>
+                                                                                            </div>
+                                                                                          </div>
+                                                                                        </fieldset>
+                                                                                    </div>
+                                                                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12">
+                                                                                        <fieldset class="slds-form-element">
+                                                                                          
+                                                                                          <div class="slds-form-element__control">
+                                                                                            <label class="slds-form-element__label field-title time-title" for="form-element-help-01">Afternoon</label>
+                                                                                            <div class="time-list afternoon">
+                                                                                              <apex:repeat value="{!tSlotMap.afternoonSlot}" var="ins">
+                                                                                                 <span class="slds-button slds-radio_button">
+                                                                                                    <input name="radio" type="radio" id="{!ins}" value="{!ins}"/>
+                                                                                                    <label class="slds-radio_button__label" for="{!ins}">
+                                                                                                        <span class="slds-radio_faux">{!ins}</span>
+                                                                                                    </label>
+                                                                                                 </span>
+                                                                                              </apex:repeat>  
+                                                                                            </div>
+                                                                                          </div>
+                                                                                        </fieldset>
+                                                                                    </div>
+                                                                                </div>
+                                                                                </apex:outputPanel> 
+                                                                            </div>
+                                                                           
+                                                                        <button class="slds-button custom-btn save-btn">Save</button>
+                                                                    </div>
+                                                                    
+                                                                    <button class="slds-button custom-btn save-btn" onclick="saveStudentOrLesson();return false;">Save</button>
+                                                                </div>
+                                                              <!--  <apex:variable value="{!i+1}" var="i"/>    
+                                                            </apex:repeat>-->
+                                                        </apex:outputPanel>
+                                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                            <a class="slds-button custom-btn more-lesson" onclick="addLessonsOnPage();return false;">Add another lesson</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </apex:outputPanel>
+                                            <div class="slds-clearfix"></div>
+                                        </fieldset>
+                                        
+                                        <!-- Send Email -->
+                                        <div class="sendEmail slds-hide">
+                                            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open slds-modal_small">
+                                                <div class="slds-modal__container" style="width: 50%;">
+                                                    <header class="slds-modal__header" style="background: #303a42; color: white;">
+                                                        <a href="javascript:void(0);" class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick="$('.sendEmail').addClass('slds-hide'); return false;">
+                                                            <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                                                                <use xmlns:xlink="{!URLFOR($Resource.SLDS283,'/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                                                            </svg>
+                                                           <!--  <svg aria-hidden="true" class="slds-icon slds-icon--x-small slds-icon-text-default slds-is-sortable__icon">
+                                                                <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS283, 'assets/icons/utility-sprite/svg/symbols.svg#email')}"></use>
+                                                            </svg>-->
+                                                            <span class="slds-assistive-text">Close</span>
+                                                        </a>
+                                                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Send Email</h2>
+                                                    </header>
+                                                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                                                        <c:sendemailcomp />
+                                                    </div>
+                                                    <footer class="slds-modal__footer">
+                                                        <a href="javascript:void(0);" class="slds-button slds-button_neutral" onclick="$('.sendEmail').addClass('slds-hide'); return false;">Close</a>
+                                                        <a href="javascript:void(0);" class="slds-button slds-button_brand" onclick="sendEmail(); $('.sendEmail').addClass('slds-hide'); return false">Send E-Mail</a> 
+                                                    </footer>
+                                                </div>
+                                            </section>
+                                            <div class="slds-backdrop slds-backdrop_open"></div>
+                                        </div>
+                                        
+                                        <div class="slds-col slds-size_1-of-1 slds-p-horizontal_medium">
+                                            <a  class="slds-button custom-btn prev-btn" onclick="document.getElementById('firstCmpId').style.display = 'block';document.getElementById('secondCmpId').style.display = 'none';">Previous</a> 
+                                            
+                                            <a  class="slds-button custom-btn"  onclick="sendPaymentLink();return false;">Send payment Link</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            </div>                           
+                            <!-------  Second block  End ------------------->
+                    </div>
+                </div>
+            </div>
+        </apex:form>
+    </body>
+    <style>
+        .input-group-btn:first-child>.btn, .input-group-btn:first-child>.btn-group{
+           height: 31px !important;
+           width: 51px !important;
+        }
+        .caret{
+            position: relative !important;
+            top: 7px !important;
+            left: 2px !important;
+        }
+        .input-group .form-control:not(:first-child):not(:last-child), .input-group-addon:not(:first-child):not(:last-child), .input-group-btn:not(:first-child):not(:last-child){
+            border-radius: 4px !important;
+            height: 32px !important;
+            position: relative !important;
+            top: 1px !important;
+        }
+        .dateFormat{
+        display: none;
+        }
+        body{
+        background-image: url("{!$Resource.music}") !important;
+        background-size:100% 100% !important;
+        background-repeat:no-repeat !important;
+        background-position:left !important;
+        background-color: #f3613c !important;
+        
+        }
+        .main-content {
+        min-height: 100vh;
+        background-image:none !important;
+        background-size: contain !important;
+        background-repeat: no-repeat !important;
+        background-color: transparent !important;
+        }
+        .container {
+        max-width:650px;
+        }
+        span.main-title {
+        color: #200a28;
+        font-size: 24px;
+        border-radius: 0;
+        font-weight: bold;
+        margin-bottom: 10px;
+        display: block;
+        line-height: 30px;
+        padding-bottom:10px;
+        text-align:center;
+        }
+        .content-box {
+        margin: 50px 0 ;
+        width: 90%;
+        max-width: 700px;
+        background: rgba(255, 255, 255, 1);
+        border-radius: 10px;
+        }
+        .locations-list {
+        text-align:left;
+        }
+        form legend {
+        font-size: 16px !important;
+        }
+        .header {
+        background: #fff;
+        border-radius: 10px 10px 0 0px;
+        padding: 10px 10px 0;
+        text-align: center;
+        }
+        form {
+        padding: 0 10px;
+        }
+        .field-title {
+        font-size: 20px !important;
+        font-weight: bold;
+        }
+        .info-box {
+        border: 1px solid #eee;
+        color: #333;
+        font-size: 13px;
+        padding: 10px 10px !important;
+        border-radius: 5px;
+        margin: 10px 0;
+        background: #f7f7f7;
+        }
+        .content-body span.slds-form-element__label {
+        display: block;
+        font-size: 14px !important;
+        }
+        
+        .content-body span.slds-radio {
+        margin: 10px 0;
+        }
+        form .custom-btn {
+        padding: 5px 10px 3px !important;
+        color: #fff !important;
+        background: #f79c1a !important;
+        font-size: 16px !important;
+        text-transform: uppercase;
+        line-height: 20px !important;
+        margin: 15px 0 20px;
+        float:right;
+        }
+        .slds-form-element {
+        margin-bottom: 5px;
+        }
+        .user-img {
+        width: 80px;
+        border: 1px solid #eee;
+        border-radius: 50%;
+        height: 80px;
+        min-width:80px;
+        margin-right:10px;
+        overflow:hidden;
+        }
+        .teacher-details {
+        display: flex;
+        }
+        
+        .teacher-details div {
+        display: inline-block;
+        float: left;
+        }
+        .info-box h2 {
+        font-size: 16px;
+        font-weight: bold;
+        }
+        .custom-calendar .calc {
+        border: 1px solid rgb(221, 219, 218);
+        border-radius: .25rem;
+        padding: .25rem 0;
+        background: rgb(255, 255, 255);
+        box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.16);
+        width: 100%;
+        }
+        .custom-btn.prev-btn {
+        float: none;
+        background: #fbbf0d !important;
+        float: left;
+        }
+        .f-title {
+        font-size: 14px !important;
+        }
+        .student-box {
+        border: 1px solid #f79c1a;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        background: #fed217;
+        border-radius: 5px;
+        position: relative;
+        margin: 0 0 20px;
+        }
+        @font-face {
+        font-family: "Font Awesome 5 Pro";
+        src: url(https://use.fontawesome.com/releases/v5.5.0/css/all.css);
+        }
+        .edit-del {
+        position: absolute;
+        right: 15px;
+        top: 15px;
+        }
+        .edit-del i {
+        padding: 5px;
+        }
+        .edit-del a {
+        margin: 0 5px;
+        display: inline-block;
+        color: #4d4d4d;
+        font-size: 16px;
+        }
+        .content-body {
+        overflow-y: auto;
+        }
+        fieldset{
+        overflow-y: auto;
+        }
+        .terms-info p {
+        margin-bottom: 10px;
+        }
+        
+        .terms-info h4.f-title {
+        font-weight: bold;
+        font-size: 14px !important;
+        }
+        .terms-info {
+        border: 15px solid #f2f2f2;
+        background: #f2f2f2;
+        height: 145px;
+        overflow-y: scroll;
+        outline: 1px solid #eee;
+        }
+        
+        .field-title + .student-box .del-btn {
+        display: none;
+        }
+        input.slds-input {
+        }
+        
+        input.slds-input,select {
+        border-color: #f79c1a !important;
+        }
+        
+        .content-box {
+        box-shadow: 1px 2px 10px #f79c1a;
+        }
+        .content-body{
+        overflow-x:hidden;
+        }
+        .add-more button {
+        background: #f79c1a;
+        border: 1px solid #f79c1a;
+        padding: 5px 20px 5px 20px;
+        float: right;
+        color: #fff;
+        text-transform: uppercase;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 5px;
+        margin:20px 0 10px;
+        }
+        .add-more {
+        float: left;
+        }
+        .add-more button  i {
+        position: relative;
+        margin-left: 10px;
+        }
+        .student-list th, .student-list td {
+        width: 20% !important;
+        white-space: unset !important;
+        padding: 10px 5px!important;
+        text-transform: none !important;
+        letter-spacing: 0.2px !important;
+        }
+        .edit-del button {
+        background: transparent;
+        border: none;
+        color: #4d4d4d;
+        font-size: 16px;
+        }
+        .custom-calendar td {
+        padding: 0 !important;
+        }
+        .billig-info {
+        background: #f2f2f2;
+        float: left;
+        width: 100%;
+        padding: 10px 0;
+        font-size: 14px;
+        margin: 0 0 10px;
+        }
+        
+        .billig-info li {
+        padding: 5px 0;
+        line-height: 26px;
+        display: block;
+        width: 100%;
+        border-bottom: 1px solid #ccc;
+        margin-left:0;
+        }
+        
+        .billig-info:last-child {
+        margin-bottom: 0;
+        }
+        
+        .billig-info li strong {
+        /*width: 120px;
+        display: inline-block;*/
+        width:100%;
+        display:block; 
+        }
+        .after-noon {
+        padding-bottom: 50px;
+        }
+        
+        button.save-btn {
+        position: absolute !important;
+        bottom: 0 !important;
+        right: 1rem;
+        }
+        .more-lesson {
+        width: 100%;
+        }
+        .available i {
+        display: inline-block;
+        background: #eee;
+        height: 100%;
+        float: left;
+        width: 20px;
+        margin: 0 2px;
+        }
+        .available {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        bottom: 0px;
+        height: 5px;
+        text-align: center;
+        justify-content: center;
+        display: flex;
+        }
+        
+        form .custom-btn.more-lesson {
+        margin-bottom: 10px;
+        }
+        .another-box {
+        background: rgba(255, 255, 255, 0.5);
+        width: calc(100% - 30px);
+        margin: 0 15px 15px;
+        padding: 10px 0 20px;
+        }
+        .time-list span.slds-button.slds-radio_button {
+        width: 100%;
+        margin-bottom: 5px;
+        border: 1px solid #eee;
+        }
+        
+        .time-list label.slds-radio_button__label {
+        width: 100%;
+        text-align: center;
+        }
+        
+        .time-list {
+        background: #f7f7f7;
+        padding: 15px 15px 5px;
+        border: 1px solid #eee;
+        width: calc(100% - 15px);
+        margin: 0 auto 10px;
+        }
+        
+        .afternoon .time-list {
+        float: right;
+        }
+        
+        span.slds-radio label {
+        padding: 10px;
+        border: 1px solid #eee;
+        background: #f7f7f7;
+        border-radius: 5px;
+        display: block;
+        }
+        
+        span.slds-radio input:checked + label {
+        background: #1b5297;
+        }
+        
+        span.slds-radio input:checked + label span.slds-form-element__label {
+        color: #fff;
+        }
+        .slds-scope .slds-datepicker td {
+        border: 1px solid #eee;
+        }
+        td.slds-is-today {
+        background: #ecebea;
+        }
+        .date-list {
+        padding: 0 10px !important;
+        }
+        
+        .date-list label {
+        padding: 0 5px;
+        }
+        i.morning-availablity, i.afternoon-availablity{
+        background:#61c461
+        }
+        .content-body > div > fieldset {
+        max-height: 450px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 0 15px;
+        }
+        .calc > div fieldset {
+        overflow: hidden;
+        }
+        .slds-scope .slds-datepicker th {
+        padding: 0;
+        }
+        
+        .popupBackground{ 
+            background-color: lightgrey;
+            opacity: 0.80;
+            
+            position:fixed;
+            padding:0;
+            margin:0;
+            
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 9998;
+            border-radius: 5px; 
+        }
+        
+        /*  Date picker css   */
+        .ui-datepicker {
+        width: 17em;
+        padding: 0;
+        display: none;
+        background:#846733;  
+        }
+        .ui-datepicker .ui-datepicker-title {
+        margin: 0;
+        line-height: 36px;
+        text-align: center;
+        }
+        .ui-datepicker table {
+        background:#fff;    
+        }
+        .ui-datepicker td {
+        padding: 0px;
+        border: 1px solid #eee;
+        font-size: .75rem;
+        position: relative;
+        width: 2rem;
+        min-height: 2rem;
+        line-height: 2.5rem;
+        
+        }
+        .ui-datepicker td span,
+        .ui-datepicker td a {
+        display: block;
+        padding: 0em;
+        text-align: center;
+        text-decoration: none;
+        }
+        #datepicker,
+        .ui-datepicker,
+        .ui-datepicker-header,
+        .ui-datepicker-calendar {
+        width: 100%;
+        }
+        .loc-maps span {
+        width: 100%;
+        }
+        .ui-datepicker td span, .ui-datepicker td a {
+        
+        background: #fff !important;
+        border:2px solid #fff !important;
+        }
+        .ui-state-highlight, .ui-widget-content .ui-state-highlight, .ui-widget-header .ui-state-highlight {
+        background: rgb(236, 235, 234) !important;
+        border-color: rgb(236, 235, 234) !important;
+        border-width: 2px !important;
+        border-style: solid !important
+        }
+        .ui-datepicker table{
+        margin:0 !important;
+        }
+        .ui-widget.ui-widget-content {
+        border: none;
+        }
+        
+        table.ui-datepicker-calendar thead {
+        border: 1px solid #eee;
+        }
+        .ui-datepicker .ui-datepicker-header{
+        border-radius:0;
+        }
+        .ui-datepicker td a.ui-state-active {
+        background: #fff!important;
+        border: 2px solid #f6911d !important;
+        color: #f6911d !important;
+        }
+        .ui-datepicker td a:before, .ui-datepicker td span:before {
+        content: "";
+        position: absolute;
+        max-width: 12px;
+        height: 5px;
+        background: #eee;
+        bottom: 5px;
+        left: 4px;
+        width: 100%;
+        }
+        .ui-datepicker td a:after, .ui-datepicker td span:after {
+        content: "";
+        position: absolute;
+        max-width: 12px;
+        height: 5px;
+        background: #eee;
+        bottom: 5px;
+        right: 4px;
+        width: 100%;
+        }
+        .ui-datepicker .ui-datepicker-prev span, .ui-datepicker .ui-datepicker-next span {
+        display: block;
+        position: absolute;
+        left: 50%;
+        margin-left: -8px;
+        top: 15%;
+        margin-top: 0;
+        transform: translateY(50%);
+        }
+        
+        .day-availability--morning .ui-state-default:before, .ui-widget-content .day-availability--morning .ui-state-default:before, .ui-widget-header .day-availability--morning .ui-state-default:before {
+            background: #61c461;
+        }
+        .day-availability--afternoon .ui-state-default:after, .ui-widget-content .day-availability--afternoon .ui-state-default:after, .ui-widget-header .day-availability--afternoon .ui-state-default:after {
+            background: #61c461;
+        } 
+        .ui-datepicker .ui-datepicker-next, .ui-datepicker .ui-datepicker-prev{
+        height: 100%;
+        }   
+        .time-list:empty {
+            display: none;
+        }
+        div#signature-pad {
+            position: relative;
+            top: 0;
+            margin: auto;
+            left: 0;
+            width: 100%;
+            margin-top: 10px;
+            box-shadow: none;
+            background: #f2f2f2;
+            border-radius: 0;
+        }
+        .m-signature-pad--body canvas {
+            border: 1px solid #ccc;
+            background: #fff;
+        }
+        .dark-bg {
+            background: #f2f2f2;
+            width: 100%;
+        }
+        .m-signature-pad--footer .button.clear {
+            background: #f79c1a;
+            border: 0 !important;
+            padding: 5px 15px;
+            color: #fff;
+            text-transform: uppercase;
+            left: auto;
+            right: 0; 
+        } 
+        .grand-total-section li {
+            margin-left:1rem;
+            margin-right:1rem;
+            width:calc(50% - 2rem);
+        }
+        .slds-checkbox__label span.slds-form-element__label {
+            display: inherit;
+        }
+    </style>
+</apex:page>

@@ -1,0 +1,302 @@
+<apex:page standardStylesheets="false" lightningStylesheets="true" showHeader="false" sidebar="false" controller="MakePaymentController">
+    <div id="status" class="demo-only demo--inverse " style="height:100%;width:100%;z-index:200;position:fixed;display:none;"> 
+        <div class="slds-spinner_container" style="height:100%;width:100%;"> 
+            <div role="status" class="slds-spinner slds-spinner_large slds-spinner_brand">
+                <span class="slds-assistive-text">Loading</span> <div class="slds-spinner__dot-a">
+            </div> 
+            <div class="slds-spinner__dot-b"></div>
+            </div>
+        </div>
+    </div> 
+    <script src="https://js.stripe.com/v3/"></script>
+    
+    <style>
+        body{       
+            background-image: url("{!$Resource.music}") !important;     
+            background-size:100% 100% !important;       
+            background-repeat:no-repeat !important;     
+            background-position:left !important;        
+        }       
+        span.main-title {       
+            color: #200a28;     
+            font-size: 24px;        
+            border-radius: 0;       
+            font-weight: bold;      
+            margin-bottom: 10px;        
+            display: block;     
+            line-height: 30px;      
+            padding-bottom:10px;        
+            text-align:center;      
+        }           
+        .content-box {      
+            margin: 50px 0 ;        
+            width: 90%;     
+            max-width: 700px;       
+            background: rgba(255, 255, 255, 1);     
+            border-radius: 10px;        
+        }       
+        .custom-btn {       
+            padding: 5px 10px 3px !important;       
+            color: #fff !important;     
+            background: #f79c1a !important;     
+            font-size: 16px !important;     
+            text-transform: uppercase;      
+            line-height: 20px !important;       
+            margin: 15px 0 20px;        
+            float: right;       
+            height:40px;        
+        }
+        .outstanding{
+            padding: 20px;
+            text-align: center;
+        }
+        #card-errors{
+            color:red;
+        }
+        .StripeElement {
+          box-sizing: border-box;
+        
+          height: 40px;
+        
+          padding: 10px 12px;
+        
+          border: 1px solid transparent;
+          border-radius: 4px;
+          background-color: white;
+        
+          box-shadow: 0 1px 3px 0 #e6ebf1;
+          -webkit-transition: box-shadow 150ms ease;
+          transition: box-shadow 150ms ease;
+        }
+    
+        .StripeElement--focus {
+          box-shadow: 0 1px 3px 0 #cfd7df;
+        }
+        
+        .StripeElement--invalid {
+          border-color: #fa755a;
+        }
+        
+        .StripeElement--webkit-autofill {
+          background-color: #fefde5 !important;
+        }
+    </style>
+    <apex:slds />
+    <div class="content">
+    <form method="post" id="payment-form">
+        <div class="slds-scope" style="width:50%; margin:auto; margin-top:50px;">
+            <div class="slds-panel slds-size_medium slds-panel_docked slds-panel_docked-left slds-is-open content-box" style="width:100%;border-radius:10px;box-shadow:1px 2px 10px #f79c1a" aria-hidden="false">  
+                <div class="slds-grid slds-wrap slds-grid--align-center">
+                    <div class="slds-col">           
+                         <div class="header slds-col">
+                            <div class="slds-col">
+                        <a href="#" class="logo"><img src="https://aureusacademy.com/wp-content/uploads/2017/03/cropped-Aureus-Logo-Small.png"/></a>
+                    </div>
+                </div></div></div>
+             
+                <div class="slds-panel__header">
+                   <div class="slds-col "><span class="main-title">SECURE PAYMENT</span></div>
+                </div>
+                <apex:outputPanel rendered="{!invLineItm.size > 0}">
+                    <div class="slds-panel__body">Online payment service provided by Stripe.Well send you an online booking confirmation email once payment
+                        has been received.</div>
+                    <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-no-row-hover slds-theme_shade">
+                        <thead>
+                            <tr class="slds-line-height_reset">
+                                <th class="" scope="col">
+                                    <div class="slds-truncate" title="Description">Description</div>
+                                </th>
+                                <th class="" scope="col">
+                                    <div class="slds-truncate" title="Price">Price</div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!--<tr>
+                                Hello
+                                
+                                    Data>>>>>{!invLineItmVar.Subscription_Line_Item__c}
+                                
+                            </tr>-->
+                            <apex:repeat value="{!invLineItm}" var="invLineItmVar">
+                                <tr class="slds-hint-parent">
+                                    <th data-label="ABSRM Booking" scope="row">
+                                        <div class="slds-truncate" >{!invLineItmVar.Package__r.Name}</div>
+                                    </th>
+                                    <td data-label="ABSRM Booking">
+                                        <div class="slds-truncate">${!invLineItmVar.Amount__c}</div>
+                                    </td>
+                                </tr>
+                            </apex:repeat>
+                            <tr class="slds-hint-parent">
+                                <th data-label="Total tax" scope="row">
+                                    <div class="slds-truncate" title="Total tax"><b>Sub Total</b></div>
+                                </th>
+                                <td data-label="Total tax">
+                                    <div class="slds-truncate"><b>${!subTotal }</b></div>
+                                </td>
+                            </tr>
+                            <tr class="slds-hint-parent">
+                                <th data-label="Total tax" scope="row">
+                                    <div class="slds-truncate" title="Total tax">Tax</div>
+                                </th>
+                                <td data-label="Total tax">
+                                    <div class="slds-truncate">${!totalTax }</div>
+                                </td>
+                            </tr>
+                            <tr class="slds-hint-parent">
+                                <th data-label="Total tax" scope="row">
+                                    <div class="slds-truncate" title="Total tax"><b>Total Amount</b></div>
+                                </th>
+                                <td data-label="Total tax">
+                                    <div class="slds-truncate"><b>${!totalAmount}</b></div>
+                                </td>
+                            </tr>
+                            <apex:outputPanel rendered="{!totalDeposite > 0}">
+                                <tr class="slds-hint-parent">
+                                    <th data-label="Total tax" scope="row">
+                                        <div class="slds-truncate" title="Total tax">Total Deposit</div>
+                                    </th>
+                                <td data-label="Total tax">
+                                    <div class="slds-truncate">
+                                        ${!totalDeposite}
+                                    </div>
+                                    </td>
+                                </tr>  
+                                         </apex:outputPanel>
+                            <tr class="slds-hint-parent">
+                                <th data-label="Total due" scope="row">
+                                    <div class="slds-truncate" title="Total due">Total Due</div>
+                                </th>
+                                <td data-label="Total due">
+                                    <div class="slds-truncate">${!totalDue}</div>
+                                </td>
+                            </tr>
+                            
+                        </tbody>
+                    </table>
+                    <div class="slds-p-around_x-small">
+                        <p><b>Card Detail</b></p>
+                        <div id="card-element">
+                        </div>
+                        <div id="card-errors" role="alert"></div>
+                    </div>
+                    <div class="footer slds-p-around_medium slds-float_right" >
+                        <button type="button" class="slds-button slds-button_neutral" style="background-color:#EAEAEA;color:Gray;height:40px">
+                            <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
+                                <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
+                                    <use fill="black" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#close')}" />
+                                </svg>
+                            </span>
+                            Cancel
+                        </button>
+                        <button  class="slds-button slds-button_neutral custom-btn" >
+                            Pay Now
+                            <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
+                                <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
+                                    <use fill="White" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#chevronright')}" />
+                                </svg>
+                            </span>
+                        </button>
+                    </div>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!invLineItm.size == 0}">
+                    <div class="outstanding">You don't  have outstanding invoice.</div >
+                </apex:outputPanel>
+            </div>
+        </div>
+    </form>
+    </div>
+    <script>
+        var stripe = Stripe('{!apiKey}');
+        console.log(stripe);
+        var elements = stripe.elements();
+        var style = {
+          base: {
+            color: '#32325d',
+            fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+            fontSmoothing: 'antialiased',
+            fontSize: '16px',
+            '::placeholder': {
+              color: '#aab7c4'
+            }
+          },
+          invalid: {
+            color: '#fa755a',
+            iconColor: '#fa755a'
+          }
+        };
+        var card = elements.create('card', {style: style,hidePostalCode:true});
+        card.mount('#card-element');
+        card.addEventListener('change', function(event) {
+          var displayError = document.getElementById('card-errors');
+          if (event.error) {
+              console.log(event.error);
+            displayError.textContent = event.error.message;
+          } else {
+            displayError.textContent = '';
+          }
+        });
+        
+        // Handle form submission.
+        var form = document.getElementById('payment-form');
+        form.addEventListener('submit', function(event) {
+          event.preventDefault();
+           
+          stripe.createToken(card).then(function(result) {
+           console.log('result token ',result);
+            
+            if (result.error) {
+              var errorElement = document.getElementById('card-errors');
+              errorElement.textContent = result.error.message;
+            } else {
+              document.getElementById("status").style.display = 'block'; 
+              stripeTokenHandler(result.token);
+            }
+          });
+        });
+        function stripeTokenHandler(token) {
+          var form = document.getElementById('payment-form');
+          var hiddenInput = document.createElement('input');
+          hiddenInput.setAttribute('type', 'hidden');
+          hiddenInput.setAttribute('name', 'stripeToken');
+          hiddenInput.setAttribute('value', token.id);
+          form.appendChild(hiddenInput);
+            console.log(token.card.id);
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.MakePaymentController.createCharge}',token.id,'{!invoiceId}',
+                 
+                function(result, event){
+                   if(event.status){
+                       document.getElementById("status").style.display = 'none';
+                       if(result == 'Payment Success'){
+                           location.href='apex/trialthankyou';
+                           //sendMail();
+                       }else{
+                           document.getElementById('card-errors').innerHTML = result;
+                       }                              
+                   }               
+                },
+                {escape: true}
+            );
+        }
+        
+        function sendMail(){
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.MakePaymentController.sendInvoiceMail}','{!invoiceId}',
+                 
+                function(result, event){
+                   if(event.status){
+                       document.getElementById("status").style.display = 'none';
+                       if(result == 'Mail Sent'){
+                           location.href='apex/trialthankyou';
+                       }else{
+                           
+                       }                              
+                   }               
+                },
+                {escape: true}
+            );
+        }
+    </script>
+</apex:page>

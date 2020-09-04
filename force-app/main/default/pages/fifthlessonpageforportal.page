@@ -1,0 +1,583 @@
+<apex:page id="pg" controller="FifthLessonPageForPortalController" showHeader="false" standardStylesheets="true" sidebar="false" docType="html-5.0" cache="false" applyBodyTag="False" applyHtmlTag="False">
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" lang="en">
+        <head>
+            <meta http-equiv='cache-control' content='no-cache' />
+            <meta http-equiv='expires' content='0' />
+            <meta http-equiv='pragma' content='no-cache' />
+            <title>Aureus Academy – 5th Lesson Detail</title>
+            <apex:slds />        
+            <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}"/>
+            <link href="{!URLFOR($Resource.iconcss,'iconcss/material-icons.css')}" rel="stylesheet"/>        
+            <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+            <apex:stylesheet value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.css')}"/>        
+            <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery/jquery.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.js')}"/>   
+            <style>
+                body{
+                    background-color: white !important;
+                    font-family: 'Lato', sans-serif !important;
+                }
+                p.heading_style{
+                    font-size: 19px !important;
+                    font-weight: 600 !important;
+                    font-style: normal !important;
+                    font-stretch: normal !important;
+                    line-height: 1.26 !important;
+                    letter-spacing: 0.5px !important;
+                    /*font-family: Lato !important;*/
+                    border-bottom: 1px solid lightgray;
+                }
+                button.fifthlessonbutton{
+                  width: 150px !important;
+                  height: 24px !important;
+                  border-radius: 4px !important;
+                  background: #3fa6fb !important;
+                  border:1px solid #3fa6fb !important;
+                  color: #ffffff !important;
+                  font-size: 13px !important;
+                  /*font-family: Lato !important;*/
+                  font-weight: bold !important;
+                  font-style: normal !important;
+                  font-stretch: normal !important;
+                  line-height: 1.23 !important;
+                  letter-spacing: normal !important;
+                  text-align: center !important;
+                }
+                div.detail-style{
+                    /*font-family: Lato !important;*/
+                    font-size: 16px !important;
+                    font-weight: normal !important;
+                    font-style: normal !important;
+                    font-stretch: normal !important;
+                    line-height: 1.38 !important;
+                    letter-spacing: 0.5px !important;
+                    color: #353c43 !important;
+                }
+                .inline-flex{
+                    display: inline-flex !important;
+                }
+                .margin-top{
+                    margin-top:13px !important;                
+                }
+                .icon-font-size{
+                    margin-top: 18px;     
+                    margin-right:10px !important;   
+                }
+                label.label-style{
+                    /*font-family: Lato !important;*/
+                    font-size: 16px !important;
+                    font-weight: normal !important;
+                    font-style: normal !important;
+                    font-stretch: normal !important;
+                    line-height: 1 !important;
+                    letter-spacing: 0.5px !important;
+                    color: #353c43 !important;
+                }
+                label.info-label-style{
+                    /*font-family: Lato !important;*/
+                    font-size: 16px !important;
+                    font-weight: bold !important;
+                    font-style: normal !important;
+                    font-stretch: normal !important;
+                    line-height: 1 !important;
+                    letter-spacing: 0.5px !important;
+                    color: #353c43 !important;
+                }
+                a.custom-css-button,button.custom-css-button{
+                    height:48px !important;
+                    /*font-family: Lato !important;*/
+                    font-size: 16px !important;
+                    font-weight: bold !important;
+                    font-style: normal !important;
+                    font-stretch: normal !important;
+                    line-height: 1 !important;
+                    /*letter-spacing: 0.5px !important;*/
+                    text-align: center !important;
+                    color: #ffffff !important;
+                }
+                div.border-right{
+                    border-right:1px solid lightgray;
+                }
+                button.statusbutton{                
+                    height: 24px !important;
+                    background:#3fa6fb !important;
+                    border:1px solid #3fa6fb !important;
+                    /*font-family: Lato !important;*/
+                    font-size: 13px !important;                
+                    font-style: normal !important;
+                    font-stretch: normal !important;
+                    line-height: 1.23 !important;
+                    letter-spacing: normal !important;
+                    text-align: center !important;
+                    color: #ffffff !important;
+                }
+                button.statusbuttonbgcolor{
+                    background:#FFBF2F !important;
+                    border:1px solid #FFBF2F !important;
+                    color: #ffffff !important;
+                }
+                .modal-custom-css{                
+                    /*font-family: Lato !important;*/
+                    font-size: 19px !important;
+                    font-weight: 600 !important;
+                    font-style: normal !important;
+                    font-stretch: normal !important;
+                    line-height: 1.26 !important;
+                    letter-spacing: 0.5px !important;
+                    color: #353c43 !important;
+                }
+                .slds-modal__header{
+                    background-color: #f6f6f9 !important;
+                    text-align:left !important;
+                }   
+                span.custom-date-css{
+                    height: 24px !important;
+                    /*font-family: Lato !important;*/
+                    font-size: 16px;
+                    font-weight: bold !important;
+                    font-style: normal !important;
+                    font-stretch: normal !important;
+                    line-height: 1.5 !important;
+                    letter-spacing: 0.5px !important;
+                    color: #3fa6fb !important;
+                }      
+                .defination-css{
+                    height: 24px !important;
+                    /*font-family: Lato !important;*/
+                    font-size: 16px !important;
+                    font-weight: normal !important;
+                    font-style: normal !important;
+                    font-stretch: normal !important;
+                    line-height: 1.71 !important;
+                    letter-spacing: 0.44px !important;
+                    color: #353c43 !important;
+                }   
+                .slds-modal__footer{
+                    background-color:white !important;
+                    border-top:none !important;
+                }
+                .slds-modal__header{
+                    border-bottom: 1px solid #dddbda !important;
+                }
+                .custom-close-btn-css{                                        
+                    background-color: #ffffff !important;  
+                    color: #353c43 !important;
+                }
+                .custom-confirm-btn-css{                    
+                    background-color: #ffbf2f !important;
+                    border:1px solid #ffbf2f !important;
+                    color: #ffffff !important;
+                }
+                .custom-text-css-btn{
+                    width: 200px;
+                    height: 39px !important;
+                    border-radius: 4px !important;
+                    /*font-family: Lato !important;*/
+                    font-size: 16px !important;
+                    font-weight: normal !important;
+                    font-style: normal !important;
+                    font-stretch: normal !important;
+                    line-height: 1 !important;
+                    letter-spacing: 0.5px !important;
+                    text-align: center !important;
+                }
+                .custom-confirm-btn-css:hover{
+                    background-color:#ffbf2f !important;
+                    color:#ffffff !important;
+                }                
+                .custom-close-btn-css:hover{
+                    background-color:#ffffff !important;
+                    color:black !important;
+                }
+                div.border-bottom{
+                    border-bottom:1px solid lightgray;
+                    padding: 7px;
+                }
+                div.no-padding-in-mobile-case{
+                    padding:0px !important;
+                }
+                .padding-left-none{
+                    padding-left:0px !important;
+                }
+                .padding-right-none{
+                    padding-right:0px !important;
+                }
+                .popupBackground{ 
+                    background-color: lightgrey;
+                    opacity: 0.80;                
+                    position:fixed;
+                    padding:0;
+                    margin:0;                    
+                    width: 100%;
+                    height: 100%;
+                    top: 0;
+                    left: 0;
+                    z-index: 9998;
+                    border-radius: 5px; 
+                }
+                button.disabled{
+                    pointer-events: none;
+                }                
+                @media (min-width: 320px) and (max-width: 580px){                    
+                    .padding-right-mobile-none{
+                        padding-right:0px !important;
+                    }
+                    .padding-left-mobile-none{
+                        padding-left:0px !important;
+                    }
+                    .custom-text-css-btn{
+                        width: 140px;
+                    }
+                    p.heading_style{
+                        font-size: 14px !important;
+                    }
+                    button.fifthlessonbutton{
+                        width: 92px !important;
+                        height: 19px !important;
+                        font-size: 10px !important;
+                    }   
+                    div.margin-top-for-mobile{
+                        margin-top:25px;
+                    }   
+                    p.font-size-remain{
+                        font-size:19px !important;
+                    }       
+                    div.no-padding-in-mobile-case{
+                        padding:0px !important;
+                    }    
+                    div.border-right{
+                        border-right:none;
+                    } 
+                    .icon-font-size{
+                        margin-top:23px !important;
+                    }    
+                    .custom-date-css{
+                        font-size:12px !important;
+                    }      
+                    .no-border-for-mobile{
+                        border-bottom:none !important;
+                    } 
+                    .padding-top-for-mobile-case{
+                        padding-top:30px;
+                    }
+                    .ad-hoc-detail,.make-up-detail{
+                        font-size:12px;
+                    }
+                    label.info-label-style{
+                        font-size:16px !important;
+                    }
+                    .margin-top-info-icon{
+                        margin-top:29px !important;
+                    }
+                    .padding-none-left-right-for-mobile-case{
+                        padding-left:0px !important;
+                        padding-right:0px !important;
+                    }
+                    .slds-modal__container{
+                        margin: 420px 0.5rem;
+                    }    
+                    .mobile-font{
+                        font-size:12px !important;
+                    }
+                    .hide-mobile-case-info{
+                        display:none !important;
+                    }
+                }
+            </style>            
+         </head>      
+         <body>
+             <apex:form id="frm" styleClass="slds-col">
+                 <apex:actionStatus id="spinner">
+                     <apex:facet name="start"> 
+                        <apex:outputPanel id="backdrop" styleClass="popupBackground">
+                            <div role="status" class="slds-spinner slds-spinner_brand" style="transform: translate(-50%, -50%) rotate(0deg);"> 
+                                <img src="{!URLFOR($Resource.cardImages,'cardImages/aureus-loader.gif')}"/>
+                            </div>
+                        </apex:outputPanel>
+                     </apex:facet>
+                 </apex:actionStatus>
+                 <apex:actionFunction name="createBookingRecord" reRender="frm" action="{!createBookingRecord}" status="spinner" oncomplete="scrolltoptothepage();">
+                     <apex:param name="type" value="" assignTo="{!type}"/>
+                 </apex:actionFunction>
+                 <div class="slds-scope">
+                     <apex:outputPanel rendered="{!isError}" >
+                        <div class="slds-grid slds-wrap">
+                            <div class="slds-col slds-size_1-of-1 slds-p-horizontal_medium" style="text-align: center;padding:30px;">
+                                <label class="slds-form-element__label field-title" for="form-element-help-01" style="font-size: 18px;">
+                                    <apex:outputText value="{!errorMsg}" escape="false"/> 
+                                </label>                                   
+                            </div>
+                        </div>
+                     </apex:outputPanel>
+                     <apex:outputPanel rendered="{!!isError}" >
+                         <div class="slds-grid slds-wrap slds-p-around_medium no-padding-in-mobile-case">
+                             <div class="slds-col slds-size_1-of-1 slds-medium-size_8-of-12 slds-large-size--8-of-12 slds-p-horizontal_medium border-right padding-left-none padding-right-mobile-none">
+                                 <p class="slds-page-header__title slds-p-around_x-small heading_style">
+                                    5th Lesson <apex:outputPanel rendered="{!actionRequiredFlag}">&nbsp;-&nbsp;</apex:outputPanel><apex:outputPanel rendered="{!actionRequiredFlag}" style="color:red;">Action Required</apex:outputPanel>
+                                    <button type="button" class="slds-float_right slds-button_neutral fifthlessonbutton">5th Lesson</button>                                                           
+                                 </p>   
+                                 <div class="slds-col slds-p-around_small detail-style" style="padding-left:9px;">
+                                     <p>
+                                         Note that this is a 5th lesson in the month of <apex:outputText value="{0, date, MMMM}"><apex:param value="{!fifthLesson.Booking_Date__c}" /></apex:outputText> and you need to select one of the following options for the 5th lesson. For more details on 5th lessons, please visit our <a href="{!faqlink.link_name__c}" target="_blank">FAQ Page.</a>
+                                     </p>                                     
+                                     <p class="slds-p-top_large">
+                                         <label style="font-weight:bold;color:#ffbf2f;">Book Make-Up Lesson:</label><br/>
+                                         Book Make-Up Lesson: You currently have <b>{!fifthLesson.parent__r.Available_Make_up_Units__c} mins</b> make-up minutes available. Please choose "Book Make-Up Lesson" if you would like to attend the 5th lesson and utilise some of your available make-up minutes.
+                                     </p>
+                                     <p class="slds-p-top_large">
+                                        <label style="font-weight:bold;color:#e52b20;">Cancel Lesson:</label><br/>
+                                        If you are unable to attend the 5th lesson of the month for any reason, please select the option to Cancel Lesson at least <b>6-days</b> in advanced. 
+                                    </p>
+                                     <p class="slds-p-top_large">
+                                         <label style="font-weight:bold;color:#5575c7;">Ad-hoc Lesson:</label><br/>
+                                         If you don't have available make-up minutes and you would like to attend this lesson, please select ad-hoc lesson. This will charge your account for 1 ad-hoc lesson based on your enrolment package and send confirmation. Otherwise, this process will run automatically 6-days before your 5th lesson if there are no available make-up minutes and the lesson has not been cancelled. 
+                                     </p>
+                                 </div>
+                                 <p class="slds-page-header__title slds-p-around_x-small heading_style font-size-remain" style="padding-top:30px">
+                                    Lesson Details
+                                 </p> 
+                                 <ul class="slds-grid slds-wrap">
+                                     <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-around_small inline-flex">
+                                        <i class="material-icons icon-font-size">
+                                            account_circle
+                                        </i>
+                                        <p class="margin-top"><label class="label-style">Student</label><br/>
+                                            <label class="info-label-style">{!fifthLesson.student__r.name}</label>
+                                        </p>
+                                    </li>
+                                    <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-around_small inline-flex">
+                                        <i class="material-icons icon-font-size">
+                                            calendar_today
+                                        </i>
+                                        <p class="margin-top"><label class="label-style">Date</label><br/>
+                                            <label class="info-label-style">
+                                                <apex:outputText value="{0, date, dd MMM, yyyy}">
+                                                    <apex:param value="{!fifthLesson.Booking_Date__c}" /> 
+                                                </apex:outputText>
+                                            </label>
+                                        </p>
+                                    </li>
+                                    <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-around_small inline-flex">
+                                        <i class="material-icons icon-font-size">
+                                            music_note
+                                        </i>
+                                        <p class="margin-top"><label class="label-style">Lesson Type</label><br/>
+                                            <label class="info-label-style">{!fifthLesson.package__r.Instrument__c} Lesson</label>
+                                        </p>
+                                    </li>
+                                    <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-around_small inline-flex">
+                                        <i class="material-icons icon-font-size">
+                                            person
+                                        </i>
+                                        <p class="margin-top"><label class="label-style">Teacher</label><br/>
+                                            <label class="info-label-style">{!fifthLesson.teacher_account__r.name}</label>
+                                        </p>
+                                    </li>
+                                    <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-around_small inline-flex">
+                                        <i class="material-icons icon-font-size">
+                                            access_time
+                                        </i>
+                                        <p class="margin-top"><label class="label-style">Time</label><br/>
+                                            <label class="info-label-style">{!startTime}</label>
+                                        </p>
+                                    </li>
+                                    <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-around_small inline-flex">
+                                        <i class="material-icons icon-font-size">
+                                            timelapse
+                                        </i>
+                                        <p class="margin-top"><label class="label-style">Duration</label><br/>
+                                            <label class="info-label-style">
+                                                <apex:outputText value="{0,number,#.##}">
+                                                    <apex:param value="{!fifthLesson.Duration__c}"/>
+                                                </apex:outputText>
+                                                 Min
+                                            </label>
+                                        </p>
+                                    </li>
+                                    <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-around_small inline-flex">
+                                        <i class="material-icons icon-font-size">
+                                            check_box
+                                        </i>
+                                        <p class="margin-top"><label class="label-style">Status</label><br/>
+                                            <button type="button" class="slds-button_neutral statusbuttonbgcolor">Scheduled</button>
+                                        </p>
+                                    </li>
+                                    <li class="slds-size_6-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-around_small inline-flex">
+                                        <i class="material-icons icon-font-size">
+                                            location_on
+                                        </i>
+                                        <p class="margin-top"><label class="label-style">Location</label><br/>
+                                            <label class="info-label-style">{!fifthLesson.center__r.name}</label>
+                                        </p>
+                                    </li>
+                                 </ul>
+                             </div>
+                             <div class="slds-col slds-small_1-of-1 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-p-horizontal_medium margin-top-for-mobile padding-right-none padding-left-mobile-none">                                 
+                                 <p class="slds-page-header__title slds-p-around_x-small heading_style font-size-remain">
+                                    5th Lesson Options                           
+                                 </p>  
+                                 <apex:outputPanel rendered="{!actionRequiredFlag}">
+                                     <p class="slds-m-bottom_medium slds-p-top_medium">                            
+                                        <button class="slds-button slds-button_destructive slds-button_stretch custom-css-button {!IF(makeUpButtonDisaleFlag,'disabled','')}"  style="{!IF(makeUpButtonDisaleFlag,'background-color:lightgray;border:1px solid lightgray;','background-color:#ffbf2f;border:1px solid #ffbf2f;')}"><a href="javascript:void(0);" onClick="showModal('makeup');" style="text-decoration:none;">Book Make-Up Lesson</a></button>
+                                     </p>  
+                                     <p class="slds-m-bottom_medium slds-p-top_medium">                            
+                                        <a class="slds-button slds-button_destructive slds-button_stretch custom-css-button" style="background-color:#e52b20;border:1px solid #e52b20;" onClick="showModal('placeholder');">Cancel Lesson</a>
+                                     </p> 
+                                     <p class="slds-m-bottom_medium slds-p-top_medium">                            
+                                        <a class="slds-button slds-button_destructive slds-button_stretch custom-css-button" style="background-color:#575bde;border:1px solid #575bde;" onClick="showModal('adhoc');">Book Ad-Hoc Lesson</a>
+                                     </p> 
+                                 </apex:outputPanel> 
+                             </div>
+                         </div>
+                     </apex:outputpanel>
+                 </div>
+             </apex:form> 
+             <!-- modal start -->
+             <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-modal_small">
+              <div class="slds-modal__container">
+                <input type="hidden" id="action_name"/>  
+                <header class="slds-modal__header">
+                  <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onClick="hideModal();">
+                    <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                      <use xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Close</span>
+                  </button>
+                  <h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate modal-custom-css">5th Lesson - Cancel Lesson</h2>              
+                </header>
+                <div class="slds-modal__content slds-p-around_medium detail-style" id="modal-content-id-1">
+                  <div class="cancel-lesson-detail">
+                      You have requested to cancel {!fifthLesson.student__r.name} attendance for the 5th lesson. Please note that cancelling this lesson will not result in make-up credits and this time slot on {!fifthLesson.Booking_Day__c} will be available to other customers for booking make-up lessons.
+                      <br/><br/>
+                      If you would like to proceed with the cancellation, please confirm below.  
+                      <br/><br/>                      
+                  </div>
+                  <div class="make-up-lesson-detail">
+                      You are selecting the option to have a make-up lesson on {!fifthLesson.Booking_Day__c} {!startTime}. Please see the confirmation of the make-up lesson details below as well as the make-up balance.
+                      <br/><br/>
+                  </div>  
+                  <div class="ad-hoc-lesson-detail">
+                      You are selecting the option ad-hoc lesson on {!fifthLesson.Booking_Day__c} {!startTime} for {!fifthLesson.student__r.name}. Note  the Ad-Hoc lesson option will result in a charge of ${!totalFee} for the lesson and an invoice will be sent to you after confirmation. Please see the breakdown below:
+                      <br/><br/> 
+                  </div>                                   
+                  <div>
+                      <p class="slds-page-header__title slds-p-around_x-small heading_style font-size-remain heading-text-change padding-none-left-right-for-mobile-case">
+                        Cancellation of 5th Lesson                          
+                      </p>     
+                      <p style="margin-top:10px;"><span class="slds-p-around_x-small custom-date-css"><apex:outputText value="{0, date,EE,  dd MMM yyyy}"><apex:param value="{!fifthLesson.Booking_Date__c}" /></apex:outputText> - {!startTime}&nbsp;&nbsp;<button type="button" class="slds-button_neutral statusbutton" style="padding: 4px 10px;">Scheduled</button></span></p>
+                      <p class="slds-p-around_x-small defination-css"><b>{!fifthLesson.student__r.name}</b> - {!fifthLesson.package__r.instrument__c} Lesson (<apex:outputText value="{0,number,#.##}"><apex:param value="{!fifthLesson.Duration__c}"/></apex:outputText> min) with Teacher {!fifthLesson.teacher_account__r.name} at {!fifthLesson.Center__r.name}</p>
+                      <i class="slds-float_right material-icons icon-font-size margin-top-info-icon hide-mobile-case-info" style="margin-top:-37px;">
+                          info
+                      </i>
+                      <p class="slds-page-header__title slds-p-around_x-small heading_style font-size-remain no-border-for-mobile" style="margin-bottom: 25px;"></p>                       
+                  </div>     
+                  <div class="ad-hoc-detail padding-top-for-mobile-case">
+                      <p class="slds-page-header__title slds-p-around_x-small heading_style font-size-remain padding-none-left-right-for-mobile-case">
+                        Ad-Hoc Lesson Charges                       
+                      </p>
+                      <div class="slds-grid slds-wrap">
+                          <div class="slds-size_12-of-12 border-bottom">
+                              <span>Ad-Hoc {!fifthLesson.package__r.instrument__c}&nbsp;<apex:outputText value="{0,number,#.##}"><apex:param value="{!fifthLesson.Duration__c}"/></apex:outputText> min lesson</span>                              
+                              <span class="slds-float_right" style="font-weight: bold;">${!packageUnitFee}</span>
+                          </div>    
+                          <div class="slds-size_12-of-12 border-bottom">
+                              <span>GST</span>                              
+                              <span class="slds-float_right" style="font-weight: bold;">${!taxRate}</span>
+                          </div>
+                          <div class="slds-size_12-of-12 border-bottom">
+                              <span>Total Charge</span>                              
+                              <span class="slds-float_right" style="font-weight: bold;">${!totalFee}</span>
+                          </div>                      
+                      </div>
+                  </div>
+                  <div class="make-up-detail padding-top-for-mobile-case">
+                      <p class="slds-page-header__title slds-p-around_x-small heading_style font-size-remain padding-none-left-right-for-mobile-case">
+                        Make-Up Balance                      
+                      </p>
+                      <div class="slds-grid slds-wrap">
+                          <div class="slds-size_12-of-12 border-bottom">
+                              <span>Make Up Minutes Available</span>                              
+                              <span class="slds-float_right" style="font-weight: bold;">{!fifthLesson.parent__r.Available_Make_up_Units__c} mins</span>
+                          </div>    
+                          <div class="slds-size_12-of-12 border-bottom">
+                              <span>Make Up Minutes Utilised for Booking</span>                              
+                              <span class="slds-float_right" style="font-weight:600;">
+                                  <label class="info-label-style">
+                                    -&nbsp;
+                                    <apex:outputText value="{0,number,#.##}" styleClass="mobile-font">
+                                        <apex:param value="{!fifthLesson.Duration__c}"/>                                        
+                                    </apex:outputText><span class="mobile-font">&nbsp;mins</span>
+                                     
+                                  </label>
+                              </span>
+                          </div>
+                          <div class="slds-size_12-of-12 border-bottom">
+                              <span>Make-Up Balance After Booking</span>                              
+                              <span class="slds-float_right" style="font-weight: bold;">                                  
+                                  <apex:outputText value="{0,number,#.##}">
+                                      <apex:param value="{!fifthLesson.parent__r.Available_Make_up_Units__c - fifthLesson.Duration__c}"/>
+                                  </apex:outputText> mins
+                              </span>
+                          </div>                      
+                      </div>
+                  </div>   
+                </div>
+                <footer class="slds-modal__footer">
+                  <button class="slds-button slds-button_neutral custom-close-btn-css custom-text-css-btn" onClick="hideModal();">Close</button>
+                  <button type="button" class="slds-button slds-button_neutral custom-confirm-btn-css custom-text-css-btn" onClick="createBooking();">Confirm</button>
+                </footer>
+              </div>
+             </section>
+             <div class="slds-backdrop"></div>
+             <!-- modal end -->
+         </body>
+         <script>                 
+             function showModal(actionName){
+                 console.log(actionName);
+                 if(actionName == "placeholder"){
+                     $('#modal-heading-01').text('5th Lesson - Cancel Lesson');
+                     $('.heading-text-change').text('Cancellation of 5th Lesson');
+                     $('.make-up-lesson-detail,.ad-hoc-lesson-detail').hide();
+                     $('.cancel-lesson-detail').show();
+                     $('.ad-hoc-detail,.make-up-detail').hide();
+                     $('#action_name').val(actionName);
+                 }else if(actionName == "makeup"){
+                     $('#modal-heading-01').text('5th Lesson - Book a Make-Up Lesson');
+                     $('.heading-text-change').text('Make-Up Lesson Details');
+                     $('.cancel-lesson-detail,.ad-hoc-lesson-detail').hide();
+                     $('.make-up-lesson-detail,.make-up-detail').show();
+                     $('.ad-hoc-detail').hide();
+                     $('#action_name').val(actionName);
+                 }else{
+                     $('#modal-heading-01').text('5th Lesson - Ad-Hoc Lesson');
+                     $('.heading-text-change').text('Ad-Hoc Lesson Detail');
+                     $('.make-up-lesson-detail,.cancel-lesson-detail,.make-up-detail').hide();
+                     $('.ad-hoc-lesson-detail').show();
+                     $('.ad-hoc-detail').show();
+                     $('#action_name').val(actionName);
+                 }                 
+                 $('.slds-modal').addClass('slds-fade-in-open');
+                 $('.slds-backdrop').addClass('slds-backdrop_open');
+             }
+             function hideModal(){
+                 $('.slds-modal').removeClass('slds-fade-in-open');
+                 $('.slds-backdrop').removeClass('slds-backdrop_open');
+             }
+             function createBooking(){
+                 var actionName = $('#action_name').val();
+                 hideModal();
+                 if(actionName != '' || actionName.length == 0){
+                     console.log(actionName);
+                     //scrolltoptothepage();
+                     createBookingRecord(actionName);
+                 }
+             }
+             function scrolltoptothepage(){
+                window.parent.postMessage("", "*");                
+                setTimeout(function(){ 
+                    window.top.location = 'https://login.aureusacademy.com/schedule?pageid=2'; 
+                }, 18000);                                    
+             }             
+         </script>
+     </html>     
+</apex:page>

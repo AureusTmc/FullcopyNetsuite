@@ -1,0 +1,408 @@
+<apex:page id="pg" showHeader="false" sidebar="false" controller="FreeTrial_IpadCntrl"  standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False" action="{!checkExistingCustomer}">
+    <head>
+        <title>Aureus Academy Trial Booking</title>
+        <c:IpadHeaderJqueryCmp />
+        <!--
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0"/>
+        <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}"/>      
+        <apex:stylesheet value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.css')}"/>
+        <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700&display=swap" rel="stylesheet" /> 
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous" />
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery/jquery.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.js')}"/>               
+     	-->   
+        <style>
+         /*.sticky {  position: fixed;  top: 0;  width: 100%; z-index:99;}*/
+         .sticky {  position: fixed;  bottom: 0;  width: 100%; z-index:99;}
+            body{ font-size:16px; font-family: 'Lato', sans-serif; font-weight:300; color:#000; }
+           @media(min-width:991px){.new-container.class-true{width:80%; margin:0 auto; background-color:#fff;} .class-true .sticky{width:80%; left:10%;}}
+            .slds-checkbox .slds-form-element__label { font-size: .9125rem; color:#000; }
+            @media(min-width:999px){.slds-modal__container {width: 40%;}}
+            blocklist{ margin:0px;}
+            .icon-collapse,.icon-collapse:focus, .icon-collapse:hover {color:#000; font-weight:bold; font-size:26px;text-decoration: none;}
+            input{
+            height: calc(1.875rem + (1px * 10));}
+            ul li{margin-left:0px;}
+            @media(min-width:999px){
+            .m-lg-right{margin-right: .75rem;}}
+            @media(min-width:767px){
+            .text-lg-left{ text-align:left;}
+            .text-lg-right{text-align:right;}
+            .slds-large-p-around_large{padding:1.5rem;}
+            .slds-large-p-horizontal_xx-large{padding-left: 3rem; padding-right: 3rem;}
+            }
+            
+            
+            .btn-yellow, .btn-yellow:hover, .btn-yellow:focus {
+            background-color:#ffbf2f;
+            color:#fff;
+            }
+            
+            .slds-button_success{
+            color:#fff !important;
+            padding-left:12px;
+            padding-right:12px;}
+            .text-yellow{color:#ffbf2f;}
+            .btn-block{
+            display:block;
+            font-size:1.2rem; 
+            }
+            .btn-gray,.btn-gray:hover, .btn-gray:focus{
+            background-color:#ccced0;
+            color:#fff;
+            }
+            .slds-checkbox .slds-checkbox--faux, .slds-checkbox .slds-checkbox_faux{
+            font-size:16px;
+            border-color:#000;
+            box-shadow: 0 1px 0 0 #ececee;
+            top:4px;
+            }
+            .box-info{
+            box-shadow: 0 1px 0 0 #ececee;
+            background-color:#fff;
+            margin-bottom:4px;
+            }
+            #step-2, #step-3, .bg-white{background-color:#fff;}
+            .title-no{border: solid 1px #353c43; border-radius:50%; padding: 4px 9px;} 
+            .bg-light{background-color:#f7f7f7 !important;}
+            .w-50{width:50%;}
+            .font-bold{font-weight:bold;}
+            @media(max-width:767px){
+            .text-sm-center{
+            text-align:center;
+            }
+            }
+        </style>
+        
+        <script>
+        //@Juneid 05 July 2020, This method is used for check Osia and Existing customer
+        window.onload = function() {
+            if('{!errorMsg}' == 'System found you as an existing customer and hence the referral cannot be applied'){
+                console.log('error message --->');
+                $('.cmpErrDiv').removeClass('slds-hide');
+                $('.contentDiv').html('{!errorMsg}');
+                confirm('System found you as an existing customer and hence the referral cannot be applied');
+                
+            }
+        }
+        function bookTrial(){
+                disableBookBtn(true);
+                var isErr = false;
+                $('.errortxt').remove();
+                $('.inputchk').each(function(){                              
+                    if(!$(this).prop('checked')){
+                        $(this).parent().parent().after('<div class="slds-form-element__help errortxt" style="color:#F44336">This field is required</div>');
+                        isErr = true;        
+                    }
+                });
+                
+                if(isErr){
+                    disableBookBtn(false);
+                    return;
+                }
+
+                saveTrialBook();
+            }
+        
+            //Added by Rajesh 26th June 2019, for enable/disable booking button for stop double click
+            function disableBookBtn(isDisable){
+                if(isDisable)
+                    $('#bookTrialId').css('pointer-events', 'none');
+                else
+                    $('#bookTrialId').css('pointer-events', '');
+            }
+        </script>
+    </head>
+    <body class="">
+      <apex:outputPanel id="loadCalendarPanel">
+          <apex:outputPanel id="loadCalendarPanel1">
+              <script>
+                  function checkError(){
+                      /* var isErrMsg = '{!errorMsg}';
+                      if(isErrMsg == 'success'){
+                        window.open('https://aureusacademy.com/trial-booking-confirmation', '_self');
+                      }*/
+                      
+                      var isErrOnSave = '{!isError}';
+                      console.log('SDFSDF--->'+'{!errorMsg}');
+                      if(isErrOnSave == 'true'){
+                          disableBookBtn(false);
+                          
+                          $('.cmpErrDiv').removeClass('slds-hide');
+                          $('.contentDiv').html('{!errorMsg}');
+                          if('{!errorMsg}' == 'Timeslot not available.'){
+                            if(confirm("Timeslot is no longer available now. Please try again.")){
+                                if({!isSiteGuestUser})
+                                    redirectToFreeTrial();
+                                else
+                                	redirectToHome();
+                            }   
+                          }
+                          return;
+                          
+                      }else{
+                          $('.cmpErrDiv').addClass('slds-hide');
+                      }
+                  }
+              </script>
+          </apex:outputPanel> 
+      </apex:outputPanel>    
+      <apex:outputPanel rendered="{!isSiteGuestUser}">     
+            <div  class="slds-p-around_medium" style="font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;">Aureus Academy Enrolment Process       
+            </div>
+            <p style="text-align:center;"><apex:image url="{!$Resource.Aureus_logo_png}" /></p>
+      </apex:outputPanel>    
+      <apex:form id="frm">
+        <apex:actionFunction name="backBtn" action="{!backBtnCmp5}" status="spinner"/>
+        <!--<apex:actionFunction name="saveTrialBook" action="{!saveTrialData}"/>-->
+        <apex:actionFunction name="saveTrialBook"  action="{!saveTrialData}" status="spinner" oncomplete="checkError();return false;" reRender="loadCalendarPanel"/>
+        <apex:actionFunction name="redirectToHome" action="/apex/adminHome"/>
+        <apex:actionFunction name="redirectToFreeTrial" action="/apex/freetrial_ipad1"/>
+        <!--<apex:actionStatus id="spinner">
+            <apex:facet name="start"> 
+                <apex:outputPanel id="backdrop" styleClass="popupBackground">
+                    <div role="status" class="slds-spinner slds-spinner_brand slds-spinner_large"> 
+                        <div class="slds-spinner__dot-a"></div>
+                        <div class="slds-spinner__dot-b"></div>
+                    </div>
+                </apex:outputPanel>
+            </apex:facet>
+        </apex:actionStatus>-->
+        <apex:actionStatus id="spinner" styleClass="status">
+              <apex:facet name="start">
+                  <div class="demo-only demo--inverse " style="height:100%;width:100%;z-index:200;position:fixed">
+                      <div class="slds-spinner_container" style="height:100%;width:100%;">
+                          <div role="status" class="slds-spinner slds-spinner_large slds-spinner_brand">
+                              <span class="slds-assistive-text">Loading</span>
+                              <div class="slds-spinner__dot-a"></div>
+                              <div class="slds-spinner__dot-b"></div>
+                          </div>
+                      </div>
+                  </div>
+              </apex:facet>
+         </apex:actionStatus>   
+		<div class="new-container {!IF(isSiteGuestUser, 'class-true','')}">      
+        <div  class="slds-text-heading_large  slds-p-around_small slds-text-align_center" style="font-weight:bold;">Trial Request Summary</div>
+              
+                <!--
+            <div  class="slds-grid slds-wrap slds-p-around_small " id="myHeader" style="background-color:#f9f9fb; transition:all 0.3s ease-out;">
+                <div class="slds-size_1-of-1 slds-medium-size_1-of-3 slds-text-align_center slds-medium-order_2 slds-p-bottom_small">
+                    <h3 class="slds-text-heading_large" style="font-weight:bold;">Trial Confirmation</h3>
+                </div>
+                <div class="slds-size_1-of-1 slds-medium-size_1-of-3 slds-medium-order_1  text-sm-center">
+                    <a class="slds-button btn-gray slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-p-horizontal_large slds-m-bottom_small" href="javascript:void(0)" onClick="backBtn();"  id="back_step1" style="margin-bottom: .75rem;">Back</a>  
+                </div>
+            </div>
+          <script>
+          window.onscroll = function() {myFunction()};
+          var header = document.getElementById("myHeader");
+          var sticky = header.offsetTop;
+          
+          function myFunction() {
+              if (window.pageYOffset > sticky) {
+                  header.classList.add("sticky");
+              } else {
+                  header.classList.remove("sticky");
+              }
+          }
+          </script> -->
+          <div class="slds-text-align_center slds-is-relative slds-hide cmpErrDiv">
+              <div class="slds-notify slds-notify_toast slds-theme_error slds-m-left_none slds-m-right_medium" role="status">
+                  <div class="slds-notify__content">
+                      <h2 class="slds-text-heading_small contentDiv"></h2>
+                  </div>
+                  <div class="slds-notify__close">
+                      <button class="slds-button slds-button_icon slds-button_icon-inverse" onclick="$('.cmpErrDiv').addClass('slds-hide');return false;" title="Close">
+                          X
+                          <span class="slds-assistive-text">Close</span>
+                      </button>
+                  </div>
+              </div>
+          </div>  
+        
+        <div class="container slds-p-around_small" id="step-2" style="background-color:#fff;">
+        <hr style="margin:0px 0px 30px"/> 
+            <h3 class="slds-text-heading_medium" style="font-weight:bold;">Parent Details</h3>
+            <hr style="margin-top: 25px;" />
+            <div class="slds-grid slds-wrap date-list">
+                <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                    <p class=""><strong>First Name</strong></p>
+                    <div class="box-info m-lg-right">
+                        {!parentAcc.firstName}
+                    </div> 
+                </div>
+                
+                <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                    <p class=""><strong>Last Name</strong></p>
+                    <div class="box-info" >
+                        {!parentAcc.lastName}
+                    </div> 
+                </div>
+                <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                    <p class=""><strong>Email</strong></p>
+                    <div class="box-info m-lg-right">
+                        {!parentAcc.PersonEmail}
+                    </div> 
+                </div>
+                
+                <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                    <p class=""><strong>Phone</strong></p>
+                    <div class="box-info" >
+                        {!parentAcc.phone}
+                    </div> 
+                </div>
+            </div>
+        </div>
+        
+        <hr style="margin:0px;"/> 
+        
+        <div class="container slds-p-around_small slds-large-p-around_large bg-white " >
+            <apex:variable value="{!1}" var="stuIndex"/>
+            <apex:repeat value="{!enrModelList}" var="enrTrial">
+                <div class="slds-m-bottom_medium">
+                    <h3 class="slds-text-heading_medium" style="font-weight:bold;">Trial Lesson {!stuIndex} Details</h3>
+                    <hr style="margin-top: 25px;" />
+                    <div class="slds-grid slds-wrap date-list">
+                        <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                            <p class=""><strong>Centre</strong></p>
+                            <div class="slds-p-vertical_small box-info m-lg-right">
+                                {!slcdCentrName}
+                            </div> 
+                        </div>
+                        
+                        <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                            <p class=""><strong>Lesson Type</strong></p>
+                            <div class="slds-p-vertical_small box-info" >
+                                {!enrTrial.slcdInstrument} Trial Lesson - {!enrTrial.slcdDuration} min
+                            </div> 
+                        </div>
+                        <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                            <p class=""><strong>Teacher</strong></p>
+                            <div class="slds-p-vertical_small box-info m-lg-right">
+                                {!enrTrial.slcdTchrName}
+                            </div> 
+                        </div>
+                         <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                            <p class=""><strong>Referral Code</strong></p>
+                            <div class="slds-p-vertical_small box-info m-lg-right">
+                                {!uniqueRefCode}
+                            </div> 
+                        </div>
+                        
+                        <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                            <p class=""><strong>Day &amp; Time</strong></p>
+                            <div class="slds-p-vertical_small box-info" >
+                                 <apex:outputLabel >
+                                     <apex:outputText value="{0, date, EEE}">
+                                         <apex:param value="{!enrTrial.slcdDateDt}" />
+                                     </apex:outputText>,
+                                     <apex:outputText value="{0, date, dd MMMM yyyy}">
+                                         <apex:param value="{!enrTrial.slcdDateDt}"/>
+                                     </apex:outputText>
+                                     at {!enrTrial.slcdSlot} 
+                                </apex:outputLabel>
+                            </div> 
+                        </div>
+                        
+                        <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                            <p class=""><strong>First Name</strong></p>
+                            <div class="slds-p-vertical_small box-info m-lg-right">
+                                {!enrTrial.studentAcc.FirstName}
+                            </div> 
+                        </div>
+                        
+                        <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                            <p class=""><strong>Last Name</strong></p>
+                            <div class="slds-p-vertical_small box-info" >
+                                {!enrTrial.studentAcc.LastName}
+                            </div> 
+                        </div>
+                        
+                        <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                            <p class=""><strong>Date of Birth</strong></p>
+                            <div class="slds-p-vertical_small box-info m-lg-right">
+                                <!--DD / MM / YYYY-->
+                                <apex:outputText value="{0, date, MM/dd/yyyy}">
+                                    <apex:param value="{!enrTrial.studentAcc.PersonBirthdate}"/>
+                                </apex:outputText>
+                            </div> 
+                        </div>
+                        
+                        <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                            <p class=""><strong>Gender</strong></p>
+                            <div class="slds-p-vertical_small box-info" >
+                                {!enrTrial.studentAcc.Gender__c}
+                            </div> 
+                        </div>
+                        
+                        <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                            <p class=""><strong>Learning Style</strong></p>
+                            <div class="slds-p-vertical_small box-info m-lg-right">
+                                {!enrTrial.studentAcc.Learning_Style__c}
+                            </div> 
+                        </div>
+                        
+                        <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                            <p class=""><strong>Previous Experience (if any)</strong></p>
+                            <div class="slds-p-vertical_small box-info" >
+                                {!enrTrial.stuPreExperience}
+                            </div> 
+                        </div>
+                    </div>
+                    <p class=""><strong>Additional Comments</strong></p>
+                    <p class="slds-p-bottom_medium">{!enrTrial.studentAcc.Description}</p>
+                </div>
+                <apex:variable value="{!stuIndex+1}" var="stuIndex"/>            
+            </apex:repeat>
+            
+            
+            <hr/>
+            
+            <div class="slds-form-element">
+                <div class="slds-form-element__control">
+                    <div class="slds-checkbox">
+                        <input type="checkbox" name="options" id="checkbox-unique-id-72" class="inputchk" value="checkbox-unique-id-72" checked="" />
+                        <label class="slds-checkbox__label" for="checkbox-unique-id-72">
+                            <span class="slds-checkbox_faux"></span>
+                            <span class="slds-form-element__label">I agree to the cancellation policy.</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="slds-form-element">
+                <div class="slds-form-element__control">
+                    <div class="slds-checkbox">
+                       <!-- <input type="checkbox" name="options" id="checkbox-unique-id-72" value="checkbox-unique-id-72" checked="" />-->
+                        <apex:inputCheckbox value="{!iWantReceivedLatestNew}" id="receiveNews" styleClass="slds-checkbox inputchk"/>
+                        <label class="slds-checkbox__label" for="pg:frm:receiveNews">
+                            <span class="slds-checkbox_faux"></span>
+                            <span class="slds-form-element__label">By signing up for a trial lesson at Aureus Academy, you will be subscribed to our latest news and updates.</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div class="slds-grid slds-grid_align-center slds-p-vertical_x-large">
+                <div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-medium-size_1-of-2">
+                    <!--<a class="slds-button btn-block slds-button_success  slds-p-around_x-small slds-m-bottom_large" href="#">Confirm Trial Lesson</a>-->
+                    <a  onclick="bookTrial();return false;" id="bookTrialId" class="slds-button btn-block slds-button_success  slds-p-around_x-small slds-m-bottom_large">Confirm Trial Lesson</a>
+                </div>
+            </div>
+        </div>
+        
+         
+            
+            <div class="slds-grid slds-wrap slds-p-around_small sticky"  style="background-color:#f9f9fb; transition:all 0.3s ease-out;">
+                    <div class="slds-size_1-of-2 "><span>
+                        <a class="slds-button btn-gray slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-p-horizontal_large slds-m-bottom_small" href="javascript:void(0)" onClick="backBtn();"  id="back_step1" style="">Back</a> </span>  
+                    </div>
+                    
+                    <div class="slds-size_1-of-2 slds-text-align_right">
+                    </div>
+                </div>
+        </div>
+        </apex:form>  
+    </body>
+</apex:page>

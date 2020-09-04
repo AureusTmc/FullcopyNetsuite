@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>EUCF__c</fullName>
+    <externalId>false</externalId>
+    <formula>IF(EUCF_Contribution__c, 
+	IF(Total_Amount_CPF__c &gt; 10000 ,20,
+		IF(Total_Amount_CPF__c &gt; 7000 ,16,
+			IF(Total_Amount_CPF__c &gt;4000 ,12,
+				IF(Total_Amount_CPF__c &gt; 2500 ,9,
+					IF(Total_Amount_CPF__c &gt; 1500 ,6, 
+						IF(Total_Amount_CPF__c &gt; 1000 ,4, 
+							IF(Total_Amount_CPF__c &gt; 0 ,2,0)
+						)
+					)
+				)
+			)
+		)
+	), 0
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>EUCF</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Currency</type>
+</CustomField>

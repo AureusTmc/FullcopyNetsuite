@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Queue xmlns="http://soap.sforce.com/2006/04/metadata">
+    <doesSendEmailToMembers>false</doesSendEmailToMembers>
+    <email>jurongpoint@aureusacademy.com</email>
+    <name>Jurong Point Queue</name>
+    <queueMembers>
+        <users>
+            <user>angela.cortez@aureusacademy.com</user>
+            <user>cheryl.lai@aureusacademy.com</user>
+            <user>chiara@aureusacademy.com</user>
+            <user>kristy.chan@aureusacademy.com</user>
+        </users>
+    </queueMembers>
+    <queueSobject>
+        <sobjectType>Case</sobjectType>
+    </queueSobject>
+</Queue>

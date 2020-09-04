@@ -1,0 +1,7 @@
+<apex:page >
+    <script>
+    window.onload = function() { 
+        window.location.href='/apex/iPadHomePage';
+    }
+    </script>
+</apex:page>

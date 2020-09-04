@@ -1,0 +1,386 @@
+<apex:page standardStylesheets="false" lightningStylesheets="true" showHeader="false" sidebar="false" controller="UpdateCustomerCardForPortalCntrl" docType="html-5.0" applyBodyTag="false" applyHtmlTag="false" cache="false">
+    <div id="status" class="demo-only demo--inverse " style="height:100%;width:100%;z-index:200;position:fixed;display:none;"> 
+        <div class="slds-spinner_container" style="height:100%;width:100%;"> 
+            <div role="status" class="slds-spinner slds-spinner_large slds-spinner_brand">
+                <span class="slds-assistive-text">Loading</span> <div class="slds-spinner__dot-a">
+                </div> 
+                <div class="slds-spinner__dot-b"></div>
+            </div>
+        </div>
+    </div>
+    <head>
+        <meta http-equiv='cache-control' content='no-cache' />
+        <meta http-equiv='expires' content='0' />
+        <meta http-equiv='pragma' content='no-cache' />
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery/jquery.js')}"/>
+        <apex:includeScript value="https://js.stripe.com/v3/"/> 
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}"/>
+        <apex:slds />
+    </head>    
+    <style>
+        /*body{       
+            background-image: url("{!$Resource.music}") !important;     
+            background-size:100% 100% !important;       
+            background-repeat:no-repeat !important;     
+            background-position:left !important;        
+        }*/   
+        
+    span.main-title {       
+        color: #200a28;     
+        font-size: 20px;        
+        border-radius: 0;       
+        font-weight: bold;      
+        /*margin-bottom: 10px;*/        
+        display: block;     
+        line-height: 30px;      
+        /*padding-bottom:10px;*/        
+        text-align:center;      
+    }           
+    
+    .custom-btn {       
+        padding: 5px 46px 3px !important;       
+        color: #fff !important;     
+        background: #f79c1a !important;     
+        font-size: 16px !important;     
+        text-transform: uppercase;      
+        line-height: 20px !important;       
+        margin: 15px 0 20px;        
+        float: right;       
+        height:32px;        
+    }
+    .outstanding{
+        padding: 20px;
+        text-align: center;
+    }
+    #card-errors, #card-update-errors{
+        color:red;
+    }
+    .StripeElement {
+        box-sizing: border-box;
+        
+        height: 40px;
+        
+        padding: 10px 12px;
+        
+        border: 1px solid transparent;
+        border-radius: 4px;
+        background-color: white;
+        
+        box-shadow: 0 1px 3px 0 #e6ebf1;
+        -webkit-transition: box-shadow 150ms ease;
+        transition: box-shadow 150ms ease;
+    }
+    
+    .StripeElement--focus {
+        box-shadow: 0 1px 3px 0 #cfd7df;
+    }
+    
+    .StripeElement--invalid {
+        border-color: #fa755a;
+    }
+    
+    .StripeElement--webkit-autofill {
+        background-color: #fefde5 !important;
+    }
+    .select-list{
+        width:30% !important;
+        color:black !important;
+    }
+    .width-mobile-desktop{
+        width:70%;
+    }
+    .image-height-width{
+        height:25px !important;
+    }    
+    .popupBackground{ 
+        background-color: lightgrey;
+        opacity: 0.80;                
+        position:fixed;
+        padding:0;
+        margin:0;                
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        z-index: 9998;
+        border-radius: 5px; 
+    }
+    @media (min-width: 320px) and (max-width: 580px){
+        .slds-spinner{
+                    top:30% !important;
+                }
+        .width-mobile-desktop{
+            width:100% !important;
+        }   
+        .select-list{
+            width:100% !important;
+        }
+        .padding-top-mobile{
+            padding-top:10px !important;
+        }
+        span img{
+            margin-bottom:12px !important;
+        }
+        .month-div{
+            margin-bottom:12px !important;
+        }
+        .image-height-width{
+            width:25px !important;
+            vertical-align:middle !important;
+        }
+    }
+    #card-number iframe, #card-expire iframe, #card-cvc iframe{
+        height: 30px !important;
+        top: 7px !important;
+        position: absolute;
+    }    
+    </style>
+    <body>
+             <div class="slds-scope">  
+                <div class="slds-grid slds-wrap">
+                    <div class="slds-col slds-medium-size_12-of-12">  
+                        <span class="main-title">
+                            Update/Add a New Credit Card
+                        </span>
+                        <hr/>
+                    </div>    
+                </div>
+                <apex:outputPanel rendered="{!!isError}">
+                <apex:outputPanel rendered="{!!isNotaStripeCstmr}">  
+                <apex:form styleClass="slds-col" id="frm">
+                <apex:actionfunction name="updCard" action="{!updateCard}" reRender="frm" status="spinner"/>                                    
+                <apex:actionStatus id="spinner">
+                    <apex:facet name="start"> 
+                        <apex:outputPanel id="backdrop" styleClass="popupBackground">
+                            <div role="status" class="slds-spinner slds-spinner_brand" style="transform: translate(-50%, -50%) rotate(0deg);"> 
+                                <img src="{!URLFOR($Resource.cardImages,'cardImages/aureus-loader.gif')}"/>
+                            </div>
+                        </apex:outputPanel>
+                    </apex:facet>
+                </apex:actionStatus>    
+                <div class="slds-grid slds-wrap">
+                    <div class="slds-col slds-size--1-of-1 slds-small-size--12-of-12 slds-medium-size--12-of-12 slds-p-horizontal_medium">                        
+                        <p><b style="font-size: 19px;color:black">Update Expiry Date of The Default Card on File</b></p><br/>
+                    </div>    
+                </div>
+                <div class="slds-grid slds-wrap slds-align_absolute-center width-mobile-desktop">  
+                    <div class="slds-col slds-size--1-of-1 slds-small-size--12-of-12 slds-medium-size--4-of-12 slds-p-horizontal_medium">                        
+                        <strong class="card-margin-mobile" style="color:black;font-size:14px;">Card Info</strong> 
+                        <apex:outputText value="{!cardImage}" escape="false" styleclass="margin-bottom-mobile"/> x {!cardNumber}                        
+                    </div>
+                    <div class="slds-col slds-size--1-of-1 slds-small-size--12-of-12 slds-medium-size--4-of-12 slds-p-horizontal_medium month-div">                        
+                        <apex:selectList id="month" value="{!selMonth}" multiselect="false" size="1" styleclass="slds-select">
+                            <apex:selectOption itemValue="" itemLabel="Select Month"/>
+                            <apex:selectOption itemValue="1" itemLabel="01"/>
+                            <apex:selectOption itemValue="2" itemLabel="02"/>
+                            <apex:selectOption itemValue="3" itemLabel="03"/>
+                            <apex:selectOption itemValue="4" itemLabel="04"/>
+                            <apex:selectOption itemValue="5" itemLabel="05"/>
+                            <apex:selectOption itemValue="6" itemLabel="06"/>
+                            <apex:selectOption itemValue="7" itemLabel="07"/>
+                            <apex:selectOption itemValue="8" itemLabel="08"/>
+                            <apex:selectOption itemValue="9" itemLabel="09"/>
+                            <apex:selectOption itemValue="10" itemLabel="10"/>
+                            <apex:selectOption itemValue="11" itemLabel="11"/>
+                            <apex:selectOption itemValue="12" itemLabel="12"/>
+                        </apex:selectList>
+                    </div>
+                    <div class="slds-col slds-size--1-of-1 slds-small-size--12-of-12 slds-medium-size--4-of-12 slds-p-horizontal_medium">
+                        <apex:selectList id="year" value="{!selYear}"  multiselect="false" size="1" styleclass="margin-top-mobile slds-select">
+                            <apex:selectOption itemValue="" itemLabel="Select Year"/>
+                            <apex:selectOptions value="{!Years}" />
+                        </apex:selectList>
+                    </div>
+                </div>
+                <div class="slds-grid slds-wrap">
+                    <div class="slds-col slds-size--1-of-1 slds-small-size--12-of-12 slds-medium-size--12-of-12 slds-p-horizontal_medium">
+                        <apex:outputPanel rendered="{!isErrorInUpdateCard}">
+                            <div id="card-update-errors" role="alert" style="text-align:center">{!errorMessage}</div>
+                        </apex:outputPanel>    
+                    </div>    
+                </div>    
+                <div class="slds-grid slds-wrap">
+                    <div class="slds-col slds-size--1-of-1 slds-small-size--12-of-12 slds-medium-size--12-of-12 slds-align_absolute-center slds-p-around_x-small">  
+                        <button  class="slds-button slds-button_neutral custom-btn" onclick="updCard();return false;" style="border:1px solid #F79C1A">
+                            Update Card
+                            <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
+                                <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
+                                    <use fill="White" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#chevronright')}" />
+                                </svg>
+                            </span>
+                        </button>
+                    </div>    
+                </div> 
+                    </apex:form>
+                </apex:outputPanel>
+                    <apex:outputPanel rendered="{!isNotaStripeCstmr}">
+                        <div class="slds-form-element" id="cstmrNotFoundCmpId">
+                            <div class="slds-p-around_x-large">
+                                <center>
+                                    <p><b style="font-size: small;">Currently there are no payment methods linked to your account. Please click here to upload a new payment method.</b></p>                                    
+                                    <div class="footer slds-p-around_medium" >   
+                                        <button style="float:none;" class="slds-button slds-button_neutral custom-btn" onclick="showAddCstmr();return false;">
+                                            Ok
+                                            <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
+                                                <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
+                                                    <use fill="White" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#chevronright')}" />
+                                                </svg>
+                                            </span>
+                                        </button>    
+                                        <button style="float:none;"  class="slds-button slds-button_neutral custom-btn" onclick="self.close();">
+                                            Cancel
+                                            <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
+                                                <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
+                                                    <use fill="White" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#chevronright')}" />
+                                                </svg>
+                                            </span>
+                                        </button>                                                                                   
+                                    </div> 
+                                </center>
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <div class="addCardCmpcls" id="addCardCmpId" style="display:{!If(isNotaStripeCstmr,'none','block')};margin-top:20px;" >
+                            <form method="post" id="payment-form">
+                                <div class="slds-p-horizontal_medium">
+                                    <!--<p><b style="font-size: smaller;">Add Default Card on File</b></p>-->
+                                    <p><b style="font-size: 19px;color:black;">Add a New Credit Card</b>&nbsp;&nbsp;<img src="{!URLFOR($Resource.cardImages,'cardImages/visa.png')}" class="image-height-width"/>&nbsp;&nbsp;<img src="{!URLFOR($Resource.cardImages,'cardImages/mastercard.png')}" class="image-height-width"/>&nbsp;&nbsp;<img src="{!URLFOR($Resource.cardImages,'cardImages/amex.png')}" class="image-height-width"/></p><br/>
+                                    <p style="font-size:16px;color:black">Please fill in the details below to add a new credit card on file. Note that the card you update will become the default credit card for billings.</p><br/>                                    
+                                    <div id="card-errors" class="slds-align_absolute-center" role="alert"></div>
+                                </div>     
+                                <div class="slds-grid slds-wrap slds-p-horizontal_medium">
+                                    <p><b style="font-size: 19px;color:black;">Customer Name  &nbsp;</b></p>
+                                    <p style="font-size:19px;color:black">{!cstmrName}</p><br/><br/>
+                                </div>
+                                <div class="slds-grid slds-wrap slds-p-horizontal_medium">
+                                    <p><b style="font-size: 19px;color:black;">Credit Card Number</b></p>
+                                    <div class="slds-col slds-size--1-of-1 slds-small-size--12-of-12 slds-medium-size--12-of-12" id="card-number">
+                                        
+                                    </div> 
+                                </div>
+                                <div class="slds-grid slds-wrap slds-p-horizontal_medium">                                    
+                                    <div class="slds-col" style="padding-right:20px;">
+                                       <p><b style="font-size: 19px;color:black;">Expiry Date</b></p>
+                                       <div id="card-expire">
+                                           
+                                       </div>
+                                    </div>                                    
+                                    <div class="slds-col" style="padding-left:20px;">
+                                        <p><b style="font-size: 19px;color:black;">CVC Number</b></p>
+                                        <div id="card-cvc">
+                                            
+                                        </div>                                        
+                                    </div>                                    
+                                </div>
+                                <div class="footer slds-p-around_medium slds-align_absolute-center">                       
+                                    <button  class="slds-button slds-button_neutral custom-btn" style="border:1px solid #63CE63;background:#63CE63 !important;"> <!-- onclick="addNewCard();" -->
+                                        Add a card
+                                        <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
+                                            <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
+                                                <use fill="White" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#chevronright')}" />
+                                            </svg>
+                                        </span>
+                                    </button>
+                                </div>                      
+                            </form>
+                          </div>
+                </apex:outputPanel>  
+                <apex:outputPanel rendered="{!isError}">
+                    <div class="outstanding">{!errorMessage}</div >
+                </apex:outputPanel>
+            </div> 
+    <script>
+        var stripe = Stripe('{!apiKey}');
+        console.log(stripe);
+        var elements = stripe.elements();
+        var cardNumber = elements.create("cardNumber",{
+            classes:{
+                base:'slds-input'}
+        });
+        cardNumber.mount("#card-number");
+        var cardExpire = elements.create("cardExpiry",{
+            classes:{
+                base:'slds-input'}
+        });
+        cardExpire.mount("#card-expire");
+        var cardCvc = elements.create("cardCvc",{
+            classes:{
+                base:'slds-input'}
+        });
+        cardCvc.mount("#card-cvc");        
+        cardNumber.addEventListener('change', function(event) {
+            var displayError = document.getElementById('card-errors');
+            if (event.error) {
+                console.log(event.error);
+                displayError.textContent = event.error.message;
+            } else {
+                displayError.textContent = '';
+            }
+        });        
+        var form = document.getElementById('payment-form');
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            stripe.createToken(cardNumber).then(function(result) {
+                console.log('result token ',result);
+                
+                if (result.error) {
+                    var errorElement = document.getElementById('card-errors');
+                    errorElement.textContent = result.error.message;
+                } else {
+                    document.getElementById("status").style.display = 'block'; 
+                    stripeTokenHandler(result.token);
+                }
+            });
+        });        
+        function stripeTokenHandler(token) {
+            var form = document.getElementById('payment-form');
+            var hiddenInput = document.createElement('input');
+            hiddenInput.setAttribute('type', 'hidden');
+            hiddenInput.setAttribute('name', 'stripeToken');
+            hiddenInput.setAttribute('value', token.id);
+            form.appendChild(hiddenInput);
+            console.log(token.card.id);
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.UpdateCustomerCardForPortalCntrl.addCard}',token.id,'{!cstmrAccId}','{!isNotaStripeCstmr}','{!countryCode}',
+                
+                function(result, event){
+                    if(event.status){
+                        document.getElementById("status").style.display = 'none';
+                        if(result == 'Card update Successfully' || result == 'Customer created Successfully'){
+                            location.href='apex/trialthankyou';
+                            //sendMail();
+                        }else{
+                            document.getElementById('card-errors').innerHTML = result;
+                        }                              
+                    }               
+                },
+                {escape: true}
+            );
+        }
+        
+        function sendMail(){
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.UpdateCustomerCardForPortalCntrl.sendInvoiceMail}','{!cstmrAccId}',
+                
+                function(result, event){
+                    if(event.status){
+                        document.getElementById("status").style.display = 'none';
+                        if(result == 'Mail Sent'){
+                            location.href='apex/trialthankyou';
+                        }else{
+                            
+                        }                              
+                    }               
+                },
+                {escape: true}
+            );
+        }
+   
+        function showAddCstmr(){
+            document.getElementById('cstmrNotFoundCmpId').style.display = 'none';
+            document.getElementById('addCardCmpId').style.display = 'block';        
+        }
+    </script>
+    </body>    
+</apex:page>

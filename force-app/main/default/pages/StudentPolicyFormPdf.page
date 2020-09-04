@@ -1,0 +1,224 @@
+<apex:page renderAs="pdf" controller="StudentPolicyFormPdfCntrl"  applyBodyTag="false" applyHtmlTag="false" showHeader="false">
+    <html>
+        <head>
+            <title>Student!Policy!Form</title>
+            <style type="text/css">
+                                    
+                @page {
+                	size: letter;
+                    margin-top: 150px;
+                    padding:0px;
+                    margin-bottom: 90px;
+                
+                    @top-left {
+                        content: element(header);
+                    }                           
+                    @bottom-left {   
+                        content: element(footer);
+                    } 
+                }        
+                div.header {
+                    margin-top:10px;
+                	margin-bottom:30px;
+                    position: running(header);
+                    width: 100%;
+                    margin-right: 10px;
+                }
+                div.footer {                    
+                    position: running(footer);
+                    width: 100%;
+                }
+                .repeatTableHeader{-fs-table-paginate: paginate;}
+            </style>
+            
+        </head>
+        <body style="font-family : Arial, Helvetica, sans-serif;">
+            <div class="header" style="padding-bottom:50px;">
+                 <table width="100%">
+                     <tr>                         
+                         <td style="height:35px;background: #efb550;"></td>
+                     </tr>
+                     <tr>                         
+                         <td style="text-align:right;"><apex:image url="{!$Resource.Aureus_logo}" style="width:20%;"/></td>
+                     </tr>
+                 </table>  
+            </div>        
+            <!--<div class="footer" >
+                 <table width="100%">
+                     <tr>                         
+                         <td style="height:35px;background: #efb550;" width="100%"></td>
+                     </tr>
+                 </table> 
+            </div>-->
+           
+            <div class="leadTable">                 
+                <table width="100%">
+                    <tr>
+                        <td style="text-align: center;font-size: 26px;text-decoration: underline;">
+                            <strong>Aureus Academy Student Policy Form </strong>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>1. Tuition fees and frequency of lessons: </strong>
+<p style="text-align: justify;margin-top: 3px;margin-left: 18px;">Tuition fees are charged on a monthly basis at the beginning of each month. Payment will be deducted from your customer 
+account on a monthly basis through Visa, Mastercard, or American Express credit cards. Under normal circumstances, monthly 
+tuition fees would cover your course description whether it be 4 x 30 minute lessons or 4 x 60 minute lessons. Lessons in the 
+fifth week (29th, 30th, and 31st) will be reserved for make ups. In the event there are no outstanding make ups or preMmake 
+ups arranged (within 60Mdays), the 5th lesson will be billed to your account (once billed, it cannot be considered a preMmake 
+    up).</p> 
+                        </td>
+                    </tr>
+                     <tr>
+                        <td>
+                            <strong>2. Security Deposit: </strong>
+<p style="text-align: justify;margin-top: 3px;margin-left: 18px;">Aureus Academy requires oneMmonth (4 lessons) advanced notice for termination of lessons. This security deposit will be 
+refunded to you with oneMmonth (4 lessons) notice or will serve inMlieu of any remaining unpaid lessons within the oneMmonth 
+(4 lesson) notice. Should lessons be terminated without a 30 day advanced notice, the security deposit will be forfeited. A nonM
+refundable registration fee of $25 is required for all new students, and is inclusive of an Aureus Academy enrolment kit.</p> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>3. Missed Lessons: </strong>
+<p style="text-align: justify;margin-top: 3px;margin-left: 18px;">For individual lessons there will be no make up for any cancellation of lessons by the student unless given sufficient notice (a 
+minimum of 24 hours) and supporting documents, such as a Medical Certificate. The lesson will be made up at the discretion of 
+management and availability of the teacher. Group lessons require 48Mhour notice in order to be considered for a make up 
+lesson. For Group Lessons, make up lessons have to be completed within the same month of the cancelled lesson or it will be 
+forfeited. Should the instructor need to cancel a lesson, it will be replaced and not prorated. This replacement will be reM
+scheduled accordingly to accommodate the time schedule of both parties. </p> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>4. Student Absence Policy: </strong>
+<p style="text-align: justify;margin-top: 3px;margin-left: 18px;">Tuition fees will be due as per normal, regardless of scheduling changes. For extended periods of absence and advanced 
+scheduling changes, Aureus Academy will arrange make up lessons either before or after the period of absence. All efforts will 
+be made to ensure that the student receives their entitled makeup lessons with their respective teacher. Compliance with our 
+Student Absence
+    
+Policy allows the student to guarantee their time slot, and their respective teacher during periods of extended absence.</p> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong><div style="page-break-after: always"/>5. Public Holidays and Annual Leave:  </strong>
+<p style="text-align: justify;margin-top: 3px;margin-left: 18px;">There will be lessons conducted on the following public holidays (Good Friday, Vesak Day, Hari Raya Puasa, Hari Raya Haji, and 
+Deepavali). If the lesson falls on a public holiday that we are closed, it will be replaced on another day. Should the teacher take 
+annual leave, lessons will be made up either before or after the leave period.</p> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>6. MakeIUpILessons: </strong>
+<p style="text-align: justify;margin-top: 3px;margin-left: 18px;">In the event that lessons are cancelled in advanced, lessons can be made up on another day and time with the teacher. MakeMup 
+lessons need to be completed within 120 days of the cancelled lesson, or they are forfeited. In the unlikely event the instructor 
+is full and cannot make up the lessons, the customer has the option to make up the lessons with another teacher. Should the 
+customer submit withdrawal notice from the school, outstanding make up lessons need to be completed before the 30Mday 
+notice period has ended; otherwise, they are forfeited. MakeMup lessons do not replace paid lessons and cannot be extended 
+past the withdrawal notice of 30Mdays. </p> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>7. Punctuality:  </strong>
+<p style="text-align: justify;margin-top: 3px;margin-left: 18px;">Students must make the effort to come on time for their lessons. There will not be any make up for any time lost. Strict 
+punctuality is also expected of the instructor, however, should the instructor be late time will be made up accordingly.</p> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>8. Termination:</strong>
+<p style="text-align: justify;margin-top: 3px;margin-left: 18px;">Aureus Academy reserves the right to dismiss any student due to frequent absences, disciplinary reasons, overdue tuition 
+payments or parental nonMcompliance with policies and procedures listed here. Informing an instructor of intent to withdraw, 
+or not attending classes, does not constitute withdrawal from lessons. Should a student wish to terminate his or her lessons, 
+Aureus Academy must be given 30Mday notice via email to admin@aureusacademy.com or the deposit is forfeited. </p> 
+                        </td>
+                    </tr>                    
+                    <tr>
+                        <td>
+                            <strong>9. Personal Property:</strong>
+<p style="text-align: justify;margin-top: 3px;margin-left: 18px;">Aureus Academy does not assume any responsibility for personal property (including, but not limited to clothing, cameras, cell 
+phones, purses, wallets, vehicles, etc.) lost, damaged or left unattended on school premises and in common areas. Should any of 
+Aureus Academy’s materials or goods be damaged by the student, the student/family is responsible for full replacement. If 
+replacement is not made, then the remaining lessons for the month and deposit are forfeited. </p> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>10. Refund: </strong>
+<p style="text-align: justify;margin-top: 3px;margin-left: 18px;">Aureus Academy has a strict no refund policy. Should you pay for the lessons and terminate within the same month, you are 
+entitled to the remaining lessons but there will not be any refund. </p> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>11. Official Matters:  </strong>
+<p style="text-align: justify;margin-top: 3px;margin-left: 18px;">All official matters, regarding questions, comments, or concerns are to be communicated directly with the Administrative 
+Office. Should there be any issues, it is best to communicate them to admin@aureusacademy.com or +65 6235 6488. We 
+appreciate, and even welcome parental input, as it allows us to serve all of our families better. </p> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>12. Liability: </strong>
+<p style="text-align: justify;margin-top: 3px;margin-left: 18px;">By signing this contract, the signee and all associated parties waives any responsibility for illness, personal injury, or death 
+anywhere in the premises of Aureus Group Pte. Ltd. facilities. Aureus Group Pte. Ltd. any associated parties are not responsible 
+for any of the above mentioned nor damage of personal goods. </p> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>13. Personal Data:  </strong>
+<p style="text-align: justify;margin-top: 3px;margin-left: 18px;">By signing this document, you hereby agree that Aureus Group Pte. Ltd. (or Aureus Academy) may collect, obtain, store and 
+process your personal data that you provide in this form for the purpose of considering your feedback as described in this 
+Form and/or for receiving updates, news, promotional and marketing mails or materials from Aureus Group Pte. Ltd/Aureus 
+    Academy. </p>
+                            
+ <p style="margin-top: 5px;margin-left: 18px;">
+You hereby give your consent to the Aureus Group Pte. Ltd. and/or the Aureus Academy to: <br/>
+     I. Store and process your Personal Data; <br/>
+	  II. Use provided Personal Data for the purposes of marketing, promotion, and updates. </p> 
+                            
+ <p style="text-align: justify;margin-top: 5px;margin-left: 18px;">
+In addition, your personal data may be transferred to any company within the Aureus Group Pte. Ltd. For the purpose of 
+updating or correcting such data, you may at any time apply to the Aureus Group Pte. Ltd. to have access to your personal data 
+which are stored by the company.</p> 
+                            
+<p style="text-align: justify;margin-top: 5px;margin-left: 18px;"> 
+Also, Aureus Group Pte. Ltd. may use any photos or videos taken for marketing purposes which include Facebook, Newsletters, 
+Website, brochures, and other mediums of marketing communication.  </p> 
+                            
+ <p style="text-align: justify;margin-top: 5px;margin-left: 18px;">
+For the avoidance of doubt, Personal Data includes all data defined within the Personal Data Protection Act (2012) including all 
+data you have disclosed to the Company. </p> 
+                        </td>
+                    </tr>
+                </table>
+                <div style="page-break-after: always"/>
+                <table width="100%">
+                    <tr>
+                        <td width="35%">Signature (Parent or Guardian):</td>
+                        <td style="border-bottom:1px solid black;">
+                            <div style="width: 325px;height: 119px;overflow: hidden;">
+                            	<apex:image url="/servlet/servlet.FileDownload?file={!attId}" style="width: 100%;"/> 
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Parent or Guardian Name:</td>
+                        <td style="height:30px;border-bottom:1px solid black;">{!parName}</td>
+                    </tr>
+                    <tr>
+                        <td>Date:</td>
+                        <td style="height:30px;border-bottom:1px solid black;"> 
+                            <apex:outputText value="{0, date,EE,  MMM dd yyyy}">
+                                <apex:param value="{!dt}" /> 
+                            </apex:outputText>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </body>
+    </html>
+</apex:page>

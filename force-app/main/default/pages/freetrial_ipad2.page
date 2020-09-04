@@ -1,0 +1,965 @@
+<apex:page showHeader="false" controller="FreeTrial_IpadCntrl"  standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False">
+    <head>
+        <title>Aureus Academy Trial Booking</title>
+        <c:IpadHeaderJqueryCmp />
+        <!--<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0"/>
+        <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}"/>      
+        <apex:stylesheet value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.css')}"/>
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700&display=swap" rel="stylesheet" />
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery/jquery.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.js')}"/>               
+        -->
+        <style>
+        /*.sticky {  position: fixed;  top: 0;  width: 100%; z-index:99;}*/
+         .sticky {  position: fixed;  bottom: 0;  width: 100%; z-index:99;}
+            body{ font-size:16px; font-family: 'Lato', sans-serif; font-weight:300; overflow-x: hidden;}
+            @media(min-width:991px){.new-container.class-true{width:80%; margin:0 auto; background-color:#fff;} .class-true .sticky{width:80%; left:10%;}}
+
+            .slds-form-element__control{box-sizing: content-box;}
+            @media(min-width:999px){.slds-modal__container {width: 40%;}}
+            blocklist{ margin:0px;}
+            .icon-collapse,.icon-collapse:focus, .icon-collapse:hover {color:#000; font-weight:bold; font-size:26px;text-decoration: none;}
+            input{
+            height: calc(1.875rem + (1px * 10));}
+            ul li{margin-left:0px;}
+            @media(min-width:999px){
+            .m-lg-right{margin-right: .75rem;}}
+            @media(min-width:767px){
+            .text-lg-left{ text-align:left;}
+            .text-lg-right{text-align:right;}
+            .slds-large-p-around_large{padding:1.5rem;}
+            .slds-large-p-horizontal_xx-large{padding-left: 3rem; padding-right: 3rem;}
+            }
+            
+            
+            .btn-yellow, .btn-yellow:hover, .btn-yellow:focus {
+            background-color:#ffbf2f;
+            color:#fff;
+            }
+            
+            .slds-button_success{
+            color:#fff !important;
+            padding-left:12px;
+            padding-right:12px;}
+            .text-yellow{color:#ffbf2f;}
+            .btn-block{
+            display:block;
+            font-size:1.2rem; 
+            }
+            .btn-gray,.btn-gray:hover, .btn-gray:focus{
+            background-color:#ccced0;
+            color:#fff;
+            }
+            .slds-checkbox .slds-checkbox--faux, .slds-checkbox .slds-checkbox_faux{
+            font-size:16px;
+            border-color:#000;
+            box-shadow: 0 1px 0 0 #ececee;
+            top:4px;
+            }
+            .box-info{
+            box-shadow: 0 1px 0 0 #ececee;
+            background-color:#fff;
+            margin-bottom:4px;
+            }
+            #step-2, #step-3{background-color:#fff;}
+            .title-no{border: solid 1px #353c43; border-radius:50%; padding: 4px 9px;} 
+            .bg-light{background-color:#f7f7f7 !important;}
+            .w-50{width:50%;}
+            .font-bold{font-weight:bold;}
+            
+           .time-list .slds-radio__label {
+            width: 100%;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            border: solid 1px #dcdcdc;
+            font-size: 19px;
+            background-color: #ffffff;
+            font-weight:bold;
+            
+            }
+            .slds-form-element__label{color:#9a9da0; font-size:18px !important;}
+             .slds-radio{padding:8px 0px; border-radius:6px;}
+            .time-list label.slds-radio__label, .time-list .slds-radio_button__label {
+            display: block !important;
+            width:100%;
+            padding:6px 8px;
+            border-radius:6px;
+            }
+            .time-list .slds-radio_button__label {text-align:center;}
+            .slds-radio [type="radio"]:checked + .slds-radio__label{
+            background-color:#ffbf2f;
+            color:#fff;
+            }
+            .slds-radio [type="radio"]:checked + .slds-radio__label > .slds-form-element__label, .slds-radio [type="radio"]:checked .slds-radio__label * {color:#fff !important;}
+            .time-list {
+            width: calc(100% - 15px);
+            margin: 0px;
+            }
+            
+            .slds-radio .slds-radio--faux, .slds-radio .slds-radio_faux {
+            width: 1.3rem;
+            height: 1.1em;
+            }
+            .slds-radio--button + .slds-radio--button, .slds-radio--button + .slds-radio_button, .slds-radio_button + .slds-radio--button, .slds-radio_button + .slds-radio_button {
+            border-left: 0px solid #dddbda;
+            }
+            .slds-radio [type="radio"]:checked + .slds-radio--faux::after, .slds-radio [type="radio"]:checked + .slds-radio__label .slds-radio--faux::after, .slds-radio [type="radio"]:checked + .slds-radio__label .slds-radio_faux::after, .slds-radio [type="radio"]:checked + .slds-radio_faux::after, .slds-radio [type="radio"]:checked ~ .slds-radio--faux::after, .slds-radio [type="radio"]:checked ~ .slds-radio_faux::after {background-color: #fff; border:2px solid #ffbf2f;}
+            .slds-radio .slds-radio--faux, .slds-radio .slds-radio_faux {transition: none;}
+            .time-list span.slds-button.slds-radio_button {
+            width: 100%;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0), 0 2px 6px 0 rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            color: #ffbf2f;
+            font-weight: bold;
+            }
+            .slds-radio--button [type="radio"]:checked + .slds-radio--button__label, .slds-radio--button [type="radio"]:checked + .slds-radio--faux, .slds-radio--button [type="radio"]:checked + .slds-radio_button__label, .slds-radio--button [type="radio"]:checked + .slds-radio_faux, .slds-radio--button [type="radio"]:checked ~ .slds-radio--faux, .slds-radio--button [type="radio"]:checked ~ .slds-radio_faux, .slds-radio_button [type="radio"]:checked + .slds-radio--button__label, .slds-radio_button [type="radio"]:checked + .slds-radio--faux, .slds-radio_button [type="radio"]:checked + .slds-radio_button__label, .slds-radio_button [type="radio"]:checked + .slds-radio_faux, .slds-radio_button [type="radio"]:checked ~ .slds-radio--faux, .slds-radio_button [type="radio"]:checked ~ .slds-radio_faux {
+                background-color: #ffbf2f;
+            color:#fff;
+            box-shadow:none !important;
+            }
+            .slds-radio--button [type="radio"]:checked + .slds-radio--button__label:focus, .slds-radio--button [type="radio"]:checked + .slds-radio--button__label:hover, .slds-radio--button [type="radio"]:checked + .slds-radio--faux:focus, .slds-radio--button [type="radio"]:checked + .slds-radio--faux:hover, .slds-radio--button [type="radio"]:checked + .slds-radio_button__label:focus, .slds-radio--button [type="radio"]:checked + .slds-radio_button__label:hover, .slds-radio--button [type="radio"]:checked + .slds-radio_faux:focus, .slds-radio--button [type="radio"]:checked + .slds-radio_faux:hover, .slds-radio--button [type="radio"]:checked ~ .slds-radio--faux:focus, .slds-radio--button [type="radio"]:checked ~ .slds-radio--faux:hover, .slds-radio--button [type="radio"]:checked ~ .slds-radio_faux:focus, .slds-radio--button [type="radio"]:checked ~ .slds-radio_faux:hover, .slds-radio_button [type="radio"]:checked + .slds-radio--button__label:focus, .slds-radio_button [type="radio"]:checked + .slds-radio--button__label:hover, .slds-radio_button [type="radio"]:checked + .slds-radio--faux:focus, .slds-radio_button [type="radio"]:checked + .slds-radio--faux:hover, .slds-radio_button [type="radio"]:checked + .slds-radio_button__label:focus, .slds-radio_button [type="radio"]:checked + .slds-radio_button__label:hover, .slds-radio_button [type="radio"]:checked + .slds-radio_faux:focus, .slds-radio_button [type="radio"]:checked + .slds-radio_faux:hover, .slds-radio_button [type="radio"]:checked ~ .slds-radio--faux:focus, .slds-radio_button [type="radio"]:checked ~ .slds-radio--faux:hover, .slds-radio_button [type="radio"]:checked ~ .slds-radio_faux:focus, .slds-radio_button [type="radio"]:checked ~ .slds-radio_faux:hover {
+                background-color: #ffbf2f;
+            }
+            table.date-list td, table.date-list th{vertical-align:top; padding:5px; }
+            .table-parent{overflow-x:auto; max-width:100%;}
+            // .table-parent{overflow-x:scroll !important; max-width:100%;}
+            .table-parent table thead{display:inline-block; width:100%}
+            .table-parent table tbody{height:300px; overflow:auto; -webkit-overflow:auto; display:inline-block; width:100%;}
+            .table-parent tbody tr, .table-parent thead tr {    width: 100%;  display: table;}
+            @media(max-width:767px){
+            table.date-list td, table.date-list th{
+             width:206px;
+             }
+             .table-parent table tbody{height:300px; overflow:scroll !important; -webkit-overflow:scroll !important; }
+             table.date-list .time-list {width:100%;}
+             .slds-grid.date-list{padding-bottom:30px;}
+            /*.hideInMobile{display:none;}*/
+            }
+            
+        </style>
+        <script>
+            $(document).ready(function() { 
+                <apex:variable value="{!1}" var="stuIndex"/>
+                <apex:repeat value="{!enrModelList}" var="enrTrial">
+                    var tSlot = '{!enrTrial.slcdFullSlot}';//alert(tSlot);
+                    var radioName = 'timeSlotRadio'+{!stuIndex};
+                    $("input[name='"+radioName+"'][value='"+tSlot+"']").attr('checked', 'checked');
+                
+                    <apex:variable value="{!stuIndex+1}" var="stuIndex"/>
+                </apex:repeat>
+
+            }); 
+            
+            function enablebtn(){
+            var listsize = '{!enrModelList.size}';
+            var listsize = Number(listsize);
+             var isSuccess = true;
+                    for(var i=1; i<= listsize; i++){
+                        var option_index = 'timeSlotRadio'+i;
+                        var isSelectedTime = $("input[name='"+option_index+"']:checked").val();
+                        if(!isSelectedTime){
+                          isSuccess = false;   
+                        }
+                    }
+                       
+                   if(isSuccess){
+                        $("#next_step3").addClass("btn-yellow").removeClass("btn-gray").css("pointer-events", "auto");  
+                   }else{
+                        $("#next_step3").addClass("btn-gray").removeClass("btn-yellow").css("pointer-events", "none");
+                        } 
+              
+              
+            }
+        
+            function setDuration(stuIndx){
+                var optIndx = 'options'+stuIndx;
+                var slcdDuration = $("input[name='"+optIndx+"']:checked").val();
+                setDurationForStu(stuIndx,slcdDuration);
+            }    
+        
+            function setTimeSlot(stuIndx, slcdSlotDate){
+                var optIndx = 'timeSlotRadio'+stuIndx;
+                var slcdDuration = $("input[name='"+optIndx+"']:checked").val();
+                setTimeslotandgetTchrs(stuIndx,slcdDuration, slcdSlotDate);
+            }    
+        
+            function nextBtn(){
+                var enrListSize = {!enrModelList.size};
+                var i;
+                for (i = 1; i <= enrListSize; i++) {
+                    var optIndx = 'timeSlotRadio'+i;
+                    var slcdSlot = $("input[name='"+optIndx+"']:checked").val();
+                    if(!slcdSlot){
+                        //alert('Please select time slot.');
+                        $('.cmpErrDiv').removeClass('slds-hide');
+                        $('.contentDiv').html('Please select time slot.');
+                        return;
+                    }
+                }    
+                $('.cmpErrDiv').addClass('slds-hide');
+                proceedNext();
+            }
+        </script>
+        
+    </head>
+    <body class="">
+        <apex:outputPanel rendered="{!isSiteGuestUser}">     
+            <div  class="slds-p-around_medium" style="font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;">Aureus Academy Enrolment Process       
+            </div>
+            <p style="text-align:center;"><apex:image url="{!$Resource.Aureus_logo_png}" /></p>
+        </apex:outputPanel>  
+        <apex:form >
+            <apex:actionFunction name="setDurationForStu" action="{!processDuration}" reRender="noOfEnrPanel" status="spinner">
+                <apex:param name="slcdIndx" value="0" assignTo="{!slcdStuIndex}"/> 
+                <apex:param name="slcdDuration" value="" assignTo="{!slcdDuration}"/> 
+            </apex:actionFunction>
+            <apex:actionFunction name="setTimeslotandgetTchrs" action="{!fetchTeacherDetails}" reRender="noOfEnrPanel" status="spinner">
+                <apex:param name="slcdIndx" value="0" assignTo="{!slcdStuIndex}"/> 
+                <apex:param name="slcdSlot" value="" assignTo="{!slcdSlot}"/> 
+                <apex:param name="slcdSlotDate" value="" assignTo="{!slcdDate}"/> 
+            </apex:actionFunction>
+            
+            <apex:actionFunction name="preWeek" action="{!fetchPreWeekSlot}" reRender="noOfEnrPanel" status="spinner">
+                <apex:param name="slcdIndx" value="0" assignTo="{!slcdStuIndex}"/> 
+            </apex:actionFunction>
+            <apex:actionFunction name="nextWeek" action="{!fetchNextWeekSlot}" reRender="noOfEnrPanel" status="spinner">
+                <apex:param name="slcdIndx" value="0" assignTo="{!slcdStuIndex}"/> 
+            </apex:actionFunction>
+            
+            <!--<apex:actionFunction name="nextBtn" action="{!nextBtnCmp2}" status="spinner"/>-->
+            <apex:actionFunction name="proceedNext"  action="{!nextBtnCmp2}" status="spinner"/>
+            <apex:actionFunction name="backBtn" action="{!backBtnCmp2}" status="spinner"/>
+            <apex:actionStatus id="spinner" styleClass="status">
+                <apex:facet name="start">
+                    <div class="demo-only demo--inverse " style="height:100%;width:100%;z-index:200;position:fixed">
+                        <div class="slds-spinner_container" style="height:100%;width:100%;">
+                            <div role="status" class="slds-spinner slds-spinner_large slds-spinner_brand">
+                                <span class="slds-assistive-text">Loading</span>
+                                <div class="slds-spinner__dot-a"></div>
+                                <div class="slds-spinner__dot-b"></div>
+                            </div>
+                        </div>
+                    </div>
+                </apex:facet>
+            </apex:actionStatus> 
+            <div class="new-container {!IF(isSiteGuestUser, 'class-true','')}">
+             <div  class="slds-text-heading_large  slds-p-around_small slds-text-align_center" style="font-weight:bold;">Days &amp; Times Available</div>
+               
+                <!--
+            <div class="slds-grid slds-wrap slds-p-around_small " id="myHeader" style="background-color:#f9f9fb; transition:all 0.3s ease-out;">
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-text-align_center slds-large-order_2 slds-p-bottom_small">
+                        <h3 class="slds-text-heading_large" style="font-weight:bold;">Days &amp; Times Available</h3>
+                    </div>
+                    <div class="slds-size_1-of-3 slds-large-size_1-of-3 slds-large-order_1  slds-p-bottom_small"><span >
+                        <a class="slds-button btn-gray slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-p-horizontal_large slds-m-bottom_small"  onClick="backBtn();" href="javascript:void(0)" id="back_step1" style="margin-bottom: .75rem;">Back</a></span>  
+                    </div>
+                    
+                    <div class="slds-size_2-of-3 slds-large-size_1-of-3 slds-text-align_right slds-large-order_3  slds-p-bottom_small"><span id="j_id0:frm:nextRefresh">
+                        <a class="slds-button btn-yellow slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-m-bottom_small slds-p-horizontal_large"  onClick="nextBtn();"  href="javascript:void(0)" id="next_step3" >Next</a></span>
+                    </div>
+                </div> 
+            <script>
+                   window.onscroll = function() {myFunction()};
+                        var header = document.getElementById("myHeader");
+                        var sticky = header.offsetTop;
+                        
+                        function myFunction() {
+                            if (window.pageYOffset > sticky) {
+                                header.classList.add("sticky");
+                            } else {
+                                header.classList.remove("sticky");
+                            }
+                        }
+                </script>   -->            
+              
+              
+            <div class="slds-text-align_center slds-is-relative slds-hide cmpErrDiv">
+                <div class="slds-notify slds-notify_toast slds-theme_error slds-m-left_none slds-m-right_medium" role="status">
+                    <div class="slds-notify__content">
+                        <h2 class="slds-text-heading_small contentDiv"></h2>
+                    </div>
+                    <div class="slds-notify__close">
+                        <button class="slds-button slds-button_icon slds-button_icon-inverse" onclick="$('.cmpErrDiv').addClass('slds-hide');return false;" title="Close">
+                            X
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <apex:outputPanel id="noOfEnrPanel">
+                <apex:variable value="{!1}" var="stuIndex"/>
+                <apex:repeat value="{!enrModelList}" var="enrTrial">
+                     <script>
+                        var slcdVal = '{!enrTrial.slcdDuration}';//alert(tSlot);
+                        var radioName = 'options'+{!stuIndex};
+                        $("input[name='"+radioName+"'][value='"+slcdVal+"']").attr('checked', 'checked');   
+                    
+                        slcdVal = '{!enrTrial.slcdFullSlot}';//alert(tSlot);
+                        radioName = 'timeSlotRadio'+{!stuIndex};
+                        $("input[name='"+radioName+"'][value='"+slcdVal+"']").attr('checked', 'checked');
+                    </script>
+                    
+                    <div class="container slds-p-around_small  slds-m-bottom_x-large" id="step-2" style="padding-bottom:4rem !important;">
+                    <hr style="margin:10px 0px 30px"/>
+                        <h3 class="slds-text-heading_medium slds-m-bottom_small" style="font-weight:bold;">Trial Lesson {!stuIndex}</h3>
+                        <hr style="margin-top: 25px;" />
+                        <p class="slds-m-bottom_small"><strong>Select Lesson Duration</strong></p>
+                        <div class="slds-grid slds-wrap date-list">
+                            <div class="slds-size_1-of-1 slds-medium-size_1-of-3">
+                                <div class="time-list m-lg-right">
+                                    <div class="slds-form-element__control">
+                                        <span class="slds-radio active">
+                                            <input type="radio" id="radiolessonThirty{!stuIndex}" value="30"  onClick="setDuration('{!stuIndex}');" name="options{!stuIndex}" disabled="" checked="checked" />
+                                            <label class="slds-radio__label" for="radiolessonThirty{!stuIndex}">
+                                                <span class="slds-radio_faux"></span>
+                                                <span class="slds-form-element__label">30 min</span>
+                                            </label>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <apex:outputPanel rendered="{!!isSiteGuestUser}" layout="none">                                  
+                                <div class="slds-size_1-of-1 slds-medium-size_1-of-3">
+                                    <div class="time-list">
+                                        <div class="slds-form-element__control">
+                                            <span class="slds-radio">
+                                                <input type="radio" id="radiolessonFourtyfive{!stuIndex}" value="45" onClick="setDuration('{!stuIndex}');" name="options{!stuIndex}" disabled="" checked="" />
+                                                <label class="slds-radio__label" for="radiolessonFourtyfive{!stuIndex}">
+                                                    <span class="slds-radio_faux"></span>
+                                                    <span class="slds-form-element__label">45 min</span>
+                                                </label>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="slds-size_1-of-1 slds-medium-size_1-of-3">
+                                    <div class="time-list">
+                                        <div class="slds-form-element__control">
+                                            <span class="slds-radio">
+                                                <input type="radio" id="radiolessonSixty{!stuIndex}" value="60" onClick="setDuration('{!stuIndex}');" name="options{!stuIndex}" disabled="" checked="" />
+                                                <label class="slds-radio__label" for="radiolessonSixty{!stuIndex}">
+                                                    <span class="slds-radio_faux"></span>
+                                                    <span class="slds-form-element__label">60 min</span>
+                                                </label>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </apex:outputPanel>
+                        </div>
+                        
+                        <h3 class="slds-p-bottom_x-large" style="font-weight:bold; color:#ffbf2f; display:block; text-align:center; font-size: 1.2em;">
+                            <a href="#" onclick="preWeek('{!stuIndex}');"><span style="float:left; color:#000;" class="fa fa-angle-left"></span></a>
+                            <apex:outputText value="{0, date, d MMMM}">
+                                <apex:param value="{!enrTrial.calStartDate}" /> 
+                            </apex:outputText> - 
+                            <apex:outputText value="{0, date, d MMMM  yyyy}">
+                                <apex:param value="{!enrTrial.calEndDate}" /> 
+                            </apex:outputText> 
+                            <a href="#" onclick="nextWeek('{!stuIndex}');"><span style="float:right; color:#000;" class="fa fa-angle-right"></span></a>
+                        </h3>
+                        
+                        <apex:outputPanel id="tSlotId">
+                        <div class="table-parent ">
+                            <table class="date-list" style="padding-bottom:0px; z-index:5;" cellpadding="3">
+                            <thead>
+                            <tr>
+                                <apex:repeat value="{!enrTrial.timeSlotMap}" var="dateKey">
+                                    <apex:variable value="{!enrTrial.timeSlotMap[dateKey]}" var="enrTSize" />
+                                    
+                                        <!--<div class="slds-col slds-large-size_1-of-7" style="{!IF(enrTSize.size > 0,'','display:none;')}" >-->
+                                        <th class=" {!IF(enrTSize.size > 0,'showInMobile','hideInMobile')}">
+                                            <div class="time-list">
+                                                <p class="" style="text-align: center;">
+                                                    <strong>
+                                                        <apex:outputText value="{0, date, EEE, d MMM}">
+                                                            <apex:param value="{!dateKey}" />
+                                                        </apex:outputText>
+                                                    </strong>
+                                                </p> 
+                                            </div>
+                                        </th>         
+                                    </apex:repeat>
+                                    </tr>
+                                    </thead>
+                                    <tbody style="z-index:5;"> 
+                                     <tr class="">
+                                     
+                            <apex:repeat value="{!enrTrial.timeSlotMap}" var="dateKey">
+                                <apex:variable value="{!enrTrial.timeSlotMap[dateKey]}" var="enrTSize" />
+                                <!--<div class="slds-col slds-large-size_1-of-7" style="{!IF(enrTSize.size > 0,'','display:none;')}" >-->
+                                <td class="{!IF(enrTSize.size > 0,'showInMobile','hideInMobile')}">
+                                    <div class="time-list">
+                                      <!--  <p class="slds-m-bottom_small" style="text-align: center;">
+                                            <strong>
+                                                <apex:outputText value="{0, date, EEE, d MMM}">
+                                                    <apex:param value="{!dateKey}" />
+                                                </apex:outputText>
+                                            </strong>
+                                        </p> 
+                                          -->                                      
+                                        <apex:repeat value="{!enrTrial.timeSlotMap[dateKey]}" var="tslot">
+                                            <span class="slds-button slds-radio_button slds-m-bottom_medium">        
+                                                <input id="{!stuIndex}{!dateKey}{!tslot}" name="timeSlotRadio{!stuIndex}" onClick="setTimeSlot('{!stuIndex}', '{!enrTrial.timeSlotStrMap[dateKey]}');" type="radio" value="{!tslot}" onchange="enablebtn();" />
+                                                <label class="slds-radio_button__label" for="{!stuIndex}{!dateKey}{!tslot}">
+                                                   <!-- <span class="slds-radio_faux">{!tslot}</span>-->
+                                                    <apex:outputText value="{!RIGHT(tslot, LEN(tslot)-4)}" /> 
+                                                </label>
+                                            </span>
+                                        </apex:repeat>
+                                        
+                                        <span class="slds-button slds-radio_button slds-m-bottom_medium" style="{!IF(enrTSize.size > 0,'display:none;','')}">        
+                                            <input id="sdfsdf{!stuIndex}{!dateKey}"  type="radio" disabled="disabled"/>
+                                            <label class="slds-radio_button__label" for="sdfsdf{!stuIndex}{!dateKey}" >
+                                                <!-- <span class="slds-radio_faux">{!tslot}</span>-->
+                                                <apex:outputText value="Not Avl" /> 
+                                            </label>
+                                        </span>
+                                    </div>
+                                </td>
+                            </apex:repeat>
+                            
+                        </tr>
+                        </tbody>
+                        </table>
+                        </div>
+                        </apex:outputPanel>
+                    </div>                    
+                    <apex:variable value="{!stuIndex+1}" var="stuIndex"/>
+                </apex:repeat>
+            </apex:outputPanel>  
+                            <!--<div class="slds-large-size_1-of-7">
+<div class="time-list">
+<span class="slds-button slds-radio_button slds-m-bottom_medium">        
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">        
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+</div>
+</div>
+
+<div class="slds-large-size_1-of-7">
+<div class="time-list">
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+
+</div>
+</div>
+<div class="slds-large-size_1-of-7">
+<div class="time-list">
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+
+</div>
+</div>
+<div class="slds-large-size_1-of-7">
+<div class="time-list">
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+
+</div>
+</div>
+<div class="slds-large-size_1-of-7">
+<div class="time-list">
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+
+</div>
+</div>
+<div class="slds-large-size_1-of-7">
+<div class="time-list">
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+
+</div>
+</div>
+<div class="slds-large-size_1-of-7">
+<div class="time-list">
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+
+</div>
+</div> -->    
+                        
+            <!--
+<div class="container slds-p-around_small slds-large-p-around_large slds-border_top" id="step-2">
+<h3 class="slds-text-heading_medium slds-m-bottom_small" style="font-weight:bold;">Trial Lesson 1 - Trial Options</h3>
+<hr style="margin-top: 25px;" />
+<p class="slds-m-bottom_small"><strong>Trial Lesson 1</strong></p>
+<div class="slds-grid slds-wrap date-list">
+<div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-p-bottom_large">
+<div class="time-list m-lg-right">
+<div class="slds-form-element__control">
+<span class="slds-radio active">
+<input type="radio" id="radio1" value="radio1" name="options" disabled="" checked="checked" />
+<label class="slds-radio__label" for="radio1">
+<span class="slds-radio_faux"></span>
+<span class="slds-form-element__label">30 min</span>
+</label>
+</span>
+</div>
+</div>
+</div>
+
+<div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-p-bottom_large">
+<div class="time-list">
+<div class="slds-form-element__control">
+<span class="slds-radio">
+<input type="radio" id="radio2" value="radio2" name="options" disabled="" checked="" />
+<label class="slds-radio__label" for="radio2">
+<span class="slds-radio_faux"></span>
+<span class="slds-form-element__label">45 min</span>
+</label>
+</span>
+</div>
+</div>
+</div>
+
+<div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-p-bottom_large">
+<div class="time-list">
+<div class="slds-form-element__control">
+<span class="slds-radio">
+<input type="radio" id="radio12" value="radio12" name="options" disabled="" checked="" />
+<label class="slds-radio__label" for="radio12">
+<span class="slds-radio_faux"></span>
+<span class="slds-form-element__label">60 min</span>
+</label>
+</span>
+</div>
+</div>
+</div>
+
+</div>
+
+<h3 class="slds-p-bottom_x-large" style="font-weight:bold; color:#ffbf2f; display:block; text-align:center; font-size: 1.2em;"><a href="#"><span style="float:left; color:#000;" class="fa fa-angle-left"></span></a>22 September - 28 September 2019 <a href="#"><span style="float:right; color:#000;" class="fa fa-angle-right"></span></a></h3>
+
+<div class="slds-grid slds-wrap date-list">
+<div class="slds-large-size_1-of-7">
+<div class="time-list">
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+</div>
+</div>
+
+<div class="slds-large-size_1-of-7">
+<div class="time-list">
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+
+</div>
+</div>
+<div class="slds-large-size_1-of-7">
+<div class="time-list">
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+
+</div>
+</div>
+<div class="slds-large-size_1-of-7">
+<div class="time-list">
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+
+</div>
+</div>
+<div class="slds-large-size_1-of-7">
+<div class="time-list">
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+
+</div>
+</div>
+<div class="slds-large-size_1-of-7">
+<div class="time-list">
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+
+</div>
+</div>
+<div class="slds-large-size_1-of-7">
+<div class="time-list">
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+<span class="slds-button slds-radio_button slds-m-bottom_medium">
+
+<input id="10:30" name="radio1"  type="radio" value="10:30" />
+<label class="slds-radio_button__label" for="10:30">
+<span class="slds-radio_faux">10:30</span>
+</label>
+</span>
+
+</div>
+</div>
+
+</div>
+</div>-->
+
+<div class="slds-grid slds-wrap slds-p-around_small sticky " id="myHeader" style="background-color:#f9f9fb; transition:all 0.3s ease-out;">
+                    <div class="slds-size_1-of-2 "><span>
+                        <a class="slds-button btn-gray slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-p-horizontal_large slds-m-bottom_small"  onClick="backBtn();" href="javascript:void(0)" id="back_step1" >Back</a></span>  
+                    </div>
+                    
+                    <div class="slds-size_1-of-2 slds-text-align_right"><span id="j_id0:frm:nextRefresh">
+                        <a class="slds-button btn-gray slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-m-bottom_small slds-p-horizontal_large"  onClick="nextBtn();"  href="javascript:void(0)" id="next_step3"  >Next</a></span>
+                    </div>
+                </div>
+                </div>
+        </apex:form>
+    </body>
+</apex:page>

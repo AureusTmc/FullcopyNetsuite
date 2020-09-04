@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<QuickAction xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>this button for piano rental customer want purchase piano</description>
+    <height>450</height>
+    <label>Rent-to-Purchase</label>
+    <optionsCreateFeedItem>false</optionsCreateFeedItem>
+    <page>PianoRentalPurchasePageV2</page>
+    <type>VisualforcePage</type>
+    <width>-100</width>
+</QuickAction>

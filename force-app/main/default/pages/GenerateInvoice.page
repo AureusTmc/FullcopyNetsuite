@@ -1,0 +1,332 @@
+<apex:page lightningStylesheets="true" standardController="Account" extensions="GenerateInvoiceController" title="Generate Invoice" docType="html-5.0">
+    <apex:form >
+    <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/jquery.min.js')}"/>
+
+    <apex:slds />
+     <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+         <div id="status" class="demo-only demo--inverse " style="height:100%;width:100%;z-index:200;position:fixed;display:none;"> 
+            <div class="slds-spinner_container" style="height:100%;width:100%;"> 
+                <div role="status" class="slds-spinner slds-spinner_large slds-spinner_brand">
+                    <span class="slds-assistive-text">Loading</span> <div class="slds-spinner__dot-a">
+                </div> 
+                <div class="slds-spinner__dot-b"></div>
+                </div>
+            </div>
+        </div>
+         
+        <apex:actionFunction Name="fetchPkgAmt" action="{!fetchPkgAmount}" oncomplete="calculateTotalAmount({!centreCountry.Tax_Rate__c});" reRender="itemSection" >
+        	<apex:param name="indexId" value="" assignTo="{!index}"/>
+        </apex:actionFunction>  
+         <apex:actionFunction Name="getCountry" action="{!fetchCentreCountry}" reRender="itemSection"/>
+        <apex:pageMessages ></apex:pageMessages>
+        <!-- start from here -->
+        <div class="slds-scope slds-p-around_x-small">
+            <article class="slds-card">
+                <div class="slds-card__header slds-grid">
+                    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                        <div class="slds-media__figure">
+                        </div>
+                        <div class="slds-media__body">
+                            <div class="slds-grid slds-gutters">
+                                <div class="slds-col slds-size_3-of-12">
+                                    <span><b>Customer Name:</b> {!Account.name}</span>
+                                </div>
+                                <div class="slds-col slds-size_4-of-12">
+                                    <b>Center Name:</b>&nbsp;<apex:selectList value="{!selectedCenter}" styleClass="reqField centerVal" size="1" onchange="getCountry();return false">
+                                                      <apex:selectOptions value="{!listOfCenter}"></apex:selectOptions>
+                                                  </apex:selectList>
+                                </div>
+                            </div>
+                       </div>
+                    </header>
+                </div>
+                <apex:outputPanel id="itemSection">
+                   
+                    <apex:variable var="index" value="{!0}"/>
+                    <div class="slds-card__body">
+                        <table class="slds-table slds-table_cell-buffer slds-no-row-hover slds-table_bordered slds-table_fixed-layout" role="grid">
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate" title="Name">SR No.</div>
+                                    </th>
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate" title="Name">Action</div>
+                                    </th>
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate" title="Company">Student</div>
+                                    </th>
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate" title="Company">Package Name</div>
+                                    </th>
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate" title="Title">Item Name</div>
+                                    </th>
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate" title="Email">Amount</div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <apex:repeat value="{!listOfItems}" var="item" >
+                                    <apex:variable var="index" value="{!index+ 1}"/>
+                                    <tr class="slds-hint-parent">
+                                        <td role="gridcell">
+                                            <div class="slds-truncate" title="Sr No.">{!index}</div>
+                                        </td>
+                                        <td role="gridcell">
+                                            <div class="slds-truncate" title="Action">
+                                                <apex:commandButton title="" value="+" action="{!addRow}" oncomplete="calculateTotalAmount({!centreCountry.Tax_Rate__c});" reRender="itemSection"/> &nbsp;
+                                                <apex:outputPanel rendered="{!IF(index==1,FALSE,TRUE)}">
+                                                    <apex:commandButton title="" value="-" action="{!removeRow}" oncomplete="calculateTotalAmount({!centreCountry.Tax_Rate__c});" reRender="itemSection">
+                                                        <apex:param name="indexId" value="{!index}" assignTo="{!index}"/>
+                                                    </apex:commandButton>
+                                                </apex:outputPanel>
+                                            </div>
+                                        </td>
+                                        <td role="gridcell">
+                                            <div class="slds-truncate" title="Company One">
+                                                <apex:selectList value="{!item.selectedStudent}" styleClass="reqField" size="1">
+                                                    <apex:selectOptions value="{!item.listOfStudents}"></apex:selectOptions>
+                                                </apex:selectList>
+                                            </div>
+                                        </td>
+                                        <td role="gridcell">
+                                            <div class="slds-truncate" title="Package Name">
+                                                <apex:selectList value="{!item.slctdPkg}" onchange="fetchPkgAmt('{!index}');return false;"  styleClass="reqField" size="1">
+                                                    <apex:selectOptions value="{!CampPkgList}"></apex:selectOptions>
+                                                </apex:selectList>
+                                            </div>
+                                        </td>
+                                        <td role="gridcell">
+                                            <div class="slds-truncate" title="Item Name">
+                                                <apex:inputText styleClass="reqField" disabled="{!item.isPkgSlcd}" value="{!item.itemName}"/>
+                                            </div>
+                                        </td>
+                                        <td role="gridcell">
+                                            <div class="slds-truncate" title="">
+                                                <apex:inputText styleClass="slds-input price reqField" onblur="calculateTotalAmount({!centreCountry.Tax_Rate__c});return false;" html-type="number" value="{!item.price}"/>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </apex:repeat>
+                                <tr role="gridcell" class="slds-hint-parent">
+                                    <td colspan="5">
+                                        <apex:outputPanel rendered="{!IF(AND(centreCountry.Tax_Rate__c != NULL, centreCountry.Tax_Rate__c > 0), TRUE, FALSE)}">
+                                            <div class="slds-truncate slds-text-align_right" >
+                                                <b>GST({!centreCountry.Tax_Rate__c}%):</b>
+                                            </div>
+                                        </apex:outputPanel>
+                                    </td>
+                                    <td>
+                                        <apex:outputPanel rendered="{!IF(AND(centreCountry.Tax_Rate__c != NULL, centreCountry.Tax_Rate__c > 0), TRUE, FALSE)}">
+                                            <b><span id="gstAmount">0</span></b>
+                                        </apex:outputPanel>
+                                    </td>
+                                    
+                                </tr>
+                                <tr role="gridcell" class="slds-hint-parent">
+                                    <td colspan="5">
+                                        <div class="slds-truncate slds-text-align_right" >
+                                            <b>Total:</b>
+                                        </div>
+                                    </td>
+                                    <td><b><span id="totalAmount">0</span></b></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                </apex:outputPanel>
+                <footer class="slds-card__footer">
+                    <div class="slds-align_absolute-center">
+                        <apex:commandButton action="{!cancel}" value="Cancel" styleClass="slds-button slds-button_destructive"/>
+                        <button class="slds-button slds-button_brand" id="summaryBtn" onclick="displaySummary();return false;">Preview</button>
+                        <button class="slds-button slds-button_brand" id="payNowBtn" onclick="validateAndPay();return false;">Pay Now</button>
+                        <!--<apex:commandButton action="{!payAndRedirect}"/>-->
+                     </div>
+                </footer>
+            </article>  
+        </div> 
+        <apex:outputPanel layout="none" id="summarySection">
+            <apex:variable var="ind" value="{!0}"/>
+                    
+            <apex:outputPanel rendered="{!isSummaryOpen}" >
+               
+                <!-- Modal Start --> 
+                <div  id="SummaryPopup" style="height:600px;">
+                <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open slds-modal_medium">
+                    <div class="slds-modal__container">
+                    <header class="slds-modal__header" style="background: #303a42;Color:white;">
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Summary</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <div class="slds-grid slds-gutters">
+                                <div class="slds-col slds-size_3-of-12">
+                                    <span><b>Customer Name:</b> {!Account.name}</span>
+                                </div>
+                                <div class="slds-col slds-size_4-of-12">
+                                    <b>Center Name:</b>&nbsp; <span id="centerName"></span>
+                                </div>
+                            </div>
+                        <table class="slds-table slds-table_cell-buffer slds-no-row-hover slds-table_bordered slds-table_fixed-layout" role="grid">
+                                <thead>
+                                    <tr class="slds-line-height_reset">
+                                        <th class="" scope="col">
+                                            <div class="slds-truncate" title="Name">SR No.</div>
+                                        </th>
+                                        <th class="" scope="col">
+                                            <div class="slds-truncate" title="Company">Student</div>
+                                        </th>
+                                        <th class="" scope="col">
+                                            <div class="slds-truncate" title="pkgName">Package Name</div>
+                                        </th>
+                                        <th class="" scope="col">
+                                            <div class="slds-truncate" title="Title">Item Name</div>
+                                        </th>
+                                        <th class="" scope="col">
+                                            <div class="slds-truncate" title="Email">Amount</div>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <apex:repeat value="{!listOfItems}" var="item" >
+                                        <apex:variable var="ind" value="{!ind+1}"/>
+            
+                                        <tr class="slds-hint-parent">
+                                            <td role="gridcell">
+                                                <div class="slds-truncate" title="Sr No.">{!ind}</div>
+                                            </td>
+                                            <td role="gridcell">
+                                                <div class="slds-truncate" title="Company One">
+                                                    {!item.studName}
+                                                </div>
+                                            </td>
+                                            <td role="gridcell" class="slds-truncate">
+                                                <apex:outputPanel rendered="{!item.isPkgSlcd}"> {!item.itemName}
+                                                </apex:outputPanel>
+                                            </td>
+                                            <td role="gridcell" class="slds-truncate">
+                                                {!item.itemName}
+                                            </td>
+                                            <td role="gridcell">
+                                                {!item.price}
+                                            </td>
+                                        </tr>
+                                    </apex:repeat>
+                                    <tr role="gridcell" class="slds-hint-parent">
+                                        
+                                        <td colspan="4">
+                                            <apex:outputPanel rendered="{!IF(AND(centreCountry.Tax_Rate__c != NULL, centreCountry.Tax_Rate__c > 0), TRUE, FALSE)}">
+                                                <div class="slds-truncate slds-text-align_right" >
+                                                    <b>GST({!centreCountry.Tax_Rate__c}%):</b>
+                                                </div>
+                                            </apex:outputPanel>
+                                        </td>
+                                        
+                                        
+                                        <td>
+                                            <apex:outputPanel rendered="{!IF(AND(centreCountry.Tax_Rate__c != NULL, centreCountry.Tax_Rate__c > 0), TRUE, FALSE)}">
+                                                <b><span id="summarygstAmount">0</span></b>
+                                            </apex:outputPanel>
+                                        </td>
+                                        
+                                    </tr>
+                                    <tr role="gridcell" class="slds-hint-parent">
+                                        <td colspan="4">
+                                            <div class="slds-truncate slds-text-align_right" >
+                                                <b>Total:</b>
+                                            </div>
+                                        </td>
+                                        <td><b><span id="summarytotalAmount">0</span></b></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <button class="slds-button slds-button_neutral" onclick="displaySummary();return false;">Close</button>
+                    </footer>
+                    </div>
+                </section>
+                <div class="slds-backdrop"></div>
+            </div>
+            <!-- Modal End-->
+            </apex:outputPanel>
+        </apex:outputPanel>
+        
+    </html>
+    <apex:actionFunction name="payNow" action="{!payAndRedirect}"/>
+    <apex:actionFunction name="displaySummaryModal" action="{!toggaleSummary}" oncomplete="copyAmount();return false;"  reRender="summarySection"/>
+    <script>
+        function copyAmount(){
+          if(document.getElementById('summarygstAmount')){
+          	document.getElementById('summarygstAmount').innerText =  document.getElementById('gstAmount').innerText;
+          }
+          
+          document.getElementById('summarytotalAmount').innerText = document.getElementById('totalAmount').innerText;
+         $("#centerName").html( $('.centerVal option:selected').text());
+  
+        }
+        function calculateTotalAmount(taxRate){
+            console.log('@@@taxRate'+taxRate);
+            var priceElement = new Array();
+            priceElement = document.getElementsByClassName("price");
+            let total = 0;
+            let GSTRate = taxRate/107;
+            let gstSubPrice =0;
+            let totalGstPrice =0;
+            for(let i=0; i< priceElement.length; i++){
+                var price = priceElement[i].value;
+                console.log('isNaN(price)',isNaN(price));
+                if(price && !isNaN(price)){
+                    console.log('price'+price);
+                    let reduceAmount = price - (price * (taxRate / 107)); 
+                    console.log('reduceAmount'+reduceAmount);
+                    gstSubPrice = (parseFloat(reduceAmount) * taxRate) / 100;
+                    console.log('gstSubPrice'+gstSubPrice);
+                    totalGstPrice +=gstSubPrice;
+                    console.log('totalGstPrice'+totalGstPrice);
+                    total += parseFloat(reduceAmount) +gstSubPrice;
+                    console.log('@@@total'+total);
+                    console.log('@@@---------------------------');
+                }
+            }
+            
+            
+            console.log('@@GSTRate--', GSTRate);
+            console.log('@@@gstSubPrice --'+totalGstPrice);
+            console.log('@@@total'+total);
+            //let gstPrice = total * GSTRate;
+            if(document.getElementById('gstAmount')){
+                //document.getElementById('gstAmount').innerText = gstPrice.toFixed(2);
+                document.getElementById('gstAmount').innerText = totalGstPrice.toFixed(2);
+            }
+            
+            document.getElementById('totalAmount').innerText= (total).toFixed(2);
+        }
+        
+        function validateAndPay(){
+            $('#payNowBtn').css('pointer-events','none');
+            var flag = true;
+            $(".reqField" ).removeClass('slds-has-error');
+            $(".reqField" ).each(function( index ) {
+              if(!$( this ).val()){
+                  $(this).addClass('slds-has-error');
+                  flag =false;
+              }
+              console.log( index + ": " + $( this ).val() );
+            });
+            if(flag){
+                payNow();
+            }else{
+                $('#payNowBtn').css('pointer-events','');
+            }
+        }
+        function displaySummary(){
+            //console.log('summary called');
+            displaySummaryModal();
+            //$("#SummaryPopup").Class('slds-hide');
+        }
+    </script>
+    </apex:form>
+</apex:page>

@@ -1,0 +1,208 @@
+<apex:page standardController="Expense_Claim__c" extensions="CustomExpenseItemPageController" showHeader="false" sidebar="false" docType="html-5.0" >
+    <apex:slds />    
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script>function setFocusOnLoad(){ /*NOOP*/ }</script>
+        <script>
+            $( document ).ready(function() {
+                $('.dateFormat').hide();
+                
+            });
+        </script>
+        
+        <style>
+            .expItemTable{
+                width: 1800px !important;
+            }
+            
+            .expItemTable th{
+                width: 200px !important;
+            }
+            .tableDiv{
+                max-height:260px;
+                overflow-y:scroll;
+            }
+        </style>
+        <apex:form >
+        <apex:pageMessages />
+
+        <div class="slds-scope">
+            <article class="slds-card">
+                <div class="slds-card__header slds-grid">
+                <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                  <div class="slds-media__figure">
+                    <span class="slds-icon_container slds-icon-standard-account" title="account">
+                      <svg class="slds-icon slds-icon_small" aria-hidden="true">
+                        <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/apexpages/slds/latest/assets/icons/utility-sprite/svg/symbols.svg#moneybag"></use>
+                      </svg>
+                      <span class="slds-assistive-text">Expense Items</span>
+                    </span>
+                  </div>
+                  <div class="slds-media__body">
+                    <h2 class="slds-card__header-title slds-card__header-link slds-truncate">
+                        Expense Items ({!relatedCount})
+                    </h2>
+                  </div>
+                </header>
+                </div>
+                <div class="slds-card__body slds-card__body_inner">
+                    <div style="overflow-x: scroll;" class="tableDiv">
+                        <table class="slds-table slds-table_bordered slds-table_col-bordered expItemTable" role="grid">
+                            <thead>
+                            <tr>
+                                <!--<th class="slds-text-title_caps"> S.No.</th>-->
+                                <th class="slds-text-title_caps" scope="col">Expense Type</th>
+                                <th class="slds-text-title_caps" scope="col">Expense Date</th>
+                                <th class="slds-text-title_caps" scope="col">Supplier</th>
+                                <th class="slds-text-title_caps" scope="col">Supplier Other</th>
+                                <th class="slds-text-title_caps" scope="col">Receipt Number</th>
+                                <th class="slds-text-title_caps" scope="col">Amount (Incl. GST)</th>
+                                <th class="slds-text-title_caps" scope="col">GST</th>
+                                <!--<th class="slds-text-title_caps" scope="col">Converted Amount</th>-->
+                                <th class="slds-text-title_caps" scope="col">Action</th>
+                                <th class="slds-text-title_caps" scope="col">Employee Remarks</th>
+                                <th class="slds-text-title_caps" scope="col">Finance Remarks</th>
+                                <th class="slds-text-title_caps" scope="col">Receipt Status</th>
+                                <th class="slds-text-title_caps" scope="col">Preview</th>
+                            </tr>
+                            </thead>
+                            <apex:repeat value="{!expItemList}" var="expItem">
+                                <tr>
+                                    <!--<td>{!expItem.indexNo}</td>-->
+                                    <td>
+                                        <apex:outputPanel rendered="{!if(IsCurrentUserApprover, true, false)}">
+                                            <apex:selectList styleclass="slds-select" size="1" value="{!expItem.realExpItem.Expense_Type__c}">
+                                                <apex:selectOptions value="{!ExpenseTypePL}"/>
+                                            </apex:selectList>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{!if(!IsCurrentUserApprover, true, false)}">
+                                            {!expItem.expType}
+                                        </apex:outputPanel>
+                                    </td>
+                                    <td>
+                                        <apex:outputPanel rendered="{!if(IsCurrentUserApprover, true, false)}">
+                                            <!--<input id="date" class="slds-input" type="text" placeholder="Select a Date"/>-->
+                                            <div class="slds-form-element">
+                                                <apex:inputField styleClass="slds-input" value="{!expItem.realExpItem.Expense_Date__c}"/>
+                                            </div>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{!if(!IsCurrentUserApprover, true, false)}">
+                                            <apex:outputText value="{0,date,MM/dd/yyyy}"> 
+                                                <apex:param value="{!expItem.expDate}"/> 
+                                            </apex:outputText>
+                                        </apex:outputPanel>
+                                    </td>
+                                    <td>
+                                        <apex:outputPanel rendered="{!if(IsCurrentUserApprover, true, false)}">
+                                            <apex:selectList styleclass="slds-select" size="1" value="{!expItem.realExpItem.Supplier__c}">
+                                                <apex:selectOptions value="{!SupplierPL}"/>
+                                            </apex:selectList>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{!if(!IsCurrentUserApprover, true, false)}">
+                                            {!expItem.supplier}
+                                        </apex:outputPanel>
+                                    </td>
+                                    <td>
+                                        <apex:outputPanel rendered="{!if(IsCurrentUserApprover, true, false)}">
+                                            <apex:inputTextarea styleClass="slds-textarea" value="{!expItem.realExpItem.Other_Supplier__c}"/>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{!if(!IsCurrentUserApprover, true, false)}">
+                                            {!expItem.realExpItem.Other_Supplier__c}
+                                        </apex:outputPanel>
+                                    </td>
+                                    <td>
+                                        <apex:outputPanel rendered="{!if(IsCurrentUserApprover, true, false)}">
+                                            <apex:inputText styleClass="slds-input" value="{!expItem.realExpItem.Invoice_Receipt_Number__c}"/>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{!if(!IsCurrentUserApprover, true, false)}">
+                                            {!expItem.realExpItem.Invoice_Receipt_Number__c}
+                                        </apex:outputPanel>
+                                    </td>
+                                    <td style="text-align:right;">
+                                        <apex:outputPanel rendered="{!if(IsCurrentUserApprover, true, false)}">
+                                            <apex:input type="number" html-step=".01" styleClass="slds-input" value="{!expItem.amount}"/>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{!if(!IsCurrentUserApprover, true, false)}">
+                                            <apex:outputText value="{0, Number, Currency}" >
+                                                <apex:param value="{!expItem.amount}" />
+                                            </apex:outputText>
+                                        </apex:outputPanel>
+                                    </td>
+                                    <td style="text-align:right;">
+                                        <apex:outputPanel rendered="{!if(IsCurrentUserApprover, true, false)}">
+                                            <apex:input html-step=".01"  type="number" styleClass="slds-input" value="{!expItem.gst}"/>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{!if(!IsCurrentUserApprover, true, false)}">
+                                            <apex:outputText value="{0, Number, Currency}" >
+                                                <apex:param value="{!expItem.gst}" />
+                                            </apex:outputText>
+                                        </apex:outputPanel>
+                                    </td>
+                                    <!--<td style="text-align:right;">
+                                        <apex:outputPanel rendered="{!if(IsCurrentUserApprover, true, false)}">
+                                            <apex:inputField styleClass="slds-input" value="{!expItem.realExpItem.Converted_Amount__c}"/>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{!if(!IsCurrentUserApprover, true, false)}">
+                                            <apex:outputText value="{0, Number, Currency}" >
+                                                <apex:param value="{!expItem.realExpItem.Converted_Amount__c}" />
+                                            </apex:outputText>
+                                        </apex:outputPanel>
+                                    </td>-->
+                                    <td>
+                                        <div class="slds-form-element">
+                                            <apex:outputPanel rendered="{!if(IsCurrentUserApprover, true, false)}">
+                                                <label class="slds-checkbox_toggle slds-grid">
+                                                    <apex:inputCheckbox value="{!expItem.approvalAction}"/>
+                                                    <span id="checkboxStatus" class="slds-checkbox_faux_container" aria-live="assertive">
+                                                      <span class="slds-checkbox_faux"></span>
+                                                      <span class="slds-checkbox_on">Approved</span>
+                                                      <span class="slds-checkbox_off">Rejected</span>
+                                                    </span>
+                                                </label>
+                                            </apex:outputPanel>
+                                            <apex:outputPanel rendered="{!if(!IsCurrentUserApprover, true, false)}">
+                                                {!expItem.realExpItem.Status__c}
+                                            </apex:outputPanel>
+                                        </div>
+                                    </td>
+                                    <td class="slds-theme_shade"> 
+                                        <!--<apex:inputTextarea styleClass="slds-textarea" value="{!expItem.realExpItem.Remarks__c}"/>-->
+                                        <div class="slds-text-color_weak">{!expItem.realExpItem.Remarks__c} </div>
+                                    </td>
+                                    <td>
+                                        <apex:outputPanel rendered="{!if(IsCurrentUserApprover, true, false)}">
+                                            <apex:inputTextarea styleClass="slds-textarea" value="{!expItem.financeRemarks}"/>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{!if(!IsCurrentUserApprover, true, false)}">
+                                            {!expItem.financeRemarks}
+                                        </apex:outputPanel>
+                                    </td>
+                                    <td>
+                                        <apex:outputPanel rendered="{!if(IsCurrentUserApprover, true, false)}">
+                                            <apex:inputField styleClass="slds-select" value="{!expItem.realExpItem.Receipt_Status__c}"/>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{!if(!IsCurrentUserApprover, true, false)}">
+                                            {!expItem.realExpItem.Receipt_Status__c}
+                                        </apex:outputPanel>
+                                    </td>
+                                    <td>
+                                        <button class="slds-button slds-button_icon" title="File" onclick="window.open('{!expItem.attachPath}', '_blank')">
+                                            <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                                                <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/apexpages/slds/latest/assets/icons/utility-sprite/svg/symbols.svg#file"></use>
+                                            </svg>
+                                            <span class="slds-assistive-text">File</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </apex:repeat>
+                        </table>
+                    </div>
+                    <apex:outputPanel rendered="{!if(IsCurrentUserApprover, true, false)}">
+                        <div class="slds-align_absolute-center slds-m-top_medium">
+                            <apex:commandButton value="Save" styleClass="slds-button slds-button_brand" action="{!saveChanges}"/>
+                        </div>
+                    </apex:outputPanel>
+                </div>
+            </article>
+        </div>
+        </apex:form>
+</apex:page>

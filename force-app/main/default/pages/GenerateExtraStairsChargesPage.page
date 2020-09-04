@@ -1,0 +1,150 @@
+<apex:page standardController="Enrolment__c" extensions="GenerateExtraStairsChargesCtrl" standardStylesheets="false" sidebar="false"
+    showHeader="false" lightningStylesheets="true" docType="html-5.0" showQuickActionVfHeader="false">
+    <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/jquery.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.css')}" />
+    <apex:slds />
+    <apex:form id="frm" styleClass="slds-box">
+        <div class=" slds-col modal-header slds-modal__header">
+            <h2 class="title slds-text-heading--medium">Charge Extra Stairs Amount</h2>
+        </div>
+        <div class="slds-col modal-body scrollable slds-p-around--medium" style="height: auto;">
+            <div>
+
+                <apex:outputPanel rendered="{!isGenerateExtraStairsCharges}">
+                    <apex:actionFunction name="generateExtraStairsCharges" action="{!generateExtraStairsCharges}" rerender="messageDiv" status="spinner"
+                    />
+                    <apex:actionFunction name="getPaymentForInvoices" action="{!getPaymentForInvoices}" rerender="messageDiv" status="spinner"
+                    />
+                    <apex:actionFunction name="createAttachmentForEmail" action="{!createAttachmentForEmail}" rerender="messageDiv" status="spinner"
+                    />
+                    <apex:actionStatus id="spinner">
+                        <apex:facet name="start">
+                            <apex:outputPanel id="backdrop" styleClass="popupBackground">
+                                <div role="status" class="slds-spinner slds-spinner_brand slds-spinner_large">
+                                    <div class="slds-spinner__dot-a"></div>
+                                    <div class="slds-spinner__dot-b"></div>
+                                </div>
+                            </apex:outputPanel>
+                        </apex:facet>
+                    </apex:actionStatus>
+                    <apex:outputPanel id="messageDiv">
+                        <script>
+                            var errorString = "{!errorString}";
+                            console.log('errorString' + errorString);
+                            if (errorString != '') {
+                                checkIsUpdate(errorString, {!isGenerateExtraStairsCharges}); 
+                    }
+                        </script>
+                        <div id="messagePage" class="slds-hide">
+                            Please wait.....
+                            <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_success sucess_validation" style="display:none"
+                                role="alert">
+                                <span class="slds-assistive-text">error</span>
+                                <h2 class="sucessMessage"></h2>
+                                <div class="slds-notify__close">
+                                    <button class="slds-button slds-button_icon slds-button_icon-inverse" title="Close" onclick="closeSucess();return false;">
+                                        X
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error error_validation" style="display:none"
+                                role="alert">
+                                <span class="slds-assistive-text">error</span>
+                                <h2 class="errorMessage"></h2>
+                                <div class="slds-notify__close">
+                                    <button class="slds-button slds-button_icon slds-button_icon-inverse" title="Close" onclick="closeError();return false;">
+                                        X
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <!--17-Feb-2020:start: according to ashish new requirement :
+                Need to show the confirm message for extra stair case charge button if user confirm then we charge extra stairs charges. "-->
+        
+                    <div class="slds-modal__content slds-p-around_medium" id="prompt-message-wrapper">
+                        <p> This will charge the customer's credit card for the ${!extraStairsAmount} on account
+                            of stair case moving charges of {!objEnrolment.Extra_Stairs__c} extra stair cases.</p>
+                            <br/>Do You Want To Continue?
+                    </div>
+                              
+                    <!--17-Feb-2020:end: according to ashish new requirement :
+                Need to show the confirm message for extra stair case charge button if user confirm then we charge extra stairs charges. "-->
+
+                </apex:outputPanel>
+                <apex:outputPanel id="GenerateExtraStairsChargesError" rendered="{!!isGenerateExtraStairsCharges}">
+                    <div id="GenerateErrorValidation" class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error " role="alert">
+                        <span class="slds-assistive-text">error</span>
+                        <h2>{!errorString}</h2>
+                        <div class="slds-notify__close">
+                            <button class="slds-button slds-button_icon slds-button_icon-inverse" title="Close" onclick="closeError();return false;">
+                                X
+                            </button>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+
+            </div>
+        </div>
+        <div class="slds-col modal-footer slds-modal__footer">
+            <button class="slds-button slds-button_neutral" id="cancelBtn"  title="done" onclick="closeError();return false;">Cancel</button>
+            <apex:outputPanel rendered="{!isGenerateExtraStairsCharges}">
+                <button class="slds-button slds-button_brand" id="saveBtn" title="done" onclick="confirmExtraStairsCharges();return false;">Save</button>
+            </apex:outputPanel>  
+            <apex:outputPanel rendered="{!!isGenerateExtraStairsCharges}">
+                <button class="slds-button slds-button_brand" disabled="true"  title="done" >Save</button>
+            </apex:outputPanel>               
+        </div>
+    </apex:form>
+    <script type="text/javascript">
+        var objEnrolmentId ='{!objEnrolment.id}';
+        function confirmExtraStairsCharges() {
+            $('#messagePage').removeClass('slds-hide');
+            $('#ConfirmModal').addClass('slds-hide');
+            $('#saveBtn').addClass('slds-hide');
+            
+            generateExtraStairsCharges();
+        }
+        function checkIsUpdate(errorString, isGenerateExtraStairsCharges) {
+            console.log('errorString' + errorString);
+            console.log('isGenerateExtraStairsCharges' + isGenerateExtraStairsCharges);
+            if (!isGenerateExtraStairsCharges) {
+                $('.error_validation').removeAttr('style')
+                    .animate({ opacity: 1.0 }, 1500)
+                    .effect("pulsate", { times: 1 }, 800)
+                    .fadeOut('slow', function () {
+                        window.open('/'+objEnrolmentId, '_self');
+                    });
+                $('.error_validation').find('.errorMessage').text(errorString);
+            } else {
+                if (errorString == 'getPaymentForInvoices') {
+                    getPaymentForInvoices();
+                    return false;
+                } else if (errorString == 'createAttachmentForEmail') {
+                    createAttachmentForEmail();
+                    return false;
+                } else if (errorString.trim() === 'Success') {
+                    window.open('/'+objEnrolmentId, '_self');
+                    $('.sucess_validation').removeAttr('style')
+                        .animate({ opacity: 1.0 }, 1500)
+                        .effect("pulsate", { times: 1 }, 800)
+                        .fadeOut('slow', function () {
+                            window.open('/'+objEnrolmentId, '_self');
+                        });
+                    $('.sucess_validation').find('.sucessMessage').text('Piano Rental Extra Stairs Charged Sucessfully  !... ');
+                }
+            }
+        }
+        function closeError() {
+            $('.error_validation').css('display', 'none');
+            window.open('/'+objEnrolmentId, '_self');
+           // window.open('/{!objEnrolment.id}', '_self');
+        }
+        function closeSucess() {
+            $('.sucess_validation').css('display', 'none');
+            window.open('/'+objEnrolmentId, '_self');
+           // window.open('/{!objEnrolment.id}', '_self');
+        }
+    </script>
+</apex:page>

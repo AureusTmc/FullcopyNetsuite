@@ -1,0 +1,40 @@
+<apex:page standardStylesheets="false" sidebar="false" showHeader="false" lightningStylesheets="true" title="Aureus Calendar" docType="html-5.0" standardController="Booking__c">
+    <!-- full calender link -->
+    <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/jquery.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/moment.min.js')}"/>
+   
+    <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/fullCalenderCustom.js')}"/>
+    
+    
+    
+    
+    
+    <apex:stylesheet value="{!URLFOR($Resource.FullCalender, '/fullcalendar.min.css')}"/>
+    
+    <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.8.0/fullcalendar.print.css" media="print" /> -->
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <!--<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"/> -->
+    <apex:stylesheet value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.FullCalender, '/scheduler.min.css')}" />
+    <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/scheduler.min.js')}" />
+    <apex:includeScript value="{!$Resource.aljs}"/>
+    <apex:includeScript value="{!$Resource.datepicker}"/>
+    <apex:slds />
+        <c:aureusCalendarCMPClone />
+        <script>
+        		var bookingIdToHighlight, bookingTeacherToHighlight, bookingResourceToHighlight, bookingCentreToHighlight, bookingDateToHighlight;
+                bookingIdToHighlight = '{!Booking__c.Id}';
+    			bookingTeacherToHighlight = '{!Booking__c.Teacher_Account__c}';
+                bookingCentreToHighlight = '{!Booking__c.Center__c}';
+   				bookingDateToHighlight = '{!Booking__c.Booking_Date__c}';
+    			bookingResourceToHighlight = '{!Booking__c.Resource__c}';
+    			if(bookingDateToHighlight){
+                	bookingDateToHighlight = moment(bookingDateToHighlight, "ddd MMM DD kk:mm:ss GMT YYYY");
+                }
+    			
+        </script>
+</apex:page>

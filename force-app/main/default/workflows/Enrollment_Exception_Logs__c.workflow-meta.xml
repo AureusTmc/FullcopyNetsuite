@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workflow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <alerts>
+        <fullName>Send_Enrollment_Studio_exception_email</fullName>
+        <description>Send Enrollment/Studio exception email</description>
+        <protected>false</protected>
+        <recipients>
+            <recipient>aureus@techmatrixconsulting.com</recipient>
+            <type>user</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus_New_Email_Template/Enrollment_and_Studio_Rental_Exceptions</template>
+    </alerts>
+    <rules>
+        <fullName>Enrollment%2FStudio Rental Exception Error Log</fullName>
+        <actions>
+            <name>Send_Enrollment_Studio_exception_email</name>
+            <type>Alert</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Enrollment_Exception_Logs__c.CreatedById</field>
+            <operation>notEqual</operation>
+        </criteriaItems>
+        <triggerType>onCreateOnly</triggerType>
+    </rules>
+</Workflow>

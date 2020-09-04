@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Discount_Amount_Referrer__c</fullName>
+    <description>This field is used to store the Discount amount of Referrer</description>
+    <externalId>false</externalId>
+    <inlineHelpText>To work out the price without GST you have to divide the amount by 1. (Tax Rate) i.e. 1.07. E.g. ($214/1.07=$200)</inlineHelpText>
+    <label>Discount Amount (Referrer)</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <trackTrending>false</trackTrending>
+    <type>Currency</type>
+</CustomField>

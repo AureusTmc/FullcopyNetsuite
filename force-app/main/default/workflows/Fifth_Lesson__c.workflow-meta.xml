@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workflow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <alerts>
+        <fullName>X5th_Lesson_Cancelled</fullName>
+        <description>5th Lesson Cancelled</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Parent_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderAddress>noreply@aureusacademy.com</senderAddress>
+        <senderType>OrgWideEmailAddress</senderType>
+        <template>Aureus_Portal_Notifications/X5th_Lesson_Cancelled</template>
+    </alerts>
+    <fieldUpdates>
+        <fullName>Update_Parent_Email</fullName>
+        <description>Update Parent Email</description>
+        <field>Parent_Email__c</field>
+        <formula>Parent__r.PersonContact.Email</formula>
+        <name>Update Parent Email</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <rules>
+        <fullName>5th Lesson Cancellation from Portal%2FApp Stripo</fullName>
+        <actions>
+            <name>X5th_Lesson_Cancelled</name>
+            <type>Alert</type>
+        </actions>
+        <actions>
+            <name>Email_5th_Lesson_Cancellation_Notification</name>
+            <type>Task</type>
+        </actions>
+        <active>true</active>
+        <description>5th Lesson Cancellation from Portal/App Stripo</description>
+        <formula>AND (
+
+ ISPICKVAL (Booking__r.Type__c  , &quot;Busy&quot;)
+
+,
+
+OR(
+LastModifiedBy.Username = &quot;aureusacademy@aureusgroup.force.com&quot;,
+LastModifiedBy.Username = &quot;admin@aureusacademy.com&quot;
+)
+)</formula>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Parent Email in 5th Lesson</fullName>
+        <actions>
+            <name>Update_Parent_Email</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <description>Update Parent Email in 5th Lesson</description>
+        <formula>NOT( ISBLANK( Parent__r.PersonContact.Email ))</formula>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <tasks>
+        <fullName>Email_5th_Lesson_Cancellation_Notification</fullName>
+        <assignedTo>admin@aureusacademy.com</assignedTo>
+        <assignedToType>user</assignedToType>
+        <dueDateOffset>0</dueDateOffset>
+        <notifyAssignee>false</notifyAssignee>
+        <priority>Normal</priority>
+        <protected>false</protected>
+        <status>Completed</status>
+        <subject>Email: 5th Lesson Cancellation Notification</subject>
+    </tasks>
+</Workflow>

@@ -1,0 +1,112 @@
+<apex:page id="PandaDocForCustomObject" controller="EnrolmentRetalPandaDocController" showHeader="false" standardStylesheets="true"
+    docType="html-5.0" applyBodyTag="False" applyHtmlTag="False">
+    <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.css')}" />
+    <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/jquery.min.js')}" />
+
+    <apex:form id="frm">
+        <apex:actionFunction name="sendDocument" status="spinner" action="{!sendDocument}"  oncomplete="waitForTwoSecond({!isSendDocument},'{!aggrementId}','{!enrolmentId}'); return false;"
+            reRender="frm" />
+        <apex:actionFunction name="updateEnrolment" status="spinner" action="{!updateEnrolment}" reRender="frm" oncomplete="closeWindow();" />
+
+        <apex:actionFunction name="getNewSession" status="spinner" action="{!createSession}" reRender="framePanel" oncomplete="console.log('{!sessionId}');" />
+        <apex:outputPanel rendered="{!!isGetAggrementId}">
+
+            <apex:actionStatus id="spinner" styleClass="status">
+                <apex:facet name="start">
+                    <div class="demo-only demo--inverse " style="height:100%;width:100%;z-index:200;position:fixed">
+                        <div class="slds-spinner_container" style="height:100%;width:100%;">
+                            <div role="status" class="slds-spinner slds-spinner_large slds-spinner_brand">
+                                <span class="slds-assistive-text">Loading</span>
+                                <div class="slds-spinner__dot-a"></div>
+                                <div class="slds-spinner__dot-b"></div>
+                            </div>
+                        </div>
+                    </div>
+                </apex:facet>
+            </apex:actionStatus>
+
+            <apex:outputPanel id="framePanel" rendered="{!isSendDocument}" >
+                <apex:iframe src="https://app.pandadoc.com/s/{!sessionId}" height="500px" width="100%"></apex:iframe>
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!isGetAggrementId}">
+            <div class="slds-align_absolute-center slds-p-around_x-small">
+                <strong>We cannot process your request at the moment Aggrement not created. Please contact centre admin for further assistance.
+                </strong>
+            </div>
+            <div class="slds-grid slds-grid_align-center slds-size_1-of-1">
+                <div class="slds-col ">
+                    <a class="slds-button  slds-button_brand" id="payBtn" onclick=" window.open('/{!enrolmentId}','_self');">Back
+                    </a>
+                </div>
+            </div>
+        </apex:outputPanel>
+
+    </apex:form>
+    <script>
+        $(document).ready(function () {
+            //console.log('isGetAggrementId{!isGetAggrementId}');
+            if (!{!isGetAggrementId}){
+            sendDocument();
+        }
+        });
+        function waitForTwoSecond(isSendDocument, aggrementId, enrolmentId) {
+            console.log('isSend' + isSendDocument);
+            console.log('aggrementId' + aggrementId.length);
+            console.log('enrolmentId' + enrolmentId.length);
+
+            if (!aggrementId.trim() || aggrementId.length === 0) {
+                console.log('aggrementId' + aggrementId.length);
+                if (!enrolmentId.trim() || enrolmentId.length === 0)
+                    window.open("/", "_self");
+                else
+                    window.open("/{!enrolmentId}", "_self");
+
+            } else {
+                if (isSendDocument != true) {
+                    setTimeout(function () {
+                        sendDocument();
+                        console.log('isSend' + isSendDocument);
+                    }, 200);
+                } else {
+                    getNewSession();
+                    console.log('getNewSession');
+                }
+            }
+        }
+
+        var eventMethod = window.addEventListener ? 'addEventListener' : 'attachEvent',
+            messageEvent = eventMethod === 'attachEvent' ? 'onmessage' : 'message';
+        //console.log('@@@@window ', window);
+        window[eventMethod](messageEvent, function (e) {
+            console.log('messageEvent', messageEvent);
+            if (e && e.data) {
+                try {
+                    console.log('e.data', e.data);
+                    var message = JSON.parse(e.data);
+                    console.log('message', message);
+                    if (message && message.event) {
+                        console.log('message.data', message.data);
+                        console.log('message.event', message.event);
+                        if (message.event == 'session_view.document.completed') {
+                            updateEnrolment();
+                            /*var r = confirm("Do you want to continue");
+                            if (r == true) {
+                                updateEnrolment();
+                            } else {
+                                closeWindow();
+                            }*/
+                        }
+                    }
+                } catch (e) {
+                    console.log(e);
+                }
+            }
+        }, false); 
+
+        function closeWindow(){
+            window.open('/{!enrolmentId}','_self');
+        }
+    </script>
+</apex:page>

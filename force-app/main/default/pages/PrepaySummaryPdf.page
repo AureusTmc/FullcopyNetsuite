@@ -1,0 +1,327 @@
+<apex:page renderAs="pdf"  controller="PrePaymentSummaryController" applyBodyTag="false" applyHtmlTag="false" showHeader="false">
+    <html>
+        <head>
+            <style>
+                @page {
+                    size: letter;
+                    margin-top: 100px;
+                    padding:0px;
+                    margin-bottom: 90px;
+                
+                    @top-left {
+                        content: element(header);
+                    }  
+                }
+                
+                div.header {
+                    margin-top:10px;
+                    margin-bottom:30px;
+                    position: running(header);
+                    width: 100%;
+                    margin-right: 10px;
+                }
+                
+                td{
+                vertical-align:top;
+                padding-top:5px;
+                padding-bottom:5px;
+                }
+                
+                tr{
+                page-break-inside:avoid;
+                }
+                
+                .graycolor{
+                color:gray;
+                }
+                
+                body{
+                font-family : Arial, Helvetica, sans-serif;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <table width="100%">        
+                    <table width="100%">
+                        <tr>                         
+                            <td style="height:35px;background: #efb550;"></td>
+                        </tr>
+                        <tr>                         
+                            <td style="text-align:right;"><apex:image style="width:20%;" url="{!$Resource.Aureus_logo}"/></td>
+                        </tr>
+                    </table>  
+                </table>    
+            </div>
+            <br/>
+            <div style="padding: 0% 0% 0% 5%;">
+                <table width="90%">        
+                    <tr>      
+                        <th colspan="2">Enrolment Details</th>
+                    </tr>    
+                    <tr>      
+                        <td width="50%">Student Name<br/>
+                            <span class="graycolor">{!enrolment.Student__r.Name}</span>
+                        </td>
+                        <td width="50%">Parent Name<br/>
+                            <span class="graycolor">{!enrolment.Parent__r.Name}</span>
+                        </td>
+                        
+                    </tr>
+                    <tr>      
+                        <td>Mobile<br/>
+                            <span class="graycolor">{!enrolment.Parent__r.PersonMobilePhone}</span>
+                        </td>
+                        <td>Parent Email<br/>
+                            <span class="graycolor">{!enrolment.Parent__r.PersonEmail}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Centre<br/>
+                            <span class="graycolor">{!enrolment.Center__r.Name}</span>
+                        </td>
+                    </tr>
+                </table>   
+                <br/><br/>
+                <table width="90%">        
+                    <tr colspan="2">      
+                        <th>Prepayment Period</th>
+                    </tr>
+                        <tr>
+                            <td width="50%">Prepayment Start Date<br/>
+                                <span class="graycolor">
+                                    <apex:outputText value="{0, date, MMMM d','  yyyy}" >
+                                        <apex:param value="{!firstDate}" /> 
+                                    </apex:outputText>
+                                </span>
+                            </td>
+                            <td>Prepayment End Date<br/>
+                                <span class="graycolor">
+                                    <apex:outputText value="{0, date, MMMM d','  yyyy}" >
+                                        <apex:param value="{!lastDate}" /> 
+                                    </apex:outputText>
+                                </span>
+                            </td>
+                        </tr>    
+                        <tr>      
+                            <td>Next Bill Date<br/>
+                                <span class="graycolor">
+                                    <apex:outputText value="{0, date, MMMM d','  yyyy}" >
+                                        <apex:param value="{!nextBillDate}" /> 
+                                    </apex:outputText>
+                                </span>
+                            </td>
+                            <td>Prepayment Duration (In Months)<br/>
+                                <span class="graycolor">{!prepayPackage.Promotion_period_In_months__c}</span>
+                            </td>
+                        </tr> 
+                </table> 
+                
+                <br/><br/>
+                <table width="100%"  style="border-collapse:collapse;">        
+                    <tr width="100%">      
+                        <th colspan="5">Billing Details</th>
+                    </tr>
+                    <tr>
+                        <th Style="border-bottom:2px solid black;" width="18%">Invoice Month</th>
+                        <th Style="border-bottom:2px solid black;text-align:left;" width="37%">Package Name</th>
+                        <th style="border-bottom:2px solid black;text-align:right;" width="12%">Amount</th>
+                        <th style="border-bottom:2px solid black;text-align:right;" width="13%">Discount</th>
+                        <th style="border-bottom:2px solid black;text-align:right;" width="20%">Net Amount</th>
+                    </tr>
+                    <apex:repeat value="{!listOfSummary}" var="summary">      
+                        <tr class="slds-hint-parent slds-border_bottom">
+                            <td style="text-align:left;">
+                                <apex:outputText value="{0, date, MMM','  yyyy}">
+                                    <apex:param value="{!summary.invoiceDate}" /> 
+                                </apex:outputText>
+                            </td>
+                            <td style="text-align:left;">{!summary.packageName}</td>
+                            <td style="text-align:right;">
+                                <apex:outputText value="${!ROUND(summary.amount,2)}" ></apex:outputText>
+                            </td>
+                            <td style="text-align:right;">
+                                <apex:outputText value="${!ROUND(summary.discount,2)}" ></apex:outputText>
+                            </td>
+                            <td style="text-align:right;">
+                                <apex:outputText value="${!ROUND(summary.netAmount,2)}" ></apex:outputText>
+                            </td>
+                        </tr>
+                    </apex:repeat>
+                        <tr>
+                            <td colspan="2" Style="text-align:right;border-top:2px solid black;"><b>Total</b></td>
+                            <td style="text-align:right;border-top:2px solid black;">
+                                <apex:outputText value="${!ROUND(prepayPackage.Package_Fee__c,2)}" ></apex:outputText>
+                            </td>
+                            <td style="text-align:right;border-top:2px solid black;">
+                                <apex:outputText value="${!ROUND(prepayPackage.Promotion_Discount__c,2)}" ></apex:outputText>
+                            </td>
+                            <td style="text-align:right;border-top:2px solid black;">
+                                <apex:outputText value="${!ROUND(amountAfterDiscount,2)}" ></apex:outputText>
+                            </td>
+                        </tr> 
+                       <tr>
+                            
+                            <td></td>
+                            <td></td>
+                           <td colspan="2" style="text-align:right;"><apex:outputPanel rendered="{!IF(gstAmount > 0, TRUE, FALSE)}"><b>GST</b></apex:outputPanel></td>
+                            <td style="text-align:right;">
+                                <apex:outputPanel rendered="{!IF(gstAmount > 0, TRUE, FALSE)}">
+                                <apex:outputText value="${!ROUND(gstAmount,2)}" ></apex:outputText>
+                                </apex:outputPanel>
+                            </td>
+                           
+                        </tr>
+                        <tr>
+                            
+                            <td style="text-align:right;border-bottom:2px solid black;"></td>
+                            <td style="text-align:right;border-bottom:2px solid black;"></td>
+                            <td colspan="2" style="text-align:right;border-bottom:2px solid black;"><b>Final Amount</b></td>
+                            <td style="text-align:right;border-bottom:2px solid black;">
+                                <apex:outputText value="${!ROUND(finalAmount,2)}" ></apex:outputText>
+                            </td>
+                        </tr>
+                </table>                 
+            </div>
+            
+            <!-- Cancellation policy -->
+            <div style="page-break-after: always"/>
+            <div class="leadTable" >                 
+                <table width="100%">
+                    <tr>
+                        <td style="text-align: center;font-size: 20px;padding-bottom:50px;">
+                            <strong>Pre-Payment 2019 <br/>Terms and Conditions </strong>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>1. Promotion Validity:</strong>
+                                <p style="text-align: justify;margin-top: 3px;margin-left: 18px;">The promotion is valid for customers at all of our facilities as well as Home Lessons, and
+                                not for Aureus Academy’s contract programmes/international schools.
+                                </p> 
+                        </td>
+                    </tr>
+                     <tr>
+                        <td>
+                            <strong>2. No Refunds: </strong>
+                            <p style="text-align: justify;margin-top: 3px;margin-left: 18px;">
+                                <strong>There will be strictly no refunds under any circumstances.</strong>  
+                                The Pre-Payment is a special promotion in conjunction with GSS 2019 and it is not compulsory, 
+                                so customers can decide to participate in this promotion or not.
+                            </p> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>3. Make Up Lessons: </strong>
+                                <p style="text-align: justify;margin-top: 3px;margin-left: 18px;">
+                                    Similar to regular lessons, as long as you continue after the pre-payment period is
+                                    complete, any pending make up lessons will still be valid for 4 months, as per student
+                                    policy. If any termination of enrolment has been made, any make up lessons will need to
+                                    be completed before the end of your last lesson.
+                                </p> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>4.Packages Upgrade/ Downgrade: </strong>
+                            <p style="text-align: justify;margin-top: 3px;margin-left: 18px;">
+                                As this is a promotional package, unfortunately we will not be allowing any downgrading
+                                (i.e. from 45 to 30-min lesson packages) of classes. However, for lesson advancements,
+                                customers will simply have to pay the deposit top up + difference in lesson fees for the
+                                remaining months. The formula will be 60 / 45 mins lesson fee - our fixed prices
+                                corresponding with the previous package (i.e. 45 mins is either $349 or $320, 30 mins is
+                                either $235 or $213). We will not be calculating the top up from the discounted fees that
+                                the customer has already paid (so they continue to enjoy a discount).
+                            </p> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong><div/>5.Relocation:  </strong> <!-- style="page-break-after: always" -->
+                            <p style="text-align: justify;margin-top: 3px;margin-left: 18px;">
+                                We understand customers might not have control over this. We will do our best to find a
+                                solution, but our pre-payment plan is a promotion so we will be unable to refund any
+                                unused lessons under any circumstances. 
+                            </p> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>6. Change of instructor: </strong>
+                                <p style="text-align: justify;margin-top: 3px;margin-left: 18px;">
+                                    Aureus does not change teachers very often as we have a minimal turnover of our staff.
+                                    If we change the teacher as a staff member leaves, we will have a transition where the
+                                    new teacher will sit in the lessons with the existing teacher before taking over.
+                                    <strong>
+                                         However,there will be no refunds should you want to cease lessons due to change of instructor. 
+                                    </strong>
+                                </p> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>7. Location Change:  </strong>
+                            <p style="text-align: justify;margin-top: 3px;margin-left: 18px;">
+                                Customers from centres with a lower fee structure who wish to switch to a centre with
+                                higher fee structure will have to top up the difference in fees. We will be calculating the
+                                top up fees from the fixed Aureus price corresponding with their package and not from
+                                the discounted fees that they had prepaid. We will not be able to refund the difference
+                                for customers moving from a higher fee centre to a lower fee centre.
+                            </p> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="text-decoration:underline;">
+                            <p style="text-align: justify;margin-top: 3px;margin-left: 18px;">
+                                <strong>The prepayment promotion cannot be combined with other ongoing offers or previous historical discounts.</strong>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <p style="text-align: justify;margin-top: 3px;margin-left: 18px;">
+                                Aureus Group Pte Ltd reserves the right to amend above terms and conditions without prior notice.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+                <div /> <!-- style="page-break-after: always"-->
+                <table width="100%">
+                    <tr>                        
+                        <td style="border-bottom:1px solid black;">
+                            Signature (Parent or Guardian):  <br/>
+                            <div >
+                                <apex:image url="/servlet/servlet.FileDownload?file={!attId}"/> 
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <!--<td width="10%">Parent or Guardian Name:</td>-->
+                        <td style="height:50px;vertical-align: bottom;">
+                            Parent or Guardian Name:  
+                            <div style="border-bottom:1px solid black;vertical-align: bottom;padding-top:5px;">   
+                                <span class="graycolor">
+                                {!enrolment.Parent__r.Name}
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <!--<td width="10%">Date:</td>-->
+                        <td style="height:50px;vertical-align: bottom;"> 
+                            Date:
+                            <div Style="border-bottom:1px solid black;padding-top:5px;"> 
+                                <span class="graycolor">
+                                    <apex:outputText value="{0, date,EE,  MMM dd yyyy}">
+                                        <apex:param value="{!TODAY()}" /> 
+                                    </apex:outputText>
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </body>
+    </html>
+</apex:page>

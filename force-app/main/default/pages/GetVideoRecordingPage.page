@@ -1,0 +1,102 @@
+<apex:page controller="GetVideoRecordingController" lightningStylesheets="true" standardStylesheets="false" applyBodyTag="false" applyHtmlTag="false"  showHeader="false" sidebar="false"> 
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <apex:slds />
+        <apex:includeLightning />
+        <apex:includeScript value="{!URLFOR($Resource.minjs)}" />
+        <head>
+            <style>
+                /* .left-side{
+                float:left;
+                }*/
+                .slds-col{
+                padding-top: .75rem;
+                }
+                .inside_message {
+                //  margin: 35px;
+                line-height: 1.1em;
+                // font-size: 18px;
+                // padding: 10px 0;
+                color: #666;
+                //  font-weight: bold;
+                text-align: center;
+                }
+                .btnDisabled{
+                opacity: 0.6;
+                }
+                .messageCell{
+                width:100%;
+                }
+            </style>
+        </head>
+        <body style="background-color: white;">
+            <apex:form style="background-color: white;margin-top: 8%;">
+                <div style="text-align:center;">
+                    <apex:image url="{!$Resource.Aureus_logo_png}" style="height:53px;width:146px"/><br/><br/>
+                </div>
+                <div class="slds" style="text-align: center;">
+                    <div class="slds-scope">
+                        <div class="slds-grid slds-gutters">
+                            <div class="slds-container--center" style="width: 100% !important;text-align: center;">
+                                <span class="slds-col left-side slds-size_1-of-1 slds-small-size_12-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12" style="width:31%" > 
+                                    <apex:outputPanel >
+                                        <apex:commandButton styleClass="slds-button {!If((compURLALready),'btnDisabled','')} " value="Generate Composition" disabled="{!compURLALready}" id="generateComposition" action="{!generateComposition}" style="background-color: #ffbf2f !important;color:white;padding-left: .75rem;padding-right: .75rem;"/>
+                                    </apex:outputPanel>
+                                </span>
+                                <span class="slds-col left-side slds-size_1-of-1 slds-small-size_12-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12" style="width:12%; !important">
+                                    <apex:outputPanel >
+                                        <apex:commandButton styleClass="slds-button  {!If((downloadActive),'btnDisabled','')}" value="Download" disabled="{!downloadActive}" id="downloadButton" action="{!downloadRecording}" style="background-color: #ffbf2f !important;color:white;padding-left: .75rem;padding-right: .75rem;margin-top: 2%;"/>
+                                    </apex:outputPanel>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <apex:outputPanel rendered="{!!compURLALready}" id="showMessage" > 
+                    <p class="inside_message" style="font-family: 'Salesforce Sans',Arial,sans-serif;">
+                        Please generate composition URL link.
+                    </p>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!roomIdNotFound}" id="showMessage2" > 
+                    <div class="inside_message" style="font-family: 'Salesforce Sans',Arial,sans-serif;">
+                        <apex:pageMessages />
+                    </div>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!recordingNotFound}" id="showMessage3" > 
+                    <div class="inside_message" style="font-family: 'Salesforce Sans',Arial,sans-serif;">
+                        <apex:pageMessages />
+                    </div>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!checkLater}" id="showMessage4" > 
+                    <div class="inside_message" style="font-family: 'Salesforce Sans',Arial,sans-serif;">
+                        <apex:pageMessages />
+                    </div>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!!downloadActive}" id="showMessage1" > 
+                    <div class="slds-grid slds-grid_vertical" style="width: 100%;text-align: center;margin-top: 2%;">
+                        <span class="slds-col" >
+                            <span>
+                                <apex:image url="{!$Resource.success}" style="height:45px;width:45px"/><br/><br/>
+                                <p style="margin-top: -12px;font-family: 'Salesforce Sans',Arial,sans-serif;">
+                                    Composition link Generated and wait for some time to available video for download.
+                                </p>
+                            </span>
+                        </span>
+                    </div> 
+                </apex:outputPanel>
+                <div class="slds" style="text-align: center;">
+                    <div class="slds-scope">
+                        <div class="slds-grid slds-gutters">
+                            <div class="slds-container--center" style="width: 100% !important;text-align: center;margin-bottom: 2%;">
+                                <span class="slds-col left-side slds-size_1-of-1 slds-small-size_12-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12" style="width: 100%;">
+                                    <apex:outputPanel >
+                                        <apex:commandButton styleClass="slds-button " value="Back to Home"  id="downloadButton1"  onComplete="window.close();" style="background-color: #ffbf2f !important;color:white;padding-left: .75rem;padding-right: .75rem;"/>
+                                    </apex:outputPanel>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </apex:form>
+        </body>
+    </html>
+</apex:page>

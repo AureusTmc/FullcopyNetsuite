@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workflow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fieldUpdates>
+        <fullName>Empty_Unique_Supplier_Receipt</fullName>
+        <field>Unique_Supplier_Receipt__c</field>
+        <name>Empty Unique Supplier Receipt</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Null</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Update_Unique_Supplier_Receipt</fullName>
+        <field>Unique_Supplier_Receipt__c</field>
+        <formula>IF(Not(IsBlank(Supplier__c))
+		,Supplier__r.Name,
+		Other_Supplier__c)
++  Invoice_Receipt_Number__c</formula>
+        <name>Update Unique Supplier Receipt</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <rules>
+        <fullName>Empty Unique Supplier Receipt</fullName>
+        <actions>
+            <name>Empty_Unique_Supplier_Receipt</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <formula>ISPICKVAL(Status__c, &apos;Rejected&apos;)</formula>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Unique Supplier Receipt</fullName>
+        <actions>
+            <name>Update_Unique_Supplier_Receipt</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <formula>AND(NOT(ISPICKVAL(Status__c, &apos;Rejected&apos;)), OR(ISNEW(), ISCHANGED(Status__c) , ISCHANGED(Invoice_Receipt_Number__c), ISCHANGED(Supplier__c),ISCHANGED(Other_Supplier__c)))</formula>
+        <triggerType>onAllChanges</triggerType>
+    </rules>
+</Workflow>

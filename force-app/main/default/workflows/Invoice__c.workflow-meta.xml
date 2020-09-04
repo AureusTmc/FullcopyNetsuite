@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workflow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fieldUpdates>
+        <fullName>Capture_Invoice_Void_Date</fullName>
+        <field>Invoice_Void_Date__c</field>
+        <formula>Now()</formula>
+        <name>Capture Invoice Void Date</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Inv_Number_update</fullName>
+        <field>Name</field>
+        <formula>IF(Center__r.Country__r.Name = &quot;HK&quot;,(Center__r.Country__r.Name +&quot;-&quot;+ Inv_number_backend__c), Inv_number_backend__c)</formula>
+        <name>Inv Number update</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <rules>
+        <fullName>Capture Invoice Void Date</fullName>
+        <actions>
+            <name>Capture_Invoice_Void_Date</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Invoice__c.Status__c</field>
+            <operation>equals</operation>
+            <value>Void</value>
+        </criteriaItems>
+        <description>Capture Invoice Void Date</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Update Invoice number</fullName>
+        <actions>
+            <name>Inv_Number_update</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <active>true</active>
+        <formula>TRUE</formula>
+        <triggerType>onCreateOnly</triggerType>
+    </rules>
+</Workflow>

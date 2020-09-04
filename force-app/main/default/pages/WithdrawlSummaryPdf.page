@@ -1,0 +1,272 @@
+<apex:page controller="WithdrawController" renderAs="pdf" showHeader="false" applyBodyTag="false" applyHtmlTag="false">
+    <html>
+        <head>
+            <style>
+                @page {
+                
+                margin-top: 100px;
+                padding:0px;
+                margin-bottom: 90px;
+                
+                @top-left {
+                content: element(header);
+                }  
+                }
+                h2{       
+                font-family: sans-serif; 
+                } 
+                div.header {
+                margin-top:10px;
+                margin-bottom:30px;
+                position: running(header);
+                width: 100%;
+                margin-right: 10px;
+                }
+                
+                td{
+                vertical-align:top;
+                padding-top:5px;
+                padding-bottom:5px;
+                }
+                
+                tr{
+                page-break-inside:avoid;
+                }
+                
+                .graycolor{
+                color:gray;
+                }
+                
+                body{
+                font-family : Arial, Helvetica, sans-serif;
+                }
+                hr{ border: 1px solid black;}
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <table width="100%">        
+                    <table width="100%">
+                        <tr>                         
+                            <td style="height:35px;background: #efb550;"></td>
+                        </tr>
+                        <tr>                         
+                            <td style="text-align:right;"><apex:image style="width:20%;" url="{!$Resource.Aureus_logo}"/></td>
+                        </tr>
+                    </table>  
+                </table>    
+            </div>
+            <div class="main-title">
+                <center> <h2>Withdrawal Summary</h2></center>
+            </div>
+            <hr/>
+            <div style="padding: 0% 0% 0% 5%;">
+                
+                <table width="90%">
+                    <tr>
+                        <th>
+                            <h3>Enrolment Details</h3>
+                        </th>
+                    </tr>
+                    <tr>      
+                        <td>Student Name</td>
+                        <td>centre</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <apex:outputText id="withdrawSummaryCentre" value="{!withdrawSummary.centre}" styleClass="graycolor"/>
+                        </td>
+                        <td>
+                            <apex:outputText id="withdrawSummaryStudentName" value="{!withdrawSummary.student}" styleClass="graycolor"/>
+                        </td>   
+                    </tr>
+                    <tr>      
+                        <td>Package</td>
+                        <td>Lesson Day &amp; Time</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <apex:outputText id="withdrawSummaryPackage" value="{!withdrawSummary.packageName}" styleClass="graycolor"/>
+                        </td>
+                        <td>
+                            <apex:outputText id="withdrawSummaryLessonDay" value="{!withdrawSummary.LessonDay}" styleClass="graycolor"/>
+                        </td>   
+                    </tr>
+                    <tr>
+                        <th>
+                            <h3>Withdrawal Summary</h3>
+                        </th>
+                    </tr>
+                    <tr>      
+                        <td>Notice Date</td>
+                        <td>Final Lesson Date</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <apex:outputText id="withdrawSummaryNoticeDate" value="{!withdrawSummary.noticeDate}" styleClass="graycolor"/>
+                        </td>
+                        <td>
+                            <apex:outputText id="withdrawSummaryFinalDate" value="{!withdrawSummary.lastDate}" styleClass="graycolor"/>
+                        </td>   
+                    </tr>
+                </table>
+                <br/>
+                <h3>Final 4 Lessons</h3>
+                <table width="100%" style="border-collapse:collapse;"> 
+                    <tr>
+                        <th Style="border-bottom:2px solid black; width:32%;" >Lesson</th>
+                        <th Style="border-bottom:2px solid black; width:20%;">Date</th>
+                        <th Style="border-bottom:2px solid black; width:15%;">Time</th>
+                        <th Style="border-bottom:2px solid black; width:18%;">Duration</th>
+                        <th Style="border-bottom:2px solid black; width:20%;">Status</th>
+                    </tr>
+                    <apex:repeat value="{!withdrawSummary.lastLessons}" var="value">
+                        <tr>
+                            <td>
+                                {!value.Lesson}
+                            </td>
+                            <td>
+                                <div title="Date">{!value.bookingDate}</div>
+                            </td>
+                            <td>
+                                <div title="Time">{!value.bookingTime}</div>
+                            </td>
+                            <td>
+                                <div title="Duration">{!value.duration} Mins</div>
+                            </td>
+                            <td>
+                                <div title="Status">
+                                    <apex:outputPanel rendered="{!IF(AND(value.status != 'Billed', value.status != 'Deposit', NOT(ISBLANK(value.status))), true, false)}">
+                                        {!RIGHT(value.status, LEN(value.status) - FIND(':', value.status))}
+                                        <!-- commented as per julius request @26 jun 2019 -->
+                                        <!--<a href="/{!LEFT(value.status, FIND(':', value.status) - 1)}" target="_blank"></a>-->
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!IF(OR(value.status = 'Billed', value.status = 'Deposit'), true, false)}">
+                                        {!value.status}
+                                    </apex:outputPanel>
+                                </div>
+                            </td>
+                            
+                        </tr> 
+                    </apex:repeat>
+                    <tr width="100%">
+                        <th Style="border-bottom:2px solid black;" colspan="5"></th>
+                    </tr>
+                </table><br/>
+          <apex:outputPanel rendered="{!IF(OR(withdrawSummary.makeupLessons.size == NULL , withdrawSummary.makeupLessons.size == 0), false,true)}">
+		       <h3>Make-Up Lessons</h3>
+                <table width="100%" style="border-collapse:collapse;"> 
+                    <tr>
+                        <th Style="border-bottom:2px solid black; width:25%;">Student</th>
+                        <th Style="border-bottom:2px solid black; width:30%;">Booking Date</th>
+                        <th Style="border-bottom:2px solid black; width:20%;">Duration</th>
+                        <th Style="border-bottom:2px solid black; width:25%;">New Expiry Date</th>
+                    </tr>
+                    <apex:repeat value="{!withdrawSummary.makeupLessons}" var="value">
+                        <tr>
+                            <td>
+                                <div title="Student">{!value.student}</div>
+                            </td>
+                            <td >
+                                <div  title="Cancellation Date">{!value.cancelDate}</div>
+                            </td>
+                            
+                            <td >
+                                <div title="Duration">{!value.duration}</div>
+                            </td>
+                            <td >
+                                <div title="Expiry Date">{!value.expiryDate}</div>
+                            </td>
+                        </tr>
+                    </apex:repeat>
+                    <tr>
+                        <th Style="border-bottom:2px solid black;" colspan="4"></th>
+                    </tr>
+                </table>
+               </apex:outputPanel>
+                <br/>
+                <table width="100%"  style="border-collapse:collapse;">        
+                    <tr width="100%">      
+                        <th colspan="5">Deposit Balance (Final Month)</th>
+                    </tr>
+                    <tr>
+                        <th Style="border-bottom:2px solid black; width:45%;">Package Name</th>
+                        <th Style="border-bottom:2px solid black; width:15%;">Student</th>
+                        <th Style="border-bottom:2px solid black; width:10%;">Qty</th>
+                        <th Style="border-bottom:2px solid black; width:10%;">Rate</th>
+                        <th Style="border-bottom:2px solid black; width:15%;">Total</th>
+                    </tr>
+                    <apex:repeat value="{!withdrawSummary.finalDeposits}" var="value">
+                        <tr>
+                            <td>
+                                <div title="Package Name">{!value.Lesson}</div>
+                            </td>
+                            <td>
+                                <div title="Student">{!value.student}</div>
+                            </td>
+                            <td>
+                                <div title="Qty">{!value.qty}</div>
+                            </td>
+                            <td>
+                                <div title="Rate"><apex:outputText value="{!ROUND(value.unitPrice,2)}"></apex:outputText></div>
+                            </td>
+                            <td>
+                                <div title="Total"><apex:outputText value="{!ROUND(value.total,2)}"></apex:outputText></div>
+                            </td>
+                        </tr>
+                    </apex:repeat>
+                    <tr>
+                        
+                        <td style="width:40%;"></td>
+                        <td style="width:15%;"></td>
+                        <td style="width:10%;"></td>
+                        <td style="width:10%;"><apex:outputPanel rendered="{!AND(withdrawSummary.gst <> null, withdrawSummary.gst > 0)}"><b>GST</b></apex:outputPanel></td>
+                        <td style="width:15%;">
+                            <apex:outputPanel rendered="{!AND(withdrawSummary.gst <> null, withdrawSummary.gst > 0)}"><apex:outputText rendered="{!withdrawSummary.gst <> null}" value="${!ROUND(withdrawSummary.gst,2)}" ></apex:outputText></apex:outputPanel>
+                        </td>
+                    </tr>
+                    <tr>
+                        
+                        <td style="width:40%;"></td>
+                        <td style="width:15%;"></td>
+                        <td style="width:10%;"></td>
+                        <td style="width:10%;"><b>Total</b></td>
+                        <td style="width:15%;">
+                            <apex:outputPanel rendered="{!withdrawSummary.total <> null}"><apex:outputText rendered="{!withdrawSummary.total <> null}" value="${!ROUND(withdrawSummary.total,2)}" ></apex:outputText></apex:outputPanel>
+                        </td>
+                    </tr>
+                    <tr>
+                        
+                        <td style="width:40%;"></td>
+                        <td style="width:15%;"></td>
+                        <td style="width:10%;"></td>
+                        <td style="width:10%;"><b>Deposit</b></td>
+                        <td style="width:15%;">
+                            <apex:outputPanel rendered="{!withdrawSummary.deposit <> null}"><apex:outputText rendered="{!withdrawSummary.deposit <> null}" value="${!ROUND(withdrawSummary.deposit,2)}" ></apex:outputText></apex:outputPanel>
+                        </td>
+                    </tr>
+                    <tr>
+                        
+                        <td style="width:40%;"></td>
+                        <td style="width:15%;"></td>
+                        <td style="width:10%;"></td>
+                        <td style="width:10%;"><b>Refund</b></td>
+                        <td style="width:15%;">
+                            <apex:outputPanel rendered="{!withdrawSummary.refund <> null}"><apex:outputText rendered="{!withdrawSummary.refund <> null}" value="${!ROUND(withdrawSummary.refund,2)}" ></apex:outputText></apex:outputPanel>
+                        </td>
+                    </tr>
+                    <tr width="100%">
+                        <th Style="border-bottom:2px solid black;" colspan="5"></th>
+                    </tr>
+                </table>
+                
+                <!-- <div style="font-size: 1.0em;padding: 10px;">Note: 
+Your final invoice will be generated on the 1st of your final lesson month. 
+The deposit will be applied, and if a balance is applicable, a refund will be processed thereafter. 
+In the event you have multiple students or multiple enrolments, and refund balance presented in the summary will be applied as 
+a payment towards your next invoice.
+</div> -->
+            </div>
+        </body>
+    </html>
+</apex:page>
