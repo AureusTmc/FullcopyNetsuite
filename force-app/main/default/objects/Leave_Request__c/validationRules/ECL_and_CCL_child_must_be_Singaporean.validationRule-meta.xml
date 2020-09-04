@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ECL_and_CCL_child_must_be_Singaporean</fullName>
+    <active>true</active>
+    <description>CCL &amp; ECL child nationality to be Singapore.</description>
+    <errorConditionFormula>(RecordType.DeveloperName == &apos;Child_Care_Leave&apos; || RecordType.DeveloperName == &apos;Extended_Child_Care_Leave&apos;) &amp;&amp; (ISPICKVAL(Child_Nationality__c , &quot;Non-Singapore&quot;) || ISPICKVAL(Child_Nationality__c , &quot;&quot;))</errorConditionFormula>
+    <errorMessage>Child Nationality cannot be left blank and must be Singapore.</errorMessage>
+</ValidationRule>

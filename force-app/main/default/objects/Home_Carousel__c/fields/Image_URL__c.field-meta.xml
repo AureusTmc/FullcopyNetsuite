@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Image_URL__c</fullName>
+    <description>Used to generate and publish related Image Public Link
+This is used to publish the image in Portal and Mobile App</description>
+    <externalId>false</externalId>
+    <inlineHelpText>Managed by Upload Image button</inlineHelpText>
+    <label>Image URL</label>
+    <length>131072</length>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>3</visibleLines>
+</CustomField>

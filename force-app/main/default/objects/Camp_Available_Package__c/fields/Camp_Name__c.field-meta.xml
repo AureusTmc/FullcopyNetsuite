@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Camp_Name__c</fullName>
+    <description>this field for camp package for manage selected camp name</description>
+    <externalId>false</externalId>
+    <label>Camp Name</label>
+    <referenceTo>Camp__c</referenceTo>
+    <relationshipLabel>Camp Available Packages</relationshipLabel>
+    <relationshipName>Camp_Available_Packages</relationshipName>
+    <relationshipOrder>0</relationshipOrder>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <trackTrending>false</trackTrending>
+    <type>MasterDetail</type>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+</CustomField>

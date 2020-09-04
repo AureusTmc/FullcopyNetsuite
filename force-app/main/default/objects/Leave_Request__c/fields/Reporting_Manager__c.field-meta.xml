@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Reporting_Manager__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>This field is used to assign approver, gets value from Employee&apos;s Reporting Manager field, if it&apos;s blank then will contain HR user.</description>
+    <externalId>false</externalId>
+    <label>Reporting Manager</label>
+    <referenceTo>User</referenceTo>
+    <relationshipName>Leave_Requests</relationshipName>
+    <required>false</required>
+    <trackHistory>true</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

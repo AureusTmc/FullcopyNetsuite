@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Instrument_Image__c</fullName>
+    <externalId>false</externalId>
+    <formula>CASE( Instrument__c, 
+&apos;Piano&apos;, IMAGE(&quot;/servlet/servlet.ImageServer?id=0156F00000GwOsi&amp;oid=00D1m0000008aQN&amp;lastMod=1556006616000&quot;,&quot;Piano&quot;,20,30), 
+&apos;Guitar&apos;, IMAGE(&quot;/servlet/servlet.ImageServer?id=0156F00000GwOsj&amp;oid=00D1m0000008aQN&amp;lastMod=1556006616000&quot;,&quot;Guitar&quot;,20,30), 
+&apos;Violin&apos;, IMAGE(&quot;/servlet/servlet.ImageServer?id=0156F00000GwOtK&amp;oid=00D1m0000008aQN&amp;lastMod=1556006617000&quot;,&quot;Violin&quot;,20,30),
+&apos;Vocal&apos;, IMAGE(&quot;/servlet/servlet.ImageServer?id=0156F00000GwOtM&amp;oid=00D1m0000008aQN&amp;lastMod=1556006617000&quot;,&quot;Vocal&quot;,20,30),
+&apos;Guitar&apos;, IMAGE(&quot;servlet/servlet.ImageServer?id=0156F00000GwOsj&amp;oid=00D1m0000008aQN&amp;lastMod=1556006616000&quot;,&quot;Guitar&quot;,20,30),
+&apos;Cello&apos;, IMAGE(&quot;/servlet/servlet.ImageServer?id=0156F00000GwOsT&amp;oid=00D1m0000008aQN&amp;lastMod=1556006615000&quot;,&quot;Cello&quot;,20,30),
+&apos;Drum&apos;, IMAGE(&quot;/servlet/servlet.ImageServer?id=0156F00000GwOsc&amp;oid=00D1m0000008aQN&amp;lastMod=1556006615000&quot;,&quot;Drum&quot;,20,30),
+&apos;Brass&apos;, IMAGE(&quot;/servlet/servlet.ImageServer?id=0156F00000GwOsR&amp;oid=00D1m0000008aQN&amp;lastMod=1556006615000&quot;,&quot;Brass&quot;,20,30),
+&apos;Music Exploration&apos;,IMAGE(&quot;servlet/servlet.ImageServer?id=0156F00000GwOsw&amp;oid=00D1m0000008aQN&amp;lastMod=1556006616000&quot;,&quot;Music Exploration&quot;,20,30),
+IMAGE(&quot;/servlet/servlet.ImageServer?id=0150k0000003ISs&amp;oid=00D0k000000Dsbn&amp;lastMod=1545292079000&quot;,&quot;Music Note&quot;,20,30))</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Instrument Image</label>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

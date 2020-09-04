@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Stage__c</fullName>
+    <description>Add &apos;Duplicate&apos; and &apos;Enquiry Lost&apos; on Nov 4th to capture more Statistic
+These values will be used in Pardot going forward
+Requested By: Alex and Yunshi</description>
+    <externalId>false</externalId>
+    <label>Sales Stage</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>true</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Enquiry</fullName>
+                <default>false</default>
+                <label>Enquiry</label>
+            </value>
+            <value>
+                <fullName>Trial Requested</fullName>
+                <default>false</default>
+                <label>Trial Requested</label>
+            </value>
+            <value>
+                <fullName>Trial Booked</fullName>
+                <default>false</default>
+                <label>Trial Booked</label>
+            </value>
+            <value>
+                <fullName>Trial Cancelled</fullName>
+                <default>false</default>
+                <label>Trial Cancelled</label>
+            </value>
+            <value>
+                <fullName>Trial No Show</fullName>
+                <default>false</default>
+                <label>Trial No Show</label>
+            </value>
+            <value>
+                <fullName>Trial Attended</fullName>
+                <default>false</default>
+                <label>Trial Attended</label>
+            </value>
+            <value>
+                <fullName>Transferred</fullName>
+                <default>false</default>
+                <label>Transferred</label>
+            </value>
+            <value>
+                <fullName>Duplicate</fullName>
+                <default>false</default>
+                <label>Duplicate</label>
+            </value>
+            <value>
+                <fullName>Enquiry Lost</fullName>
+                <default>false</default>
+                <label>Enquiry Lost</label>
+            </value>
+            <value>
+                <fullName>Lost</fullName>
+                <default>false</default>
+                <label>Lost</label>
+            </value>
+            <value>
+                <fullName>Enrolled</fullName>
+                <default>false</default>
+                <label>Enrolled</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

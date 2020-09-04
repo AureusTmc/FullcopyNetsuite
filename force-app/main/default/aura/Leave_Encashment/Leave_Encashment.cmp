@@ -1,0 +1,20 @@
+<aura:component implements="flexipage:availableForRecordHome,force:hasRecordId,force:lightningQuickAction" access="global" controller="Leave_Encashment_Controller">
+    <aura:attribute name="NoofDays" type="integer" /> 
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+     <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+   
+    
+    <lightning:card >
+        <aura:set attribute="title">
+            <h3 class="slds-section-title--divider">Leave Encashment</h3>
+        </aura:set>
+         <center><lightning:spinner variant="brand" aura:id="spinner" alternativeText="Loading" size="small" /></center>        
+        <p class="slds-p-horizontal_small">
+            <lightning:input type="number" name="NDays" label="Enter number of days" required="true" value="{!v.NoofDays}" />
+            <br/>
+            <center>
+                <lightning:button variant="brand" label="Calculate" title="Calculate" onclick="{!c.CalculateLeaveEncashment}" />
+            </center>
+        </p>
+    </lightning:card>
+</aura:component>

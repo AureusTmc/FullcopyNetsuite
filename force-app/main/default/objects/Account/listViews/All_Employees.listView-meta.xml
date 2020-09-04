@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>All_Employees</fullName>
+    <columns>Employee_Code__c</columns>
+    <columns>ACCOUNT.NAME</columns>
+    <columns>Teacher_Portal_Invitation__c</columns>
+    <columns>PC_EMAIL</columns>
+    <columns>ID_Type__c</columns>
+    <columns>Identification_Number__c</columns>
+    <columns>Job_Title__c</columns>
+    <columns>Joining_Date__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>ACCOUNT.RECORDTYPE</field>
+        <operation>equals</operation>
+        <value>PersonAccount.Employee</value>
+    </filters>
+    <filters>
+        <field>Employee_Status__c</field>
+        <operation>equals</operation>
+        <value>Probation,Confirm</value>
+    </filters>
+    <label>All Active Employees</label>
+</ListView>

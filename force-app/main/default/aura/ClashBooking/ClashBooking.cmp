@@ -1,0 +1,119 @@
+<aura:component controller="ClashBookingClass" implements="force:appHostable" >
+	<aura:attribute name="Bookings" type="list"/>
+    <aura:attribute name="totalCount" type="integer"/>
+    <aura:attribute name="centerID" type="string"/>
+    <aura:handler event="c:AccountKeyChange" action="{!c.initialize}"/>
+    <aura:attribute name="datetyp" type="list"/>
+    <lightning:card title="" class="Remove-Margin">
+        <aura:set attribute="title">
+            <b>Booking Clashes ({!v.datetyp[0]}&nbsp; to &nbsp;{!v.datetyp[1]})</b>
+        </aura:set>
+        <div class="c-container slds-scrollable">
+            <lightning:layout multipleRows="true">
+                <lightning:layoutItem padding="around-xxx-small" size="12">
+                    
+                    <div class="slds-table--header-fixed_container" style="height:100px;">
+                        <div class="slds-m-around_xx-small" style="height:100%; background-color:white;">
+                            <table id="tableId" class="slds-table slds-table_bordered slds-table--header-fixed" cellspacing="0" width="100%">
+                                <thead>
+                                    <tr class="slds-text-heading--label">
+                                        <th scope="col" class="nobordertop slds-cell-th" title="Center" style="padding-left: 6px;">
+                                            <div  class="slds-truncate">Center</div>
+                                        </th>
+                                        <th scope="col" class="nobordertop slds-cell-th" title="Teacher" >
+                                            <div  class="slds-truncate">Teacher</div>
+                                        </th>
+                                        <th scope="col" class="nobordertop slds-cell-th" title="Date">
+                                            <div  class="slds-truncate">Date</div>
+                                        </th>
+                                        <th scope="col" class="nobordertop slds-cell-th" title="Time Slot">
+                                            <div  class="slds-truncate">Time Slot</div>
+                                        </th>
+                                        <th scope="col" class="nobordertop slds-cell-th" title="No. Of Record" style="Width:7% !important;">
+                                            <div  class="slds-truncate">Total No.</div>
+                                        </th>
+                                        <th scope="col" class="nobordertop slds-cell-th" title="Booking ID">
+                                            <div  class="slds-truncate">Booking ID</div>
+                                        </th>
+                                        <th scope="col" class="nobordertop slds-cell-th" title="Parent">
+                                            <div  class="slds-truncate">Parent</div>
+                                        </th>
+                                        <th scope="col" class="nobordertop slds-cell-th" title="Student">
+                                            <div  class="slds-truncate">Student</div>
+                                        </th>
+                                        <th scope="col" class="nobordertop slds-cell-th" title="Package">
+                                            <div  class="slds-truncate">Package</div>
+                                        </th>
+                                        <th scope="col" class="nobordertop slds-cell-th" title="Status">
+                                            <div  class="slds-truncate">Status</div>
+                                        </th>
+                                        <th scope="col" class="nobordertop slds-cell-th" title="Type">
+                                            <div  class="slds-truncate">Type</div>
+                                        </th> 
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <aura:iteration items="{!v.Bookings}" var="Bkg" indexVar="index">     
+                                        <tr>
+                                            <td data-label="Package" title="Name" class="slds-cell-td">
+                                                <a href="{! '/lightning/r/Account/'+ Bkg.Center__c + '/view'}" target="_blank">
+                                                    <div class="slds-truncate">{!Bkg.Center}</div>
+                                                </a>
+                                            </td>
+                                            <td data-label="Name" title="Name">
+                                                <a href="{! '/lightning/r/Account/'+ Bkg.Teacher__c + '/view'}" target="_blank">
+                                                    <div class="slds-truncate">{!Bkg.Teacher} </div>
+                                                </a>
+                                            </td>
+                                            <td data-label="Parent" title="Date" class="slds-cell-td">
+                                                    <div  class="slds-truncate">
+                                                        <lightning:formattedDateTime value="{!Bkg.Booking_Date__c}" year="2-digit" month="short" day="2-digit" weekday="short" timeZone="UTC"/>
+                                                    </div>
+                                            </td>
+                                            <td data-label="Start Time" title="Teacher" class="slds-cell-td">
+                                                <div class="slds-truncate">
+                                                    <lightning:formattedDateTime value="{!Bkg.Start_Time__c}" hour="2-digit" minute="2-digit" timeZone="UTC"/>
+                                                </div>
+                                            </td>
+                                            <td data-label="Start Time" title="Teacher" class="slds-cell-td">
+                                                <div class="slds-truncate">{!Bkg.NumberRecord}
+                                                </div>
+                                            </td>
+                                            <td data-label="Package" title="Name" class="slds-cell-td">
+                                                <a href="{! '/lightning/r/Account/'+ Bkg.Id + '/view'}" target="_blank">
+                                                    <div class="slds-truncate">{!Bkg.Name}</div>
+                                                </a>
+                                            </td>
+                                            <td data-label="Booking_Date" title="Parent" class="slds-cell-td">
+                                                <div class="slds-truncate" >{!Bkg.Parent}
+                                                </div>
+                                            </td>
+                                            <td data-label="Teacher" title="Student" class="slds-cell-td">
+                                                <div class="slds-truncate">{!Bkg.Student}</div>
+                                            </td>
+                                            <td data-label="Package" title="Package" class="slds-cell-td">
+                                                <div class="slds-truncate">{!Bkg.Package}</div>
+                                            </td>
+                                            <td data-label="Status" title="Status" class="slds-cell-td">
+                                                <div class="slds-truncate" >{!Bkg.Status__c}
+                                                    
+                                                </div>
+                                            </td>
+                                            <td data-label="Booking_Date" title="Type" class="slds-cell-td">
+                                                <div class="slds-truncate" >{!Bkg.Type__c}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </aura:iteration>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </lightning:layoutItem>                              
+            </lightning:layout>
+            <div class="slds-align_absolute-center viewAllButton" onclick="{!c.OpenMegaPage}"> View All</div>
+        </div>
+    </lightning:card>
+    <div>
+    </div>
+</aura:component>

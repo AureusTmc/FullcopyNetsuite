@@ -1,0 +1,160 @@
+.THIS  #style-3::-webkit-scrollbar-track
+{
+    border-radius: 10px;
+    -webkit-box-shadow: inset 0 0 3px rgba(0,0,0,0.3);
+    background-color: #F5F5F5;
+}
+
+.THIS   #style-3::-webkit-scrollbar
+{
+    width: 6px;
+    background-color: #F5F5F5;
+}
+
+.THIS  #style-3::-webkit-scrollbar-thumb
+{
+    border-radius: 10px;
+    background-color: gray;	
+}
+.THIS  .scrollbar
+{
+    height: 94px;
+    width:99% !important;
+    background: rgb(255, 255, 255);
+    overflow-y: scroll;
+    margin-top: 10px;
+    margin-left: 10px;
+}
+.THIS .uploadbtn{
+    background-color: #F90;
+    width:100%;
+    align:center;
+    color: white;
+    font-size: 20px;
+    font-family: 'Lato', sans-serif;
+}
+.THIS .slds-button {
+    display: block !important;
+}
+
+.THIS #dropFileForm {
+    height: 240px;
+    margin-left: 23px;
+    margin-right: 23px;
+    margin-top: -191px;
+    margin-bottom: 0px;
+    text-align: center;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: 0.5s;
+}
+
+.THIS #dropFileForm #fileLabel {
+    background-color: rgb(235, 235, 235);
+    display: block;
+    padding: 0px;
+    position: relative;
+    cursor: pointer;
+    height:86px;
+    font-family: 'Lato', sans-serif;
+    font-size: 14px;
+}
+
+.THIS #dropFileForm #fileInput {
+    display: none;
+}
+
+.THIS #dropFileForm #fileLabel:after,
+.THIS #dropFileForm #fileLabel:before {
+    position: absolute;
+    content: "";
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    z-index: -2;
+    border-radius: 8px 8px 0 0;
+}
+
+.THIS #dropFileForm #fileLabel:before {
+    z-index: -1;
+    background: repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 5%,
+            black 5%,
+            black 10%
+            );
+    opacity: 0;
+    transition: 0.5s;
+}
+
+.THIS #dropFileForm.fileHover #fileLabel:before {
+    opacity: 0.25;
+}
+
+.THIS #dropFileForm .uploadButton {
+    border: 0;
+    outline: 0;
+    width: 100%;
+    padding: 3px;
+    background-color: #F90;
+    color: #fff;
+    cursor: pointer;
+    font-size:18px;
+    font-family: 'Lato', sans-serif;
+}
+
+.THIS #dropFileForm.fileHover {
+    box-shadow: 0 0 16px limeGreen;
+}
+.THIS .slds-button .slds-button_neutral{
+    background-color: rgb(235, 235, 235);
+    color:rgb(235, 235, 235);
+}
+
+.THIS .slds-scope .THIS .slds-icon_small{
+    height: 1.0rem;
+}
+
+.THIS .slds-file-selector__button{
+    display:none !important;
+}
+.THIS .slds-file-selector__text{
+    display:none !important;    
+}
+.THIS .slds-file-selector__body{
+    height:15vw !important;
+    width: 100% !important;
+    
+}
+.THIS .slds-file-selector__dropzone{
+    border:none;
+    width: 100% !important;
+}
+.THIS slot[interop-primitiveFileDroppableZone_primitiveFileDroppableZone]{
+    width: 100% !important;
+}
+.THIS .slds-file-selector{
+    width: 100% !important;
+    
+}
+.THIS .slds-form-element__control{
+    width: 100% !important;
+}
+.THIS .slds-form-element{
+    width: 100% !important;
+}
+.THIS.slds-spinner_container {  
+  z-index: 10000;
+  position: fixed;   
+}
+.THIS .slds-text-body_small{
+    font-size: 100%;
+    color: darkgrey;
+}
+.THIS .slds-icon svg {
+    width: 3.2vw;
+    height: 3.2vw;
+}

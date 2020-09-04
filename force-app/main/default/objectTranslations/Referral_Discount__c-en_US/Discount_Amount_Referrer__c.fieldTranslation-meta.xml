@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help><!-- To work out the price without GST you have to divide the amount by 1. (Tax Rate) i.e. 1.07. E.g. ($214/1.07=$200) --></help>
+    <label><!-- Discount Amount (Referrer) --></label>
+    <name>Discount_Amount_Referrer__c</name>
+</CustomFieldTranslation>

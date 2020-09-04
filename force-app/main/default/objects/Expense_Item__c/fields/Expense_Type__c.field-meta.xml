@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Expense_Type__c</fullName>
+    <externalId>false</externalId>
+    <label>Expense Type</label>
+    <referenceTo>Expense_Type__c</referenceTo>
+    <relationshipLabel>Expense Items</relationshipLabel>
+    <relationshipName>Expense_Types</relationshipName>
+    <relationshipOrder>1</relationshipOrder>
+    <reparentableMasterDetail>true</reparentableMasterDetail>
+    <trackTrending>false</trackTrending>
+    <type>MasterDetail</type>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+</CustomField>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Reason of Withdraw --></label>
+    <name>Reason_of_Withdraw__c</name>
+    <picklistValues>
+        <masterLabel>Focus on Other Studies</masterLabel>
+        <translation><!-- Focus on Other Studies --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Logistics Issues</masterLabel>
+        <translation><!-- Logistics Issues --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Loss of Interest</masterLabel>
+        <translation><!-- Loss of Interest --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Other - Please Specify</masterLabel>
+        <translation><!-- Other - Please Specify --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Relocation</masterLabel>
+        <translation><!-- Relocation --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Too Expensive</masterLabel>
+        <translation><!-- Too Expensive --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

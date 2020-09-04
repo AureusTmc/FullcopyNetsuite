@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <caseValues>
+        <plural>false</plural>
+        <value>Payout</value>
+    </caseValues>
+    <caseValues>
+        <plural>true</plural>
+        <value>Payouts</value>
+    </caseValues>
+    <layouts>
+        <layout>Payout Layout</layout>
+        <sections>
+            <label><!-- Additional Pay Items --></label>
+            <section>Additional Pay Items</section>
+        </sections>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+        <sections>
+            <label><!-- Employee Contribution --></label>
+            <section>Employee Contribution</section>
+        </sections>
+        <sections>
+            <label><!-- Employer Contribution --></label>
+            <section>Employer Contribution</section>
+        </sections>
+        <sections>
+            <label><!-- Other Information --></label>
+            <section>Other Information</section>
+        </sections>
+        <sections>
+            <label><!-- Payment Details --></label>
+            <section>Payment Details</section>
+        </sections>
+    </layouts>
+    <quickActions>
+        <label><!-- Calculate Payout --></label>
+        <name>Calculate_Payout</name>
+    </quickActions>
+    <quickActions>
+        <label><!-- Generate Payslip --></label>
+        <name>GeneratePayslip</name>
+    </quickActions>
+    <quickActions>
+        <label><!-- Leave Encashment --></label>
+        <name>Leave_Encashment</name>
+    </quickActions>
+    <startsWith>Consonant</startsWith>
+    <validationRules>
+        <errorMessage><!-- Closed Payout cannot be modified. --></errorMessage>
+        <name>Cannot_modify_Closed_Payout</name>
+    </validationRules>
+</CustomObjectTranslation>

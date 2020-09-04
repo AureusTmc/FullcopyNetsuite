@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>No_leave_for_3_months</fullName>
+    <active>true</active>
+    <description>ECL, CCL, Maternity Leave can only be applied after 3 months. HR can also not create such leaves within first 3 month of employment.</description>
+    <errorConditionFormula>(RecordType.DeveloperName == &apos;Child_Care_Leave&apos; || RecordType.DeveloperName == &apos;Extended_Child_Care_Leave&apos; || RecordType.DeveloperName == &apos;Maternity_Leave&apos;) &amp;&amp; $Profile.Name != &apos;HR Manager&apos; &amp;&amp; $Profile.Name != &apos;System Administrator&apos; &amp;&amp; 
+!($Permission.Operation_User) &amp;&amp; Leave_Start_Date__c &lt;= ADDMONTHS(Employee__r.Joining_Date__c , 3)</errorConditionFormula>
+    <errorMessage>Cannot apply for leave in the first three months of employment. Please contact your HR.</errorMessage>
+</ValidationRule>

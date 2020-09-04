@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>All</fullName>
+    <columns>NAME</columns>
+    <columns>Category__c</columns>
+    <columns>Min_Employee_Age__c</columns>
+    <columns>Max_Employee_Age__c</columns>
+    <columns>Min_Total_Wage__c</columns>
+    <columns>Max_Total_Wages__c</columns>
+    <columns>Total_Contribution_Fixed_Amount__c</columns>
+    <columns>Employee_Contribution_Fixed_Amount__c</columns>
+    <columns>TC_Multiple_of_TW_Fixed_Amount__c</columns>
+    <columns>EC_Multiple_of_TW_Fixed_Amount__c</columns>
+    <filterScope>Everything</filterScope>
+    <label>All</label>
+</ListView>

@@ -1,0 +1,32 @@
+<aura:component  implements="lightning:actionOverride,flexipage:availableForRecordHome,force:appHostable,flexipage:availableForAllPageTypes,force:hasRecordId,force:lightningQuickActionWithoutHeader" access="global" controller="AddCreditNotesController">
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:attribute name="parentAccountId" type="String" description="get Parent Account Id"/>
+    <aura:attribute name="parentAccountName" type="String" description="get Parent Account Name"/>
+    <aura:attribute name="reasonOptions" type="List" description="Set All Reasons "/>
+    <aura:attribute name="reasonOther" type="String" description="Enter text if user select Other reason"/>
+    <aura:attribute name="isReasonOtherSelected" default="false" type="Boolean" description="If Reason picklist user select Other reason then text box show"/>
+    <aura:attribute name="amount" type="integer" />
+    <aura:attribute name="selectedReasonOption" type="String"/>
+    <aura:attribute name="isPaymentCreated" default="false" type="Boolean" />
+    <aura:attribute name="alertMessage"  type="String" />
+    
+    <lightning:card  title="Add Credit Note">
+        <aura:if isTrue="{!v.isPaymentCreated}">
+            <div aura:id="alertMessage" class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error" role="alert">
+                <h2>{!v.alertMessage}</h2>
+            </div>
+        </aura:if>
+        <p class="slds-p-horizontal_small body-size" aura:id="paymentCard">
+            <lightning:input aura:id="ParentAccount" name="parent Account" readonly="true" value="{!v.parentAccountName}" label="Parent Account Name" />
+            <lightning:combobox name="Reason"  aura:id ="Reason" label="Reason" value="{!v.selectedReasonOption}"  placeholder="Select Reason" options="{!v.reasonOptions}" onchange="{! c.handleReasonChange }"/>
+            <aura:if isTrue="{!v.isReasonOtherSelected}">
+                <lightning:input aura:id="reasonOther" label="Other Reason"  value="{!v.reasonOther}" required="true"/>
+            </aura:if>
+            <lightning:input type="number" aura:id="Amount"  name="Amount" label="Enter a Amount: " required="true" value="{!v.amount}"/>
+        </p>
+        <div class="slds-float_right slds-m-top_large"> 
+            <lightning:button aura:id="savePayment" label="Save" variant="brand" onclick="{!c.handleSavePayment}"/>
+            <lightning:button aura:id="cancelPayment" label="Cancel"  onclick="{!c.handleCancel}"/>
+        </div>
+    </lightning:card>
+</aura:component>

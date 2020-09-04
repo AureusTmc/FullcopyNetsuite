@@ -1,0 +1,115 @@
+<apex:component controller="PianoRentalEditCalendarController" allowDML="true">
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <script>
+        //Jatin: 20-jan-2020 : get calandar data according to employee list
+        function getEmployeeList(employeeVal){
+            filter.employee = employeeVal;
+            if(filter.employee){
+                $('[id$=resources]').val('');
+                $('[id$=teachers]').val('Select Teacher'); 
+                filter.teacher = $('[id$=teachers]').val(); 
+                filter.resource = $('[id$=resources]').val();
+                $('[id$=instruments]').val(''); 
+                filter.instrument = $('[id$=instruments]').val();
+                refreshCalendarAccordingToEmployee();
+            }else{
+                refreshCalendar();
+            }
+            
+        }
+       
+        function employeeChange(){
+            window.setTimeout(function(){
+                var calView = $('#calendar').fullCalendar('getView').name;
+                if(calView == 'agendaTwoDay'){
+                    $("[id$=employee] option[value='AllRosteredStaff']").remove();
+                    $("[id$=employee] option[value='AllStaff']").remove();
+                } 
+                $('[id$=employee]').val('');
+                filter.employee = $('[id$=employee]').val();
+            },10);
+        }
+        //Jatin: 20-jan-2020 : Refresh the calendar with existing dates according to  employee 
+        function refreshCalendarAccordingToEmployee(){
+            var b = $('#calendar').fullCalendar('getDate');
+            var bookDate = [b.format('YYYY-MM-DD')];
+            employee = $('[id$=employee]').val();
+            
+            var calView = $('#calendar').fullCalendar('getView').name;
+            var calendarDates = isWeekDay();
+           //console.log(calView);
+            if(calView == 'agendaTwoDay'){
+                initEmployeeResources(center, employee, calendarDates, calView);
+            }else{
+                initEmployeeResources(center, employee, bookDate, calView);
+            } 
+        }
+        //Jatin: 20-jan-2020 get calandar details according to selected employee 
+        function initEmployeeResources(centerId, employeeId, dateOfAppointment, view){
+            $('#statusOnPage').show();
+            var listOfResource = [];
+            var listOfEvents = [];
+            var minTime;
+            var maxTime;
+           ////console.log(centerId);
+            //console.log(employeeId);
+           ////console.log(dateOfAppointment);
+            //console.log(view);
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.PianoRentalEditCalendarController.getCalendarAllEmployeeData}',
+                centerId, employeeId, dateOfAppointment, 
+                function(result, event){
+                    var msg = '';
+                   ////console.log('result',result);
+                    //console.log('event',event.status);
+                    if (event.status) {
+                        if(result != '' && result != null && result != 'undefined'){
+                            
+                            var calendarResult = JSON.parse(result.replace(/(&quot\;)/g,"\""));
+                           ////console.log('calendarResult',calendarResult);
+                            listOfResource = calendarResult.listOfResources;
+                            listOfEvents = calendarResult.listOfEvents;
+                            teacherWorkingHours = calendarResult.employeeWorkingHours;
+                            //console.log('teacherWorkingHours.....',teacherWorkingHours);
+                            //console.log('@@@workingHours', calendarResult);
+                            eventsOfCalendar = calendarResult.listOfEvents;
+                            $('#statusOnPage').hide();
+                            
+                            
+                            
+                            if(calendarResult.minTime != '' && calendarResult.minTime != null && calendarResult.minTime != 'undefined'
+                            && calendarResult.maxTime != '' && calendarResult.maxTime != null && calendarResult.maxTime != 'undefined'){
+                                minTime = calendarResult.minTime;
+                                maxTime = calendarResult.maxTime;
+                                
+                                $('#calendar').html('');
+                               ////console.log('listOfResource',listOfResource);
+                               ////console.log('listOfEvents',listOfEvents);
+                               ////console.log('dateOfAppointment',dateOfAppointment);
+                              // //console.log('minTime',minTime);
+                              // //console.log('maxTime',maxTime);
+                               ////console.log('view',view);
+                                initCalendar(listOfResource,listOfEvents,dateOfAppointment,minTime,maxTime,view);
+                                
+                            }else{
+                                msg = 'TODAY IS OFF';
+                                $('#calendar').html(msg);
+                            }
+                        }else{
+                            msg = 'TODAY IS OFF';
+                            $('#calendar').html(msg);
+                        }
+                    } else if (event.type === 'exception') {
+                        document.getElementById("responseErrors").innerHTML = 
+                            event.message + "<br/>\n<pre>" + event.where + "</pre>";
+                    } else {
+                        document.getElementById("responseErrors").innerHTML = event.message;
+                    }
+                }, 
+                {escape: true}
+            );
+        }
+        
+    </script>
+    </html>
+</apex:component>

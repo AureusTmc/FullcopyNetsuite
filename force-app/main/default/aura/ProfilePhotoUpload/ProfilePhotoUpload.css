@@ -1,0 +1,28 @@
+.THIS .profileIcon {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 50%;
+    vertical-align: middle;
+    max-width: 100%;
+    vertical-align: middle;
+    border: 0;
+    
+    color: #ffffff;
+    cursor: pointer;
+}
+.THIS .slds-file-selector__text{
+    display:none !important;
+}
+.THIS .slds-form-element__label{
+    display:none !important;
+}
+.THIS .slds-form-element__control{
+    font-size: 10px !important;
+    margin-top: 45px !important;
+}
+.THIS .slds-file-selector__button{
+    font-size: 10px !important;
+    height: 22px !important;
+    padding-left: 0.2rem !important;
+    padding-right: 0.2rem !important;
+}

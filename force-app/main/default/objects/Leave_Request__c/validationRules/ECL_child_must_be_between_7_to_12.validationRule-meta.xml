@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ECL_child_must_be_between_7_to_12</fullName>
+    <active>true</active>
+    <description>ECL: age of the child to be greater than 7 years but less than 12 years.</description>
+    <errorConditionFormula>RecordType.DeveloperName == &apos;Extended_Child_Care_Leave&apos; &amp;&amp; (Child_Age__c &lt;=7 || Child_Age__c &gt; 12)</errorConditionFormula>
+    <errorMessage>Child Age must be between 7 to 12 years.</errorMessage>
+</ValidationRule>

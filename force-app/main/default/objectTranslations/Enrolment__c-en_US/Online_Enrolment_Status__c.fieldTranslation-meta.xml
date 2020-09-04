@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Online Enrolment Status --></label>
+    <name>Online_Enrolment_Status__c</name>
+    <picklistValues>
+        <masterLabel>Cancel &amp; Make Up Lessons</masterLabel>
+        <translation><!-- Cancel &amp; Make Up Lessons --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Cancel &amp; Make Up Lessons (2)</masterLabel>
+        <translation><!-- Cancel &amp; Make Up Lessons (2) --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>New Enrolment Deferred</masterLabel>
+        <translation><!-- New Enrolment Deferred --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Online Lessons</masterLabel>
+        <translation><!-- Online Lessons --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Online Lessons (P)</masterLabel>
+        <translation><!-- Online Lessons (P) --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Online Lessons (S)</masterLabel>
+        <translation><!-- Online Lessons (S) --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Proration of 2 Lessons</masterLabel>
+        <translation><!-- Proration of 2 Lessons --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Suspension of Lessons</masterLabel>
+        <translation><!-- Suspension of Lessons --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Withdrawal</masterLabel>
+        <translation><!-- Withdrawal --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

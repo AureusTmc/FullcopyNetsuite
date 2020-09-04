@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>All_HKTeachers</fullName>
+    <columns>ACCOUNT.NAME</columns>
+    <columns>App_Portal_User__c</columns>
+    <columns>Status__c</columns>
+    <columns>CustIndicator__c</columns>
+    <columns>Major_Instruments_Disciplines__c</columns>
+    <columns>PC_EMAIL</columns>
+    <columns>AccountID_Teacher__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>ACCOUNT.RECORDTYPE</field>
+        <operation>equals</operation>
+        <value>PersonAccount.Teacher</value>
+    </filters>
+    <filters>
+        <field>Status__c</field>
+        <operation>equals</operation>
+        <value>Working</value>
+    </filters>
+    <filters>
+        <field>PC_EMAIL</field>
+        <operation>contains</operation>
+        <value>.hk</value>
+    </filters>
+    <label>Active HK Teachers</label>
+</ListView>

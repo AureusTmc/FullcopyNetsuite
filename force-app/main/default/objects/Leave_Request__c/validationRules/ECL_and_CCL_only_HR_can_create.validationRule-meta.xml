@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ECL_and_CCL_only_HR_can_create</fullName>
+    <active>false</active>
+    <errorConditionFormula>(RecordType.DeveloperName == &apos;Child_Care_Leave&apos; || RecordType.DeveloperName == &apos;Extended_Child_Care_Leave&apos;) &amp;&amp; $Profile.Name != &apos;HR Manager&apos; &amp;&amp; $Profile.Name != &apos;System Administrator&apos; &amp;&amp; !($Permission.Operation_User)</errorConditionFormula>
+    <errorMessage>You&apos;re not eligible to apply for leave. Please contact your HR.</errorMessage>
+</ValidationRule>

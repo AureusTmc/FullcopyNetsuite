@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Package_Invoiced_Month__c</fullName>
+    <externalId>false</externalId>
+    <formula>CASE(MONTH( Month__c ), 
+
+1, &quot;January,&quot; + TEXT(YEAR(Month__c)) , 
+2, &quot;February, &quot;+ TEXT(YEAR(Month__c)), 
+3, &quot;March, &quot;+ TEXT(YEAR(Month__c)), 
+4, &quot;April, &quot;+ TEXT(YEAR(Month__c)), 
+5, &quot;May, &quot;+ TEXT(YEAR(Month__c)), 
+6, &quot;June, &quot;+ TEXT(YEAR(Month__c)), 
+7, &quot;July, &quot;+ TEXT(YEAR(Month__c)), 
+8, &quot;August, &quot;+ TEXT(YEAR(Month__c)), 
+9, &quot;September, &quot;+ TEXT(YEAR(Month__c)), 
+10, &quot;October, &quot;+ TEXT(YEAR(Month__c)), 
+11, &quot;November, &quot;+ TEXT(YEAR(Month__c)), 
+12, &quot;December, &quot;+ TEXT(YEAR(Month__c)), 
+&quot;None&quot;)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Package Invoiced Month</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

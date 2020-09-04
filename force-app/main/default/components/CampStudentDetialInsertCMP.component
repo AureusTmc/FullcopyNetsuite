@@ -1,0 +1,927 @@
+<apex:component controller="CampDetailsForEnrolStudentController" allowDML="True">
+    <apex:attribute name="countryCode" description="" type="String" required="true" assignTo="{!selCountryCode}" />
+    <apex:attribute name="isAtHome" description="" type="boolean" required="true" assignTo="{!isAureusAtHome}" />
+    <apex:attribute name="trvlDuration" description="" type="Integer" required="true" assignTo="{!travelDuration}" />
+    <apex:attribute name="enrolCampId" description="" type="string" required="true" assignTo="{!selectedCampId}" />
+    <apex:attribute name="selectedCenterId" description="" type="string" required="true" assignTo="{!centerId}" />
+    <apex:attribute name="selectedCenterName" description="" type="string" required="true" assignTo="{!centerName}" />
+
+    <!--<apex:actionFunction name="fetchExistingStuDetails" action="{!fetchExistingStuDetail}" reRender="CampStudentEnrolSummaryPanel"
+        status="spinner" oncomplete="showStudentSummary();">
+        <apex:param assignTo="{selectedPackageId}" name="packageId" value="" />
+        <apex:param assignTo="{selectedDates}" name="campDays" value="" />
+        <apex:param assignTo="{phoneNumber}" name="phone" value="" />
+        <apex:param assignTo="{isParAlsoAStudent}" name="isParAlsoAStudent" value="" />
+    </apex:actionFunction>--> 
+    <apex:actionFunction name="fetchExistingStuDetails" action="{!fetchExistingStuDetail}" reRender="CampStudentEnrolSummaryPanel"
+        status="spinner" oncomplete="showStudentSummary();">
+        <apex:param assignTo="{!studentDetails}" name="StudentDetails" value="" />
+        <apex:param assignTo="{!phoneNumber}" name="phone" value="" />
+    </apex:actionFunction>
+
+
+    <div class="slds-grid slds-wrap">
+        <div class="slds-page-header pageHeader slds-col slds-size_12-of-12">
+            <div class="slds-page-header__row">
+                <div class="slds-page-header__col-title"> 
+                    <div class="slds-media">
+                        <div class="slds-media__body"> 
+                            <div class="slds-page-header__name">
+                                <div class="slds-page-header__name-title">
+                                    <h1>
+                                        <span class="slds-page-header__title slds-truncate" title="Camps Details">Book a Camps Instantly!</span>
+                                    </h1>
+                                </div>
+                            </div>
+                            <p class="slds-page-header__name-meta">Enrol A Camps Now • {!centerName}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="slds-grid slds-wrap slds-col slds-size_12-of-12" id="insertStudent">
+        <article class="slds-card  slds-col slds-size_12-of-12 ">
+            <div class="slds-modal__header modalHeader slds-grid">
+                <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                    <div class="slds-media__body">
+                        <h2 class="slds-card__header-title">
+                            <a href="javascript:void(0);" class="slds-card__header-link slds-truncate" title="Select Camp Package">
+                                <span>Enter Parent details</span>
+                            </a>
+                        </h2>
+                    </div>
+                </header>
+            </div>
+            <div class="slds-card__body slds-card__body_inner slds-col slds-size_12-of-12 slds-p-around_large slds-p-top_xx-large ">
+
+                <div class="thirdCmpcls" id="thirdCmpId" style="">
+                    <apex:outputPanel id="refreshThird">
+                        <script>
+                           // $('[id$=birthdate]').attr('readonly', true);
+
+
+                        </script>
+                        <div class="content-body slds-col freetrail_3">
+                            <div class="slds-form-element">
+
+                                <div class="slds-notify_container slds-is-relative slds-hide thirdCmpErrDiv">
+                                    <div class="slds-notify slds-notify_toast slds-theme_error slds-m-left_none slds-m-right_medium" role="status">
+                                        <div class="slds-notify__content">
+                                            <h2 class="slds-text-heading_small contentDivThird"></h2>
+                                        </div>
+
+                                        <div class="slds-notify__close">
+                                            <button class="slds-button slds-button_icon slds-button_icon-inverse" onclick=" $('.thirdCmpErrDiv').addClass('slds-hide');return false;"
+                                                title="Close">
+                                                X
+                                                <span class="slds-assistive-text">Close</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="slds-form-element info-box student-panel slds-size_1-of-1 radio-list slds-grid slds-wrap">
+                                    <div class="slds-form-element slds-grid slds-wrap radio-list slds-col slds-size_12-of-12 ">
+                                        <div class="slds-form-element slds-size_1-of-1 slds-medium-size_6-of-12">
+                                            <label class="slds-form-element__label">First Name
+                                                <abbr class="slds-required slds-m-horizontal_none" title="required" style="cursor: default;">* </abbr>
+                                            </label>
+
+                                            <div class="slds-form-element__control">
+                                                <apex:inputText value="{!parentAcc.firstName}" onchange="populateStuName();" styleclass="slds-input inputtxt parNameCls"
+                                                    id="parFirstName" />
+                                            </div>
+                                            <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                        </div>
+                                        <div class="slds-form-element slds-size_1-of-1 slds-medium-size_6-of-12">
+                                            <label class="slds-form-element__label">Last Name
+                                                <abbr class="slds-required slds-m-horizontal_none" title="required" style="cursor: default;">* </abbr>
+                                            </label>
+                                            <div class="slds-form-element__control">
+                                                <apex:inputText value="{!parentAcc.lastName}" onchange="populateStuName();" styleclass="slds-input inputtxt parNameCls" id="parLastName"
+                                                />
+                                            </div>
+                                            <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                        </div>
+                                        <div class="slds-form-element slds-size_1-of-1 slds-medium-size_6-of-12">
+                                            <label class="slds-form-element__label">Mobile Phone
+                                                <abbr class="slds-required slds-m-horizontal_none phoneNumber" title="required" style="cursor: default;">* </abbr>
+                                            </label>
+
+                                            <div id="slds-form-element__control inputMobileId"></div>
+                                            <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                        </div>
+                                        <div class="slds-form-element slds-size_1-of-1 slds-medium-size_6-of-12">
+                                            <label class="slds-form-element__label">Email
+                                                <abbr class="slds-required slds-m-horizontal_none" title="required" style="cursor: default;">* </abbr>
+                                            </label>
+                                            <div class="slds-form-element__control">
+                                                <apex:inputField value="{!parentAcc.PersonEmail}" styleclass="slds-input inputtxt emailCls" id="emailtxt" />
+                                            </div>
+                                            <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                        </div>
+                                        <!-- Parent Address information Start  -->
+                                        <!--<apex:outputPanel rendered="{!isAureusAtHome}" styleClass="slds-col slds-size_12-of-12">
+                                            <div class="slds-form-element info-box student-panel slds-size_1-of-1 radio-list slds-grid slds-wrap">
+                                                <div class="slds-form-element slds-size_1-of-1 slds-medium-size_6-of-12">
+                                                    <label class="slds-form-element__label">Address
+                                                        <abbr class="slds-required slds-m-horizontal_none" title="required" style="cursor: default;">* </abbr>
+                                                    </label>
+                                                    <div class="slds-form-element__control">
+                                                        <apex:inputText value="{!parentAcc.BillingStreet}" styleclass="slds-input inputtxt" />
+                                                    </div>
+                                                    <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                </div>
+                                                <div class="slds-form-element slds-size_1-of-1 slds-medium-size_6-of-12">
+                                                    <label class="slds-form-element__label">City
+                                                        <abbr class="slds-required slds-m-horizontal_none" title="required" style="cursor: default;">* </abbr>
+                                                    </label>
+                                                    <div class="slds-form-element__control">
+                                                        <apex:inputText value="{!parentAcc.BillingCity}" styleclass="slds-input inputtxt" />
+                                                    </div>
+                                                    <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                </div>
+                                                <div class="slds-form-element slds-size_1-of-1 slds-medium-size_6-of-12">
+                                                    <label class="slds-form-element__label">Postal Code
+                                                        <abbr class="slds-required slds-m-horizontal_none" title="required" style="cursor: default;">* </abbr>
+                                                    </label>
+                                                    <div class="slds-form-element__control">
+                                                        <apex:inputField styleclass="slds-input inputtxt" value="{!parentAcc.BillingPostalCode}" />
+                                                    </div>
+                                                    <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                </div>
+                                                <div class="slds-form-element slds-size_1-of-1 slds-medium-size_6-of-12">
+                                                    <label class="slds-form-element__label">Country
+                                                        <abbr class="slds-required slds-m-horizontal_none" title="required" style="cursor: default;">* </abbr>
+                                                    </label>
+                                                    <div class="slds-form-element__control">
+                                                        <apex:inputField value="{!parentAcc.BillingCountryCode}" styleclass="slds-input inputtxt" />
+                                                        <!--<div class="slds-form-element__help slds-hide errortxt">This field is required</div>-
+                                                    </div>
+                                                    <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                </div>
+                                            </div>
+                                        </apex:outputPanel>-->
+                                        <!-- Parent Address information End  -->
+
+
+                                        <!--commented by jatin: 20-feb-2020: now we manage multiple student detials 
+                                            <div class="slds-form-element info-box student-panel slds-size_1-of-1 radio-list slds-grid slds-wrap">
+                                            <div class="slds-form-element slds-size_1-of-1">
+                                                <div class="slds-form-element__control">
+                                                    <div class="slds-checkbox">
+                                                        <!--<apex:inputCheckbox value="{!isParAlsoAStudent}" id="studentAsCstmr" onchange="checkStudent($(this));" styleClass="slds-checkbox"
+                                                        />-
+                                                        <input type="checkbox" class="slds-checkbox" name="parentAsCstmr" value="parentAsCstmr" id="parentAsCstmr" checked="" onclick="checkIsAlsoStudent($(this));" />
+                                                        <label class="slds-checkbox__label" for="parentAsCstmr">
+                                                            <span class="slds-checkbox_faux"></span>
+                                                            <span class="slds-form-element__label" style="font-size: 14px !important;"> Also a Student</span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="slds-form-element slds-size_1-of-1 slds-medium-size_6-of-12">
+                                                <label class="slds-form-element__label">Student First name
+                                                    <abbr class="slds-required slds-m-horizontal_none" title="required" style="cursor: default;">* </abbr>
+                                                </label>
+                                                <div class="slds-form-element__control">
+                                                    <apex:inputText value="{!studentAcc.firstName}" id="stuFirstName" styleclass="slds-input inputtxt stuNameCls" />
+                                                </div>
+                                                <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                            </div>
+                                            <div class="slds-form-element slds-size_1-of-1 slds-medium-size_6-of-12">
+                                                <label class="slds-form-element__label">Student Last Name
+                                                    <abbr class="slds-required slds-m-horizontal_none" title="required" style="cursor: default;">* </abbr>
+                                                </label>
+                                                <div class="slds-form-element__control">
+                                                    <apex:inputText value="{!studentAcc.lastName}" id="stuLastName" styleclass="slds-input inputtxt stuNameCls" />
+                                                </div>
+                                                <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                            </div>
+                                            <div class="slds-form-element slds-size_1-of-1 slds-medium-size_6-of-12">
+                                                <label class="slds-form-element__label">Date of Birth
+                                                    <abbr class="slds-required slds-m-horizontal_none" title="required" style="cursor: default;">* </abbr>
+                                                </label>
+                                                <div class="slds-form-element__control">
+                                                    <apex:inputtext id="birthdate" styleclass="slds-input inputtxt" value="{!birthDate}" style="width:100%;background: white;"
+                                                    />
+                                                    <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                </div>
+                                            </div>
+                                            <div class="slds-form-element slds-size_1-of-1 slds-medium-size_6-of-12">
+                                                <label class="slds-form-element__label">Learning Style
+                                                    <abbr class="slds-required slds-m-horizontal_none" title="required" style="cursor: default;">* </abbr>
+                                                </label>
+                                                <div class="slds-form-element__control">
+                                                    <div class="slds-select_container">
+                                                        <apex:inputField value="{!studentAcc.Learning_Style__c}" styleclass="slds-select inputtxt" />
+                                                    </div>
+                                                    <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                </div>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                                <div class="slds-form-element">
+                                                    <label class="slds-form-element__label f-title">Gender
+                                                        <abbr class="slds-required" title="required">* </abbr>
+                                                    </label>
+                                                    <div class="slds-form-element__control">
+                                                        <div class="slds-select_container">
+                                                            <apex:selectList id="parGendrId" value="{!studentAcc.Gender__c}" size="1" styleclass="slds-select inputsel">
+                                                                <apex:selectOptions value="{!AccoungGenderPicklist}" />
+                                                            </apex:selectList>
+                                                        </div>
+                                                        <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="slds-form-element slds-size_1-of-1 slds-medium-size_6-of-12">
+                                                <label class="slds-form-element__label">Previous Experience (if any)</label>
+                                                <div class="slds-form-element__control">
+                                                    <apex:inputText value="{!stuPreExperience}" styleclass="slds-input" />
+                                                </div>
+                                            </div>
+                                        </div>-->
+
+                                        <div class="slds-form-element  slds-size_1-of-1">
+                                            <label class="slds-form-element__label">Comments</label>
+                                            <div class="slds-form-element__control">
+                                                <apex:inputField value="{!parentAcc.Description}" styleclass="slds-input" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="slds-clearfix"></div>
+                            </div>
+
+
+                        </div>
+                    </apex:outputPanel>
+                </div>
+            </div>
+        </article>
+    </div>
+    <apex:outputPanel id="CampStudentEnrolSummaryPanel" >
+        <script>
+            function showStudentSummary() {
+                $('#studentSummary').removeClass('slds-hide');
+                $('#insertStudent').addClass('slds-hide');
+                // $('#showStudentSummarybtn').removeClass('slds-hide');
+                $('#saveNewStudentbtn').addClass('slds-hide');
+                counterPage += 1;
+                console.log('{!accountModalDetails}');
+            }
+
+        </script>
+        <div id="studentSummary">
+            <apex:outputPanel rendered="{!if(accountModalDetails != null,true,false)}">
+                <c:CampStudentEnrolSummaryCMP accountDetails="{!accountModalDetails}" />
+            </apex:outputPanel>
+        </div>
+    </apex:outputPanel> 
+
+    <script>
+       /* if ((maxAge != null && maxAge != '' && maxAge != undefined) && (minAge != null && minAge != '' && minAge != undefined)) {
+           // console.log('maxAge', maxAge);
+            //  maxAge += 1;
+            $('[id$=birthdate]').empty();
+            // create calendar for get calendar user can  select birth date
+            $('[id$=birthdate]').datepicker({
+                initDate: moment(),
+                dateFormat: 'dd/mm/yy', //Date Format Of Datepicker Input Field
+                changeMonth: true,
+                changeYear: true,
+                yearRange: "-100:+0",
+                // minDate:"-"+maxAge+"y",
+                // maxDate:"-"+minAge+"y",
+                minDate: new Date(new Date().getFullYear() - maxAge, 1 - 1, 1),
+                maxDate: new Date(new Date().getFullYear() - minAge, 11, 31),
+                onChange: function (datepicker) {
+                    $('[id$=birthdate]').html('Selected Date: <strong>' + moment(datepicker.selectedFullDate._d).format('dd/mm/yy') + '</strong>');
+                }
+            });
+
+            
+            
+        }*/
+        loadintlInputPhone();
+        //check phone according to country code
+        function loadintlInputPhone() {
+            var cntryCode = '{!countryCode}';
+            $('[id$=inputMobileId]').intlInputPhone({ preferred_country: [cntryCode] });
+
+        }
+
+
+
+        function populateStuName() {
+            if ($('[id$=studentAsCstmr]').prop('checked')) {
+                $('[id$=stuFirstName]').val($('[id$=parFirstName]').val());
+                $('[id$=stuLastName]').val($('[id$=parLastName]').val());
+            }
+        }
+        function fetchStudentDetails() {
+            var firstCheck = false;
+            $('.inputsel').each(function () {
+                if (!$(this).val()) {
+                    $(this).parent().parent().addClass('slds-has-error');
+                    $(this).parent().next().removeClass('slds-hide');
+                    firstCheck = true;
+                } else {
+                    $(this).parent().parent().removeClass('slds-has-error');
+                    $(this).parent().next().addClass('slds-hide');
+                }
+            })
+            $('.inputtxt').each(function () {
+                if (!$(this).val()) {
+                    $(this).parent().parent().addClass('slds-has-error');
+                    $(this).parent().next().removeClass('slds-hide');
+                    firstCheck = true;
+                } else {
+                    $(this).parent().parent().removeClass('slds-has-error');
+                    $(this).parent().next().addClass('slds-hide');
+                }
+            });
+
+            var phoneObj = $('[id$=phoneNumber]');
+            if (!$(phoneObj).val()) {
+                $(phoneObj).parent().parent().parent().addClass('slds-has-error');
+                $(phoneObj).parent().parent().next().removeClass('slds-hide');
+                firstCheck = true;
+            } else {
+                $(phoneObj).parent().parent().parent().removeClass('slds-has-error');
+                $(phoneObj).parent().parent().next().addClass('slds-hide');
+            }
+
+            
+            var emailVal = $('[id$=emailtxt]').val();
+            if ($(phoneObj).val()) {
+                var reg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
+
+                if (reg.test(emailVal) == false) {
+                    $('.thirdCmpErrDiv').removeClass('slds-hide');
+                    $('.contentDivThird').html('Invalid email address.');
+                    return;
+                } else {
+                    $('.thirdCmpErrDiv').addClass('slds-hide');
+                }
+            }
+
+            if (!firstCheck ) {
+                console.log('studentDetailsList', JSON.stringify(studentDetailsList));
+                fetchExistingStuDetails(JSON.stringify(studentDetailsList), $(phoneObj).val());
+                // fetchExistingStuDetails(packageId, campDays.join(','), $(phoneObj).val(), $('#parentAsCstmr').prop('checked'));
+            }
+        }
+       function checkIsAlsoStudent(thisObj) {
+            if (thisObj.prop('checked')) {
+                var isParNameBlank = false;
+
+                $('.parNameCls').each(function () {
+                    if (!$(this).val()) {
+                        $(this).parent().parent().addClass('slds-has-error');
+                        $(this).parent().next().removeClass('slds-hide');
+                        isParNameBlank = true;
+                    } else {
+                        $(this).parent().parent().removeClass('slds-has-error');
+                        $(this).parent().next().addClass('slds-hide');
+                    }
+                });
+
+                if (!isParNameBlank) {
+                    $('[id$=stuFirstName]').val($('[id$=parFirstName]').val());
+                    $('[id$=stuLastName]').val($('[id$=parLastName]').val());
+
+                    $('[id$=stuFirstName]').prop('disabled', true);
+                    $('[id$=stuLastName]').prop('disabled', true);
+                } else {
+                    $('#parentAsCstmr').prop('checked', false);
+                }
+            } else {
+                $('[id$=stuFirstName]').prop('disabled', false);
+                $('[id$=stuLastName]').prop('disabled', false);
+            }
+
+        }
+       
+
+    </script>
+    <style>
+        .input-group-btn:first-child>.btn,
+        .input-group-btn:first-child>.btn-group {
+            height: 31px !important;
+            width: 51px !important;
+        }
+
+        .caret {
+            position: relative !important;
+            top: 7px !important;
+            left: 2px !important;
+        }
+
+        .input-group .form-control:not(:first-child):not(:last-child),
+        .input-group-addon:not(:first-child):not(:last-child),
+        .input-group-btn:not(:first-child):not(:last-child) {
+            border-radius: 4px !important;
+            height: 32px !important;
+            position: relative !important;
+            top: 1px !important;
+        }
+
+        .dateFormat {
+            display: none;
+        }
+
+        .main-content {
+            min-height: 100vh;
+            background-image: none !important;
+            background-size: contain !important;
+            background-repeat: no-repeat !important;
+            background-color: transparent !important;
+        }
+
+        /*Added by Reena*/
+
+        @media(max-width:992px) {
+            .main-content {
+                min-height: auto;
+            }
+        }
+
+        .container {
+            max-width: 650px;
+        }
+
+        span.main-title {
+            color: #200a28;
+            font-size: 24px;
+            border-radius: 0;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: block;
+            line-height: 30px;
+            padding-bottom: 10px
+        }
+
+        .content-box {
+            margin: 50px 0;
+            width: 80%;
+            max-width: 700px;
+            background: rgba(255, 255, 255, 1);
+            border-radius: 10px;
+        }
+
+        .locations-list {
+            text-align: left;
+        }
+
+        form legend {
+            font-size: 16px !important;
+        }
+
+        .header {
+            background: #fff;
+            border-radius: 10px 10px 0 0px;
+            padding: 10px 10px 0;
+            text-align: center;
+        }
+
+        
+
+        .content-body .field-title {
+            font-size: 20px !important;
+            font-weight: bold;
+            padding: 0;
+            margin: 0;
+        }
+
+        .info-box {
+            border: 1px solid #eee;
+            color: #333;
+            font-size: 13px;
+            padding: 10px 10px !important;
+            border-radius: 5px;
+            margin: 5px 0 5px;
+            background: #f7f7f7;
+        }
+
+        .content-body span.slds-form-element__label {
+            display: block;
+            font-size: 12px !important;
+        }
+
+        .content-body span.slds-radio {
+            margin: 0 0 5px;
+        }
+
+        form .custom-btn {
+            padding: 5px 10px 3px !important;
+            color: #fff !important;
+            background: #200a28 !important;
+            font-size: 16px !important;
+            text-transform: uppercase;
+            line-height: 20px !important;
+            margin: 15px 15px 20px;
+            float: right;
+        }
+
+        .slds-form-element {
+            margin-bottom: 5px;
+        }
+
+        .user-img {
+            /* border: 2px solid #ffffff;
+        border-radius: 12px;*/
+            min-width: 80px;
+            margin-right: 10px;
+            overflow: hidden;
+            float: left;
+        }
+
+        .teacher-details {
+            display: flex;
+            margin-left: -20px;
+            display: -webkit-flex;
+            margin-top: 10px;
+        }
+
+        .teacher-details div {
+            display: inline-block;
+            float: left;
+        }
+
+        .info-box h2 {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 0;
+        }
+
+        .custom-calendar>div {
+            border: 1px solid rgb(221, 219, 218);
+            border-radius: .25rem;
+            padding: .25rem 0;
+            background: rgb(255, 255, 255);
+            box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.16);
+            width: 100%;
+        }
+
+        .custom-btn.prev-btn {
+            float: none;
+            background: rgba(32, 10, 40, 0.7) !important;
+            float: left;
+        }
+
+        .final-step label {
+            font-size: 14px !important;
+        }
+
+
+
+        .available i {
+            display: inline-block;
+            background: #ebebeb;
+            height: 100%;
+            float: left;
+            width: 20px;
+            margin: 0 2px;
+        }
+
+        .available {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            bottom: 0px;
+            height: 5px;
+            justify-content: center;
+            display: flex;
+        }
+
+        i.morning-availablity,
+        i.afternoon-availablity {
+            background: #61c461
+        }
+
+        .time-list span.slds-button.slds-radio_button {
+            width: 100%;
+            margin-bottom: 5px;
+            border: 1px solid #eee;
+        }
+
+        .time-list label.slds-radio_button__label {
+            width: 100%;
+            text-align: center;
+        }
+
+        .time-list.morning {
+            padding-right: 10px;
+        }
+
+        .time-list.afternoon {
+            padding-left: 10px;
+        }
+
+        .time-list {
+            background: #f7f7f7;
+            padding: 10px 10px 5px;
+            border: 1px solid #eee;
+            width: calc(100% - 10px);
+            margin-bottom: 10px;
+        }
+
+        .afternoon .time-list {
+            float: right;
+        }
+
+        .afternoon label.field-title.time-title {
+            padding-left: 10px;
+        }
+
+        span.slds-radio .slds-radio__label {
+            padding: 10px;
+            border: 1px solid #eee;
+            background: #f7f7f7;
+            border-radius: 5px;
+            display: block;
+        }
+
+        span.slds-radio input:checked+.slds-radio__label {
+            background: #1b5297;
+        }
+
+        span.slds-radio input:checked+.slds-radio__label span.slds-form-element__label {
+            color: #fff;
+        }
+
+        td.slds-is-today {
+            background: #ecebea;
+        }
+
+        .info-box.student-panel {
+            margin: 10px 0px 5px;
+        }
+
+        .text {
+            display: none;
+        }
+
+        span.slds-radio input:checked+label .read-more {
+            color: #fff;
+            background: #1b5297;
+        }
+
+        .read-more {
+            color: rgb(62, 62, 60);
+            font-size: 12px;
+            line-height: normal;
+            z-index: 1;
+        }
+
+        span.slds-radio input:checked+label .read-more a#toggle {
+            bottom: 0;
+            color: #fff;
+        }
+
+        span.slds-radio {
+            position: relative;
+        }
+
+        .radio-list>div {
+            padding: 0 3px;
+        }
+
+        .radio-list {
+            margin: 0 -3px;
+        }
+
+        .time-title {
+            text-align: center;
+            display: block !important;
+        }
+
+        .teacher-list span.slds-radio_faux {
+            position: absolute !important;
+            left: 10px;
+            top: 70px;
+        }
+
+        .teacher-list input[type=radio]:checked+label,
+        .teacher-list input[type=radio]:checked+label div {
+            color: #fff;
+        }
+
+        .teacher-list a {
+            font-weight: bold;
+            position: relative;
+            z-index: 1;
+            color: inherit !important;
+        }
+
+        .info-box.teacher-box {
+            background: transparent;
+            border: navajowhite;
+            padding: 0 0 0 20px !important;
+            margin: 0;
+            text-align: justify;
+            display: flow-root;
+        }
+
+        .teacher-details {
+            display: none;
+        }
+
+        .show {
+            display: flex !important;
+        }
+
+        .content-body>div>fieldset {
+            max-height: 450px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 0 15px;
+        }
+
+        a:hover,
+        a,
+        a:active {
+            text-decoration: none !important;
+        }
+
+        .teacher-list label {
+            float: left;
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            top: 0;
+        }
+
+        input#phoneNumber {
+            position: initial !important;
+        }
+
+        .slds-scope .slds-radio [type=radio]:checked+div .info-box,
+        .slds-scope .slds-radio [type=radio]:checked+div .info-box p,
+        .slds-scope .slds-radio [type=radio]:checked+div .info-box a.read-more {
+            color: #fff !important;
+        }
+
+        a.read-more {
+            color: #8795d9 !important;
+            font-weight: normal;
+        }
+
+        .day-availability--morning .ui-state-default:before,
+        .ui-widget-content .day-availability--morning .ui-state-default:before,
+        .ui-widget-header .day-availability--morning .ui-state-default:before {
+            background: #61c461;
+        }
+
+        .day-availability--afternoon .ui-state-default:after,
+        .ui-widget-content .day-availability--afternoon .ui-state-default:after,
+        .ui-widget-header .day-availability--afternoon .ui-state-default:after {
+            background: #61c461;
+        }
+
+        .popupBackground {
+            background-color: lightgrey;
+            opacity: 0.80;
+
+            position: fixed;
+            padding: 0;
+            margin: 0;
+
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 9998;
+            border-radius: 5px;
+        }
+
+        .disabled-text {
+            position: absolute;
+            right: 10px;
+            top: 13px;
+            background: #000 !important;
+            color: #fff !important;
+            padding: 2px 6.5px;
+            line-height: 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+
+        a.disabled-text:hover+div {
+            display: block !important;
+        }
+
+        .teacher-box p {
+            width: 100%;
+        }
+
+        button#btn-country {
+            font-size: inherit;
+        }
+
+        .teach-desc .teacher-details {
+            margin: 0;
+        }
+
+        label.slds-radio__label span {
+            display: inline-block !important;
+        }
+
+        .slds-checkbox label.slds-checkbox__label {
+            display: flex;
+        }
+
+        .slds-checkbox label.slds-checkbox__label span.slds-checkbox_faux {
+            min-width: 16px !important;
+        }
+
+        .slds-checkbox label.slds-checkbox__label span.slds-form-element__label {
+            padding-top: 0;
+            padding-right: 0;
+        }
+
+        .user-img img {
+            width: 130px;
+            height: 135px;
+            border: 2px solid #ffffff;
+            padding: 5px; // border-radius: 12px;
+        }
+
+        @media(max-width:767px) {
+
+            @media(max-width: 991px) {
+                .user-img {
+                    width:100%;
+                    text-align: center;
+                    /*margin:4px 0px;*/
+                }
+                form .custom-btn {
+                    margin: 10px 5px;
+                    s
+                }
+
+            }
+            @media(min-width:992px) {
+                .ml-md {
+                    margin-left: 163px;
+                }
+            }
+
+            .billig-info {
+                background: #f2f2f2;
+                float: left;
+                width: 100%;
+                padding: 10px 0;
+                font-size: 14px;
+                margin: 0 0 10px;
+            }
+            .billig-info li {
+                margin: 0;
+            }
+            .billig-info li>div {
+                padding-top: 5px;
+                padding-bottom: 5px;
+                line-height: 26px;
+                display: block;
+                border-bottom: 1px solid #ccc;
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .billig-info:last-child {
+                margin-bottom: 0;
+            }
+
+            .billig-info li strong {
+
+                width: 100%;
+                display: block;
+            }
+            label {
+                font-weight: 100 !important;
+            }
+
+            .pageHeader {
+                background-color: #ffbf2f !important;
+                color: white;
+            }
+
+            #enrolBtn {
+                background-color: #ffaa00 !important;
+                color: white;
+            }
+
+            #enrolBtn:hover {
+                color: #ffaa00 !important;
+                background-color: white !important;
+                border: 1px solid #ffaa00;
+            }
+    </style>
+
+</apex:component>

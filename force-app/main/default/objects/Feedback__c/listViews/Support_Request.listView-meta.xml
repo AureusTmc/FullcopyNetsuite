@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Support_Request</fullName>
+    <columns>NAME</columns>
+    <columns>Priority__c</columns>
+    <columns>Subject__c</columns>
+    <columns>Status__c</columns>
+    <columns>Estimated_Effort__c</columns>
+    <columns>Remarks__c</columns>
+    <columns>Requested_By__c</columns>
+    <columns>Request_date__c</columns>
+    <columns>Request_type__c</columns>
+    <columns>CREATED_DATE</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>RECORDTYPE</field>
+        <operation>equals</operation>
+        <value>Feedback__c.Support_Request</value>
+    </filters>
+    <label>All Support Request</label>
+</ListView>

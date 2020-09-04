@@ -1,0 +1,11 @@
+<aura:component controller="AccountController" implements="lightning:actionOverride,flexipage:availableForRecordHome,force:appHostable,flexipage:availableForAllPageTypes,force:hasRecordId,force:lightningQuickAction" access="global">
+	<!--aura:handler event="c:AccountKeyChange" action="{!c.searchKeyChange}"/ -->
+    <!--aura:handler name="init" value="{!this}" action="{!c.doInit}" / -->
+    <aura:attribute name="searchKey" type="string"></aura:attribute>
+    <ltng:require scripts="{!$Resource.ChartJS23}" afterScriptsLoaded="{!c.doInit}"/>
+    <div class="slds-grid slds-wrap">
+        <div class="slds-col slds-size_1-of-1 slds-medium-size_12-of-12 slds-large-size_12-of-12">
+            <canvas aura:id="barChart" id="barChart" class="barChart"/>
+        </div>
+    </div>
+</aura:component>

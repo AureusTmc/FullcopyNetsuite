@@ -1,0 +1,8 @@
+.THIS .fireBricks{
+    background: Firebrick;
+    border: firebrick;
+    margin-right:7px;
+}
+.THIS .slds-datepicker__month td{
+    padding:0rem 0rem;
+}

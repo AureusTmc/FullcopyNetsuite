@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FlexiPage xmlns="http://soap.sforce.com/2006/04/metadata">
+    <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentName>Home</componentName>
+            </componentInstance>
+        </itemInstances>
+        <name>dashboard</name>
+        <type>Region</type>
+    </flexiPageRegions>
+    <masterLabel>CenterHome1</masterLabel>
+    <template>
+        <name>CenterManagerHome</name>
+    </template>
+    <type>HomePage</type>
+</FlexiPage>

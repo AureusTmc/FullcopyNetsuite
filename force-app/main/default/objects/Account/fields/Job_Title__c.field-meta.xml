@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Job_Title__c</fullName>
+    <externalId>false</externalId>
+    <label>Job Title</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Administrative Manager</fullName>
+                <default>false</default>
+                <label>Administrative Manager</label>
+            </value>
+            <value>
+                <fullName>Chauffeur</fullName>
+                <default>false</default>
+                <label>Chauffeur</label>
+            </value>
+            <value>
+                <fullName>Chief Executive Officer</fullName>
+                <default>false</default>
+                <label>Chief Executive Officer</label>
+            </value>
+            <value>
+                <fullName>Chief Operations Officer</fullName>
+                <default>false</default>
+                <label>Chief Operations Officer</label>
+            </value>
+            <value>
+                <fullName>Cleaner</fullName>
+                <default>false</default>
+                <label>Cleaner</label>
+            </value>
+            <value>
+                <fullName>Director</fullName>
+                <default>false</default>
+                <label>Director</label>
+            </value>
+            <value>
+                <fullName>Director of Operations</fullName>
+                <default>false</default>
+                <label>Director of Operations</label>
+            </value>
+            <value>
+                <fullName>Finance Executive</fullName>
+                <default>false</default>
+                <label>Finance Executive</label>
+            </value>
+            <value>
+                <fullName>HR Payroll Executive</fullName>
+                <default>false</default>
+                <label>HR Payroll Executive</label>
+            </value>
+            <value>
+                <fullName>Head of Piano Department</fullName>
+                <default>false</default>
+                <label>Head of Piano Department</label>
+            </value>
+            <value>
+                <fullName>Human Resource Manager</fullName>
+                <default>false</default>
+                <label>Human Resource Manager</label>
+            </value>
+            <value>
+                <fullName>Instrument Technician</fullName>
+                <default>false</default>
+                <label>Instrument Technician</label>
+            </value>
+            <value>
+                <fullName>Manager</fullName>
+                <default>false</default>
+                <label>Manager</label>
+            </value>
+            <value>
+                <fullName>Managing Director</fullName>
+                <default>false</default>
+                <label>Managing Director</label>
+            </value>
+            <value>
+                <fullName>Music Instructor</fullName>
+                <default>false</default>
+                <label>Music Instructor</label>
+            </value>
+            <value>
+                <fullName>Music Teacher</fullName>
+                <default>false</default>
+                <label>Music Teacher</label>
+            </value>
+            <value>
+                <fullName>Project Manager</fullName>
+                <default>false</default>
+                <label>Project Manager</label>
+            </value>
+            <value>
+                <fullName>Teacher</fullName>
+                <default>false</default>
+                <label>Teacher</label>
+            </value>
+            <value>
+                <fullName>Sales Executive</fullName>
+                <default>false</default>
+                <label>Sales Executive</label>
+            </value>
+            <value>
+                <fullName>Sales and Operations Executive</fullName>
+                <default>false</default>
+                <label>Sales and Operations Executive</label>
+            </value>
+            <value>
+                <fullName>Sales Manager</fullName>
+                <default>false</default>
+                <label>Sales Manager</label>
+            </value>
+            <value>
+                <fullName>Piano Technician</fullName>
+                <default>false</default>
+                <label>Piano Technician</label>
+            </value>
+            <value>
+                <fullName>Language Teacher</fullName>
+                <default>false</default>
+                <label>Language Teacher</label>
+            </value>
+            <value>
+                <fullName>HR Executive</fullName>
+                <default>false</default>
+                <label>HR Executive</label>
+            </value>
+            <value>
+                <fullName>Assistant Director of Marketing</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Assistant Director of Marketing</label>
+            </value>
+            <value>
+                <fullName>Assistant Director of Product Management</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Assistant Director of Product Management</label>
+            </value>
+            <value>
+                <fullName>Associate Director of HR</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Associate Director of HR</label>
+            </value>
+            <value>
+                <fullName>Associate Director of IT and Operations</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Associate Director of IT and Operations</label>
+            </value>
+            <value>
+                <fullName>Director of Retail</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Director of Retail</label>
+            </value>
+            <value>
+                <fullName>Executive</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Executive</label>
+            </value>
+            <value>
+                <fullName>Marketing Executive</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Marketing Executive</label>
+            </value>
+            <value>
+                <fullName>Operations Manager</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Operations Manager</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Payment Method --></label>
+    <name>Payment_Method__c</name>
+    <picklistValues>
+        <masterLabel>Card</masterLabel>
+        <translation><!-- Card --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Cash</masterLabel>
+        <translation><!-- Cash --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Cheque</masterLabel>
+        <translation><!-- Cheque --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>NETS</masterLabel>
+        <translation><!-- NETS --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Offline Card</masterLabel>
+        <translation><!-- Offline Card --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Others</masterLabel>
+        <translation><!-- Others --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

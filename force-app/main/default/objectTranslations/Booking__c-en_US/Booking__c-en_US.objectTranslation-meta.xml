@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <caseValues>
+        <plural>false</plural>
+        <value>Booking</value>
+    </caseValues>
+    <caseValues>
+        <plural>true</plural>
+        <value>Bookings</value>
+    </caseValues>
+    <layouts>
+        <layout>Camp Lesson</layout>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+    </layouts>
+    <layouts>
+        <layout>Facility Booking Layout</layout>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+    </layouts>
+    <layouts>
+        <layout>Group Class Layout</layout>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+    </layouts>
+    <layouts>
+        <layout>Group Lesson</layout>
+        <sections>
+            <label><!-- Automated Values --></label>
+            <section>Automated Values</section>
+        </sections>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+        <sections>
+            <label><!-- Make-Up Mins Information --></label>
+            <section>Make-Up Mins Information</section>
+        </sections>
+        <sections>
+            <label><!-- Prev Booking Details --></label>
+            <section>Prev Booking Details</section>
+        </sections>
+        <sections>
+            <label><!-- Remarks --></label>
+            <section>Remarks</section>
+        </sections>
+    </layouts>
+    <layouts>
+        <layout>Lesson Booking Layout</layout>
+        <sections>
+            <label><!-- Automated Values --></label>
+            <section>Automated Values</section>
+        </sections>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+        <sections>
+            <label><!-- Make-Up Mins Information --></label>
+            <section>Make-Up Mins Information</section>
+        </sections>
+        <sections>
+            <label><!-- Prev Booking Details --></label>
+            <section>Prev Booking Details</section>
+        </sections>
+        <sections>
+            <label><!-- Remarks --></label>
+            <section>Remarks</section>
+        </sections>
+    </layouts>
+    <quickActions>
+        <label><!-- Booking --></label>
+        <name>Booking</name>
+    </quickActions>
+    <recordTypes>
+        <description><!-- this  Record Type for show Camp lesson fields --></description>
+        <label><!-- Camp Lesson --></label>
+        <name>Camp_Lesson</name>
+    </recordTypes>
+    <recordTypes>
+        <description><!-- Select this record type to create facility booking --></description>
+        <label><!-- Facility --></label>
+        <name>Facility</name>
+    </recordTypes>
+    <recordTypes>
+        <description><!-- Select this record type to create Group Class Bookings --></description>
+        <label><!-- Group Class --></label>
+        <name>Group_Class</name>
+    </recordTypes>
+    <recordTypes>
+        <description><!-- Select this record type to create Group Lessons Bookings --></description>
+        <label><!-- Group Lesson --></label>
+        <name>Group_Lesson</name>
+    </recordTypes>
+    <recordTypes>
+        <description><!-- Select this record type to create lesson booking --></description>
+        <label><!-- Lesson --></label>
+        <name>Lesson</name>
+    </recordTypes>
+    <startsWith>Consonant</startsWith>
+    <webLinks>
+        <label><!-- Get_Video_Recording --></label>
+        <name>Get_Video_Recording</name>
+    </webLinks>
+    <webLinks>
+        <label><!-- Join_Meeting_Hidden_Mode --></label>
+        <name>Join_Meeting_Hidden_Mode</name>
+    </webLinks>
+    <workflowTasks>
+        <description><!-- Email: Lesson Cancelled with Make-Up Credit
+Automated Email sent Cancellation details --></description>
+        <name>Email_Lesson_Cancelled_with_Make_Up_Credit</name>
+        <subject><!-- Email: Lesson Cancelled with Make-Up Credit --></subject>
+    </workflowTasks>
+    <workflowTasks>
+        <description><!-- Email: Lesson Cancelled without Make-Up Credit
+Automated Email sent with Lesson Details --></description>
+        <name>Email_Lesson_Cancelled_without_Make_Up_Credit</name>
+        <subject><!-- Email: Lesson Cancelled without Make-Up Credit --></subject>
+    </workflowTasks>
+    <workflowTasks>
+        <description><!-- Email: Make-Up Booking Notification
+Automated Email sent with Make-Up Lesson Details --></description>
+        <name>Email_Make_Up_Booking_Notification</name>
+        <subject><!-- Email: Make-Up Booking Notification --></subject>
+    </workflowTasks>
+    <workflowTasks>
+        <description><!-- Automated Email sent to Parents Email when they reschedule a Booking using RS online link --></description>
+        <name>Email_Reschedule_Lesson_Confirmation</name>
+        <subject><!-- Email: Reschedule Lesson Confirmation --></subject>
+    </workflowTasks>
+    <workflowTasks>
+        <name>X5th_Lesson_Ad_Hoc_Booking_Cofirmation</name>
+        <subject><!-- Email: 5th Lesson Ad-Hoc Booking Notification --></subject>
+    </workflowTasks>
+</CustomObjectTranslation>

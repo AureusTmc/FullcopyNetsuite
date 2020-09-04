@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>No_Email_for_American_Club</fullName>
+    <active>true</active>
+    <errorConditionFormula>And(Text(Membership_Type__c) = &apos;American Club&apos;, Want_Invoice_As_Email__c = true, RecordType.Name =&apos;Customer&apos;)</errorConditionFormula>
+    <errorDisplayField>Want_Invoice_As_Email__c</errorDisplayField>
+    <errorMessage>This setting cannot be turned on for American club members</errorMessage>
+</ValidationRule>

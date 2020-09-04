@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <caseValues>
+        <plural>false</plural>
+        <value>Leave Request</value>
+    </caseValues>
+    <caseValues>
+        <plural>true</plural>
+        <value>Leave Requests</value>
+    </caseValues>
+    <layouts>
+        <layout>Child Care Leave Request Layout</layout>
+        <sections>
+            <label><!-- Child Care Leave Details --></label>
+            <section>Child Care Leave Details</section>
+        </sections>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+        <sections>
+            <label><!-- System Information --></label>
+            <section>System Information</section>
+        </sections>
+    </layouts>
+    <layouts>
+        <layout>Extended Care Leave Request Layout</layout>
+        <sections>
+            <label><!-- Child Care Leave Details --></label>
+            <section>Child Care Leave Details</section>
+        </sections>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+        <sections>
+            <label><!-- System Information --></label>
+            <section>System Information</section>
+        </sections>
+    </layouts>
+    <layouts>
+        <layout>Leave Request Layout</layout>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+    </layouts>
+    <layouts>
+        <layout>Maternity Leave Request Layout</layout>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+        <sections>
+            <label><!-- Maternity Leave Sections --></label>
+            <section>Maternity Leave Sections</section>
+        </sections>
+        <sections>
+            <label><!-- System Iinformation --></label>
+            <section>System Iinformation</section>
+        </sections>
+    </layouts>
+    <layouts>
+        <layout>NS Leave Request Layout</layout>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+        <sections>
+            <label><!-- System Information --></label>
+            <section>System Information</section>
+        </sections>
+    </layouts>
+    <layouts>
+        <layout>Others Leave Request Layout</layout>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+        <sections>
+            <label><!-- System Information --></label>
+            <section>System Information</section>
+        </sections>
+    </layouts>
+    <layouts>
+        <layout>Paid Leave Request Layout</layout>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+        <sections>
+            <label><!-- System Information --></label>
+            <section>System Information</section>
+        </sections>
+    </layouts>
+    <layouts>
+        <layout>Sick Leave Request Layout</layout>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+        <sections>
+            <label><!-- Sick Leave Information --></label>
+            <section>Sick Leave Information</section>
+        </sections>
+        <sections>
+            <label><!-- System Information --></label>
+            <section>System Information</section>
+        </sections>
+    </layouts>
+    <recordTypes>
+        <label><!-- Child Care Leave --></label>
+        <name>Child_Care_Leave</name>
+    </recordTypes>
+    <recordTypes>
+        <label><!-- Extended Child Care Leave --></label>
+        <name>Extended_Child_Care_Leave</name>
+    </recordTypes>
+    <recordTypes>
+        <label><!-- Maternity Leave --></label>
+        <name>Maternity_Leave</name>
+    </recordTypes>
+    <recordTypes>
+        <label><!-- NSMen Leave --></label>
+        <name>NSMen_Leave</name>
+    </recordTypes>
+    <recordTypes>
+        <label><!-- Other Leave --></label>
+        <name>Other_Leave</name>
+    </recordTypes>
+    <recordTypes>
+        <label><!-- Paid Leave --></label>
+        <name>Paid_Leave</name>
+    </recordTypes>
+    <recordTypes>
+        <label><!-- Sick Leave --></label>
+        <name>Sick_Leave</name>
+    </recordTypes>
+    <startsWith>Consonant</startsWith>
+    <validationRules>
+        <errorMessage><!-- Child Age must be less than 7 years. --></errorMessage>
+        <name>CCL_child_must_be_less_than_7</name>
+    </validationRules>
+    <validationRules>
+        <errorMessage><!-- Cancelled Leave cannot be Approved or Rejected --></errorMessage>
+        <name>Cancelled_Leave_can_not_be_Approved</name>
+    </validationRules>
+    <validationRules>
+        <errorMessage><!-- You cannot apply for leave before 30 days in advance. Please contact your HR. --></errorMessage>
+        <name>Disallow_leave_before_30_days_in_advance</name>
+    </validationRules>
+    <validationRules>
+        <errorMessage><!-- Child Nationality cannot be left blank and must be Singapore. --></errorMessage>
+        <name>ECL_and_CCL_child_must_be_Singaporean</name>
+    </validationRules>
+    <validationRules>
+        <errorMessage><!-- Child name cannot be left blank. --></errorMessage>
+        <name>ECL_and_CCL_child_name_required</name>
+    </validationRules>
+    <validationRules>
+        <errorMessage><!-- You&apos;re not eligible to apply for leave. Please contact your HR. --></errorMessage>
+        <name>ECL_and_CCL_only_HR_can_create</name>
+    </validationRules>
+    <validationRules>
+        <errorMessage><!-- Child Age must be between 7 to 12 years. --></errorMessage>
+        <name>ECL_child_must_be_between_7_to_12</name>
+    </validationRules>
+    <validationRules>
+        <errorMessage><!-- Cannot apply for leave in the first three months of employment. Please contact your HR. --></errorMessage>
+        <name>No_leave_for_3_months</name>
+    </validationRules>
+    <validationRules>
+        <errorMessage><!-- You&apos;re not eligible to apply for leave in the first three months of employment. Please contact your HR. --></errorMessage>
+        <name>Paid_No_Leave_for_3_months</name>
+    </validationRules>
+    <validationRules>
+        <errorMessage><!-- 30 days left to leave start, cannot cancel leave. Please contact your HR. --></errorMessage>
+        <name>Restrict_Leave_Cancel</name>
+    </validationRules>
+    <validationRules>
+        <errorMessage><!-- Start Date cannot be greater than End Date. --></errorMessage>
+        <name>Start_Date_End_Date_Validation</name>
+    </validationRules>
+    <validationRules>
+        <errorMessage><!-- Leave start date cannot be less than today --></errorMessage>
+        <name>Start_date_cannot_be_less_than_today</name>
+    </validationRules>
+    <workflowTasks>
+        <description><!-- A reminder to the govt for reimbursement. --></description>
+        <name>Reminder_to_the_govt_for_reimbursement</name>
+        <subject><!-- Reminder to the govt for reimbursement --></subject>
+    </workflowTasks>
+    <workflowTasks>
+        <description><!-- Submit a claim to MINDEF for employee payout --></description>
+        <name>Submit_a_claim_to_MINDEF</name>
+        <subject><!-- Submit a claim to MINDEF --></subject>
+    </workflowTasks>
+</CustomObjectTranslation>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Student__c</fullName>
+    <externalId>false</externalId>
+    <formula>IF(ISBLANK( Subscription_Line_Item__c ), Booking__r.Student__r.FirstName+&apos; &apos;+Booking__r.Student__r.LastName, 
+Subscription_Line_Item__r.Enrolment__r.Student__r.FirstName+&apos; &apos;
++Subscription_Line_Item__r.Enrolment__r.Student__r.LastName)</formula>
+    <label>Student</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Check_Is_Member</fullName>
+    <active>true</active>
+    <errorConditionFormula>AND(NOT(ISBLANK(American_club__c)), (ISBLANK(TEXT( Membership_Type__c))|| ISBLANK(Membership_Number__c)))</errorConditionFormula>
+    <errorDisplayField>American_club__c</errorDisplayField>
+    <errorMessage>On select of American club, Membership type and Membership number are required</errorMessage>
+</ValidationRule>

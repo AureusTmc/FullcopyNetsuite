@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomPermission xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>change_Enrolment_Admin button  should be accessible for related  users in Aureus Calendar page</description>
+    <label>Change Enrolment Admin</label>
+</CustomPermission>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Unique_Referral_Code__c</fullName>
+    <description>This field is use to generate  Referral Code</description>
+    <externalId>false</externalId>
+    <formula>IF(!ISBLANK(FirstName) , MID( FirstName, 1, 1), &apos;&apos;) &amp; IF(!ISBLANK(LastName ) , MID( LastName , 1, 1),&apos;&apos;) &amp; AccountAutoNum__c</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Unique Referral Code</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

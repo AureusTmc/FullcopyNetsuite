@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebLink xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Join_Meeting_Hidden_Mode</fullName>
+    <availability>online</availability>
+    <displayType>button</displayType>
+    <encodingKey>UTF-8</encodingKey>
+    <hasMenubar>false</hasMenubar>
+    <hasScrollbars>true</hasScrollbars>
+    <hasToolbar>false</hasToolbar>
+    <height>600</height>
+    <isResizable>true</isResizable>
+    <linkType>url</linkType>
+    <masterLabel>Join Meeting - Hidden Mode</masterLabel>
+    <openType>newWindow</openType>
+    <position>none</position>
+    <protected>false</protected>
+    <showsLocation>false</showsLocation>
+    <showsStatus>false</showsStatus>
+    <url>https://aureusacademy-meeting.herokuapp.com/?type=student&amp;room_name={!RIGHT( Booking__c.Online_Lesson_URL__c , LEN(Booking__c.Online_Lesson_URL__c) -10- FIND(&apos;?room_name=&apos;,Booking__c.Online_Lesson_URL__c))}&amp;person_name={!User.FirstName}+ +{! User.LastName}(HiddenUser)&amp;person_id=0012s000003hymNAAQ</url>
+</WebLink>

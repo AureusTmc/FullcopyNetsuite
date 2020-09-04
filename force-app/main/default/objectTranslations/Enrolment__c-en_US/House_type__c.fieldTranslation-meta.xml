@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- House type --></label>
+    <name>House_type__c</name>
+    <picklistValues>
+        <masterLabel>Condo</masterLabel>
+        <translation><!-- Condo --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>HDB</masterLabel>
+        <translation><!-- HDB --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Landed</masterLabel>
+        <translation><!-- Landed --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

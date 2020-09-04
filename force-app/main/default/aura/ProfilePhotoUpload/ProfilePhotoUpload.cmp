@@ -1,0 +1,33 @@
+<aura:component controller="ProfilePhotoUploadController" implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes" access="global">
+    <aura:attribute name="isModalOpen" type="boolean" default="false"/>
+    <aura:attribute name="accId" type="string"/>
+    <aura:attribute name="fileName" type="String" default="Drag your files here" />
+    <aura:attribute name="attId" type="String"/> 
+    <aura:attribute name="uploadedFiles" type="Object[]"  />
+    <aura:attribute name="imgText" type="string"/>
+    <aura:attribute name="isImgText" type="boolean"/>
+    <aura:attribute name="btnShow" type="boolean" default="true"/>
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    
+    <div class="slds-m-around_xx-large" style="margin:0px !important;text-align: center;">
+        <aura:if isTrue="{!!v.isModalOpen}">
+            <span class="slds-avatar slds-avatar--circle image__crop--1x1 slds-avatar--x-large" style="width: 6.5rem;height: 6.5rem;font-size: 3rem;" >
+                <aura:if isTrue="{!!v.isImgText}">
+                    <img style="width: 8rem !important;" class="profileIcon" src="{!'/servlet/servlet.FileDownload?file='+v.attId}"/>
+                </aura:if>
+                <aura:if isTrue="{!v.isImgText}">
+                    <span class="profileIcon slds-image__text slds-truncate slds-align_absolute-center" title="Image Title" style="background-color: #ffbf2f !important;">{!v.imgText}</span>
+                </aura:if>
+            </span><br/><br/>
+        </aura:if>
+        <aura:if isTrue="{!v.isModalOpen}">
+            <lightning:input aura:id="fileId" type="file" name="file" label="Upload Attachment" multiple="false" accept="image/jpeg, image/png" onchange="{!c.handleFilesChange}" />
+        </aura:if>
+        <aura:if isTrue="{!v.btnShow}">
+            <button onclick="{! c.openModel }" class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small" tabindex="0" title="Edit Name" style="font-color:lightgray;margin-left: 0.rem !important;margin-top: -15px !important;">
+                <lightning:icon iconName="utility:edit" size="xx-small" alternativeText="edit"/><b>&nbsp;Edit</b>
+            </button>
+        </aura:if>
+    </div>
+</aura:component>

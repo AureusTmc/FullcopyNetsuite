@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Student_MC_to_check_if_Booking_is_there</fullName>
+    <active>true</active>
+    <description>Student_MC_to_check_if_Booking_is_there</description>
+    <errorConditionFormula>AND( MC_Received__c = TRUE, 
+
+OR 
+
+(Booking__c = NULL, 
+
+NOT(ISPICKVAL(Booking__r.Status__c, &quot;Canceled&quot;))))</errorConditionFormula>
+    <errorMessage>Please select an appropriate Booking or ensure related Booking is Canceled before marking it as MC.</errorMessage>
+</ValidationRule>

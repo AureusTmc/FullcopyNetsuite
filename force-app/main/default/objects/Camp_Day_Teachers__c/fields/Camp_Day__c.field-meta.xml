@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Camp_Day__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>this field lookup of camp day object</description>
+    <externalId>false</externalId>
+    <label>Camp Day</label>
+    <referenceTo>Camp_Days__c</referenceTo>
+    <relationshipLabel>Camp Day Teachers</relationshipLabel>
+    <relationshipName>Camp_Day_Teachers</relationshipName>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Working_Days_in_a_Week__c</fullName>
+    <externalId>false</externalId>
+    <formula>IF(ISPICKVAL(Monday__c,&apos;Full Day&apos;),1,IF(ISPICKVAL(Monday__c,&apos;Half Day&apos;),0.5,0))
++
+IF(ISPICKVAL(Tuesday__c,&apos;Full Day&apos;),1,IF(ISPICKVAL(Tuesday__c,&apos;Half Day&apos;),0.5,0))
++
+IF(ISPICKVAL(Wednesday__c,&apos;Full Day&apos;),1,IF(ISPICKVAL(Wednesday__c,&apos;Half Day&apos;),0.5,0))
++
+IF(ISPICKVAL(Thursday__c,&apos;Full Day&apos;),1,IF(ISPICKVAL(Thursday__c,&apos;Half Day&apos;),0.5,0))
++
+IF(ISPICKVAL(Friday__c,&apos;Full Day&apos;),1,IF(ISPICKVAL(Friday__c,&apos;Half Day&apos;),0.5,0))
++
+IF(ISPICKVAL(Saturday__c,&apos;Full Day&apos;),1,IF(ISPICKVAL(Saturday__c,&apos;Half Day&apos;),0.5,0))
++
+IF(ISPICKVAL(Sunday__c,&apos;Full Day&apos;),1,IF(ISPICKVAL(Sunday__c,&apos;Half Day&apos;),0.5,0))</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Working Days in a Week</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Prod_Verified</fullName>
+    <columns>NAME</columns>
+    <columns>Subject__c</columns>
+    <columns>Priority__c</columns>
+    <columns>Type__c</columns>
+    <columns>Status__c</columns>
+    <columns>Aureus_Internal_Approval__c</columns>
+    <columns>Requested_By__c</columns>
+    <columns>Assigned_To__c</columns>
+    <columns>CREATED_DATE</columns>
+    <columns>TMC_Team_Member__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>Type__c</field>
+        <operation>equals</operation>
+        <value>Operational Request,Enhancement,Defect</value>
+    </filters>
+    <filters>
+        <field>Status__c</field>
+        <operation>equals</operation>
+        <value>Verified</value>
+    </filters>
+    <filters>
+        <field>Assigned_To__c</field>
+        <operation>equals</operation>
+        <value>Techmatrix</value>
+    </filters>
+    <label>Prod Verified</label>
+</ListView>

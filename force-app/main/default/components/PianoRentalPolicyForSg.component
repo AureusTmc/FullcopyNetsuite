@@ -1,0 +1,32 @@
+<apex:component >
+    <strong>1. Description of Instrument:</strong>
+    <p>The Customer agrees to rent the musical instrument described in the table above (“Piano Model” and “Serial No.”).</p>
+    
+    <h4 class="f-title"><strong>2. Rental Rate:</strong></h4>
+    <p>Rent will be payable exclusively via Aureus auto-billing at the beginning of each month at the rate of S$_ per month, beginning on the day AFTER the initial moving and continuing on the same date in every month thereafter. In instance that the rental begins on another day of the month, rental shall be charged pro-rata for the remainder of the month, with the next billing cycle to commence on the first day of the next month. The Customer also agrees to pay a security deposit for the sum of S$_ and 2-way moving charges for the sum of S$_. There will be an admin fee of S$50 for rescheduling of delivery time if it is requested within 48 hours before the confirmed delivery slot.</p>
+    
+    <h4 class="f-title"><strong>3. Term of Agreement:</strong></h4>
+    <p>This agreement shall be for a minimum of (6) months; and shall continue until the customer, or Aureus Group Pte. Ltd, provides a written notice of termination. The Instrument shall be returned by the Customer to Aureus Group Pte. Ltd on or before the last day of the notice period and in the same condition it was received.</p>
+    
+    <h4 class="f-title"><strong>4. Renewal:</strong></h4>
+    <p>This agreement shall continue without need for renewal, until written notice is give by the Customer or Aureus Group Pte. Ltd.</p>
+    
+    <h4 class="f-title"><strong>5. Condition of Instrument:</strong></h4>
+    <p>Aureus Group Pte. Ltd shall make the instrument available to the Customer for inspection before the initial delivery, and upon taking possession of the instrument, the Customer shall acknowledge that the instrument is in the condition described.</p>
+    
+    <h4 class="f-title"><strong>6. Termination:</strong></h4>
+    <p>This Agreement may be terminated by giving 2 month’s written notice (provided the initial 6 months has been completed) to retail@aureusacademy.com and returning the instrument in good working condition (only reasonable wear and tear will be accepted) to Aureus Group Pte. Ltd. Upon return of the instrument, any repairs that Aureus Group Pte. Ltd. deems necessary to restore the instrument to good working condition will be charged to the Customer.</p>
+    
+    <h4 class="f-title"><strong>7. Liability Waiver:</strong></h4>
+    <p>The Aureus Group Pte. Ltd shall not be liable for any injury or loss sustained by the Customer by the operation, handling or transportation of the Instrument during the rental term.</p>
+    
+    <h4 class="f-title"><strong>8. Purchase Option:</strong></h4>
+    <p>When not in default under this agreement, the Customer shall have the option to purchase the Instrument at the offered rate of S$_ and will be able to use the initial 4 months of rental towards the purchase of the instrument. In addition to this, remaining moving credit (if any) and security deposit will be applied to the purchase price.</p>
+    
+    <h4 class="f-title"><strong>9. Default:</strong></h4>
+    <p>In the event of default by the Customer, Aureus Group Pte.Ltd may terminate this agreement in which case the Customer shall pay any amounts outstanding and return the Instrument; and if the Customer refuses or neglects to return the Instrument, the Customer shall be deemed to forfeit their security deposit in addition to owing the full retail price of the instrument to Aureus Group Pte.Ltd.</p>
+    
+    <h4 class="f-title"><strong>10. Piano Technician:</strong></h4>
+    <p>The Customer must use an Aureus Group Pte. Ltd appointed piano technicians. Any damages caused by a non-Aureus technician shall be borne in full by the customer. The tuning will be chargeable at S$150 per session and will be redeemable within the first 3 months of the rental period. There will be an admin fee of S$50 for rescheduling of servicing time if it is requested within 48 hours before the confirmed tuning slot.</p>
+    
+</apex:component>

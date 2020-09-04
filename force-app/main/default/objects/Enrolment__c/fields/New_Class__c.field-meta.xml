@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>New_Class__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>select class Id is enrolment type is group</description>
+    <externalId>false</externalId>
+    <label>New Class</label>
+    <referenceTo>Class__c</referenceTo>
+    <relationshipLabel>Enrolments (New Class)</relationshipLabel>
+    <relationshipName>Enrolments1</relationshipName>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

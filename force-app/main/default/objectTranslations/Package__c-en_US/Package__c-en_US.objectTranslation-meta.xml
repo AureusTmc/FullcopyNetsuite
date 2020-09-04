@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <caseValues>
+        <plural>false</plural>
+        <value>Package</value>
+    </caseValues>
+    <caseValues>
+        <plural>true</plural>
+        <value>Packages</value>
+    </caseValues>
+    <layouts>
+        <layout>Facility Package Layout</layout>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+    </layouts>
+    <layouts>
+        <layout>Item Package Layout</layout>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+    </layouts>
+    <layouts>
+        <layout>Lesson Package Layout</layout>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+        <sections>
+            <label><!-- Long-term Discount --></label>
+            <section>Long-term Discount</section>
+        </sections>
+        <sections>
+            <label><!-- One-time Registration Discount --></label>
+            <section>One-time Registration Discount</section>
+        </sections>
+        <sections>
+            <label><!-- Pre Payment --></label>
+            <section>Pre Payment</section>
+        </sections>
+        <sections>
+            <label><!-- Sage Revenue Template --></label>
+            <section>Sage Revenue Template</section>
+        </sections>
+    </layouts>
+    <recordTypes>
+        <description><!-- Select this record type to setup package for Facility Rental --></description>
+        <label><!-- Facility --></label>
+        <name>Facility</name>
+    </recordTypes>
+    <recordTypes>
+        <description><!-- Select this record type to setup package for Item Rental/Sell --></description>
+        <label><!-- Item --></label>
+        <name>Item</name>
+    </recordTypes>
+    <recordTypes>
+        <description><!-- Select this record type to setup package for music lesson --></description>
+        <label><!-- Lesson --></label>
+        <name>Lesson</name>
+    </recordTypes>
+    <startsWith>Consonant</startsWith>
+    <validationRules>
+        <errorMessage><!-- Required field cannot be empty --></errorMessage>
+        <name>Long_term_Discount</name>
+    </validationRules>
+    <validationRules>
+        <errorMessage><!-- Discount value cant be Null --></errorMessage>
+        <name>RegistrationDiscountActive</name>
+    </validationRules>
+</CustomObjectTranslation>

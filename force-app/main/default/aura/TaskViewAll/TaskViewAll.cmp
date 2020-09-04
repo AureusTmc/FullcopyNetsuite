@@ -1,0 +1,161 @@
+<aura:component controller="AccountController" implements="force:appHostable,flexipage:availableForRecordHome,force:hasRecordId" access="global" >
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:attribute name="centerId" type="string" />
+    <aura:attribute name="Tasks" type="task[]" />
+    <aura:attribute name="openModal" type="boolean" default="false"></aura:attribute>
+     <aura:attribute name="tskId" type="string" />
+    <aura:attribute name="description" type="string"/>
+    <aura:attribute name="userView" type="list"/>
+    <aura:attribute name="selvalue" type="string" default="My Tasks"/>
+    <aura:attribute name="totalCount" type="integer" />
+    <lightning:card variant="Narrow" title="" iconName="standard:task">
+        <aura:set attribute="title">
+           <b>To-Do List</b>
+        </aura:set>
+        <aura:set attribute="actions">
+            <div class="display-inline">
+                <lightning:select  aura:id="select-userview" name="select" label="" onchange="{! c.onChangeUserView }">
+                    <option value="My Tasks">Select View...</option>
+                    <aura:iteration items="{! v.userView}" var="dt" >
+                        <option value="{!dt}" selected="{! dt==v.selvalue}">{!dt}</option>
+                    </aura:iteration>
+                </lightning:select>
+            </div>
+            <div class="display-inline">
+                <a href="{! '/lightning/n/Home'}">  <lightning:button label="Back"/></a>
+            </div>
+        </aura:set>
+                    <lightning:layout multipleRows="true">
+                        <lightning:layoutItem  size="12">
+                            <div class="slds-table--header-fixed_container">
+                                <div class="slds-m-around_xx-small slds-scrollable_y" style="height:100%; background-color:white;">
+                                    <table id="tableId" class="slds-table slds-table_bordered slds-table--header-fixed" style=" table-layout: fixed !important;" cellspacing="0" width="100%">
+                                        <thead >
+                                            <tr class="slds-text-heading--label">
+                                                <th scope="col" class="nobordertop slds-cell-th" title="Name" style="padding-left:6px;width:20% !important">
+                                                    <div class="slds-truncate">Subject</div>
+                                                </th>
+                                                <th scope="col" class="nobordertop slds-cell-th" title="Priority" style="width:8% !important">
+                                                    <div class="slds-truncate"></div>
+                                                </th> 
+                                                <th scope="col" class="nobordertop slds-cell-th" title="Subject">
+                                                    <div class="slds-truncate">Due Date</div>
+                                                </th>
+                                                <th scope="col" class="nobordertop slds-cell-th" title="Subject">
+                                                    <div class="slds-truncate">Name</div>
+                                                </th>
+                                                 <th scope="col" class="nobordertop slds-cell-th" title="Subject">
+                                                    <div class="slds-truncate">Related To</div>
+                                                </th>
+                                                <th scope="col" class="nobordertop slds-cell-th" title="Owner">
+                                                    <div class="slds-truncate">Owner</div>
+                                                </th>
+                                                <th scope="col" class="nobordertop slds-cell-th" title="Status" style="width:8% !important;">
+                                                    <div class="slds-truncate">Status</div>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <aura:iteration items="{!v.Tasks}" var="Tsk">     
+                                                <tr>
+                                                    <td data-label="Name" title="Name" class="slds-cell-td" style="padding-left: 6px !important;">
+                                                        <a href="{! '/lightning/r/'+ Tsk.id + '/view'}" target="_blank"><div class="slds-truncate" title="{!Tsk.Subject}">
+                                                            {!Tsk.Subject}
+                                                            </div>
+                                                        </a>
+                                                        
+                                                    </td>
+                                                    <td data-label="Name" title="Name" class="slds-cell-td" style="padding-left: 6px !important;">
+                                                        <div class="slds-truncate" title="Priority">
+                                                            <aura:if isTrue="{!Tsk.Priority=='High'}">
+                                                            <img src="{!$Resource.FlagImage + '/image-flag/red.png'}" height="20" width="20"/>
+                                                            </aura:if>
+                                                        </div>
+                                                        
+                                                    </td>
+                                                    <td data-label="Phone" class="slds-cell-td">
+                                                        <div class="slds-truncate" >
+                                                            <aura:if isTrue="{!Tsk.overDue}">
+                                                            		<lightning:formattedDateTime value="{!Tsk.ActivityDate}" year="2-digit" month="short" day="2-digit" weekday="short" style="color:firebrick;"/>
+                                                             <aura:set attribute="else" >
+                                                                 <lightning:formattedDateTime value="{!Tsk.ActivityDate}" year="2-digit" month="short" day="2-digit" weekday="short"/>
+                                                                </aura:set>     
+                                                            </aura:if>
+                                                        </div>
+                                                    </td>
+                                                    <td data-label="Phone" class="slds-cell-td">
+                                                        <a href="{! '/lightning/r/'+ Tsk.WhoId + '/view'}" target="_blank">
+                                                            <div class="slds-truncate" title="{!Tsk.Name}">{!Tsk.Name}</div>
+                                                        </a>
+                                                    </td>
+                                                    <td data-label="Phone" class="slds-cell-td">
+                                                        <aura:if isTrue="{! Tsk.hyperLinkValue=='500'}">
+                                                            <a href="{! '/lightning/r/'+ Tsk.What + '/view'}" target="_blank">
+                                                                <div class="slds-truncate" title="{!Tsk.Center}">{!Tsk.Center}
+                                                                </div>
+                                                            </a>
+                                                            <aura:set attribute="else">
+                                                                <div class="slds-truncate" title="{!Tsk.Center}">{!Tsk.Center}
+                                                                </div>
+                                                            </aura:set>
+                                                        </aura:if>
+                                                        
+                                                    </td>
+                                                    <td data-label="Phone" class="slds-cell-td">
+                                                        <div class="slds-truncate" title="{!Tsk.Owner}">{!Tsk.Owner}
+                                                        </div>
+                                                    </td>
+                                                    <td data-label="Phone" class="slds-cell-td">
+                                                        <div class="slds-truncate" title="{!Tsk.Center}">
+                                                            <lightning:button label="Neutral" title="Approve" class="{!Tsk.id}" onclick="{!c.openapproveModel}">
+                                                                <lightning:buttonIcon iconName="utility:check" variant="bare"  alternativeText="Approve"/>
+                                                            </lightning:button>
+                                                        </div>
+                                                    </td>      
+                                                </tr>
+                                            </aura:iteration>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </lightning:layoutItem>                              
+                    </lightning:layout>   
+    </lightning:card>
+    <aura:if isTrue="{!v.openModal}">
+            
+            <!--###### MODAL BOX Start######--> 
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- ###### MODAL BOX HEADER Start ######-->
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close"
+                                              onclick="{! c.closeModel }"
+                                              alternativeText="close"
+                                              variant="bare-inverse"
+                                              class="slds-modal__close"/>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Please Confirm</h2>
+                    </header>
+                    <!--###### MODAL BOX BODY Part Start######-->
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1" style="padding-top:0px;">
+                        <lightning:textarea name="input3"  value="{!v.description}" placeholder="Remark..."/>
+                    </div>
+                    <!--###### MODAL BOX FOOTER Part Start ######-->
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="neutral" 
+                                          label="Complete"
+                                          title="Complete"
+                                          onclick="{! c.approveTask }" class="Confirm"/>
+                        <lightning:button variant="brand" 
+                                          label="Cancel"
+                                          title="Cancel"
+                                          onclick="{! c.closeModel }" class="Cancel"/>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+            <!--###### MODAL BOX Part END Here ######-->
+            
+        </aura:if>
+        <!--/aura:if -->
+	
+</aura:component>

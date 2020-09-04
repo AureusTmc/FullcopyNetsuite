@@ -1,0 +1,157 @@
+<aura:component controller="AccountController" implements="force:appHostable,flexipage:availableForRecordHome,force:hasRecordId" access="global" >
+    <aura:attribute name="recordId" type="Id"/>
+    <!-- Edited on 14 july 2020 updated Case as it was Case__c--> 
+    <aura:attribute name ="Bookings" type="Case"/>
+    <!-- Edited on 14 july 2020 --> 
+    <aura:attribute name="bookingID" type="string" />
+    <aura:attribute name="action" type="string"/>
+    <aura:attribute name="openModal" type="boolean" default="false"></aura:attribute>
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:if isTrue="{! v.Bookings[0].RecordTypeId}">
+    <lightning:card variant="Narrow" title="Trial Details" iconName="standard:contact">
+        <div class="slds-p-horizontal_medium"> 
+            <div class="slds-grid slds-gutters">
+                <div class="slds-col slds-size_1-of-2">
+                    <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                        <span class="slds-form-element__label">
+                            <abbr class="slds-required"></abbr>Student</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">
+                                <a href="{! '/lightning/r/Account/'+ v.Bookings[0].Enrolment__r.Id + '/view'}" target="_blank">{!v.Bookings[0].Enrolment__r.Student__r.Name}</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                        <span class="slds-form-element__label">
+                            <abbr class="slds-required"></abbr>Teacher</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">
+                                {! v.Bookings[0].Enrolment__r.Teacher__r.Name}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                        <span class="slds-form-element__label">
+                            <abbr class="slds-required"></abbr>Date</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">
+                                <lightning:formattedDateTime value="{! v.Bookings[0].Enrolment__r.Trial_Date__c}" year="2-digit" month="short" day="2-digit" weekday="short"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                        <aura:if isTrue="{! or(v.Bookings[0].Enrolment__r.Stage__c == 'Booked',v.Bookings[0].Enrolment__r.Stage__c == 'Cancelled')}">
+                            <span class="slds-form-element__label">Type</span>
+                            <div class="slds-form-element__control">
+                                <div class="slds-form-element__static">
+                                    {!v.Bookings[0].Enrolment__r.Type__c}
+                                </div>
+                            </div>
+                            <aura:set attribute="else">
+                                <span class="slds-form-element__label">
+                                    <abbr class="slds-required"></abbr>Approve</span>
+                                <div class="slds-form-element__control">
+                                    <div class="slds-form-element__static">
+                                        <a href="javascript: void(0)" style="color:lightgreen;" onclick="{!c.openModel}" data-val="{!v.Bookings[0].Enrolment__r.Id}" data-id="confirm" >Confirm</a>
+                                    </div>
+                                </div>
+                            </aura:set>
+                        </aura:if>
+                        
+                    </div>
+                    
+                </div>
+                
+                <div class="slds-col slds-size_1-of-2">
+                    
+                    <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                        <span class="slds-form-element__label">Parent</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">
+                                <a href="{! '/lightning/r/Account/'+ v.Bookings[0].Enrolment__r.Id + '/view'}" target="_blank">{! v.Bookings[0].Enrolment__r.Parent__r.Name}</a>
+                            </div>
+                        </div>
+                    </div> 
+                    <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                        <span class="slds-form-element__label">
+                            <abbr class="slds-required"></abbr>Instrument</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">
+                                {! v.Bookings[0].Enrolment__r.Instrument__c}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                        <span class="slds-form-element__label">Time</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">
+                                <lightning:formattedDateTime value="{! v.Bookings[0].Enrolment__r.Trial_Start_Time__c}" hour="2-digit" minute="2-digit" timeZone="UTC"/>
+                                
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                       <aura:if isTrue="{! or(v.Bookings[0].Enrolment__r.Stage__c == 'Booked',v.Bookings[0].Enrolment__r.Stage__c == 'Cancelled')}">
+                           <span class="slds-form-element__label">Stage</span>
+                               <div class="slds-form-element__control">
+                                   <div class="slds-form-element__static">
+                                       {!v.Bookings[0].Enrolment__r.Stage__c}
+                                   </div>
+                               </div>
+                           <aura:set attribute="else" >
+                               <span class="slds-form-element__label">Reject</span>
+                               <div class="slds-form-element__control">
+                                   <div class="slds-form-element__static">
+                                       <a href="javascript: void(0)" style="color:firebrick;" data-id="Reject"  data-val="{!v.Bookings[0].Enrolment__r.Id}" onclick="{!c.openModel}">Reject</a>
+                                   </div>
+                               </div>
+                           </aura:set>
+                        </aura:if>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <aura:if isTrue="{!v.openModal}">
+            
+            <!--###### MODAL BOX Start######--> 
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- ###### MODAL BOX HEADER Start ######-->
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close"
+                                              onclick="{! c.closeModel }"
+                                              alternativeText="close"
+                                              variant="bare-inverse"
+                                              class="slds-modal__close"/>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Please Confirm</h2>
+                    </header>
+                    <!--###### MODAL BOX BODY Part Start######-->
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <aura:if isTrue="{!v.action=='confirm'}">
+                            <p><b>Do you want to approve the Trial?</b></p>
+                            <aura:set attribute="else">
+                                <p><b>Do you want to Reject the Trial?</b></p>
+                            </aura:set>
+                        </aura:if>
+                    </div>
+                    <!--###### MODAL BOX FOOTER Part Start ######-->
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="brand" 
+                                          label="Confirm"
+                                          title="Confirm"
+                                          onclick="{! c.onChangeAction }" class="Confirm"/>
+                        <lightning:button variant="neutral" 
+                                          label="Cancel"
+                                          title="Cancel"
+                                          onclick="{! c.closeModel }" class="Cancel"/>
+                        
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+            <!--###### MODAL BOX Part END Here ######-->
+            
+        </aura:if>
+    </lightning:card>
+        </aura:if>
+</aura:component>

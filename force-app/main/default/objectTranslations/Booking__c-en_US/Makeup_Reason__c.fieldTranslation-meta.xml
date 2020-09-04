@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Make-up Reason --></label>
+    <name>Makeup_Reason__c</name>
+    <picklistValues>
+        <masterLabel>Admin Error</masterLabel>
+        <translation><!-- Admin Error --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Exams</masterLabel>
+        <translation><!-- Exams --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Holidays</masterLabel>
+        <translation><!-- Holidays --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Other</masterLabel>
+        <translation><!-- Other --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Personal Reason</masterLabel>
+        <translation><!-- Personal Reason --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>School Event</masterLabel>
+        <translation><!-- School Event --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>School trip</masterLabel>
+        <translation><!-- School trip --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Student MC</masterLabel>
+        <translation><!-- Student MC --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Teacher MC</masterLabel>
+        <translation><!-- Teacher MC --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Teacher leaves</masterLabel>
+        <translation><!-- Teacher leaves --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>CustIndicator__c</fullName>
+    <description>This formula is basically to represent Parent/Student Images</description>
+    <externalId>false</externalId>
+    <formula>IF( RecordType.DeveloperName = &quot;Customer&quot;,
+
+     IF(
+        ISBLANK(Parent__c), 
+        IMAGE (&quot;/servlet/servlet.ImageServer?id=0156F00000GwRX8&amp;oid=00D1m0000008aQN&amp;lastMod=1556272366000&quot;,&quot;Parent&quot;),
+        IMAGE (&quot;/servlet/servlet.ImageServer?id=0156F00000GwRXN&amp;oid=00D1m0000008aQN&amp;lastMod=1556272415000&quot;, &quot;Student&quot;)),
+     
+     IF (RecordType.DeveloperName = &quot;Centre&quot;,
+        IMAGE (&quot;/servlet/servlet.ImageServer?id=0156F00000GwRVW&amp;oid=00D1m0000008aQN&amp;lastMod=1556271399000&quot;, &quot;Centre&quot;),
+   
+     IF (RecordType.DeveloperName = &quot;Teacher&quot;,
+        IMAGE (&quot;/servlet/servlet.ImageServer?id=0156F00000GwRXS&amp;oid=00D1m0000008aQN&amp;lastMod=1556272445000&quot;, &quot;Teacher&quot;)
+,&quot;&quot;)))</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Indicator</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

@@ -1,0 +1,20 @@
+<apex:component >
+  <strong>1. Purchase of Instrument:</strong>
+    <p>The Customer has agreed to purchase the above piano from Aureus Group Pte. Ltd at a purchase price of S$_</p>
+    
+    <h4 class="f-title"><strong>2. Applicable Credit/Deposit:</strong></h4>
+    <p>The Customer shall have the option to offset below amount towards the purchase as described in the initial rental agreement form;</p>
+    <p>•  Rental Credit: The Customer may offset a maximum of 4 months of rental credit towards the purchase price. This is calculated as S$_</p>
+    <p>•  Moving Credit: If applicable, 1-way moving credit will be offset towards the purchase price that was reserved for termination and return of the piano. This sum is calculated as S$_</p>
+    <p>•  Deposit Application: The previously collected deposit shall be applied to the purchase price. This sum is calculated as S$_</p>
+        
+        
+    <h4 class="f-title"><strong>3. Condition of Instrument on Handover:</strong></h4>
+    <p>Aureus Group Pte. Ltd shall make the instrument available to the Customer (alongside an Aureus Representative) for inspection before the initial delivery, and upon taking ownership of the instrument, the Customer shall acknowledge that the instrument is in the condition described.</p>
+    
+    <h4 class="f-title"><strong>4. Liability Waiver:</strong></h4>
+    <p>The Aureus Group Pte. Ltd shall not be liable for any injury or loss sustained by the Customer by the operation, handling or transportation of the instrument.</p>
+    
+    
+    <h4 class="f-title">5. All sold items are non-exchangeable nor refundable</h4>
+</apex:component>

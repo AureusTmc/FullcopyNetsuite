@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Restrict_Leave_Cancel</fullName>
+    <active>true</active>
+    <description>Restricts Employee from cancelling leave request if only 30 days are left in leave start.</description>
+    <errorConditionFormula>ISPICKVAL(Status__c , &quot;Cancelled&quot;) &amp;&amp;
+RecordType.DeveloperName == &apos;Paid_Leave&apos; &amp;&amp; $Profile.Name != &apos;HR Manager&apos; &amp;&amp; $Profile.Name != &apos;System Administrator&apos; &amp;&amp;
+!($Permission.Operation_User) &amp;&amp; NOT(Leave_Start_Date__c - TODAY() &gt; 30)</errorConditionFormula>
+    <errorMessage>30 days left to leave start, cannot cancel leave. Please contact your HR.</errorMessage>
+</ValidationRule>

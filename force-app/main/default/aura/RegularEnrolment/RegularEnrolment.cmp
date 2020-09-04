@@ -1,0 +1,95 @@
+<aura:component controller="AccountController" implements="lightning:actionOverride,flexipage:availableForRecordHome,force:appHostable,flexipage:availableForAllPageTypes,force:hasRecordId,force:lightningQuickAction">
+    <aura:attribute name="Bookings" type="Booking__c[]"/>
+    <aura:attribute name="accKey" type="string"></aura:attribute>
+    <aura:attribute name="selvalue" type="string" default="Last 7 Days"/>
+    <aura:attribute name="dateList" type="list"></aura:attribute>
+    <aura:attribute name="openModal" type="boolean" default="false"></aura:attribute>
+    <aura:attribute name="bookingID" type="string" />
+    <aura:attribute name="action" type="string"/>
+    <aura:attribute name="dateVal" type="string"/>
+    <aura:attribute name="totalCount" type="integer"/>
+    <aura:handler event="c:AccountKeyChange" action="{!c.searchKeyChange}"/>
+    <lightning:card title="" class="Remove-Margin">
+        <aura:set attribute="title">
+            <b>Enrolments&nbsp;({!v.totalCount})</b>
+        </aura:set>
+        <aura:set attribute="actions">
+            <lightning:select  aura:id="select-date" name="select" label="" onchange="{! c.onChangeDate }">
+                <option value="">Select Date...</option>
+                <aura:iteration items="{! v.dateList}" var="dt" >
+                    <option value="{!dt}" selected="{! dt==v.selvalue}">{!dt}</option>
+                </aura:iteration>
+            </lightning:select>
+        </aura:set>
+        <div class="c-container slds-scrollable">
+            <lightning:layout multipleRows="true">
+                <lightning:layoutItem padding="around-xxx-small" size="12">
+                    
+                    <div class="slds-table--header-fixed_container" style="height:100px;">
+                        <div class="slds-m-around_xx-small" style="height:100%; background-color:white;">
+                            <table id="tableId" class="slds-table slds-table_bordered slds-table--header-fixed" cellspacing="0" width="100%">
+                                <thead>
+                                    <tr class="slds-text-heading--label">
+                                        <th scope="col" class="nobordertop slds-cell-th" title="Student" style="padding-left: 6px;">
+                                            <div  class="slds-truncate">Student</div>
+                                        </th>
+                                        <th scope="col" class="nobordertop slds-cell-th" title="Parent">
+                                            <div  class="slds-truncate">Parent</div>
+                                        </th>
+                                        <th scope="col" class="nobordertop slds-cell-th" title="Teacher">
+                                            <div  class="slds-truncate">Teacher</div>
+                                        </th>
+                                        <th scope="col" class="nobordertop slds-cell-th" title="Package">
+                                            <div  class="slds-truncate">Package</div>
+                                        </th>
+                                        <th scope="col" class="nobordertop slds-cell-th" title="Time">
+                                            <div  class="slds-truncate">Start Date &amp; Time</div>
+                                        </th>
+                                        <th scope="col" class="nobordertop slds-cell-th" title="Date">
+                                            <div  class="slds-truncate">Created Date</div>
+                                        </th> 
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <aura:iteration items="{!v.Bookings}" var="Bkg" indexVar="index">     
+                                        <tr>
+                                            <td data-label="Name" title="Name">
+                                               <div class="slds-truncate"> {!Bkg.Student__r.Name}</div>
+                                            </td>
+                                            <td data-label="Parent" title="Parent" class="slds-cell-td">
+                                                <a href="{! '/lightning/r/Account/'+ Bkg.Id + '/view'}" target="_blank">
+                                                    <div  class="slds-truncate">{!Bkg.Parent__r.Name}
+                                                    </div>
+                                                </a>
+                                            </td>
+                                            <td data-label="Teacher" title="Teacher" class="slds-cell-td">
+                                                <div class="slds-truncate">{!Bkg.Teacher__r.Name}</div>
+                                            </td>
+                                            <td data-label="Package" title="Package" class="slds-cell-td">
+                                                <div class="slds-truncate">{!Bkg.Package__r.Name}</div>
+                                            </td>
+                                            <td data-label="Booking_Date" title="Booking Date" class="slds-cell-td">
+                                                <div class="slds-truncate" >
+                                                    <lightning:formattedDateTime value="{!Bkg.Lessons_Start_Date__c}" year="2-digit" month="short" day="2-digit" weekday="short" timeZone="UTC"/>&nbsp;@
+                                                    <lightning:formattedDateTime value="{!Bkg.Lesson_Start_time__c}" hour="2-digit" minute="2-digit" timeZone="UTC"/>
+                                                </div>
+                                            </td>
+                                            <td data-label="Booking_Date" title="Created Date" class="slds-cell-td">
+                                                <div class="slds-truncate" >
+                                                    <lightning:formattedDateTime value="{!Bkg.Enrolment_Created_Date__c}" year="2-digit" month="short" day="2-digit" weekday="short" timeZone="UTC"/>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </aura:iteration>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </lightning:layoutItem>                              
+            </lightning:layout>
+            <div class="slds-align_absolute-center viewAllButton" onclick="{!c.OpenMegaPage}"> View All</div>
+        </div>
+    </lightning:card>
+    <div>
+    </div>
+</aura:component>

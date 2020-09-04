@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Status__c</fullName>
+    <externalId>false</externalId>
+    <label>Status</label>
+    <required>false</required>
+    <trackHistory>true</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <controllingField>Type__c</controllingField>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Pending</fullName>
+                <default>false</default>
+                <label>Pending</label>
+            </value>
+            <value>
+                <fullName>Scheduled</fullName>
+                <default>false</default>
+                <label>Scheduled</label>
+            </value>
+            <value>
+                <fullName>Completed</fullName>
+                <default>false</default>
+                <label>Completed</label>
+            </value>
+            <value>
+                <fullName>Canceled</fullName>
+                <default>false</default>
+                <label>Canceled</label>
+            </value>
+            <value>
+                <fullName>No-show</fullName>
+                <default>false</default>
+                <label>No-show</label>
+            </value>
+            <value>
+                <fullName>Rejected</fullName>
+                <default>false</default>
+                <label>Rejected</label>
+            </value>
+            <value>
+                <fullName>Expired</fullName>
+                <default>false</default>
+                <label>Expired</label>
+            </value>
+            <value>
+                <fullName>Blocked</fullName>
+                <default>false</default>
+                <label>Blocked</label>
+            </value>
+            <value>
+                <fullName>Approved</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Approved</label>
+            </value>
+            <value>
+                <fullName>Make-up</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Make-up</label>
+            </value>
+            <value>
+                <fullName>Makeup Pending</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Makeup Pending</label>
+            </value>
+            <value>
+                <fullName>Rescheduled</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Rescheduled</label>
+            </value>
+        </valueSetDefinition>
+        <valueSettings>
+            <controllingFieldValue>Group Class</controllingFieldValue>
+            <controllingFieldValue>Trial</controllingFieldValue>
+            <controllingFieldValue>Group Lesson</controllingFieldValue>
+            <controllingFieldValue>Regular</controllingFieldValue>
+            <controllingFieldValue>Audition</controllingFieldValue>
+            <controllingFieldValue>Ad-hoc</controllingFieldValue>
+            <controllingFieldValue>Piano Viewing</controllingFieldValue>
+            <valueName>Pending</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Group Class</controllingFieldValue>
+            <controllingFieldValue>Trial</controllingFieldValue>
+            <controllingFieldValue>Group Lesson</controllingFieldValue>
+            <controllingFieldValue>Regular</controllingFieldValue>
+            <controllingFieldValue>Make-up</controllingFieldValue>
+            <controllingFieldValue>Audition</controllingFieldValue>
+            <controllingFieldValue>Ad-hoc</controllingFieldValue>
+            <controllingFieldValue>Studio</controllingFieldValue>
+            <controllingFieldValue>Busy</controllingFieldValue>
+            <controllingFieldValue>Piano Viewing</controllingFieldValue>
+            <valueName>Scheduled</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Group Class</controllingFieldValue>
+            <controllingFieldValue>Trial</controllingFieldValue>
+            <controllingFieldValue>Group Lesson</controllingFieldValue>
+            <controllingFieldValue>Regular</controllingFieldValue>
+            <controllingFieldValue>Make-up</controllingFieldValue>
+            <controllingFieldValue>Audition</controllingFieldValue>
+            <controllingFieldValue>Ad-hoc</controllingFieldValue>
+            <controllingFieldValue>Studio</controllingFieldValue>
+            <controllingFieldValue>Piano Viewing</controllingFieldValue>
+            <valueName>Completed</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Group Class</controllingFieldValue>
+            <controllingFieldValue>Trial</controllingFieldValue>
+            <controllingFieldValue>Group Lesson</controllingFieldValue>
+            <controllingFieldValue>Regular</controllingFieldValue>
+            <controllingFieldValue>Make-up</controllingFieldValue>
+            <controllingFieldValue>Audition</controllingFieldValue>
+            <controllingFieldValue>Ad-hoc</controllingFieldValue>
+            <controllingFieldValue>Busy</controllingFieldValue>
+            <controllingFieldValue>Piano Viewing</controllingFieldValue>
+            <valueName>Canceled</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Group Class</controllingFieldValue>
+            <controllingFieldValue>Trial</controllingFieldValue>
+            <controllingFieldValue>Group Lesson</controllingFieldValue>
+            <controllingFieldValue>Regular</controllingFieldValue>
+            <controllingFieldValue>Make-up</controllingFieldValue>
+            <controllingFieldValue>Audition</controllingFieldValue>
+            <controllingFieldValue>Ad-hoc</controllingFieldValue>
+            <controllingFieldValue>Studio</controllingFieldValue>
+            <controllingFieldValue>Piano Viewing</controllingFieldValue>
+            <valueName>No-show</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Trial</controllingFieldValue>
+            <controllingFieldValue>Audition</controllingFieldValue>
+            <valueName>Rejected</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Trial</controllingFieldValue>
+            <controllingFieldValue>Busy</controllingFieldValue>
+            <valueName>Blocked</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Regular</controllingFieldValue>
+            <controllingFieldValue>Piano Viewing</controllingFieldValue>
+            <valueName>Expired</valueName>
+        </valueSettings>
+    </valueSet>
+</CustomField>

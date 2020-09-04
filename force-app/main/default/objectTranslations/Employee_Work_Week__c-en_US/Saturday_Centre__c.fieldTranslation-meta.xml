@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Saturday Centre --></label>
+    <name>Saturday_Centre__c</name>
+    <relationshipLabel><!-- Employee Work Week (Saturday Centre) --></relationshipLabel>
+</CustomFieldTranslation>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Pass_Type__c</fullName>
+    <externalId>false</externalId>
+    <label>Pass Type</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>NRIC</fullName>
+                <default>false</default>
+                <label>NRIC</label>
+            </value>
+            <value>
+                <fullName>Employment Pass</fullName>
+                <default>false</default>
+                <label>Employment Pass</label>
+            </value>
+            <value>
+                <fullName>S Pass</fullName>
+                <default>false</default>
+                <label>S Pass</label>
+            </value>
+            <value>
+                <fullName>Work Permit</fullName>
+                <default>false</default>
+                <label>Work Permit</label>
+            </value>
+            <value>
+                <fullName>Dependent Pass</fullName>
+                <default>false</default>
+                <label>Dependent Pass</label>
+            </value>
+            <value>
+                <fullName>Student Pass</fullName>
+                <default>false</default>
+                <label>Student Pass</label>
+            </value>
+            <value>
+                <fullName>Work Holiday Pass</fullName>
+                <default>false</default>
+                <label>Work Holiday Pass</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

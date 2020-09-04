@@ -1,0 +1,42 @@
+<aura:component controller="StripeRefundController" implements="force:lightningQuickActionWithoutHeader,flexipage:availableForRecordHome,force:hasRecordId" access="global" >
+    <aura:attribute name="amount" type="String"/>
+    <aura:attribute name="remark" type="String"/>
+    <aura:attribute name="isOpen" type="Boolean" default="false"/>
+    <aura:attribute name="isProcessing" type="Boolean" default="false"/>
+    <div class="slds-box slds-card slds-box_small">
+  			<lightning:button variant="brand" label="Refund" name="openrefund" onclick="{!c.openRefund}" ></lightning:button>
+    </div>
+    <aura:if isTrue="{!v.isOpen}">
+        <div style="height:640px">
+            <aura:if isTrue="{!v.isProcessing}">
+            	<lightning:spinner alternativeText="Loading" />
+            </aura:if>
+            <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open slds-modal_small" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1">
+            	<div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                    	<h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Refund</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <lightning:input type="number" aura:id="amountField" label="Enter Refund Amount" value="{!v.amount}" required="true"></lightning:input>
+            			<lightning:input type="string" aura:id="remarkField" label="Enter Remark" value="{!v.remark}" required="true"></lightning:input>
+                        
+                    </div>
+                    <footer class="slds-modal__footer">
+                            <lightning:button variant="brand" label="Cancel" name="cancel" onclick="{!c.cancel}" ></lightning:button>
+            				<lightning:button variant="brand" label="Refund" name="refund" onclick="{!c.callRefund}" ></lightning:button>
+            		</footer>
+            	</div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </div>
+        <!--<lightning:card title="">
+            <aura:set attribute="body">
+                <lightning:input type="string" aura:id="remark" label="Enter Remark" value="{!v.remark}" required="true"></lightning:input>
+                <lightning:input type="number" aura:id="amountField" label="Enter Refund Amount" value="{!v.amount}" required="true"></lightning:input>
+            </aura:set>
+            <aura:set attribute="footer">
+                <lightning:button variant="brand" label="Refund" name="refund" onclick="{!c.callRefund}" ></lightning:button>
+            </aura:set>
+        </lightning:card>--> 
+    </aura:if>
+</aura:component>

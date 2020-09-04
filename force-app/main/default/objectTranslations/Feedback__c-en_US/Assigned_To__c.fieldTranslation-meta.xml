@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Assigned To --></label>
+    <name>Assigned_To__c</name>
+    <picklistValues>
+        <masterLabel>Alex</masterLabel>
+        <translation><!-- Alex --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Alice Wong</masterLabel>
+        <translation><!-- Alice Wong --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Ivy</masterLabel>
+        <translation><!-- Ivy --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Julius</masterLabel>
+        <translation><!-- Julius --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Techmatrix</masterLabel>
+        <translation><!-- Techmatrix --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Techmatrix Support</masterLabel>
+        <translation><!-- Techmatrix Support --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

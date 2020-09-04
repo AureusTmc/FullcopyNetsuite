@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Previous Lesson Day Time --></label>
+    <name>Previous_Lesson_Day_Time__c</name>
+</CustomFieldTranslation>

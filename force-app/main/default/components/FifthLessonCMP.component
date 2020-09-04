@@ -1,0 +1,238 @@
+<apex:component controller="FifthLessonController" allowDML="true">
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <!--5th Lesson view Popup-->
+        <div class="slds-hide" id="fifthLessonViewPopup">
+                <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                    <div class="slds-modal__container" style="width: 50%;">
+                        <header class="slds-modal__header" style="background: #303a42; color: white;">
+                            <h2 id="fifthLessonViewPopupHeader" class="slds-text-heading_medium slds-hyphenate">Fifth Lesson</h2>
+                            <a href="javascript:void(0);" class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick="$('#fifthLessonViewPopup').addClass('slds-hide'); return false;">
+                                <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                                    <use xlink:href="{!URLFOR($Asset.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                                </svg>
+                                <span class="slds-assistive-text">Close</span>
+                            </a>
+                        </header>
+                        <div class="slds-modal__content slds-p-around_medium" id="fifthLessonViewPopupBody">
+                            <div class="slds-grid slds-wrap slds-p-around_xx-small">
+        
+                                <div class="slds-col slds-size_1-of-1">
+                                    <div class="slds-grid slds-gutters">
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <span class="slds-form-element__label slds-text-align_right"><b>Location:</b></span>
+                                            <span><a id="centerNameFifth" href="" target="_blank"></a></span>
+                                        </div>
+                                        <div class="slds-col slds-size_7-of-12">
+                                            <span class="slds-form-element__label slds-text-align_right"><b>Student:</b></span>
+                                            <span><a id="studentNameFifth" target="_blank" href="#"></a></span>
+                                        </div>
+                                    </div>
+                                    <div class="slds-grid slds-gutters">
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <span class="slds-form-element__label slds-text-align_right"><b>Teacher Name:</b></span>
+                                            <span><a id="teacherNameFifth" target="_blank" href="#"></a></span>
+                                        </div>
+                                        
+                                        <div class="slds-col slds-size_7-of-12">
+                                            <span class="slds-form-element__label slds-text-align_right"><b>Parent:</b></span>
+                                            <span><a id="ParentNameFifth" target="_blank" href="#"></a></span>
+                                        </div>
+                                        
+                                    </div>
+                                    <div class="slds-grid slds-gutters">
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <span class="slds-form-element__label slds-text-align_right"><b>Date:</b></span>
+                                            <span id="dateFifth"></span>
+                                            
+                                        </div>
+                                        
+                                        <div class="slds-col slds-size_7-of-12">
+                                            <span class="slds-form-element__label slds-text-align_right"><b>Phone:</b></span>
+                                            <span><a id="PhoneFifth" target="_blank" href="#"></a></span>
+                                        </div>
+                                    </div>
+                                    <div class="slds-grid slds-gutters">
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <span class="slds-form-element__label slds-text-align_right"><b>Time:</b></span>
+                                            <span id="TimeFifth"></span>
+                                            
+                                        </div>
+                                        
+                                        <div class="slds-col slds-size_7-of-12" style="margin-right: 0px;padding-right: 0PX;">
+                                            <span class="slds-form-element__label slds-text-align_right"><b>Email:</b></span>
+                                            <span id="EmailFifth"></span>
+                                        </div>
+                                    </div>
+                                    <div class="slds-grid slds-gutters">
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <span class="slds-form-element__label slds-text-align_right"><b>Package:</b></span>
+                                            <span id="PackageFifth"></span>
+                                        </div>
+                                        <div class="slds-col slds-size_7-of-12">
+                                            <span class="slds-form-element__label slds-text-align_right"><b>Duration:</b></span>
+                                            <span id="DurationFifth"></span>
+                                        </div>
+                                        
+                                    </div>
+                                    <div class="slds-grid slds-gutters">
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <span class="slds-form-element__label slds-text-align_right"><b>AMM:</b></span>
+                                            <span id="AMMFifth"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <footer class="slds-modal__footer">
+                                <div class="slds-button-group slds-grid" role="group">
+                                        <button class="slds-col slds-button slds-button_icon slds-button_icon-border-filled button-shadow" title="Cancel 5th Lesson" aria-pressed="false" id="replacePlaceholder" onclick="confirmFifthLessonConvertion($(this).attr('data-id'), 'placeholder');return false;">Cancel 5th Lesson
+                                            <span class="slds-assistive-text">Cancel 5th Lesson</span>
+                                        </button>
+                                        <button class="slds-col slds-button slds-button_icon slds-button_icon-border-filled button-shadow" title="Confirm Make-Up" aria-pressed="false" id="bookMakeup" onclick="confirmFifthLessonConvertion($(this).attr('data-id'), 'makeup');return false;">Confirm Make-Up
+                                            <span class="slds-assistive-text">Confirm Make-Up</span>
+                                        </button>
+                                        <button class="slds-col slds-button slds-button_icon slds-button_icon-border-filled button-shadow" title="Confirm Ad-Hoc Lesson" aria-pressed="false" id="bookAdhoc" onclick="confirmFifthLessonConvertion($(this).attr('data-id'), 'adhoc');return false;">Confirm Ad-Hoc Lesson
+                                            <span class="slds-assistive-text">Confirm Ad-Hoc Lesson</span>
+                                        </button>
+                                </div>
+                        </footer> 
+                    </div> 
+                </section>
+                <div class="slds-backdrop slds-backdrop_open"></div>
+            </div>
+
+            <!--Confirm Modal For Fifth Lesson Convertion..-->
+            <div class="slds-hide" id="confirmModalFifthLesson">
+                <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                    <div class="slds-modal__container" style="width: 35%;">
+                        <header class="slds-modal__header" style="background: #303a42; color: white;">
+                            <h2 id="confirmFifthHeader" class="slds-text-heading_medium slds-hyphenate"></h2>
+                        </header>
+                        <div class="slds-modal__content slds-p-around_medium" id="confirmModalFifthBody"></div>
+                        <footer class="slds-modal__footer">
+                            <button class="slds-button slds-button_neutral revert" id="confirmModalFifthNo" onclick="$('#confirmModalFifthLesson').addClass('slds-hide'); return false;">No</button>
+                            <button class="slds-button slds-button_brand yesClass" id="confirmModalFifthYes" onclick="replaceLesson($('#confirmModalFifthYes').attr('data-id'), $('#confirmModalFifthYes').attr('data-origin'));return false;">Yes</button>
+                        </footer>
+                    </div>
+                </section>
+                <div class="slds-backdrop slds-backdrop_open"></div>
+            </div>
+
+            <script type="text/javascript">
+                function getFifthBookingDetails(fifthLessonStr){
+                    if(fifthLessonStr){
+                        $('#bookMakeup').css('pointer-events', 'all');
+                        $('#bookMakeup').removeAttr('disabled');
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.FifthLessonController.fetchLessonDetails}',
+                             fifthLessonStr,  
+                            function(result, event){
+                                if(result){
+                                    console.log('@@@Result', result);
+
+                                    refreshFifthLessonPopup();
+                                    if(!result.amm || result.duration > result.amm){
+                                        $('#bookMakeup').css('pointer-events', 'none');
+                                        $('#bookMakeup').attr('disabled', 'true');
+                                    }
+                                    if(result.amm){
+                                        $('#AMMFifth').text(result.amm + ' Mins');
+                                    }else{
+                                        $('#AMMFifth').text('0 Mins');
+                                    }
+                                    
+
+                                    $('#replacePlaceholder').attr('data-id', result.Id);
+                                    $('#bookMakeup').attr('data-id', result.Id);
+                                    $('#bookAdhoc').attr('data-id', result.Id);
+
+                                    $('#centerNameFifth').text(result.centerName);
+                                    $('#centerNameFifth').attr('href', '/'+result.centerId);
+
+                                    $('#studentNameFifth').text(result.studentFirstName);
+                                    $('#studentNameFifth').attr('href', '/'+result.studentId);
+
+                                    $('#teacherNameFifth').text(result.staffMember);
+                                    $('#teacherNameFifth').attr('href', '/'+result.staffMemberId);
+
+                                    $('#ParentNameFifth').text(result.parentFirstName);
+                                    $('#ParentNameFifth').attr('href', '/'+result.parentId);      
+
+                                    $('#dateFifth').text(result.dateAndTime);
+
+                                    $('#PhoneFifth').text(result.parentMobile);
+                                    $('#PhoneFifth').attr('href', 'tel:'+result.parentMobile);
+
+                                    $('#TimeFifth').text(result.endDateTime);
+
+                                    $('#EmailFifth').text(result.parentEmail);
+
+                                    $('#PackageFifth').text(result.newPackageName);
+
+                                    $('#DurationFifth').text(result.duration);
+
+                                    $('#fifthLessonViewPopup').removeClass('slds-hide');
+
+                                }
+                            }
+                        );
+                    }
+                }  
+                
+                function refreshFifthLessonPopup(){
+                    $('#centerNameFifth').text('');
+                    $('#studentNameFifth').text('');
+                    $('#teacherNameFifth').text('');
+                    $('#ParentNameFifth').text('');
+                    $('#dateFifth').text('');
+                    $('#PhoneFifth').text('');
+                    $('#TimeFifth').text('');
+                    $('#EmailFifth').text('');
+                    $('#PackageFifth').text('');
+                    $('#DurationFifth').text('');
+                    $('#AMMFifth').text('');
+                }
+
+                function replaceLesson(lessonId, origin){
+                    console.log('@@@@replaceLesson',lessonId, origin);
+                    $('#confirmModalFifthLesson').addClass('slds-hide');
+
+                    if(!caseId){
+                        caseId = '';
+                    }
+                    if(lessonId && origin){
+                        Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.FifthLessonController.bookingConvert}',
+                        lessonId, caseId, origin, true, 
+                            function(result, event){
+                                if(result && origin != 'placeholder'){
+                                    redirectToCaseRecord(result);
+                                    refreshCalendar();
+
+                                }else{
+                                    refreshCalendar();
+                                }
+                            }
+                        );
+                    }
+                    
+                }
+
+                //Show Confirm Modal
+                function confirmFifthLessonConvertion(bookingId, origin){
+                    $('#fifthLessonViewPopup').addClass('slds-hide');
+                    $('#confirmModalFifthYes').attr('data-id', bookingId);
+                    $('#confirmFifthHeader').text('Replace Fifth Lesson');
+                    if(origin == 'placeholder'){
+                        $('#confirmModalFifthBody').text('Do you want to convert this Lesson to Placeholder');
+                    }else if(origin == 'makeup'){
+                        $('#confirmModalFifthBody').text('Do you want to convert this Lesson to Makeup Booking. It will use the parent\'s available makeup units.');
+                    }else if(origin == 'adhoc'){
+                        $('#confirmModalFifthBody').text('Do you want to convert this Lesson to Ad-hoc Booking. It will charge the credit card immediately');
+                    }
+                    $('#confirmModalFifthYes').attr('data-origin', origin);
+                    $('#confirmModalFifthLesson').removeClass('slds-hide');
+                }
+            </script>
+    </html>
+</apex:component>

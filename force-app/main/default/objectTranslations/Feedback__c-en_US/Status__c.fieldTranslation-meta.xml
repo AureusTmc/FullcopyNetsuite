@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Status --></label>
+    <name>Status__c</name>
+    <picklistValues>
+        <masterLabel>Closed</masterLabel>
+        <translation><!-- Closed --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Dev Fixed</masterLabel>
+        <translation><!-- Dev Fixed --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Dev Verified</masterLabel>
+        <translation><!-- Dev Verified --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Duplicate</masterLabel>
+        <translation><!-- Duplicate --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>No-Fix Required</masterLabel>
+        <translation><!-- No-Fix Required --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Open</masterLabel>
+        <translation><!-- Open --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Prod Fixed</masterLabel>
+        <translation><!-- Prod Fixed --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Prod Verified</masterLabel>
+        <translation><!-- Prod Verified --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Working</masterLabel>
+        <translation><!-- Working --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

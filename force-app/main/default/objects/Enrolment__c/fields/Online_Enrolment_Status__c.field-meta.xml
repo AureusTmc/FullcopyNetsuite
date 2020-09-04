@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Online_Enrolment_Status__c</fullName>
+    <externalId>false</externalId>
+    <label>Online Enrolment Status</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Online Lessons</fullName>
+                <default>false</default>
+                <label>Online Lessons</label>
+            </value>
+            <value>
+                <fullName>Suspension of Lessons</fullName>
+                <default>false</default>
+                <label>Suspension of Lessons</label>
+            </value>
+            <value>
+                <fullName>Proration of 2 Lessons</fullName>
+                <default>false</default>
+                <label>Proration of 2 Lessons</label>
+            </value>
+            <value>
+                <fullName>New Enrolment Deferred</fullName>
+                <default>false</default>
+                <label>New Enrolment Deferred</label>
+            </value>
+            <value>
+                <fullName>Cancel &amp; Make Up Lessons</fullName>
+                <default>false</default>
+                <label>Cancel &amp; Make Up Lessons</label>
+            </value>
+            <value>
+                <fullName>Withdrawal</fullName>
+                <default>false</default>
+                <label>Withdrawal</label>
+            </value>
+            <value>
+                <fullName>Online Lessons (P)</fullName>
+                <default>false</default>
+                <label>Online Lessons (P)</label>
+            </value>
+            <value>
+                <fullName>Online Lessons (S)</fullName>
+                <default>false</default>
+                <label>Online Lessons (S)</label>
+            </value>
+            <value>
+                <fullName>Cancel &amp; Make Up Lessons (2)</fullName>
+                <default>false</default>
+                <label>Cancel &amp; Make Up Lessons (2)</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

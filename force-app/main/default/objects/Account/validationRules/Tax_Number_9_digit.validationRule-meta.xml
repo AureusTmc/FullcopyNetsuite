@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Tax_Number_9_digit</fullName>
+    <active>true</active>
+    <errorConditionFormula>AND(
+(OR(RecordType.Name=&apos;Employee&apos;,RecordType.Name=&apos;Teacher&apos;)),
+NOT(ISBLANK(Tax_Number__c)),
+ LEN(Tax_Number__c)&lt;9  
+)</errorConditionFormula>
+    <errorMessage>Please enter a valid 9 digit tax number.</errorMessage>
+</ValidationRule>

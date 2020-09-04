@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Source_Image__c</fullName>
+    <externalId>false</externalId>
+    <formula>CASE( LeadSource, 
+&apos;Phone&apos;, IMAGE(&quot;/servlet/servlet.ImageServer?id=0150k0000003ITC&amp;oid=00D0k000000Dsbn&amp;lastMod=1545292177000&quot;,&quot;Phone&quot;,20,30), 
+&apos;Referrals&apos;, IMAGE(&quot;/servlet/servlet.ImageServer?id=0150k0000003ITW&amp;oid=00D0k000000Dsbn&amp;lastMod=1545292265000&quot;,&quot;Referrals&quot;,20,30), 
+&apos;Advertising&apos;, IMAGE(&quot;/servlet/servlet.ImageServer?id=0150k000000UsE0&amp;oid=00D0k000000Dsbn&amp;lastMod=1545380268000&quot;,&quot;Advertising&quot;,20,30), 
+&apos;Email&apos;, IMAGE(&quot;/servlet/servlet.ImageServer?id=0150k0000003ITW&amp;oid=00D0k000000Dsbn&amp;lastMod=1545292265000&quot;,&quot;Email&quot;,20,30), 
+&apos;Social Media&apos;, IMAGE(&quot;/servlet/servlet.ImageServer?id=0150k000000UsDv&amp;oid=00D0k000000Dsbn&amp;lastMod=1545379604000&quot;,&quot;Social Media&quot;,20,30),
+&apos;Walk-in&apos;, IMAGE(&quot;/servlet/servlet.ImageServer?id=0150k0000003IU5&amp;oid=00D0k000000Dsbn&amp;lastMod=1545292444000&quot;,&quot;Walk-in&quot;,20,30),
+&apos;Website&apos;, IMAGE(&quot;/servlet/servlet.ImageServer?id=0150k0000003IUF&amp;oid=00D0k000000Dsbn&amp;lastMod=1545292490000&quot;,&quot;Website&quot;,20,30),
+&apos;Other&apos;, IMAGE(&quot;/servlet/servlet.ImageServer?id=0150k0000003ISx&amp;oid=00D0k000000Dsbn&amp;lastMod=1545292104000&quot;,&quot;Other&quot;,20,30),
+IMAGE(&quot;/servlet/servlet.ImageServer?id=0150k000000UsCE&amp;oid=00D0k000000Dsbn&amp;lastMod=1545368014000&quot;,&quot;Hi&quot;,20,30))</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Source Image</label>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

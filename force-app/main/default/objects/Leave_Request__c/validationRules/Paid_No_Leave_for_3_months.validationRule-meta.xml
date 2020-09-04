@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Paid_No_Leave_for_3_months</fullName>
+    <active>true</active>
+    <description>Prohibits user from applying leaves in the first 3 months of employment. HR Manager/Exec can create a leave application in this case (in case of an exception).</description>
+    <errorConditionFormula>RecordType.DeveloperName == &apos;Paid_Leave&apos; &amp;&amp; $Profile.Name != &apos;HR Manager&apos; &amp;&amp; $Profile.Name != &apos;System Administrator&apos; &amp;&amp; !($Permission.Operation_User) &amp;&amp; Leave_Start_Date__c &lt; ADDMONTHS(Employee__r.Joining_Date__c , 3)</errorConditionFormula>
+    <errorMessage>You&apos;re not eligible to apply for leave in the first three months of employment. Please contact your HR.</errorMessage>
+</ValidationRule>

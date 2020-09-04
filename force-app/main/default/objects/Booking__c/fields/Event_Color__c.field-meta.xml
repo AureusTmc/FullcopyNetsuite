@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Event_Color__c</fullName>
+    <externalId>false</externalId>
+    <formula>IF(
+   AND(TEXT(Enrolment__r.Package_Process_Type__c) = &apos;Cancellation&apos;,
+       TEXT(Type__c) = &apos;Regular&apos;, (Enrolment__r.Effective_Date__c  - Booking_Date__c ) &lt;=28 ), &apos;#DF4D7E&apos;,
+ 
+IF(TEXT(Type__c) = &apos;Busy&apos;, 
+	&apos;#abb8b8&apos;,
+	IF(AND(TEXT(Type__c) = &apos;Trial&apos;,ISPICKVAL(Status__c,&apos;Blocked&apos;)),  
+            &quot;#071FA6&quot;,
+	    IF(TEXT(Type__c) = &apos;Trial&apos;, 
+		&apos;#f3ce59&apos;,  
+		IF(TEXT(Type__c) = &apos;Make-up&apos;,
+			&apos;#5d6d7d&apos;, 
+			IF(AND(TEXT(Type__c) = &apos;Regular&apos;, NOT(ISBLANK(Instrument__c))),
+				CASE(Instrument__c,
+					&quot;Piano&quot;, &quot;#54c9b1&quot;,
+					&quot;Violin&quot;, &quot;#61d590&quot;,
+					&quot;Guitar&quot;, &quot;#59a5d8&quot;,
+					&quot;Vocal&quot;, &quot;#ea985a&quot;,
+					&quot;Ukulele&quot;, &quot;#59a5d8&quot;,
+					&quot;Drum&quot;, &quot;#15fbff&quot;,
+					&quot;Cello&quot;, &quot;#1ebf00&quot;,
+					&quot;Flute&quot;, &quot;#bca1fd&quot;,
+					&quot;Aural&quot;, &quot;#bca1fd&quot;,
+					&quot;Theory&quot;, &quot;#bca1fd&quot;,
+					&quot;Kids Class&quot;, &quot;#ff3ff5&quot;,
+                                        &quot;Music Exploration&quot;, &quot;#ff3ff5&quot;,
+                                        &quot;Clarinet&quot;, &quot;#a642c7&quot;,   
+					&quot;None&quot;
+					),
+				IF(Text(Type__c)=&apos;Ad-hoc&apos;,
+					&apos;#bca1fd&apos;,
+					IF(Text(Type__c)=&apos;Studio&apos;,
+						&apos;#5d6d7d&apos;,
+						&apos;&apos;
+					)
+				)
+			)
+		)   )
+	)
+)
+)</formula>
+    <label>Event Color</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

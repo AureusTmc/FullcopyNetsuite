@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Mandatory_commission_percent</fullName>
+    <active>true</active>
+    <errorConditionFormula>AND(OR(RecordType.Name=&apos;Employee&apos;,RecordType.Name=&apos;Teacher&apos;),
+ISPICKVAL(Payout_Type__c, &apos;Commission&apos;),
+OR(Not(Individual_Commission__c&gt;0),Not(Group_Commission__c&gt;0))
+)</errorConditionFormula>
+    <errorMessage>Individual or Group commission percent are required for commission payout.</errorMessage>
+</ValidationRule>

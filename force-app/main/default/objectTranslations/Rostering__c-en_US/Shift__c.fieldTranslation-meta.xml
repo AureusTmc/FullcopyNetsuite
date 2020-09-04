@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Shift --></label>
+    <name>Shift__c</name>
+    <picklistValues>
+        <masterLabel>Closing Hours</masterLabel>
+        <translation><!-- Closing Hours --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Exam Day</masterLabel>
+        <translation><!-- Exam Day --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Opening Hours</masterLabel>
+        <translation><!-- Opening Hours --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Regular Hours</masterLabel>
+        <translation><!-- Regular Hours --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

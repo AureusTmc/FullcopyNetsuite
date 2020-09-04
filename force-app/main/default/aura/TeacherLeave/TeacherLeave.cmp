@@ -1,0 +1,82 @@
+<aura:component controller="TeacherLeaveClass" implements="flexipage:availableForRecordHome,force:hasRecordId,flexipage:availableForAllPageTypes" access="global">
+    <aura:handler name="init" value="{!this}" action="{!c.initialize}"/>
+    <aura:attribute name="savevalue" type="object" />
+    <aura:attribute name="recordId" type="string" />
+    <aura:attribute name="isTeacher" type="string" />
+    <aura:attribute name="isShowRemark" type="boolean" default="false"/>
+    <aura:attribute name="todayDate" type="date"/>
+    <aura:attribute name="showForm" type="boolean"/>
+    <aura:attribute name="lookupId" type="string"/>
+    <!--aura:attribute name="plannedBoolean" type="string"/ -->
+     <!-- for Exception -->
+    <aura:attribute name="Exception" type="boolean" default="false"/>
+    <!-- to disable button -->
+    <aura:attribute name="countClick" type="integer" default="0"/>
+    <aura:attribute name="isDisabled" type="boolean" default="false"/>
+    <aura:attribute name="exceptionMessage" type="string"/>
+        <lightning:navigation aura:id="navService"/>
+        <lightning:card title="">
+            <aura:set attribute="body">
+            </aura:set>
+            <aura:set attribute="actions">
+                <lightning:button variant="brand" label="Sick Leave" name="Mc" title="Add Teacher Mc" 
+                                  onclick="{!c.openModal}" class="right"/>
+            </aura:set>
+            <aura:set attribute="footer">
+            </aura:set>
+        </lightning:card>
+    <aura:if isTrue="{!v.showForm}" >
+        <div class="demo-only demo-only_viewport" style="height:640px">
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Leave Request Form</h2>
+                        <aura:if isTrue="{!v.Exception}">
+                            <P><span style="color:firebrick;font-weight:Bold;">{!v.exceptionMessage} Please Contact System Administrator</span></P>
+                        </aura:if>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <fieldset class="slds-box slds-theme--default slds-container--large">
+                            
+                            <!-- CREATE NEW EXPENSE FORM -->
+                            <form class="slds-form--stacked">  
+                                <div class="slds-grid slds-gutters">
+                                    <div class="slds-col">
+                                        <lightning:input aura:id="mcform" label="Teacher"
+                                                         name="Teacher" value="{!v.savevalue.Employee}"
+                                                         required="true" disabled="true"/>
+                                        <lightning:input  type="time" name="input2" label="Sick leave start Time"  value="{!v.savevalue.SickLeaveTime}"/>
+                                        <lightning:textarea  label="Remark" aura:id="remarks"
+                                                            name="Remark" value="{!v.savevalue.Remarks}"/>
+                                        <aura:if isTrue="{!v.isShowRemark}">
+                                            <span style="color:firebrick;">Complete this field.</span>
+                                        </aura:if>
+                                    </div>
+                                    <div class="slds-col"> 
+                                        <lightning:input type="date" aura:id="mcform" label="Leave Start Date" class="fixDate" onchange="{!c.populatedDate}"
+                                                         name="Start Date" value="{!v.savevalue.Leave_Start_Date}"
+                                                         required="true" min="{!v.todayDate}"/>
+                                        <lightning:input type="date" aura:id="mcform" label="Leave End Date"
+                                                         name="End Date" value="{!v.savevalue.Leave_End_Date}"
+                                                         required="true" min="{!v.todayDate}"/>  
+                                    </div>
+                                </div>
+                            </form>
+                            <!-- / CREATE NEW EXPENSE FORM -->
+                            
+                        </fieldset>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <aura:if isTrue="{! v.isTeacher == 'Teacher'}">
+                            <lightning:button  variant="brand" label="Show Bookings" onclick="{!c.gotoReport}" class="Left"/>
+                        </aura:if>
+                        <lightning:button variant="destructive" label="Cancel" title="Cancel" onclick="{!c.hideModal}"/>
+                        <lightning:button  variant="brand" label="Save Request" disabled="{!v.isDisabled}" onclick="{!c.confirmYes}"/>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </div>
+    </aura:if>
+	
+</aura:component>

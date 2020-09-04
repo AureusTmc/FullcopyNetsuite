@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomApplication xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>View</actionName>
+        <comment>Action override created by Lightning App Builder during activation.</comment>
+        <content>Account_Record_Page</content>
+        <formFactor>Large</formFactor>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Flexipage</type>
+        <pageOrSobjectType>Account</pageOrSobjectType>
+    </actionOverrides>
+    <brand>
+        <headerColor>#0070D2</headerColor>
+        <logo>Sales_operation</logo>
+        <logoVersion>1</logoVersion>
+        <shouldOverrideOrgTheme>false</shouldOverrideOrgTheme>
+    </brand>
+    <description>Customize and automate the sales process, and analyze your data to make informed business decisions.</description>
+    <formFactors>Large</formFactors>
+    <isNavAutoTempTabsDisabled>false</isNavAutoTempTabsDisabled>
+    <isNavPersonalizationDisabled>false</isNavPersonalizationDisabled>
+    <label>Sales Operations</label>
+    <navType>Standard</navType>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Support_Request</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Feedback__c</pageOrSobjectType>
+        <recordType>Feedback__c.Support_Request</recordType>
+        <type>Flexipage</type>
+        <profile>Admin</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Support_Request</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Feedback__c</pageOrSobjectType>
+        <recordType>Feedback__c.Support_Request</recordType>
+        <type>Flexipage</type>
+        <profile>HR Manager</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Support_Request</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Feedback__c</pageOrSobjectType>
+        <recordType>Feedback__c.Support_Request</recordType>
+        <type>Flexipage</type>
+        <profile>Centre Staff</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Support_Request</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Feedback__c</pageOrSobjectType>
+        <recordType>Feedback__c.Support_Request</recordType>
+        <type>Flexipage</type>
+        <profile>aureusacademy Profile</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Support_Request</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Feedback__c</pageOrSobjectType>
+        <recordType>Feedback__c.Support_Request</recordType>
+        <type>Flexipage</type>
+        <profile>Aureus Teacher</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Support_Request</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Feedback__c</pageOrSobjectType>
+        <recordType>Feedback__c.Support_Request</recordType>
+        <type>Flexipage</type>
+        <profile>Aureus System Admin</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Support_Request</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Feedback__c</pageOrSobjectType>
+        <recordType>Feedback__c.Support_Request</recordType>
+        <type>Flexipage</type>
+        <profile>Aureus Finance</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Support_Request</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Feedback__c</pageOrSobjectType>
+        <recordType>Feedback__c.Support_Request</recordType>
+        <type>Flexipage</type>
+        <profile>Aureus MD</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Support_Request</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Feedback__c</pageOrSobjectType>
+        <recordType>Feedback__c.Support_Request</recordType>
+        <type>Flexipage</type>
+        <profile>Aureus Business Administrator</profile>
+    </profileActionOverrides>
+    <tabs>standard-home</tabs>
+    <tabs>standard-Dashboard</tabs>
+    <tabs>standard-report</tabs>
+    <tabs>standard-Pricebook2</tabs>
+    <tabs>standard-Product2</tabs>
+    <tabs>standard-CollaborationGroup</tabs>
+    <tabs>Admin_Home</tabs>
+    <tabs>Stripe_Payout_Log__c</tabs>
+    <tabs>Referral_Discount__c</tabs>
+    <uiType>Lightning</uiType>
+    <utilityBar>Sales_Operations_UtilityBar</utilityBar>
+</CustomApplication>

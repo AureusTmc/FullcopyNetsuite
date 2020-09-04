@@ -1,0 +1,7 @@
+<aura:component implements="flexipage:availableForAllPageTypes,force:hasRecordId" access="global">
+	<!--<aura:handler name="init" value="{!this}" action="{!c.doInit}"/>-->
+    <div class="slds-box slds-card slds-box_small">
+        <lightning:button variant="brand" label="PDF Invoice" title="PDF Invoice" onclick="{! c.genratePDF }"/>
+    </div>
+    
+</aura:component>

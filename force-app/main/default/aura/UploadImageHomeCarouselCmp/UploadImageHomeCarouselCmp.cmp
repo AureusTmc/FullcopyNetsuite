@@ -1,0 +1,59 @@
+<aura:component implements="force:lightningquickAction,force:hasRecordId,flexipage:availableForRecordHome" controller="HomeCarouselUploadController">
+    <aura:attribute name="fileImage" type="List" default="['.jpg', '.jpeg','.PNG','.png','.gif','.tiff','.bmp','.tif']"/>
+    <aura:attribute name="fileAudio" type="List" default="['.mp3', '.aac','.3gp','.wma',''.wav','.aiff','.m4a']"/>
+    <aura:attribute name="multiple" type="Boolean" default="false"/>
+    <aura:attribute name="disabled" type="Boolean" default="false"/>
+    <aura:attribute name="imageFileId" type="String"/>
+    <aura:attribute name="imageUploadStatus" type="String"/>
+    <aura:attribute name="audioFileId" type="String"/>
+    <aura:attribute name="audioUploadStatus" type="String"/>
+    
+    <aura:attribute name="record" type="Object" description="The record object to be displayed"/>
+    <aura:attribute name="ParentRecord" type="Object" description="A simplified view record object to be displayed"/>
+    <aura:attribute name="recordError" type="String" description="An error message bound to force:recordData"/>
+    <div class= "slds-box">
+        <force:recordData aura:id="record" layoutType="FULL" recordId="{!v.recordId}" targetError="{!v.recordError}" targetRecord="{!v.record}"
+                          targetFields="{!v.ParentRecord }" mode="VIEW"/>        
+        
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open slds-modal_medium" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick="{!c.handleClose}">
+                        <lightning:icon iconName="utility:close" alternativeText="close" variant="inverse"/>
+                    </button>
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Upload Image</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                    <lightning:card>
+                        <aura:set attribute="title">
+                            <lightning:icon iconName="utility:layout" size="small"/>
+                            Upload Home Carousel Picture
+                            <hr style="margin-top:2%;"></hr>
+                        </aura:set>
+                        <aura:set attribute="footer">
+                            
+                        </aura:set>
+                        <div class="slds-grid">
+                            <div class="slds-size_12-of-12 slds-text-align_center slds-border_right">
+                                
+                                <lightning:fileUpload  name="fileUploaderImage" label= "Image Upload" multiple="{!v.multiple}" accept="{!v.fileImage}"
+                                                      disabled="{!v.disabled}" recordId="{!v.recordId}" onuploadfinished="{!c.handleUploadFinishedImage}"
+                                                      aura:id = "profileImage"/>
+                                
+                                <aura:if isTrue="{!not(empty(v.imageFileId))}">
+                                    <div style="border: 2px solid #80808014;margin: 3% 1% 0% 0%;height: 41px;padding: auto;padding-top: 3%;background-color: #F3F2F2;">
+                                        {!v.imageUploadStatus}
+                                    </div>
+                                </aura:if>
+                            </div>                
+                        </div>
+                    </lightning:card>
+                </div>
+                <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_brand" onclick="{!c.handleDone}">Done</button>
+                    <button class="slds-button slds-button_neutral" onclick="{!c.handleClose}">Close</button>
+                </footer>
+            </div>
+        </section>    
+    </div>
+</aura:component>

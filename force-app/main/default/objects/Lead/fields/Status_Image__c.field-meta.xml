@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Status_Image__c</fullName>
+    <externalId>false</externalId>
+    <formula>CASE(Status ,
+&apos;New&apos;, IMAGE(&quot;/servlet/servlet.ImageServer?id=0150k000000UsAw&amp;oid=00D0k000000Dsbn&amp;lastMod=1545367040000&quot;,&quot;New&quot;,20,30), 
+&apos;Unqualified&apos;, IMAGE(&quot;/servlet/servlet.ImageServer?id=0150k0000003ITv&amp;oid=00D0k000000Dsbn&amp;lastMod=1545292395000&quot;,&quot;Unqualified&quot;,20,30), 
+&apos;Assigned&apos;, IMAGE(&quot;/servlet/servlet.ImageServer?id=0150k000000UsB1&amp;oid=00D0k000000Dsbn&amp;lastMod=1545367656000&quot;,&quot;Assigned&quot;,20,30),
+&apos;Working&apos;, IMAGE(&quot;/servlet/servlet.ImageServer?id=0150k0000003IUP&amp;oid=00D0k000000Dsbn&amp;lastMod=1545292538000&quot;,&quot;Working&quot;,20,30),
+&apos;Qualified&apos;, IMAGE(&quot;/servlet/servlet.ImageServer?id=0150k0000003ITR&amp;oid=00D0k000000Dsbn&amp;lastMod=1545292245000&quot;,&quot;Qualified&quot;,20,30),
+IMAGE(&quot;/servlet/servlet.ImageServer?id=0150k000000UsCE&amp;oid=00D0k000000Dsbn&amp;lastMod=1545368014000&quot;,&quot;Hi&quot;,20,30))</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Status Image</label>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

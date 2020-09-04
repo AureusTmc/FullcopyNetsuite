@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Operational Request Type --></label>
+    <name>Operational_Request_Type__c</name>
+    <picklistValues>
+        <masterLabel>Credit Note Request</masterLabel>
+        <translation><!-- Credit Note Request --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Enrolment Change Request</masterLabel>
+        <translation><!-- Enrolment Change Request --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Enrolment Downgrade Request</masterLabel>
+        <translation><!-- Enrolment Downgrade Request --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Enrolment Upgrade Request</masterLabel>
+        <translation><!-- Enrolment Upgrade Request --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Macro Edit Request</masterLabel>
+        <translation><!-- Macro Edit Request --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>New Macro Request</masterLabel>
+        <translation><!-- New Macro Request --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>New Template Request</masterLabel>
+        <translation><!-- New Template Request --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Other - Specify</masterLabel>
+        <translation><!-- Other - Specify --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Refund Customer Request</masterLabel>
+        <translation><!-- Refund Customer Request --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Teacher Work Hours Request</masterLabel>
+        <translation><!-- Teacher Work Hours Request --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Template Edit Request</masterLabel>
+        <translation><!-- Template Edit Request --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Withdrawal of Lessons Request</masterLabel>
+        <translation><!-- Withdrawal of Lessons Request --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

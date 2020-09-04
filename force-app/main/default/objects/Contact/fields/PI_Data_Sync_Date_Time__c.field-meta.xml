@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>PI_Data_Sync_Date_Time__c</fullName>
+    <description>Update this field when PI Data Sync is Updated as TRUE 
+Update NOW() - 45 mins in this field</description>
+    <externalId>false</externalId>
+    <label>PI Data Sync Date/Time</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>DateTime</type>
+</CustomField>

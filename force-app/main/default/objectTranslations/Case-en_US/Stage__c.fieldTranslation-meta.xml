@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Sales Stage --></label>
+    <name>Stage__c</name>
+    <picklistValues>
+        <masterLabel>Duplicate</masterLabel>
+        <translation><!-- Duplicate --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Enquiry</masterLabel>
+        <translation><!-- Enquiry --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Enquiry Lost</masterLabel>
+        <translation><!-- Enquiry Lost --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Enrolled</masterLabel>
+        <translation><!-- Enrolled --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Lost</masterLabel>
+        <translation><!-- Lost --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Transferred</masterLabel>
+        <translation><!-- Transferred --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Trial Attended</masterLabel>
+        <translation><!-- Trial Attended --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Trial Booked</masterLabel>
+        <translation><!-- Trial Booked --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Trial Cancelled</masterLabel>
+        <translation><!-- Trial Cancelled --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Trial No Show</masterLabel>
+        <translation><!-- Trial No Show --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Trial Requested</masterLabel>
+        <translation><!-- Trial Requested --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

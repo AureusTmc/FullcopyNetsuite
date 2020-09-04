@@ -1,0 +1,298 @@
+<aura:component controller="FileUtilityController" implements="flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,force:lightningQuickActionWithoutHeader" access="global" >
+    
+    <aura:html tag="style">
+        .slds-modal__container{
+        max-width: 88rem;
+        width: 88% !important; 
+        height:100% !important;
+        }
+    </aura:html>
+    
+    <aura:attribute name="updateConVer" type="List"/> 			<!--Used for document relinking-->
+    <aura:attribute name="fileWrapListContract" type="List"/>	<!--Used for document relinking-->
+    <aura:attribute name="fileWrapList" type="List"/>
+    
+    <aura:attribute name="docListMap" type="Map"/>
+    <aura:attribute name="docAPIMap" type="Map"/>
+    
+    <aura:attribute name="showCol" type="Boolean" default="false"/>
+    <aura:attribute name="showOutCol" type="Boolean" default="false"/>
+    
+    <aura:attribute name="accountRecordId" type="String"/>
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    
+    <aura:attribute name="record" type="Object"/>
+    <aura:attribute name="simpleRecord" type="Object"/>
+    <aura:attribute name="recordError" type="String"/>
+    
+    <force:recordData aura:id="recordLoader"
+                      recordId="{!v.recordId}"
+                      targetFields="{!v.simpleRecord}"
+                      targetError="{!v.recordError}"
+                      layoutType="FULL"
+                      recordUpdated="{!c.handleRecordUpdated}"
+     />
+    
+    
+    
+    <lightning:card title="Upload Files" iconName="action:add_file">
+        <lightning:spinner aura:id="mySpinner" variant="brand" class="slds-hide"/>
+        <div class="slds-p-right_medium slds-p-left_medium">
+            <aura:if isTrue="{!v.fileWrapList[0].toUploadList.length>0}">
+                <table class="slds-table slds-no-cell-focus slds-table_bordered slds-table_edit slds-table_fixed-layout slds-table_resizable-cols" role="grid">
+                    <thead>
+                        <th class="slds-text-title_caps" scope="col" style="width:5%;padding:5px;">
+                            S No.
+                        </th>
+                        <th class="slds-text-title_caps" scope="col" style="width:25%;">
+                            <div class="slds-truncate" title="File type">
+                                &nbsp;&nbsp;File type
+                            </div>
+                        </th> 
+                        <th class="slds-text-title_caps" scope="col">
+                            <div class="slds-truncate" title="Object">
+                                &nbsp;&nbsp;&nbsp;&nbsp;Select File
+                            </div>
+                        </th> 
+                        <th class="slds-text-title_caps" scope="col">
+                            <div class="slds-truncate" title="File">
+                                File
+                            </div>
+                        </th>
+                        <th class="slds-text-title_caps" scope="col" style="width:7%">
+                            <div class="slds-truncate" title="Replace">Remove</div>
+                        </th>
+                    </thead>
+                    <tbody>
+                        <aura:iteration items="{!v.fileWrapList[0].toUploadList}" var="item" indexVar="idx">
+                            <tr class="slds-hint-parent">
+                                <td data-label="S No.">
+                                    <div class="slds-truncate" title="S No.">
+                                        {!idx+1}
+                                    </div>
+                                </td>
+                                
+                                <td data-label="File type">
+                                    <div class="slds-truncate" title="File type">
+                                        <lightning:select name="select" accesskey="{!idx}" label="" value="{!item.selectedDoc}">
+                                            <option text="">-- Select --</option>
+                                            <aura:iteration items="{!item.docList}" var="doc">
+                                                <option value="{!doc.Id}">
+                                                    {!doc.Name}
+                                                    <aura:if isTrue="{!(doc.Required__c)}" >
+                                                        *
+                                                    </aura:if>
+                                                </option>
+                                            </aura:iteration>
+                                        </lightning:select>
+                                    </div>
+                                </td>
+                                
+                                <td data-label="Select File">
+                                    <div class="slds-truncate" title="Select File">
+                                        <lightning:input accesskey="{!idx}" name="file1" type="file" label="" onchange="{! c.handleTopFilesChange }"/>
+                                    </div>
+                                </td>
+                                <td data-label="File">
+                                    <div class="slds-truncate" title="File">
+                                        {!item.original_filename}
+                                    </div>
+                                </td>
+                                
+                                <td data-label="Remove">
+                                    <div class="slds-truncate" title="Remove">
+                                        <lightning:buttonIcon accesskey="{!idx}" iconName="utility:delete" size="small" onclick="{!c.removeRowTop}"/>
+                                    </div>
+                                </td>
+                            </tr>
+                        </aura:iteration>
+                    </tbody>
+                </table>
+                <aura:set attribute="else">
+                    <ui:message title="Information" severity="info" closable="false">
+                        No records to display.
+                    </ui:message>
+                </aura:set>
+            </aura:if>
+            <div class="slds-p-top_small"/>
+            <div class="slds-grid slds-gutters">
+                <div class="slds-align_absolute-right slds-col slds-size_1-of-3 ">
+                </div>
+                <div class="slds-align_absolute-right slds-col slds-size_1-of-3 ">
+                </div>
+              <div class="slds-align_absolute-right slds-col slds-size_1-of-3 ">
+                   <div class="slds-grid slds-gutters">
+                    <div class="slds-align_absolute-right slds-col slds-size_1-of-2" style="padding-left:47px">
+                        <div  style="height: 1rem;">
+                            <lightning:button label="Add More" iconName="utility:add"  onclick="{!c.addMoreRows}"/>
+                        </div>
+                    </div>
+                  </div>
+              </div>
+            </div>
+            
+            <div class="slds-p-top_small"/>
+        </div>
+        <div class="slds-p-top_medium"/>
+        <div class="slds-align_absolute-center" style="height: 1rem;">
+            <lightning:button  label="Cancel" onclick="{!c.closeModal}"/>
+            <lightning:button variant="brand" label="Save" onclick="{!c.saveMethod}"/>
+        </div>
+        
+        <div class="slds-p-top_medium"/>
+        
+        <div class="slds-page-header slds-p-right_medium slds-p-left_medium" style="padding:0.4rem;width:98%;margin-left:1%;">
+            <div class="slds-page-header__row">
+                <div class="slds-page-header__col-title">
+                    <div class="slds-media">
+                        <div class="slds-media__body">
+                            <div class="slds-page-header__name">
+                                <div class="slds-page-header__name-title">
+                                    <h1>
+                                        <span class="slds-page-header__title slds-truncate" style="margin-top: 2%;" title="Uploaded Documents">Uploaded Documents</span>
+                                    </h1>
+                                </div>
+                            </div> 
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slds-p-top_medium"/>
+        
+        <aura:if isTrue="{!v.fileWrapList[0].uploadedList.length>0}">
+            <div class="slds-p-right_medium slds-p-left_medium">
+                <!--<table class="slds-table slds-table_bordered slds-table_resizable-cols slds-max-medium-table_stacked-horizontal">-->
+                <table class="slds-table slds-no-cell-focus slds-table_bordered slds-table_edit slds-table_fixed-layout slds-table_resizable-cols" role="grid">
+                    <thead>
+                        <th class="slds-text-title_caps" scope="col" style="width:4%;padding:5px;">
+                            S No.
+                        </th>
+                        <th class="slds-text-title_caps" scope="col" style="width:6%;padding:5px;">
+                            Action
+                        </th>
+                        <th class="slds-text-title_caps" scope="col">
+                            <div class="slds-truncate" title="Select File">
+                                &nbsp;&nbsp;&nbsp;&nbsp;File Name
+                            </div>
+                        </th>
+                        <th class="slds-text-title_caps" scope="col" style="width:22% !important;">
+                            <div class="slds-truncate" title="File type">
+                                &nbsp;&nbsp;&nbsp;&nbsp;File type
+                            </div>
+                        </th>
+                        <th class="slds-text-title_caps" scope="col">
+                            <div class="slds-truncate" title="Uploaded">Uploaded</div>
+                        </th>
+                        <th class="slds-text-title_caps" scope="col">
+                            <div class="slds-truncate" title="Replace">Replace</div>
+                        </th>
+                        <th class="slds-text-title_caps" scope="col">
+                            <div class="slds-truncate" title="File">File</div>
+                        </th>
+                    </thead>
+                    <tbody>
+                        <aura:iteration items="{!v.fileWrapList[0].uploadedList}" var="item" indexVar="idx">
+                            <tr class="slds-hint-parent">
+                                <td data-label="S No.">
+                                    <div class="slds-truncate" title="S No.">
+                                        {!idx+1}
+                                    </div>
+                                </td>
+                                <td data-label="S No.">
+                                    <div class="slds-truncate" title="S No.">
+                                        <a style="color:#eb2d53;" onclick="{!c.deletFile}" data-idx="{!idx}" data-selid="{!item.conv.Id}" data-objid="{!item.conv.Related_Record_ID__c}" data-objname="{!item.conv.Documents__r.Object__c}" data-docid="{!item.conv.Documents__c}">
+                                            DELETE
+                                        </a>
+                                    </div>
+                                </td>
+                                <td data-label="Select File">
+                                    <p  class="slds-truncate">
+                                        {!item.conv.Title}
+                                    </p>
+                                </td>
+                                <td data-label="File type" role="gridcell">
+                                    <div class="slds-truncate" title="File">
+                                        {!item.conv.Employee_Document__r.Name}
+                                    </div>
+                                </td>
+                                <td data-label="Uploaded">
+                                    <div class="slds-truncate" title="Uploaded">
+                                        <lightning:icon iconName="action:approval" size="xx-small"/>
+                                    </div>
+                                </td>
+                                <td data-label="Replace" >
+                                    <div class="slds-truncate" title="Replace" >
+                                        <lightning:input style="width:136px" name="file2" accesskey="{!idx}" type="file" label="" onchange="{!c.handleBottomFilesChange}"/>
+                                    </div>
+                                </td> 
+                                <td data-label="File">
+                                    <div class="slds-truncate" title="File">
+                                        {!item.original_filename}
+                                    </div>
+                                </td>
+                            </tr>
+                            <!--Edit part Started-->
+                            	<tr class="slds-hint-parent" style="display:none">
+                                <td data-label="S No.">
+                                    <div class="slds-truncate" title="S No.">
+                                        {!idx+1}
+                                    </div>
+                                </td>
+                                <td data-label="S No.">
+                                    <div class="slds-truncate" title="S No.">
+                                        <a style="color:#eb2d53;" onclick="{!c.deletFile}" data-idx="{!idx}" data-selid="{!item.conv.Id}" data-objid="{!item.conv.Related_Record_ID__c}" data-objname="{!item.conv.Documents__r.Object__c}" data-docid="{!item.conv.Documents__c}">
+                                            DELETE
+                                        </a>
+                                    </div>
+                                </td>
+                                <td data-label="Select File">
+                                    <p  class="slds-truncate">
+                                        {!item.conv.Title}
+                                    </p>
+                                </td>
+                                <td data-label="File type" role="gridcell">
+                                    <div class="slds-truncate" title="File">
+                                        {!item.conv.Employee_Document__r.Name}
+                                    </div>
+                                </td>
+                                <td data-label="Uploaded">
+                                    <div class="slds-truncate" title="Uploaded">
+                                        <lightning:icon iconName="action:approval" size="xx-small"/>
+                                    </div>
+                                </td>
+                                <td data-label="Replace">
+                                    <div class="slds-truncate" title="Replace">
+                                        <lightning:input name="file2" accesskey="{!idx}" type="file" label="" accept="image/*" onchange="{!c.handleBottomFilesChange}"/>
+                                    </div>
+                                </td> 
+                                <td data-label="File">
+                                    <div class="slds-truncate" title="File">
+
+                                    </div>
+                                </td>
+                            </tr>
+                            <!--Edit part Ended-->
+                            
+                        </aura:iteration>
+                    </tbody>
+                </table>
+            </div>
+            <aura:set attribute="else">
+                <ui:message title="Information" severity="info" closable="false">
+                    No records to display.
+                </ui:message>
+            </aura:set>
+        </aura:if>
+        <div class="slds-p-top_medium"/>
+        
+        
+    </lightning:card>
+    
+    
+    <aura:attribute name="isOpen" type="boolean" default="false"/>
+    
+    <!--Use "slds-m-around_xx-large" class to add standard X-Large padding to the component--> 
+    
+</aura:component>

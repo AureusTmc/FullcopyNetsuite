@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Total_Payment_Credit_Available__c</fullName>
+    <externalId>false</externalId>
+    <label>Total Payment Credit Available</label>
+    <summarizedField>Payment__c.Payment_Amount__c</summarizedField>
+    <summaryFilterItems>
+        <field>Payment__c.Payment_Status__c</field>
+        <operation>equals</operation>
+        <value>Pending</value>
+    </summaryFilterItems>
+    <summaryFilterItems>
+        <field>Payment__c.RecordTypeId</field>
+        <operation>equals</operation>
+        <value>Payment As Credit</value>
+    </summaryFilterItems>
+    <summaryForeignKey>Payment__c.Parent_Account__c</summaryForeignKey>
+    <summaryOperation>sum</summaryOperation>
+    <trackHistory>false</trackHistory>
+    <type>Summary</type>
+</CustomField>

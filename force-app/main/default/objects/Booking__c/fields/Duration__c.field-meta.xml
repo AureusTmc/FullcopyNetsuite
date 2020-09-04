@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Duration__c</fullName>
+    <externalId>false</externalId>
+    <formula>(End_Time__c - Start_Time__c )/(60*1000)
+
+/*IF( RecordType.Name = &apos;Facility&apos;, (End_Time__c - Start_Time__c )/(60*1000), If( ISPICKVAL( Package__r.Duration__c , &apos;Trial&apos;)  , value(&apos;30&apos;),  value(Text(Package__r.Duration__c))))
+*/
+/*Commented by Rajesh on 26th June 2019, To correct the actual duration for the studio booking
+
+If( ISPICKVAL( Package__r.Duration__c , &apos;Trial&apos;)  , value(&apos;30&apos;),  value(Text(Package__r.Duration__c)))*/</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <inlineHelpText>Durations in Minutes</inlineHelpText>
+    <label>Duration</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

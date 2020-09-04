@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Type --></label>
+    <name>Type__c</name>
+    <picklistValues>
+        <masterLabel>Ad-hoc</masterLabel>
+        <translation><!-- Ad-hoc --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Camp</masterLabel>
+        <translation><!-- Camp --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Group</masterLabel>
+        <translation><!-- Group --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Home</masterLabel>
+        <translation><!-- Home --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Instrument</masterLabel>
+        <translation><!-- Instrument --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Regular</masterLabel>
+        <translation><!-- Regular --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Trial</masterLabel>
+        <translation><!-- Trial --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

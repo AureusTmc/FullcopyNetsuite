@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Level_Grade__c</fullName>
+    <externalId>false</externalId>
+    <label>Level/Grade</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Primary 1</fullName>
+                <default>false</default>
+                <label>Primary 1</label>
+            </value>
+            <value>
+                <fullName>Primary 2</fullName>
+                <default>false</default>
+                <label>Primary 2</label>
+            </value>
+            <value>
+                <fullName>Primary 3</fullName>
+                <default>false</default>
+                <label>Primary 3</label>
+            </value>
+            <value>
+                <fullName>Primary 4</fullName>
+                <default>false</default>
+                <label>Primary 4</label>
+            </value>
+            <value>
+                <fullName>Primary 5</fullName>
+                <default>false</default>
+                <label>Primary 5</label>
+            </value>
+            <value>
+                <fullName>Primary 6</fullName>
+                <default>false</default>
+                <label>Primary 6</label>
+            </value>
+            <value>
+                <fullName>Secondary 1</fullName>
+                <default>false</default>
+                <label>Secondary 1</label>
+            </value>
+            <value>
+                <fullName>Secondary 2</fullName>
+                <default>false</default>
+                <label>Secondary 2</label>
+            </value>
+            <value>
+                <fullName>Secondary 3</fullName>
+                <default>false</default>
+                <label>Secondary 3</label>
+            </value>
+            <value>
+                <fullName>Secondary 4</fullName>
+                <default>false</default>
+                <label>Secondary 4</label>
+            </value>
+            <value>
+                <fullName>Secondary 5</fullName>
+                <default>false</default>
+                <label>Secondary 5</label>
+            </value>
+            <value>
+                <fullName>Junior College</fullName>
+                <default>false</default>
+                <label>Junior College</label>
+            </value>
+            <value>
+                <fullName>Polytechnic or Arts Institution</fullName>
+                <default>false</default>
+                <label>Polytechnic or Arts Institution</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

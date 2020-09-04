@@ -1,0 +1,69 @@
+<aura:component controller="FileUploadController" implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes" access="global" >
+    
+    <aura:attribute name="uploadedFiles" type="Object[]"  />
+    <aura:attribute name="fileName1" type="String" default="Drag your files here" />
+    <aura:attribute name="parentId" type="String" /> 
+    <aura:attribute name="recordMap" type="map"/> 
+    <aura:attribute name="accId" type="string"/> 
+    <aura:attribute name="Spinner" type="Boolean"/>
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    
+    <aura:if isTrue="{!v.Spinner}">
+        <div class="slds-spinner_container">
+            <div class="slds-spinner--brand slds-spinner slds-spinner--medium" role="alert">
+                <span class="slds-assistive-text">Uploading, Please Wait...</span>
+                <div class="slds-spinner__dot-a"></div>
+                <div class="slds-spinner__dot-b"></div>
+            </div>
+        </div>
+    </aura:if>
+    
+    
+    
+    <lightning:layout>
+        <lightning:layoutItem flexibility="auto" padding="around-small">
+            <div id="style-3" class="scrollbar">
+                <table  height="100px" class="slds-table slds-table_cell-buffer slds-table_striped" style=" table-layout:fixed;">
+                    <aura:iteration items="{!v.recordMap}" var="record" indexVar="key">
+                        <tr>
+                            <td style="padding-left:0px;overflow: hidden;width: 4%;font-size: 3.2vw;"><lightning:icon variant="" iconName="utility:stop" class="slds-icon slds-icon_small" size="xx-small" alternativeText="icon" style="display: inline;"/></td>
+                            <aura:iteration items="{!record.value}" var="mapValue" indexVar="key2">
+                                <aura:if isTrue="{!key2==0}">
+                                <td scope="col" style="width: 92%;font-size: 3.2vw;padding: .2rem;overflow: hidden;">
+                                    <a href="{!'/servlet/servlet.FileDownload?file='+record.key}" target="_blank" download="{!record.key}" title="{!mapValue}" style="color: #3fa6fb;">{!mapValue}</a>
+                                </td>
+                                    </aura:if>
+                                <aura:if isTrue="{!key2==1}">
+                                <td  style="width: 20%;font-size: 3.2vw">{!mapValue}</td>
+                                </aura:if>
+                            </aura:iteration>
+                            <td scope="col" style="padding-right:0px;overflow: hidden;text-align: center;width: 15%;">
+                                <a onclick="{!c.deleteRecord}" data-value="{!record.key}">
+                                    <lightning:icon variant="" iconName="utility:close" class="slds-icon slds-icon_small" size="x-small" alternativeText="icon" style="height: 20px;"/>
+                                    <span class="slds-assistive-text">Delete</span>
+                                </a>
+                            </td>
+                        </tr>
+                    </aura:iteration>
+                </table>
+            </div>
+        </lightning:layoutItem>
+    </lightning:layout>
+    <div class="slds-grid" style="position: relative;">
+        <div class="col" style="width:94%;margin-left:3%;height:132px;position: fixed;z-Index:9999;"> 
+            <lightning:input aura:id="fileInput" type="file" onchange="{!c.handleFilesUploadChange}" name="file" multiple="true"/>
+        </div>
+        <div class="col" style="width:100%;">
+            <img src="{!$Resource.DragDrop}" style="margin-left: 3% !important;width: 94% !important;height: 100% !important;"/><br/> 
+        </div>
+        <div class="col" style="width: 100%;display: block;position: fixed;margin-top: 12%;">
+            <p style="text-align: center;font-size: 2.5vw;" class="slds-text-body_small">{!v.fileName1}</p>
+        </div>
+    </div>
+    <!--<div class="slds-grid" style="margin-top: -23px;">    
+        <p style = "text-align: center;color:#A9A9A9;background-color:#ebebeb;margin-top:-31px;width: 94%;margin-left: 3%;height: 24px;">
+            <span>{!v.fileName1}</span>
+        </p>
+    </div>-->
+</aura:component>

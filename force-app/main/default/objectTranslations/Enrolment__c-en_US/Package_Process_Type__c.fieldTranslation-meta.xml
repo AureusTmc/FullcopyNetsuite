@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Advance Action Type --></label>
+    <name>Package_Process_Type__c</name>
+    <picklistValues>
+        <masterLabel>Cancellation</masterLabel>
+        <translation><!-- Cancellation --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Downgrade</masterLabel>
+        <translation><!-- Downgrade --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Enrolment Change</masterLabel>
+        <translation><!-- Enrolment Change --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Upgrade</masterLabel>
+        <translation><!-- Upgrade --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

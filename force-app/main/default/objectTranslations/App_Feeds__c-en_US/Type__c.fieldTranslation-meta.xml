@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Type --></label>
+    <name>Type__c</name>
+    <picklistValues>
+        <masterLabel>5th Lesson - AH</masterLabel>
+        <translation><!-- 5th Lesson - AH --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>5th Lesson - CX</masterLabel>
+        <translation><!-- 5th Lesson - CX --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>5th Lesson - MU</masterLabel>
+        <translation><!-- 5th Lesson - MU --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Cancel</masterLabel>
+        <translation><!-- Cancel --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Make-Up</masterLabel>
+        <translation><!-- Make-Up --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Reschedule</masterLabel>
+        <translation><!-- Reschedule --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

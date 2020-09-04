@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Standard Accessories --></label>
+    <name>Standard_Accessories__c</name>
+    <picklistValues>
+        <masterLabel>Bench</masterLabel>
+        <translation><!-- Bench --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Headphone</masterLabel>
+        <translation><!-- Headphone --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Heating rod</masterLabel>
+        <translation><!-- Heating rod --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Maintenance kit (Caster cups, key cloth, cleaning cloth)</masterLabel>
+        <translation><!-- Maintenance kit (Caster cups, key cloth, cleaning cloth) --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

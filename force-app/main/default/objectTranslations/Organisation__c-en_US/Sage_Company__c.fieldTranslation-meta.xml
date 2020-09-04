@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Sage Company --></label>
+    <name>Sage_Company__c</name>
+    <picklistValues>
+        <masterLabel>ACP</masterLabel>
+        <translation><!-- ACP --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>AGH</masterLabel>
+        <translation><!-- AGH --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>AGP</masterLabel>
+        <translation><!-- AGP --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>OMS</masterLabel>
+        <translation><!-- OMS --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

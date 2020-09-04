@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>All_Camps</fullName>
+    <columns>NAME</columns>
+    <columns>Camp_End_Time__c</columns>
+    <columns>Camp_Start_Time__c</columns>
+    <columns>Camp_Teacher__c</columns>
+    <columns>Dates_Of_The_Camp__c</columns>
+    <columns>No_of_Students_Enrolled__c</columns>
+    <columns>Status__c</columns>
+    <filterScope>Mine</filterScope>
+    <label>All Camps</label>
+</ListView>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Last_Working_Date_less_than_Joining_Date</fullName>
+    <active>true</active>
+    <errorConditionFormula>AND((OR(RecordType.DeveloperName=&apos;Employee&apos;,RecordType.DeveloperName=&apos;Teacher&apos;)),Last_Working_Date__c!=null,Joining_Date__c!=null,
+(Last_Working_Date__c &lt; Joining_Date__c))</errorConditionFormula>
+    <errorMessage>Last working date should be greater than Joining date.</errorMessage>
+</ValidationRule>

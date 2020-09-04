@@ -1,0 +1,64 @@
+<apex:component controller="sendEmailController">
+    <style>
+        .richText{
+            height: 240px;
+            overflow: auto;
+        }
+    </style>
+    
+    <div class="slds-form">
+        <div class="slds-form-element slds-form-element_stacked">
+            <label class="slds-form-element__label">Email Templates</label>
+            <div class="slds-form-element__control">
+                <apex:selectList value="{!templateName}" size="1" styleClass="slds-select emailTemplates" onchange="selectedTemplate(); return false;">
+                    <apex:selectOptions value="{!EmailTemplates}"/>
+                </apex:selectList>
+            </div>
+        </div>
+        <div class="slds-form-element slds-form-element_stacked">
+            <div class="slds-form-element__control">
+                Subject: <span id="emailSubject"></span>
+            </div>
+        </div>
+        <apex:outputPanel id="templatePreviewArea">
+            <div class="slds-form-element slds-form-element_stacked">
+                <label class="slds-form-element__label">Template Output</label>
+                <div class="slds-form-element__control">
+                    <div contenteditable="true" class="slds-textarea richText" id="templateOutput"></div>
+                </div>
+            </div>
+        </apex:outputPanel>
+    </div>
+    <script>
+        function selectedTemplate(){
+            
+            $('#templateOutput').html('');
+            var templateId = $('.emailTemplates :selected').val();
+            var bookingId = $('.sendEmail').attr('data-bookingId');
+            console.log('booking Id ',bookingId);
+            var parentId = $('.sendEmail').attr('data-parentId');
+            console.log('Parent Id ',parentId);
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.sendEmailController.templatePreview}',
+                templateId, bookingId,
+                function(result, event){
+                    if (event.status) {
+                        if(result){
+                            var templateResult = JSON.parse(result.replace(/(&quot\;)/g,"\""));
+                            // console.log(templateResult);
+                            $('#emailSubject').html(templateResult.subject);
+                            var txt = $('<textarea />').html(templateResult.templateBody).text();
+                            $('#templateOutput').html(txt);
+                        }
+                    } else if (event.type === 'exception') {
+                        document.getElementById("responseErrors").innerHTML = 
+                        event.message + "<br/>\n<pre>" + event.where + "</pre>";
+                    } else {
+                        document.getElementById("responseErrors").innerHTML = event.message;
+                    }
+                }, 
+                {escape: true}
+            );
+        }
+    </script>
+</apex:component>

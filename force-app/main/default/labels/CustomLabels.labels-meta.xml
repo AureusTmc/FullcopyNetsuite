@@ -1,0 +1,551 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
+    <labels>
+        <fullName>Allow_Offline_Signing</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Allow Offline Signing</shortDescription>
+        <value>false</value>
+    </labels>
+    <labels>
+        <fullName>Aureus_Academy_App_Version</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Aureus Academy App Version</shortDescription>
+        <value>1</value>
+    </labels>
+    <labels>
+        <fullName>Aureus_Site</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Aureus Site</shortDescription>
+        <value>http://full-aureusgroup.cs117.force.com</value>
+    </labels>
+    <labels>
+        <fullName>Aureus_Website</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Aureus Website</shortDescription>
+        <value>https://www.aureusacademy.com</value>
+    </labels>
+    <labels>
+        <fullName>Aureus_at_Home_Id</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Aureus at Home Id</shortDescription>
+        <value>0016F00003H95LvQAJ</value>
+    </labels>
+    <labels>
+        <fullName>B2BMA_Integration_UserId</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>B2BMA Integration UserId</shortDescription>
+        <value>0056F00000CJslzQAD</value>
+    </labels>
+    <labels>
+        <fullName>Bank_Account_Number</fullName>
+        <categories>Bank File</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Bank Account Number</shortDescription>
+        <value>647743343001</value>
+    </labels>
+    <labels>
+        <fullName>Bank_Name</fullName>
+        <categories>Bank File</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Bank Name</shortDescription>
+        <value>OVERSEA-CHINESE BANKING CORP GROUP</value>
+    </labels>
+    <labels>
+        <fullName>BatchSizeForSchedulablarToUpdateCaseWidAcccls</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>BatchSizeForSchedulablarToUpdateCaseWidAcccls</shortDescription>
+        <value>20</value>
+    </labels>
+    <labels>
+        <fullName>Branch_Code</fullName>
+        <categories>Bank File</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Branch Code</shortDescription>
+        <value>001</value>
+    </labels>
+    <labels>
+        <fullName>CPFAdviceCode</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>CPFAdviceCode</shortDescription>
+        <value>01</value>
+    </labels>
+    <labels>
+        <fullName>CPFPaymentType</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>CPFPaymentType</shortDescription>
+        <value>PTE</value>
+    </labels>
+    <labels>
+        <fullName>Camp_Class_Template_Id</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Camp Class Template Id</shortDescription>
+        <value>tLp6MdahkByHCSkParG8D5</value>
+    </labels>
+    <labels>
+        <fullName>CaseCreatedTime</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>CaseCreatedTime</shortDescription>
+        <value>120</value>
+    </labels>
+    <labels>
+        <fullName>Case_Enquiry_Id</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Case Enquiry Id</shortDescription>
+        <value>0126F000001QKPX</value>
+    </labels>
+    <labels>
+        <fullName>Case_Sales_Enquiry_RecTypeId</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Case Sales Enquiry RecTypeId</shortDescription>
+        <value>0126F000001QKPXQA4</value>
+    </labels>
+    <labels>
+        <fullName>Case_Service_Request_Id</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Case Service Request Id</shortDescription>
+        <value>0126F000001QKPY</value>
+    </labels>
+    <labels>
+        <fullName>Centre_Close_Time</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Centre Close Time</shortDescription>
+        <value>10:00 PM</value>
+    </labels>
+    <labels>
+        <fullName>Centre_to_Exclude_in_Rostering</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Centre to Exclude in Rostering</shortDescription>
+        <value>0016F00003XMLnyQAH</value>
+    </labels>
+    <labels>
+        <fullName>Company_Name</fullName>
+        <categories>Bank File</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Company Name</shortDescription>
+        <value>Aureus Group Pte. Lt</value>
+    </labels>
+    <labels>
+        <fullName>DateConflictLeaveEntitlementError</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>DateConflictLeaveEntitlementError</shortDescription>
+        <value>There is a conflict/overlap with Start and End Date for the past (previous year) entitlements. Please enter the appropriate dates.</value>
+    </labels>
+    <labels>
+        <fullName>DateConflictLeaveRequestError</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>DateConflictLeaveRequestError</shortDescription>
+        <value>There is a conflict/overlap with start and end Date of existing leave request. Please enter the appropriate dates.</value>
+    </labels>
+    <labels>
+        <fullName>Default_Referral_Discount</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Default Referral Discount</shortDescription>
+        <value>Test</value>
+    </labels>
+    <labels>
+        <fullName>Delivery_Charges</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Delivery Charges</shortDescription>
+        <value>116.82</value>
+    </labels>
+    <labels>
+        <fullName>EmpStatusDutyTypeMandatory</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>EmpStatusDutyTypeMandatory</shortDescription>
+        <value>Please select employee duty type if employee is in probation or confirmed.</value>
+    </labels>
+    <labels>
+        <fullName>EmpStatusJoiningDateMandatory</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>EmpStatusJoiningDateMandatory</shortDescription>
+        <value>Please enter joining date if employee is in probation or confirmed.</value>
+    </labels>
+    <labels>
+        <fullName>EmployeeDutyTypeOnboardingProcessError</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>EmployeeDutyTypeOnboardingProcessError</shortDescription>
+        <value>Please enter the employee duty type before completing the onboarding process.</value>
+    </labels>
+    <labels>
+        <fullName>Enrolment_Summary_Email</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Enrolment Summary Email</shortDescription>
+        <value>Enrolment_Summary_Email</value>
+    </labels>
+    <labels>
+        <fullName>Enrolment_completed_url</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Enrolment completed url</shortDescription>
+        <value>https://aureusacademy.com/enrolment-complete</value>
+    </labels>
+    <labels>
+        <fullName>Enrolment_expiry_period</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Enrolment expiry period</shortDescription>
+        <value>48</value>
+    </labels>
+    <labels>
+        <fullName>Financial_User</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Financial User</shortDescription>
+        <value>0056F00000BPHwM</value>
+    </labels>
+    <labels>
+        <fullName>Financial_User_Email</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Financial User Email</shortDescription>
+        <value>finance@aureusacademy.com</value>
+    </labels>
+    <labels>
+        <fullName>From_Ipad</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>From Ipad</shortDescription>
+        <value>from Ipad</value>
+    </labels>
+    <labels>
+        <fullName>GST_Tax_Rate</fullName>
+        <categories>Billing</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>GST/Tax Rate</shortDescription>
+        <value>7</value>
+    </labels>
+    <labels>
+        <fullName>Heating_Rod_Installation_Fee</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Heating Rod Installation Fee</shortDescription>
+        <value>0</value>
+    </labels>
+    <labels>
+        <fullName>InsufficientLeaveBalanceError</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>InsufficientLeaveBalanceError</shortDescription>
+        <value>Insufficient leave balance.</value>
+    </labels>
+    <labels>
+        <fullName>Invoice_Due_Day</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Invoice Due Day</shortDescription>
+        <value>2</value>
+    </labels>
+    <labels>
+        <fullName>Is_Employee_Code_Activated</fullName>
+        <categories>Employee</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Is Employee Code Activated</shortDescription>
+        <value>true</value>
+    </labels>
+    <labels>
+        <fullName>JoiningDateOnboardingProcessError</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>JoiningDateOnboardingProcessError</shortDescription>
+        <value>Please enter the employee joining date before completing the onboarding process.</value>
+    </labels>
+    <labels>
+        <fullName>Leave_Minimum_Due_No</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Leave Minimum Due No</shortDescription>
+        <value>35</value>
+    </labels>
+    <labels>
+        <fullName>Link_Expiry_Duration</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Link Expiry Duration</shortDescription>
+        <value>72.00</value>
+    </labels>
+    <labels>
+        <fullName>Make_up_Expiry_Duration_in_Months</fullName>
+        <categories>Scheduling</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Make-up Expiry Duration in Months</shortDescription>
+        <value>3</value>
+    </labels>
+    <labels>
+        <fullName>MaternityLeavePaidUnpaidWeekError</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>MaternityLeavePaidUnpaidWeekError</shortDescription>
+        <value>Sum of Paid Week and Unpaid Week must be equal to No. of Weeks.</value>
+    </labels>
+    <labels>
+        <fullName>Max_Days_for_Booking_expire</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Max Days for Booking expire</shortDescription>
+        <value>5</value>
+    </labels>
+    <labels>
+        <fullName>Mobile_API_URL</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Mobile API URL</shortDescription>
+        <value>https://aureusgroup.secure.force.com/</value>
+    </labels>
+    <labels>
+        <fullName>NotEntitledForApplyingLeaveError</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>NotEntitledForApplyingLeaveError</shortDescription>
+        <value>You&apos;re not entitled to apply for leave for the entered period.</value>
+    </labels>
+    <labels>
+        <fullName>OnlyFemaleToApplyForMaternityLeave</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>OnlyFemaleToApplyForMaternityLeave</shortDescription>
+        <value>Only female employee can apply for Maternity Leave.</value>
+    </labels>
+    <labels>
+        <fullName>OnlyUpdateLeaveDateIfDraft</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>OnlyUpdateLeaveDateIfDraft</shortDescription>
+        <value>Leave Dates cannot be updated at this stage.</value>
+    </labels>
+    <labels>
+        <fullName>Ossia_Organisation_Name</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Ossia_Organisation_Name</shortDescription>
+        <value>Ossia Music School Singapore</value>
+    </labels>
+    <labels>
+        <fullName>Per_Stair_Charges</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Per Stair Charges</shortDescription>
+        <value>10</value>
+    </labels>
+    <labels>
+        <fullName>Piano_Delivery_Window</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Piano Delivery Window</shortDescription>
+        <value>2</value>
+    </labels>
+    <labels>
+        <fullName>Piano_Purchase_Folder_Id</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Piano Purchase Folder Id</shortDescription>
+        <value>LQ66xcYvjjSZebir2cCUW8</value>
+    </labels>
+    <labels>
+        <fullName>Piano_Purchase_Template_Id</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Piano Purchase Template Id</shortDescription>
+        <value>q6ScM9GBwi7UAzutYCfS8m</value>
+    </labels>
+    <labels>
+        <fullName>Piano_Rental_Deposit_Fee</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Piano Rental Deposit Fee</shortDescription>
+        <value>48</value>
+    </labels>
+    <labels>
+        <fullName>Piano_Rental_Folder_Id</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Piano Rental Folder Id</shortDescription>
+        <value>r7Fhbe9cvV6MCnD59adALG</value>
+    </labels>
+    <labels>
+        <fullName>Piano_Rental_Template_Id</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Piano Rental Template Id</shortDescription>
+        <value>5jfk4yvnNWaqsjmg4tdnbm</value>
+    </labels>
+    <labels>
+        <fullName>Prepayment_Expiry</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Prepayment Expiry</shortDescription>
+        <value>4</value>
+    </labels>
+    <labels>
+        <fullName>Recurring_occurrence</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Recurring  occurrence</shortDescription>
+        <value>50</value>
+    </labels>
+    <labels>
+        <fullName>ReportingManagerOnboardingProcessError</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>ReportingManagerOnboardingProcessError</shortDescription>
+        <value>Please enter the employee&apos;s Reporting Manager before completing the onboarding process.</value>
+    </labels>
+    <labels>
+        <fullName>SageBatchSize</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>SageBatchSize</shortDescription>
+        <value>10</value>
+    </labels>
+    <labels>
+        <fullName>SageCutoverMonth</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>SageCutoverMonth</shortDescription>
+        <value>7</value>
+    </labels>
+    <labels>
+        <fullName>SageCutoverYear</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>SageCutoverYear</shortDescription>
+        <value>2019</value>
+    </labels>
+    <labels>
+        <fullName>SageGSTCode</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>SageGSTCode</shortDescription>
+        <value>10038</value>
+    </labels>
+    <labels>
+        <fullName>SageIntacctbatchSize</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>SageIntacctbatchSize</shortDescription>
+        <value>50</value>
+    </labels>
+    <labels>
+        <fullName>SageNoGSTCode</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>SageNoGSTCode</shortDescription>
+        <value>10036</value>
+    </labels>
+    <labels>
+        <fullName>Sales_Employee_Piano_Viewing_Process</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Sales Employee Piano Viewing Process</shortDescription>
+        <value>Sales Executive</value>
+    </labels>
+    <labels>
+        <fullName>Student_Policies_Template</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Student Policies Template</shortDescription>
+        <value>DLe9tWht6W9PNHEabs2ruT</value>
+    </labels>
+    <labels>
+        <fullName>Studio_Booking_Confirmation_Email</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Studio Booking Confirmation Email</shortDescription>
+        <value>Studio_Booking_Confirmation</value>
+    </labels>
+    <labels>
+        <fullName>Trial_Enrollment_Org_Wide</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Trial Enrollment Org Wide</shortDescription>
+        <value>noreply@aureusacademy.com</value>
+    </labels>
+    <labels>
+        <fullName>Trial_booking_confirmation_url</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Trial booking confirmation url</shortDescription>
+        <value>https://aureusacademy.com/trial-booking-confirmation</value>
+    </labels>
+    <labels>
+        <fullName>Tuning_Fee</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Tuning Fee</shortDescription>
+        <value>150</value>
+    </labels>
+    <labels>
+        <fullName>Twilio_Meeting_URL</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Twilio Meeting URL</shortDescription>
+        <value>https://aureusacademy-meeting.herokuapp.com/?room_name=</value>
+    </labels>
+    <labels>
+        <fullName>UEN</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>UEN</shortDescription>
+        <value>201315007K</value>
+    </labels>
+    <labels>
+        <fullName>WalkInCstmr</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>WalkInCstmr</shortDescription>
+        <value>Dummy Customer</value>
+    </labels>
+    <labels>
+        <fullName>aureusacademy_Site_GuestUser</fullName>
+        <categories>Site User</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>aureusacademy Site Guest User</shortDescription>
+        <value>aureusacademy Site Guest User</value>
+    </labels>
+    <labels>
+        <fullName>custome_Aureus_Admin</fullName>
+        <categories>System Admin</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>custome Aureus Admin</shortDescription>
+        <value>System Administrator</value>
+    </labels>
+    <labels>
+        <fullName>filterDate</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>filterDate</shortDescription>
+        <value>1</value>
+    </labels>
+</CustomLabels>

@@ -1,0 +1,11 @@
+.THIS .centerAlign{
+    text-align:center;
+}
+
+.THIS .alignright{
+    float:right;
+}
+
+.THIS .slds-file-selector__text{
+    display:none;
+}

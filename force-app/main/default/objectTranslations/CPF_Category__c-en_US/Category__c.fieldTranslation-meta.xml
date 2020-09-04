@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Category --></label>
+    <name>Category__c</name>
+    <picklistValues>
+        <masterLabel>First Year</masterLabel>
+        <translation><!-- First Year --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Second Year</masterLabel>
+        <translation><!-- Second Year --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Third Year &amp; Singaporean</masterLabel>
+        <translation><!-- Third Year &amp; Singaporean --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

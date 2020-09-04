@@ -1,0 +1,112 @@
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:lightningQuickAction" controller="PushNotificationClass" access="global" >
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:attribute name="recordId" type="String" />
+    <aura:attribute name="toggleSpinner" type="boolean" default="true"/>
+    <aura:attribute name="CentreOptions" type="List" default="[]"/>
+    <aura:attribute name="instrumentList" type="List" default="[]"/>
+     <aura:attribute name="SelectedCentre" type="List"/>
+    <aura:attribute name="countryList" type="List"/>
+    <aura:attribute name="title" type="String"/>
+    <aura:attribute name="url" type="String"/>
+    <aura:attribute name="description" type="String"/>
+    
+    <aura:HTML tag="style">
+        .slds-modal__container{
+        max-width:80rem !important;
+        width:90% !important;
+        height:100% !important;
+        }
+    </aura:HTML>
+    
+    <div class="slds-box slds-theme_default"> 
+        <div class=" slds-scrollable_y" style="height:80vh;">
+            <h1 class="slds-align_absolute-center slds-text-title_large slds-text-title_bold slds-p-bottom_medium" style="font-size: 14pt">
+            	Push Notification  
+            </h1>
+            <div class="slds-p-vertical_medium">
+                <lightning:select name="select1" label="Select Country" required="true">
+                    <aura:iteration items="{!v.countryList}" var="item">
+                        <option value="{! item.Id}">{! item.Country_Name__c}</option>
+                    </aura:iteration>
+                </lightning:select>
+            </div>            
+            <div class="slds-m-horizontal_small" >
+                <div class="slds-grid slds-wrap slds-gutters slds-p-top_small">
+                    <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2 ">
+                        <lightning:dualListbox name="Centres"
+                                               label= "Select Centre"
+                                               sourceLabel="Available"
+                                               selectedLabel="Selected"
+                                               fieldLevelHelp="Select your preferred Centre"
+                                               options="{!v.CentreOptions}"
+                                               onchange="{! c.handleCentreChange }"
+                                               required="true"/>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2 ">
+                        <div>
+                            <lightning:dualListbox name="Instrument"
+                                                   label= "Select Instrument"
+                                                   sourceLabel="Available"
+                                                   selectedLabel="Selected"
+                                                   fieldLevelHelp="Select your Instrument"
+                                                   options="{!v.instrumentList}"
+                                                   onchange="{! c.handleCentreChange }"
+                                                   required="true"/>
+                        </div>
+                        <div class="slds-p-top_medium">
+                        <!-- c:strike_lookup
+                                         object="Account"
+                                         searchField="Name"
+                                         placeholder="Select an option"
+                                         iconName="standard:account"
+                                         value="{!v.selectedTeacher}"
+                                         order="Name"
+                                         filter="{!'Recordtype.Name = \'' + v.RecType + '\''}"
+                                         aura:id="revenueval"
+                                         showRecentRecords = "true"
+                                         loadingMessage="Loading..."
+                                         errorMessage="Invalid input"
+                                         label="Teacher"
+                                         / -->
+                            </div>
+                        <div class="slds-p-top_medium">
+                        <!-- c:strike_lookup
+                                         object="Class__c"
+                                         searchField="Name"
+                                         placeholder="Select an option"
+                                         iconName="standard:account"
+                                         value="{!v.selectedClass}"
+                                         order="Name"
+                                         aura:id="revenueval"
+                                         showRecentRecords = "true"
+                                         loadingMessage="Loading..."
+                                         errorMessage="Invalid input"
+                                         label="Class"
+                                         / -->
+                            </div>
+                    </div>
+                </div> 				
+                
+                <div class="slds-grid slds-wrap slds-gutters slds-p-top_small">
+                    <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2 ">
+                        Title : <lightning:input name="title input" label="" value="{!v.title}"/>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2 ">
+                        URL: <lightning:input type="url" label="" name="url input" value="{!v.url}"/>
+                    </div>
+                </div>
+                
+                 <div class="slds-grid slds-wrap slds-gutters slds-p-top_small">   
+                     <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-1 ">
+                        Description : <lightning:textarea name="description input" label="" value="{!v.description}"/>
+                     </div>
+                </div>
+                
+                 <div class="slds-p-vertical_medium">
+                    <lightning:button aura:id="button" class = "slds-align_absolute-center" variant="brand" label="Save"  onclick="{!c.onCreateMobileNotifications}"  />
+                </div>
+               
+            </div>
+        </div>
+    </div>
+</aura:component>

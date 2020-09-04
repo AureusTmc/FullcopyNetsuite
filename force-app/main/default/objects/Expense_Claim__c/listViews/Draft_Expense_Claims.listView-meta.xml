@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Draft_Expense_Claims</fullName>
+    <columns>NAME</columns>
+    <columns>Employee__c</columns>
+    <columns>Currency_Code__c</columns>
+    <columns>Submit_Date__c</columns>
+    <columns>Applied_Amount__c</columns>
+    <columns>Approved_Amount__c</columns>
+    <columns>Status__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>Status__c</field>
+        <operation>equals</operation>
+        <value>Draft</value>
+    </filters>
+    <label>Draft Expense Claims</label>
+</ListView>

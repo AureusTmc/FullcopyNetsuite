@@ -1,0 +1,21 @@
+.THIS.slds-file--card  {
+   width:50% !important;
+}
+.THIS lightning-primitive-file-droppable-zone.slds-file-selector__dropzone {
+    width: 100%;
+  
+}
+.THIS .slds-file-selector.slds-file-selector_files{
+    width: 100%;
+    height: 100%;
+}
+.THIS .slds-file-selector__body {
+    padding-right: 49%;
+    padding-left: 35%;
+    padding-top: 6%;
+    padding-bottom: 6%;
+    width: max-content;
+}
+.THIS slot {
+    width: 100%;
+}

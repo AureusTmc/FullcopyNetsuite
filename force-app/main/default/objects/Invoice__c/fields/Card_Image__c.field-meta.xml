@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Card_Image__c</fullName>
+    <externalId>false</externalId>
+    <formula>CASE( 
+ Card_Type__c  , 
+&quot;Visa&quot;, IMAGE (&quot;/servlet/servlet.ImageServer?id=0156F00000GwOsI&amp;oid=00D1m0000008aQN&quot;, &quot;Visa&quot;,16,30), 
+&quot;American Express&quot;, IMAGE (&quot;/servlet/servlet.ImageServer?id=0156F00000GwOsD&amp;oid=00D1m0000008aQN&quot;, &quot;American Express&quot;,16,30), 
+&quot;MasterCard&quot;, IMAGE (&quot;/servlet/servlet.ImageServer?id=0156F00000GwOsF&amp;oid=00D1m0000008aQN&quot;, &quot;MasterCard&quot;,16,30), 
+&quot;&quot; 
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Card Image</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

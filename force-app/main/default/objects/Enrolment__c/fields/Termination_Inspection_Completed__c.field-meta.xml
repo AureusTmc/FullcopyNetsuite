@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Termination_Inspection_Completed__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>this field for piano rental for manage customer Termination Inspection Completed after submit Inspection report</description>
+    <externalId>false</externalId>
+    <label>Termination Inspection Completed</label>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

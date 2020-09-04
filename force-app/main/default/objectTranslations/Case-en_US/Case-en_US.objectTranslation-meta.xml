@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <layouts>
+        <layout>Sales Enquiry Layout</layout>
+        <sections>
+            <label><!-- Ads Information --></label>
+            <section>Ads Information</section>
+        </sections>
+        <sections>
+            <label><!-- Centre and Location Information --></label>
+            <section>Centre and Location Information</section>
+        </sections>
+        <sections>
+            <label><!-- Enrolment &amp; Booking Information --></label>
+            <section>Enrolment &amp; Booking Information</section>
+        </sections>
+        <sections>
+            <label><!-- Sales Stage Information --></label>
+            <section>Sales Stage Information</section>
+        </sections>
+        <sections>
+            <label><!-- System Audit Dates --></label>
+            <section>System Audit Dates</section>
+        </sections>
+        <sections>
+            <label><!-- Web Information --></label>
+            <section>Web Information</section>
+        </sections>
+    </layouts>
+    <layouts>
+        <layout>Service Request Layout</layout>
+        <sections>
+            <label><!-- Booking Details (Temporary Section) --></label>
+            <section>Booking Details (Temporary Section)</section>
+        </sections>
+        <sections>
+            <label><!-- Centre and Booking Information --></label>
+            <section>Centre and Booking Information</section>
+        </sections>
+        <sections>
+            <label><!-- System Information --></label>
+            <section>System Information</section>
+        </sections>
+    </layouts>
+    <quickActions>
+        <label><!-- Add Comment --></label>
+        <name>Add_Comment</name>
+    </quickActions>
+    <quickActions>
+        <label><!-- Enquiry Details --></label>
+        <name>Enquiry_Details</name>
+    </quickActions>
+    <quickActions>
+        <label><!-- NewChildCase --></label>
+        <name>NewChildCase</name>
+    </quickActions>
+    <quickActions>
+        <label><!-- New Task --></label>
+        <name>New_Task</name>
+    </quickActions>
+    <quickActions>
+        <label><!-- SendEmail --></label>
+        <name>SendEmail</name>
+    </quickActions>
+    <quickActions>
+        <label><!-- Update Sales Enquiry --></label>
+        <name>Update_Sales_Enquiry</name>
+    </quickActions>
+    <quickActions>
+        <label><!-- Update Case Lost --></label>
+        <name>Update_Sales_Stage</name>
+    </quickActions>
+    <quickActions>
+        <label><!-- Update Service Request --></label>
+        <name>Update_Service_Request</name>
+    </quickActions>
+    <recordTypes>
+        <description><!-- Use this option to create a Sales Enquiry --></description>
+        <label><!-- Sales Enquiry --></label>
+        <name>Sales_Enquiry</name>
+    </recordTypes>
+    <recordTypes>
+        <description><!-- This this option to create a Service Request --></description>
+        <label><!-- Service Request --></label>
+        <name>Service_Request</name>
+    </recordTypes>
+    <validationRules>
+        <errorMessage><!-- Please select an appropriate Booking or ensure related Booking is Canceled before marking it as MC. --></errorMessage>
+        <name>Student_MC_to_check_if_Booking_is_there</name>
+    </validationRules>
+    <webLinks>
+        <label><!-- Booking_Calendar --></label>
+        <name>Booking_Calendar</name>
+    </webLinks>
+    <workflowTasks>
+        <description><!-- Email: Trial Reminder Notification --></description>
+        <name>Email_Trial_Reminder_Notification</name>
+        <subject><!-- Email: Trial Reminder Notification --></subject>
+    </workflowTasks>
+    <workflowTasks>
+        <description><!-- Email: Trial Request Confirm Notification --></description>
+        <name>Email_Trial_Request_Confirm_Notification</name>
+        <subject><!-- Email: Trial Request Confirm Notification --></subject>
+    </workflowTasks>
+    <workflowTasks>
+        <description><!-- Email: Trial Request Received Notification --></description>
+        <name>Email_Trial_Request_Received_Notification</name>
+        <subject><!-- Email: Trial Request Received Notification --></subject>
+    </workflowTasks>
+    <workflowTasks>
+        <description><!-- Please create Placeholder Appointments. --></description>
+        <name>Future_Enrolment_Created</name>
+        <subject><!-- Future Enrolment (Create Placeholder) --></subject>
+    </workflowTasks>
+    <workflowTasks>
+        <description><!-- Give Enrolment Kit to Student on Enrolment completion. --></description>
+        <name>Give_Enrolment_Kit_to_Student</name>
+        <subject><!-- Give Enrolment Kit to Student --></subject>
+    </workflowTasks>
+</CustomObjectTranslation>

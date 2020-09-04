@@ -1,0 +1,87 @@
+<aura:component controller="AccountController" implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:lightningQuickAction" access="global" >
+    <aura:attribute name="AppFeeds" type="App_Feeds__c[]"/>
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:attribute name="centerId" type="string" />
+    <lightning:card title="App Feeds" iconName="standard:person_account">
+        <aura:set attribute="actions">
+            <div class="display-check">
+                <a href="{! '/lightning/n/Home'}">  <lightning:button label="Back"/></a>
+            </div>
+        </aura:set>
+        <lightning:layout multipleRows="true">
+            <lightning:layoutItem padding="around-xxx-small" size="12">
+                <div class="slds-table--header-fixed_container">
+                    <div class="slds-m-around_xx-small slds-scrollable_y" style="height:100%; background-color:white;">
+                        <table id="tableId" class="slds-table slds-table_bordered slds-table--header-fixed" cellspacing="0" width="100%">
+                            <thead>
+                                <tr class="slds-text-heading--label">
+                                    <th scope="col" class="nobordertop slds-cell-th" title="AppFeedId" style="padding-left: 9px;">
+                                        <div  class="slds-truncate">Id</div>
+                                    </th>
+                                    <th scope="col" class="nobordertop slds-cell-th" title="Type" style="padding-left: 9px;">
+                                        <div  class="slds-truncate">Type</div>
+                                    </th>
+                                    <th scope="col" class="nobordertop slds-cell-th" title="Parent" style="padding-left: 9px;">
+                                        <div  class="slds-truncate">Parent</div>
+                                    </th>
+                                    <th scope="col" class="nobordertop slds-cell-th" title="Student" style="padding-left: 9px;">
+                                        <div  class="slds-truncate">Student</div>
+                                    </th>
+                                    <th scope="col" class="nobordertop slds-cell-th" title="Teacher" style="padding-left: 9px;">
+                                        <div  class="slds-truncate">Teacher</div>
+                                    </th>
+                                    <th scope="col" class="nobordertop slds-cell-th" title="Instrument" style="padding-left: 9px;">
+                                        <div  class="slds-truncate">Instrument</div>
+                                    </th>
+                                    <th scope="col" class="nobordertop slds-cell-th" title="Booking Date and Time">
+                                        <div  class="slds-truncate">Booking Date and Time</div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <aura:iteration items="{!v.AppFeeds}" var="AppFeed" indexVar="index">     
+                                    <tr>
+                                        <td data-label="Id" title="Id">
+                                            <a href="{! '/lightning/r/App_Feeds__c/'+ AppFeed.Id + '/view'}" target="_blank">
+                                                <div class="slds-truncate"> {!AppFeed.Name}</div>
+                                            </a>
+                                        </td>
+                                        <td data-label="Type" title="Type">
+                                            <div class="slds-truncate"> {!AppFeed.Type__c}</div>
+                                        </td>
+                                        <td data-label="Parent" title="Parent">
+                                            <a href="{! '/lightning/r/App_Feeds__c/'+ AppFeed.Parent__c + '/view'}" target="_blank">
+                                                <div class="slds-truncate"> {!AppFeed.Parent__r.Name}</div>
+                                            </a>
+                                        </td>
+                                        <td data-label="Student" title="Student">
+                                            <a href="{! '/lightning/r/App_Feeds__c/'+ AppFeed.Student__c + '/view'}" target="_blank">
+                                                <div class="slds-truncate"> {!AppFeed.Student__r.Name}</div>
+                                            </a>
+                                        </td>
+                                        <td data-label="Teacher" title="Teacher">
+                                            <!--ref="{! '/lightning/r/App_Feeds__c/'+ AppFeed.Teacher__c + '/view'}" target="_blank"-->
+                                                <div class="slds-truncate"> {!AppFeed.Teacher__r.Name}</div>
+                                            <!--/a-->
+                                        </td>
+                                        <td data-label="Instrument" title="Instrument">
+                                            <!--a href="{! '/lightning/r/App_Feeds__c/'+ AppFeed.Instrument__c + '/view'}" target="_blank"-->
+                                                <div class="slds-truncate"> {!AppFeed.Instrument__c}</div>
+                                            <!--/a-->
+                                        </td>
+                                        <td data-label="Booking_Date" title="Booking Date and Start Time" class="slds-cell-td">
+                                            <div class="slds-truncate" >
+                                                <lightning:formattedDateTime value="{!AppFeed.Booking_Date__c}" year="2-digit" month="short" day="2-digit" weekday="short" timeZone="UTC"/>&nbsp;@
+                                                <lightning:formattedDateTime value="{!AppFeed.Booking_Time__c}" hour="2-digit" minute="2-digit" timeZone="UTC"/>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </aura:iteration>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </lightning:layoutItem>                              
+        </lightning:layout>
+    </lightning:card>
+</aura:component>

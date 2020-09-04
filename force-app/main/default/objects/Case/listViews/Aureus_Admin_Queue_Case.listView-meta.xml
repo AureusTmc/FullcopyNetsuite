@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Aureus_Admin_Queue_Case</fullName>
+    <booleanFilter>(1 OR 2 OR 3) AND 4 AND 5 AND 6</booleanFilter>
+    <columns>CASES.CASE_NUMBER</columns>
+    <columns>NAME</columns>
+    <columns>CASES.SUBJECT</columns>
+    <columns>CASES.STATUS</columns>
+    <columns>Status_Image__c</columns>
+    <columns>CASES.PRIORITY</columns>
+    <columns>CASES.LAST_UPDATE_DATE_ONLY</columns>
+    <columns>CORE.USERS.ALIAS</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>Location__c</field>
+        <operation>equals</operation>
+        <value>XXXX</value>
+    </filters>
+    <filters>
+        <field>Location__c</field>
+        <operation>equals</operation>
+    </filters>
+    <filters>
+        <field>ACCOUNT.NAME</field>
+        <operation>equals</operation>
+    </filters>
+    <filters>
+        <field>CASES.STATUS</field>
+        <operation>notEqual</operation>
+        <value>Working,Pending,Closed</value>
+    </filters>
+    <filters>
+        <field>CASES.RECORDTYPE</field>
+        <operation>equals</operation>
+        <value>Case.Service_Request</value>
+    </filters>
+    <filters>
+        <field>OWNER_NAME</field>
+        <operation>notEqual</operation>
+        <value>Case HR Queue,Sock Teng,Duncan Yeow</value>
+    </filters>
+    <label>Admin Queue (Svc Rqsts)</label>
+</ListView>

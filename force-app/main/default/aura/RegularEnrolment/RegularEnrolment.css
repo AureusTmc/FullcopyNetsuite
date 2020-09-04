@@ -1,0 +1,68 @@
+.THIS.cSalesEnquiry{
+    margin-top: 0.06rem;
+}
+.THIS .slds-card__header{
+    margin-bottom:0px !important;
+    padding : .25rem 1rem 0;
+}
+.THIS .slds-table_header-fixed_container:before {
+   border-bottom: 1px solid rgba(221, 219, 218, 0) !important; 
+    
+}
+.THIS .slds-table--header-fixed_container:before{
+    border-bottom: 1px solid rgba(221, 219, 218, 0) !important; 
+}
+.THIS .slds-cell-th{
+    width:16%;
+    min-height:1rem !important;
+    margin-top: 11px;
+    padding-left: 0px;
+     position: relative !important;
+}
+.THIS .slds-card__body{
+    margin-bottom: 0.05rem;
+}
+.THIS .slds-table--header-fixed_container{
+    padding-top: 0 !important;
+}
+.THIS .slds-text-heading--label{
+    position: relative !important;
+    
+}
+.THIS .table-layout{
+    table-layout: fixed !important;
+}
+
+.THIS .overflow-check{
+    word-wrap: break-word;
+    word-break: break-all;
+    white-space: normal;
+}
+.THIS .slds-cell-td{
+    padding-left: 0px !important;
+}
+.THIS .viewAllButton{
+    background-color:#fff;
+    padding:7px 0px 7px 0px ;
+    font-size:15px; 
+    border-top:1px solid rgb(216,214,213);
+    border-radius:0px 0px 4px 4px;
+    color:rgb(63,122,205) !important;
+}
+.THIS .viewAllButton:hover{
+    cursor:pointer;
+    color:rgb(0, 95, 178);
+    text-decoration:underline;
+}
+.THIS .viewAllButton:active{
+    color:rgb(0, 57, 107);
+}
+.THIS .slds-form-element__label{
+    display:none;
+}
+.THIS .slds-truncate{
+    font-size: smaller !important; 
+}
+.THIS .Remove-Margin{
+        margin-top: 0 !important;
+}

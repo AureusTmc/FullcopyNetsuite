@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Stage__c</fullName>
+    <externalId>false</externalId>
+    <label>Stage</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>true</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <controllingField>Type__c</controllingField>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Requested</fullName>
+                <default>false</default>
+                <label>Requested</label>
+            </value>
+            <value>
+                <fullName>Booked</fullName>
+                <default>false</default>
+                <label>Booked</label>
+            </value>
+            <value>
+                <fullName>Enrolled</fullName>
+                <default>false</default>
+                <label>Enrolled</label>
+            </value>
+            <value>
+                <fullName>No-Show</fullName>
+                <default>false</default>
+                <label>No-Show</label>
+            </value>
+            <value>
+                <fullName>Attended</fullName>
+                <default>false</default>
+                <label>Attended</label>
+            </value>
+            <value>
+                <fullName>Transferred</fullName>
+                <default>false</default>
+                <label>Transferred</label>
+            </value>
+            <value>
+                <fullName>Cancelled</fullName>
+                <default>false</default>
+                <label>Cancelled</label>
+            </value>
+            <value>
+                <fullName>Withdrawn</fullName>
+                <default>false</default>
+                <label>Withdrawn</label>
+            </value>
+            <value>
+                <fullName>Suspended</fullName>
+                <default>false</default>
+                <label>Suspended</label>
+            </value>
+            <value>
+                <fullName>Lost</fullName>
+                <default>false</default>
+                <label>Lost</label>
+            </value>
+            <value>
+                <fullName>Pending Enrolment</fullName>
+                <default>false</default>
+                <label>Pending Enrolment</label>
+            </value>
+            <value>
+                <fullName>Piano Viewing Booked</fullName>
+                <default>false</default>
+                <label>Piano Viewing Booked</label>
+            </value>
+            <value>
+                <fullName>Piano Viewing Completed</fullName>
+                <default>false</default>
+                <label>Piano Viewing Completed</label>
+            </value>
+            <value>
+                <fullName>Piano Rental Active</fullName>
+                <default>false</default>
+                <label>Piano Rental Active</label>
+            </value>
+            <value>
+                <fullName>Piano Termination In-Progress</fullName>
+                <default>false</default>
+                <label>Piano Termination In-Progress</label>
+            </value>
+            <value>
+                <fullName>Piano Rental Terminated</fullName>
+                <default>false</default>
+                <label>Piano Rental Terminated</label>
+            </value>
+            <value>
+                <fullName>Piano Sold</fullName>
+                <default>false</default>
+                <label>Piano Sold</label>
+            </value>
+            <value>
+                <fullName>Not Interested</fullName>
+                <default>false</default>
+                <label>Not Interested</label>
+            </value>
+        </valueSetDefinition>
+        <valueSettings>
+            <controllingFieldValue>Trial</controllingFieldValue>
+            <controllingFieldValue>Group</controllingFieldValue>
+            <controllingFieldValue>Home</controllingFieldValue>
+            <valueName>Requested</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Trial</controllingFieldValue>
+            <controllingFieldValue>Group</controllingFieldValue>
+            <controllingFieldValue>Ad-hoc</controllingFieldValue>
+            <controllingFieldValue>Camp</controllingFieldValue>
+            <valueName>Booked</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Trial</controllingFieldValue>
+            <controllingFieldValue>Ad-hoc</controllingFieldValue>
+            <controllingFieldValue>Camp</controllingFieldValue>
+            <valueName>No-Show</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Trial</controllingFieldValue>
+            <controllingFieldValue>Group</controllingFieldValue>
+            <controllingFieldValue>Ad-hoc</controllingFieldValue>
+            <controllingFieldValue>Camp</controllingFieldValue>
+            <valueName>Attended</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Trial</controllingFieldValue>
+            <valueName>Transferred</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Trial</controllingFieldValue>
+            <controllingFieldValue>Regular</controllingFieldValue>
+            <controllingFieldValue>Group</controllingFieldValue>
+            <controllingFieldValue>Home</controllingFieldValue>
+            <controllingFieldValue>Ad-hoc</controllingFieldValue>
+            <controllingFieldValue>Camp</controllingFieldValue>
+            <valueName>Cancelled</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Trial</controllingFieldValue>
+            <controllingFieldValue>Regular</controllingFieldValue>
+            <valueName>Lost</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Trial</controllingFieldValue>
+            <controllingFieldValue>Group</controllingFieldValue>
+            <valueName>Pending Enrolment</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Regular</controllingFieldValue>
+            <controllingFieldValue>Group</controllingFieldValue>
+            <controllingFieldValue>Home</controllingFieldValue>
+            <controllingFieldValue>Camp</controllingFieldValue>
+            <valueName>Enrolled</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Regular</controllingFieldValue>
+            <controllingFieldValue>Group</controllingFieldValue>
+            <controllingFieldValue>Home</controllingFieldValue>
+            <controllingFieldValue>Ad-hoc</controllingFieldValue>
+            <controllingFieldValue>Camp</controllingFieldValue>
+            <valueName>Withdrawn</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Group</controllingFieldValue>
+            <controllingFieldValue>Home</controllingFieldValue>
+            <valueName>Suspended</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Instrument</controllingFieldValue>
+            <valueName>Piano Viewing Booked</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Instrument</controllingFieldValue>
+            <valueName>Piano Viewing Completed</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Instrument</controllingFieldValue>
+            <valueName>Piano Rental Active</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Instrument</controllingFieldValue>
+            <valueName>Piano Termination In-Progress</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Instrument</controllingFieldValue>
+            <valueName>Piano Rental Terminated</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Instrument</controllingFieldValue>
+            <valueName>Piano Sold</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Instrument</controllingFieldValue>
+            <valueName>Not Interested</valueName>
+        </valueSettings>
+    </valueSet>
+</CustomField>

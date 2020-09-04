@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Stage --></label>
+    <name>Stage__c</name>
+    <picklistValues>
+        <masterLabel>Attended</masterLabel>
+        <translation><!-- Attended --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Booked</masterLabel>
+        <translation><!-- Booked --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Cancelled</masterLabel>
+        <translation><!-- Cancelled --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Enrolled</masterLabel>
+        <translation><!-- Enrolled --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Lost</masterLabel>
+        <translation><!-- Lost --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>No-Show</masterLabel>
+        <translation><!-- No-Show --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Not Interested</masterLabel>
+        <translation><!-- Not Interested --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Pending Enrolment</masterLabel>
+        <translation><!-- Pending Enrolment --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Piano Rental Active</masterLabel>
+        <translation><!-- Piano Rental Active --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Piano Rental Terminated</masterLabel>
+        <translation><!-- Piano Rental Terminated --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Piano Sold</masterLabel>
+        <translation><!-- Piano Sold --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Piano Termination In-Progress</masterLabel>
+        <translation><!-- Piano Termination In-Progress --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Piano Viewing Booked</masterLabel>
+        <translation><!-- Piano Viewing Booked --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Piano Viewing Completed</masterLabel>
+        <translation><!-- Piano Viewing Completed --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Requested</masterLabel>
+        <translation><!-- Requested --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Suspended</masterLabel>
+        <translation><!-- Suspended --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Transferred</masterLabel>
+        <translation><!-- Transferred --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Withdrawn</masterLabel>
+        <translation><!-- Withdrawn --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

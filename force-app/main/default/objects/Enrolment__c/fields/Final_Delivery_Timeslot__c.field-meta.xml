@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Final_Delivery_Timeslot__c</fullName>
+    <description>this field for piano rental for manage customer final Delivery  time slot</description>
+    <externalId>false</externalId>
+    <label>Final Delivery Timeslot</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Time</type>
+</CustomField>

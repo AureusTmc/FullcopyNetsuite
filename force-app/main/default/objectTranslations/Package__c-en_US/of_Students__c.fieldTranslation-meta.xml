@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help><!-- Applicable for the Class (Group) lesson packages --></help>
+    <label><!-- # of Students --></label>
+    <name>of_Students__c</name>
+</CustomFieldTranslation>

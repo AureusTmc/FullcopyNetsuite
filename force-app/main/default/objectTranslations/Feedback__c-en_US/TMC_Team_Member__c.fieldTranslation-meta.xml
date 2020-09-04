@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- TMC Team Member --></label>
+    <name>TMC_Team_Member__c</name>
+    <picklistValues>
+        <masterLabel>AB</masterLabel>
+        <translation><!-- AB --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>AV</masterLabel>
+        <translation><!-- AV --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>DJ</masterLabel>
+        <translation><!-- DJ --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>PB</masterLabel>
+        <translation><!-- PB --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>RG</masterLabel>
+        <translation><!-- RG --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>RJ</masterLabel>
+        <translation><!-- RJ --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>RS</masterLabel>
+        <translation><!-- RS --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>SM</masterLabel>
+        <translation><!-- SM --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

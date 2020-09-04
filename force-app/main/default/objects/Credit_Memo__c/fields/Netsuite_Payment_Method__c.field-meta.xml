@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <fullName>Netsuite_Payment_Method__c</fullName>
+    <externalId>false</externalId>
+    <formula>CASE(Center__r.Organisation__r.Name,
+&apos;Aureus Academy Singapore&apos;,
+CASE(TEXT(Payment_Method__c),
+&apos;Card&apos;, &apos;AURSG-Stripe&apos;,
+&apos;Cheque&apos;, &apos;AURSG-Cheque&apos;,
+&apos;Cash&apos;, &apos;AURSG-Cash/Funds transfer/Paynow&apos;,
+&apos;NETS&apos;, &apos;AURSG-Nets&apos;,
+&apos;Others&apos;, &apos;AURSG-Cash/Funds transfer/Paynow&apos;,
+&apos;Offline Card&apos;, &apos;AURSG-CC Terminals&apos;,
+&apos;&apos;),
+&apos;Aureus Academy Hong Kong&apos;,
+CASE(TEXT(Payment_Method__c),
+&apos;Card&apos;, &apos;AURHK-Stripe&apos;,
+&apos;Cheque&apos;, &apos;AURHK-Cheque&apos;,
+&apos;Cash&apos;, &apos;AURHK-Cash/Funds Transfer/Paynow&apos;,
+&apos;Others&apos;, &apos;AURHK-Cash/Funds Transfer/Paynow&apos;,
+&apos;&apos;),
+&apos;Ossia Music School Singapore&apos;,
+CASE(TEXT(Payment_Method__c),
+&apos;Card&apos;, &apos;AUROM-Stripe&apos;,
+&apos;Cheque&apos;, &apos;AUROM-Cheque&apos;,
+&apos;Cash&apos;, &apos;AUROM-Cash/Funds Transfer/Paynow&apos;,
+&apos;Others&apos;, &apos;AUROM-Cash/Funds Transfer/Paynow&apos;,
+&apos;&apos;),
+&apos;&apos;)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Netsuite Payment Method</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

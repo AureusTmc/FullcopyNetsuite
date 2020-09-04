@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Employee_Birthdate_validation</fullName>
+    <active>true</active>
+    <errorConditionFormula>AND(RecordType.Name=&apos;Employee&apos;,ISPICKVAL(Onboarding_Stage__c,&apos;Completed&apos;),IsBlank(PersonBirthdate))</errorConditionFormula>
+    <errorMessage>Please enter the employee birthdate before completing the onboarding process.</errorMessage>
+</ValidationRule>

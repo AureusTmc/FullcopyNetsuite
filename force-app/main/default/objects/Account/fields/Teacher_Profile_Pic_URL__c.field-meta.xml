@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Teacher_Profile_Pic_URL__c</fullName>
+    <description>Teacher Profile Pic URL</description>
+    <externalId>false</externalId>
+    <label>Teacher Profile Pic URL</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Url</type>
+</CustomField>

@@ -1,0 +1,13 @@
+.THIS .slds-form__row {
+    
+}
+.THIS .Confirm{
+    background-color:lightgreen !important;
+    border:lightgreen !important; 
+    color: white !important;
+}
+.THIS .Cancel{
+    background-color: firebrick !important;
+    border:firebrick !important;
+    color: white !important;
+}

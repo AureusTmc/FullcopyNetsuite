@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Cancelled_Leave_can_not_be_Approved</fullName>
+    <active>true</active>
+    <description>Cancelled Leave cannot be Approved or Rejected</description>
+    <errorConditionFormula>AND (
+ISPICKVAL(PRIORVALUE( Status__c ),&apos;Cancelled&apos;),
+OR (
+ ISPICKVAL(Status__c , &quot;Approved&quot;),
+ ISPICKVAL(Status__c , &quot;Rejected&quot;)
+)
+)</errorConditionFormula>
+    <errorMessage>Cancelled Leave cannot be Approved or Rejected</errorMessage>
+</ValidationRule>

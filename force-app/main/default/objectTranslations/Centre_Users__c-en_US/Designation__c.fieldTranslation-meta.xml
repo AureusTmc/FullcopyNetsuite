@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- User Role --></label>
+    <name>Designation__c</name>
+    <picklistValues>
+        <masterLabel>Centre Admin</masterLabel>
+        <translation><!-- Centre Admin --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Centre Manager</masterLabel>
+        <translation><!-- Centre Manager --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Regional Manager</masterLabel>
+        <translation><!-- Regional Manager --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

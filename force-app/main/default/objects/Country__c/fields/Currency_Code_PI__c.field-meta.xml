@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Currency_Code_PI__c</fullName>
+    <description>Global picklist in replace of Country Code(text)</description>
+    <externalId>false</externalId>
+    <label>Currency Code PI</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetName>Currency_Code</valueSetName>
+    </valueSet>
+</CustomField>

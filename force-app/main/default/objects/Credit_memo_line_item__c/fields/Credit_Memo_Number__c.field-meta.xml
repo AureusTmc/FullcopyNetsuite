@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <fullName>Credit_Memo_Number__c</fullName>
+    <externalId>false</externalId>
+    <label>Credit Memo Number</label>
+    <referenceTo>Credit_Memo__c</referenceTo>
+    <relationshipLabel>Credit Memo Line Items</relationshipLabel>
+    <relationshipName>Credit_Memo_Line_Items</relationshipName>
+    <relationshipOrder>0</relationshipOrder>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackTrending>false</trackTrending>
+    <type>MasterDetail</type>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+</CustomField>

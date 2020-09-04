@@ -1,0 +1,716 @@
+<apex:component controller="CampPackagesDetailCtrl" allowDML="True">
+
+    <apex:attribute name="enrolCampId" description="" type="String" required="true" assignTo="{!campId}" />
+    <style>
+        .responsiveTabel {
+            width: 100%;
+            overflow-y: none;
+        }
+
+        .pageHeader {
+            background-color: #ffbf2f !important;
+            color: white;
+        }
+
+        #enrolBtn {
+            background-color: #ffaa00 !important;
+            color: white;
+        }
+
+        #enrolBtn:hover {
+            color: #ffaa00 !important;
+            background-color: white !important;
+            border: 1px solid #ffaa00;
+        }
+
+        .modalHeader {
+            /*background-color: #ffbf2fa1  !important;*/
+        }
+
+        @media (min-width: 300px) and (max-width: 700px) {
+            .responsiveTabel {
+                width: 100%;
+                overflow-y: scroll;
+            }
+            .slds-notify--toast,
+            .slds-notify_toast {
+                display: -ms-inline-flexbox;
+                color: #fff;
+                background-color: #c23934;
+                -ms-flex-align: center;
+                background: #;
+                font-weight: 300;
+                border-radius: .25rem;
+                margin: 0px;
+                padding: 10px;
+                min-width: 1rem;
+                text-align: left;
+
+            }
+
+            .slds-p-around--large,
+            .slds-p-around_large {
+                padding-top: 1.5rem;
+                padding-bottom: 1.5rem;
+                padding-right: 2px;
+                padding-left: 2px;
+            }
+            form {
+                padding: 0px;
+            }
+
+            .slds-box {
+                padding: 0px;
+            }
+        }
+    </style>
+    <!-- show package details according to selected package-->
+    <apex:outputPanel id="CampPackageDetails">
+        <!--  <apex:actionFunction name="addNewStudentAndPackageDetails" action="{!addNewStudentAndPackageDetails}" reRender="AllStudentDetails,NewStudentDetails"
+status="spinner" oncomplete=" $('.package-list').first().prop('checked', true);$('.package-list').first().trigger('click');">
+<apex:param assignTo="{!selectedPackageId}" name="packageId" value="" />
+<apex:param assignTo="{!selectedPackageName}" name="selectedPackageName" value="" />
+<apex:param assignTo="{!campDaysDetail}" name="campDays" value="" />
+</apex:actionFunction>
+<apex:actionFunction name="deleteStudentAndPackageDetails" action="{!deleteStudentAndPackageDetails}" reRender="AllStudentDetails,NewStudentDetails"
+status="spinner" oncomplete=" $('.package-list').first().prop('checked', true);$('.package-list').first().trigger('click');">
+<apex:param assignTo="{!studentIndexNumber}" name="studentIndexNumber" value="" />
+</apex:actionFunction>-->
+        <div>
+            <div class="slds-page-header pageHeader">
+                <div class="slds-page-header__row">
+                    <div class="slds-page-header__col-title">
+                        <div class="slds-media">
+                            <div class="slds-media__body">
+                                <div class="slds-page-header__name">
+                                    <div class="slds-page-header__name-title">
+                                        <h1>
+                                            <span class="slds-page-header__title slds-truncate" title="Camps Details">{!CampDetails.name} Enrol Details</span>
+                                        </h1>
+                                    </div>
+                                </div>
+                                <p class="slds-page-header__name-meta">Enrol A Camps Now • {!CampDetails.Centre__r.Name}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <apex:outputPanel rendered="{!if(campId != null, true,false)}">
+            <apex:outputPanel id="AllStudentDetails">
+                <div class="slds-grid slds-wrap slds-p-top_large slds-box slds-m-bottom_xx-large">
+                    <article class="slds-card slds-col slds-size_12-of-12 ">
+                        <div class="slds-modal__header modalHeader slds-grid">
+                            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                <div class="slds-media__body">
+                                    <h2 class="slds-card__header-title">
+                                        <span>All Student Details</span>
+                                    </h2>
+                                </div>
+                            </header>
+                        </div>
+                        <div class="responsiveTabel slds-card__body slds-card__body_inner slds-col slds-size_12-of-12 slds-p-around_large slds-p-top_xx-large "
+                            id="allPackages">
+                            <!--<apex:outputPanel rendered="{!AND(listOfStudentDetails != null,listOfStudentDetails.size > 0)}">-->
+                            <!--<table aria-multiselectable="true" class="slds-box slds-table slds-table_bordered slds-table_fixed-layout slds-table_resizable-cols"
+                                   role="grid">-->
+                            <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                                <thead>
+                                    <tr class="slds-line-height_reset">
+                                        <th class="" scope="col" style="width:3.25rem">
+                                            <div class="slds-truncate slds-assistive-text" title="Remove">Remove</div>
+                                        </th>
+                                        <th class="" scope="col">
+                                            <div class="slds-truncate" title="Student Name">Student Name</div>
+                                        </th>
+                                        <th class="" scope="col">
+                                            <div class="slds-truncate" title="Selected Package">Selected Package</div>
+                                        </th>
+                                        <th class="" scope="col">
+                                            <div class="slds-truncate" title="Selected Days">Selected Days</div>
+                                        </th>
+
+
+                                    </tr>
+                                </thead>
+                                <tbody id="studentDetailBody">
+                                    <!-- <apex:variable var="studentNumber" value="{!0}" />
+<apex:repeat value="{!listOfStudentDetails}" var="objStudentDetails">
+<tr aria-selected="false" class="slds-hint-parent">
+<th scope="row">
+<div class="slds-truncate" title="{!objStudentDetails.accountStudentObj.firstName} {!objStudentDetails.accountStudentObj.lastName}">
+{!objStudentDetails.accountStudentObj.firstName} {!objStudentDetails.accountStudentObj.lastName}
+</div>
+</th>
+<td role="gridcell">
+<div class="slds-truncate" title="!objStudentDetails.selectedPackageName}">
+{!objStudentDetails.selectedPackageName}
+</div>
+</td>
+<td role="gridcell">
+<!--style="white-space: initial;">
+<div class="slds-truncate">
+<apex:variable var="campDaysNumber" value="{!1}" />
+<apex:repeat value="{!objStudentDetails.listOfCampDays}" var="objCampDay">
+Camp day-{!objCampDay.campDay}-{!objCampDay.campDate}
+<apex:outputText value="{!IF(campDaysNumber==objStudentDetails.listOfCampDays.size,'',',')}"
+/>
+<apex:variable var="campDaysNumber" value="{!campDaysNumber+1}" />
+</apex:repeat>
+</div>
+</td>
+<td role="gridcell">
+<button class="slds-button slds-button_destructive" onclick="deleteStudentAndPackageDetails({!studentNumber}); return false;">X</button>
+</td>
+</tr>
+<apex:variable var="studentNumber" value="{!studentNumber+1}" />
+</apex:repeat>
+-->
+
+                                </tbody>
+                            </table>
+                            <!-- </apex:outputPanel>
+<apex:outputPanel rendered="{!OR(listOfStudentDetails == null,listOfStudentDetails.size == 0)}">
+<div class="slds-align_absolute-center">
+Add New Students Details
+</div>
+</apex:outputPanel>-->
+                        </div>
+                    </article>
+                </div>
+            </apex:outputPanel>
+            <apex:outputPanel id="NewStudentDetails">
+                <div class="slds-grid slds-wrap slds-p-top_large slds-box slds-m-bottom_xx-large">
+                    <article class="slds-card slds-col slds-size_12-of-12 ">
+                        <div class="slds-modal__header modalHeader slds-grid">
+                            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                <div class="slds-media__body">
+                                    <h2 class="slds-card__header-title">
+                                        <span>Student Details</span>
+                                    </h2>
+                                </div>
+                            </header>
+                        </div>
+                        <div class="slds-card__body slds-card__body_inner slds-col slds-size_12-of-12 slds-p-around_large slds-p-top_xx-large " id="allPackages">
+                            <script>
+                                $('[id$=studentbirthdate]').attr('readonly', true);
+
+                            </script>
+                            <div class="slds-form-element info-box student-panel slds-size_1-of-1 radio-list slds-grid slds-wrap">
+                                <div class="slds-form-element slds-size_1-of-1 slds-medium-size_6-of-12">
+                                    <label class="slds-form-element__label">Student First name
+                                        <abbr class="slds-required slds-m-horizontal_none" title="required" style="cursor: default;">* </abbr>
+                                    </label>
+                                    <div class="slds-form-element__control">
+                                        <apex:inputText value="{!accountStudentObj.firstName}" id="stuFirstName" styleclass="slds-input inputstudenttxt stuNameCls"
+                                        />
+                                    </div>
+                                    <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                </div>
+                                <div class="slds-form-element slds-size_1-of-1 slds-medium-size_6-of-12">
+                                    <label class="slds-form-element__label">Student Last Name
+                                        <abbr class="slds-required slds-m-horizontal_none" title="required" style="cursor: default;">* </abbr>
+                                    </label>
+                                    <div class="slds-form-element__control">
+                                        <apex:inputText value="{!accountStudentObj.lastName}" id="stuLastName" styleclass="slds-input inputstudenttxt stuNameCls"
+                                        />
+
+                                    </div>
+                                    <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                </div>
+                                <div class="slds-form-element slds-size_1-of-1 slds-medium-size_6-of-12">
+                                    <label class="slds-form-element__label">Date of Birth
+                                        <abbr class="slds-required slds-m-horizontal_none" title="required" style="cursor: default;">* </abbr>
+                                    </label>
+                                    <div class="slds-form-element__control">
+                                        <apex:inputtext id="studentbirthdate" styleclass="slds-input inputstudenttxt" value="{!birthDate}" style="width:100%;background: white;"
+                                        />
+                                        <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                    </div>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label f-title">Gender
+                                            <abbr class="slds-required" title="required">* </abbr>
+                                        </label>
+                                        <div class="slds-form-element__control">
+                                            <div class="slds-select_container">
+                                                <apex:selectList id="stuGender" value="{!accountStudentObj.Gender__c}" size="1" styleclass="slds-select inputstudentsel">
+                                                    <apex:selectOptions value="{!AccoungGenderPicklist}" />
+                                                </apex:selectList>
+                                            </div>
+                                            <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slds-form-element slds-size_1-of-1 slds-medium-size_6-of-12">
+                                    <label class="slds-form-element__label">Previous Experience (if any)</label>
+                                    <div class="slds-form-element__control">
+                                        <apex:inputText id="stuPreExperience" value="{!stuPreExperience}" styleclass="slds-input" />
+                                    </div>
+                                </div>
+                                <div class="slds-form-element slds-size_1-of-1 slds-medium-size_6-of-12">
+                                    <label class="slds-form-element__label">Food Allergy (if any)</label>
+                                    <div class="slds-form-element__control">
+                                        <apex:inputText id="stuFoodAllergy" value="{!accountStudentObj.Food_Allergy__c}" styleclass="slds-input" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                    <apex:outputPanel rendered="{!And(CampDetails.Camp_Available_Packages__r != null,CampDetails.Camp_Available_Packages__r.size > 0)}"
+                        styleClass="slds-col slds-size_12-of-12 ">
+                        <!--Need to apply CSS here..-->
+                        <article class="slds-card">
+                            <div class="slds-modal__header modalHeader slds-grid">
+                                <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                    <div class="slds-media__body">
+                                        <h2 class="slds-card__header-title">
+                                            <span>Select Camp Package</span>
+                                        </h2>
+                                    </div>
+                                </header>
+                            </div>
+                            <div class="slds-card__body slds-card__body_inner slds-col slds-size_12-of-12 slds-p-around_large slds-p-top_xx-large " id="allPackages">
+                                <!-- start : jatin: 4-mar-2020: When registerring for the camp, there should be a text above the packages for the early bird discount 
+                                    then show alert. However, when the early bird discount does not apply, the text should not be appearing.– -->
+                                <apex:outputPanel rendered="{!showDiscountAlert}" styleClass="slds-col slds-size_12-of-12 ">
+                                    <div class="slds-card__body slds-card__body_inner slds-p-around_large slds-p-top_xx-large " id="allPackages">
+                                        <div class="slds-col slds-size_12-of-12" id="campPackageDiscountInfo">
+                                            <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_info" role="alert">
+                                                <span class="slds-assistive-text">info</span>
+                                                <h2>If you register before 
+                                                    <apex:outputText value="{0,date, MMM d, yyyy}">
+                                                        <apex:param value="{!CampDetails.Early_Bird_End_Date__c}" />
+                                                    </apex:outputText>, you will be entitled to a {!CampDetails.Early_Bird_Discount__c}%
+                                                    discount on the packages below. This discount will appear at the checkout
+                                                    process.
+                                                </h2>
+                                                <div class="slds-notify__close">
+                                                    <button class="slds-button slds-button_icon slds-button_icon-inverse" title="Close" onclick=" $('#campPackageDiscountInfo').addClass('slds-hide');return false;">
+                                                        <span class="slds-assistive-text">Close</span>X
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </apex:outputPanel>
+                                 <!-- end : jatin: 4-mar-2020: When registerring for the camp, there should be a text above the packages for the early bird discount 
+                                    then show alert. However, when the early bird discount does not apply, the text should not be appearing.– -->
+                                <apex:repeat value="{!CampDetails.Camp_Available_Packages__r}" var="objCampPackage">
+                                    <div class="packageDiv slds-box" data-packageDays="{!objCampPackage.No_of_days__c}">
+                                        <article class="slds-col slds-size_12-of-12 slds-card">
+                                            <div class="slds-card__header slds-grid">
+                                                <header class="slds-media slds-media_center slds-has-flexi-truncate slds-grid slds-wrap ">
+                                                    <div class="slds-media__body slds-col slds-size_1-of-1 slds-medium-size_10-of-12">
+                                                        <h1 class="slds-card__header-title">
+                                                            <span class="slds-card__header-link slds-truncate" title="{!objCampPackage.name}">
+                                                                {!objCampPackage.name}
+                                                            </span>
+                                                        </h1>
+                                                    </div>
+                                                    <div class="slds-no-flex slds-col slds-size_1-of-1 slds-medium-size_2-of-12">
+                                                        <input type="radio" class="package-list slds-float_right" name="package" id="package-id-{!objCampPackage.id}" value="{!objCampPackage.id}"
+                                                            checked="" data-packageDays="{!objCampPackage.No_of_days__c}" data-packageName="{!objCampPackage.Name}"
+                                                        />
+                                                    </div>
+                                                </header>
+                                            </div>
+                                            <div class="slds-card__body slds-card__body_inner slds-grid slds-wrap">
+                                                <div class="slds-grid slds-wrap slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small">
+                                                    <div class="slds-col slds-medium-size_2-of-12 slds-size_1-of-1 ">
+                                                        <span class="">Package Name</span>
+                                                    </div>
+                                                    <div class="slds-col slds-medium-size_4-of-12 slds-size_1-of-1 ">
+                                                        <span>{!objCampPackage.Name}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="slds-grid slds-wrap slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-around_x-small">
+                                                    <div class="slds-col slds-medium-size_2-of-12 slds-size_1-of-1 ">
+                                                        <span class="">Package Fee</span>
+                                                    </div>
+                                                    <div class="slds-col slds-medium-size_4-of-12 slds-size_1-of-1 ">
+                                                        <span>
+                                                            <apex:outputPanel rendered="{!AND(objCampPackage.Package__r.Package_Fee_with_GST__c != null,objCampPackage.Package__r.Package_Fee_with_GST__c > 0)}">
+                                                                <apex:outputText value="{0, number, $,##0.00}">
+                                                                    <apex:param value="{!objCampPackage.Package__r.Package_Fee_with_GST__c}" />
+                                                                </apex:outputText>
+                                                            </apex:outputPanel>
+                                                            <apex:outputPanel rendered="{!Or(objCampPackage.Package__r.Package_Fee_with_GST__c == null,objCampPackage.Package__r.Package_Fee_with_GST__c == 0)}">
+                                                                <apex:outputPanel rendered="{!AND(objCampPackage.Package__r.Package_Fee__c != null,objCampPackage.Package__r.Package_Fee__c > 0)}">
+                                                                    <apex:outputText value="{0, number, $,##0.00}">
+                                                                        <apex:param value="{!objCampPackage.Package__r.Package_Fee__c}" />
+                                                                    </apex:outputText>
+                                                                </apex:outputPanel>
+                                                            </apex:outputPanel>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </article>
+                                    </div>
+                                </apex:repeat>
+                            </div>
+                        </article>
+                        <apex:outputPanel rendered="{!And(CampDetails.Camp_Days__r !=null && CampDetails.Camp_Days__r.size > 0)}" styleClass="slds-col slds-size_12-of-12">
+                            <!--Need to apply CSS here..-->
+                            <article class="slds-card" id="CampDays">
+                                <div class="slds-modal__header modalHeader slds-grid">
+                                    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                        <div class="slds-media__body ">
+                                            <h2 class="slds-card__header-title">
+                                                <span>Select Camp Dates</span>
+                                            </h2>
+                                        </div>
+                                    </header>
+                                </div>
+                                <div id="allCampDays" class="slds-card__body slds-card__body_inner slds-col slds-size_12-of-12 slds-grid slds-wrap slds-p-around_large slds-p-top_xx-large ">
+                                    <div class="slds-hide slds-col slds-size_12-of-12 slds-p-around_medium slds-p-top_xx-large" id="CampDaysError">
+                                        <div class="demo-only" style="height:4rem">
+                                            <div class="slds-notify_container slds-is-relative">
+                                                <div class="slds-notify slds-col slds-size_12-of-12 slds-notify_toast slds-theme_error" role="status">
+                                                    <span class="slds-assistive-text">error</span>
+                                                    <div class="slds-notify__content">
+                                                        <h2 class="slds-text-heading_small "> You have selected Maximum days</h2>
+                                                    </div>
+                                                    <div class="slds-notify__close">
+                                                        <button class="slds-button slds-button_icon slds-button_icon-inverse" title="Close" onclick=" $('#CampDaysError').addClass('slds-hide');return false;">
+                                                            <span class="slds-assistive-text">Close</span>X
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <apex:variable var="CampDay" value="{!1}" />
+                                    <apex:repeat value="{!CampDetails.Camp_Days__r}" var="objCampDays">
+                                        <div class="CampDaysDiv slds-col slds-medium-size_4-of-12  slds-size_1-of-1 slds-p-around_medium slds-p-top_xx-large slds-box">
+                                            <article class="slds-card">
+                                                <div class="slds-card__header slds-grid">
+                                                    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                                        <div class="slds-media__body">
+                                                            <h1 class="slds-card__header-title">
+                                                                <span class="slds-card__header-link slds-truncate" title="{!objCampDays.name}">
+                                                                    <apex:outputPanel rendered="{!if(objCampDays.Dates_Of_The_Camp__c!= null, true,false)}">
+                                                                        <!--commented by jatin: 4 mar,2020 according to camp feedbacks all dates change format May 5, 2020 instead of 05/05/2020
+                                                                            <apex:outputText value="{0,date, dd/MM/yyyy}">
+                                                                            <apex:param value="{!objCampDays.Dates_Of_The_Camp__c}" />
+                                                                        </apex:outputText>-->
+                                                                        <apex:outputText value="{0,date, MMM d, yyyy}">
+                                                                            <apex:param value="{!objCampDays.Dates_Of_The_Camp__c}" />
+                                                                        </apex:outputText>
+                                                                    </apex:outputPanel>
+                                                                </span>
+                                                            </h1>
+                                                        </div>
+                                                        <div class="slds-no-flex">
+                                                            <input type="checkbox" class="CampDays-list" name="CampDays" id="CampDays-id-{!objCampDays.id}" value="{!objCampDays.id}"
+                                                                checked="" data-campDate="{!objCampDays.Dates_Of_The_Camp__c}"
+                                                                data-campDay="{!CampDay}" />
+                                                        </div>
+                                                    </header>
+                                                </div>
+                                            </article>
+                                        </div>
+                                        <apex:variable var="CampDay" value="{!CampDay+1}" />
+                                    </apex:repeat>
+                                </div>
+                                <!--commented by jatin: for this add student button use to page footer
+                                    <footer class="slds-card__footer" style="">
+                                    <!--commented by jatin: for this add student button use to page footer
+                                    <div class="slds-grid slds-grid_align-end">
+                                        <div class="slds-col slds-size_12-of-12"> 
+                                            <button class="slds-button slds-button_neutral custom-Btn slds-col slds-size_12-of-12" style="font-size: larger; font-weight:bold;" id="addStudentandPackageDetails" onclick="addNewStudentDetail(); return false;">Add Student</button>
+                                        </div>
+                                    </div>
+                                -->
+                                <footer class="slds-card__footer" style="">
+                                    <div class="slds-grid slds-grid_align-center slds-p-vertical_x-small">
+                                        <div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-medium-size_1-of-2">
+                                            <button id="addStudentandPackageDetails" class="slds-button btn-block slds-button_success custom-Btn" onclick="addNewStudentDetail();">
+                                                Add Student
+                                            </button>
+                                        </div>
+                                    </div>
+                                </footer>
+                            </article>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+
+                    <apex:outputPanel rendered="{!And(CampDetails.Camp_Available_Packages__r == null,CampDetails.Camp_Available_Packages__r.size == 0)}">
+                        <div class="slds-align_absolute-center slds-p-around_x-small" style="color:red;">
+                            <strong>We cannot process your request at the moment. Please contact centre admin for further assistance.
+                            </strong>
+                        </div>
+                    </apex:outputPanel>
+                </div>
+                <script type="text/javascript">
+                    var packageId = '';
+                    var selectDays = 0;
+                    var campDays = [];
+                    var campDates = [];
+                    var selectedPackageName = '';
+                    console.log('hello');
+                    var campId = '{!enrolCampId}';
+
+                    if (campId != '') {
+                        maxAge = '{!CampDetails.Maximum_Age__c}';
+                        minAge = '{!CampDetails.Minimum_Age__c}';
+                        console.log('maxAge', maxAge);
+                        console.log('minAge', minAge);
+                    }
+
+                    if ((maxAge != null && maxAge != '' && maxAge != undefined) && (minAge != null && minAge != '' && minAge != undefined)) {
+                        console.log('maxAge', maxAge);
+                        console.log('minAge', minAge);
+                        //  maxAge += 1;
+                        $('[id$=studentbirthdate]').empty();
+                        // create calendar for get calendar user can  select birth date
+                        $('[id$=studentbirthdate]').datepicker({
+                            initDate: moment(),
+                            dateFormat: 'dd/mm/yy', //Date Format Of Datepicker Input Field
+                            changeMonth: true,
+                            changeYear: true,
+                            yearRange: "-100:+0",
+                            // minDate:"-"+maxAge+"y",
+                            // maxDate:"-"+minAge+"y",
+                            minDate: new Date(new Date().getFullYear() - maxAge, 1 - 1, 1),
+                            maxDate: new Date(new Date().getFullYear() - minAge, 11, 31),
+                            onChange: function (datepicker) {
+                                $('[id$=studentbirthdate]').html('Selected Date: <strong>' + moment(datepicker.selectedFullDate._d).format('dd/mm/yy') + '</strong>');
+                            }
+                        });
+
+                    }
+
+                    function addNewStudentDetail() {
+                        var firstCheck = false;
+                        var secondCheck = false;
+                        $('.inputstudentsel').each(function () {
+                            if (!$(this).val()) {
+                                $(this).parent().parent().addClass('slds-has-error');
+                                $(this).parent().next().removeClass('slds-hide');
+                                firstCheck = true;
+                            } else {
+                                $(this).parent().parent().removeClass('slds-has-error');
+                                $(this).parent().next().addClass('slds-hide');
+                            }
+                        })
+                        $('.inputstudenttxt').each(function () {
+                            if (!$(this).val()) {
+                                $(this).parent().parent().addClass('slds-has-error');
+                                $(this).parent().next().removeClass('slds-hide');
+                                firstCheck = true;
+                            } else {
+                                $(this).parent().parent().removeClass('slds-has-error');
+                                $(this).parent().next().addClass('slds-hide');
+                            }
+                        });
+
+                        if (!firstCheck && campDays.length > 0 && (packageId && packageId != '' && packageId != undefined)) {
+                            console.log('campDays', JSON.stringify(campDays));
+
+                            addNewStudentAndPackageDetails();
+                        }
+                    }
+                    function removeStudentAndPackageDetails(studentTempId) {
+                        studentDetailsList = studentDetailsList.filter(student => student.student.id != studentTempId);
+                        $('#studentDetail-' + studentTempId).remove();
+                        $('#addStudentandPackageDetails').prop('disabled', false);
+                        if (studentDetailsList.length > 0) {
+                            $('#nextbtn').prop('disabled', false);
+                        } else {
+                            $('#nextbtn').prop('disabled', true);
+                        }
+
+                    }
+                    var studentDetailsList = [];
+                    function addNewStudentAndPackageDetails() {
+                        let studentId = studentDetailsList.length;
+                        var studentName = $('[id$=stuFirstName]').val() + ' ' + $('[id$=stuLastName]').val();
+                        var student = new Object();
+                        student.id = studentId;
+                        student.FirstName = $('[id$=stuFirstName]').val();
+                        student.LastName = $('[id$=stuLastName]').val();
+                        student.FullName = studentName;
+                        student.BirthDate = $('[id$=studentbirthdate]').val();
+                        student.Gender = $('[id$=stuGender]').val();
+                        student.stuPreExperience = $('[id$=stuPreExperience]').val();
+                        student.stuFoodAllergy = $('[id$=stuFoodAllergy]').val();
+                        var studentDetail = new Object();
+                        studentDetail.student = student;
+                        studentDetail.packageId = packageId;
+                        studentDetail.selectedPackageName = selectedPackageName;
+                        studentDetail.campDays = campDays;
+                        studentDetail.campDates = campDates.join('; ');
+                        /*var studentDetail = {"student":{"id":studentId, "FirstName":$('[id$=stuFirstName]').val(),
+                                                        "LastName":$('[id$=stuLastName]').val(),
+                                                        "FullName":studentName,
+                                                        "BirthDate":$('[id$=studentbirthdate]').val(),
+                                                        "Gender":$('[id$=stuGender]').val(),
+                                                        "stuPreExperience":$('[id$=stuPreExperience]').val()},
+                                             "packageId":packageId,
+                                             "selectedPackageName":selectedPackageName,
+                                             "campDays":campDays,
+                                            "campDates":campDates.join(',')};*/
+
+                        console.log('studentDetailsList', studentDetailsList);
+
+                        studentDetailsList.push(studentDetail);
+                        console.log('studentDetailsList', studentDetailsList);
+                        var studentDetailBody = '<tr aria-selected="false" id="studentDetail-' + studentId + '" class="slds-hint-parent"><td role="gridcell"><button class="slds-button" onclick="removeStudentAndPackageDetails(' + studentId + ');">X</button></td>';
+                        studentDetailBody += '<th scope="row"><div class="slds-truncate">';
+                        studentDetailBody += $('[id$=stuFirstName]').val() + ' ' + $('[id$=stuLastName]').val() + '</div></th><td role="gridcell">';
+                        studentDetailBody += '<div class="slds-truncate">' + studentDetail.selectedPackageName + '</div></td><td role="gridcell">';
+                        studentDetailBody += '<div class="slds-truncate">';
+                        /*for ( var campDaysNumber=0; campDaysNumber<campDays.length; campDaysNumber++ ) {
+                            studentDetailBody+= campDays[campDaysNumber].campDate + (campDaysNumber<campDays.length+1 ? ',':'');
+                        }*/
+                        studentDetailBody += campDates.join('; ');
+                        studentDetailBody += '</div></td>';
+                        studentDetailBody += '</tr>';
+
+                        $('#studentDetailBody').append(studentDetailBody);
+                        $('[id$=stuFirstName]').val('');
+                        $('[id$=stuLastName]').val('');
+                        $('[id$=studentbirthdate]').val('');
+                        $('[id$=stuGender]').val('');
+                        $('[id$=stuPreExperience]').val('');
+                        $('[id$=stuFoodAllergy]').val('');
+                        if (studentDetailsList.length > 2) {
+                            $('#addStudentandPackageDetails').prop('disabled', true);
+                        }
+                        $('#nextbtn').prop('disabled', false);
+                        window.scrollTo(1, 1);
+                    }
+
+                    var campName = '{!CampDetails.name}';
+
+                    $('.packageDiv').click(function () {
+                        console.log('click');
+                        $('.package-list').prop('checked', false);
+                        $('.packageDiv').removeClass('pageHeader');
+                        $('.packageDiv').find('article').removeClass('pageHeader');
+                        var val = $(this).find('input:radio').prop('checked') ? false : true;
+                        $(this).find('input:radio').prop('checked', val);
+                        var $checks = $(this).find('input:radio');
+                        if ($checks.is(":checked")) {
+                            $(this).find('article').addClass('pageHeader');
+                            $(this).addClass('pageHeader');
+                        } else {
+                            $(this).find('article').removeClass('pageHeader');
+                            $(this).removeClass('pageHeader');
+                        }
+
+                        $(".package-list").trigger('change');
+
+                    });
+                    $(".package-list").on('click', function () {
+                        console.log('package-listclick');
+                        $(".package-list").trigger('change');
+                    });
+                    $(".package-list").on('change', function () {
+                        console.log('package-listchnage');
+                        packageId = '';
+                        selectDays = 0;
+                        $.each($("input[name='package']:checked"), function () {
+                            packageId = $(this).val();
+                            $('#saveNewStudentbtn').attr('data-packageId', packageId);
+                            selectDays = $(this).attr('data-packagedays');
+                            selectedPackageName = $(this).attr('data-packagename');
+                        });
+                        if (packageId && packageId != '' && packageId != undefined) {
+                            $('#CampDays').removeClass('slds-hide');
+                            checkedCampDaysAccordingToPackageDays(selectDays)
+                        } else {
+                            $('#CampDays').addClass('slds-hide');
+                        }
+                    });
+                    function checkedCampDaysAccordingToPackageDays(selectDays) {
+                        var i = 1; $('#allCampDays ').children('.CampDaysDiv').each(function () {
+                            var $checks = $(this).find('input:checkbox[name=CampDays]');
+                            if (i <= selectDays) {
+                                $checks.prop("checked", true);
+                            }
+                            else {
+                                $checks.prop("checked", false);
+                            }
+                            /*campDays = [];
+                            $.each($("input[name='CampDays']:checked"), function () {
+                                 var campDate = new moment($(this).attr('data-campDate')).format('YYYY-MM-DD');
+                                campDays.push({ "campId": $(this).val(), "campDate": campDate, "campDay": $(this).attr('data-campDay') });
+                            });*/
+                            if ($checks.is(":checked")) {
+                                $(this).find('article').addClass('pageHeader');
+                                $(this).addClass('pageHeader');
+                            } else {
+                                $(this).find('article').removeClass('pageHeader');
+                                $(this).removeClass('pageHeader');
+                            }
+                            $(".CampDays-list").trigger('change'); i++;
+                        });
+                    }
+                    $(".CampDaysDiv").click(function () {
+                        var $checks = $(this).find('input:checkbox[name=CampDays]');
+                        $checks.prop("checked", !$checks.is(":checked"));
+                        campDays = [];
+                        campDates = [];
+                        $.each($("input[name='CampDays']:checked"), function () {
+                            var campDate = new moment($(this).attr('data-campDate')).format('DD/MM/YYYY');
+                            var campDayObj = new Object();
+                            campDayObj.campId = $(this).val();
+                            campDayObj.campDate = campDate;
+                            campDayObj.campDay = $(this).attr('data-campDay');
+                            campDays.push(campDayObj);
+                            //campDays.push({ "campId": $(this).val(), "campDate": campDate, "campDay": $(this).attr('data-campDay') });
+                            campDates.push(new moment($(this).attr('data-campDate')).format('MMM D, YYYY'));
+                        });
+                        if ($checks.is(":checked")) {
+                            $(this).find('article').addClass('pageHeader');
+                            $(this).addClass('pageHeader');
+                        } else {
+                            $(this).find('article').removeClass('pageHeader');
+                            $(this).removeClass('pageHeader');
+                        }
+                        $(".CampDays-list").trigger('change');
+                    });
+                    $(".CampDays-list").click(function () {
+                        var $checks = $(this);
+                        $checks.prop("checked", !$checks.is(":checked"));
+                    });
+                    $(".CampDays-list").on('change', function () {
+                        campDays = []; campDates = [];
+                        $.each($("input[name='CampDays']:checked"), function () {
+                            var campDate = new moment($(this).attr('data-campDate')).format('DD/MM/YYYY');
+                            var campDayObj = new Object();
+                            campDayObj.campId = $(this).val();
+                            campDayObj.campDate = campDate;
+                            campDayObj.campDay = $(this).attr('data-campDay');
+                            campDays.push(campDayObj);
+                            //campDays.push({ "campId": $(this).val(), "campDate": campDate, "campDay": $(this).attr('data-campDay') });
+                            campDates.push(new moment($(this).attr('data-campDate')).format('MMM D, YYYY'));
+                        });
+
+                        if (campDays.length > selectDays) {
+                            $('#CampDaysError').removeClass('slds-hide');
+                        } else {
+                            $('#CampDaysError').addClass('slds-hide');
+                        }
+                        // 10-Feb-2020: the dates should be equal to the package Days Count.
+                        if (campDays.length == selectDays) {
+                            $('#addStudentandPackageDetails').prop('disabled', false);
+                        } else {
+                            $('#addStudentandPackageDetails').prop('disabled', true);
+                        }
+                        $('#saveNewStudentbtn').attr('data-CampName', '{!CampDetails.name}');
+                        $('#saveNewStudentbtn').attr('data-CampSelectedDays', campDays.join(", "));
+                    });
+
+
+
+                </script>
+            </apex:outputPanel>
+        </apex:outputPanel>
+    </apex:outputPanel>
+
+</apex:component>

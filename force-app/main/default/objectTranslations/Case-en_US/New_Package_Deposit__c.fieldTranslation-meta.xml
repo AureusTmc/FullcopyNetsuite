@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- New Package Deposit --></label>
+    <name>New_Package_Deposit__c</name>
+</CustomFieldTranslation>

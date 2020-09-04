@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Disallow_leave_before_30_days_in_advance</fullName>
+    <active>true</active>
+    <description>Restrict user from creating Paid Leave record before 30 days in advance.</description>
+    <errorConditionFormula>RecordType.DeveloperName == &apos;Paid_Leave&apos; &amp;&amp; $Profile.Name != &apos;System Administrator&apos; &amp;&amp; $Profile.Name != &apos;HR Manager&apos; &amp;&amp;
+!($Permission.Operation_User) &amp;&amp; Leave_Start_Date__c &lt;  (TODAY() + 30)</errorConditionFormula>
+    <errorMessage>You cannot apply for leave before 30 days in advance. Please contact your HR.</errorMessage>
+</ValidationRule>

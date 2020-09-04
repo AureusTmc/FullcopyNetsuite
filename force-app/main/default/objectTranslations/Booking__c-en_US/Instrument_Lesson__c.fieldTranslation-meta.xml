@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help><!-- To be used in email templates to indicate Instrument Lesson also includes Make-Up and Ad-Hoc Lessons
+Managed by System Workflow --></help>
+    <label><!-- Instrument Lesson --></label>
+    <name>Instrument_Lesson__c</name>
+</CustomFieldTranslation>

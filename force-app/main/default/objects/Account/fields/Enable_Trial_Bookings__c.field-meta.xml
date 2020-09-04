@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Enable_Trial_Bookings__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>For handle trial for the public guest users. Its simply disable the trial booking for the teachers if its false.</description>
+    <externalId>false</externalId>
+    <label>Enable Trial Bookings</label>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Checkbox</type>
+</CustomField>

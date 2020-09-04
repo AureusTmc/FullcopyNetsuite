@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Type --></label>
+    <name>Type__c</name>
+    <picklistValues>
+        <masterLabel>Ad-hoc</masterLabel>
+        <translation><!-- Ad-hoc --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Audition</masterLabel>
+        <translation><!-- Audition --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Busy</masterLabel>
+        <translation><!-- Busy --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Group Class</masterLabel>
+        <translation><!-- Group Class --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Group Lesson</masterLabel>
+        <translation><!-- Group Lesson --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Make-up</masterLabel>
+        <translation><!-- Make-up --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Piano Viewing</masterLabel>
+        <translation><!-- Piano Viewing --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Regular</masterLabel>
+        <translation><!-- Regular --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Studio</masterLabel>
+        <translation><!-- Studio --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Trial</masterLabel>
+        <translation><!-- Trial --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help><!-- Total Amount - GST --></help>
+    <label><!-- Amount (Excluding GST) --></label>
+    <name>Amount_Excluding_GST__c</name>
+</CustomFieldTranslation>

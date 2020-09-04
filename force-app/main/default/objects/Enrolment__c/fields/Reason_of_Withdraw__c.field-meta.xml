@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Reason_of_Withdraw__c</fullName>
+    <externalId>false</externalId>
+    <label>Reason of Withdraw</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Loss of Interest</fullName>
+                <default>false</default>
+                <label>Loss of Interest</label>
+            </value>
+            <value>
+                <fullName>Focus on Other Studies</fullName>
+                <default>false</default>
+                <label>Focus on Other Studies</label>
+            </value>
+            <value>
+                <fullName>Logistics Issues</fullName>
+                <default>false</default>
+                <label>Logistics Issues</label>
+            </value>
+            <value>
+                <fullName>Relocation</fullName>
+                <default>false</default>
+                <label>Relocation</label>
+            </value>
+            <value>
+                <fullName>Too Expensive</fullName>
+                <default>false</default>
+                <label>Too Expensive</label>
+            </value>
+            <value>
+                <fullName>Other - Please Specify</fullName>
+                <default>false</default>
+                <label>Other - Please Specify</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

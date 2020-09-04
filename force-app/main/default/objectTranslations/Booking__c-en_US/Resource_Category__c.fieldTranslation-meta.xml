@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Resource Category --></label>
+    <name>Resource_Category__c</name>
+    <picklistValues>
+        <masterLabel>Aureus Student</masterLabel>
+        <translation><!-- Aureus Student --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Conservatory</masterLabel>
+        <translation><!-- Conservatory --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Others</masterLabel>
+        <translation><!-- Others --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Teacher Recital</masterLabel>
+        <translation><!-- Teacher Recital --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

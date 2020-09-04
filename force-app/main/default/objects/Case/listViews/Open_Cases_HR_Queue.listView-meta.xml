@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Open_Cases_HR_Queue</fullName>
+    <booleanFilter>1 AND (2 OR (3 AND 4))</booleanFilter>
+    <columns>CASES.CASE_NUMBER</columns>
+    <columns>ACCOUNT.NAME</columns>
+    <columns>CASES.TYPE</columns>
+    <columns>CASES.SUBJECT</columns>
+    <columns>Status_Image__c</columns>
+    <columns>CASES.CREATED_DATE_DATE_ONLY</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>CASES.STATUS</field>
+        <operation>notEqual</operation>
+        <value>New,Closed</value>
+    </filters>
+    <filters>
+        <field>CASES.TYPE</field>
+        <operation>equals</operation>
+        <value>HR</value>
+    </filters>
+    <filters>
+        <field>Record_Type_Name_For_Portal__c</field>
+        <operation>equals</operation>
+        <value>Staff</value>
+    </filters>
+    <filters>
+        <field>CASES.TYPE</field>
+        <operation>equals</operation>
+        <value>Update Personal Details</value>
+    </filters>
+    <label>Open Cases - HR Queue</label>
+    <sharedTo>
+        <group>Aureus_HR</group>
+    </sharedTo>
+</ListView>

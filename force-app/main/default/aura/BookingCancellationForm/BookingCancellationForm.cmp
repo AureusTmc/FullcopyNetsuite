@@ -1,0 +1,141 @@
+<aura:component controller="BookingCancellationClass" implements="force:appHostable,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global" >
+
+    
+    <aura:handler name="init" value="{!this}" action="{!c.initialize }"/>
+    <!-- aura:handler name="init" value="{!this}" action="{!c.filterOperators}"/ -->
+    <!-- attribute declaration -->
+    <aura:attribute name="enrolId" type="string" />
+    <aura:attribute name="Center" type="string"/>
+    <aura:attribute name="Student" type="string"/>
+    <aura:attribute name="Parent" type="string"/>
+    <aura:attribute name="CenterId" type="string"/>
+    <aura:attribute name="StudentId" type="string"/>
+    <aura:attribute name="ParentId" type="string"/>
+    
+    
+    <!-- aura:attribute name="accList" type="object[]"/>
+    <aura:attribute name="objectName" type="String" description="Name of object"/>
+    <aura:attribute name="availableList" type="List" default="[]" description="get all available objects"/>
+    <aura:attribute name="availFieldList" type="List" default="[]" description="get all available Fields"/>
+    <aura:attribute name="isSelected" type="Boolean" default="false"/>
+    aura:attribute name="isFilterd" type="Boolean" default="false"/ -->
+    <!-- aura:attribute name="OperatorsList" type="List" default="[]" description="avaliable operators"/ -->
+    
+    <aura:attribute name="criteriaList" type="list" />
+     <!-- aura:attribute name="filterlogic" type="String" / -->
+    <lightning:card footer="" title="Booking Cancellation Form">
+    <div class="slds-form--stacked slds-p-around_small">
+            <br/>
+
+            <div class="slds-float_right slds-p-bottom_small">
+                 <lightning:button variant="brand" label="Add Booking" onclick="{!c.addRow}" />
+            </div>
+            
+            
+            <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+                
+                
+                
+                <thead>
+                    <tr class="slds-text-title_caps">
+                        <th scope="col">
+                            <div class="slds-truncate">S.N</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="Student">Student</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="Parent">Parent</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="Center">Center</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="Booking Date" style="overflow:visible !important;">Booking Date</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="Start Time" style="overflow:visible !important;">Start Time</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="Start Time" style="overflow:visible !important;">Duration</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="End Time" style="overflow:visible !important;">End Time</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="Make-up mins">Available Make-up mins.</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="action">Action</div>
+                        </th>
+                        
+                    </tr>
+                </thead> 
+                <tbody> 
+                    <aura:iteration items="{!v.criteriaList}" var="acc" indexVar="index">
+                    <tr>
+                        <td>
+                        {!index + 1}
+                        </td>
+                        <td>
+                             <lightning:input name="criteriavalue" aura:id ="fldname" label="" value="{!acc.Student}" disabled="true"/>
+                           
+                        </td>
+                        <td> 
+                            <lightning:input  name="criteriavalue" aura:id ="fldname" label="" value="{!acc.Parent}" disabled="true"/>
+                        </td>
+                        <td> 
+                            <lightning:input name="criteriavalue" aura:id ="fldname" label="" value="{!acc.Center}" disabled="true"/>
+                        </td>
+                        <td>
+                            <div title="action">
+                                <lightning:input type="date" name="criteriavalue" aura:id ="fldname" label="" value="{!acc.Booking_Date}" required="true"/>
+                            </div>
+                        </td>
+                        <td>
+                            <div  title="action">
+                                <lightning:input accesskey="{!index}" type="time" name="criteriavalue" class="start" onchange="{!c.testData}"  aura:id ="fldname" label="" value="{!acc.Start_Time}" required="true"/>
+                            </div>
+                        </td>
+                        <td>
+                            <div  title="action">
+                                <lightning:select name="Duration" accesskey="{!index}" label="" value="{!acc.duration}"  onchange="{!c.addDuration}" required="true" >
+                                    <option value="15">15</option>
+                                    <option value="30">30</option>
+                                    <option value="45">45</option>
+                                    <option value="60">60</option>
+                                </lightning:select>
+                            </div>
+                        </td>
+                        <td>
+                            <div  title="action">
+                           <!--  <lightning:input name="criteriavalue" accesskey="{!index}" aura:id ="fldname" label="" value="{!acc.End_Time}" required="true"/> -->
+                              <lightning:input type="time" accesskey="{!index}" name="criteriavalue" aura:id ="fldname" label="" value="{!acc.End_Time}" required="true" disabled="true"/>
+                            </div>
+                        </td>
+                        <td>
+                            <div title="action">
+                                <lightning:input type="number" max="99" name="criteriavalue" aura:id ="fldname" label="" value="{!acc.Available_Make_up_Units}" disabled="true" required="true"/>
+                            </div>
+                        </td>
+                        <td>
+                             <a >
+                                  <lightning:icon iconName="utility:add" size="small" alternativeText="Add Row" onclick="{!c.addRow}"/>
+                            </a>
+                            <a >
+                                <lightning:icon iconName="utility:dash" size="small" alternativeText="Delete Row" onclick="{!c.deleteRow}"/>
+                            </a>
+                           
+                        </td>
+                    </tr>
+                    </aura:iteration>
+                </tbody>
+            </table>
+            <div class="slds-p-bottom_small" style="text-align:center;margin-top: 2%;">
+                <a href="{! '/lightning/r/Enrolment__c/'+ v.enrolId + '/view'}"><lightning:button variant="brand" label="Cancel" onclick="{!c.CancelButton}" class="fireBricks"/></a>
+                <lightning:button variant="brand" label="Save" onclick="{!c.SaveBookings}" />
+            </div>
+    </div>
+    </lightning:card> 
+    
+</aura:component>

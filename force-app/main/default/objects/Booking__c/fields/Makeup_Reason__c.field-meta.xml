@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Makeup_Reason__c</fullName>
+    <externalId>false</externalId>
+    <label>Make-up Reason</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Teacher MC</fullName>
+                <default>false</default>
+                <label>Teacher MC</label>
+            </value>
+            <value>
+                <fullName>Other</fullName>
+                <default>false</default>
+                <label>Other</label>
+            </value>
+            <value>
+                <fullName>Teacher leaves</fullName>
+                <default>false</default>
+                <label>Teacher leaves</label>
+            </value>
+            <value>
+                <fullName>School Event</fullName>
+                <default>false</default>
+                <label>School Event</label>
+            </value>
+            <value>
+                <fullName>Admin Error</fullName>
+                <default>false</default>
+                <label>Admin Error</label>
+            </value>
+            <value>
+                <fullName>Holidays</fullName>
+                <default>false</default>
+                <label>Holidays</label>
+            </value>
+            <value>
+                <fullName>School trip</fullName>
+                <default>false</default>
+                <label>School trip</label>
+            </value>
+            <value>
+                <fullName>Exams</fullName>
+                <default>false</default>
+                <label>Exams</label>
+            </value>
+            <value>
+                <fullName>Student MC</fullName>
+                <default>false</default>
+                <label>Student MC</label>
+            </value>
+            <value>
+                <fullName>Personal Reason</fullName>
+                <default>false</default>
+                <label>Personal Reason</label>
+            </value>
+            <value>
+                <fullName>Admin/CM Exception</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Admin/CM Exception</label>
+            </value>
+            <value>
+                <fullName>Customer Emergency</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Customer Emergency</label>
+            </value>
+            <value>
+                <fullName>Emergency Leave</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Emergency Leave</label>
+            </value>
+            <value>
+                <fullName>Non-Business Hours</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Non-Business Hours</label>
+            </value>
+            <value>
+                <fullName>Student MC Provided</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Student MC Provided</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

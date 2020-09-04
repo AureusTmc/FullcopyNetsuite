@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help><!-- Package &gt; Location &gt; Country: Tax Rate --></help>
+    <label><!-- Package Tax Amount --></label>
+    <name>Package_Tax_Amount__c</name>
+</CustomFieldTranslation>

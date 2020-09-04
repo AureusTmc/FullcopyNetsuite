@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Channel__c</fullName>
+    <externalId>false</externalId>
+    <formula>CASE(
+      Origin ,
+    &quot;Phone&quot;, IMAGE (&quot;/servlet/servlet.ImageServer?id=0156F00000GwRW5&amp;oid=00D1m0000008aQN&amp;lastMod=1556271674000&quot;, &quot;Phone&quot;),
+    &quot;Email&quot;, IMAGE (&quot;/servlet/servlet.ImageServer?id=0156F00000GwRW0&amp;oid=00D1m0000008aQN&amp;lastMod=1556271640000&quot;, &quot;Email&quot;),
+    &quot;Web&quot;, IMAGE (&quot;/servlet/servlet.ImageServer?id=0156F00000GwRWF&amp;oid=00D1m0000008aQN&amp;lastMod=1556271751000&quot;, &quot;Web&quot;),
+    &quot;Walk in&quot;, IMAGE (&quot;/servlet/servlet.ImageServer?id=0156F00000GwRWL&amp;oid=00D1m0000008aQN&amp;lastMod=1556271874000&quot;, &quot;Walk in&quot;),
+     &quot;App&quot;, IMAGE (&quot;/servlet/servlet.ImageServer?id=0156F00000Heaca&amp;oid=00D1m0000008aQN&amp;lastMod=1567056592000&quot;, &quot;App&quot;),
+      &quot;Facebook&quot;, IMAGE(&quot;/servlet/servlet.ImageServer?id=0151m000000Enkd&amp;oid=00D1m0000008aQN&amp;lastMod=1597318551000&quot;,&quot;Facebook&quot;),
+     &quot;Null&quot;  
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Channel</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

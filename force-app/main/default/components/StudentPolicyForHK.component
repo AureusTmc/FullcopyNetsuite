@@ -1,0 +1,108 @@
+<apex:component >
+    <strong>1. Tuition fees and frequency of lessons:</strong>
+    <p>Tuition fees are charged on a monthly basis at the beginning of each month. Payment will be auto-deducted from your customer account on a monthly basis through Visa, Mastercard, or American Express credit cards. Under normal circumstances, monthly tuition fees would cover your enrolment packages that you are subscribed for. Lessons in the 5th week (29th, 30th, and 31st) will auto-schedule any outstanding make-up credits in your account (minimum of your enrolment package duration). In the event there are no outstanding make ups or pre-make ups arranged (within 60-days), the 5th lesson will be billed to your account 7- days prior to the 5th lesson day (once billed, any cancellations of this lesson will be considered a make-up). A non- refundable registration fee of HKD $200 is required for all new students, and is inclusive of an Aureus Academy enrolment kit.</p>
+    
+    <h4 class="f-title"><strong>2. Security Deposit:</strong></h4>
+    <p>Aureus Academy requires one-month (4 lessons) advanced notice for termination of lessons. This security deposit will be refunded to you with one-month (4 lessons) notice or will serve in-lieu of any remaining unpaid lessons within the one-month (4 lesson) notice. Should lessons be terminated without a 30 day advanced notice, the security deposit will be forfeited. Informing an instructor of intent to withdraw, or not attending classes, does not constitute withdrawal from lessons.</p>
+    
+    <h4 class="f-title"><strong>3. Missed Lessons:y</strong></h4>
+    <p>For individual lessons there will be no make up for any cancellation of lessons by the student unless given a minimum of 24 hours notice. In the event a student cancels a lesson on less than 24-hour notice, supporting documents, such as a Medical Certificate, must be provided to receive the make-up credit. Group lessons require 24 hour notice in order to be considered for a make up lesson. For Group Lessons, make up lessons have to be for the same group lesson type or it will be forfeited. Should the teacher need to cancel a lesson, regardless of the reason, it will be replaced and not prorated. This replacement will be rescheduled accordingly to accommodate the time schedule of both parties.</p>
+    
+    <h4 class="f-title"><strong>4. Student Absence Policy:</strong></h4>
+    <p>Tuition fees will be due as per normal, regardless of scheduling changes. For extended periods of absence and advanced scheduling changes, Aureus Academy will arrange make up lessons either before or after the period of absence. All efforts will be made to ensure that the student receives their entitled makeup lessons with their respective teacher. Compliance with our Student Absence Policy allows the student to guarantee their time slot, and their respective teacher during periods of extended absence.</p>
+    
+    <h4 class="f-title"><strong>5. Public Holidays and Annual Leave:</strong></h4>
+    <p>There will be lessons conducted on the following public holidays (Ching Ming Year, Good Friday, The Day After Good Friday, Buddha Birthday, Tuen Ng, Mid Autumn, Chung Yeung Festival, The Day After Christmas). If the lesson falls on a public holiday that we are closed, the lesson will be cancelled and added to your account as a make-up credit. Should the teacher take annual leave, lessons will be made up either before or after the leave period using the standard make-up lesson policy.</p>
+    
+    <h4 class="f-title"><strong>6. Public Holidays and Annual Leave:</strong></h4>
+    <p>In the event lessons are cancelled due to Weather changes, the cancelled lessons will be credited as a makeup lesson to the customer account to be scheduled at the customer’s convenience. Please see attached ‘Weather Policy’ for more details.</p>
+    
+    <h4 class="f-title"><strong>7. Make-Up-Lessons:</strong></h4>
+    <p>In the event lessons are cancelled in advanced, lessons can be made up on another day and time with the teacher. Make-up lessons need to be completed within 120 days of the cancelled lesson or they are forfeited. In the unlikely event the instructor is full and cannot make up the lessons, the customer has the option to make up the lessons with another teacher. Should the customer submit withdrawal notice from the school, outstanding make up lessons need to be completed before the 30-day notice period has ended; otherwise, they are forfeited. Make-up lessons do not replace paid lessons and cannot be extended past the withdrawal notice of 30-days.</p>
+    
+    <h4 class="f-title"><strong>8.  Punctuality:</strong></h4>
+    <p>Students must make the effort to come on time for their lessons. There will not be any make up for any time lost. Strict punctuality is also expected of the instructor, however, should the instructor be late time will be made up accordingly.</p>
+    
+    <h4 class="f-title"><strong>9. Termination:</strong></h4>
+    <p>Aureus Academy reserves the right to dismiss any student due to frequent absences, disciplinary reasons, overdue tuition payments or parental non- compliance with policies and procedures listed here. Should a student wish to terminate his or her lessons, Aureus Academy must be given 30-day notice via email to your centre or the deposit is forfeited.</p>
+    
+    <h4 class="f-title"><strong>10. Personal Property:</strong></h4>
+    <p>Aureus Academy does not assume any responsibility for personal property (including, but not limited to clothing, cameras, cell phones, purses, wallets, vehicles, etc.) lost, damaged or left unattended on school premises and in common areas. Should any of Aureus Academy’s materials or goods be damaged by the student, the student/family is responsible for full replacement. If replacement is not made, then the remaining lessons for the month and deposit are forfeited.</p>
+    
+    <h4 class="f-title"><strong>11. Refund:</strong></h4>
+    <p>Aureus Academy has a strict no refund policy. Should you pay for the lessons and terminate within the same month, you are entitled to the remaining lessons but there will not be any refund.</p>
+    
+    <h4 class="f-title"><strong>12. Official Matters:</strong></h4>
+    <p>All official matters, regarding questions, comments, or concerns are to be communicated directly with the Administrative Office. Should there be any issues, it is best to communicate to your centre through email or by phone. The Company reserves the right, at its discretion, to change, modify, add, or remove portions of these student policies at any time by posting the amended Terms. Your continued enrolment in Aureus Academy constitutes your binding acceptance of such changes to our student policies. Please check these Terms periodically for changes. </p>
+    
+    <h4 class="f-title"><strong>13. Liability:</strong></h4>
+    <p>By using our services, the user and all associated parties waives any responsibility for illness, personal injury, or death anywhere in the premises of Aureus Group Pte. Ltd. facilities. Aureus Group Pte. Ltd. any associated parties are not responsible for any of the above mentioned nor damage of personal goods.</p>
+    
+    
+    <h4 class="f-title"><strong>14. Personal Data:</strong></h4>
+    <p>By signing this student policy form, you hereby agree that Aureus Group HK Ltd.. (or Aureus Academy) may collect, obtain, store and process your personal data that you provide in this form for the purpose of considering your feedback as described in this Form and/or for receiving updates, news, promotional and marketing mails or materials from Aureus Group HK Ltd/Aureus Academy. You hereby give your consent to the Aureus Group HK Ltd. and/or the Aureus Academy to: </p>
+    
+    <p>I: Store and process your personal data</p>
+    <p>II: Use provided personal data for the purposes of marketing, promotion, and updates</p>
+    
+    <p>In addition, your personal data may be transferred to any company within the Aureus Group HK Ltd.. For the purpose of updating or correcting such data, you may at any time apply to the Aureus Group HK Ltd. to have access to your personal data which are stored by the company. Also, Aureus Group HK Ltd.. may use any photos or videos taken for marketing purposes which include Facebook, Newsletters, Website, brochures, and other mediums of marketing communication. For the avoidance of doubt, Personal Data includes all data defined within the Privacy Commissioner for Personal Data, Hong Kong (PCPD) including all data you have disclosed to the Company.</p>
+    
+    <br/>
+    <h4 class="f-title"><strong>Typhoon / Cyclone Warnings</strong></h4>
+    <table>
+        <tr>
+            <td>Signal 1</td>
+            <td>Lessons Operate as usual</td>
+        </tr>
+        <tr>
+            <td>Signal 3</td>
+            <td>Lessons Operate as usual</td>
+        </tr>
+        <tr>
+            <td>Signal 8</td>
+            <td><p>If there is any announcement made by the HK Observatory of a Signal 8 Typhoon Signal before 9:00am, all lessons for that day will be cancelled (unless there is a lowering of signals) and added as makeup credits to the customer account.</p>
+                <p>If the student is already within the premises of Aureus Academy when a Signal 8 Typhoon Signal is announced, students must remain in the Aureus Academy premises until it is safe to return home. </p>
+            </td>
+        </tr>
+        <tr>
+            <td>Lowering Signals</td>
+            <td>If the Typhoon Signal has been lowered from Signal 8 to Signal 3 or 1 by the HK Observatory, all lessons 2 hours after the signal lowering announcement will resume automatically (with no prior announcement required from Aureus Academy).</td>
+        </tr>
+    </table>
+    
+    <br/>
+    <h4 class="f-title"><strong>Rainstorm Warnings</strong></h4>
+    <table>
+        <tr>
+            <td>Amber</td>
+            <td>Lessons Operate as usual</td>
+        </tr>
+        <tr>
+            <td>Red</td>
+            <td><p>Lessons Operate as usual</p>
+                <p>If the student is already in the premises of Aureus Academy while a Black/Red Rainstorm signal is announced, the student must remain in the Aureus Academy premises until it is safe to return home.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>Black</td>
+            <td><p>If there is any announcement made by the HK Observatory, no lessons  </p></td>
+        </tr>
+        <tr>
+            <td>Lowering Signals</td>
+            <td><p>If the signal has been lowered from Black/Red to Amber by the HK Observatory, all lessons 2 hours after the signal lowering announcement will resume automatically (with no prior announcement required from Aureus Academy).</p></td>
+        </tr>
+    </table>
+    
+    <style>
+        table {
+          border-collapse: collapse;
+        }
+        
+        table, th, td {
+          border:1px solid #e2d9d9;  
+          vertical-align: top;
+          padding-left: 5px;
+          padding-top: 5px;
+        }
+    </style>
+</apex:component>

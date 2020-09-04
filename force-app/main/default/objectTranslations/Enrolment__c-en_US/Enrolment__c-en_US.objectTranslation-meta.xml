@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <caseValues>
+        <plural>false</plural>
+        <value>Enrolment</value>
+    </caseValues>
+    <caseValues>
+        <plural>true</plural>
+        <value>Enrolments</value>
+    </caseValues>
+    <layouts>
+        <layout>Enrolment Layout</layout>
+        <sections>
+            <label><!-- Advance Action Details --></label>
+            <section>Advance Action Details</section>
+        </sections>
+        <sections>
+            <label><!-- Booking Details --></label>
+            <section>Booking Details</section>
+        </sections>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+        <sections>
+            <label><!-- Customer Agreement --></label>
+            <section>Customer Agreement</section>
+        </sections>
+        <sections>
+            <label><!-- Customer Exit Feedback --></label>
+            <section>Customer Exit Feedback</section>
+        </sections>
+        <sections>
+            <label><!-- Description --></label>
+            <section>Description</section>
+        </sections>
+        <sections>
+            <label><!-- Promotional Package Details --></label>
+            <section>Promotional Package Details</section>
+        </sections>
+    </layouts>
+    <layouts>
+        <layout>Instrument Enrolment Layout</layout>
+        <sections>
+            <label><!-- Advance Action Details --></label>
+            <section>Advance Action Details</section>
+        </sections>
+        <sections>
+            <label><!-- Booking Details --></label>
+            <section>Booking Details</section>
+        </sections>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+        <sections>
+            <label><!-- Customer Agreement --></label>
+            <section>Customer Agreement</section>
+        </sections>
+        <sections>
+            <label><!-- Customer Exit Feedback --></label>
+            <section>Customer Exit Feedback</section>
+        </sections>
+        <sections>
+            <label><!-- Description --></label>
+            <section>Description</section>
+        </sections>
+        <sections>
+            <label><!-- Promotional Package Details --></label>
+            <section>Promotional Package Details</section>
+        </sections>
+    </layouts>
+    <layouts>
+        <layout>Instrument Rental Page Layout</layout>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+        <sections>
+            <label><!-- Customer Agreement --></label>
+            <section>Customer Agreement</section>
+        </sections>
+        <sections>
+            <label><!-- Delivery address --></label>
+            <section>Delivery address</section>
+        </sections>
+        <sections>
+            <label><!-- Description --></label>
+            <section>Description</section>
+        </sections>
+        <sections>
+            <label><!-- Inspection Detail --></label>
+            <section>Inspection Detail</section>
+        </sections>
+        <sections>
+            <label><!-- Instrument details --></label>
+            <section>Instrument details</section>
+        </sections>
+        <sections>
+            <label><!-- Terminating --></label>
+            <section>Terminating</section>
+        </sections>
+    </layouts>
+    <quickActions>
+        <label><!-- Add Deposit Invoice --></label>
+        <name>Add_Deposit_Invoice</name>
+    </quickActions>
+    <quickActions>
+        <label><!-- Add Makeup Credit --></label>
+        <name>Add_Makeup_Credit</name>
+    </quickActions>
+    <quickActions>
+        <label><!-- Charge Extra Stairs Amount --></label>
+        <name>Charge_Extra_Stairs_Amount</name>
+    </quickActions>
+    <quickActions>
+        <label><!-- Complete Termination --></label>
+        <name>Complete_Termination</name>
+    </quickActions>
+    <quickActions>
+        <label><!-- Rent-to-Purchase --></label>
+        <name>Rent_to_Purchase</name>
+    </quickActions>
+    <quickActions>
+        <label><!-- Submit Inspection Report --></label>
+        <name>Submit_Inspection_Report</name>
+    </quickActions>
+    <quickActions>
+        <label><!-- Terminate Rental --></label>
+        <name>Terminate_Rental</name>
+    </quickActions>
+    <recordTypes>
+        <description><!-- this  Record Type for show Instrument Rental fields --></description>
+        <label><!-- Instrument Rental --></label>
+        <name>Instrument_Rental</name>
+    </recordTypes>
+    <recordTypes>
+        <label><!-- Lesson --></label>
+        <name>Lesson</name>
+    </recordTypes>
+    <startsWith>Consonant</startsWith>
+    <webLinks>
+        <label><!-- Delivery_Sign_Customer --></label>
+        <name>Delivery_Sign_Customer</name>
+    </webLinks>
+    <webLinks>
+        <label><!-- Delivery_Sign_Pack_Mov --></label>
+        <name>Delivery_Sign_Pack_Mov</name>
+    </webLinks>
+    <webLinks>
+        <label><!-- Generate_Enrolment --></label>
+        <name>Generate_Enrolment</name>
+    </webLinks>
+    <workflowTasks>
+        <description><!-- Enrolment confirmation email sent to customer --></description>
+        <name>Enrolment_Confirmation_Email_Sent</name>
+        <subject><!-- Enrolment Confirmation Email Sent --></subject>
+    </workflowTasks>
+    <workflowTasks>
+        <description><!-- Trial booking confirmation email sent to customer. --></description>
+        <name>Trial_Booking_Confirmation_Email</name>
+        <subject><!-- Trial Booking Confirmation Email --></subject>
+    </workflowTasks>
+    <workflowTasks>
+        <description><!-- Trial booking reminder email sent to customer. --></description>
+        <name>Trial_Booking_Reminder_Email</name>
+        <subject><!-- Trial Booking Reminder Email --></subject>
+    </workflowTasks>
+    <workflowTasks>
+        <description><!-- Hi Center Manager, 
+
+A new trial booking has been created online. Please review the new trial and take the necessary action. 
+
+Thanks --></description>
+        <name>Trial_Booking_to_Review</name>
+        <subject><!-- Trial Booking to Review --></subject>
+    </workflowTasks>
+</CustomObjectTranslation>

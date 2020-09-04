@@ -1,0 +1,493 @@
+<apex:component controller="RentalPurchaseSummaryController" allowDML="True">
+    <apex:attribute name="enrolmentId" description="" type="String" required="true" assignTo="{!enrolId}"/>
+    <div style="padding:1px;">
+        <apex:outputPanel >
+            <apex:actionFunction name="getPurchaseBillingSummary" action="{!getPurchaseBillingSummary}" rerender="purchaseBillingSummary" status="spinner"/>
+           
+            <div class="slds-scope mainContainer">
+                <div class="slds-panel slds-size_medium slds-panel_docked slds-panel_docked-left slds-is-open content-box" style="width:100%;border-radius:10px;box-shadow:1px 2px 10px #f79c1a"
+                    aria-hidden="false">
+                    <div class="slds-grid slds-wrap slds-grid--align-center">
+                        <div class="slds-col">
+                            <div class="header slds-col">
+                                <div class="slds-col">
+                                    <a href="#" class="logo">
+                                        <img src="https://aureusacademy.com/wp-content/uploads/2017/03/cropped-Aureus-Logo-Small.png"/>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-panel__header">
+                        <div class="slds-col ">
+                            <span class="main-title">Piano Rental Purchase Summary</span>
+                        </div>
+                    </div>
+                    <apex:outputPanel id="purchaseBillingSummary" >
+                        <div class="content-body slds-col">
+                            <div class="slds-form-element">
+                                <div class="slds-form-element">
+                                    <div class="slds-grid slds-wrap ">
+                                        <label class="slds-form-element__label field-title slds-col slds-size_1-of-1 slds-p-horizontal_medium">
+                                            <b>Enrolment Details</b>
+                                        </label>
+                                        <!--<div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                            <div class="slds-form-element">
+                                                <label class="slds-form-element__label f-title">Student Name
+                                                    <abbr class="slds-required"></abbr>
+                                                </label>
+                                                <div class="slds-form-element__control">
+                                                    <input type="text" class="slds-input inputtxt" value="{!enrolment.Student__r.Name}" disabled="true" />
+                                                </div>
+                                            </div>
+                                        </div>-->
+                                        
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                            <div class="slds-form-element">
+                                                <label class="slds-form-element__label f-title">Parent Name
+                                                    <abbr class="slds-required"></abbr>
+                                                </label>
+                                                <div class="slds-form-element__control">
+                                                    <input type="text" class="slds-input inputtxt" value="{!enrolment.Parent__r.Name}" disabled="true" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                            <div class="slds-form-element">
+                                                <label class="slds-form-element__label f-title">Centre
+                                                    <abbr class="slds-required"></abbr>
+                                                </label>
+                                                <div class="slds-form-element__control">
+                                                    <input type="text" class="slds-input inputtxt" value="{!enrolment.Center__r.Name}" disabled="true" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                            <div class="slds-form-element">
+                                                <label class="slds-form-element__label f-title">Mobile
+                                                    <abbr class="slds-required"></abbr>
+                                                </label>
+                                                <div class="slds-form-element__control">
+                                                    <input type="text" class="slds-input inputtxt" value="{!enrolment.Parent__r.PersonMobilePhone}" disabled="true" />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
+                                            <div class="slds-form-element">
+                                                <label class="slds-form-element__label f-title">Email
+                                                    <abbr class="slds-required"></abbr>
+                                                </label>
+                                                <div class="slds-form-element__control">
+                                                    <input type="text" class="slds-input inputtxt" value="{!enrolment.Parent__r.PersonEmail}" disabled="true" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                       
+                                    </div>
+                                </div>
+                                <!-- Section 2 Start -->
+                                <div class="slds-form-element" style="margin-top: 15px;">
+                                    <label class="slds-form-element__label field-title slds-col slds-size_1-of-1 slds-p-horizontal_medium">
+                                        <b>Charges Summary</b>
+                                    </label>
+                                    <div class="summaryContainer">
+                                        <table id="chargeSummaryTbl" class="slds-table slds-table_cell-buffer slds-table_bordered">
+                                            <thead>
+                                                <tr class="slds-line-height_reset">
+                                                    <th class="" scope="col">
+                                                        <div class="slds-truncate" title="Description">Description</div>
+                                                    </th>
+                                                    <th class="" scope="col">
+                                                        <div class="slds-truncate" title="Amount">Amount</div>
+                                                    </th>
+                                                    <th class="" scope="col">
+                                                        <div class="slds-truncate" title="Discount">Net Amount</div>
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="billSummaryTblBody">
+                                                <apex:repeat value="{!listOfSummary}" var="value">
+                                                    <tr class="slds-line-height_reset">
+                                                        <td class="" scope="col">
+                                                            <div class="slds-truncate" title="Description">
+                                                                <apex:outputText value="{!value.packageName}"></apex:outputText>
+                                                            </div>
+                                                        </td>
+                                                        <td class="" scope="col">
+                                                            <div class="slds-truncate" title="Amount">
+                                                                <apex:outputText value="{0, number, $,##0.00}" >
+                                                                    <apex:param value="{!value.amount}"/>
+                                                                </apex:outputText>
+                                                                <!--<apex:outputText value="{!ROUND(value.amount,2)}"></apex:outputText>-->
+                                                            </div>
+                                                        </td>
+                                                        <td class="" scope="col">
+                                                            <div class="slds-truncate" title="Net Amount">
+                                                                <apex:outputText value="{0, number, $,##0.00}" >
+                                                                    <apex:param value="{!value.netAmount}"/>
+                                                                </apex:outputText>
+                                                                <!--<apex:outputText value="{!ROUND(value.netAmount,2)}"></apex:outputText>
+                                                                -->
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                </apex:repeat>
+                                                <tr>
+                                                    <td></td>
+                                                    <td>
+                                                        <b>Total</b>
+                                                    </td>
+                                                    <td>
+                                                        <b>
+                                                            <apex:outputText value="{0, number, $,##0.00}" >
+                                                                    <apex:param value="{!amountAfterDiscount}"/>
+                                                            </apex:outputText>
+                                                            <!--<apex:outputText value="{!ROUND(amountAfterDiscount,2)}"></apex:outputText>-->
+                                                        </b>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                        <td></td>
+                                                        <td>
+                                                            <b>GST</b>
+                                                        </td>
+                                                        <td>
+                                                            <b>
+                                                                <apex:outputText value="{0, number, $,##0.00}" >
+                                                                    <apex:param value="{!gstAmount}"/>
+                                                                </apex:outputText>
+                                                                <!--<apex:outputText value="{!ROUND(gstAmount,2)}"></apex:outputText>-->
+                                                            </b>
+                                                        </td>
+                                                </tr>
+                                                
+                                                <tr>
+                                                    <td></td>
+                                                    <td>
+                                                        <b>Net Amount</b>
+                                                    </td>
+                                                    <td>
+                                                        <b>
+                                                            <apex:outputText value="{0, number, $,##0.00}" >
+                                                                <apex:param value="{!finalAmount}"/>
+                                                            </apex:outputText>
+                                                            <!--<apex:outputText value="{!ROUND(finalAmount,2)}"></apex:outputText>-->
+                                                        </b>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td></td>
+                                                    <td>
+                                                        <b>Deduct Rental Deposit</b>
+                                                    </td>
+                                                    <td>
+                                                        <b>
+                                                            <apex:outputText value="{0, number, $,##0.00}" >
+                                                                <apex:param value="{!totalRentalDepositAmount}"/>
+                                                            </apex:outputText>
+                                                            <!--<apex:outputText value="{!ROUND(finalAmount,2)}"></apex:outputText>-->
+                                                        </b>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td></td>
+                                                    <td>
+                                                        <b>Final Amount</b>
+                                                    </td>
+                                                    <td>
+                                                        <b>
+                                                            <apex:outputText value="{0, number, $,##0.00}" >
+                                                                <apex:param value="{!finalAmount+totalRentalDepositAmount}"/>
+                                                            </apex:outputText>
+                                                            <!--<apex:outputText value="{!ROUND(finalAmount,2)}"></apex:outputText>-->
+                                                        </b>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <!-- Section 3 End -->
+                                <!-- Student policy start-->
+                                <div class="slds-col slds-size_1-of-1  slds-p-horizontal_medium">
+                                    <div class="slds-form-element">
+                                        <div class="slds-form-element__control">
+                                            <label class="slds-form-element__label  field-title">Student Policies </label>
+                                            <div class="slds-checkbox">
+                                                <input type="checkbox" name="options" id="checkbox-3" value="checkbox-3" class="inputchk" />
+                                                <label class="slds-checkbox__label" for="checkbox-3">
+                                                    <span class="slds-checkbox_faux"></span>
+                                                    <span class="slds-form-element__label">By checking this box and enrolling into Aureus Academy you agree to all
+                                                        of our policies and accept that they may be subject to change. To
+                                                        see our full student policies, please
+                                                        <a href="/apex/prepayment_terms" target="_blank" style="text-decoration: underline !important;">click here</a>
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
+                                    </div>
+                                </div>
+                                <!-- Student policy end-->
+                                <!-- terms and condition start-->
+                                <div class="slds-col slds-size_1-of-1 slds-p-horizontal_medium">
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label  field-title">Terms and Conditions</label>
+                                        <div class="slds-form-element__control">
+                                            <div class="terms-info">
+                                                <h4 class="f-title">
+                                                    <u>Promotion Validity</u>
+                                                </h4>
+                                                <p>The promotion is valid for customers at all of our facilities as well as
+                                                    Home Lessons, and not for Aureus Academy’s contract programmes/international
+                                                    schools</p>
+
+                                                <h4 class="f-title">
+                                                    <u>No Refunds</u>
+                                                </h4>
+                                                <p>
+                                                    <b>
+                                                        <u>There will be strictly no refunds under any circumstances.</u>
+                                                    </b>
+                                                    The Pre-Payment is a special promotion in conjunction with GSS 2019 and
+                                                    it is not compulsory, so customers can decide to participate in this
+                                                    promotion or not. </p>
+
+                                                <h4 class="f-title">
+                                                    <u>Make Up Lessons</u>
+                                                </h4>
+                                                <p>Similar to regular lessons, as long as you continue after the pre-payment
+                                                    period is complete, any pending make up lessons will still be valid for
+                                                    4 months, as per student policy. If any termination of enrolment has
+                                                    been made, any make up lessons will need to be completed before the end
+                                                    of your last lesson.</p>
+
+                                                <h4 class="f-title">
+                                                    <u>Packages Upgrade/ Downgrade</u>
+                                                </h4>
+                                                <p>As this is a promotional package, unfortunately we will not be allowing any
+                                                    downgrading (i.e. from 45 to 30-min lesson packages) of classes. However,
+                                                    for lesson advancements, customers will simply have to pay the deposit
+                                                    top up + difference in lesson fees for the remaining months. The formula
+                                                    will be 60 / 45 mins lesson fee - our fixed prices corresponding with
+                                                    the previous package (i.e. 45 mins is either $349 or $320, 30 mins is
+                                                    either $235 or $213). We will not be calculating the top up from the
+                                                    discounted fees that the customer has already paid (so they continue
+                                                    to enjoy a discount).</p>
+
+                                                <h4 class="f-title">
+                                                    <u>Relocation</u>
+                                                </h4>
+                                                <p>We understand customers might not have control over this. We will do our
+                                                    best to find a solution, but our pre-payment plan is a promotion so we
+                                                    will be unable to refund any unused lessons under any circumstances.</p>
+
+                                                <h4 class="f-title">Change of instructor</h4>
+                                                <p>Aureus does not change teachers very often as we have a minimal turnover
+                                                    of our staff. If we change the teacher as a staff member leaves, we will
+                                                    have a transition where the new teacher will sit in the lessons with
+                                                    the existing teacher before taking over.
+                                                    <b>However, there will be no refunds should you want to cease lessons due
+                                                        to change of instructor. </b>
+                                                </p>
+
+                                                <h4 class="f-title">
+                                                    <u>Location Change</u>
+                                                </h4>
+                                                <p>Customers from centres with a lower fee structure who wish to switch to a
+                                                    centre with higher fee structure will have to top up the difference in
+                                                    fees. We will be calculating the top up fees from the fixed Aureus price
+                                                    corresponding with their package and not from the discounted fees that
+                                                    they had prepaid. We will not be able to refund the difference for customers
+                                                    moving from a higher fee centre to a lower fee centre.</p>
+
+                                                <h4 class="f-title">
+                                                    <u>The prepayment promotion cannot be combined with other ongoing offers
+                                                        or previous historical discounts.</u>
+                                                </h4>
+
+                                                <p>Aureus Group Pte Ltd reserves the right to amend above terms and conditions
+                                                    without prior notice.</p>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- terms and condition end-->
+                               
+                                
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                </div>
+            </div>
+        </apex:outputPanel>
+    </div>
+    <script>
+        $(document).ready(function () {
+            var enrolmentId = '{!enrolmentId}';
+            console.log('enrolmentId', enrolmentId);
+            if (enrolmentId !='') {
+                getPurchaseBillingSummary();
+            }
+        });
+        function closeError(){
+            $('.error_validation').css('display','none');
+        }
+        function closeSucess(){
+            $('.sucess_validation').css('display','none');
+        }
+        function checkIsUpdate(errorString){
+            
+       }
+    </script>
+    <style>
+        body {
+            background-image: url("{!$Resource.music}") !important;
+            background-size: 100% 100% !important;
+            background-repeat: no-repeat !important;
+            background-position: left !important;
+        }
+
+        span.main-title {
+            color: #200a28;
+            font-size: 24px;
+            border-radius: 0;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: block;
+            line-height: 30px;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+
+        .content-box {
+            margin: 50px 0;
+            width: 90%;
+            background: rgba(255, 255, 255, 1);
+            border-radius: 10px;
+        }
+
+        .outstanding {
+            padding: 20px;
+        }
+
+        .custom-btn {
+            padding: 5px 10px 3px !important;
+            color: #fff !important;
+            background: #f79c1a !important;
+            font-size: 16px !important;
+            text-transform: uppercase;
+            line-height: 20px !important;
+            margin: 15px 0 20px;
+            float: right;
+            height: 40px;
+        }
+
+        .terms-info p {
+            margin-bottom: 10px;
+        }
+
+        .terms-info h4.f-title {
+            font-weight: bold;
+            font-size: 14px !important;
+        }
+
+        .terms-info {
+            border: 15px solid #f2f2f2;
+            background: #f2f2f2;
+            height: 145px;
+            overflow-y: scroll;
+            outline: 1px solid #eee;
+        }
+
+        div#signature-pad {
+            position: relative;
+            top: 0;
+            margin: auto;
+            left: 0;
+            width: 100%;
+            margin-top: 10px;
+            box-shadow: none;
+            background: #f2f2f2;
+            border-radius: 0;
+        }
+
+        .m-signature-pad--body canvas {
+            border: 1px solid #ccc;
+            background: #fff;
+        }
+
+        .dark-bg {
+            background: #f2f2f2;
+            width: 100%;
+        }
+
+        .m-signature-pad--footer .button.clear {
+            background: #f79c1a;
+            border: 0 !important;
+            padding: 5px 15px;
+            color: #fff;
+            text-transform: uppercase;
+            left: auto;
+            right: 0;
+        }
+
+        .popupBackground {
+            background-color: lightgrey;
+            opacity: 0.80;
+
+            position: fixed;
+            padding: 0;
+            margin: 0;
+
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 9998;
+            border-radius: 5px;
+        }
+
+        .mainContainer {
+            width: 90%;
+            margin: auto;
+            margin-top: 50px;
+        }
+
+        @media (min-width: 320px) and (max-width: 580px) {
+            .mainContainer {
+                width: 100%;
+                margin: auto;
+                margin-top: 0px;
+            }
+            .summaryContainer {
+                width: 90%;
+                overflow-x: scroll;
+                background: #000;
+            }
+            .content-box {
+                margin: 0px 0;
+            }
+            .m-signature-pad--body canvas {
+                height: 80%;
+            }
+
+            ::-webkit-scrollbar-thumb:horizontal {
+                border-radius: 5px;
+                background-color: red;
+                background-image: -webkit-gradient(linear, 40% 0%, 75% 84%, from(#ff6da2), to(#7983f8), color-stop(.6, #7983f8));
+                height: 10px;
+            }
+            ::-webkit-scrollbar {
+                width: 18px;
+                background-color: #d1d1d1;
+
+            }
+
+
+
+        }
+    </style>
+</apex:component>

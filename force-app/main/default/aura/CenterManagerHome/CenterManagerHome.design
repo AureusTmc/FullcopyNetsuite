@@ -1,0 +1,7 @@
+<design:component label="One column layout">
+    <flexipage:template >
+        <flexipage:region name="dashboard" defaultWidth="MEDIUM">
+            <flexipage:formfactor type="MEDIUM" width="LARGE" />
+        </flexipage:region>
+    </flexipage:template>
+</design:component>

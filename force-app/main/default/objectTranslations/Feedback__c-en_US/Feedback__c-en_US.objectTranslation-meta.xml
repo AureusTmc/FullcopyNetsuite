@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <caseValues>
+        <plural>false</plural>
+        <value>Feedback</value>
+    </caseValues>
+    <caseValues>
+        <plural>true</plural>
+        <value>Feedback</value>
+    </caseValues>
+    <layouts>
+        <layout>Feedback Layout</layout>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+        <sections>
+            <label><!-- Enrolemnt Change Request --></label>
+            <section>Enrolemnt Change Request</section>
+        </sections>
+        <sections>
+            <label><!-- Enrolment Upgrade/Downgrade Request --></label>
+            <section>Enrolment Upgrade/Downgrade Request</section>
+        </sections>
+        <sections>
+            <label><!-- Lesson Details --></label>
+            <section>Lesson Details</section>
+        </sections>
+        <sections>
+            <label><!-- New Section --></label>
+            <section>New Section</section>
+        </sections>
+        <sections>
+            <label><!-- Parent/Student/Teacher Name --></label>
+            <section>Parent/Student/Teacher Name</section>
+        </sections>
+        <sections>
+            <label><!-- TMC Remarks --></label>
+            <section>TMC Remarks</section>
+        </sections>
+        <sections>
+            <label><!-- Widhdrawal of Lesson Request --></label>
+            <section>Widhdrawal of Lesson Request</section>
+        </sections>
+    </layouts>
+    <layouts>
+        <layout>Support Request Feedback Layout</layout>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+        <sections>
+            <label><!-- New Section --></label>
+            <section>New Section</section>
+        </sections>
+        <sections>
+            <label><!-- TMC Remarks --></label>
+            <section>TMC Remarks</section>
+        </sections>
+    </layouts>
+    <recordTypes>
+        <label><!-- Feedback --></label>
+        <name>Feedback</name>
+    </recordTypes>
+    <recordTypes>
+        <label><!-- Support Request --></label>
+        <name>Support_Request</name>
+    </recordTypes>
+    <startsWith>Consonant</startsWith>
+    <validationRules>
+        <errorMessage><!-- Support request can be approved by only &apos;Julius&apos;, &apos;Alex&apos; and &apos;Ying Da&apos;. --></errorMessage>
+        <name>Approved_Restriction</name>
+    </validationRules>
+</CustomObjectTranslation>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>All</fullName>
+    <columns>NAME</columns>
+    <columns>Student__c</columns>
+    <columns>Center__c</columns>
+    <columns>Teacher_Account__c</columns>
+    <columns>Type__c</columns>
+    <columns>Status__c</columns>
+    <columns>Booking_Date__c</columns>
+    <columns>Start_Time__c</columns>
+    <columns>End_Time__c</columns>
+    <columns>CREATED_DATE</columns>
+    <columns>RECORDTYPE</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>student_Name__c</field>
+        <operation>contains</operation>
+        <value>Julius</value>
+    </filters>
+    <label>All</label>
+</ListView>

@@ -1,0 +1,385 @@
+<aura:component controller="OnboardingActivityChecklistController" implements="force:lightningQuickActionWithoutHeader,force:appHostable,flexipage:availableForAllPageTypes,force:hasRecordId" access="global" >
+    <aura:html tag="style">
+        .slds-modal__container{
+            max-width: 88rem;
+            width: 88% !important; 
+            height:95% !important;
+        } 
+    </aura:html>
+    
+    <aura:attribute name="joiningDate" type="string"/>
+    <aura:attribute name="EmployeeName" type="string"/>
+    <aura:attribute name="masterCheckLists" type="object[]"/>
+    <aura:attribute name="masterCheckExitLists" type="object[]"/>
+    <aura:attribute name="static_masterCheckLists" type="object[]"/>
+    <aura:attribute name="static_masterCheckExitLists" type="object[]"/>
+    <aura:handler name="init" value="{!this}" action="{!c.initialize}"/>
+    <aura:attribute name="EmployeeStatus" type="string"/>
+    <aura:attribute name="isDraft" type="boolean" default="false"/>
+    <aura:attribute name="todayDate" type="date"/>
+    
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    <aura:attribute name="Spinner" type="boolean" default="false"/>
+    
+    <aura:attribute name="employee" type="object"/>
+    <aura:attribute name="onboarding_process" type="Boolean" />
+    <aura:attribute name="Exit_process" type="Boolean" />
+    <aura:attribute name="ContractEndDate" type="string"/>
+    <aura:attribute name="DocumentList" type="object[]"/>
+    <aura:attribute name="stages" type="object[]"/>
+    <aura:attribute name="activity" type="string" default=""/>
+    <aura:attribute name="selectAll" type="boolean" default="false"/>
+    <aura:attribute name="selectAllDocument" type="boolean" default="false"/>
+    <aura:attribute name="isSaveAsTemplate" type="Boolean" default="false"/>
+    <aura:attribute name="saveAsTemplateName" type="String"/>
+    <aura:attribute name="isSaveAsExitTemplate" type="Boolean" default="false"/>
+    <aura:attribute name="saveAsTemplateExitName" type="String"/>
+    <aura:attribute name="checkListItemTemplateOnBoarding" type="object[]"/>
+    <aura:attribute name="checkListItemTemplateExit" type="object[]"/>
+    <aura:attribute name="selectedCheckListItemTemplateExit" type="String"/>
+    <aura:attribute name="selectedCheckListItemTemplateOnBoarding" type="String"/>
+    
+    <aura:attribute name="exitTypeList" type="object[]"/>
+    <aura:attribute name="exitType" type="String"/>
+    <aura:if isTrue="{!v.Spinner}">
+        <div aura:id="spinnerId" class="slds-spinner_container" style="background-color: rgba(255, 255, 255, 0)">
+            <div class="slds-spinner--brand  slds-spinner slds-spinner--medium" role="alert">
+                <span class="slds-assistive-text">Loading</span>
+                <div class="slds-spinner__dot-a"></div>
+                <div class="slds-spinner__dot-b"></div>
+            </div>
+        </div>
+    </aura:if>
+    
+    <lightning:card title="Check List Activity" iconName="utility:multi_picklist">
+        <fieldset class="slds-form-element slds-p-around_medium">
+            <lightning:select aura:id="select" name="Select" label="Process Type" value="{!v.activity}" onchange="{!c.resetTemplate}">
+                <option value="">Select Process Type</option>
+                <option value="OnboardingProcess">Onboarding Process</option>
+                <option value="ExitProcess">Exit Process</option>
+            </lightning:select>
+        </fieldset>
+    </lightning:card>
+    <div class="slds-theme_default">
+        <aura:if isTrue="{!or(v.activity == 'OnboardingProcess' , v.activity == 'ExitProcess')}">
+            <lightning:card title="Employee Details" iconName="utility:user">
+                <div class="slds-p-around_medium">
+                    <div class="slds-grid slds-wrap"> 
+                        <div class="slds-col slds-size_1-of-1 slds-large-size_6-of-12 slds-p-right_small">
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="text-input-id-1">Employee Name</label>
+                                <div class="slds-form-element__control">
+                                    <input type="text" value="{!v.EmployeeName}" class="slds-input" disabled="true"/>
+                                </div>
+                            </div>
+                        </div>
+                        <aura:if isTrue="{!v.activity == 'OnboardingProcess'}">
+                            <div class="slds-col slds-size_1-of-1 slds-large-size_6-of-12">
+                                <lightning:input type="date" aura:id="doj" label="Joining Date" class="fixDate"
+                                                 name="Joining Date" value="{!v.joiningDate}"
+                                                 required="true" onchange="{!c.calculateDataByDOJ}" disabled="{!v.isDraft}"/>
+                            </div>
+                        </aura:if>
+                        <aura:if isTrue="{!v.activity == 'ExitProcess'}">
+                            <div class="slds-col slds-size_1-of-1 slds-large-size_6-of-12">
+                                <lightning:input type="date" aura:id="ced" label="Last Working Date" class="fixDate"
+                                                 name="Last Working Date" value="{!v.ContractEndDate}" required="true" 
+                                                 onchange="{!c.calculateDataByLWD}"/>
+                            </div>
+                        </aura:if>
+                    </div>
+                    <aura:if isTrue="{!v.activity == 'ExitProcess'}">
+                    <div class="slds-col slds-size_1-of-1 slds-large-size_6-of-12 slds-p-right_small">
+                        <ui:inputSelect class="single" label="Exit Type" value="{!v.employee.Exit_Type__c}">
+                            <ui:inputSelectOption label="None" text=""/>
+                            <aura:iteration items="{!v.exitTypeList}" var="temp">
+                                <ui:inputSelectOption label="{!temp}" text="{!temp}"/>
+                            </aura:iteration>
+                        </ui:inputSelect>
+                    </div>
+                    </aura:if>
+                </div>
+            </lightning:card>
+            <br/>
+            <aura:if isTrue="{!v.activity == 'ExitProcess'}">
+                <lightning:card title="CheckList Item Template" iconName="utility:text_template">
+                    <div class="slds-col slds-size_1-of-1 slds-large-size_6-of-12">
+                        <div class="slds-p-around_medium">
+                            <ui:inputSelect class="single" value="{!v.selectedCheckListItemTemplateExit}" change="{!c.onExitSelectChange}">
+                                <ui:inputSelectOption label="None" text=""/>
+                                <aura:iteration items="{!v.checkListItemTemplateExit}" var="temp">
+                                    <ui:inputSelectOption label="{!temp.label}" text="{!temp.value}"/>
+                                </aura:iteration>
+                            </ui:inputSelect>
+                        </div>
+                    </div>
+                </lightning:card>
+                <!-- Checklist Activity -->
+                <lightning:card title="Checklist Activity" iconName="utility:note">
+                    <aura:if isTrue="{!v.masterCheckExitLists.length>0}">
+                        <div class="slds-p-around_medium">
+                            <div class="slds-grid slds-wrap tableth slds-text-title_caps">
+                                <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-12">
+                                    <div class="slds-truncate" title="Select All">
+                                        <div class="slds-form-element">
+                                            <div class="slds-form-element__control">
+                                                <label class="slds-checkbox">
+                                                    <ui:inputCheckbox aura:id="isAll" value="{!v.selectAll}" change="{!c.selectAllAct}"/>
+                                                    <span class="slds-checkbox--faux"></span>
+                                                    <span class="slds-form-element__label text"></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div> 
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-large-size_7-of-12">
+                                    Activity Name
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-large-size_4-of-12">
+                                    Due Date
+                                </div>
+                            </div>
+                            <div class="scroll350px">
+                                <aura:iteration items="{!v.masterCheckExitLists}" var="mtr">
+                                    <div class="slds-grid slds-wrap">
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-12" style="padding-top: 2%;">
+                                            <div class="slds-truncate" title="{!mtr.master_check.Activity_Name__c}">
+                                                <div class="slds-form-element">
+                                                    <div class="slds-form-element__control">
+                                                        <label class="slds-checkbox">
+                                                            <ui:inputCheckbox text="{!mtr.master_check.Id}" aura:id="isChecked" value="{!mtr.isChecked}"/>
+                                                            <span class="slds-checkbox--faux"></span>
+                                                            <span class="slds-form-element__label text"></span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>    
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_7-of-12" style="padding-top: 2%;">
+                                            <div class="slds-truncate" title="{!mtr.master_check.Activity_Name__c}" style="font-weight: 600;">{!mtr.master_check.Activity_Name__c}</div>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_4-of-12">
+                                            <lightning:input type="date" aura:id="doj" label="" name="Joining Date" value="{!mtr.checklist_Item.Due_Date__c}" required="true" min="{!v.todayDate}"/>
+                                        </div>
+                                    </div>
+                                    <div style="border-bottom: 1px solid rgb(201, 199, 197);padding-top: 10px;"></div>
+                                </aura:iteration>
+                            </div>
+                            
+                            <br/>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
+                                    <div class="slds-form-element">
+                                        <div class="slds-form-element__control">
+                                            <label class="slds-checkbox">
+                                                <ui:inputCheckbox text="Save As Template" value="{!v.isSaveAsExitTemplate}"/>
+                                                <span class="slds-checkbox--faux"></span>
+                                                <span class="slds-form-element__label text">Save As Template</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2"></div>
+                                <aura:if isTrue="{!v.isSaveAsExitTemplate}">
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
+                                        <lightning:input type="text" label="Template Name" name="Template Name" value="{!v.saveAsTemplateExitName}" required="true"/>
+                                    </div> 
+                                </aura:if>
+                            </div>
+                        </div>
+                        <aura:set attribute="else">
+                            <ui:message title="Information" severity="info" closable="false">
+                                No records to display.
+                            </ui:message>
+                        </aura:set>
+                    </aura:if>
+                </lightning:card>
+            </aura:if>
+            <aura:if isTrue="{!v.activity == 'OnboardingProcess'}">
+                <lightning:card title="CheckList Item Template" iconName="utility:text_template">
+                    <div class="slds-col slds-size_1-of-1 slds-large-size_6-of-12">
+                        <div class="slds-p-around_medium">
+                            <ui:inputSelect class="single" value="{!v.selectedCheckListItemTemplateOnBoarding}"  disabled="{!v.isDraft}" change="{!c.onOnBoardingSelectChange}">
+                                <ui:inputSelectOption label="None" text=""/>
+                                <aura:iteration items="{!v.checkListItemTemplateOnBoarding}" var="temp">
+                                    <ui:inputSelectOption label="{!temp.label}" text="{!temp.value}"/>
+                                </aura:iteration>
+                            </ui:inputSelect>
+                        </div>
+                    </div>
+                </lightning:card>
+                <!-- Checklist Activity -->
+                <lightning:card title="Checklist Activity" iconName="utility:note">
+                    <aura:if isTrue="{!v.masterCheckLists.length>0}">
+                        <div class="slds-p-around_medium">
+                            <div class="slds-grid slds-wrap tableth slds-text-title_caps">
+                                <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-12">
+                                    <div class="slds-truncate" title="Select All">
+                                        <div class="slds-form-element">
+                                            <div class="slds-form-element__control">
+                                                <label class="slds-checkbox">
+                                                    <ui:inputCheckbox disabled="{!v.isDraft}" aura:id="isAll" value="{!v.selectAll}" change="{!c.selectAllAct}"/>
+                                                    <span class="slds-checkbox--faux"></span>
+                                                    <span class="slds-form-element__label text"></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div> 
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-large-size_7-of-12">
+                                    Activity Name
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-large-size_4-of-12">
+                                    Due Date
+                                </div>
+                            </div>
+                            <div class="scroll350px">
+                                <aura:iteration items="{!v.masterCheckLists}" var="mtr">
+                                    <div class="slds-grid slds-wrap">
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-12" style="padding-top: 2%;">
+                                            <div class="slds-truncate" title="{!mtr.master_check.Activity_Name__c}">
+                                                <div class="slds-form-element">
+                                                    <div class="slds-form-element__control">
+                                                        <label class="slds-checkbox">
+                                                            <ui:inputCheckbox text="{!mtr.master_check.Id}" disabled="{!v.isDraft}" aura:id="isChecked" value="{!mtr.isChecked}"/>
+                                                            <span class="slds-checkbox--faux"></span>
+                                                            <span class="slds-form-element__label text"></span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>    
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_7-of-12" style="padding-top: 2%;">
+                                            <div class="slds-truncate" title="{!mtr.master_check.Activity_Name__c}" style="font-weight: 600;">{!mtr.master_check.Activity_Name__c}</div>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_4-of-12">
+                                            <lightning:input type="date" aura:id="doj" label="" disabled="{!v.isDraft}" name="Joining Date" value="{!mtr.checklist_Item.Due_Date__c}" required="true" min="{!v.todayDate}"/>
+                                        </div>
+                                    </div>
+                                    <div style="border-bottom: 1px solid rgb(201, 199, 197);padding-top: 10px;"></div>
+                                </aura:iteration>
+                            </div>
+                            <br/>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
+                                    <div class="slds-form-element">
+                                        <div class="slds-form-element__control">
+                                            <label class="slds-checkbox">
+                                                <ui:inputCheckbox text="Save As Template" disabled="{!v.isDraft}" value="{!v.isSaveAsTemplate}"/>
+                                                <span class="slds-checkbox--faux"></span>
+                                                <span class="slds-form-element__label text">Save As Template</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2"></div>
+                                <aura:if isTrue="{!v.isSaveAsTemplate}">
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
+                                        <lightning:input type="text" label="Template Name" disabled="{!v.isDraft}" name="Template Name" value="{!v.saveAsTemplateName}" required="true"/>
+                                    </div> 
+                                </aura:if>
+                            </div>
+                        </div>
+                        <aura:set attribute="else">
+                            <ui:message title="Information" severity="info" closable="false">
+                                No records to display.
+                            </ui:message>
+                        </aura:set>
+                    </aura:if>
+                </lightning:card>
+            </aura:if>
+            <br/>
+            <aura:if isTrue="{!v.activity == 'OnboardingProcess'}">
+                <!-- Document List -->
+                <lightning:card title="Document List" iconName="utility:file">
+                    <aura:if isTrue="{!v.DocumentList.length>0}">
+                        <div class="slds-p-around_medium">
+                            <div class="slds-grid slds-wrap tableth slds-text-title_caps">
+                                <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-12">
+                                    <div class="slds-truncate" title="Select All">
+                                        <div class="slds-form-element">
+                                            <div class="slds-form-element__control">
+                                                <label class="slds-checkbox">
+                                                    <ui:inputCheckbox disabled="{!v.isDraft}" aura:id="isAllDocument" value="{!v.selectAllDocument}" change="{!c.selectAllDoc}"/>
+                                                    <span class="slds-checkbox--faux"></span>
+                                                    <span class="slds-form-element__label text"></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div> 
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-large-size_5-of-12">
+                                    Document Name
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-large-size_4-of-12">
+                                    Stage
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-large-size_2-of-12">
+                                    <label>Required</label>
+                                </div>
+                            </div>
+                            <div class="scroll350px">
+                                <aura:iteration items="{!v.DocumentList}" var="doc">
+                                    <div class="slds-grid slds-wrap" style="margin-top: 10px;">
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-12">
+                                            <div class="slds-truncate" title="{!doc.documentName}">
+                                                <div class="slds-form-element">
+                                                    <div class="slds-form-element__control">
+                                                        <label class="slds-checkbox">
+                                                            <ui:inputCheckbox text="{!doc.documentName.Id}" disabled="{!v.isDraft}" aura:id="isCheckedDocument" value="{!doc.isChecked}"/>
+                                                            <span class="slds-checkbox--faux"></span>
+                                                            <span class="slds-form-element__label text"></span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>  
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_5-of-12">
+                                            <div class="slds-truncate" title="{!doc.documentName}" style="font-weight: 600;">{!doc.documentName}</div>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_4-of-12 datatable margin-top-5px">
+                                            <div class="slds-truncate" title="{!doc.onBoardingStatge}">
+                                                <ui:inputSelect class="single" aura:id="InputSelectSingle" value="{!doc.onBoardingStatge}"  disabled="{!v.isDraft}">
+                                                    <aura:iteration items="{!v.stages}" var="st">
+                                                        <ui:inputSelectOption text="{!st}"/>
+                                                    </aura:iteration>
+                                                </ui:inputSelect>
+                                            </div>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-large-size_2-of-12 datatable margin-top-5px">
+                                            <div class="slds-truncate" title="{!doc.documentName}" style="margin-left: 5%;">
+                                                <div class="slds-form-element">
+                                                    <div class="slds-form-element__control">
+                                                        <label class="slds-checkbox">
+                                                            <ui:inputCheckbox text="{!doc.isRequired}" disabled="{!v.isDraft}" aura:id="isCheckedDocumentRequired" value="{!doc.isRequired}"/>
+                                                            <span class="slds-checkbox--faux"></span>
+                                                            <span class="slds-form-element__label text"></span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div> 
+                                        </div>
+                                    </div>
+                                    <div style="border-bottom: 1px solid rgb(201, 199, 197);padding-top: 10px;"></div>
+                                </aura:iteration>
+                            </div>
+                        </div>
+                        <aura:set attribute="else">
+                            <ui:message title="Information" severity="info" closable="false">
+                                No records to display.
+                            </ui:message>
+                        </aura:set>
+                    </aura:if>
+                </lightning:card>
+            </aura:if>
+        </aura:if>
+        <br/>
+        <aura:if isTrue="{!or(v.activity == 'OnboardingProcess' , v.activity == 'ExitProcess')}">
+            <div class="slds-docked-form-footer" style="background: white">
+                <button type="button" class="slds-button slds-button_neutral" onclick="{!c.cancel}">Cancel</button>
+                <button type="button" class="slds-button slds-button_brand" onclick="{!c.save}">Save</button>
+            </div>
+        </aura:if>
+    </div>
+</aura:component>

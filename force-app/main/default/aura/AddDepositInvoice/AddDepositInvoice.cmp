@@ -1,0 +1,11 @@
+<aura:component controller="AddDepositInvoiceClass" implements="flexipage:availableForRecordHome,force:hasRecordId,force:lightningQuickAction" access="global" >
+    <aura:attribute name="recordId" type="String" />
+    <aura:attribute name="isPopup" type="boolean" default="false"/>
+	<aura:handler name="init" value="{!this}" action="{!c.initialize}"/>
+    
+    <aura:if isTrue="{!v.isPopup}">
+                    <div style="text-align: center;margin-top: 20%;">
+                        <span style="font-weight:bold;color:firebrick;">Please Choose Booking Apart From Trial</span>
+                    </div>
+    </aura:if>
+</aura:component>

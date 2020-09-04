@@ -1,0 +1,1223 @@
+<apex:component controller="CampStudentEnrolSummaryCtrl" allowDML="True">
+    <apex:attribute name="accountDetails" description="" type="string" required="true" assignTo="{!accountModalDetails}" />
+
+    <style>
+        @media(min-width:991px) {
+            .class-true {
+                margin: 0px 120px;
+            }
+            .m-lg-4 {
+                margin-right: 35px;
+            }
+        }
+
+        @media (min-width: 300px) and (max-width: 700px) {
+            .studentTime {
+                float: left !important;
+            }
+        }
+
+        .icon-collapse,
+        .icon-collapse:focus,
+        .icon-collapse:hover {
+            color: #000;
+            font-weight: bold;
+            font-size: 26px;
+            text-decoration: none;
+        }
+
+        input {
+            height: calc(1.875rem + (1px * 10));
+        }
+
+        ul li {
+            margin-left: 0px;
+        }
+
+        @media(min-width:999px) {
+            .m-lg-right {
+                margin-right: .75rem;
+            }
+        }
+
+        @media(min-width:767px) {
+            .text-lg-left {
+                text-align: left;
+            }
+            .text-lg-right {
+                text-align: right;
+            }
+            .slds-large-p-around_large {
+                padding: 1.5rem;
+            }
+            .slds-large-p-horizontal_xx-large {
+                padding-left: 3rem;
+                padding-right: 3rem;
+            }
+        }
+
+        @media(max-width:444px) {
+            .m-sm-0 {
+                margin: 0px;
+            }
+        }
+
+        .ui-state-highlight,
+        .ui-widget-content .ui-state-highlight,
+        .ui-widget-header .ui-state-highlight {
+            border: 0px;
+            background: #3fa6fb;
+            position: relative;
+            color: #fff;
+        }
+
+        .ui-state-active:after {
+            position: absolute;
+            content: "";
+            padding: 3px;
+            background-color: #fff;
+            border-radius: 4px;
+            bottom: 5px;
+            left: 15px;
+        }
+
+        }
+
+        .ui-state-default,
+        .ui-widget-content .ui-state-default,
+        .ui-widget-header .ui-state-default,
+        .ui-button,
+        html .ui-button.ui-state-disabled:hover,
+        html .ui-button.ui-state-disabled:active {
+            border: 0px;
+        }
+
+        .ui-datepicker {
+            width: 19em;
+            margin: 0 auto;
+        }
+
+        .disableButton {
+            pointer-events: none !important;
+            opacity: 0.5 !important;
+        }
+
+        .btn-yellow,
+        .btn-yellow:hover,
+        .btn-yellow:focus {
+            background-color: #ffbf2f;
+            color: #fff;
+        }
+
+        .date-list .date-cell {
+            box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0), 0 2px 6px 0 rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            cursor: pointer;
+            color: #ffbf2f;
+            padding: 8px 35px;
+            margin: 5px 5px 18px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .date-list .date-cell.active {
+            color: #ffffff;
+            background-color: #ffbf2f;
+        }
+
+        .slds-button_success {
+            color: #fff !important;
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+
+        .text-yellow {
+            color: #ffbf2f;
+        }
+
+        .btn-block {
+            display: block;
+            width: 100%;
+            font-size: 1.2rem;
+        }
+
+        .btn-gray,
+        .btn-gray:hover,
+        .btn-gray:focus {
+            background-color: #ccced0;
+            color: #fff;
+        }
+
+        .slds-checkbox .slds-checkbox--faux,
+        .slds-checkbox .slds-checkbox_faux {
+            font-size: 16px;
+            border-color: #000;
+            box-shadow: 0 1px 0 0 #ececee;
+            top: 4px;
+        }
+
+        .box-info {
+            box-shadow: 0 1px 0 0 #ececee;
+            background-color: #fff;
+            margin-bottom: 4px;
+        }
+
+        ::placeholder {
+            /* Chrome, Firefox, Opera, Safari 10.1+ */
+            color: #353c43;
+            opacity: 0.5;
+            /* Firefox */
+        }
+
+        #step-2,
+        #step-3 {
+            background-color: #fff;
+        }
+
+        .title-no {
+            border: solid 1px #353c43;
+            border-radius: 50%;
+            padding: 4px 9px;
+        }
+
+        .bg-light {
+            background-color: #f7f7f7 !important;
+        }
+
+        .w-50 {
+            width: 50%;
+        }
+
+        .font-bold {
+            font-weight: bold;
+        }
+
+        .dateFormat {
+            display: none;
+        }
+
+        #card-errors {
+            color: red;
+        }
+
+        .StripeElement {
+            box-sizing: border-box;
+
+            height: 40px;
+
+            padding: 10px 12px;
+
+            border: 1px solid transparent;
+            border-radius: 4px;
+            background-color: white;
+
+            box-shadow: 0 1px 3px 0 #e6ebf1;
+            -webkit-transition: box-shadow 150ms ease;
+            transition: box-shadow 150ms ease;
+        }
+
+        .StripeElement--focus {
+            box-shadow: 0 1px 3px 0 #cfd7df;
+        }
+
+        .StripeElement--invalid {
+            border-color: #fa755a;
+        }
+
+        .StripeElement--webkit-autofill {
+            background-color: #fefde5 !important;
+        }
+
+        .requiredInput {
+            border-left: 2px solid #F44336;
+        }
+
+        .f-title {
+            font-size: 14px !important;
+        }
+
+        .student-policy-class {
+            height: 260px;
+            overflow-y: scroll;
+        }
+
+        .studentSection {
+            width: 100% !important;
+            overflow-x: scroll !important;
+        }
+    </style>
+    <apex:actionFunction name="saveParentCardDetailsAndGenerateInvoice" action="{!saveParentCardDetailsAndGenerateInvoice}" reRender="enrolBillDetailsPanel"
+        oncomplete="checkError('{!isError}','{!errorMsg}');return false;" status="spinner">
+        <apex:param name="tokenId" value="" assignTo="{!stripeToken}" />
+    </apex:actionFunction>
+    <apex:actionFunction name="saveParentCardDetailsSiteUser" action="{!saveParentCardDetailsSiteUser}" reRender="enrolBillDetailsPanel"
+        oncomplete="checkError('{!isError}','{!errorMsg}');return false;" status="spinner">
+        <apex:param name="tokenId" value="" assignTo="{!stripeToken}" />
+    </apex:actionFunction>
+    <apex:actionFunction name="getSession" status="spinner" action="{!createSession}" reRender="framePanel,enrolBillDetailsPanel"
+        oncomplete="showModal();" />
+    <apex:actionFunction name="sendAgreement" status="spinner" action="{!sendAgreement}" oncomplete="getSession();return false;"
+    />
+    <apex:actionFunction name="waitAgreement" status="spinner" action="{!waitAgreement}" reRender="StudentEnrollSummary" oncomplete="sendAgreement();return false;"
+    />
+    <apex:actionFunction name="signAgreement" status="spinner" action="{!signAgreement}" oncomplete="waitForTwoSecond();return false;"
+    />
+    <apex:actionFunction name="updateCustomer" status="spinner" action="{!createParentDetails}" reRender="enrolBillDetailsPanel"
+        oncomplete="signAgreement();return false;" />
+
+    <apex:outputPanel id="StudentEnrollSummary" >
+        <div class="slds-grid slds-wrap slds-col slds-size_12-of-12" id="showStudentSummaryDiv">
+            <div class="slds-col slds-size_12-of-12 slds-notify_container slds-is-relative slds-hide paymentCmpErrDiv">
+                <div class="slds-notify slds-notify_toast slds-theme_error slds-m-left_none slds-m-right_medium" role="status">
+                    <div class="slds-notify__content">
+                        <h2 class="slds-text-heading_small contentPaymentCmpErrDiv"></h2>
+                    </div>
+
+                    <div class="slds-notify__close">
+                        <button class="slds-button slds-button_icon slds-button_icon-inverse" onclick=" $('.paymentCmpErrDiv').addClass('slds-hide');return false;"
+                            title="Close">
+                            X
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!--<apex:outputPanel rendered="{!isSiteGuestUser}">
+<div class="slds-p-around_medium" style="font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;">Aureus Academy Enrolment Process
+</div>
+<p style="text-align:center;">
+<apex:image url="{!$Resource.Aureus_logo_png}" />
+</p>
+</apex:outputPanel>-->
+
+            <div id="step-3" class="slds-grid slds-wrap slds-col slds-size_12-of-12">
+                <!--{!IF(isSiteGuestUser, 'class-true','')}-->
+                <div class="slds-grid slds-wrap slds-col slds-size_12-of-12" id="StudentSummary">
+                    <article class="slds-card  slds-col slds-size_12-of-12 ">
+                        <div class="slds-modal__header modalHeader slds-grid">
+                            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                <div class="slds-media__body">
+                                    <h2 class="slds-card__header-title">
+                                        <a href="javascript:void(0);" class="slds-card__header-link slds-truncate" title="Select Camp Package">
+                                            <span>Enrolment Summary</span>
+                                        </a>
+                                    </h2>
+                                </div>
+                            </header>
+                        </div>
+                        <div class="slds-card__body slds-card__body_inner slds-col slds-size_12-of-12 slds-p-top_xx-large ">
+
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-col slds-large-size_2-of-3">
+                                    <h3 class="slds-text-heading_medium" style="font-weight:bold;">
+                                        <span class="slds-m-right_small title-no">1</span> Enrolment Details</h3>
+                                </div>
+                                <div class="slds-col slds-large-size_1-of-3 slds-text-align_right ">
+                                    <span class="slds-p-horizontal_small">
+                                        <a href="javascript:void(0);" class="icon-collapse fa fa-angle-up slds-m-left_small" onclick="showHideSections('nameErollDetails', this);"></a>
+                                    </span>
+                                </div>
+
+                            </div>
+                            <hr style="margin-top:10px; margin-bottom:0px;" />
+                            <apex:outputPanel id="enrolDetailsPanel">
+                                <div class="nameErollDetails">
+                                    <div class="slds-grid slds-wrap">
+                                        <div class="slds-size_1-of-1 slds-large-size_1-of-2">
+                                            <div class="slds-p-around_small slds-m-top_small box-info m-lg-right" style="font-weight:700;">
+                                                {!EnrolStudentDetails.objCampClass.Centre__r.Name}
+                                            </div>
+                                        </div>
+                                        <div class="slds-size_1-of-1 slds-large-size_1-of-2 ">
+                                            <div class="slds-p-around_small slds-m-top_small box-info m-lg-right" style="font-weight:700;">
+                                                {!EnrolStudentDetails.objCampClass.Name}
+                                            </div>
+                                        </div>
+                                        <div class="slds-size_1-of-1 slds-large-size_1-of-2 ">
+                                            <div class="slds-p-around_small slds-m-top_small box-info m-lg-right" style="font-weight:700;">
+                                                {!EnrolStudentDetails.objCampClass.Camp_Description__c}
+                                            </div>
+                                        </div>
+                                        <div class="slds-size_1-of-1 slds-large-size_1-of-1 ">
+                                            <article class="slds-card">
+                                                <div class="slds-card__header slds-grid">
+                                                    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                                        <div class="slds-media__body">
+                                                            <h2 class="slds-card__header-title" style="font-weight:700;">
+                                                                <span>Selected Camp Details</span>
+                                                            </h2>
+                                                        </div>
+                                                    </header>
+                                                </div>
+                                                <div class="slds-card__body slds-card__body_inner slds-grid slds-wrap responsiveTabel">
+                                                    <table class="slds-table slds-table_cell-buffer slds-table_bordered studentSection">
+                                                        <thead>
+                                                            <tr class="slds-line-height_reset">
+                                                                <th class="" scope="col">
+                                                                    <div class="slds-truncate" title="Student Name">Student Name</div>
+                                                                </th>
+                                                                <th class="" scope="col">
+                                                                    <div class="slds-truncate" title="Selected Package">Selected Package</div>
+                                                                </th>
+                                                                <th class="" scope="col">
+                                                                    <div class="slds-truncate" title="Selected Days">Selected Days</div>
+                                                                </th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="studentDetailSummaryBody">
+                                                            <apex:repeat value="{!EnrolStudentDetails.studentDetails.listOfStudentDetails}" var="objStudentDetail">
+                                                                <tr aria-selected="false" id="studentSummaryDetail-studentId" class="slds-hint-parent">
+                                                                    <th scope="row">
+                                                                        <div class="slds-truncate">
+                                                                            {!objStudentDetail.student.fullName}
+                                                                        </div>
+                                                                    </th>
+                                                                    <td role="gridcell">
+                                                                        <div class="slds-truncate">
+                                                                            {!objStudentDetail.selectedPackageName}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td role="gridcell">
+                                                                        <div class="slds-truncate">
+                                                                            {!objStudentDetail.campDates}
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            </apex:repeat>
+                                                        </tbody>
+                                                    </table>
+
+                                                </div>
+                                            </article>
+                                            <!--commented by jatin: 19-feb-2020: for show all package details in student section 
+<article class="slds-card">
+<div class="slds-card__header slds-grid">
+<header class="slds-media slds-media_center slds-has-flexi-truncate">
+<div class="slds-media__body">
+<h2 class="slds-card__header-title" style="font-weight:700;">
+<span>Selected Camp Details</span>
+</h2>
+</div>
+</header>
+</div>
+<div class="slds-card__body slds-card__body_inner slds-grid slds-wrap">
+<apex:variable var="CampDay" value="{!1}" />
+<apex:repeat value="{!EnrolStudentDetails.campDayList}" var="objcampDay">
+<div class="  slds-col  slds-size_1-of-1 slds-large-size_1-of-1">
+<div class="slds-p-around_small slds-m-top_small box-info m-lg-right" style="font-weight:700;">
+<div class="slds-clearfix">
+<div class="slds-float_left">
+Camp Day - {!CampDay} -
+<apex:outputText value="{0, date, dd/MM/yyyy}">
+<apex:param value="{!objcampDay.Dates_Of_The_Camp__c}" />
+</apex:outputText>
+</div>
+<div class="slds-float_right">
+{!HOUR(objcampDay.Camp_Start_Time__c)}:
+<apex:outputText value="{0,number,00}">
+<apex:param value="{!Minute(objcampDay.Camp_Start_Time__c)}" />
+</apex:outputText> AM - {!HOUR(objcampDay.Camp_End_Time__c)}:
+<apex:outputText value="{0,number,00}">
+<apex:param value="{!Minute(objcampDay.Camp_End_Time__c)}" />
+</apex:outputText> PM
+</div>
+</div>
+</div>
+</div>
+<apex:variable var="CampDay" value="{!CampDay+1}" />
+</apex:repeat>
+</div>
+</article>-->
+                                        </div>
+                                    </div>
+
+                                    <!--<div class="slds-p-around_small slds-m-top_small box-info" style="font-weight:700;">
+<apex:outputText value="{0, date, EEEE}">
+<apex:param value="{EnrolStudentDetails.ListOfCamp[0].Camp_Days__r[0].Dates_Of_The_Camp__c}" />
+</apex:outputText>
+
+<apex:outputText value="{0, date, dd MMMM, yyyy}">
+<apex:param value="{EnrolStudentDetails.ListOfCamp[0].Camp_Days__r[0].Dates_Of_The_Camp__c}" />
+</apex:outputText>
+</div>-->
+
+                                </div>
+                            </apex:outputPanel>
+
+                            <hr class="slds-m-vertical_x-large" />
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-col slds-large-size_2-of-3 slds-p-bottom_small">
+                                    <h3 class="slds-text-heading_medium" style="font-weight:bold;">
+                                        <span class="slds-m-right_small title-no">2</span>Parent Details</h3>
+                                </div>
+                                <div class="slds-col slds-large-size_1-of-3 slds-text-align_right slds-p-bottom_small">
+                                    <span class="slds-p-horizontal_small">
+                                        <a href="javascript:void(0);" class="icon-collapse fa fa-angle-up slds-m-left_small" onclick="showHideSections('parentdetails', this);"></a>
+                                    </span>
+                                </div>
+
+                            </div>
+                            <apex:outputPanel id="parentDetailsPanel">
+                                <div class="parentdetails">
+                                    <div class="slds-grid slds-wrap slds-p-top_large">
+                                        <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                            <div class="slds-form-element  m-lg-right">
+                                                <div class="slds-form-element__control">
+                                                    <apex:inputText html-placeholder="First Name" styleClass="slds-input requiredInput" value="{!EnrolStudentDetails.studentDetails.parentAccDetails.firstName}"
+                                                        disabled="true" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                            <div class="slds-form-element">
+                                                <div class="slds-form-element__control">
+                                                    <apex:inputText html-placeholder="Last Name" styleClass="slds-input requiredInput" value="{!EnrolStudentDetails.studentDetails.parentAccDetails.lastname}"
+                                                        disabled="true" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-grid slds-wrap">
+                                        <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                            <div class="slds-form-element  m-lg-right">
+                                                <div class="slds-form-element__control">
+                                                    <apex:inputText disabled="true" html-placeholder="Email" styleClass="slds-input requiredInput" value="{!EnrolStudentDetails.studentDetails.parentAccDetails.PersonEmail}"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                            <div class="slds-form-element">
+                                                <div class="slds-form-element__control">
+                                                    <apex:inputText html-placeholder="Phone" styleClass="slds-input requiredInput" value="{!EnrolStudentDetails.studentDetails.parentAccDetails.phone}"
+                                                        disabled="true" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <apex:outputPanel rendered="{!EnrolStudentDetails.studentDetails.isAureusAtHome}" styleClass="slds-col slds-size_12-of-12">
+                                        <div class="slds-grid slds-wrap">
+                                            <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                                <div class="slds-form-element  m-lg-right">
+                                                    <div class="slds-form-element__control">
+                                                        <apex:inputText disabled="true" html-placeholder="Email" styleClass="slds-input requiredInput" value="{!EnrolStudentDetails.studentDetails.parentAccDetails.BillingStreet}"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                                <div class="slds-form-element">
+                                                    <div class="slds-form-element__control">
+                                                        <apex:inputText html-placeholder="Phone" styleClass="slds-input requiredInput" value="{!EnrolStudentDetails.studentDetails.parentAccDetails.BillingCity}"
+                                                            disabled="true" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="slds-grid slds-wrap">
+                                            <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                                <div class="slds-form-element  m-lg-right">
+                                                    <div class="slds-form-element__control">
+                                                        <apex:inputText disabled="true" html-placeholder="Email" styleClass="slds-input requiredInput" value="{!EnrolStudentDetails.studentDetails.parentAccDetails.BillingPostalCode}"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                                <div class="slds-form-element">
+                                                    <div class="slds-form-element__control">
+                                                        <apex:inputText html-placeholder="Phone" styleClass="slds-input requiredInput" value="{!EnrolStudentDetails.studentDetails.parentAccDetails.BillingCountryCode}"
+                                                            disabled="true" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </apex:outputPanel>
+                                </div>
+                            </apex:outputPanel>
+
+                           <!-- Commented by jatin:start: 24-Feb-2020:NEed to remove/Hide the student Section in the Camp Summary.
+                             <hr class="slds-m-vertical_x-large" />
+
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-col slds-large-size_2-of-3 slds-p-bottom_small">
+                                    <h3 class="slds-text-heading_medium" style="font-weight:bold;">
+                                        <span class="slds-m-right_small title-no">3</span>Student Information</h3>
+                                </div>
+                                <div class="slds-col slds-large-size_1-of-3 slds-text-align_right slds-p-bottom_small">
+                                    <span class="slds-p-horizontal_small">
+                                        <a href="javascript:void(0);" class="icon-collapse fa fa-angle-up slds-m-left_small" onclick="showHideSections('studentinform', this);"></a>
+                                    </span>
+                                </div>
+                            </div>
+                            <apex:outputPanel id="studentDetailsPanel">
+
+                                <div class="studentinform">
+                                    <apex:outputPanel rendered="{!and(EnrolStudentDetails.listOfcampStudentCampDays != null, EnrolStudentDetails.listOfcampStudentCampDays.size > 0)}">
+                                        <apex:repeat value="{!EnrolStudentDetails.listOfcampStudentCampDays}" var="objStudentAccount">
+                                            <div class="slds-m-bottom_large">
+                                                <p class="slds-text-heading_small">
+                                                    <strong>{!objStudentAccount.studentDetail.FirstName} {!objStudentAccount.studentDetail.LastName}
+                                                        Details
+                                                    </strong>
+                                                </p>
+
+                                            </div>
+                                            <div class="slds-grid slds-wrap slds-p-top_large">
+                                                <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                                    <div class="slds-form-element  m-lg-right">
+                                                        <div class="slds-form-element__control">
+                                                            <apex:inputText html-placeholder="First Name" styleClass="slds-input" value="{!objStudentAccount.studentDetail.FirstName}"
+                                                                disabled="true" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                                    <div class="slds-form-element">
+                                                        <div class="slds-form-element__control">
+                                                            <apex:inputText html-placeholder="Last Name" styleClass="slds-input " value="{!objStudentAccount.studentDetail.LastName}"
+                                                                disabled="true" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                            <div class="slds-grid slds-wrap">
+                                                <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                                    <div class="slds-form-element  m-lg-right">
+                                                        <div class="slds-form-element__control">
+                                                            <apex:outputText styleClass="slds-input " value="{0, date, dd/MM/yyyy}" style="background-color: #ecebea;height: 41px;padding-top: 5px;cursor: no-drop;">
+                                                                <apex:param value="{!objStudentAccount.studentDetail.PersonBirthdate}" />
+                                                            </apex:outputText>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                                    <div class="slds-form-element">
+                                                        <div class="slds-form-element__control">
+                                                            <apex:inputText html-placeholder="Gender" styleClass="slds-input " value="{!objStudentAccount.studentDetail.Gender__c}" disabled="true"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                            <!--<div class="slds-size_1-of-1 slds-large-size_1-of-1 ">
+<article class="slds-card">
+<div class="slds-card__header slds-grid">
+<header class="slds-media slds-media_center slds-has-flexi-truncate">
+<div class="slds-media__body">
+<h2 class="slds-card__header-title" style="font-weight:700;">
+<span>Selected Camp Details</span>
+</h2>
+</div>
+</header>
+</div>
+<div class="slds-card__body slds-card__body_inner slds-grid slds-wrap">
+<apex:repeat value="{!objStudentAccount.listOfCampDays}" var="objcampDay">
+<div class="  slds-col  slds-size_1-of-1 slds-large-size_1-of-1">
+<div class="slds-p-around_small slds-m-top_small box-info m-lg-right" style="font-weight:700;">
+<div class="slds-clearfix">
+<div class="slds-float_left">
+Camp Day - {!objcampDay.CampDay} -
+<apex:outputText value="{0, date, dd/MM/yyyy}">
+<apex:param value="{!objcampDay.campdate}" />
+</apex:outputText>
+</div>
+<div class="studentTime slds-float_right">
+{!objcampDay.campStartTime} - {!objcampDay.campEndTime}
+</div>
+</div>
+</div>
+</div>
+</apex:repeat>
+</div>
+</article>
+</div>-
+                                        </apex:repeat>
+                                    </apex:outputPanel>
+                                </div>
+                            </apex:outputPanel>
+                        Commented by jatin:end: 24-Feb-2020:NEed to remove/Hide the student Section in the Camp Summary.-->
+                            <hr class="slds-m-vertical_x-large" />
+
+                            <div class="slds-grid slds-wrap slds-p-bottom_small">
+                                <div class="slds-col slds-large-size_2-of-3 slds-p-bottom_large">
+                                    <h3 class="slds-text-heading_medium" style="font-weight:bold;">
+                                        <span class="slds-m-right_small title-no">3</span>Student Policy Form</h3>
+                                </div>
+                                <div class="slds-col slds-large-size_1-of-3 slds-text-align_right slds-p-bottom_large">
+                                    <span class="slds-p-horizontal_small">
+                                        <a class="icon-collapse fa fa-angle-up slds-m-left_small" href="javascript:void(0);"
+                                            onclick="showHideSections('policyform', this);"></a>
+                                    </span>
+                                </div>
+
+                            </div>
+                            <div class="policyform">
+                                <div class="slds-grid">
+                                    <div class="slds-size_11-of-12">
+                                        <p>By checking this box and enrolling into Aureus Academy, you agree to all of our policies
+                                            and accept that they may be subject to change. To see our full policies, please
+                                            see below or click here. </p>
+                                    </div>
+                                    <div class="slds-size_1-of-12">
+                                        <div dir="rtl">
+                                            <div class="slds-form-element">
+                                                <div class="slds-form-element__control">
+                                                    <div class="slds-checkbox slds-text-heading_medium">
+                                                        <!--<input id="policyAgree" name="options" type="checkbox" value="checkbox-11"  class="inputchk"/>-->
+                                                        <apex:inputCheckbox value="{!agreementCheckbox}" id="policyAgree" styleclass="inputchk" style="position: absolute;"/>
+                                                        <label class="slds-checkbox__label" for="j_id0:frm:j_id98:j_id99:j_id124:j_id125:policyAgree">
+                                                            <span class="slds-checkbox_faux"></span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slds-box slds-box_small bg-light slds-m-top_large student-policy-class">
+                                    <!--<p class="slds-p-bottom_small"><strong>1.   Tuition fees and frequency of lessons:</strong></p>
+<p>Tuition fees are charged on a monthly basis at the beginning of each month. Payment will be deducted from your customer account on a monthly basis through Visa, Mastercard, or American Express credit cards. Under normal circumstances, monthly tuition fees would cover your course description whether it be 4 x 30 minute lessons or 4 x 60 minute lessons. Lessons in the fifth week (29th, 30th, and 31st) will be reserved for make ups. In the event there are no outstanding make ups or preMmake ups arranged (within 60Mdays), the 5th lesson will be billed to your account (once billed, it cannot be considered a pre-make up).</p>
+<br/>
+<p class="slds-p-bottom_small"><strong >2.  Security Deposit:</strong></p>
+<p>Aureus Academy requires oneMmonth (4 lessons) advanced notice for termination of lessons. This security deposit will be refunded to you with oneMmonth (4 lessons) notice or will serve inMlieu of any remaining unpaid lessons within the oneMmonth (4 lesson) notice. Should lessons be terminated without a 30 day advanced notice, the security deposit will be forfeited. A nonM refundable registration fee of $25 is required for all new students, and is inclusive of an Aureus Academy enrolment kit.    
+</p>-->
+                                    <div class="slds-form-element__control">
+                                        <div class="terms-info">
+                                            <c:StudentPolicyForHK rendered="{!EnrolStudentDetails.objCountry.name=='HK'}" />
+                                            <c:StudentPolicyForSg rendered="{!EnrolStudentDetails.objCountry.name!='HK'}" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slds-grid slds-grid_align-center slds-p-top_x-large">
+                                    <div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-medium-size_1-of-2">
+                                        <a class="slds-button btn-block slds-button_success  slds-p-around_x-small slds-m-bottom_large" href="#" id="signAgreementBtn"
+                                            onclick="updateCustomer();return false;">Click Here to Sign</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr class="slds-m-vertical_x-large" />
+
+
+                            <div class="slds-grid slds-wrap slds-p-bottom_small">
+                                <div class="slds-col slds-large-size_2-of-3 slds-p-bottom_large">
+                                    <h3 class="slds-text-heading_medium" style="font-weight:bold;">
+                                        <span class="slds-m-right_small title-no">4</span>Charges and Billing</h3>
+                                </div>
+                                <div class="slds-col slds-large-size_1-of-3 slds-text-align_right slds-p-bottom_large">
+                                    <span class="slds-p-horizontal_small">
+                                        <a class="icon-collapse fa fa-angle-up slds-m-left_small" href="javascript:void(0);" onclick="showHideSections('billingdetails', this);"></a>
+                                    </span>
+                                </div>
+
+                            </div>
+                            <div class="billingdetails">
+                                <apex:outputPanel rendered="{!EnrolStudentDetails.isAmcClubMember}" layout="none">
+                                    <h4 class="f-title">Please check with the American Club for your invoice after enrolment has been confirmed.</h4>
+                                    <br/>
+                                    <br/>
+                                </apex:outputPanel>
+                                <apex:outputPanel id="enrolBillDetailsPanel" rendered="{!!EnrolStudentDetails.isAmcClubMember}">
+                                    <apex:repeat value="{!EnrolStudentDetails.listOfBillSummary}" var="objBillSummary">
+                                        <div class="slds-m-bottom_large">
+                                            <p class="slds-text-heading_small">
+                                                <strong>{!objBillSummary.studentName} Fees
+                                                </strong>
+                                            </p>
+                                        </div>
+                                        <div class="slds-grid slds-wrap">
+                                            <div class="slds-col slds-large-size_2-of-3 slds-p-bottom_small">
+                                                <p>{!objBillSummary.packageName}</p>
+                                            </div>
+                                            <div class="slds-col slds-large-size_1-of-3 slds-text-align_right  slds-p-bottom_small">
+                                                <p>
+                                                    <apex:outputText value="{0, number, $,##0.00}">
+                                                        <apex:param value="{!objBillSummary.netAmount}" />
+                                                    </apex:outputText>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <apex:outputPanel rendered="{!objBillSummary.discountAmount != 0}">
+                                            <div class="slds-grid slds-wrap">
+                                                <div class="slds-col slds-large-size_2-of-3 slds-p-bottom_small">
+                                                    <p>Early Bird Discount ({!EnrolStudentDetails.objCampClass.Early_Bird_Discount__c}%)</p>
+                                                </div>
+                                                <div class="slds-col slds-large-size_1-of-3 slds-text-align_right  slds-p-bottom_small">
+                                                    <p>
+                                                        <apex:outputText value="{0, number, $,##0.00}">
+                                                            <apex:param value="{!objBillSummary.discountAmount}" />
+                                                        </apex:outputText>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </apex:outputPanel>
+                                    </apex:repeat>
+                                    <!--<apex:outputPanel rendered="{!EnrolStudentDetails.discountAmount != 0}">
+<div class="slds-grid slds-wrap">
+<div class="slds-col slds-large-size_2-of-3 slds-p-bottom_small">
+<p>{!EnrolStudentDetails.objCampClass.Early_Bird_Discount__c}% Early Bird Discount</p>
+</div>
+<div class="slds-col slds-large-size_1-of-3 slds-text-align_right  slds-p-bottom_small">
+<p>
+<apex:outputText value="{0, number, $,##0.00}">
+<apex:param value="{!EnrolStudentDetails.discountAmount}" />
+</apex:outputText>
+</p>
+</div>
+</div>
+</apex:outputPanel>-->
+                                    <hr class="slds-m-vertical_x-large" />
+
+                                    <div class="slds-grid slds-wrap slds-grid_align-center slds-p-vertical_x-large">
+                                        <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-grid_vertical-align-start">
+                                            <div class="m-lg-4">
+                                                <small style="line-height:20px !important;">Billing details above are based on the commencement date of lessons and the
+                                                    package selected. Unless you are enrolling for a full-month, the package
+                                                    will prorate based on the start date specified above.</small>
+                                            </div>
+                                        </div>
+                                        <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                            <p class="font-bold box-info slds-m-bottom_small" style="{!IF(EnrolStudentDetails.gstAmount > 0,'','display:none;')}">GST
+                                                <span class="slds-float_right">
+                                                    <apex:outputText value="{0, number, $,##0.00}">
+                                                        <apex:param value="{!EnrolStudentDetails.gstAmount}" />
+                                                    </apex:outputText>
+                                                </span>
+                                            </p>
+                                            <p class="font-bold box-info slds-m-bottom_small">Grand Total
+                                                <span class="slds-float_right">
+                                                    <apex:outputText value="{0, number, $,##0.00}">
+                                                        <apex:param value="{!EnrolStudentDetails.totalAmount}" />
+                                                    </apex:outputText>
+                                                </span>
+                                            </p>
+
+                                        </div>
+                                    </div>
+                                </apex:outputPanel>
+                            </div>
+
+                            <apex:outputPanel rendered="{!isSiteGuestUser}">
+                                <form method="post" id="SiteGuestUser-payment-form">
+                                    <div class="slds-p-around_small slds-col slds-size_1-of-1 slds-p-horizontal_medium" style="background-color: #f2f2f2;">
+                                        <p>
+                                            <b>Card Detail</b>
+                                        </p>
+                                        <p style="padding:8px 0px;">The payment methods accepted at Aureus Academy are credit cards via Visa, Mastercard,
+                                            and American Express.
+                                        </p>
+                                        <div id="card-element">
+                                        </div>
+                                        <div id="card-errors" role="alert"></div>
+                                    </div>
+
+                                    <div class="slds-grid slds-grid_align-center slds-p-vertical_x-large">
+                                        <div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-medium-size_1-of-2">
+                                            <button id="SiteGuestUserpayBtn" class="slds-button btn-block slds-button_success custom-Btn slds-p-around_x-small slds-m-bottom_large disableButton">
+                                                Complete Enrolment
+                                                <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
+                                                    <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
+                                                        <use fill="White" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#chevronright')}"
+                                                        />
+                                                    </svg>
+                                                </span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                                <script>
+                                    var stripe = Stripe('{!EnrolStudentDetails.objCountry.Stripe_Publishable_Key__c}');
+                                    var tokenId = '';
+                                    var elements = stripe.elements();
+                                    var style = {
+                                        base: {
+                                            color: '#32325d',
+                                            fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                                            fontSmoothing: 'antialiased',
+                                            fontSize: '16px',
+                                            '::placeholder': {
+                                                color: '#aab7c4'
+                                            }
+                                        },
+                                        invalid: {
+                                            color: '#fa755a',
+                                            iconColor: '#fa755a'
+                                        }
+                                    };
+                                    var card = elements.create('card', { style: style, hidePostalCode: true });
+                                    card.mount('#card-element');
+                                    card.addEventListener('change', function (event) {
+                                        var displayError = document.getElementById('card-errors');
+                                        if (event.error) {
+                                            console.log(event.error);
+                                            displayError.textContent = event.error.message;
+                                        } else {
+                                            displayError.textContent = '';
+                                        }
+                                    });
+
+                                    var form = document.getElementById('{!$Component.frm}');
+                                    form.addEventListener('submit', function (event) {
+                                        event.preventDefault();
+                                        stripe.createToken(card).then(function (result) {
+                                    
+                                            if (result.error) {
+                                                var errorElement = document.getElementById('card-errors');
+                                                errorElement.textContent = result.error.message;
+
+                                                disablePayBtn(false);
+                                            } else {
+                                                //document.getElementById('pg:spinner.start').style.display = 'block';
+                                                stripeTokenHandlerSiteGuestUser(result.token);
+                                            }
+                                        });
+                                    });
+
+                                    function stripeTokenHandlerSiteGuestUser(token) {
+                                        var form = document.getElementById('SiteGuestUserpayBtn');
+                                        var hiddenInput = document.createElement('input');
+                                        hiddenInput.setAttribute('type', 'hidden');
+                                        hiddenInput.setAttribute('name', 'stripeToken');
+                                        hiddenInput.setAttribute('value', token.id);
+                                        form.appendChild(hiddenInput);
+                                        var tokenId = token.id;
+                                        var checkErr = checkErrorOnSummaryPage();
+                                        if(!checkErr){
+                                            if(!isCreateStudent){
+                                                console.log('tokenId'+tokenId);
+                                                $('#SiteGuestUserpayBtn').addClass('disableButton');
+                                                saveParentCardDetailsSiteUser('');
+                                                isCreateStudent = true;
+                                            }
+                                        }else{
+                                            $('#SiteGuestUserpayBtn').before('<div class="slds-form-element__help errortxt" style="color:#F44336">Please fill all mandatory fields.</div>');
+                                        }
+                                    }
+                                </script>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!!isSiteGuestUser}">
+                                <apex:outputPanel rendered="{!EnrolStudentDetails.isAmcClubMember}">
+                                    <div class="slds-form-element">
+                                        <div class="slds-grid slds-grid_align-center slds-p-vertical_x-large">
+                                            <div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-medium-size_1-of-2">
+                                                <div class="slds-form-element">
+                                                    <div class="slds-form-element__control">
+                                                        <a onclick="completeEnrolmentNow();return false;" id="payAmericanCstmr" class="slds-button btn-block slds-button_success  slds-p-around_x-small slds-m-bottom_large disableButton">
+                                                            Complete Enrolment
+                                                            <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
+                                                                <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
+                                                                    <use fill="White" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#chevronright')}"
+                                                                    />
+                                                                </svg>
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!(!EnrolStudentDetails.isAmcClubMember) && EnrolStudentDetails.isAlreadyStripCstmr}">
+                                    
+                                    <div class="slds-form-element">
+                                        <div class="slds-grid slds-wrap">
+                                            <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                                <div class="slds-form-element  m-lg-right">
+                                                    <div class="slds-form-element__control">
+                                                        <!--<label class="slds-form-element__label field-title slds-size_1-of-1 slds-p-horizontal_medium" for="form-element-help-01">Card Details</label>                                       -->
+
+                                                        <div>
+                                                            <strong>Card Info</strong>
+                                                            <apex:outputText value="{!EnrolStudentDetails.cardImage}" escape="false" /> x {!EnrolStudentDetails.cardNumber}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="slds-grid slds-grid_align-center slds-p-vertical_x-large">
+                                            <div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-medium-size_1-of-2">
+                                                <div class="slds-form-element">
+                                                    <div class="slds-form-element__control">
+                                                        <a onclick="paymentNow();return false;" id="payNowAlrdyCstmr" class="slds-button btn-block slds-button_success  slds-p-around_x-small slds-m-bottom_large disableButton">
+                                                            Complete Enrolment
+                                                            <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
+                                                                <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
+                                                                    <use fill="White" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#chevronright')}"
+                                                                    />
+                                                                </svg>
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </apex:outputPanel>
+
+                                <apex:outputPanel rendered="{!(!EnrolStudentDetails.isAmcClubMember) &&  (!EnrolStudentDetails.isAlreadyStripCstmr)}">
+                                    <form method="post" id="payment-form">
+                                        <div class="slds-p-around_small slds-col slds-size_1-of-1 slds-p-horizontal_medium" style="background-color: #f2f2f2;">
+                                            <p>
+                                                <b>Card Detail</b>
+                                            </p>
+                                            <p style="padding:8px 0px;">The payment methods accepted at Aureus Academy are credit cards via Visa, Mastercard,
+                                                and American Express.
+                                            </p>
+                                            <div id="card-element">
+                                            </div>
+                                            <div id="card-errors" role="alert"></div>
+                                        </div>
+
+                                        <div class="slds-grid slds-grid_align-center slds-p-vertical_x-large">
+                                            <div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-medium-size_1-of-2">
+                                                <button id="payBtn" class="slds-button btn-block slds-button_success custom-Btn slds-p-around_x-small slds-m-bottom_large disableButton">
+                                                    Complete Enrolment
+                                                    <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
+                                                        <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
+                                                            <use fill="White" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#chevronright')}"
+                                                            />
+                                                        </svg>
+                                                    </span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                    <script>
+                                        var stripe = Stripe('{!EnrolStudentDetails.objCountry.Stripe_Publishable_Key__c}');
+                                        var tokenId = '';
+                                        var elements = stripe.elements();
+                                        var style = {
+                                            base: {
+                                                color: '#32325d',
+                                                fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                                                fontSmoothing: 'antialiased',
+                                                fontSize: '16px',
+                                                '::placeholder': {
+                                                    color: '#aab7c4'
+                                                }
+                                            },
+                                            invalid: {
+                                                color: '#fa755a',
+                                                iconColor: '#fa755a'
+                                            }
+                                        };
+                                        var card = elements.create('card', { style: style, hidePostalCode: true });
+                                        card.mount('#card-element');
+                                        card.addEventListener('change', function (event) {
+                                            var displayError = document.getElementById('card-errors');
+                                            if (event.error) {
+                                                console.log(event.error);
+                                                displayError.textContent = event.error.message;
+                                            } else {
+                                                displayError.textContent = '';
+                                            }
+                                        });
+
+                                        console.log('payment form', document.getElementById('payment-form'));
+
+                                        var form = document.getElementById('{!$Component.frm}');
+                                        form.addEventListener('submit', function (event) {
+                                            event.preventDefault();
+                                            stripe.createToken(card).then(function (result) {
+                                        
+                                                if (result.error) {
+                                                    var errorElement = document.getElementById('card-errors');
+                                                    errorElement.textContent = result.error.message;
+
+                                                    disablePayBtn(false);
+                                                } else {
+                                                    //document.getElementById('pg:spinner.start').style.display = 'block';
+                                                    stripeTokenHandler(result.token);
+                                                }
+                                            });
+                                        });
+
+                                        function stripeTokenHandler(token) {
+                                            var form = document.getElementById('payBtn');
+                                            var hiddenInput = document.createElement('input');
+                                            hiddenInput.setAttribute('type', 'hidden');
+                                            hiddenInput.setAttribute('name', 'stripeToken');
+                                            hiddenInput.setAttribute('value', token.id);
+                                            form.appendChild(hiddenInput);
+                                            var tokenId = token.id;
+                                            var checkErr = checkErrorOnSummaryPage();
+                                            if(!checkErr){
+                                                if(!isCreateStudent){
+                                                    $('#payBtn').addClass('disableButton');
+                                                    saveParentCardDetailsAndGenerateInvoice(tokenId);
+                                                    isCreateStudent = true;
+                                                }
+                                            }else{
+                                                $('#payBtn').before('<div class="slds-form-element__help errortxt" style="color:#F44336">Please fill all mandatory fields.</div>');
+                                            }
+                                        }
+                                    </script>
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </div>
+
+                    </article>
+                </div>
+            </div>
+        </div>
+
+    </apex:outputPanel>
+    <div id="modalForDocument" style="height:640px" class="slds-hide">
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open slds-modal_medium" aria-labelledby="modal-heading-01"
+            aria-modal="true" aria-describedby="modal-content-id-1">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick="$('#modalForDocument').addClass('slds-hide');">
+                        <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                            <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#close')}"
+                            />
+                        </svg>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate"></h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+
+                    <apex:outputPanel id="framePanel">
+                        <apex:iframe src="https://app.pandadoc.com/s/{!sessionId}" height="500px" width="100%"></apex:iframe>
+                    </apex:outputPanel>
+
+                </div>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </div>
+    <script>
+        var isCreateStudent = false;
+        function checkErrorOnSummaryPage() {
+            var isErr = false;
+
+            $('.errortxt').remove();
+            $('.requiredInput').each(function () {
+                $(this).css('border-left', '1px solid #dddbda');
+                $(this).css('border-left', '1px solid #F44336');
+                if (!$(this).val()) {
+                    $(this).after('<div class="slds-form-element__help errortxt" style="color:#F44336">This field is required</div>');
+                    $(this).css('border', '1px solid #F44336');
+                    isErr = true;
+                }
+            });
+
+            $('.inputchk').each(function () {
+                if (!$(this).prop('checked')) {
+                    $(this).parent().parent().after('<div class="slds-form-element__help errortxt" style="color:#F44336">This field is required</div>');
+                    isErr = true;
+                }
+            });
+
+
+
+            return isErr;
+        }
+
+        function disablePayBtn(isDisable) {
+            if (isDisable){
+                $('#payBtn').css('pointer-events', 'none');
+            }else{
+                $('#payBtn').css('pointer-events', '');
+            }
+        }
+
+
+
+        function paymentNow() {
+            var checkErr = checkErrorOnSummaryPage();
+            $('#payNowAlrdyCstmr').css('pointer-events', 'none'); 
+            if (!checkErr) {
+                $('#payNowAlrdyCstmr').addClass('disableButton');
+                saveParentCardDetailsAndGenerateInvoice('');
+            } else {
+                $('#payNowAlrdyCstmr').before('<div class="slds-form-element__help errortxt" style="color:#F44336">Please fill all mandatory fields.</div>');
+                $('#payNowAlrdyCstmr').css('pointer-events', '');
+            }
+
+
+        }
+
+        function completeEnrolmentNow() {
+            var checkErr = checkErrorOnSummaryPage();
+            $('#payAmericanCstmr').css('pointer-events', 'none');
+            if (!checkErr) {
+                $('#payAmericanCstmr').addClass('disableButton');
+                saveParentCardDetailsAndGenerateInvoice('');
+            } else {
+                $('#payAmericanCstmr').before('<div class="slds-form-element__help errortxt" style="color:#F44336">Please fill all mandatory fields.</div>');
+                $('#payAmericanCstmr').css('pointer-events', '');
+            }
+        }
+        function checkError(isErrOnSave, errorMessage) {
+            console.log('isErrOnSave', isErrOnSave);
+            console.log('errorMessage', errorMessage);
+            $('#payBtn').css('pointer-events', 'none');
+            $('#payAmericanCstmr').css('pointer-events', 'none');
+            if (isErrOnSave == 'true') {
+               // $("#payBtn").css('pointer-events', '');
+                $('.paymentCmpErrDiv').removeClass('slds-hide');
+                $('.contentPaymentCmpErrDiv').html(errorMessage);
+            } else {
+                $('#payBtn').addClass('disableButton');
+                $('#payAmericanCstmr').addClass('disableButton');
+                $('.paymentCmpErrDiv').addClass('slds-hide');
+                var isSiteGuestUser = {!isSiteGuestUser};
+                if(isSiteGuestUser){
+                    window.location.href = "/apex/thankyoupage";
+                }else{
+                    window.location.href = "/apex/thankyoupage_ipad";
+                }
+            }
+        }
+        function showHideSections(element, currentEle) {
+            console.log('@@@element', element);
+            $("." + element).slideToggle(1000);
+            $(currentEle).toggleClass("fa-angle-up fa-angle-down");
+
+        }
+        function waitForTwoSecond() {
+            setTimeout(function () {
+                waitAgreement();
+            }, 2000);
+        }
+        function showModal() {
+            $('#modalForDocument').removeClass('slds-hide');
+        }
+
+        function hideModal() {
+            $('#signAgreementBtn').addClass('disableButton');
+            $('#modalForDocument').addClass('slds-hide');
+            $('#payBtn').removeClass('disableButton');
+            $('#payNowAlrdyCstmr').removeClass('disableButton');
+            $('#payAmericanCstmr').removeClass('disableButton');
+            $('#SiteGuestUserpayBtn').removeClass('disableButton');
+        }
+        var eventMethod = window.addEventListener ? 'addEventListener' : 'attachEvent',
+            messageEvent = eventMethod === 'attachEvent' ? 'onmessage' : 'message';
+        //console.log('@@@@window ', window);
+        window[eventMethod](messageEvent, function (e) {
+            if (e && e.data) {
+                try {
+                    var message = JSON.parse(e.data);
+                    if (message && message.event) {
+                        console.log(message.event, message.data);
+                        if (message.event == 'session_view.document.completed') {
+                            hideModal();
+
+                            //Add time delay for 3 seconds
+                            // setTimeout(function(){ hideModal(); }, 3000);
+                        }
+                    }
+                } catch (e) {
+                    console.log(e);
+                }
+            }
+        }, false);
+
+    </script>
+</apex:component>

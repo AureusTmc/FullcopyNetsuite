@@ -1,0 +1,545 @@
+<aura:component controller="PosHomeComponentCntrl" implements="force:appHostable" access="global">
+    <aura:handler name="init" value="{!this}" action="{!c.onInit}" />
+    
+    <!--aura attributes-->
+    <aura:attribute name="cntrAccMap" type="Map" />
+    <aura:attribute name="slcdCentr" type="String" />
+    <!-- <aura:attribute name="slcdCstmr" type="String"/>-->
+    <aura:attribute name="slcdProducts" type="object" />
+    <aura:attribute name="isModalOpen" type="boolean" default="false" />
+    <aura:attribute name="payDetailModel" type="boolean" default="false" />
+    <aura:attribute name="itemOutStockModalOpen" type="boolean" default="false" />
+    
+    <aura:attribute name="isCstmrModelOpen" type="boolean" default="false" />
+    <aura:attribute name="acc" type="Account" default="{'sObjectType':'Account'}" />
+    <aura:attribute name="accCstmrId" type="String" />
+    <aura:attribute name="accName" type="String" />
+    <!-- Sage products -->
+    <aura:attribute name="SageProductItems" type="object" />
+    <!--aura attributes-->
+    <!--<aura:attribute name="accountColumns" type="List"/>
+    <aura:attribute name="accountData" type="Object"/>
+    <aura:attribute name="sortBy" type="String"/>
+    <aura:attribute name="sortDirection" type="String"/>-->
+    <!-- Calculations related attributes -->
+    <aura:attribute name="totalAmt" type="Decimal" />
+    <aura:attribute name="gstPrcnt" type="Decimal" />
+    <aura:attribute name="gstPercntAmt" type="Decimal" />
+    <aura:attribute name="grandTot" type="Decimal" />
+    
+    <aura:attribute name="options" type="List" default="" />
+    <aura:attribute name="slcdCstmrDetail" type="object" />
+    <aura:attribute name="avlPayCredits" type="Decimal" />
+    <aura:attribute name="value" type="String" default="Cash" />
+    <aura:handler event="c:PosHomeCmpEvent" action="{!c.handleMyApplicationEvent}" />
+    <!-- added By Ravi on 6 jan 2020 -->
+    <aura:attribute name="isItemSearchError" type="string" default="Please select Items" />
+    <aura:attribute name="isCustomerError" type="string" default="Please select Customer" />
+    <aura:attribute name="isCenterError" type="string" default="Please select Center" />
+    <aura:attribute name="isItemSearch" type="boolean" default="false" />
+    <aura:attribute name="isCustomer" type="boolean" default="false" />
+    <aura:attribute name="isCenter" type="boolean" default="false" />
+    <aura:attribute name="openPopUp" type="boolean" default="false" />
+    <aura:attribute name="isCstmrHasCard" type="boolean" default="false" />
+    <aura:attribute name="slcdPayType" type="string" default="" />
+    
+    <!-- jatin: 25-Feb=2020:Start: for manage Adhoc pos Invoice -->
+    <aura:attribute name="adhocPOSServicesOptions" type="List" />
+    <aura:attribute name="adhocPOSServicesName" type="String" default="" />
+    <aura:attribute name="isAdhocPOSServices" type="boolean" default="false" />
+    <aura:attribute name="slcdAdhocPOSServices" type="object" />
+    <!-- jatin: 25-Feb=2020:end: for manage Adhoc pos Invoice -->
+    <aura:attribute name="isOpenItemDetail" type="boolean" default="false" />
+    <aura:attribute name="slcdSingleProduct" type="object" />
+    <aura:attribute name="wareHouseItemDetailList" type="object" />
+    
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}" />
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}" />
+    <aura:attribute name="toggleSpinner" type="boolean" default="false" />
+    <aura:if isTrue="{!v.toggleSpinner}">
+        <div class="slds-spinner_container">
+            <div class="slds-spinner--brand  slds-spinner slds-spinner--large slds-is-relative" role="alert">
+                <span class="slds-assistive-text">Loading</span>
+                <div class="slds-spinner__dot-a"></div>
+                <div class="slds-spinner__dot-b"></div>
+            </div>
+        </div>
+    </aura:if>
+    <lightning:card title="" iconName="">
+        <div class="">
+            <div class="slds-grid slds-p-around_small" style="background-color:#f6f6f9;">
+                <div class="slds-col slds-size_1-of-5" style="font-weight: bold;">
+                    <span style="color:#95989d; font-size:15px;"> Point of Sale</span>
+                </div>
+                <div class="slds-col slds-size_3-of-5">
+                    <lightning:select aura:id="select" name="select" label="" onchange="{! c.onChange }"
+                                      variant="label-hidden" class="lable2hide">
+                        <option value="">Please select centre</option>
+                        <aura:iteration items="{!v.cntrAccMap}" var="cntr" indexVar="key">
+                            <option text="{!cntr.value}" value="{!cntr.key}" selected="{!cntr.key==v.slcdCentr}" />
+                        </aura:iteration>
+                        
+                        <!-- <option text="{!cntr.value}" value="{!cntr.key}" selected="{!cntr.key==v.acc.Industry}" />-->
+                        <!--  <option value="apple">apple</option>
+                    <option value="pumpkin">pumpkin</option>
+                    <option value="cherry">cherry</option>
+                    <option value="blueberry">blueberry</option>
+                    <option value="pickle">pickle</option>-->
+                    </lightning:select>
+                    <aura:if isTrue="{!v.isCenter}">
+                        <span style="color:firebrick;">{!v.isCenterError}</span>
+                    </aura:if>
+                </div>
+                <div class="slds-col slds-size_1-of-5">
+                </div>
+            </div>
+            
+            <div class="slds-grid slds-p-around_small">
+                <div class="slds-col slds-size_12-of-12">
+                    <div class="slds-grid slds-wrap slds-gutters">
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_2-of-6">
+                            <div class="slds-form-element">
+                                <div class="Pad-left">
+                                    <!--<lightning:input
+                                         aura:id="enter-search"
+                                         name="enter-search"
+                                         label="Seach Customer"
+                                         type="search"
+                                         />-->
+                                    <c:TestAutoComplete label="Select Customers" objectApiName="Account"
+                                                        selectedOption="{!v.accCstmrId}" inputValue="{!v.accName}" />
+                                    <aura:if isTrue="{!not(empty(v.slcdCstmrDetail.BillingCountry))}">
+                                        <b>A:</b><span
+                                                       class="grayColor">{!v.slcdCstmrDetail.BillingStreet}&nbsp;{!v.slcdCstmrDetail.BillingCountry}&nbsp;{!v.slcdCstmrDetail.BillingPostalCode}</span><br />
+                                    </aura:if>
+                                    <aura:if isTrue="{!not(empty(v.slcdCstmrDetail.PersonEmail))}">
+                                        <b>E:</b><span class="grayColor">{!v.slcdCstmrDetail.PersonEmail}
+                                        <b>&nbsp;P:</b>{!v.slcdCstmrDetail.PersonMobilePhone}</span><br />
+                                    </aura:if>
+                                    <aura:if isTrue="{!v.avlPayCredits > 0}">
+                                        <span>Available Payment credit: ${!v.avlPayCredits}</span>
+                                    </aura:if>
+                                    <aura:if isTrue="{!v.isCustomer}">
+                                        <span style="color:firebrick;">{!v.isCustomerError}</span>
+                                    </aura:if>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-6 slds-text-align_center">
+                            <div class="Padding-all">
+                                <lightning:button class="Green slds-p-vertical_xx-small" label="New Customer"
+                                                  title="New Customer" onclick="{! c.openModel }" />
+                            </div>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-6  slds-text-align_center">
+                            <div class="Padding-all">
+                                <lightning:button class="btn_yellow slds-p-vertical_xx-small" label="Walk-In"
+                                                  title="Walk-In" onclick="{! c.processWalkIn }" />
+                            </div>
+                        </div>
+                        <!-- added by jatin: 25-Feb-2020: start : for manage adhoc Pos services invoices-->
+                        <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-6  slds-text-align_center">
+                            <div class="Padding-all">
+                                <lightning:button class="btn_AdhocPOSServicesDisable slds-p-vertical_xx-small" label="Adhoc POS Services"
+                                                  aura:id="processAdhocPOSServicesBtn" title="Adhoc POS Services"
+                                                  onclick="{! c.processAdhocPOSServices }" />
+                            </div>
+                        </div>
+                        <!-- added by jatin: 25-Feb-2020: end : for manage adhoc Pos services invoices-->
+                        <div class="slds-col slds-size_2-of-6  slds-text-align_center">
+                            <!--<div class="Padding-all">
+                    <lightning:button class="yellow" label="Walk-In" title="Walk-In" onclick="{! c.handleClick }"/>
+                </div>-->
+                        </div>
+                    </div>
+                    <hr style="margin:10px 0px;" />
+                    <!-- added by jatin 25-Feb-2020: end:show adhoc pos invoice records is user click 'Adhoc pos invoice button' other wise default show sage item's for creating POs invoice -->
+                    <div class="slds-grid slds-gutters">
+                        <div class="slds-col slds-size_2-of-3">
+                            <div class="slds-form-element">
+                                <div class="Pad-left">
+                                    <aura:if isTrue="{!v.isAdhocPOSServices}">
+                                        <lightning:select name="ServiceId" label="Select Adhoc POS Services Name:"
+                                                          aura:id="AdhocServiceId" value="{!v.adhocPOSServicesName}"
+                                                          onchange="{! c.getPosInvoiceItems }">
+                                            <option value="">Select Adhoc POS Services</option>
+                                            <aura:iteration items="{!v.adhocPOSServicesOptions}" var="adhocPOSServices"
+                                                            indexVar="key">
+                                                <option text="{!adhocPOSServices.value}"
+                                                        value="{!adhocPOSServices.key}" />
+                                            </aura:iteration>
+                                        </lightning:select>
+                                        <!-- added by jatin 25-Feb-2020: start:default show sage item's for creating POs invoice -->
+                                        <aura:set attribute="else">
+                                            <!--<lightning:input class="search"
+                                         aura:id="enter-search"
+                                         name="enter-search"
+                                         label="Item Seach"
+                                         type="search"
+                                         />-->
+                                            <c:TestAutoComplete label="Item Search" objectApiName="SageProduct"
+                                                                SageProductItems="{!v.SageProductItems}" />
+                                        </aura:set>
+                                        <!-- added by jatin 25-Feb-2020: end:default show sage item's for creating POs invoice -->
+                                    </aura:if>
+                                    <!-- added by jatin 25-Feb-2020: end:show adhoc pos invoice records is user click 'Adhoc pos invoice button' other wise default show sage item's for creating POs invoice -->
+                                    <aura:if isTrue="{!v.isItemSearch}">
+                                        <span style="color:firebrick;">{!v.isItemSearchError}</span>
+                                    </aura:if>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style=" margin-top:40px;" class="data-tab">
+                        <!--Lightning data table markup-->
+                        <!-- <lightning:datatable aura:id="accountTable"
+                         keyField="Id"
+                         hideCheckboxColumn="true"
+                         columns="{!v.accountColumns}"
+                         data="{!v.accountData}"
+                         sortedBy="{!v.sortBy}"
+                         sortedDirection="{!v.sortDirection}"
+                         onsort="{!c.handleSort}"/>-->
+                        
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate" title="Action"></div>
+                                    </th>
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate" title="Item">Item</div>
+                                    </th>
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate" title="Category">Category</div>
+                                    </th>
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate" title="Qty">Qty</div>
+                                    </th>
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate" title="Price">Price</div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <aura:iteration items="{!v.slcdProducts}" var="slProduct" indexVar="key">
+                                    <tr class="slds-hint-parent">
+                                        <th data-label="Opportunity Name" scope="row">
+                                            <div class="slds-truncate" title="Delete">
+                                                <lightning:icon iconName="action:delete"
+                                                                class="{!'index_'+slProduct.indexNo}" onclick="{!c.removeItem}"
+                                                                alternativeText="Error!" variant="error" />
+                                            </div>
+                                        </th>
+                                        <td data-label="Item">
+                                            <div class="slds-truncate" title="{!slProduct.indexNo}">
+                                                <!--<a class="{!'index_'+slProduct.indexNo}" onclick="{!c.slctdItmDetils}">{!slProduct.item} </a>-->
+                                                <!--<lightning:formattedUrl class="{!'index_'+slProduct.indexNo}" value="" onclick="{!c.slctdItmDetils}" target="_blank" label="{!slProduct.item}"/>-->
+                                                <lightning:button variant="base" label="{!slProduct.item}"
+                                                                  class="{!'index_'+slProduct.indexNo}"
+                                                                  onclick="{! c.slctdItmDetils }" />
+                                            </div>
+                                        </td>
+                                        <td data-label="Category">
+                                            <div class="slds-truncate" title="">{!slProduct.category}</div>
+                                        </td>
+                                        <td data-label="Qty">
+                                            <div class="slds-truncate" title="">
+                                                <!--{!slProduct.quantity}-->
+                                                <lightning:input class="quntityInput" aura:id="quantity"
+                                                                 onchange="{!c.onChangeQuantity}" type="number" max="99"
+                                                                 name="quantity" value="{!slProduct.quantity}" />
+                                                <!--   <ui:inputNumber class="quntityInput" updateOn="{!c.onChangeQuantity}" maxlength="2" value="{!slProduct.quantity}"/>-->
+                                            </div>
+                                        </td>
+                                        <td data-label="Price">
+                                            <!-- added by jatin: 26-Feb-2020: start : for manage adhoc Pos services invoices-->
+                                            <div class="slds-truncate" title="">
+                                                <aura:if isTrue="{!v.isAdhocPOSServices}">
+                                                    <lightning:input class="quntityInput" aura:id="Price"
+                                                                     onchange="{!c.onChangeAdhocServicePrice}" type="number"
+                                                                     formatter="currency" min="1" name="price"
+                                                                     value="{!slProduct.price}" step="0.01" />
+                                                    <aura:set attribute="else">
+                                                        ${!slProduct.price}
+                                                    </aura:set>
+                                                </aura:if>
+                                            </div>
+                                            <!-- added by jatin: 26-Feb-2020: start : for manage adhoc Pos services invoices-->
+                                        </td>
+                                    </tr>
+                                </aura:iteration>
+                                <aura:if isTrue="{!not(empty(v.slcdProducts))}">
+                                    <tr class="slds-hint-parent">
+                                        <td colspan="4">
+                                            <div class="slds-truncate slds-text-align_right">
+                                                <b>Total:</b>
+                                            </div>
+                                        </td>
+                                        <td><b><span id="totalAmount">${!v.totalAmt}</span></b></td>
+                                    </tr>
+                                    <tr class="slds-hint-parent">
+                                        <td colspan="4">
+                                            <div class="slds-truncate slds-text-align_right">
+                                                <b>GST({!v.gstPrcnt}%):</b>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <b><span id="gstAmount">${!v.gstPercntAmt}</span></b>
+                                        </td>
+                                    </tr>
+                                    <tr class="slds-hint-parent">
+                                        <td colspan="4">
+                                            <div class="slds-truncate slds-text-align_right">
+                                                <b>Grand Total:</b>
+                                            </div>
+                                        </td>
+                                        <td><b><span id="totalAmount">${!v.grandTot}</span></b></td>
+                                    </tr>
+                                </aura:if>
+                            </tbody>
+                        </table>
+                    </div>
+                    <lightning:button class="Green payment slds-p-vertical_xx-small" label="Enter Payment"
+                                      title="Enter Payment" onclick="{!c.openPaymentDetModel}" />
+                </div>
+                <!--
+                <div class="slds-col slds-size_2-of-12" style="border-left: 1px solid gray;">
+                    <div class="slds-col slds-size_3-of-3" style="padding-top: 9px;font-size: 20px;border-bottom: 1px solid gray;">
+                        <span style=""> Details</span>
+                    </div>
+                </div>-->
+            </div>
+        </div>
+        
+    </lightning:card>
+    <!--<c:ItemDetail/>-->
+    <div class="slds-m-around_xx-large">
+        <!--Use aura:if tag to display/hide popup based on isModalOpen value-->
+        <aura:if isTrue="{!v.isModalOpen}">
+            
+            <!-- Modal/Popup Box starts here-->
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                     aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- Modal/Popup Box Header Starts here-->
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close" onclick="{! c.closeModel }"
+                                              alternativeText="close" variant="bare-inverse" class="slds-modal__close" />
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">New Customer</h2>
+                    </header>
+                    <!--Modal/Popup Box Body Starts here-->
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <lightning:input aura:id="cstmrFName" name="cstmrFName" label="First Name"
+                                         value="{!v.acc.FirstName}" />
+                        <lightning:input aura:id="cstmrLName" name="cstmrLName" label="Last Name"
+                                         value="{!v.acc.LastName}" />
+                        <lightning:input aura:id="csmrEmail" name="csmrEmail" label="Email"
+                                         value="{!v.acc.PersonEmail}" />
+                        <lightning:input aura:id="cstmrPhone" name="cstmrPhone" label="Phone"
+                                         value="{!v.acc.PersonPhone}" />
+                        <!--						
+      <lightning:radioGroup name="radioGroup" class="slds-p-top_medium" label="Please Select Payment Method" options="{! v.options }" value="{! v.value }" type="radio"/>-->
+                    </div>
+                    <!--Modal/Popup Box Footer Starts here-->
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="neutral" label="Cancel" title="Cancel" onclick="{! c.closeModel }" />
+                        <lightning:button variant="brand" label="Save" title="Save" onclick="{!c.submitDetails}" />
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </aura:if>
+        
+        <!--Use aura:if tag to display/hide popup based on isModalOpen value-->
+        <aura:if isTrue="{!v.payDetailModel}">
+            <!-- Modal/Popup Box starts here-->
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                     aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- Modal/Popup Box Header Starts here-->
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close" onclick="{! c.closePaymentDetModel }"
+                                              alternativeText="close" variant="bare-inverse" class="slds-modal__close" />
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Payment Detail</h2>
+                    </header>
+                    <!--Modal/Popup Box Body Starts here-->
+                    <div class="slds-modal__content slds-p-around_medium time-list" id="modal-content-id-1">
+                        <lightning:radioGroup name="radioGroup" aura:id="mygroup" class="slds-p-top_medium"
+                                              label="Please Select Payment Method" options="{! v.options }" value="{! v.value }"
+                                              type="radio" />
+                        <span><input type="checkbox" disabled="true" checked="checked" name="vehicle3" /> Available
+                            payment credit: ${!v.avlPayCredits}</span>
+                    </div>
+                    <!--Modal/Popup Box Footer Starts here-->
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="neutral" label="Cancel" title="Cancel"
+                                          onclick="{! c.closePaymentDetModel }" />
+                        <lightning:button variant="brand" label="Save" title="Save" onclick="{!c.generateInvoice}" />
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </aura:if>
+        
+        <aura:if isTrue="{!v.itemOutStockModalOpen}">
+            <!-- Modal/Popup Box starts here-->
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                     aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- Modal/Popup Box Header Starts here-->
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close" onclick="{! c.closeModel }"
+                                              alternativeText="close" variant="bare-inverse" class="slds-modal__close" />
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Item Out of Stock</h2>
+                    </header>
+                    <!--Modal/Popup Box Body Starts here-->
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        The Item you have selected is currently out of stock at {Location name}. Are you sure you would
+                        like to proceed with the sale?
+                    </div>
+                    <!--Modal/Popup Box Footer Starts here-->
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="destructive" label="Cancel" title="Cancel"
+                                          onclick="{!c.closeModel}" />
+                        <lightning:button class="GreenInModel" label="Continue" title="Continue"
+                                          onclick="{! c.openModel }" />
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </aura:if>
+    </div>
+    <!-- <aura:attribute name="myEnterSearch" type="String"/>
+    
+    <div class="slds-grid slds-gutters">
+        <div class="slds-col slds-size_2-of-3">
+            <div class="slds-grid slds-wrap">
+            <div class="slds-col slds-size_1-of-3">
+                <div oninput="{! c.handleInput}"  onkeyup="{! c.handleKeyUp}" >
+                    <lightning:input
+                                     aura:id="enter-search"
+                                     name="enter-search"
+                                     label=""
+                                     type="search"
+                                     value="{!v.myEnterSearch}"
+                                     placholder="Search Customers"/>       
+                </div>
+            </div>
+            <div class="slds-col slds-size_1-of-3">
+                <button class="slds-button slds-button_success">New Customer</button>
+            </div>
+            <div class="slds-col slds-size_1-of-3">
+                <button class="slds-button slds-button_brand">Walk-In</button>
+            </div>
+            </div>
+        </div>
+        <div class="slds-col slds-size_1-of-3">
+            <span>2</span>
+        </div>
+    </div>-->
+    <aura:if isTrue="{!v.openPopUp}">
+        <!-- Modal/Popup Box starts here-->
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                 aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <!-- Modal/Popup Box Header Starts here-->
+                <header class="slds-modal__header">
+                    <lightning:buttonIcon iconName="utility:close" onclick="{! c.closePaymentDetModel }"
+                                          alternativeText="close" variant="bare-inverse" class="slds-modal__close" />
+                </header>
+                <!--Modal/Popup Box Body Starts here-->
+                <div class="slds-modal__content slds-p-around_medium time-list" id="modal-content-id-1"
+                     style="text-align: center;">
+                    <span style="color:firebrick;font-weight:bold;"> Did you received the amount?</span>
+                </div>
+                <!--Modal/Popup Box Footer Starts here-->
+                <footer class="slds-modal__footer">
+                    <lightning:button variant="neutral" label="Cancel" title="Cancel"
+                                      onclick="{! c.closePaymentDetModel }" />
+                    <lightning:button variant="brand" label="Save" title="Save" onclick="{!c.saveGenerateInvoice}" />
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </aura:if>
+    
+    <aura:if isTrue="{!v.isOpenItemDetail}">
+        <div class="slds-m-around_xx-large">
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                     aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close" onclick="{! c.closeItemDetailModel }"
+                                              alternativeText="close" variant="bare-inverse" class="slds-modal__close" />
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Item
+                            {!v.slcdSingleProduct.item} Detail Page</h2>
+                    </header>
+                    
+                    <div class="slds-grid slds-wrap" style="background-color:white;">
+                        <div class="slds-col slds-size_3-of-12">
+                            <!-- <div style="height:100px; width:100px; border-style: bold; background-color:red; "></div> -->
+                        </div>
+                        <div class="slds-col slds-size_9-of-12">
+                            <br />
+                            <p style="text-weight:bold;"><b>
+                                <lightning:formattedText value="Item Name" /></b></p>
+                            <p>
+                                <lightning:formattedText value="{!v.slcdSingleProduct.item}" />
+                            </p>
+                            <br />
+                            <p style="text-weight:bold;"><b>
+                                <lightning:formattedText value="Item Category" /></b></p>
+                            <p>
+                                <lightning:formattedText value="{!v.slcdSingleProduct.category}" />
+                            </p>
+                            <br />
+                            <!--<p style="text-weight:bold;"><b><lightning:formattedText value="Vendor" /></b></p>
+                        <p><lightning:formattedText value="Vendor Name" /></p>
+                        <br/>-->
+                            <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                                <thead>
+                                    <tr class="slds-line-height_reset">
+                                        <th class="" scope="col">
+                                            <div class="slds-truncate" title="Inventory By location">Inventory By
+                                                location</div>
+                                        </th>
+                                        <th class="" scope="col">
+                                            <div class="slds-truncate" title="Qty">Qty</div>
+                                        </th>
+                                        <th class="" scope="col">
+                                            <div class="slds-truncate" title="Price">Price</div>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <aura:iteration items="{!v.wareHouseItemDetailList}" var="whDetail" indexVar="key">
+                                        <tr class="slds-line-height_reset">
+                                            <th class="" scope="col">
+                                                <div class="slds-truncate" title="Inventory By location">
+                                                    {!whDetail.wareHouseId}</div>
+                                            </th>
+                                            <th class="" scope="col">
+                                                <div class="slds-truncate" title="Qty">{!whDetail.avlailbleQntity}</div>
+                                            </th>
+                                            <th class="" scope="col">
+                                                <div class="slds-truncate" title="Price">${!whDetail.price}</div>
+                                            </th>
+                                        </tr>
+                                    </aura:iteration>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="neutral" label="Cancel" title="Cancel"
+                                          onclick="{! c.closeItemDetailModel }" />
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </div>
+    </aura:if>
+</aura:component>

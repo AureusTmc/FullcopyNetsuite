@@ -1,0 +1,142 @@
+<aura:component controller="AddDepositInvoiceClass" implements="force:appHostable,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global" >
+
+    <aura:handler name="init" value="{!this}" action="{!c.initialize }"/>
+    <!-- attribute declaration -->
+    <aura:attribute name="enrolId" type="string" />
+    <aura:attribute name="Center" type="string"/>
+    <aura:attribute name="TeacherId" type="string"/>
+    <aura:attribute name="Student" type="string"/>
+    <aura:attribute name="Parent" type="string"/>
+    <aura:attribute name="CenterId" type="string"/>
+    <aura:attribute name="StudentId" type="string"/>
+    <aura:attribute name="ParentId" type="string"/>
+    <aura:attribute name="Enrolment" type="string"/>
+    <aura:attribute name="Package" type="string"/>
+    <aura:attribute name="Deposit" type="string"/>
+    <aura:attribute name="EnrolmentId" type="string"/>
+    <aura:attribute name="PackageId" type="string"/>
+    <aura:attribute name="Subscription" type="string"/>
+    <aura:attribute name="SubscriptionLineItem" type="string"/>
+    
+    <aura:attribute name="criteriaList" type="list" />
+    <lightning:card footer="" title="Add Deposit Invoices">
+    <div class="slds-form--stacked slds-p-around_small">
+            <br/>
+
+            <div class="slds-float_right slds-p-bottom_small">
+                 <lightning:button variant="brand" label="Add Invoice" onclick="{!c.addRow}" />
+            </div>
+            
+            
+            <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+                
+                
+                
+                <thead>
+                    <tr class="slds-text-title_caps">
+                        <th scope="col">
+                            <div class="slds-truncate">S.N</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="Parent">Parent</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="Student">Student</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="Package">Package</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="Enrolment">Enrolment</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="Deposit Amount" style="overflow:visible !important;">Deposit Amount</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="Invoice Date" style="overflow:visible !important;">Invoice Date</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="Stripe Charge Id" style="overflow:visible !important;">Stripe Charge Id</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="CO Inv No" style="overflow:visible !important;">CO Inv No</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="Method Of Payments">Method Of Payments</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="action">Action</div>
+                        </th>
+                        
+                    </tr>
+                </thead> 
+                <tbody> 
+                    <aura:iteration items="{!v.criteriaList}" var="acc" indexVar="index">
+                    <tr>
+                        <td>
+                        {!index + 1}
+                        </td>
+                        <td> 
+                            <lightning:input  name="criteriavalue" aura:id ="fldname" label="" value="{!acc.Parent}" disabled="true"/>
+                        </td>
+                        <td>
+                             <lightning:input name="criteriavalue" aura:id ="fldname" label="" value="{!acc.Student}" disabled="true"/>
+                           
+                        </td>
+                        <td> 
+                            <lightning:input name="criteriavalue" aura:id ="fldname" label="" Title="{!acc.Package}" value="{!acc.Packages}" disabled="true"/>
+                        </td>
+                        <td> 
+                            <lightning:input name="criteriavalue" aura:id ="fldname" label="" Title="{!acc.Enrolment}" value="{!acc.Enrolment}" disabled="true"/>
+                        </td>
+                        <td> 
+                            <lightning:input name="criteriavalue" aura:id ="fldname" label="" value="{!acc.DepositAmt}"/>
+                        </td>
+                        <td>
+                            <div title="action">
+                                <lightning:input type="date" name="criteriavalue" aura:id ="fldname" label="" value="{!acc.Invoice_Date}" required="true"/>
+                            </div>
+                        </td>
+                        <td>
+                            <div  title="action">
+                                <lightning:input name="criteriavalue" class="start"   label="" value="{!acc.Stripe}"/>
+                            </div>
+                        </td>
+                        <td>
+                            <div  title="action">
+                           <!--  <lightning:input name="criteriavalue" accesskey="{!index}" aura:id ="fldname" label="" value="{!acc.End_Time}" required="true"/> -->
+                              <lightning:input  name="criteriavalue"  label="" value="{!acc.CoInv}"/>
+                            </div>
+                        </td>
+                        <td>
+                            <div  title="action">
+                                <lightning:select name="Duration" accesskey="{!index}" label="" value="{!acc.PaymentMethod}"  required="true" >
+                                    <option value="Card">Card</option>
+                                    <option value="Cheque">Cheque</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Offline Card">Offline Card</option>
+                                    <option value="NETS">NETS</option>
+                                </lightning:select>
+                            </div>
+                        </td>
+                        <td>
+                             <a >
+                                  <lightning:icon iconName="utility:add" size="small" alternativeText="Add Row" onclick="{!c.addRow}"/>
+                            </a>
+                            <a >
+                                <lightning:icon iconName="utility:dash" size="small" alternativeText="Delete Row" onclick="{!c.deleteRow}"/>
+                            </a>
+                           
+                        </td>
+                    </tr>
+                    </aura:iteration>
+                </tbody>
+            </table>
+            <div class="slds-p-bottom_small" style="text-align:center;margin-top: 2%;">
+                <a href="{! '/lightning/r/Enrolment__c/'+ v.enrolId + '/view'}"><lightning:button variant="brand" label="Cancel" onclick="{!c.CancelButton}" class="fireBricks"/></a>
+                <lightning:button variant="brand" label="Save" onclick="{!c.SaveInvoices}" />
+            </div>
+    </div>
+    </lightning:card> 
+    
+</aura:component>

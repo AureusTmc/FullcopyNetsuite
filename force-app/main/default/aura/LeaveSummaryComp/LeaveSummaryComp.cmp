@@ -1,0 +1,81 @@
+<aura:component implements="flexipage:availableForAllPageTypes,force:hasRecordId" access="global" controller="LeaveSummaryController">
+    <aura:attribute name="leaveEntObj" type="Leave_Entitlement__c" description="contains current Leave Entitlement"/>
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+	
+	<article class="slds-card">
+        <div class="slds-card__header">
+            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                <div class="slds-media__figure">
+                    <span class="slds-icon_container slds-icon-utility-builder slds-icon-standard-account">
+                        <lightning:icon class="customIconColor" iconName="utility:summarydetail" size="small"/>
+                    </span>
+                </div>
+                <div class="slds-media__body">
+                    <h2 class="slds-card__header-title">
+                        <b>Leave Summary</b>
+                    </h2>
+                </div>
+            </header>
+        </div>
+        <div class="slds-card__body slds-m-horizontal_medium">
+            <aura:if isTrue="{!not(empty(v.leaveEntObj))}">
+                <div class="slds-box">
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    Paid Leave:
+                                </td>
+                                <td>
+                                    {!v.leaveEntObj.Paid_Leave__c}
+                                </td>
+                                <td class="slds-p-left_small">
+                                    Sick Leave:
+                                </td>
+                                <td>
+                                    {!v.leaveEntObj.Sick_Leave__c}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Used Paid Leaves:
+                                </td>
+                                <td>
+                                    {!v.leaveEntObj.Used_Paid_Leaves__c}
+                                </td>
+                                <td class="slds-p-left_small">
+                                    Used Sick Leaves:
+                                </td>
+                                <td>
+                                    {!v.leaveEntObj.Used_Sick_Leaves__c}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Remaining Paid Leaves:
+                                </td>
+                                <td>
+                                    {!v.leaveEntObj.Remaining_Paid_Leaves__c}
+                                </td>
+                                <td class="slds-p-left_small">
+                                    Remaining Sick Leaves:
+                                </td>
+                                <td>
+                                    {!v.leaveEntObj.Remaining_Sick_Leaves__c }
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <aura:set attribute="else">
+                    <div class="slds-illustration slds-illustration_small">
+                        <div class="slds-text-longform">
+                            <p class="slds-text-body_regular">No leave entitlement found for today. Check back later!</p>
+                        </div>
+                    </div>
+                </aura:set>
+            </aura:if>
+        </div>
+        <footer class="slds-card__footer"></footer>
+    </article>
+</aura:component>

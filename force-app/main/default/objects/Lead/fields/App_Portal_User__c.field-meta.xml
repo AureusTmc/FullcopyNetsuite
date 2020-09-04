@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>App_Portal_User__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>For Pardot use</description>
+    <externalId>false</externalId>
+    <label>App/Portal User</label>
+    <trackFeedHistory>false</trackFeedHistory>
+    <type>Checkbox</type>
+</CustomField>

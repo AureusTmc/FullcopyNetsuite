@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>American_club__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <externalId>false</externalId>
+    <label>American club</label>
+    <lookupFilter>
+        <active>true</active>
+        <filterItems>
+            <field>Account.LastName</field>
+            <operation>contains</operation>
+            <value>American club</value>
+        </filterItems>
+        <filterItems>
+            <field>$Source.Membership_Type__c</field>
+            <operation>equals</operation>
+            <valueField>Account.Membership_Type__c</valueField>
+        </filterItems>
+        <isOptional>false</isOptional>
+    </lookupFilter>
+    <referenceTo>Account</referenceTo>
+    <relationshipLabel>Accounts (American club)</relationshipLabel>
+    <relationshipName>Accounts</relationshipName>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Lookup</type>
+</CustomField>

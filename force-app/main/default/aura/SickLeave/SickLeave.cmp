@@ -1,0 +1,117 @@
+<aura:component controller="TeacherMcClass" implements="flexipage:availableForRecordHome,force:hasRecordId,force:lightningQuickAction" access="global" >
+    <aura:handler name="init" value="{!this}" action="{!c.initialize}"/>
+    <aura:attribute name="savevalue" type="object" />
+    <aura:attribute name="recordId" type="string" />
+    <aura:attribute name="isTeacher" type="string" />
+    <aura:attribute name="showForm" type="boolean" default="false"/>
+    <aura:attribute name="lookupId" type="string"/>
+    <aura:attribute name="showConfirmBox" type="boolean" default="false"/>
+    <aura:attribute name="totalMakeUpCredit" type="integer"/>
+    <aura:attribute name="totalBooking" type="integer"/>
+    <aura:attribute name="TeacherName" type="string"/>
+    <aura:attribute name="isShowRemark" type="boolean" default="false"/>
+    <aura:attribute name="todayDate" type="date"/>
+    <aura:attribute name="LeaveTy" type="string"/>
+    <aura:attribute name="options" type="List"/>
+    
+    
+    <aura:if isTrue="{! v.isTeacher == 'Teacher'}">
+    <lightning:navigation aura:id="navService"/>
+    <lightning:card title="">
+        <aura:set attribute="body">
+        </aura:set>
+        <aura:set attribute="actions">
+             <lightning:button variant="brand" label="Sick leave" name="Mc" title="Add Teacher Mc" 
+                              onclick="{!c.openModal}"/>
+        </aura:set>
+        <aura:set attribute="footer">
+        </aura:set>
+    </lightning:card>
+    </aura:if>
+    <aura:if isTrue="{!v.showForm}" >
+       <div class="demo-only demo-only_viewport" style="height:640px">
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Leave Request Form</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <fieldset class="slds-box slds-theme--default slds-container--large">
+                            
+                            <!-- CREATE NEW EXPENSE FORM -->
+                            <form class="slds-form--stacked">  
+                                <div class="slds-grid slds-gutters">
+                                    <div class="slds-col">
+                                        <lightning:input aura:id="mcform" label="Teacher"
+                                                         name="Teacher" value="{!v.savevalue.Employee}"
+                                                         required="true" disabled="true"/>
+                                         <lightning:input type="date" aura:id="mcform" label="Leave Start Date" class="fixDate" onchange="{!c.populatedDate}"
+                                                         name="Start Date" value="{!v.savevalue.Leave_Start_Date}"
+                                                         required="true" min="{!v.todayDate}"/>
+                                        
+                                            <lightning:textarea  label="Remark" aura:id="remarks"
+                                                                name="Remark" value="{!v.savevalue.Remarks}"/>
+                                        <aura:if isTrue="{!v.isShowRemark}">
+                                            <span style="color:firebrick;">Complete this field.</span>
+                                        </aura:if>
+                                            <!--aura:set attribute="else">
+                                                <lightning:textarea aura:id="mcform" label="Remark"
+                                                                    name="Remark" value="{!v.savevalue.Remarks}"
+                                                                    required="true"/>
+                                                
+                                            </aura:set -->
+                                        
+                                    </div>
+                                    <div class="slds-col"> 
+                                        <!--Lightning:select  label="Leave Type" aura:id="LeaveTypeRequest" required="true">
+                                            <aura:iteration items="{!v.options}" var="value">
+                                                <option value="{!value.value}">{!value.value}</option>
+                                            </aura:iteration>
+                                        </Lightning:select -->
+                                                <lightning:input aura:id="LeaveTypeRequest" label="Leave Type"
+                                                         name="Teacher" value="Teacher MC"
+                                                         required="true" disabled="true"/>
+                                        <lightning:input type="date" aura:id="mcform" label="Leave End Date"
+                                                         name="End Date" value="{!v.savevalue.Leave_End_Date}"
+                                                         required="true" min="{!v.todayDate}"/>  
+                                    </div>
+                                </div>
+                            </form>
+                            <!-- / CREATE NEW EXPENSE FORM -->
+                            
+                        </fieldset>
+                    </div>
+                    <footer class="slds-modal__footer">
+                         <lightning:button  variant="brand" label="Show Bookings" onclick="{!c.gotoReport}" class="Left"/>
+                        <lightning:button variant="destructive" label="Cancel" title="Cancel" onclick="{!c.hideModal}"/>
+                        <lightning:button  variant="brand" label="Save Request" onclick="{!c.createLeaveRequest}"/>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </div>
+    </aura:if>
+    
+     <aura:if isTrue="{!v.showConfirmBox}">
+        <div class="demo-only demo-only_viewport" style="height:640px">
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Are you sure?</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <P>Total <span style="color:firebrick;font-weight:Bold;">{! v.totalBooking}</span> bookings will be cancelled and  <span style="color:firebrick;font-weight:Bold;"> {!v.totalMakeUpCredit}</span> minute Make-up credit will be applied to respective  <span style="color:green;">Parents</span></P>
+                        <aura:if isTrue="{!v.processType == 'void'}">
+                    	    <lightning:textarea class="textarea-size" name="Remark" aura:id="Remark"  required="true" value="{!v.remark}" label="Enter Remark" maxlength="255" />
+                        </aura:if>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="destructive" label="No" title="No" onclick="{!c.hideModal}"/>
+                        <lightning:button variant="brand" label="Yes" title="Yes" onclick="{!c.confirmYes}"/>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </div>
+    </aura:if>
+</aura:component>

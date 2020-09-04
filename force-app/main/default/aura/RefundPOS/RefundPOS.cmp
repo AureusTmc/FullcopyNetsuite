@@ -1,0 +1,84 @@
+<aura:component controller="ExchangeInstrumntCLass">
+	<aura:attribute name="invoiceRefundRecord" type="object"/>
+    <aura:attribute name="recordId" type="string"/>
+    <aura:attribute name="isDisabled" type="boolean" default="false"/>
+    <aura:attribute name="isBankTrnsfr" type="boolean" default="false"/>
+    <aura:attribute name="isCardOnFile" type="boolean" default="false"/>
+    <aura:attribute name="isOfflineCard" type="boolean" default="false"/>
+    <aura:attribute name="isError" type="boolean" default="false"/>
+    <aura:attribute name="exceptionMessage" type="string" />
+    <aura:attribute name="Exception" type="boolean" default="false"/>
+    <aura:attribute name="showModal" type="boolean" default="false"/>
+    <aura:attribute name="isChildForm" type="boolean" default="True"/>
+    <aura:registerEvent name="cmpEvent" type="c:Exchange"/>
+    <aura:if isTrue="{!v.isChildForm}">
+        <div class="demo-only demo-only_viewport" style="height:640px">
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">POS Refund Invoice</h2>
+                        <aura:if isTrue="{!v.isError}">
+                            <span style="color:firebrick;font-weight:Bold;">Please Select Refund type</span>
+                        </aura:if>
+                        <aura:if isTrue="{!v.Exception}">
+                            <P><span style="color:firebrick;font-weight:Bold;">{!v.exceptionMessage} Please Contact System Administrator</span></P>
+                        </aura:if>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <fieldset class="slds-box slds-theme--default slds-container--large">
+                            
+                            <!-- CREATE NEW INVOICE FORM -->
+                            <form class="slds-form--stacked">  
+                                <div class="slds-grid slds-gutters">
+                                    <div class="slds-col">
+                                        <lightning:tile label="Name" class="lablCls">
+                                            <p class="slds-truncate" title="{!v.invoiceRefundRecord.Name}">{!v.invoiceRefundRecord.Name}</p>
+                                        </lightning:tile>
+                                        <lightning:tile label="Customer Name" class="lablCls">
+                                            <p class="slds-truncate" title="{!v.invoiceRefundRecord.Parent_Account__r.Name}">{!v.invoiceRefundRecord.CustomerName}</p>
+                                        </lightning:tile>
+                                        <lightning:tile label="Total Invoice Amount" class="lablCls">
+                                            <p class="slds-truncate" title="{!v.invoiceRefundRecord.Total_Invoice_Amount__c}">${!v.invoiceRefundRecord.TotalInvoiceAmount}</p>
+                                        </lightning:tile>
+                                    </div>
+                                    <div class="slds-col">
+                                        <lightning:tile label="Method of Refund" class="lablCls">
+                                            <lightning:input type="radio" label="Card On file" name="Card" aura-id="FileCard" onchange="{!c.changeVal}" disabled="{!v.isDisabled}"/>
+                                            <lightning:input type="radio" label="Offline Card" name="Card"  onchange="{!c.changeVal}"/>
+                                            <lightning:input type="radio" label="Bank Transfer" name="Card" onchange="{!c.changeVal}" aura-id="bankTrnsfr"/>
+                                        </lightning:tile>
+                                    </div>
+                                </div>
+                            </form>
+                            <!-- / CREATE NEW INVOICE FORM -->
+                            
+                        </fieldset>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="destructive" label="Cancel" title="Cancel" onclick="{!c.hideModalRefund}"/>
+                        <lightning:button  variant="brand" label="Save" onclick="{!c.Save}"/>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </div>
+    </aura:if>
+    <!-- popup for the offline card -->
+    <aura:if isTrue="{!v.showModal}" >
+        <div class="demo-only demo-only_viewport" style="height:640px">
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Please confirm the Refund to be processed! </h2>
+                    </header>
+                    
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="destructive" name="RefundInterface" label="No" title="Cancel" onclick="{!c.hideModal}"/>
+                        <lightning:button  variant="brand" label="Yes" onclick="{!c.SaveConfirm}"/>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </div>
+    </aura:if>
+</aura:component>

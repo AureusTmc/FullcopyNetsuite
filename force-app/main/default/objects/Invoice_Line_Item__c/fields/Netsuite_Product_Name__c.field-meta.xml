@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Netsuite_Product_Name__c</fullName>
+    <externalId>false</externalId>
+    <formula>IF(Amount__c&lt;0,
+&apos;Discount : School Pre-Payment&apos;,
+IF(Is_Deposit__c,
+IF(Not(ISBLANK(Package__c)),
+&apos;Deposit : Enrolment Deposit&apos;,
+&apos;Deposit : Instrument Deposit&apos;
+),
+IF(Package_Name__c==&apos;Registration Fees&apos;,
+&apos;Registration Fees : Registration Fee&apos;,
+IF(Not(ISBLANK(Package__c)),
+Package__r.Netsuite_Product_ID__c,
+&apos;&apos;
+)
+)
+)
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Netsuite Product Name</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

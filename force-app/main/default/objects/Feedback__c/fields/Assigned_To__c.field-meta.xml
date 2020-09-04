@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Assigned_To__c</fullName>
+    <externalId>false</externalId>
+    <label>Assigned To</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>true</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Alex</fullName>
+                <default>true</default>
+                <label>Alex</label>
+            </value>
+            <value>
+                <fullName>Julius</fullName>
+                <default>false</default>
+                <label>Julius</label>
+            </value>
+            <value>
+                <fullName>Techmatrix</fullName>
+                <default>false</default>
+                <label>Techmatrix</label>
+            </value>
+            <value>
+                <fullName>Ivy</fullName>
+                <default>false</default>
+                <label>Ivy</label>
+            </value>
+            <value>
+                <fullName>Alice Wong</fullName>
+                <default>false</default>
+                <label>Alice Wong</label>
+            </value>
+            <value>
+                <fullName>Techmatrix Support</fullName>
+                <default>false</default>
+                <label>Techmatrix Support</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

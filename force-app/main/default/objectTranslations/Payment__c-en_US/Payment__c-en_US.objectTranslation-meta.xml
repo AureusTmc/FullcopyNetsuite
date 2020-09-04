@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <caseValues>
+        <plural>false</plural>
+        <value>Payment</value>
+    </caseValues>
+    <caseValues>
+        <plural>true</plural>
+        <value>Payments</value>
+    </caseValues>
+    <layouts>
+        <layout>Credit Note Transaction Layout</layout>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+        <sections>
+            <label><!-- Fields --></label>
+            <section>Fields</section>
+        </sections>
+        <sections>
+            <label><!-- System Information --></label>
+            <section>System Information</section>
+        </sections>
+    </layouts>
+    <layouts>
+        <layout>Payment Layout</layout>
+        <sections>
+            <label><!-- Cheque Details --></label>
+            <section>Cheque Details</section>
+        </sections>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+        <sections>
+            <label><!-- NETS Details --></label>
+            <section>NETS Details</section>
+        </sections>
+        <sections>
+            <label><!-- Sage --></label>
+            <section>Sage</section>
+        </sections>
+    </layouts>
+    <recordTypes>
+        <label><!-- Payment As Discount --></label>
+        <name>Credit_Note_Transaction</name>
+    </recordTypes>
+    <recordTypes>
+        <label><!-- Payment As Credit --></label>
+        <name>Payment_As_Credit</name>
+    </recordTypes>
+    <recordTypes>
+        <label><!-- Payment As Deposit --></label>
+        <name>Payment_As_Deposit</name>
+    </recordTypes>
+    <recordTypes>
+        <label><!-- Payment Transaction --></label>
+        <name>Payment_Transaction</name>
+    </recordTypes>
+    <recordTypes>
+        <label><!-- Refund --></label>
+        <name>Refund</name>
+    </recordTypes>
+    <startsWith>Consonant</startsWith>
+    <workflowTasks>
+        <name>Refund_Reminder</name>
+        <subject><!-- Refund Reminder --></subject>
+    </workflowTasks>
+</CustomObjectTranslation>

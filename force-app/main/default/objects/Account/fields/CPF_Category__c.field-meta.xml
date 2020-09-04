@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>CPF_Category__c</fullName>
+    <externalId>false</externalId>
+    <formula>IF(ISPICKVAL(ID_Type__c,&apos;Citizen&apos;),&apos;Third Year &amp; Singaporean&apos;,
+IF(
+AND(ISPICKVAL(ID_Type__c,&apos;Permanent Resident&apos;), Issue_Date__c&lt;=TODAY()),
+IF(
+OR(
+((TODAY() - Issue_Date__c)&lt;=365),
+(
+AND
+(
+((TODAY() - Issue_Date__c)&gt;365),
+(DAY(Issue_Date__c)!=1),
+(MONTH(TODAY())=MONTH(Issue_Date__c)),
+(YEAR(TODAY())=(YEAR(Issue_Date__c)+1))
+)
+)
+)
+,&apos;First Year&apos;,
+
+IF(
+AND(
+((TODAY() - Issue_Date__c)&gt;365),
+((TODAY() - Issue_Date__c)&lt;730)
+),&apos;Second Year&apos;,
+
+
+IF(
+AND(
+((TODAY() - Issue_Date__c)&gt;730),
+(DAY(Issue_Date__c)!=1),
+(MONTH(TODAY())=MONTH(Issue_Date__c)),
+(YEAR(TODAY())=(YEAR(Issue_Date__c)+2))
+),
+&apos;Second Year&apos;,
+&apos;Third Year &amp; Singaporean&apos;)
+)
+)
+
+,&apos;NO CPF&apos;)
+
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>CPF Category</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

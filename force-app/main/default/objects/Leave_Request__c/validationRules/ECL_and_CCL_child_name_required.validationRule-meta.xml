@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ECL_and_CCL_child_name_required</fullName>
+    <active>true</active>
+    <description>CCL &amp; ECL child name is mandatory.</description>
+    <errorConditionFormula>(RecordType.DeveloperName == &apos;Child_Care_Leave&apos; || RecordType.DeveloperName == &apos;Extended_Child_Care_Leave&apos;) &amp;&amp; ISBLANK(Child_Name__c)</errorConditionFormula>
+    <errorMessage>Child name cannot be left blank.</errorMessage>
+</ValidationRule>

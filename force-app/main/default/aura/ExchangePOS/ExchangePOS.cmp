@@ -1,0 +1,144 @@
+<aura:component controller="ExchangeInstrumntCLass">
+    <aura:attribute name="invoiceRecord" type="object"/>
+    <aura:attribute name="invoiceLineItemRecord" type="List"/>
+    <aura:attribute name="exceptionMessage" type="string" />
+    <aura:attribute name="showForm" type="boolean" default="false"/>
+    <aura:attribute name="isError" type="boolean" default="false"/>
+     <aura:attribute name="showModal" type="boolean" default="false"/>
+    <aura:attribute name="Exception" type="boolean" default="false"/>
+    <aura:attribute name="showFormRefund" type="boolean" default="false"/>
+    <aura:attribute name="invoiceRefundRecord" type="object"/>
+	<aura:attribute name="recordId" type="string"/>
+    <aura:registerEvent name="cmpEvent" type="c:Exchange"/>
+    
+	 <div class="demo-only demo-only_viewport" style="height:640px">
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">POS Exchange Invoice</h2>
+                        <aura:if isTrue="{!v.Exception}">
+                            <P><span style="color:firebrick;font-weight:Bold;">{!v.exceptionMessage} Please Contact System Administrator</span></P>
+                        </aura:if>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <fieldset class="slds-box slds-theme--default slds-container--large">
+                            
+                            <!-- CREATE NEW EXPENSE FORM -->
+                            <form class="slds-form--stacked">  
+                                <div class="slds-grid slds-gutters">
+                                    <div class="slds-col">
+                                        <lightning:tile class="lablCls" label="Name">
+                                            <p class="slds-truncate" title="{!v.invoiceRecord.Name}">{!v.invoiceRecord.Name}</p>
+                                        </lightning:tile>
+                                        
+                                        <lightning:tile class="lablCls" label="Invoice Type">
+                                            <p class="slds-truncate" title="{!v.invoiceRecord.Invoice_Type__c}">{!v.invoiceRecord.Invoice_Type__c}</p>
+                                        </lightning:tile>
+                                        
+                                        <lightning:tile class="lablCls" label="Total Invoice Amount">
+                                            <p class="slds-truncate" title="{!v.invoiceRecord.Total_Invoice_Amount__c}">${!v.invoiceRecord.Total_Invoice_Amount__c}</p>
+                                        </lightning:tile>
+                                    </div>
+                                    <div class="slds-col"> 
+                                         <lightning:tile class="lablCls" label="Customer Name">
+                                            <p class="slds-truncate" title="{!v.invoiceRecord.Customer_Name__c}">{!v.invoiceRecord.Parent_Account__r.Name}</p>
+                                        </lightning:tile>
+                                        
+                                        <lightning:tile class="lablCls" label="Center Name">
+                                            <p class="slds-truncate" title="{!v.invoiceRecord.Center__r.Name}">{!v.invoiceRecord.Center__r.Name}</p>
+                                        </lightning:tile>
+                                        
+                                        <lightning:tile class="lablCls" label="Invoice Date">
+                                            <lightning:formattedDateTime value="{!v.invoiceRecord.Invoice_Date__c}" year="2-digit" month="short" day="2-digit" weekday="short"/>
+                                        </lightning:tile>
+                                    </div>
+                                </div>
+                            </form>
+                            <!-- / CREATE NEW EXPENSE FORM -->
+                            
+                        </fieldset>
+                        <!-- Invoice Line Item -->
+                        <div class="c-container slds-scrollable">
+                            <lightning:layout multipleRows="true">
+                                <lightning:layoutItem padding="around-xxx-small" size="12">
+                                    
+                                    <div class="slds-table--header-fixed_container" style="min-height: 53px; max-height: 327px;">
+                                        <div class="slds-m-around_xx-small" style="height:100%; background-color:white;">
+                                            
+                                            <table id="tableId" class="slds-table slds-table_bordered slds-table--header-fixed table-layout">
+                                                <thead>
+                                                    <tr class="slds-text-heading--label">
+                                                        <th scope="col" class="nobordertop slds-cell-th" title="Name">
+                                                            <div class="slds-truncate">Name</div>
+                                                        </th> 
+                                                        <th scope="col" class="nobordertop slds-cell-th" title="Quantity">
+                                                            <div class="slds-truncate">Quantity</div>
+                                                        </th> 
+                                                        <th scope="col" class="nobordertop slds-cell-th" title="Amount">
+                                                            <div class="slds-truncate">Amount</div>
+                                                        </th> 
+                                                        <th scope="col" class="nobordertop slds-cell-th" title="Gst Amount">
+                                                            <div class="slds-truncate">Gst Amount</div>
+                                                        </th> 
+                                                       <!-- <th scope="col" class="nobordertop slds-cell-th" title="Subject" style="width:20% !important">
+                                                            <div class="slds-truncate">Type</div>
+                                                        </th>
+                                                        <th scope="col" class="nobordertop slds-cell-th" title="Requested Date" style="width:17% !important;">
+                                                            <div class="slds-truncate">Amount</div>
+                                                        </th>
+                                                        <th scope="col" class="nobordertop slds-cell-th" title="Requested Date" style="width:17% !important;">
+                                                            <div class="slds-truncate">Gst Amount</div>
+                                                        </th>-->
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <aura:iteration items="{!v.invoiceLineItemRecord}" var="invoiceLineItemRecord">     
+                                                        <tr class="slds-hint-parent">
+                                                            <td data-label="Name" class="slds-cell-td" title="Name">
+                                                                <div class="slds-truncate" title="{!invoiceLineItemRecord.Remarks__c}">{!invoiceLineItemRecord.Remarks__c}</div>
+                                                            </td>
+                                                            <td data-label="Quantity" class="slds-cell-td" title="Quantity">
+                                                                <div class="slds-truncate" title="{!invoiceLineItemRecord.Quantity__c}">{!invoiceLineItemRecord.Quantity__c}</div>
+                                                            </td>
+                                                            <td data-label="Amount" class="slds-cell-td" title="Amount">
+                                                                <div class="slds-truncate" title="{!invoiceLineItemRecord.Amount__c}">${!invoiceLineItemRecord.Amount__c}</div>
+                                                            </td>
+                                                            <td data-label="Gst Amount" class="slds-cell-td" title="Gst Amount">
+                                                                <div class="slds-truncate" title="{!invoiceLineItemRecord.GST_Amount__c}">${!invoiceLineItemRecord.GST_Amount__c}</div>
+                                                            </td>
+                                                            
+                                                            <!-- <td data-label="CaseNumber" scope="row" class="slds-cell-td">
+                                                                <a href="{! '/lightning/r/Invoice_Line_Item__c/'+ invoiceLineItemRecord.Id + '/view'}" target="_blank" ><div title="{!invoiceLineItemRecord.Name}" class="slds-truncate">{!invoiceLineItemRecord.Name}</div></a>
+                                                            </td>
+                                                           <td data-label="Subject" class="slds-cell-td" title="Subject">
+                                                                <div class="slds-truncate" title="{!invoiceLineItemRecord.Invoice_Type__c}">{!invoiceLineItemRecord.Invoice_Type__c}</div>
+                                                            </td>
+                                                            <td data-label="Amount" class="slds-cell-td">
+                                                                <div class="slds-truncate">
+                                                                    <div class="slds-truncate" title="{!invoiceLineItemRecord.Total_Invoice_Amount__c}">{!invoiceLineItemRecord.Amount__c}</div>
+                                                                </div>
+                                                            </td>   
+                                                            <td data-label="GST Amount" class="slds-cell-td">
+                                                                <div class="slds-truncate">
+                                                                    <div class="slds-truncate" title="{!invoiceLineItemRecord.Total_Invoice_Amount__c}">{!invoiceLineItemRecord.GST_Amount__c}</div>
+                                                                </div>
+                                                            </td>  -->
+                                                        </tr>
+                                                    </aura:iteration>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </lightning:layoutItem>                              
+                            </lightning:layout>
+                        </div>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="destructive" label="Cancel" title="Cancel" onclick="{!c.hideModal}"/>
+                        <lightning:button  variant="brand" label="Exchange" onclick="{!c.confirmYes}"/>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </div>
+</aura:component>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>All_Centers</fullName>
+    <columns>ACCOUNT.NAME</columns>
+    <columns>Location__c</columns>
+    <columns>Country__c</columns>
+    <columns>CustIndicator__c</columns>
+    <columns>Center_Email__c</columns>
+    <columns>ACCOUNT.PHONE1</columns>
+    <columns>Total_Area__c</columns>
+    <columns>Number_of_Studio__c</columns>
+    <columns>Organisation__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>ACCOUNT.RECORDTYPE</field>
+        <operation>equals</operation>
+        <value>Account.Centre</value>
+    </filters>
+    <label>All Centres</label>
+</ListView>

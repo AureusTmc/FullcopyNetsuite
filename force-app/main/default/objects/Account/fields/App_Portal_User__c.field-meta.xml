@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>App_Portal_User__c</fullName>
+    <description>This formula field indicated if the Teacher/Customer is using the Portal or Mobile App</description>
+    <externalId>false</externalId>
+    <formula>IF( ISBLANK(Customer_Password__c), FALSE, TRUE)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>App/Portal User</label>
+    <trackHistory>false</trackHistory>
+    <type>Checkbox</type>
+</CustomField>

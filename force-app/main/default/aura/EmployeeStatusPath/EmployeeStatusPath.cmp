@@ -1,0 +1,8 @@
+<aura:component controller="EmployeeStatusPathController" implements="flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId" >
+    <lightning:picklistPath aura:id="picklistPath" recordId="{!v.recordId}"
+        variant="non-linear"
+        picklistFieldApiName="Employee_Status__c"
+        onselect="{!c.handleSelect}"
+    >
+    </lightning:picklistPath>
+</aura:component>

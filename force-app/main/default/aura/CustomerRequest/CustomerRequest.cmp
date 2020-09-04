@@ -1,0 +1,108 @@
+<aura:component controller="AccountController" implements="lightning:actionOverride,flexipage:availableForRecordHome,force:appHostable,flexipage:availableForAllPageTypes,force:hasRecordId,force:lightningQuickAction">
+    <!-- ******Handler******-->
+    <aura:handler event="c:AccountKeyChange" action="{!c.searchKeyChange}"/>
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    
+    <!--****** Attributes******-->
+    <aura:attribute name="Cases" type="Case[]"/>
+    <aura:attribute name="totalCount" type="integer"/>
+     <aura:attribute name="centerId" type="string" />
+    <lightning:card title="">
+        <aura:set attribute="title">
+            <b>Service Request&nbsp;({!v.totalCount})</b>
+        </aura:set>
+        <div class="c-container slds-scrollable">
+                    <lightning:layout multipleRows="true">
+                        <lightning:layoutItem padding="around-xxx-small" size="12">
+                            
+                            <div class="slds-table--header-fixed_container" style="min-height: 53px; max-height: 327px;">
+                                <div class="slds-m-around_xx-small" style="height:100%; background-color:white;">
+                                   
+                                    <table id="tableId" class="slds-table slds-table_bordered slds-table--header-fixed table-layout">
+                                        <thead>
+                                            <tr class="slds-text-heading--label">
+                                                <th scope="col" class="nobordertop slds-cell-th" style="padding-left: 6px !important; width: 10% !important;" title="Case">
+                                                    <div class="slds-truncate">Case Number</div>
+                                                </th>
+                                                <th scope="col" class="nobordertop slds-cell-th" title="Parent">
+                                                    <div class="slds-truncate">Parent</div>
+                                                </th>
+                                                <th scope="col" class="nobordertop slds-cell-th" title="Subject" style="width:20% !important">
+                                                    <div class="slds-truncate">Subject</div>
+                                                </th>
+                                                <th scope="col" class="nobordertop slds-cell-th" title="Requested Date" style="width:17% !important;">
+                                                    <div class="slds-truncate">Date	&amp; Time</div>
+                                                </th> 
+                                                <th scope="col" class="nobordertop slds-cell-th" title="Channel" style="width:10% !important;">
+                                                    <div class="slds-truncate">Origin</div>
+                                                </th>
+                                                <th scope="col" class="nobordertop slds-cell-th" title="Status" style="width:11% !important;">
+                                                    <div class="slds-truncate">Status</div>
+                                                </th>
+                                                <th scope="col" class="nobordertop slds-cell-th" title="Owner" style="width:15% !important;">
+                                                    <div class="slds-truncate">Owner</div>
+                                                </th>
+                                                <th scope="col" class="nobordertop slds-cell-th" title="Own" style="width:5% !important;">
+                                                    <div class="slds-truncate">Own     
+                                                    </div>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <aura:iteration items="{!v.Cases}" var="cas">     
+                                                <tr class="slds-hint-parent">
+                                                    <td data-label="CaseNumber" scope="row" class="slds-cell-td" style="padding-left:6px !important;">
+                                                        <a href="{! '/lightning/r/Account/'+ cas.Id + '/view'}" target="_blank" ><div title="{!cas.CaseNumber}" class="slds-truncate">{!cas.CaseNumber}</div></a>
+                                                    </td>
+                                                    <td data-label="Account Name" class="slds-cell-td">
+                                                        <div class="slds-truncate" title="{!cas.Account.Name}">{!cas.Account.Name}</div>
+                                                    </td>
+                                                    <td data-label="Subject" class="slds-cell-td" title="Subject">
+                                                        <div class="slds-truncate" title="{!cas.Subject}">{!cas.Subject}</div>
+                                                    </td>
+                                                    <aura:if isTrue="{!cas.Status=='New'}">
+                                                        <td data-label="Date" class="slds-cell-td">
+                                                            <div class="slds-truncate" title="{!cas.CreatedDate}"> 
+                                                                <lightning:formattedDateTime value="{!cas.CreatedDate}" year="2-digit" month="short" day="2-digit" hour="2-digit" minute="2-digit" weekday="short" timeZone="{!$Locale.timezone}"/>
+                                                            </div>
+                                                        </td>
+                                                        <aura:set attribute="else">
+                                                            <td data-label="Date" class="slds-cell-td">
+                                                                <div class="slds-truncate"> 
+                                                                    <lightning:formattedDateTime value="{!cas.LastModifiedDate}" year="2-digit" month="short" day="2-digit" hour="2-digit" minute="2-digit" weekday="short" timeZone="{!$Locale.timezone}"/>
+                                                                </div>
+                                                            </td>
+                                                        </aura:set>
+                                                    </aura:if>
+                                                   <td data-label="Origin" class="slds-cell-td" >
+                                                        <div class="slds-truncate center-Origin" title="Origin">
+                                                            <lightning:formattedRichText value="{!cas.Channel__c}"/>
+                                                        </div>
+                                                    </td>
+                                                    <td data-label="Status" class="slds-cell-td">
+                                                        <div class="slds-truncate center-image" title="Status"> 
+                                                            <lightning:formattedRichText value="{!cas.Status_Image__c}"/>
+                                                        </div>
+                                                    </td>   
+                                                    <td data-label="Owner" class="slds-cell-td">
+                                                        <div class="slds-truncate" title="{!cas.Owner.Name}">{!cas.Owner.Name}</div>
+                                                    </td>
+                                                    <td data-label="Owner" class="slds-cell-td">
+                                                        <aura:if isTrue="{! and(cas.Status=='New',cas.checkBoxValue=='00G')}">
+                                                            <div class="slds-truncate">
+                                                                <ui:inputCheckbox aura:id="boxPack" class="{!cas.Id}"  change="{!c.changeOwner}"/>
+                                                            </div>
+                                                        </aura:if>     
+                                                    </td>                                                    
+                                                </tr>
+                                            </aura:iteration>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </lightning:layoutItem>                              
+                    </lightning:layout>
+            		<div class="slds-align_absolute-center viewAllButton" onclick="{!c.OpenMegaPage}"> View All</div>
+                </div>
+    </lightning:card>
+</aura:component>

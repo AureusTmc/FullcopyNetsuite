@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Last Reschedule Date For Month Last Week --></label>
+    <name>Last_Reschedule_Date_For_Month_Last_Week__c</name>
+</CustomFieldTranslation>

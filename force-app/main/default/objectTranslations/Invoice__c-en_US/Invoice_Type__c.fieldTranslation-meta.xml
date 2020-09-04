@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Invoice Type --></label>
+    <name>Invoice_Type__c</name>
+    <picklistValues>
+        <masterLabel>Adhoc</masterLabel>
+        <translation><!-- Adhoc --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Camp</masterLabel>
+        <translation><!-- Camp --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>New Enrolment</masterLabel>
+        <translation><!-- New Enrolment --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>POS</masterLabel>
+        <translation><!-- POS --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Recurring</masterLabel>
+        <translation><!-- Recurring --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Studio Booking</masterLabel>
+        <translation><!-- Studio Booking --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

@@ -1,0 +1,36 @@
+<aura:component controller="ProcessRefundController" implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global" >
+    <aura:attribute name="isProcessing" type="Boolean" default="false"/>
+    
+    <aura:if isTrue="{!v.isProcessing}">
+        <lightning:spinner alternativeText="Loading" />
+    </aura:if>
+    <div class="slds-box slds-card slds-box_small">
+        <lightning:button variant="brand" label="Process Refund" name="refund" onclick ="{!c.showConfirmModal}">
+        </lightning:button>
+    </div>
+    
+    <div id="confirmModal" class="slds-hide" style="height:640px">
+        <section role="dialog" tabindex="-1" aria-label="Meaningful description of the modal content" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <!--<button class="slds-button slds-button_icon slds-notify__close slds-button_icon-inverse" title="Close" onclick="{!c.hideConfirmModal}">
+                        <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                            <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#close')}" />
+                        </svg>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>-->
+                    <h1 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Confirm Refund</h1>
+                </header>
+                 <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                     Do you want to process the refund?
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning:button name="cancel" label="Cancel" onclick="{!c.hideConfirmModal}"/>
+                    <lightning:button name="ok" label="OK" variant="brand" onclick="{!c.processRefund}"/>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </div>
+    
+</aura:component>

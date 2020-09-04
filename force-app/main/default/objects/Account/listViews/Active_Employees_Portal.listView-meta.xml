@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Active_Employees_Portal</fullName>
+    <columns>ACCOUNT.NAME</columns>
+    <columns>Teacher_Portal_Invitation__c</columns>
+    <columns>App_Portal_User__c</columns>
+    <columns>PC_EMAIL</columns>
+    <columns>Account_Casesafe_ID__c</columns>
+    <columns>AccountID_Teacher__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>ACCOUNT.RECORDTYPE</field>
+        <operation>equals</operation>
+        <value>PersonAccount.Employee</value>
+    </filters>
+    <filters>
+        <field>PC_EMAIL</field>
+        <operation>notEqual</operation>
+    </filters>
+    <label>Active Employees (Portal)</label>
+</ListView>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Status__c</fullName>
+    <externalId>false</externalId>
+    <label>Status</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>true</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Open</fullName>
+                <default>true</default>
+                <label>Open</label>
+            </value>
+            <value>
+                <fullName>Working</fullName>
+                <default>false</default>
+                <label>Working</label>
+            </value>
+            <value>
+                <fullName>Dev Fixed</fullName>
+                <default>false</default>
+                <label>Dev Fixed</label>
+            </value>
+            <value>
+                <fullName>Dev Verified</fullName>
+                <default>false</default>
+                <label>Dev Verified</label>
+            </value>
+            <value>
+                <fullName>Fixed</fullName>
+                <default>false</default>
+                <label>Prod Fixed</label>
+            </value>
+            <value>
+                <fullName>Verified</fullName>
+                <default>false</default>
+                <label>Prod Verified</label>
+            </value>
+            <value>
+                <fullName>Duplicate</fullName>
+                <default>false</default>
+                <label>Duplicate</label>
+            </value>
+            <value>
+                <fullName>No-Fix Required</fullName>
+                <default>false</default>
+                <label>No-Fix Required</label>
+            </value>
+            <value>
+                <fullName>Closed</fullName>
+                <default>false</default>
+                <label>Closed</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

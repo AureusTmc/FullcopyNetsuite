@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RecordType xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Employee_Document</fullName>
+    <active>true</active>
+    <label>Employee Document</label>
+    <picklistValues>
+        <picklist>Stage__c</picklist>
+        <values>
+            <fullName>Completed</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Contract Signed</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>In Process</fullName>
+            <default>true</default>
+        </values>
+        <values>
+            <fullName>Joining</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>LO Signed</fullName>
+            <default>false</default>
+        </values>
+    </picklistValues>
+</RecordType>

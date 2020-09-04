@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Operational_Request_Type__c</fullName>
+    <externalId>false</externalId>
+    <label>Operational Request Type</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>true</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <controllingField>Type__c</controllingField>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>New Template Request</fullName>
+                <default>true</default>
+                <label>New Template Request</label>
+            </value>
+            <value>
+                <fullName>Credit Note Request</fullName>
+                <default>false</default>
+                <label>Credit Note Request</label>
+            </value>
+            <value>
+                <fullName>Enrolment Change Request</fullName>
+                <default>false</default>
+                <label>Enrolment Change Request</label>
+            </value>
+            <value>
+                <fullName>Enrolment Downgrade Request</fullName>
+                <default>false</default>
+                <label>Enrolment Downgrade Request</label>
+            </value>
+            <value>
+                <fullName>Enrolment Upgrade Request</fullName>
+                <default>false</default>
+                <label>Enrolment Upgrade Request</label>
+            </value>
+            <value>
+                <fullName>Macro Edit Request</fullName>
+                <default>false</default>
+                <label>Macro Edit Request</label>
+            </value>
+            <value>
+                <fullName>New Macro Request</fullName>
+                <default>false</default>
+                <label>New Macro Request</label>
+            </value>
+            <value>
+                <fullName>Refund Customer Request</fullName>
+                <default>false</default>
+                <label>Refund Customer Request</label>
+            </value>
+            <value>
+                <fullName>Teacher Work Hours Request</fullName>
+                <default>false</default>
+                <label>Teacher Work Hours Request</label>
+            </value>
+            <value>
+                <fullName>Template Edit Request</fullName>
+                <default>false</default>
+                <label>Template Edit Request</label>
+            </value>
+            <value>
+                <fullName>Withdrawal of Lessons Request</fullName>
+                <default>false</default>
+                <label>Withdrawal of Lessons Request</label>
+            </value>
+            <value>
+                <fullName>Other - Specify</fullName>
+                <default>false</default>
+                <label>Other - Specify</label>
+            </value>
+        </valueSetDefinition>
+        <valueSettings>
+            <controllingFieldValue>Operational Request</controllingFieldValue>
+            <valueName>New Template Request</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Operational Request</controllingFieldValue>
+            <valueName>Credit Note Request</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Operational Request</controllingFieldValue>
+            <valueName>Enrolment Change Request</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Operational Request</controllingFieldValue>
+            <valueName>Enrolment Downgrade Request</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Operational Request</controllingFieldValue>
+            <valueName>Enrolment Upgrade Request</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Operational Request</controllingFieldValue>
+            <valueName>Macro Edit Request</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Operational Request</controllingFieldValue>
+            <valueName>New Macro Request</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Operational Request</controllingFieldValue>
+            <valueName>Refund Customer Request</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Operational Request</controllingFieldValue>
+            <valueName>Teacher Work Hours Request</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Operational Request</controllingFieldValue>
+            <valueName>Template Edit Request</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Operational Request</controllingFieldValue>
+            <valueName>Withdrawal of Lessons Request</valueName>
+        </valueSettings>
+        <valueSettings>
+            <controllingFieldValue>Operational Request</controllingFieldValue>
+            <valueName>Other - Specify</valueName>
+        </valueSettings>
+    </valueSet>
+</CustomField>

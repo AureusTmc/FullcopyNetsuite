@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Check_if_From_Email_is_same_as_User</fullName>
+    <active>true</active>
+    <errorConditionFormula>FromAddress = $User.Email</errorConditionFormula>
+    <errorDisplayField>ValidatedFromAddress</errorDisplayField>
+    <errorMessage>Please select an appropriate Centre&apos;s email address!</errorMessage>
+</ValidationRule>

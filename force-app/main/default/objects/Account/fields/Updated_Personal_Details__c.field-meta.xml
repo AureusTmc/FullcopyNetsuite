@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Updated_Personal_Details__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>Updated Personal Details (KYC) 
+From Portal Sign Up (Site Page)</description>
+    <externalId>false</externalId>
+    <label>Updated Personal Details</label>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Checkbox</type>
+</CustomField>

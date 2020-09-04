@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>Email</label>
+    <protected>false</protected>
+    <values>
+        <field>EmailBody__c</field>
+        <value xsi:type="xsd:string">Experience fun, engaging, and personalised music lessons at Aureus Academy. We are currently taking music lessons at Aureus Academy and loving it! 
+
+Receive ${{Amount}} off your lesson fees upon enrolment at Aureus. Get started today with a Free Trial lesson! 
+
+[[URL]]
+
+Give it a try! Just click the link, or paste the address in your browser. When you enrol at Aureus, I will enjoy ${{Amount}} in lesson credit too.</value>
+    </values>
+    <values>
+        <field>EmailSubject__c</field>
+        <value xsi:type="xsd:string">Refer and Earn</value>
+    </values>
+</CustomMetadata>

@@ -1,0 +1,440 @@
+<apex:component controller="TerminateRentalSummaryController" allowDML="true">
+    <apex:attribute name="isSendToButton" description="" type="Boolean" required="true" assignTo="{!isSendToTeminationButton}"
+    />
+    <apex:form id="TerminateRentalSummarySection" styleClass="slds-col slds-size_12-of-12">
+        <div id="statusOnPage" class="slds-col slds-size_12-of-12 demo-only demo--inverse " style="display:none;height:100%;width:100%;z-index:200;position:fixed">
+            <div class="slds-spinner_container" style="height:100%;width:100%;">
+                <div role="status" class="slds-spinner slds-spinner_large slds-spinner_brand">
+                    <span class="slds-assistive-text">Loading</span>
+                    <div class="slds-spinner__dot-a"></div>
+                    <div class="slds-spinner__dot-b"></div>
+                </div>
+            </div>
+        </div>
+        <div class="slds-col slds-size_12-of-12 slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error error_validation"
+            style="display:none" role="alert">
+            <span class="slds-assistive-text">error</span>
+            <h2 class="errorMessage"></h2>
+            <div class="slds-notify__close">
+                <button class="slds-button slds-button_icon slds-button_icon-inverse" title="Close" onclick="closeError();return false;">
+                    X
+                </button>
+            </div>
+        </div>
+        <!-- start : 25Aug: add sucess message for show question, form are saved -->
+        <div class="slds-col slds-size_12-of-12 slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_success sucess_validation"
+            style="display:none" role="alert">
+            <span class="slds-assistive-text">error</span>
+            <h2 class="sucessMessage"></h2>
+            <div class="slds-notify__close">
+                <button class="slds-button slds-button_icon slds-button_icon-inverse" title="Close" onclick="closeSucess();return false;">
+                    X
+                </button>
+            </div>
+        </div>
+        <apex:actionFunction oncomplete="getTerminationFields('{!TerminationRequestEndDate}','{!PickupRequestEndDate}','{!TerminationReason}','{!TerminationOtherReason}');return false;"
+            name="getAllTerminationFields" action="{!getAllTerminationFields}" reRender="TerminateRentalSummarySection" />
+        <div class="slds-page-header slds-col slds-size_12-of-12" id="TerminateRentalSummary">
+            <div class="slds-page-header__row">
+                <div class="slds-page-header__col-title">
+                    <div class="slds-media">
+                        <div class="slds-media__body">
+                            <div class="slds-page-header__name">
+                                <div class="slds-page-header__name-title">
+                                    <h1>
+                                        <span class="slds-page-header__title slds-truncate" title="Terminate Rental">Terminate Rental</span>
+                                    </h1>
+                                </div>
+                            </div>
+                            <p class="slds-page-header__name-meta">Terminate Rental Enrolment Summary</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <apex:outputPanel rendered="{!ischeckStage}">
+            <div id="TerminateRentalSummaryDiv" class="slds-col slds-size_12-of-12">
+                <article class="slds-card">
+                    <div class="slds-card__body slds-card__body_inner">
+                        <div class="slds-form-element">
+                            <div style="font-size: 1.2em;">Customer Details</div>
+                            <div class="slds-form" role="list">
+                                <div class="slds-form__row margin-top5px" style="margin-top: 20px;">
+                                    <!--Student Name-->
+                                    <div class="slds-form__item" role="listitem">
+                                        <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                            <span class="slds-form-element__label">Customer Name:</span>
+                                            <div class="slds-form-element__control" id="TerminateRentalSummaryCustomerName">
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- parent name -->
+                                    <div class="slds-form__item" role="listitem">
+                                        <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                            <span class="slds-form-element__label">Piano Name:</span>
+                                            <div class="slds-form-element__control" id="TerminateRentalSummaryPianoName">
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="slds-form__row margin-top5px" style="margin-top: 20px;">
+                                    <!--Student Name-->
+                                    <div class="slds-form__item" role="listitem">
+                                        <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                            <span class="slds-form-element__label">Model Number:</span>
+                                            <div class="slds-form-element__control" id="TerminateRentalSummaryModal">
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- parent name -->
+                                    <div class="slds-form__item" role="listitem">
+                                        <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                            <span class="slds-form-element__label">Serial Number:</span>
+                                            <div class="slds-form-element__control" id="TerminateRentalSummarySerialNumber">
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slds-form__row margin-top5px" style="margin-top: 20px;">
+                                    <!-- parent name -->
+                                    <div class="slds-form__item" role="listitem">
+                                        <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                            <span class="slds-form-element__label">Standard Accessories:</span>
+                                            <div class="slds-form-element__control" id="TerminateRentalSummaryStandardAccessories">
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!--Student Name-->
+                                    <div class="slds-form__item" role="listitem">
+                                        <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                            <span class="slds-form-element__label">Rental Start Date:</span>
+                                            <div class="slds-form-element__control" id="TerminateRentalSummaryRentalStartDate">
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="slds-form__row margin-top5px" style="margin-top: 20px;">
+                                    <div class="slds-form__item" role="listitem">
+                                        <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                            <span class="slds-form-element__label">Address:</span>
+                                            <div class="slds-form-element__control" id="TerminateRentalSummaryAddress">
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <hr style="margin: 0px;" />
+                        <div class="slds-form-element" style="margin-top: 15px;">
+                            <div style="font-size: 1.2em;">Terminatation Summary</div>
+                            <div class="slds-form__row margin-top5px" style="margin-top: 20px;">
+                                <!--Student Name-->
+                                <div class="slds-form__item" role="listitem">
+                                    <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                        <span class="slds-form-element__label">Rental Termination Date:</span>
+                                        <div class="slds-form-element__control" id="TerminateRentalSummaryRentalTerminationDate">
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- parent name -->
+                                <div class="slds-form__item" role="listitem">
+                                    <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                        <span class="slds-form-element__label">Piano Pickup Date:</span>
+                                        <div class="slds-form-element__control" id="TerminateRentalSummaryPianoPickupDate">
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr style="margin: 0px;" />
+
+                        <div class="slds-form-element" style="margin-top: 15px;">
+                            <div style="font-size: 1.2em;">Terminatation Balance (Notice Month)</div>
+                            <div class="slds-form__row slds-m-around_small" style="margin-top: 20px;">
+                                <table id="depositBalanceTbl" class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_fixed-layout slds-table_resizable-cols">
+                                    <thead>
+                                        <tr class="slds-line-height_reset">
+                                            <th class="slds-is-resizable" scope="col" style="width:8.25rem">
+                                                <div class="slds-truncate" title="Piano Name">Description </div>
+                                            </th>
+                                            <th class="slds-is-resizable" scope="col" style="width:3.25rem">
+                                                <div class="slds-truncate" title=">Invoice Days">Rental Days</div>
+                                            </th>
+                                            <th class="slds-is-resizable" scope="col" style="width:3.25rem">
+                                                <div class="slds-truncate" title="Rate">Rate</div>
+                                            </th>
+                                            <th class="slds-is-resizable" scope="col" style="width:3.25rem">
+                                                <div class="slds-truncate" title="Total">Total</div>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="depositBalanceTblBody">
+
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div style="font-size: 1.0em;padding: 5px;">Note: Your final invoice will be generated on the 1st of your final lesson month. The deposit
+                                will be applied, and if a balance is applicable, a refund will be processed thereafter. In
+                                the event you have multiple students or multiple enrolments, and refund balance presented
+                                in the summary will be applied as a payment towards your next invoice.
+                            </div>
+                        </div>
+                        <hr style="margin: 0px;" />
+                        <div class="slds-form-element slds-align_absolute-center" style="margin-top: 15px;">
+                            <button class="slds-button slds-button_brand" id="SubmitTerminateRentalSummaryClick" onclick="submitTerminateRentalSummaryRequest();return false;">CONFIRM TERMINATION</button>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            <div class="slds-col slds-size_12-of-12 slds-align_absolute-center slds-p-around_x-small slds-hide" id="terminationError"
+                style="color:red;">
+                <strong>We cannot process your request at the moment Termination Date not Found. Please contact centre admin for
+                    further assistance.
+                </strong>
+            </div>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!!ischeckStage}">
+            <div class="slds-col slds-size_12-of-12 slds-align_absolute-center slds-p-around_x-small slds-hide" id="terminationError"
+                style="color:red;">
+                <strong>We cannot process your request at the moment Already instrument terminatation is proceed. Please contact
+                    centre admin for further assistance.
+                </strong>
+            </div>
+        </apex:outputPanel>
+
+    </apex:form>
+    <script>
+        $(document).ready(function () {
+            var isSendToButton = {!isSendToButton
+        };
+        console.log('isSendToButton', isSendToButton);
+        if (!isSendToButton) {
+            getAllTerminationFields();
+        }
+        });
+        function getTerminationFields(TerminationRequestEndDate, PickupRequestEndDate, TerminationReason, TerminationOtherReason) {
+            $('#SubmitTerminateRentalSummaryClick').attr({
+                'data-TerminationRequestEndDate': TerminationRequestEndDate,
+                'data-PickupRequestEndDate': PickupRequestEndDate,
+                'data-TerminationReason': TerminationReason,
+                'data-TerminationOtherReason': TerminationOtherReason,
+                'data-enrolmentId': '{!enrolmentId}'
+            });
+            getTerminateRentalSummaryDetails();
+        }
+        function NextTerminateRentalSummary() {
+            $('#TerminateRentalSummary').addClass('slds-hide');
+            $('#TerminateRentalDetails').removeClass('slds-hide');
+        }
+        function getTerminateRentalSummaryDetails() {
+            var TerminationRequestEndDate = $('#SubmitTerminateRentalSummaryClick').attr('data-TerminationRequestEndDate');
+            var PickupRequestEndDate = $('#SubmitTerminateRentalSummaryClick').attr('data-PickupRequestEndDate');
+            var TerminationReason = $('#SubmitTerminateRentalSummaryClick').attr('data-TerminationReason');
+            var TerminationOtherReason = $('#SubmitTerminateRentalSummaryClick').attr('data-TerminationOtherReason');
+            var enrolmentId = $('#SubmitTerminateRentalSummaryClick').attr('data-enrolmentId');
+            var errorFlag = false;
+            // $('#enrolProcessLoader').removeClass('slds-hide'); 
+            $('#statusOnPage').show();
+            $('#TerminateRentalSummaryCustomerName').html('');
+            $('#TerminateRentalSummaryAddress').html('');
+            $('#TerminateRentalSummaryPianoName').html('');
+            $('#TerminateRentalSummarySerialNumber').html('');
+            $('#TerminateRentalSummaryModal').html('');
+            $('#TerminateRentalSummaryStandardAccessories').html('');
+            $('#TerminateRentalSummaryRentalStartDate').html('');
+            $('#TerminateRentalSummaryPianoPickupDate').html('');
+            $('#TerminateRentalSummaryRentalTerminationDate').html('');
+            console.log(TerminationRequestEndDate);
+            console.log(PickupRequestEndDate);
+            console.log(TerminationReason);
+            console.log(TerminationOtherReason);
+            console.log(enrolmentId);
+            if (!TerminationRequestEndDate || TerminationRequestEndDate == '' || TerminationRequestEndDate == undefined) {
+                errorFlag = true;
+            }
+            if (!PickupRequestEndDate || PickupRequestEndDate == '' || PickupRequestEndDate == undefined) {
+                errorFlag = true;
+            }
+            if (!TerminationReason || TerminationReason == '' || TerminationReason == undefined) {
+                errorFlag = true;
+            } else {
+                if (TerminationReason == 'Others') {
+                    if (!TerminationOtherReason || TerminationOtherReason == '' || TerminationOtherReason == undefined) {
+                        errorFlag = true;
+                    }
+                }
+            }
+            console.log('errorFlag' + errorFlag);
+
+            if (!errorFlag) {
+                var isSendToButton = {!isSendToButton
+            };
+            console.log('isSendToButton', isSendToButton);
+            var terminationRequestEndDateObj = moment();
+            var pickupRequestEndDateObj = moment();
+            if (isSendToButton) {
+                if (TerminationRequestEndDate) {
+                    terminationRequestEndDateObj.year(TerminationRequestEndDate.split('/')[2]).month(TerminationRequestEndDate.split('/')[0] - 1).date(TerminationRequestEndDate.split('/')[1]);
+                    terminationRequestEndDateObj = terminationRequestEndDateObj.format('YYYY-MM-DD');
+                }
+                if (PickupRequestEndDate) {
+                    pickupRequestEndDateObj.year(PickupRequestEndDate.split('/')[2]).month(PickupRequestEndDate.split('/')[0] - 1).date(PickupRequestEndDate.split('/')[1]);
+                    pickupRequestEndDateObj = pickupRequestEndDateObj.format('YYYY-MM-DD');
+                }
+            } else {
+                terminationRequestEndDateObj = TerminationRequestEndDate;
+                pickupRequestEndDateObj = PickupRequestEndDate;
+            }
+            console.log(terminationRequestEndDateObj);
+            console.log(PickupRequestEndDate);
+            console.log(TerminationReason);
+            console.log(TerminationOtherReason);
+            console.log(enrolmentId);
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.TerminateRentalSummaryController.getTerminateRentalSummary}',
+                enrolmentId, terminationRequestEndDateObj, pickupRequestEndDateObj, TerminationReason, TerminationOtherReason,
+                function (result, event) {
+                    if (result) {
+                        console.log('withdrawEnrolGroupClassSummaryModal result', result);
+                        var tableRow = '';
+                        if ('finalInvoices' in result) {
+                            tableRow = '';
+                            $(result.finalInvoices).each(function (index, value) {
+                                tableRow += '<tr class="slds-line-height_reset"><td class="slds-is-resizable slds-truncate" scope="col" style="width:8.25rem"><div class="slds-resizable slds-truncate">' + value.pianoName + '</div></td><td class="slds-is-resizable" scope="col" style="width:3.25rem">' + value.invoiceDay + '</td><td class="slds-is-resizable" scope="col" style="width:3.25rem">$' + value.unitPrice.toFixed(2) + '</td><td class="slds-is-resizable" scope="col" style="width:3.25rem">$' + value.total.toFixed(2) + '</td></tr>';
+                            });
+                            if ('gst' in result && result.gst > 0) {
+                                tableRow += '<tr class="slds-line-height_reset"><td class="slds-is-resizable" scope="col" style="width:8.25rem;border: 0px;"></td><td class="slds-is-resizable" scope="col" style="width:3.25rem;border: 0px;"></td><td class="slds-is-resizable" scope="col" style="width:3.25rem"><b>GST</b></td><td class="slds-is-resizable" scope="col" style="width:3.25rem">$' + result.gst.toFixed(2) + '</td></tr>';
+                            }
+                            if ('total' in result) {
+                                tableRow += '<tr class="slds-line-height_reset"><td class="slds-is-resizable" scope="col" style="width:8.25rem;border: 0px;"></td><td class="slds-is-resizable" scope="col" style="width:3.25rem;border: 0px;"></td><td class="slds-is-resizable" scope="col" style="width:3.25rem"><b>Total</b></td><td class="slds-is-resizable" scope="col" style="width:3.25rem">$' + result.total.toFixed(2) + '</td></tr>';
+                            }
+                            $('#depositBalanceTblBody').append(tableRow);
+                        }
+                        if ('customerName' in result) {
+                            $('#TerminateRentalSummaryCustomerName').html(result.customerName);
+                        }
+                        if ('address' in result) {
+                            $('#TerminateRentalSummaryAddress').html(result.address);
+                        }
+                        if ('pianoName' in result) {
+                            $('#TerminateRentalSummaryPianoName').html(result.pianoName);
+                        }
+                        if ('serialNumber' in result) {
+                            $('#TerminateRentalSummarySerialNumber').html(result.serialNumber);
+                        }
+                        if ('modalNumber' in result) {
+                            $('#TerminateRentalSummaryModal').html(result.modalNumber);
+                        }
+                        if ('standardAccessories' in result) {
+                            $('#TerminateRentalSummaryStandardAccessories').html(result.standardAccessories);
+                        }
+                        if ('rentalStartDate' in result) {
+                            $('#TerminateRentalSummaryRentalStartDate').html(result.rentalStartDate);
+                        }
+                        if ('pianoPickupDate' in result) {
+                            $('#TerminateRentalSummaryPianoPickupDate').html(result.pianoPickupDate);
+                        }
+                        if ('rentalTerminationDate' in result) {
+                            $('#TerminateRentalSummaryRentalTerminationDate').html(result.rentalTerminationDate);
+                        }
+                        // $('#enrolProcessLoader').addClass('slds-hide'); 
+                        $('#statusOnPage').hide();
+                    }
+                });
+        }else {
+            $('#terminationError').removeClass('slds-hide');
+            $('#TerminateRentalSummaryDiv').addClass('slds-hide');
+            $('#statusOnPage').hide();
+        }
+        }
+        function submitTerminateRentalSummaryRequest() {
+            var TerminationRequestEndDate = $('#SubmitTerminateRentalSummaryClick').attr('data-TerminationRequestEndDate');
+            var PickupRequestEndDate = $('#SubmitTerminateRentalSummaryClick').attr('data-PickupRequestEndDate');
+            var TerminationReason = $('#SubmitTerminateRentalSummaryClick').attr('data-TerminationReason');
+            var TerminationOtherReason = $('#SubmitTerminateRentalSummaryClick').attr('data-TerminationOtherReason');
+            var enrolmentId = $('#SubmitTerminateRentalSummaryClick').attr('data-enrolmentId');
+            var errorFlag = false;
+            //$('#enrolProcessLoader').removeClass('slds-hide'); 
+            $('#statusOnPage').show();
+            if (!TerminationRequestEndDate || TerminationRequestEndDate == '' || TerminationRequestEndDate == undefined) {
+                errorFlag = true;
+            }
+            if (!PickupRequestEndDate || PickupRequestEndDate == '' || PickupRequestEndDate == undefined) {
+                errorFlag = true;
+            }
+            if (!TerminationReason || TerminationReason == '' || TerminationReason == undefined) {
+                errorFlag = true;
+            } else {
+                if (TerminationReason == 'Others') {
+                    if (!TerminationOtherReason || TerminationOtherReason == '' || TerminationOtherReason == undefined) {
+                        errorFlag = true;
+                    }
+                }
+            }
+            console.log('errorFlag' + errorFlag);
+
+            if (!errorFlag) {
+                var isSendToButton = {!isSendToButton
+            };
+            console.log('isSendToButton', isSendToButton);
+            var terminationRequestEndDateObj = moment();
+            var pickupRequestEndDateObj = moment();
+            if (isSendToButton) {
+                if (TerminationRequestEndDate) {
+                    terminationRequestEndDateObj.year(TerminationRequestEndDate.split('/')[2]).month(TerminationRequestEndDate.split('/')[0] - 1).date(TerminationRequestEndDate.split('/')[1]);
+                    terminationRequestEndDateObj = terminationRequestEndDateObj.format('YYYY-MM-DD');
+                }
+                if (PickupRequestEndDate) {
+                    pickupRequestEndDateObj.year(PickupRequestEndDate.split('/')[2]).month(PickupRequestEndDate.split('/')[0] - 1).date(PickupRequestEndDate.split('/')[1]);
+                    pickupRequestEndDateObj = pickupRequestEndDateObj.format('YYYY-MM-DD');
+                }
+            } else {
+                terminationRequestEndDateObj = TerminationRequestEndDate;
+                pickupRequestEndDateObj = PickupRequestEndDate;
+            }
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.TerminateRentalSummaryController.submitTerminateRentalSummaryRequest}',
+                enrolmentId, terminationRequestEndDateObj, pickupRequestEndDateObj, TerminationReason, TerminationOtherReason, isSendToButton,
+                function (result, event) {
+                    if (result == 'SUCCESS') {
+                        console.log('withdrawEnrolGroupClassSummaryModal result', result);
+                        if (isSendToButton) {
+                            $('.sucess_validation').css('display', '');
+                            $('.sucess_validation').find('.sucessMessage').text('Send Email Sucessfully to Customer !... ')
+                            window.open('/' + enrolmentId, '_self');
+                        } else {
+                            $('.sucess_validation').css('display', '');
+                            window.open('/apex/thankyouPage', '_self');
+                           // window.location.href = 'https://full-aureusgroup.cs74.force.com/apex/thankyouPage';
+                            $('.sucess_validation').find('.sucessMessage').text('Confirmation is submited Sucessfully!... ');
+
+                        }
+                        $('#statusOnPage').hide();
+                    } else {
+                        $('.sucess_validation').css('display', '');
+                        $('.error_validation').find('.errorMessage').text('Some Error is Occurred..' + result);
+                    }
+                });
+        }
+        }
+        function closeError() {
+            $('.error_validation').css('display', 'none');
+        }
+        function closeSucess() {
+            $('.sucess_validation').css('display', 'none');
+        }
+    </script>
+
+</apex:component>

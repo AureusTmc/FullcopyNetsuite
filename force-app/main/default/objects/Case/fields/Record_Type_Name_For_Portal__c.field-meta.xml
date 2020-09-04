@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Record_Type_Name_For_Portal__c</fullName>
+    <description>This field is mapped with Portal
+To populate &apos;Staff&apos; value each time a Ticket is raised by an Employee or a Teacher
+This is used in Case List views for HR and Finance</description>
+    <externalId>false</externalId>
+    <label>Account Record Type</label>
+    <length>255</length>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

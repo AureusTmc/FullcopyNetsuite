@@ -1,0 +1,15 @@
+<aura:component implements="lightning:homeTemplate" access="global" >
+
+    <aura:attribute name="dashboard" type="Aura.Component[]" access="global"/>
+
+    <div aura:id="container">
+
+        <lightning:layout >
+            <lightning:layoutItem aura:id="dashboard" size="12" class="dashboard">
+                {!v.dashboard}
+            </lightning:layoutItem>
+        </lightning:layout>
+
+    </div>
+
+</aura:component>

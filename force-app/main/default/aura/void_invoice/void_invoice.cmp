@@ -1,0 +1,41 @@
+<aura:component controller="VoidInvoiceController" implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global" >
+    <aura:attribute name="showConfirmBox" type="Boolean" default="false"/>
+    <aura:attribute name="processType" type="String" default=""/>
+    <aura:attribute name="isVoid" default="false" type="Boolean" />
+    <aura:attribute name="remark" type="String" description="Enter reason if user click 'Yes' button "/>
+    
+    <lightning:card title="">
+        <aura:set attribute="body">
+        </aura:set>
+        <aura:set attribute="actions">
+            <lightning:button variant="brand" label="Void Invoice" name="void" title="Void Invoice" 
+                              onclick="{!c.confirm}"/>
+            <!--<lightning:button variant="brand" label="Delete Invoice" name="delete" title="Delete Invoice" 
+                              onclick="{!c.confirm}"/>-->
+        </aura:set>
+        <aura:set attribute="footer">
+        </aura:set>
+    </lightning:card>
+    <aura:if isTrue="{!v.showConfirmBox}">
+        <div class="demo-only demo-only_viewport" style="height:640px">
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Are you sure?</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        Are you sure to {!v.processType} invoice?
+                        <aura:if isTrue="{!v.processType == 'void'}">
+                    	    <lightning:textarea class="textarea-size" name="Remark" aura:id="Remark"  required="true" value="{!v.remark}" label="Enter Remark" maxlength="255" />
+                        </aura:if>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="destructive" label="No" title="No" onclick="{!c.hideModal}"/>
+                        <lightning:button variant="brand" label="Yes" title="Yes" onclick="{!c.confirmYes}"/>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </div>
+    </aura:if>
+</aura:component>

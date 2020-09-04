@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomApplication xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>View</actionName>
+        <comment>Action override created by Lightning App Builder during activation.</comment>
+        <content>Employee_Record_Page</content>
+        <formFactor>Large</formFactor>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Flexipage</type>
+        <pageOrSobjectType>Account</pageOrSobjectType>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <content>HR_Home</content>
+        <formFactor>Large</formFactor>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Flexipage</type>
+        <pageOrSobjectType>standard-home</pageOrSobjectType>
+    </actionOverrides>
+    <brand>
+        <headerColor>#0070D2</headerColor>
+        <shouldOverrideOrgTheme>false</shouldOverrideOrgTheme>
+    </brand>
+    <formFactors>Large</formFactors>
+    <isNavAutoTempTabsDisabled>true</isNavAutoTempTabsDisabled>
+    <isNavPersonalizationDisabled>true</isNavPersonalizationDisabled>
+    <label>Aureus HR</label>
+    <navType>Standard</navType>
+    <profileActionOverrides>
+        <actionName>Tab</actionName>
+        <content>HR_Home</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>standard-home</pageOrSobjectType>
+        <type>Flexipage</type>
+        <profile>HR Manager</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Employee_Record_Page</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Account</pageOrSobjectType>
+        <recordType>PersonAccount.Employee</recordType>
+        <type>Flexipage</type>
+        <profile>Admin</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Employee_Record_Page</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Account</pageOrSobjectType>
+        <recordType>PersonAccount.Employee</recordType>
+        <type>Flexipage</type>
+        <profile>HR Manager</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Teacher_Account</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Account</pageOrSobjectType>
+        <recordType>PersonAccount.Teacher</recordType>
+        <type>Flexipage</type>
+        <profile>HR Manager</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>Tab</actionName>
+        <content>HR_Home</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>standard-home</pageOrSobjectType>
+        <type>Flexipage</type>
+        <profile>Admin</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Case_Service_Request</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Case</pageOrSobjectType>
+        <recordType>Case.Service_Request</recordType>
+        <type>Flexipage</type>
+        <profile>HR Manager</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Case_Record_Page</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Case</pageOrSobjectType>
+        <recordType>Case.Sales_Enquiry</recordType>
+        <type>Flexipage</type>
+        <profile>HR Manager</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>Tab</actionName>
+        <content>HR_Home</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>standard-home</pageOrSobjectType>
+        <type>Flexipage</type>
+        <profile>Aureus MD</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Employee_Record_Page</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Account</pageOrSobjectType>
+        <recordType>PersonAccount.Employee</recordType>
+        <type>Flexipage</type>
+        <profile>Aureus Business Administrator</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Employee_Record_Page</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Account</pageOrSobjectType>
+        <recordType>PersonAccount.Employee</recordType>
+        <type>Flexipage</type>
+        <profile>Aureus Finance</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Employee_Record_Page</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Account</pageOrSobjectType>
+        <recordType>PersonAccount.Employee</recordType>
+        <type>Flexipage</type>
+        <profile>Aureus MD</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Employee_Record_Page</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Account</pageOrSobjectType>
+        <recordType>PersonAccount.Employee</recordType>
+        <type>Flexipage</type>
+        <profile>Aureus System Admin</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Employee_Record_Page</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Account</pageOrSobjectType>
+        <recordType>PersonAccount.Employee</recordType>
+        <type>Flexipage</type>
+        <profile>Aureus Teacher</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Employee_Record_Page</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Account</pageOrSobjectType>
+        <recordType>PersonAccount.Employee</recordType>
+        <type>Flexipage</type>
+        <profile>Centre Staff</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Teacher_Account</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Account</pageOrSobjectType>
+        <recordType>PersonAccount.Teacher</recordType>
+        <type>Flexipage</type>
+        <profile>Aureus Business Administrator</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Teacher_Account</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Account</pageOrSobjectType>
+        <recordType>PersonAccount.Teacher</recordType>
+        <type>Flexipage</type>
+        <profile>Aureus Finance</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Teacher_Account</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Account</pageOrSobjectType>
+        <recordType>PersonAccount.Teacher</recordType>
+        <type>Flexipage</type>
+        <profile>Aureus MD</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Teacher_Account</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Account</pageOrSobjectType>
+        <recordType>PersonAccount.Teacher</recordType>
+        <type>Flexipage</type>
+        <profile>Centre Staff</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Teacher_Account</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Account</pageOrSobjectType>
+        <recordType>PersonAccount.Teacher</recordType>
+        <type>Flexipage</type>
+        <profile>Admin</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Support_Request</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Feedback__c</pageOrSobjectType>
+        <recordType>Feedback__c.Support_Request</recordType>
+        <type>Flexipage</type>
+        <profile>Admin</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Support_Request</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Feedback__c</pageOrSobjectType>
+        <recordType>Feedback__c.Support_Request</recordType>
+        <type>Flexipage</type>
+        <profile>HR Manager</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Support_Request</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Feedback__c</pageOrSobjectType>
+        <recordType>Feedback__c.Support_Request</recordType>
+        <type>Flexipage</type>
+        <profile>Centre Staff</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Support_Request</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Feedback__c</pageOrSobjectType>
+        <recordType>Feedback__c.Support_Request</recordType>
+        <type>Flexipage</type>
+        <profile>aureusacademy Profile</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Support_Request</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Feedback__c</pageOrSobjectType>
+        <recordType>Feedback__c.Support_Request</recordType>
+        <type>Flexipage</type>
+        <profile>Aureus Teacher</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Support_Request</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Feedback__c</pageOrSobjectType>
+        <recordType>Feedback__c.Support_Request</recordType>
+        <type>Flexipage</type>
+        <profile>Aureus System Admin</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Support_Request</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Feedback__c</pageOrSobjectType>
+        <recordType>Feedback__c.Support_Request</recordType>
+        <type>Flexipage</type>
+        <profile>Aureus Finance</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Support_Request</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Feedback__c</pageOrSobjectType>
+        <recordType>Feedback__c.Support_Request</recordType>
+        <type>Flexipage</type>
+        <profile>Aureus MD</profile>
+    </profileActionOverrides>
+    <profileActionOverrides>
+        <actionName>View</actionName>
+        <content>Support_Request</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Feedback__c</pageOrSobjectType>
+        <recordType>Feedback__c.Support_Request</recordType>
+        <type>Flexipage</type>
+        <profile>Aureus Business Administrator</profile>
+    </profileActionOverrides>
+    <setupExperience>all</setupExperience>
+    <tabs>standard-home</tabs>
+    <tabs>standard-Account</tabs>
+    <tabs>standard-Case</tabs>
+    <tabs>Documents__c</tabs>
+    <tabs>Checklist_Master__c</tabs>
+    <tabs>Payitem_Master__c</tabs>
+    <tabs>Payout__c</tabs>
+    <tabs>Payroll_Batch__c</tabs>
+    <tabs>Generate_CPF_File</tabs>
+    <tabs>Generate_Bank_File</tabs>
+    <tabs>standard-report</tabs>
+    <tabs>standard-Dashboard</tabs>
+    <tabs>Referral_Discount__c</tabs>
+    <uiType>Lightning</uiType>
+    <utilityBar>Aureus_HR_UtilityBar</utilityBar>
+</CustomApplication>

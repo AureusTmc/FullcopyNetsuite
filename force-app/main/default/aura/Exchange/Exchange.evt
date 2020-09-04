@@ -1,0 +1,4 @@
+<aura:event type="COMPONENT">
+    <aura:attribute name="showForm" type="boolean"/>
+    <aura:attribute name="showFormRefund" type="boolean"/>
+</aura:event>

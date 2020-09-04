@@ -1,0 +1,28 @@
+<aura:component controller="AccountController" implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome">
+    <!--aura:handler name="init" value="{!this}" action="{!c.doInit}" / -->
+    <aura:handler event="c:AccountKeyChange" action="{!c.updateDataset}"/>
+    <aura:attribute name="body" type="Aura.Component[]" />
+    <div class="slds-grid slds-wrap">
+        <div class="slds-col slds-size_1-of-1 slds-medium-size_7-of-12 slds-large-size_8-of-12">
+            
+            <c:TaskList/>
+            <c:MakeUPBooking/>
+            <c:RegularEnrolment/>
+            <c:CustomerRequest/>
+            <c:SalesEnquiry/>
+            <c:AdminServiceRequest/>
+        </div>
+        <div class="slds-col slds-size_1-of-1 slds-medium-size_5-of-12 slds-large-size_4-of-12">
+            	<c:AccountList /> 
+                <lightning:card title="" class="Remove-Margin">
+                    <aura:set attribute="title">
+                        <b>Enrolments By Duration</b>
+                    </aura:set>
+                    {!v.body}
+                </lightning:card>
+                <c:OverdueInvoices/>
+            	<c:StudioBooking/>
+            	<c:AppFeeds/>
+        </div>
+    </div>
+</aura:component>

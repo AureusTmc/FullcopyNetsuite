@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Travel_Time__c</fullName>
+    <defaultValue>30</defaultValue>
+    <description>Aureus at Home</description>
+    <externalId>false</externalId>
+    <inlineHelpText>Applicable for the home lessons</inlineHelpText>
+    <label>Travel Time(In Minutes)</label>
+    <precision>3</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

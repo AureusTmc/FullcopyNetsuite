@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Class Type --></label>
+    <name>Class_Type__c</name>
+    <picklistValues>
+        <masterLabel>Choir</masterLabel>
+        <translation><!-- Choir --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Explorer Programme</masterLabel>
+        <translation><!-- Explorer Programme --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Group Instrumental Lesson</masterLabel>
+        <translation><!-- Group Instrumental Lesson --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Group Theory Lesson</masterLabel>
+        <translation><!-- Group Theory Lesson --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Young Children Programme (Music exploration)</masterLabel>
+        <translation><!-- Young Children Programme (Music exploration) --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Young Children Programme (Play group)</masterLabel>
+        <translation><!-- Young Children Programme (Play group) --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

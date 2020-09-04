@@ -1,0 +1,191 @@
+<aura:component controller="ServiceRequestCancellationClass" implements="force:appHostable,flexipage:availableForRecordHome,force:hasRecordId" access="global" >
+    <aura:attribute name="recordId" type="Id"/>
+    <aura:attribute name ="Bookings" type="Object"/>
+    <aura:attribute name="caseId" type="string" />
+    <aura:attribute name="action" type="string"/>
+    <aura:attribute name="openModal" type="boolean" default="false"></aura:attribute>
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:if isTrue="{! v.Bookings[0].RecordTypeId}">
+    <lightning:card variant="Narrow" title="Lesson Cancellation within 24 hrs" iconName="standard:contact">
+        <div class="slds-p-horizontal_medium"> 
+            <div class="slds-grid slds-gutters">
+                <div class="slds-col slds-size_1-of-2">
+                    <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                        <span class="slds-form-element__label">
+                            <abbr class="slds-required"></abbr>Booking ID</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">
+                                <a href="{! '/lightning/r/Booking__c/'+ v.Bookings[0].Booking__c + '/view'}" target="_blank">{!v.Bookings[0].Booking__r.Name}</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                        <span class="slds-form-element__label">
+                            <abbr class="slds-required"></abbr>Booking Date</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">
+                                <lightning:formattedDateTime value="{! v.Bookings[0].Booking__r.Booking_Date__c}" year="2-digit" month="short" day="2-digit" weekday="short"/>
+                            </div>
+                        </div>
+                    </div>                    
+                    <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                        <span class="slds-form-element__label">
+                            <abbr class="slds-required"></abbr>Parent</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">{! v.Bookings[0].Booking__r.Parent__r.Name}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                        <span class="slds-form-element__label">
+                            <abbr class="slds-required"></abbr>Center Name</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">
+                                {! v.Bookings[0].Booking__r.Center__r.Name}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                        <span class="slds-form-element__label">
+                            <abbr class="slds-required"></abbr>Cancellation Reason</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">{! v.Bookings[0].Booking__r.Cancellation_Reason__c }
+                            </div>
+                        </div>
+                    </div>
+                    <aura:if isTrue="{! v.Bookings[0].X24_Hrs_Cancellation_Request__c =='Approved'}">
+                        <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                            <span class="slds-form-element__label">
+                            <abbr class="slds-required"></abbr>Status Approval</span>
+                            <div class="slds-form-element__control">
+                                <div class="slds-form-element__static" style="color:lightgreen;">Approved
+                                </div>
+                            </div>
+                        </div>
+                        </aura:if>
+                        <aura:if isTrue="{! v.Bookings[0].X24_Hrs_Cancellation_Request__c == 'Rejected'}">
+                            <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                <span class="slds-form-element__label">
+                                    <abbr class="slds-required"></abbr>Status Approval</span>
+                                <div class="slds-form-element__control">
+                                    <div class="slds-form-element__static" style="color:firebrick;">Rejected
+                                    </div>
+                                </div>
+                            </div>
+                    </aura:if>
+                    <aura:if isTrue="{! and(v.Bookings[0].X24_Hrs_Cancellation_Request__c !='Rejected',v.Bookings[0].X24_Hrs_Cancellation_Request__c !='Approved')}">
+                        <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                            <div class="slds-form-element__control">
+                                <div class="slds-form-element__static">
+                                    <a href="javascript: void(0)" style="color:firebrick;" data-id="Reject"  data-val="{!v.Bookings[0].Id}" onclick="{!c.openModel}">Reject</a>
+                                </div>
+                            </div>
+                        </div>
+                    </aura:if>
+                    
+                </div>
+                
+                <div class="slds-col slds-size_1-of-2">
+                    
+                    <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                        <span class="slds-form-element__label">Status</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">
+                                {!v.Bookings[0].Booking__r.Status__c}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                        <span class="slds-form-element__label">
+                            <abbr class="slds-required"></abbr>Start Time</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">
+                                 <lightning:formattedDateTime value="{! v.Bookings[0].Booking__r.Start_Time__c}" hour="2-digit" minute="2-digit" timeZone="UTC"/>
+                                
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                        <span class="slds-form-element__label">Student</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">
+                                {! v.Bookings[0].Booking__r.Student__r.Name} 
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                        <span class="slds-form-element__label">Teacher</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">
+                                <a href="{! '/lightning/r/Account/'+ v.Bookings[0].Booking__r.Teacher_Account__c + '/view'}" target="_blank">{! v.Bookings[0].Booking__r.Teacher_Account__r.Name}</a>
+                            </div>
+                        </div>
+                    </div> 
+                    <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                        <span class="slds-form-element__label">Package</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">
+                                {!v.Bookings[0].Booking__r.Package__r.Name}
+                            </div>
+                        </div>
+                    </div>
+                    <aura:if isTrue="{! and(v.Bookings[0].X24_Hrs_Cancellation_Request__c !='Rejected',v.Bookings[0].X24_Hrs_Cancellation_Request__c !='Approved')}">
+                        <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                            <div class="slds-form-element__control">
+                                <div class="slds-form-element__static">
+                                    <a href="javascript: void(0)" style="color:lightgreen;" onclick="{!c.openModel}" data-val="{!v.Bookings[0].Id}" data-id="confirm" >Approve</a>
+                                </div>
+                            </div>
+                        </div>
+                    </aura:if>
+                    
+                </div>
+            </div>
+        </div>
+        <aura:if isTrue="{!v.openModal}">
+            
+            <!--###### MODAL BOX Start######--> 
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- ###### MODAL BOX HEADER Start ######-->
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close"
+                                              onclick="{! c.closeModel }"
+                                              alternativeText="close"
+                                              variant="bare-inverse"
+                                              class="slds-modal__close"/>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Please Confirm</h2>
+                    </header>
+                    <!--###### MODAL BOX BODY Part Start######-->
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <aura:if isTrue="{!v.action=='confirm'}">
+                            <p><b>Do you want to approve?</b></p>
+                            <aura:set attribute="else">
+                                <p><b>Do you want to Reject?</b></p>
+                            </aura:set>
+                        </aura:if>
+                    </div>
+                    <!--###### MODAL BOX FOOTER Part Start ######-->
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="brand" 
+                                          label="Confirm"
+                                          title="Confirm"
+                                          onclick="{! c.onChangeAction }" class="Confirm"/>
+                        <lightning:button variant="neutral" 
+                                          label="Cancel"
+                                          title="Cancel"
+                                          onclick="{! c.closeModel }" class="Cancel"/>
+                        
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+            <!--###### MODAL BOX Part END Here ######-->
+            
+        </aura:if>
+    </lightning:card>
+        </aura:if>
+</aura:component>

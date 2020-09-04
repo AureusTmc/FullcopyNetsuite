@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- 24 hrs cancellation approved/Rejected by --></label>
+    <name>X24_hrs_cancellation_approved_Reject_by__c</name>
+    <relationshipLabel><!-- Cases --></relationshipLabel>
+</CustomFieldTranslation>

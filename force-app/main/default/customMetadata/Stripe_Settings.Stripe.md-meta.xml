@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>Stripe</label>
+    <protected>false</protected>
+    <values>
+        <field>Stripe_Base_Url__c</field>
+        <value xsi:type="xsd:string">https://api.stripe.com</value>
+    </values>
+    <values>
+        <field>Stripe_Publishable_Key__c</field>
+        <value xsi:type="xsd:string">pk_test_eGeu4Z0mLSfXmekcJcLt7TVH</value>
+    </values>
+    <values>
+        <field>Stripe_Secret_Key__c</field>
+        <value xsi:type="xsd:string">sk_test_M3pk8qvbMs03SWjDuf6m1bss</value>
+    </values>
+</CustomMetadata>

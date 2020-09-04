@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebLink xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Get_Video_Recording</fullName>
+    <availability>online</availability>
+    <displayType>button</displayType>
+    <encodingKey>UTF-8</encodingKey>
+    <hasMenubar>false</hasMenubar>
+    <hasScrollbars>false</hasScrollbars>
+    <hasToolbar>false</hasToolbar>
+    <height>500</height>
+    <isResizable>true</isResizable>
+    <linkType>url</linkType>
+    <masterLabel>Get Video Recording</masterLabel>
+    <openType>newWindow</openType>
+    <position>topLeft</position>
+    <protected>false</protected>
+    <showsLocation>false</showsLocation>
+    <showsStatus>false</showsStatus>
+    <url>/apex/GetVideoRecordingPage?id={!Booking__c.Id}&amp;room_id={!Booking__c.Room_Id__c}</url>
+    <width>400</width>
+</WebLink>

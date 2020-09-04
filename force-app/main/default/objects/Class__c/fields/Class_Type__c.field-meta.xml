@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Class_Type__c</fullName>
+    <description>this fields manage class type</description>
+    <externalId>false</externalId>
+    <label>Class Type</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Young Children Programme (Play group)</fullName>
+                <default>false</default>
+                <label>Young Children Programme (Play group)</label>
+            </value>
+            <value>
+                <fullName>Young Children Programme (Music exploration)</fullName>
+                <default>false</default>
+                <label>Young Children Programme (Music exploration)</label>
+            </value>
+            <value>
+                <fullName>Group Instrumental Lesson</fullName>
+                <default>false</default>
+                <label>Group Instrumental Lesson</label>
+            </value>
+            <value>
+                <fullName>Explorer Programme</fullName>
+                <default>false</default>
+                <label>Explorer Programme</label>
+            </value>
+            <value>
+                <fullName>Group Theory Lesson</fullName>
+                <default>false</default>
+                <label>Group Theory Lesson</label>
+            </value>
+            <value>
+                <fullName>Choir</fullName>
+                <default>false</default>
+                <label>Choir</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

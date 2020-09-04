@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>aircall__Missed_Call_Ratio__c</fullName>
+    <deprecated>false</deprecated>
+    <externalId>false</externalId>
+    <formula>IF(CONTAINS(CallDisposition, &quot;out_of_opening_hours&quot;), &quot;Out of opening hours&quot;, 
+IF(CONTAINS(CallDisposition, &quot;no_available_agent&quot;), &quot;No available agent&quot;, 
+IF(CONTAINS(CallDisposition, &quot;abandoned_in_ivr&quot;), &quot;Abandoned in IVR&quot;, 
+IF(CONTAINS(CallDisposition, &quot;short_abandoned&quot;), &quot;Short abandoned&quot;, 
+IF(CONTAINS(CallDisposition, &quot;agents_did_not_answer&quot;), &quot;Agents did not response&quot;, NULL)))))</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Missed Call Ratio</label>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>
