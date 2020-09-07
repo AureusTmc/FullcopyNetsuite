@@ -8,10 +8,20 @@ public class enrolmentprocessipadcntrlTest {
         countryObj.Country_Name__c='Singapore';
         countryObj.Tax_Rate__c=7.00;
         insert countryObj;
-        
+        Organisation__c organisation = new Organisation__c(
+            Name = 'Aureus Academy Singapore',
+            Bank_Account_Number__c = '647743343001',
+            Bank_Name__c = 'OVERSEA-CHINESE BANKING CORP GROUP',
+            Branch_Code__c = '001',
+            CPF_Advice_Code__c = '01',
+            CPF_Payment_Type__c = 'PTE',
+            Country__c =countryObj.Id,
+            Sage_Company__c = 'AGP');
+        insert organisation;
         Account objCentr=TestUtil.createAccount('Centre',False,false);
         objCentr.Country__c=countryObj.Id;
         objCentr.Centre_Status__c='Active';
+        objCentr.Organisation__c = organisation.Id;
         insert objCentr;
         
        /* Centre_Users__c cenUserObj = new Centre_Users__c();
@@ -37,6 +47,7 @@ public class enrolmentprocessipadcntrlTest {
         insert objPack;
         
         List<Enrolment__c> enrolObjList = new List<Enrolment__c>(); 
+
         Enrolment__c objENrol=TestUtil.createEnrolment(objCentr.Id,objTechr.Id,objCustmr.Id,objPack.id,False);
         objENrol.Type__c='Trial';
         objEnrol.Stage__c='Pending Enrolment';
@@ -59,6 +70,8 @@ public class enrolmentprocessipadcntrlTest {
         
                 
         ApexPages.currentPage().getParameters().put('enr1',objENrol.Id);
+         ApexPages.currentPage().getParameters().put('currentOrg',organisation.Id);
+         ApexPages.currentPage().getParameters().put('defaultOrg','Aureus');
         EnrolmentProcessIpadCntrl EnrolmentProcessObj = new EnrolmentProcessIpadCntrl();
         
         try{
@@ -84,6 +97,7 @@ public class enrolmentprocessipadcntrlTest {
         EnrolmentProcessObj.saveAndNextProcess();
         EnrolmentProcessObj.deleteEnrolment(); 
         EnrolmentProcessIpadCntrl.LessonWrapper lsnWrapObj = new EnrolmentProcessIpadCntrl.LessonWrapper();
+       // EnrolmentProcessIpadCntrl.fillBook(lsnWrapObj, recTypeId, enrl, status, bookDate);
         EnrolmentProcessObj.slcdLessonType();
         EnrolmentProcessObj.slcdLsnType = 'Group';
       EnrolmentProcessObj.slcdLessonType();

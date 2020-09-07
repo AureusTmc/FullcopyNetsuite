@@ -26,11 +26,16 @@ public without sharing class PrePaymentSummaryController {
     public String cardImage{get;set;}
     private Subscription_Line_Item__c objLineItem;
     public boolean isExpired{get;set;}
-    Public Country__c centreCountry;
+    Public boolean isOssia{get;set;}
+    Public Decimal totalPackageAmount{get;set;}
+    //Public Country__c centreCountry;
+    Public Organisation__c organisationOfCentre;
     public PrePaymentSummaryController(){
         gstAmount = 0;
+        isOssia = false;
         amountAfterDiscount = 0;
-        centreCountry = new Country__c();
+        //centreCountry = new Country__c();
+        organisationOfCentre = new Organisation__c();
         isExpired = false;
         enrolId = ApexPages.currentPage().getParameters().get('enrolId');
         system.debug('@@@PrePaymentSummaryController -enrolId'+enrolId);
@@ -38,12 +43,23 @@ public without sharing class PrePaymentSummaryController {
         system.debug('@@@PrePaymentSummaryController -packageId'+packageId);
         enrolment = fetchEnrol(enrolId);
         system.debug('@@@PrePaymentSummaryController -enrolment'+enrolment);
-        
-        if(String.isNotBlank(enrolment.Id) && String.isNotBlank(enrolment.Center__r.Country__r.Id)){
-            centreCountry = enrolment.Center__r.Country__r; 
-        }
-        system.debug('@@@PrePaymentSummaryController -centreCountry'+centreCountry);
         prepayPackage = fetchPackage(packageId);
+        //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+        // if(String.isNotBlank(enrolment.Id) && String.isNotBlank(enrolment.Center__r.Country__r.Id)){
+        //     centreCountry = enrolment.Center__r.Country__r; 
+        // }
+        totalPackageAmount =0;
+        if(prepayPackage.Package_Fee__c != null && prepayPackage.Package_Fee__c > 0){
+            totalPackageAmount = prepayPackage.Package_Fee__c;
+        }
+        if(String.isNotBlank(enrolment.Id) && String.isNotBlank(enrolment.Center__r.Organisation__r.Id)){
+            organisationOfCentre = enrolment.Center__r.Organisation__r; 
+            if(organisationOfCentre.name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                isOssia = true;
+                // if(prepayPackage.facility_Fee__c != null && prepayPackage.facility_Fee__c> 0)
+                // totalPackageAmount += prepayPackage.facility_Fee__c;
+            }
+        }
         attId = fetchAttachment(enrolment);
         system.debug('@@@PrePaymentSummaryController -attId'+attId);
         cardNumber = enrolment.Parent__r.Card_Number__c;
@@ -70,6 +86,7 @@ public without sharing class PrePaymentSummaryController {
         listOfSummary = fillBillSummary(prepayPackage,firstDate,noOfMonths);
         system.debug('@@PrePaymentSummaryController -listOfSummary'+listOfSummary);
         system.debug('@@PrePaymentSummaryController -prepayPackage.Package_Fee__c'+prepayPackage.Package_Fee__c);
+        
         if(prepayPackage.Package_Fee__c <> NULL){
             //amountAfterDiscount = prepayPackage.Package_Fee__c-prepayPackage.Promotion_Discount__c;
             for(BillingSummary summary : listOfSummary){
@@ -78,9 +95,15 @@ public without sharing class PrePaymentSummaryController {
                 if(prepayPackage.Promotion_Discount__c <> NULL){
                     amountAfterDiscount += summary.amount - summary.discount;
                 }
-                
+                //   //added by nishi:27-aug-2020:if ossia organisation and Facility fee is exist  so we added  Facility fees
+                // if(isOssia && summary.faclityFee != null && summary.faclityFee > 0){
+                //     amountAfterDiscount+=summary.faclityFee;
+                // }   
+                //   //added by nishi:27-aug-2020:if ossia organisation and Facility fee is exist  so we added  Facility fees
                 if(String.isNotBlank(enrolment.Center__r.Country__r.Id) && enrolment.Center__r.Country__r.Tax_Rate__c > 0){
-                    gstAmount += BillingUtility.roundOffAmount((summary.amount - summary.discount) * (enrolment.Center__r.Country__r.Tax_Rate__c / 100));    
+                    //    gstAmount += ((summary.amount - summary.discount) + (isOssia ? summary.faclityFee :0)) * (enrolment.Center__r.Country__r.Tax_Rate__c / 100);    
+                
+                    gstAmount += ((summary.amount - summary.discount) * (enrolment.Center__r.Country__r.Tax_Rate__c / 100));    
                 }
             }
             system.debug('@@PrePaymentSummaryController -amountAfterDiscount'+amountAfterDiscount);
@@ -102,17 +125,22 @@ public without sharing class PrePaymentSummaryController {
     public PageReference completePrepayment(){
         PageReference page = NULL;
         system.debug('@@completePrepayment- enrolment.Parent__r.stripe_customer_id__c'+enrolment.Parent__r.stripe_customer_id__c);
-        system.debug('@@completePrepayment-centreCountry'+centreCountry.Id);
+        system.debug('@@completePrepayment-organisationOfCentre'+organisationOfCentre.Id);
          system.debug('@@completePrepayment-finalAmount'+finalAmount);
-        system.debug('@@completePrepayment-enrolment.Parent__r.Stripe_Base_Url__c'+centreCountry.Stripe_Base_Url__c);
-        system.debug('@@completePrepayment-centreCountry.Stripe_Secret_Key__c'+centreCountry.Stripe_Secret_Key__c);
+        system.debug('@@completePrepayment-enrolment.Parent__r.Stripe_Base_Url__c'+organisationOfCentre.Stripe_Base_Url__c);
+        system.debug('@@completePrepayment-centreCountry.Stripe_Secret_Key__c'+organisationOfCentre.Stripe_Secret_Key__c);
         
         if(String.isNotBlank(enrolment.Parent__r.stripe_customer_id__c) && finalAmount > 0 
-            && String.isNotBlank(centreCountry.Id)
-             && String.isNotBlank(centreCountry.Stripe_Base_Url__c)
-              && String.isNotBlank(centreCountry.Stripe_Secret_Key__c)){
+            && String.isNotBlank(organisationOfCentre.Id)
+             && String.isNotBlank(organisationOfCentre.Stripe_Base_Url__c)
+              && String.isNotBlank(organisationOfCentre.Stripe_Secret_Key__c)){
+                  /**commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+                   *  BillingUtility.StripeCharge objStripeCharge = BillingUtility.createChargeForCustomer(
+                                enrolment.Parent__r.Stripe_Customer_Id__c,BillingUtility.roundOffAmount(finalAmount) ,centreCountry.Currency_Code__c,
+                                 centreCountry.Stripe_Base_Url__c, centreCountry.Stripe_Secret_Key__c);
+                                */
             BillingUtility.StripeCharge objStripeCharge = BillingUtility.createChargeForCustomer(
-                                enrolment.Parent__r.Stripe_Customer_Id__c,BillingUtility.roundOffAmount(finalAmount) ,centreCountry.Currency_Code__c, centreCountry.Stripe_Base_Url__c, centreCountry.Stripe_Secret_Key__c);
+                                enrolment.Parent__r.Stripe_Customer_Id__c,BillingUtility.roundOffAmount(finalAmount) ,organisationOfCentre.country__r.Currency_Code__c, organisationOfCentre.Stripe_Base_Url__c, organisationOfCentre.Stripe_Secret_Key__c);
                                 system.debug('@@@completePrepayment- objStripeCharge'+objStripeCharge);
                                 if(objStripeCharge.statusCode == 200 && objStripeCharge.paid){
                                     //System.debug('@@@objStripeCharge'+objStripeCharge);
@@ -141,7 +169,9 @@ public without sharing class PrePaymentSummaryController {
         Invoice__c inv = insertInvoice(objLineItem);
         system.debug('@@@processPrepay inv'+inv);
         if(!Test.isRunningTest()){
-        	BillingUtility.updateCharge(chargeId,inv.Name, centreCountry.Stripe_Base_Url__c, centreCountry.Stripe_Secret_Key__c);  	  
+            BillingUtility.updateCharge(chargeId,inv.Name, organisationOfCentre.Stripe_Base_Url__c, organisationOfCentre.Stripe_Secret_Key__c);  	
+            //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic*/
+            //BillingUtility.updateCharge(chargeId,inv.Name, centreCountry.Stripe_Base_Url__c, centreCountry.Stripe_Secret_Key__c);  	  
         }
         
         Payment__c objPay = insertPayment(chargeId,inv.id);
@@ -151,7 +181,7 @@ public without sharing class PrePaymentSummaryController {
     }
     
     private static Subscription_line_Item__c fetchSubsLineItem(String enrolId){
-        List<Subscription_Line_Item__c> lineItems = [SELECT Id,Next_Bill_Date__c,Subscription__c FROM Subscription_Line_Item__c WHERE
+        List<Subscription_Line_Item__c> lineItems = [SELECT Id,Next_Bill_Date__c,Subscription__c,Enrolment__r.Center__r.Country__r.Tax_Rate__c  FROM Subscription_Line_Item__c WHERE
                                                     Enrolment__c=: enrolId LIMIT 1];
                                                     system.debug('@@@fetchSubsLineItem -lineItems'+lineItems);
                                                     
@@ -212,6 +242,8 @@ public without sharing class PrePaymentSummaryController {
         system.debug('@@@insertInvoiceLineItems Promotion_Discount__c'+prepayPackage.Promotion_Discount__c);
         if(prepayPackage.Package_Fee__c != NULL && prepayPackage.Promotion_Discount__c != NULL){
             Decimal amount = prepayPackage.Package_Fee__c / noOfMonths;
+            //Decimal facilityFee = prepayPackage.facility_Fee__c / noOfMonths;
+            Decimal taxRate = subLineItem.Enrolment__r.Center__r.Country__r.Tax_Rate__c; 
             system.debug('@@@insertInvoiceLineItems amount'+amount);
             Decimal discount = prepayPackage.Promotion_Discount__c / noOfMonths;
             system.debug('@@@insertInvoiceLineItems discount'+amount);
@@ -220,15 +252,36 @@ public without sharing class PrePaymentSummaryController {
                 Invoice_Line_Item__c invLineItem = BillingUtility.fillInvLnItm(inv.id, enrolment.id, subLineItem.id, BillingUtility.roundOffAmount(amount),'',Enrolment.Teacher__c);
                 invLineItem.Discount_Amount__c = BillingUtility.roundOffAmount(discount);
                 invLineItem.Month__c = firstDate.addMonths(i);
-                if(gstAmount != NULL && gstAmount > 0){
-                    invLineItem.Gst_Amount__c = BillingUtility.roundOffAmount(gstAmount/noOfMonths);
+                // if(gstAmount != NULL && gstAmount > 0){
+                //     invLineItem.Gst_Amount__c = BillingUtility.roundOffAmount(gstAmount/noOfMonths);
+                // }else{
+                //     invLineItem.Gst_Amount__c = 0;
+                // }
+                if(taxRate != NULL && taxRate > 0){
+                    invLineItem.Gst_Amount__c = BillingUtility.roundOffAmount(((amount-discount)*taxRate) /100);
                 }else{
                     invLineItem.Gst_Amount__c = 0;
                 }
-                
                 invLineItem.Package__c = prepayPackage.id;
                 system.debug('@@@insertInvoiceLineItems invLineItem'+invLineItem);
                 invLineItems.add(invLineItem);
+                //added by nishi:27-aug-2020:if ossia organisation and Facility fee is exist  so we added  Facility fees
+               /* if(String.isNotBlank(prepayPackage.Location__c) && String.isNotBlank(prepayPackage.Location__r.Organisation__c) &&
+                    String.isNotBlank(prepayPackage.Location__r.Organisation__r.Name) && 
+                    prepayPackage.Location__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name) 
+                    && prepayPackage.facility_Fee__c != null){
+                    invLineItem = BillingUtility.fillInvLnItm(inv.id, enrolment.id, subLineItem.id, BillingUtility.roundOffAmount(facilityFee),prepayPackage.name+ ' (Facility Fees)',Enrolment.Teacher__c);
+                    invLineItem.Month__c = firstDate.addMonths(i);
+                    if(taxRate != NULL && taxRate > 0){
+                        invLineItem.Gst_Amount__c = BillingUtility.roundOffAmount((facilityFee*taxRate) /100);
+                    }else{
+                        invLineItem.Gst_Amount__c = 0;
+                    }
+                    invLineItem.Package__c = prepayPackage.id;
+                    system.debug('@@@insertInvoiceLineItems invLineItem'+invLineItem);
+                    invLineItems.add(invLineItem);
+                }*/
+                //added by nishi:27-aug-2020:if ossia organisation and Facility fee is exist  so we added  Facility fees
             }
             system.debug('@@@insertInvoiceLineItems all  invLineItems'+invLineItems);
             insert invLineItems;
@@ -386,8 +439,13 @@ public without sharing class PrePaymentSummaryController {
                                             Center__r.Name,Teacher__c,Parent__r.Stripe_customer_id__c,Parent__r.Card_Image__c, 
                                             Parent__r.Card_Number__c,Parent__r.personContactId,Package__c,Parent__r.personEmail,Parent__r.Name,
                                             Parent__r.PersonMobilePhone,prepayment_period_start_date__c,prepayment_period_end_date__c,
-                                            Package__r.type_of_package__c, Link_Creation_Date__c, Center__r.Country__r.Id, Center__r.Country__r.Tax_Rate__c, 
-                                            Center__r.Country__r.Stripe_Base_Url__c, Center__r.Country__r.Stripe_Secret_Key__c,	Center__r.Country__r.Currency_Code__c 
+                                            Package__r.type_of_package__c, Link_Creation_Date__c, 
+                                            Center__r.Country__r.Id, Center__r.Country__r.Tax_Rate__c, 
+                                            Center__r.Country__r.Stripe_Base_Url__c, Center__r.Country__r.Stripe_Secret_Key__c,	Center__r.Country__r.Currency_Code__c ,
+                                            // added by nishi: 26-Aug-2020: for manage Stripe Details
+                                            Center__r.Organisation__r.Id, Center__r.Organisation__r.Tax_Rate__c, Center__r.Organisation__r.Name,
+                                            Center__r.Organisation__r.Stripe_Base_Url__c, Center__r.Organisation__r.Stripe_Secret_Key__c,	Center__r.Organisation__r.Country__r.Currency_Code__c 
+                                            // added by nishi: 26-Aug-2020: for manage Stripe Details
                                             FROM Enrolment__c WHERE id=: enrolId];
         //Parent__r.personEmail,Parent__r.Name,
         if(enrolmentList.size() > 0){
@@ -415,7 +473,8 @@ public without sharing class PrePaymentSummaryController {
         system.debug('@@fetchPackage --packageId : '+packageId);
         Package__c prepayPackage = new Package__c();
         List<Package__c> listOfPackage = [SELECT Id,Name,Promotion_period_In_months__c,package_fee__c,Promotion_Discount__c,Offer_End_Date__c,
-                                          Active__c
+                                          Active__c,Location__r.Organisation__r.Name
+                                          //facility_Fee__c
                                           FROM Package__c WHERE Id=: packageId];
         if(listOfPackage.size() > 0){
             prepayPackage = listOfPackage[0];
@@ -432,15 +491,22 @@ public without sharing class PrePaymentSummaryController {
         system.debug('@@fillBillSummary - firstDate '+firstDate );
         if(objPack.Package_Fee__c != NULL){
             Decimal amount =  0;
+            //Decimal facilityamount =  0;
             Decimal discount = 0;
             if(objPack.Package_Fee__c != NULL && noOfMonth != NUll)
                 amount = BillingUtility.roundOffAmount(objPack.Package_Fee__c /noOfMonth);
+                // if(String.isNotBlank(objPack.Location__c) && String.isNotBlank(objPack.Location__r.Organisation__c) &&
+                //  String.isNotBlank(objPack.Location__r.Organisation__r.Name) && 
+                //  objPack.Location__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name) 
+                //  && objPack.facility_Fee__c != null){
+                //     facilityamount += BillingUtility.roundOffAmount(objPack.facility_Fee__c /noOfMonth);
+                // }   
             if(objPack.Promotion_Discount__c != NULL && noOfMonth != NUll)
                 discount = BillingUtility.roundOffAmount(objPack.Promotion_Discount__c / noOfMonth);
             system.debug('@@@fillBillSummaryamount'+amount);
             system.debug('@@@fillBillSummary discount'+discount);
             for(Integer i=0;i<noOfMonth; i++){
-                listOfBillSummary.add(new BillingSummary(firstDate.addMonths(i),amount,objPack.Name,discount));               
+                listOfBillSummary.add(new BillingSummary(firstDate.addMonths(i),amount,/*facilityamount,*/objPack.Name,discount));               
             }
         }
         system.debug('@@@fillBillSummary listOfBillSummary'+listOfBillSummary);
@@ -503,15 +569,19 @@ public without sharing class PrePaymentSummaryController {
     public class BillingSummary{
         Public Date invoiceDate{get;set;}
         public Decimal amount{get;set;}
+        public Decimal totalAmount{get;set;}
+        //public Decimal faclityFee{get;set;}
         public String packageName{get;set;}
         Public Decimal discount{get;set;}
         public Decimal netAmount{get;set;}
-        public BillingSummary(Date invDate,Decimal amount,String packageName,Decimal discount){
+        public BillingSummary(Date invDate,Decimal amount,/*Decimal faclityFee,*/String packageName,Decimal discount){
             this.invoiceDate = invDate;
+            //this.faclityFee = faclityFee; //added by nishi jain: 27_aug-2020: for manage Facility Fee
             this.amount = amount;
             this.packageName = packageName;
             this.discount = discount;
-            this.netAmount = (amount - discount).setScale(2);
+            this.totalAmount = amount;//+ (faclityFee > 0 ?faclityFee :0);
+            this.netAmount = ((amount - discount) /*+ (faclityFee > 0 ?faclityFee :0)*/ ).setScale(2);
         }
     }
     

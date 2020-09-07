@@ -24,10 +24,18 @@ public  class CampDetailsForEnrolStudentController {
     public string centerId{get;set;}
     public string centerName{get;set;}
     public string phoneNumber{get;set;}
+   //@ Juneid 28 Aug 2020, Checking for Ossia Orgnization 
+    Public Boolean isOssia{get;set;}
     public CampDetailsForEnrolStudentController() {
         parentAcc  = new Account();
         // studentAcc = new Account();
         accountModalDetails = '';
+        
+        isOssia =  false;
+        //Juneid 28 Aug 2020 Orgnization wise logic as per new Requierment
+        if(String.isNotBlank(ApexPages.currentPage().getParameters().get('org'))){
+            isOssia = ApexPages.currentPage().getParameters().get('org').equalsIgnoreCase('ossia') ? true : false;
+        }
     }
     
     

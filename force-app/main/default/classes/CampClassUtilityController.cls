@@ -1,5 +1,5 @@
 /*
-Name        :    AureusUtility
+Name        :    CampClassUtilityController
 Date        :    11th Feb 2020 
 Description :    This class is used for common methods to use in camp class controlllers.
 Author      :   Jatin
@@ -16,7 +16,10 @@ public  without sharing class CampClassUtilityController {
         system.debug('campDates'+campDates);
         string campListString =  'Select Name,Centre__c,Centre__r.Name,Early_Bird_Discount__c,Early_Bird_End_Date__c,Early_Bird_Start_Date__c,Maximum_Age__c, Camp_Description__c,Minimum_Age__c ,Centre__r.Country__r.name, Centre__r.Country__r.Tax_Rate__c,';
         campListString += 'Centre__r.Country__r.Stripe_Base_Url__c,Centre__r.Country__r.Stripe_Publishable_Key__c,Centre__r.Country__r.Stripe_Secret_Key__c,Centre__r.Country__r.Currency_Code__c,Centre__r.Country__r.Folder__c,';
-            // get camp package List 
+        // added by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+        campListString += 'Centre__r.Organisation__r.Stripe_Base_Url__c,Centre__r.Organisation__r.Student_Policies_Template_Id__c,Centre__r.Organisation__r.Camp_Class_Template__c,Centre__r.Organisation__r.Stripe_Publishable_Key__c,Centre__r.Organisation__r.Stripe_Secret_Key__c,Centre__r.Organisation__r.Country__r.Currency_Code__c,Centre__r.Organisation__r.Name,';
+        
+        // get camp package List 
             campListString += ' (SELECT Id, Name, Package__c,Package__r.Name,Package__r.Instrument__c,Package__r.package_Fee__c,Package__r.Package_Fee_with_GST__c, Active__c,No_of_days__c FROM Camp_Available_Packages__r Where Active__c= true';
             if(string.isNotBlank(packageId)){
                 campListString += ' AND id=:packageId';
@@ -44,12 +47,63 @@ public  without sharing class CampClassUtilityController {
         system.debug('listOfCamp'+listOfCamp);
         return listOfCamp;
     }
+    //@juneid 28 Aug 2020, New Method for get Orgnization wise Camps
+     // get camp list with related camp packages, days according to parameter 
+    public static List<Camp__c> getCampList(string centerId ,string campId,String packageId,Set<string> campDates,string orgnizationId){
+        List<Camp__c> listOfCamp = new List<Camp__c>();
+        system.debug('centerId'+centerId);
+        system.debug('campId'+campId);
+        system.debug('packageId'+packageId);
+        system.debug('campDates'+campDates);
+        string campListString =  'Select Name,Centre__c,Centre__r.Name,Early_Bird_Discount__c,Early_Bird_End_Date__c,Early_Bird_Start_Date__c,Maximum_Age__c, Camp_Description__c,Minimum_Age__c ,Centre__r.Country__r.name, Centre__r.Country__r.Tax_Rate__c,';
+        campListString += 'Centre__r.Country__r.Stripe_Base_Url__c,Centre__r.Country__r.Stripe_Publishable_Key__c,Centre__r.Country__r.Stripe_Secret_Key__c,Centre__r.Country__r.Currency_Code__c,Centre__r.Country__r.Folder__c,';
+        // added by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+        campListString += 'Centre__r.Organisation__r.Stripe_Base_Url__c,Centre__r.Organisation__r.Stripe_Publishable_Key__c,Centre__r.Organisation__r.Stripe_Secret_Key__c,Centre__r.Organisation__r.Student_Policies_Template_Id__c,Centre__r.Organisation__r.Camp_Class_Template__c,Centre__r.Organisation__r.Country__r.Currency_Code__c,Centre__r.Organisation__r.Name,';
+        
+        // get camp package List 
+            campListString += ' (SELECT Id, Name, Package__c,Package__r.Name,Package__r.Instrument__c,Package__r.package_Fee__c,Package__r.Package_Fee_with_GST__c, Active__c,No_of_days__c FROM Camp_Available_Packages__r Where Active__c= true';
+            if(string.isNotBlank(packageId)){
+                campListString += ' AND id=:packageId';
+            }
+
+            campListString+= ' Order by No_of_days__c DESC),';
+            campListString += ' (SELECT Camp_Start_Time__c, Camp_End_Time__c, Dates_Of_The_Camp__c, No_of_Students_Enrolled__c, Status__c, Camp_Name__c, Id, Name FROM Camp_Days__r';
+            campListString += ' Where Status__c =\'Active\'';
+            if(campDates != null && campDates.size() > 0){
+                campListString += ' AND id in :campDates';
+            }
+          
+            campListString +=' Order by Dates_Of_The_Camp__c';
+            campListString+= ')';
+            
+            campListString += ' From Camp__c WHERE Status__c =\'Active\'' ;
+            if(string.isnotBlank(campId)){
+                campListString += ' AND id=:campId';
+            }
+            if(string.isnotBlank(centerId)){
+                campListString += ' AND Centre__c =:centerId';
+            }
+        
+        //Juneid 
+        if(String.isNotBlank(orgnizationId)){
+            campListString +=' And Centre__r.Organisation__c=:orgnizationId';
+        }
+            system.debug('campListString'+campListString);
+        if(string.isNotBlank(campListString)){
+            listOfCamp  = Database.query(campListString);
+        }
+        system.debug('listOfCamp'+listOfCamp);
+        return listOfCamp;
+    }
     
     // get camp list with related camp packages, days according to parameter 
     public static List<Camp__c> getCampList(string centerId ,string campId,Set<String> packageIds,Set<string> campDates){
         List<Camp__c> listOfCamp = new List<Camp__c>();
         string campListString =  'Select Name,Centre__r.Name,Early_Bird_Discount__c,Early_Bird_End_Date__c,Early_Bird_Start_Date__c,Maximum_Age__c, Camp_Description__c,Minimum_Age__c ,Centre__r.Country__r.name, Centre__r.Country__r.Tax_Rate__c,';
         campListString += 'Centre__r.Country__r.Stripe_Base_Url__c,Centre__r.Country__r.Stripe_Publishable_Key__c,Centre__r.Country__r.Stripe_Secret_Key__c,Centre__r.Country__r.Currency_Code__c,Centre__r.Country__r.Folder__c,';
+              // added by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+        campListString += 'Centre__r.Organisation__r.Stripe_Base_Url__c,Centre__r.Organisation__r.Camp_Class_Template__c,Centre__r.Organisation__r.Student_Policies_Template_Id__c,Centre__r.Organisation__r.Stripe_Publishable_Key__c,Centre__r.Organisation__r.Stripe_Secret_Key__c,Centre__r.Organisation__r.Country__r.Currency_Code__c,Centre__r.Organisation__r.Name,';
+        
             // get camp package List 
             campListString += ' (SELECT Id, Name, Package__c,Package__r.id,Package__r.Name,Package__r.Instrument__c,Package__r.package_Fee__c, Active__c,No_of_days__c FROM Camp_Available_Packages__r Where Active__c= true';
             if(packageIds != null && packageIds.size() > 0){

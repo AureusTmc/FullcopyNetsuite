@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Previous_Center__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>this field for store old changed Center id</description>
+    <externalId>false</externalId>
+    <label>Previous Center</label>
+    <referenceTo>Account</referenceTo>
+    <relationshipLabel>Cases (Previous Center)</relationshipLabel>
+    <relationshipName>Cases5</relationshipName>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

@@ -20,13 +20,13 @@ global class PublicHolidayProcess  implements Database.Batchable<sObject>, Datab
     global set<String> organisationId = new set<String>();
     // Definig record Type for lesson
     private string lessonRecordType = Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get(ConstantsClass.recordTypeLesson).getRecordTypeId();
-    
+     
      global Database.QueryLocator start(Database.BatchableContext BC) {
         // Collecting the list of all public holiday
          set<string> status = new set<String>{'Pending','Scheduled'};
          set<string> type = new set<String>{'Trial','Regular','Make-up','Ad-hoc','Busy'};
          set<string> Category = new set<string>{'Leave','Holiday','Placeholder'};
-        String query = 'select Id,Package__c, Center__r.Organisation__c,Teacher_Account__r.Employee_Duty_Type__c,End_Time__c,Teacher_Account__r.Name,Teacher_Account__r.Id,Duration__c,Type__c,Status__c,Booking_Date__c,Start_Time__c,Parent__c,Student__c,Parent__r.PersonContactId,Parent__r.personEmail,Center__c,Center__r.Location__c,Student__r.Name,Teacher_Account__c,Enrolment__c,Available_Make_up_Units__c,Make_up_Utilize_Bookings__c  from Booking__c where  Booking_Date__c in: holidayDate  And Type__c in:type   And Status__c in:status AND Category__c Not in:Category and RecordTypeId=:lessonTypeId and Center__r.Organisation__c in:organisationId';
+        String query = 'select Id,Package__c, Center__r.Organisation__c,Center__r.Organisation__r.Name,Teacher_Account__r.Employee_Duty_Type__c,End_Time__c,Teacher_Account__r.Name,Teacher_Account__r.Id,Duration__c,Type__c,Status__c,Booking_Date__c,Start_Time__c,Parent__c,Student__c,Parent__r.PersonContactId,Parent__r.personEmail,Center__c,Center__r.Location__c,Student__r.Name,Teacher_Account__c,Enrolment__c,Available_Make_up_Units__c,Make_up_Utilize_Bookings__c  from Booking__c where  Booking_Date__c in: holidayDate  And Type__c in:type   And Status__c in:status AND Category__c Not in:Category and RecordTypeId=:lessonTypeId and Center__r.Organisation__c in:organisationId';
         return Database.getQueryLocator(query);
     }
     
@@ -41,7 +41,15 @@ global class PublicHolidayProcess  implements Database.Batchable<sObject>, Datab
         Map<Id,Integer> makeupId= new Map<Id,Integer>();
         list<Booking__c> updateMakeupList = new list<Booking__c>();
         //List<Case> casList = new List<Case>();
-        
+         
+        // added by nishi: 29-Jul-2020: for manage ossia organization student we added Makeup expiry days will be 365 days.
+         List<Ossia_Organisation_Settings__mdt> listOfOssia_Organisation_Settings = [SELECT Id, 
+         Label,  Makeup_Expiry_Days__c,Makeup_Expiry_Days_For_Public_Holiday__c,
+         Makeup_Expiry_Days_Teacher__c FROM Ossia_Organisation_Settings__mdt
+         WHERE Label =:System.Label.Ossia_Organisation_Name];
+         // added by nishi: 29-Jul-2020: for manage ossia organization student  we added Makeup expiry days will be 365 days.
+
+
         // New Code Start
         Map<string,List<Booking__c>> mapToHolidatDate= new Map<string,List<Booking__c>>();
         try{
@@ -71,7 +79,22 @@ global class PublicHolidayProcess  implements Database.Batchable<sObject>, Datab
                                 bkgObj.Cancellation_Reason__c='Holidays';
                             }
                             if(bkgObj.Type__c=='Regular'){
-                                bkgObj.Make_up_Expiry_Date__c=bkgObj.Booking_Date__c.addDays(120);
+
+                                 //Start: Added by nishi: 29-Jul-2020:Start: for ossia students booking will cancel then we added Makeup expiry days will be 365 days.
+                                // otherwise we added 120 days for other students
+                                if(String.isNotBlank(bkgObj.Center__c) && 
+                                String.isNotBlank(bkgObj.Center__r.Organisation__c) && 
+                                String.isNotBlank(bkgObj.Center__r.Organisation__r.Name) && 
+                                bkgObj.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){ 
+                                    if(listOfOssia_Organisation_Settings != null && listOfOssia_Organisation_Settings.size() > 0){
+                                        bkgObj.Make_up_Expiry_Date__c=bkgObj.Booking_Date__c.addDays(Integer.valueOf((listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days_For_Public_Holiday__c)));
+                                    }
+                                }else{
+                                    bkgObj.Make_up_Expiry_Date__c=bkgObj.Booking_Date__c.addDays(120);
+                                }
+                                //End: Added by nishi: 29-Jul-2020:end: for ossia students booking will cancel then we added Makeup expiry days will be 365 days.
+                                // otherwise we added 120 days for other students
+
                                 string description='placeholder booking for cancelling '+ bkgObj.Student__r.Name +' booking';
                                 Booking__c placIns= new Booking__c(Center__c=bkgObj.Center__c,RecordTypeId=lessonRecordType,Enrolment__c=bkgObj.Enrolment__c,Student__c=bkgObj.Student__c,Package__c=bkgObj.Package__c,
                                                                    Teacher_Account__c=bkgObj.Teacher_Account__r.Id,Type__c='Busy',Category__c='Placeholder',Remarks__c=description,Parent__c=bkgObj.Parent__c,

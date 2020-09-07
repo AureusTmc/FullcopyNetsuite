@@ -11,6 +11,12 @@
             background-color: #ffbf2f !important;
             color: white;
         }
+        
+        <!--- Arpit/Junied 27-Aug-2020 ----->
+        .pageHeader_ossia {
+        	background-color: #ed1c24  !important;
+            color: white;
+        }
 
         #enrolBtn {
             background-color: #ffaa00 !important;
@@ -77,7 +83,8 @@ status="spinner" oncomplete=" $('.package-list').first().prop('checked', true);$
 <apex:param assignTo="{!studentIndexNumber}" name="studentIndexNumber" value="" />
 </apex:actionFunction>-->
         <div>
-            <div class="slds-page-header pageHeader">
+            <!--- Arpit/Junied 27-Aug-2020 ----->
+            <div class="slds-page-header {!IF(isOssia,'pageHeader_ossia','pageHeader')}">
                 <div class="slds-page-header__row">
                     <div class="slds-page-header__col-title">
                         <div class="slds-media">
@@ -420,14 +427,15 @@ Add New Students Details
                                     <!--commented by jatin: for this add student button use to page footer
                                     <div class="slds-grid slds-grid_align-end">
                                         <div class="slds-col slds-size_12-of-12"> 
-                                            <button class="slds-button slds-button_neutral custom-Btn slds-col slds-size_12-of-12" style="font-size: larger; font-weight:bold;" id="addStudentandPackageDetails" onclick="addNewStudentDetail(); return false;">Add Student</button>
+                                            <button class="slds-button slds-button_neutral custom-Btncustom-Btn slds-col slds-size_12-of-12" style="font-size: larger; font-weight:bold;" id="addStudentandPackageDetails" onclick="addNewStudentDetail(); return false;">Add Student</button>
                                         </div>
                                     </div>
                                 -->
                                 <footer class="slds-card__footer" style="">
                                     <div class="slds-grid slds-grid_align-center slds-p-vertical_x-small">
                                         <div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-medium-size_1-of-2">
-                                            <button id="addStudentandPackageDetails" class="slds-button btn-block slds-button_success custom-Btn" onclick="addNewStudentDetail();">
+                                            <!--@Juneid 28 Aug 2020, Org wise css -->
+                                            <button id="addStudentandPackageDetails" class="slds-button btn-block slds-button_success {!IF(isOssia,'custom-Btn_ossia','custom-Btn')} " onclick="addNewStudentDetail();">
                                                 Add Student
                                             </button>
                                         </div>
@@ -588,18 +596,37 @@ Add New Students Details
 
                     $('.packageDiv').click(function () {
                         console.log('click');
-                        $('.package-list').prop('checked', false);
-                        $('.packageDiv').removeClass('pageHeader');
-                        $('.packageDiv').find('article').removeClass('pageHeader');
+                         $('.package-list').prop('checked', false);
+                        //@Juneid 27 Aug 2020, Ossia Org wise Css
+                        if({!isOssia}){
+                            $('.packageDiv').removeClass('pageHeader_ossia');
+                            $('.packageDiv').find('article').removeClass('pageHeader_ossia');
+                        }else{
+                            
+                            $('.packageDiv').removeClass('pageHeader');
+                            $('.packageDiv').find('article').removeClass('pageHeader');
+                        }
+                       
                         var val = $(this).find('input:radio').prop('checked') ? false : true;
                         $(this).find('input:radio').prop('checked', val);
                         var $checks = $(this).find('input:radio');
+                         //@Juneid 27 Aug 2020, Ossia Org wise Css
                         if ($checks.is(":checked")) {
-                            $(this).find('article').addClass('pageHeader');
-                            $(this).addClass('pageHeader');
+                            if({!isOssia}){
+                                $(this).find('article').addClass('pageHeader_ossia');
+                                $(this).addClass('pageHeader_ossia');
+                            }else{
+                                $(this).find('article').addClass('pageHeader');
+                                $(this).addClass('pageHeader');
+                            }
                         } else {
-                            $(this).find('article').removeClass('pageHeader');
-                            $(this).removeClass('pageHeader');
+                            if({!isOssia}){
+                                $(this).find('article').removeClass('pageHeader_ossia');
+                                $(this).removeClass('pageHeader_ossia');
+                            }else{
+                                $(this).find('article').removeClass('pageHeader');
+                                $(this).removeClass('pageHeader');
+                            }
                         }
 
                         $(".package-list").trigger('change');
@@ -640,12 +667,23 @@ Add New Students Details
                                  var campDate = new moment($(this).attr('data-campDate')).format('YYYY-MM-DD');
                                 campDays.push({ "campId": $(this).val(), "campDate": campDate, "campDay": $(this).attr('data-campDay') });
                             });*/
+                            //@Juneid 28 Aug 2020, Orgnization wise css
                             if ($checks.is(":checked")) {
-                                $(this).find('article').addClass('pageHeader');
-                                $(this).addClass('pageHeader');
+                                if({!isOssia}){
+                                    $(this).find('article').addClass('pageHeader_ossia');
+                                    $(this).addClass('pageHeader_ossia');
+                                }else{
+                                    $(this).find('article').addClass('pageHeader');
+                                    $(this).addClass('pageHeader');
+                                }
                             } else {
-                                $(this).find('article').removeClass('pageHeader');
-                                $(this).removeClass('pageHeader');
+                                if({!isOssia}){
+                                    $(this).find('article').removeClass('pageHeader_ossia');
+                                    $(this).removeClass('pageHeader_ossia');
+                                }else{
+                                    $(this).find('article').removeClass('pageHeader');
+                                    $(this).removeClass('pageHeader');
+                                }
                             }
                             $(".CampDays-list").trigger('change'); i++;
                         });
@@ -666,11 +704,23 @@ Add New Students Details
                             campDates.push(new moment($(this).attr('data-campDate')).format('MMM D, YYYY'));
                         });
                         if ($checks.is(":checked")) {
-                            $(this).find('article').addClass('pageHeader');
-                            $(this).addClass('pageHeader');
+                            //@Juneid 28 aug 2020 Org wise Css Changes as per new Orgnization wise channges
+                            if({!isOssia}){
+                                $(this).find('article').addClass('pageHeader_ossia');
+                                $(this).addClass('pageHeader_ossia');
+                                
+                            }else{
+                                $(this).find('article').addClass('pageHeader');
+                                $(this).addClass('pageHeader');
+                            }
                         } else {
-                            $(this).find('article').removeClass('pageHeader');
-                            $(this).removeClass('pageHeader');
+                            if({!isOssia}){
+                                $(this).find('article').removeClass('pageHeader_ossia');
+                                $(this).removeClass('pageHeader_ossia');
+                            }else{
+                                $(this).find('article').removeClass('pageHeader');
+                                $(this).removeClass('pageHeader');
+                            }
                         }
                         $(".CampDays-list").trigger('change');
                     });

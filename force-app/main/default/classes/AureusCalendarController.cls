@@ -1,5 +1,5 @@
 /*
-Name    : 
+Name    :  
 
 */
 public with Sharing class AureusCalendarController{
@@ -1266,8 +1266,10 @@ ed.teacherAttachmentId = attachList[0].Id;
     
     @RemoteAction
     public static Boolean createAdhocBookings(String packageId, String centerId, String teacherId, String studentId, String recurring, String bookingDate,
-    String lessonMode,String resourceId){
+    String lessonMode,String resourceId,String enrolmentId){
         Country__c countryOfCentre = new Country__c();
+        Organisation__c organisationOfCentre = new Organisation__c();
+        Boolean isOssiaOrganization = false;
         Boolean isSuccess;
         Double totalAmount = 0;
         string recordTypeCustomer = ConstantsClass.recordTypeCustomer;
@@ -1279,7 +1281,10 @@ ed.teacherAttachmentId = attachList[0].Id;
         if(String.isNotBlank(studentId) && String.isNotBlank(centerId)){
             accList = new List<Account>([SELECT Id, Name, Parent__c, RecordType.Name ,  Also_a_Student__c, Stripe_Customer_Id__c, Parent__r.Stripe_Customer_Id__c, 
                                          Country__c, Country__r.Id, Country__r.Tax_Rate__c, Country__r.Stripe_Base_Url__c, Country__r.Stripe_Secret_Key__c, 
-                                         Country__r.Currency_Code__c FROM Account 
+                                         Country__r.Currency_Code__c,Organisation__r.Name,Organisation__r.Id, Organisation__r.Tax_Rate__c, Organisation__r.Stripe_Base_Url__c,
+                                          Organisation__r.Stripe_Secret_Key__c, 
+                                         Organisation__r.country__r.Currency_Code__c
+                                          FROM Account 
                                          WHERE (RecordType.Name =: recordTypeCustomer AND Id =: studentId) OR Id =: centerId]);
         }
         
@@ -1297,12 +1302,19 @@ ed.teacherAttachmentId = attachList[0].Id;
                     }    
                 }else if(acc.RecordType.Name == recordTypeCentre){
                     countryOfCentre = acc.Country__r;
+                    organisationOfCentre = acc.Organisation__r;//@nishi 24 Aug 2020,Organisation wise charge as per new logic
+                    // added by nishi:17-aug-2020: for related to Ossia Organisation Center  then we manage facility fees
+                    if(string.isnotBlank(acc.Organisation__c) && string.isnotBlank(acc.Organisation__r.Name) && 
+                        acc.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name) ){
+                            isOssiaOrganization= true;
+                    }
+                    // added by nishi:17-aug-2020: for related to Ossia Organisation Center  then we manage facility feee
                 }
             }
             
         }
         
-        List<Package__c> listOfPackage =[SELECT Name, Id, Unit_Fee__c, Duration__c
+        List<Package__c> listOfPackage =[SELECT Name, Id, Unit_Fee__c, Duration__c//,facility_Fee__c
                                          FROM Package__c
                                          Where id =: packageId];
         
@@ -1313,17 +1325,29 @@ ed.teacherAttachmentId = attachList[0].Id;
            //system.debug(bookingDate);
             Double gstAdded = 0;
             Date bookDate = Date.newInstance(Integer.valueOf(bookingDate.split('T')[0].split('-')[0]), Integer.valueOf(bookingDate.split('T')[0].split('-')[1]), Integer.valueOf(bookingDate.split('T')[0].split('-')[2]));
-            bookingList = AureusCalendarControllerHelper.createAppointmentForAdhoc(listOfPackage[0], teacherId, studentId, centerId, Integer.valueOf(recurring), bookingDate,
-                                                                                   parentId,lessonMode,resourceId); //add ParentId
+            if(isOssiaOrganization){
+                 bookingList = AureusCalendarControllerHelper.createAppointmentForAdhoc(listOfPackage[0], teacherId, studentId, centerId, Integer.valueOf(recurring), bookingDate,
+                                                                                  parentId,lessonMode,resourceId,enrolmentId); //add ParentId
+            }else{
+                 bookingList = AureusCalendarControllerHelper.createAppointmentForAdhoc(listOfPackage[0], teacherId, studentId, centerId, Integer.valueOf(recurring), bookingDate,
+                                                                                    parentId,lessonMode,resourceId,''); //add ParentId
+            }
+                                                                              
             Boolean isChecked = validateBookingTime(bookingList[0].Teacher_Account__c,bookDate,bookingList[0].End_Time__c);
             List<Invoice_Line_Item__c> listOfInvoiceLineItem = new List<Invoice_Line_Item__c>();
             Stripe_Payment_Log__c iLog = new Stripe_Payment_Log__c();
+            Double packageFee =0;
             for(Integer i = 0; i < bookingList.size(); i++){
-                 totalAmount += BillingUtility.roundOffAmount(Double.valueOf(listOfPackage[0].unit_Fee__c));
-                 if(listOfPackage[0].unit_Fee__c > 0 && countryOfCentre.Tax_Rate__c > 0){
-                     gstAdded += BillingUtility.roundOffAmount(Double.valueOf(listOfPackage[0].unit_Fee__c) * (countryOfCentre.Tax_Rate__c / 100));
+                packageFee =0;
+                packageFee = Double.valueOf(listOfPackage[0].unit_Fee__c);
+                // if(packageFee > 0 && isOssiaOrganization){
+                //     packageFee+= Double.valueOf(listOfPackage[0].facility_Fee__c /4);
+                // }
+                 totalAmount += BillingUtility.roundOffAmount(packageFee);
+                  if(packageFee > 0 && countryOfCentre.Tax_Rate__c > 0){
+                     gstAdded += BillingUtility.roundOffAmount(packageFee) * (countryOfCentre.Tax_Rate__c / 100);
                  }
-                 
+                
             }
             if(totalAmount > 0 && gstAdded > 0){
                 totalAmount += gstAdded;
@@ -1340,10 +1364,13 @@ ed.teacherAttachmentId = attachList[0].Id;
                 totalAmount = BillingUtility.roundOffAmount(totalAmount);
             }*/
            ////system.debug('@@@totalAmount roundoff '+totalAmount);
-            if(objectOfInvoice != NULL && totalAmount > 0 && String.isNotBlank(stripeId) && isChecked && String.isNotBlank(countryOfCentre.Id)){
+            if(objectOfInvoice != NULL && totalAmount > 0 && String.isNotBlank(stripeId) && isChecked && String.isNotBlank(organisationOfCentre.Id)){
                 BillingUtility.StripeCharge objStripeCharge = new BillingUtility.StripeCharge();
+                 //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+                //objStripeCharge = updateInvoice(objectOfInvoice, totalAmount, stripeId, countryOfCentre.Currency_Code__c, organisationOfCentre.Stripe_Base_Url__c, countryOfCentre.Stripe_Secret_Key__c);
+                 //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
                                 
-                objStripeCharge = updateInvoice(objectOfInvoice, totalAmount, stripeId, countryOfCentre.Currency_Code__c, countryOfCentre.Stripe_Base_Url__c, countryOfCentre.Stripe_Secret_Key__c);
+                objStripeCharge = updateInvoice(objectOfInvoice, totalAmount, stripeId, organisationOfCentre.country__r.Currency_Code__c, organisationOfCentre.Stripe_Base_Url__c, organisationOfCentre.Stripe_Secret_Key__c);
                 
                 if(objStripeCharge.statusCode == 200 && objStripeCharge.paid && bookingList.size() > 0){
                     
@@ -1357,13 +1384,33 @@ ed.teacherAttachmentId = attachList[0].Id;
                             Double amount = BillingUtility.roundOffAmount(listOfPackage[0].unit_Fee__c);
                             Double taxAmount = 0;
                             if(amount > 0 && countryOfCentre.Tax_Rate__c > 0){
-                                taxAmount = BillingUtility.roundOffAmount(listOfPackage[0].unit_Fee__c * (countryOfCentre.Tax_Rate__c / 100));
+                                taxAmount = BillingUtility.roundOffAmount(amount * (countryOfCentre.Tax_Rate__c / 100));
                             }
                             listOfInvoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,
                                                                                Amount__c=amount,
                                                                                package__c=packageId, 
                                                                                Booking__c = bookingList[i].Id, month__c = System.today(), 
                                                                                GST_Amount__c = taxAmount));
+                            
+                            //start: added by nishi:17-aug-2020: for if ossia Adhoc booking created then we added facility_Fee__c with unitfee
+                            // Double facilityAmount = 0;
+                            // Double facilitytaxAmount = 0;
+                            // if(isOssiaOrganization){
+                            //     facilityAmount = BillingUtility.roundOffAmount(listOfPackage[0].facility_Fee__c/4);
+                            //     if(facilityAmount > 0 && countryOfCentre.Tax_Rate__c > 0){
+                            //         facilitytaxAmount = BillingUtility.roundOffAmount(facilityAmount * (countryOfCentre.Tax_Rate__c / 100));
+                            //     }
+                                
+                            // }
+                            // if(facilityAmount >0){
+                            //     listOfInvoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,
+                            //             Amount__c=facilityAmount,
+                            //             package__c=packageId, 
+                            //             Booking__c = bookingList[i].Id, month__c = System.today(), 
+                            //             GST_Amount__c = facilitytaxAmount,
+                            //             Remarks__c = 'Facility Fee'));   
+                            // }     
+                            //end: added by nishi:17-aug-2020: for if ossia Adhoc booking created then we added facility_Fee__c with unitfee                                                                       
                         }
                     }
                     if(listOfInvoiceLineItem.size() > 0){
@@ -1377,8 +1424,13 @@ ed.teacherAttachmentId = attachList[0].Id;
                     objPayment.Transaction_ID__c = objStripeCharge.Id;
                     objPayment.Method_of_Payment__c = ConstantsClass.cardModeType;
                     insert objPayment;
-                    if(String.isNotBlank(countryOfCentre.Id)){
-                        BillingUtility.updateCharge(objStripeCharge.Id,objectOfInvoice.Name, countryOfCentre.Stripe_Base_Url__c, countryOfCentre.Stripe_Secret_Key__c);    
+                     //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+                    // if(String.isNotBlank(countryOfCentre.Id)){
+                    //     BillingUtility.updateCharge(objStripeCharge.Id,objectOfInvoice.Name, countryOfCentre.Stripe_Base_Url__c, countryOfCentre.Stripe_Secret_Key__c);    
+                    // }
+                     //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+                    if(String.isNotBlank(organisationOfCentre.Id)){
+                        BillingUtility.updateCharge(objStripeCharge.Id,objectOfInvoice.Name, organisationOfCentre.Stripe_Base_Url__c, organisationOfCentre.Stripe_Secret_Key__c);    
                     }
 
                     // added by jatin: 31-Dec-2019 : for adhoc invoice to push on the sage
@@ -1405,7 +1457,7 @@ ed.teacherAttachmentId = attachList[0].Id;
         return objStripeCharge;
     }
     
-    private static List<Booking__c> createPlaceholder(List<Booking__c> bookingObjList, String origin, String newSlot){
+    public static List<Booking__c> createPlaceholder(List<Booking__c> bookingObjList, String origin, String newSlot){
         Booking__c placeholderObj = new Booking__c();
         Boolean isError = false;
         DateTime newSlotTime;
@@ -1990,12 +2042,21 @@ update parentList;
     public static NewBookingWrapper getTeacherAndCenterWrapper(List<String> idList,NewBookingWrapper newBookingWrapperObj){
         TeacherAndCenter tcObj = new TeacherAndCenter();
         List<TeacherAndCenter> teacherAndCenterList = new List<TeacherAndCenter>();
-        List<Account> accList = [SELECT Id, Name, RecordType.Name FROM Account WHERE Id IN :idList];
+        List<Account> accList = [SELECT Id, Name, Organisation__c,Organisation__r.Name, RecordType.Name FROM Account WHERE Id IN :idList];
             for(Account acc : accList){
                 tcObj = new TeacherAndCenter();
                 tcObj.id = acc.Id;
                 tcObj.Name = acc.Name;
                 if(acc.RecordType.Name == ConstantsClass.centerRecTypeName){
+                         // nishi: 22-Jul-2020: start: for get current center is related to ossia organization or not 
+                        if(String.isNotBlank(acc.Organisation__c) && 
+                        String.isNotBlank(acc.Organisation__r.Name) && 
+                        acc.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                            newBookingWrapperObj.isOssia =  true;
+                        }else{
+                            newBookingWrapperObj.isOssia =  false;
+                        }
+                     // nishi: 22-Jul-2020: end: for get current center is related to ossia organization or not
                     tcObj.type = acc.RecordType.Name;
                     teacherAndCenterList.add(tcObj);
                 }else if(acc.RecordType.Name == ConstantsClass.teacherRecordType){
@@ -2127,7 +2188,11 @@ newBookingWrapperObj.studentList = sObjList;
         List<Students> sObjList = new List<Students>();
         Students sObj = new Students();
         if(String.isNotBlank(str)){
-            accList = [SELECT Id, Name, RecordType.Name, Available_Make_up_Units__c, Also_a_Student__c, Parent__c, Parent__r.Available_Make_up_Units__c, Parent__r.Name, PersonEmail, Parent__r.PersonEmail, PersonMobilePhone , Parent__r.PersonMobilePhone FROM Account WHERE RecordType.Name =:recordTypeCustomer  AND ((Also_a_Student__c = true AND Parent__c = NULL) OR (Parent__c != NULL AND Also_a_Student__c = false)) AND (Name LIKE :'%'+str+'%') LIMIT 10];
+            accList = [SELECT Id, Name, RecordType.Name, Available_Make_up_Units__c, Also_a_Student__c, Parent__c, 
+            Parent__r.Available_Make_up_Units__c, Parent__r.Name, PersonEmail, Parent__r.PersonEmail, PersonMobilePhone , 
+            Parent__r.PersonMobilePhone FROM Account WHERE RecordType.Name =:recordTypeCustomer  
+            AND ((Also_a_Student__c = true AND Parent__c = NULL) OR 
+            (Parent__c != NULL AND Also_a_Student__c = false)) AND (Name LIKE :'%'+str+'%') LIMIT 10];
             for(Account acc : accList){
                 sObj = new Students();
                 sObj.id = acc.Id;
@@ -2230,6 +2295,11 @@ newBookingWrapperObj.studentList = sObjList;
                     if(bookingMap.containsKey('type')){
                         if(String.valueOf(bookingMap.get('type')) == ConstantsClass.pakageTypeMakeup){
                             bookingObj.Type__c = ConstantsClass.typeMakeup;
+                             //Nishi:22-Jul-2020:Start: if ossian student is create new booking then we added enrolment Id  for only makeup bookings
+                            if(bookingMap.containsKey('enrolmentId') && string.isNotBlank(String.valueOf(bookingMap.get('enrolmentId')))){
+                                bookingObj.Enrolment__c = String.valueOf(bookingMap.get('enrolmentId'));
+                            }
+                            //Nishi:22-Jul-2020:End: if ossian student is create new booking then we added enrolment Id 
                         }else if(String.valueOf(bookingMap.get('type')) == 'home-trial'){
                             bookingObj.Type__c = ConstantsClass.typeTrial;
                         }else if(String.valueOf(bookingMap.get('type')) == ConstantsClass.typeTrial){
@@ -2279,7 +2349,7 @@ newBookingWrapperObj.studentList = sObjList;
                     }else{
                         if(bookingObj.Type__c == ConstantsClass.typeMakeup  || bookingObj.Type__c == ConstantsClass.typeTrial){
                             if(bookingObj.Type__c == ConstantsClass.typeMakeup){
-                                bookingList.add(bookingObj);
+                                bookingList.add(bookingObj); 
                                 deductMakeupHours(bookingList, parentId);
                             }
                             
@@ -2322,8 +2392,9 @@ newBookingWrapperObj.studentList = sObjList;
                         }
                     }
                     if(String.isNotBlank(weekDay) && addDaysCount > 0 && countOfOccurence > 0){
-                        String center, teacher, student, packageId, type, status = '',resourceId;
+                        String center, teacher, student, packageId, type, status = '',resourceId,enrolmentId;
                         Integer duration = 0;
+                        Boolean isOssia = false;
                         if(bookingMap.containsKey('centerId')){
                             center = String.valueOf(bookingMap.get('centerId'));
                         }
@@ -2332,6 +2403,14 @@ newBookingWrapperObj.studentList = sObjList;
                             resourceId = String.valueOf(bookingMap.get('resourceId'));
                         }
                          //end: 30-jul-2020 added by nishi id resourceId is not blank then we added in resource lookup 
+                        // added by nishi: 23-Jul-2020: Start:if center is ossian then this enrolment id is exist
+                        if(bookingMap.containsKey('enrolmentId')){
+                            enrolmentId = String.valueOf(bookingMap.get('enrolmentId'));
+                        }
+                        if(bookingMap.containsKey('isOssia') && Boolean.valueOf(bookingMap.get('isOssia'))){
+                            isOssia = Boolean.valueOf(bookingMap.get('isOssia'));
+                        }
+                        // added by nishi: 23-Jul-2020: End:if center is ossian then this enrolment id is exist
                        
                         if(bookingMap.containsKey('teacherId')){
                             teacher = String.valueOf(bookingMap.get('teacherId'));
@@ -2395,6 +2474,12 @@ newBookingWrapperObj.studentList = sObjList;
                             //}
                              //end: 30-jul-2020 added by nishi id resourceId is not blank then we added in resource lookup 
                             bookingObj.Teacher_Account__c = teacher;
+                              // added by nishi: 23-Jul-2020: Start:if center is ossian then this enrolment id is exist
+                            if(string.isNotBlank(enrolmentId)){
+                                 bookingObj.enrolment__c = enrolmentId;
+                            }
+                            // added by nishi: 23-Jul-2020: Start:if center is ossian then this enrolment id is exist
+                           
                             bookingObj.Student__c = student;
                             bookingObj.Package__c = packageId;
                             bookingObj.Type__c = type;
@@ -2425,8 +2510,8 @@ newBookingWrapperObj.studentList = sObjList;
                                ////system.debug('parentId '+parentId);
                                 if(!isError && bookingList.size() > 0){
                                     if(bookingList[0].Type__c == ConstantsClass.typeMakeup){
-                                        deductMakeupHours(bookingList, parentId);
-                                    }
+                                            deductMakeupHours(bookingList, parentId);
+                                       }
                                 }
                                 
                             }else{
@@ -2628,6 +2713,7 @@ newBookingWrapperObj.studentList = sObjList;
         List<Booking__c> bookingUpdatedList = new List<Booking__c>();
         Integer hoursToDeduct = 0;
         List<Booking__c> bookingList = new List<Booking__c>();
+        List<Booking__c> ossiaBookingList = new List<Booking__c>();
         Booking__c bookObj = new Booking__c();
         Set<Id> setOfBookings = new Set<Id>();
         Map<Id, Integer> mapOfHours = new Map<Id, Integer>();
@@ -2642,93 +2728,119 @@ newBookingWrapperObj.studentList = sObjList;
                 setOfBookings.add(bObj.Id);
             }
             if(setOfBookings.size() > 0){
-                bookingList = [SELECT Id, Duration__c, Make_up_Utilize_Bookings__c 
-                                FROM Booking__c 
-                                WHERE Id IN:setOfBookings];
-            }
-            //System.debug('setOfParentStudent '+setOfParentStudent.size());
-            if(setOfParentStudent.size() > 0){
-                List<Booking__c> cancelBookings = new List<Booking__c>([SELECT Id, Available_Make_up_Units__c, Status__c, Make_up_Expiry_Date__c, 
-                                                                        Student__c, Type__c, Duration__c FROM Booking__c
-                                                                         WHERE Status__c =: statusCanceled 
-                                                                         AND Student__c IN: setOfParentStudent AND 
-                                                                        Make_up_Expiry_Date__c >= TODAY 
-                                                                        AND (Available_Make_up_Units__c > 0 AND Available_Make_up_Units__c != NULL) 
-                                                                        ORDER BY Make_up_Expiry_Date__c]);
-                if(cancelBookings.size() > 0){
-                    for(Booking__c cancelBooking : cancelBookings){
-                        mapOfHours.put(cancelBooking.Id, Integer.valueOf(cancelBooking.Available_Make_up_Units__c)); 
+                 // Start:added By nishi:  12-aug-2020: according to new requiremnt While utilizing Make up credit, 
+                //it should consider those makeup minutes which are related to the booking with the cancellation reason – Teacher MC/Leave first.
+                Set<string> enrolmentIds = new Set<string>();                        
+                for(Booking__c objBook: [SELECT Id,Student__c, Duration__c,Enrolment__c, Make_up_Utilize_Bookings__c ,Center__r.Organisation__r.Name
+                                        FROM Booking__c 
+                                        WHERE Id IN:setOfBookings]){
+                    if(String.isNotBlank(objBook.Center__c) && 
+                        String.isNotBlank(objBook.Center__r.Organisation__c) && 
+                        String.isNotBlank(objBook.Center__r.Organisation__r.Name) && 
+                        objBook.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                            ossiaBookingList.add(objBook);  
+                    }else{
+                        bookingList.add(objBook);
                     }
                 }
-                if(bookingList.size() > 0){
-                    for(Booking__c bookingObj : bookingList){
-                        hoursToDeduct = Integer.valueOf(bookingObj.duration__c);
-                        bookObj = new Booking__c();
-                        bookObj.Id = bookingObj.Id;
-                        bookObj.Make_up_Utilize_Bookings__c = '';
-                        for(Booking__c canceledBookings : cancelBookings){
-                            if(mapOfHours.containsKey(canceledBookings.Id) && mapOfHours.get(canceledBookings.Id) > 0 ){
-                                //if(mapOfHours.get(key) > 0){
-                                if(hoursToDeduct > mapOfHours.get(canceledBookings.Id)){
-                                    bookObj.Make_up_Utilize_Bookings__c  += canceledBookings.Id +'-'+mapOfHours.get(canceledBookings.Id)+';';
-                                    hoursToDeduct -= mapOfHours.get(canceledBookings.Id);
-                                    mapOfHours.put(canceledBookings.Id, 0);
-                                }else if(hoursToDeduct <= mapOfHours.get(canceledBookings.Id)){
-                                    mapOfHours.put(canceledBookings.Id, mapOfHours.get(canceledBookings.Id) - hoursToDeduct);
-                                    bookObj.Make_up_Utilize_Bookings__c  += canceledBookings.Id +'-'+hoursToDeduct+';';
-                                    hoursToDeduct = 0;
+                // commented by nishi: if booking center is ossian then we manage makeup mins in enrolment 
+                // bookingList = [SELECT Id, Duration__c, Make_up_Utilize_Bookings__c 
+                //                 FROM Booking__c 
+                //                 WHERE Id IN:setOfBookings];
+            
+               //system.debug('ossiaBookingList '+ossiaBookingList);
+               //system.debug('bookingList '+bookingList);
+                if(ossiaBookingList != null && ossiaBookingList.size() > 0){
+                    OssiaCenterCalendarController.deductOssiaMakeupHours(ossiaBookingList,bookingParentId,new Set<String>());
+                }
+                // end:added By nishi: 12-aug-2020: according to new requiremnt While utilizing Make up credit, 
+                //it should consider those makeup minutes which are related to the booking with the cancellation reason – Teacher MC/Leave first.
+                if(bookingList != null && bookingList.size() > 0){                               
+                    if(setOfParentStudent.size() > 0){
+                        List<Booking__c> cancelBookings = new List<Booking__c>([SELECT Id, Available_Make_up_Units__c, Status__c, Make_up_Expiry_Date__c, 
+                                                                                Student__c, Type__c, Duration__c FROM Booking__c
+                                                                                WHERE Status__c =: statusCanceled 
+                                                                                AND Student__c IN: setOfParentStudent AND 
+                                                                                Make_up_Expiry_Date__c >= TODAY 
+                                                                                AND (Available_Make_up_Units__c > 0 AND Available_Make_up_Units__c != NULL) 
+                                                                                ORDER BY Make_up_Expiry_Date__c]);
+                        if(cancelBookings.size() > 0){
+                            for(Booking__c cancelBooking : cancelBookings){
+                                mapOfHours.put(cancelBooking.Id, Integer.valueOf(cancelBooking.Available_Make_up_Units__c)); 
+                            }
+                        }
+                        if(bookingList.size() > 0){
+                            for(Booking__c bookingObj : bookingList){
+                                hoursToDeduct = Integer.valueOf(bookingObj.duration__c);
+                                bookObj = new Booking__c();
+                                bookObj.Id = bookingObj.Id;
+                                bookObj.Make_up_Utilize_Bookings__c = '';
+                                for(Booking__c canceledBookings : cancelBookings){
+                                    if(mapOfHours.containsKey(canceledBookings.Id) && mapOfHours.get(canceledBookings.Id) > 0 ){
+                                        //if(mapOfHours.get(key) > 0){
+                                        if(hoursToDeduct > mapOfHours.get(canceledBookings.Id)){
+                                            bookObj.Make_up_Utilize_Bookings__c  += canceledBookings.Id +'-'+mapOfHours.get(canceledBookings.Id)+';';
+                                            hoursToDeduct -= mapOfHours.get(canceledBookings.Id);
+                                            mapOfHours.put(canceledBookings.Id, 0);
+                                        }else if(hoursToDeduct <= mapOfHours.get(canceledBookings.Id)){
+                                            mapOfHours.put(canceledBookings.Id, mapOfHours.get(canceledBookings.Id) - hoursToDeduct);
+                                            bookObj.Make_up_Utilize_Bookings__c  += canceledBookings.Id +'-'+hoursToDeduct+';';
+                                            hoursToDeduct = 0;
+                                        }
+                                        //}
+                                        if(hoursToDeduct <= 0){
+                                            break;   
+                                        }
+                                    }
                                 }
-                                //}
-                                if(hoursToDeduct <= 0){
-                                    break;   
+                                //System.debug('bookObj '+bookObj);
+                                bookingUpdatedList.add(bookObj);
+                            }
+                        }
+                        for(String keysetValue : mapOfHours.keyset()){
+                            if(mapOfHours.containsKey(keysetValue)){
+                                bookingUpdatedList.add(new Booking__c(Id = keysetValue, 
+                                Available_Make_up_Units__c = (Decimal)mapOfHours.get(keysetValue)));
+                            }
+                        }
+                        //System.debug('bookingUpdatedList '+bookingUpdatedList);
+                        if(bookingUpdatedList.size() > 0){
+                            Database.SaveResult[] saveResults = Database.update(bookingUpdatedList, false);
+                            for(Database.SaveResult saveResult : saveResults){
+                                if(!saveResult.isSuccess()){
+                                    isError = true;
                                 }
                             }
                         }
-                        //System.debug('bookObj '+bookObj);
-                        bookingUpdatedList.add(bookObj);
-                    }
-                }
-                for(String keysetValue : mapOfHours.keyset()){
-                    if(mapOfHours.containsKey(keysetValue)){
-                        bookingUpdatedList.add(new Booking__c(Id = keysetValue, 
-                        Available_Make_up_Units__c = (Decimal)mapOfHours.get(keysetValue)));
-                    }
-                }
-                //System.debug('bookingUpdatedList '+bookingUpdatedList);
-                if(bookingUpdatedList.size() > 0){
-                    Database.SaveResult[] saveResults = Database.update(bookingUpdatedList, false);
-                    for(Database.SaveResult saveResult : saveResults){
-                        if(!saveResult.isSuccess()){
-                            isError = true;
+                        String parentId;
+                        if(isError == false){
+                            String recordTypeCustomer = ConstantsClass.recordTypeCustomer;
+                            List<Account> accList = new List<Account>([SELECT Id, Name, Parent__c, RecordType.Name ,
+                                                                        Also_a_Student__c 
+                                                                        FROM Account 
+                                                                        WHERE RecordType.Name =: recordTypeCustomer 
+                                                                        AND Id =: studentId]);
+                            if(accList.size() > 0){
+                                if(String.isNotBlank(accList[0].Parent__c) && accList[0].Also_a_Student__c == false){
+                                    parentId = accList[0].Parent__c;
+                                }else if(String.isBlank(accList[0].Parent__c) && accList[0].Also_a_Student__c == true){
+                                    parentId = accList[0].Id;
+                                }
+                            }
                         }
-                    }
-                }
-                String parentId;
-                if(isError == false){
-                    String recordTypeCustomer = ConstantsClass.recordTypeCustomer;
-                    List<Account> accList = new List<Account>([SELECT Id, Name, Parent__c, RecordType.Name ,
-                                                                  Also_a_Student__c 
-                                                                  FROM Account 
-                                                                  WHERE RecordType.Name =: recordTypeCustomer 
-                                                                  AND Id =: studentId]);
-                    if(accList.size() > 0){
-                        if(String.isNotBlank(accList[0].Parent__c) && accList[0].Also_a_Student__c == false){
-                            parentId = accList[0].Parent__c;
-                        }else if(String.isBlank(accList[0].Parent__c) && accList[0].Also_a_Student__c == true){
-                            parentId = accList[0].Id;
+                        /// update parent available mins for cancel bookings only 
+                        // beacuse trigger not calculate canceled booking available mins
+                        if(String.isNotBlank(parentId)){
+                            AureusCalendarControllerHelper.cancelBookingProceed(parentId);
                         }
-                    }
+                    }   
                 }
-                /// update parent available mins for cancel bookings only 
-                // beacuse trigger not calculate canceled booking available mins
-                if(String.isNotBlank(parentId)){
-                    AureusCalendarControllerHelper.cancelBookingProceed(parentId);
-                }
-            }   
+            }
         }
     }
     
-    private static Set<String> getParentsChild(String parentId){
+      //commentd by nishi: 28-Jul-2020:private static Set<String> getParentsChild(String parentId){
+    Public  static Set<String> getParentsChild(String parentId){
         Set<String> setOfAccId = new Set<String>();
         List<Account> accList = [SELECT Id FROM Account WHERE (Id =: parentId OR Parent__c =: parentId)];
         for(Account acc : accList){
@@ -2763,7 +2875,9 @@ newBookingWrapperObj.studentList = sObjList;
         String recordTypeLesson = ConstantsClass.recordTypeLesson;
         AdhocLessonDetails adhocDetails = new AdhocLessonDetails();
         if(String.isNotBlank(packageId)){
-            for(Package__c packageObj : [SELECT Id, Name, RecordType.Name, Location__r.Name, Location__r.Country__r.Tax_Rate__c, of_Units__c, Package_Fee__c, Unit_Fee__c, Duration__c FROM Package__c WHERE RecordType.Name =: recordTypeLesson AND Id =: packageId]){
+            for(Package__c packageObj : [SELECT Id, Name, RecordType.Name, Location__r.Name, Location__r.Country__r.Tax_Rate__c, Location__r.Organisation__r.Tax_Rate__c, 
+                                        of_Units__c, Package_Fee__c, Unit_Fee__c, Duration__c ,/*facility_Fee__c,*/Location__r.Organisation__r.Name
+                                        FROM Package__c WHERE RecordType.Name =: recordTypeLesson AND Id =: packageId]){
                 
                 adhocDetails.packageName = packageObj.Name; 
                 adhocDetails.packageId = packageObj.Id;
@@ -2771,11 +2885,17 @@ newBookingWrapperObj.studentList = sObjList;
                 adhocDetails.unitFee = packageObj.Unit_Fee__c ;
                 adhocDetails.units = Integer.valueOf(packageObj.of_Units__c);
                 adhocDetails.duration = packageObj.Duration__c;
+                //Start: added by nishi: 17-Aug-2020: for manage facility fee is ossia related centers 
                 if(String.isNotBlank(packageObj.Location__c)){
-                    adhocDetails.gstRate = packageObj.Location__r.Country__r.Tax_Rate__c;
+                    //adhocDetails.gstRate = packageObj.Location__r.Country__r.Tax_Rate__c; //Commented by nishi@nishi 24 Aug 2020,Organisation wise charge as per new logic
+                    adhocDetails.gstRate = packageObj.Location__r.Organisation__r.Tax_Rate__c;
                     adhocDetails.centerName = packageObj.Location__r.Name;
-                }
-                
+                    // if(string.isnotBlank(packageObj.Location__r.Organisation__c) && string.isnotBlank(packageObj.Location__r.Organisation__r.Name) &&
+                    // packageObj.Location__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                    //     adhocDetails.unitFee += (packageObj.facility_Fee__c/4);
+                    // }
+                }   
+                //End: added by nishi: 17-Aug-2020: for manage facility fee is ossia related centers
                 break;
             }
         }
@@ -2804,10 +2924,12 @@ newBookingWrapperObj.studentList = sObjList;
         AdvanceDetails details = new AdvanceDetails();
           //@JAtin on 9-Dec-2019 to check that User has the access of the Change Enrolment Admin
         details.isChange_Enrolment_Admin = FeatureManagement.checkPermission('Change_Enrolment_Admin') ? true : false;
+         //@Nishi on 27-Aug-2019 to check that User has the access of the Change Center
+        details.isChangeEnrolmentCentre = FeatureManagement.checkPermission('Change_Enrolment_Center') ? true : false;
         if(String.isNotBlank(bookingId)){
             bookingList = [SELECT Id, Name, Enrolment__c, Enrolment__r.Lessons_Start_Date__c, Enrolment__r.Lesson_Start_time__c, 
-                            Enrolment__r.Lesson_Day__c, Enrolment__r.Package__r.Name, 
-                            Enrolment__r.Package__r.Is_Promotion_Discount__c, 
+                            Enrolment__r.Lesson_Day__c, Enrolment__r.Package__r.Name,Center__r.Organisation__r.Name,
+                            Enrolment__r.Package__r.Is_Promotion_Discount__c,
                             Enrolment__r.Package__r.Type_of_package__c FROM Booking__c WHERE Id =: bookingId];
             if(bookingList.size() > 0){
                 details.id = bookingList[0].Id;
@@ -2816,9 +2938,27 @@ newBookingWrapperObj.studentList = sObjList;
                 details.isPackagePromotional = (bookingList[0].Enrolment__r.Package__r.Is_Promotion_Discount__c || 
                 bookingList[0].Enrolment__r.Package__r.Type_of_package__c == ConstantsClass.prePaymentType) ? true : false;
                  if(String.isNotBlank(bookingList[0].Enrolment__c)){
-                    List<Enrolment__c> enrollList = new List<Enrolment__c>([SELECT Id, Lesson_Day__c, (SELECT Id, Subscription__c, Subscription__r.Payment_Frequency__c, Subscription__r.Subscription_Start_Date__c FROM Subscription_Line_Items__r WHERE Subscription__c != NULL), Lesson_Start_time__c FROM Enrolment__c WHERE Id =: bookingList[0].Enrolment__c]);
+                    system.debug('bookingList[0].Enrolment__c'+bookingList[0].Enrolment__c);
+                    List<Enrolment__c> enrollList = new List<Enrolment__c>([SELECT Id, Lesson_Day__c,Package_Process_Status__c,Center__r.Organisation__r.Name,
+                                                                                (SELECT Id, Subscription__c,Next_Bill_Date__c, Subscription__r.Payment_Frequency__c, 
+                                                                                Subscription__r.Subscription_Start_Date__c
+                                                                                FROM Subscription_Line_Items__r 
+                                                                                WHERE Subscription__c != NULL
+                                                                                and Status__c =:ConstantsClass.activeStatus //4-sep-2020: added by nishi for new requirement one enrolment have two subscrition so we get active line item
+                                                                                And Next_Bill_Date__c != null),
+                                                                                Lesson_Start_time__c 
+                                                                                FROM Enrolment__c 
+                                                                                WHERE Id =: bookingList[0].Enrolment__c]);
                     if(enrollList.size() > 0){
-                        
+                        system.debug('enrollList'+enrollList);
+                         //10-Aug-2020:nishi:start- manage ossia Upgrade ,downGrade Subscription model 
+                        details.isOssia = false;
+                        if( String.isNotBlank(enrollList[0].Center__c) && String.isNotBlank(enrollList[0].Center__r.Organisation__c) && 	
+                        String.isNotBlank(enrollList[0].Center__r.Organisation__r.Name) && 	
+                        enrollList[0].Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){	
+                            details.isOssia = true;
+                        }
+                        //10-Aug-2020:nishi:end- manage ossia Upgrade ,downGrade Subscription model 
                         Time startTime = enrollList[0].Lesson_Start_time__c;
                         
                         Date startDate;
@@ -2833,6 +2973,20 @@ newBookingWrapperObj.studentList = sObjList;
                             
                             details.startDate = timeslot.format('dd-MM-yyyy');
                             details.frequency = enrollList[0].Subscription_Line_Items__r[0].Subscription__r.Payment_Frequency__c;
+                            date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1); // 1-10-2020
+                             //@Nishi on 27-Aug-2019 to check An advance invoice is generated Change Or Package_Process_Status__c is Pending
+                             // then we disable Change Centre Button
+                             system.debug('Next_Bill_Date__c'+(enrollList[0].Subscription_Line_Items__r[0].Next_Bill_Date__c >= nextMonthDate));
+                             system.debug('status'+((string.isNotBlank(enrollList[0].Package_Process_Status__c) && enrollList[0].Package_Process_Status__c !='Completed')));
+                            if(enrollList[0].Subscription_Line_Items__r[0].Next_Bill_Date__c < nextMonthDate && 
+                                (string.isBlank(enrollList[0].Package_Process_Status__c) || (string.isNotBlank(enrollList[0].Package_Process_Status__c)
+                                 && enrollList[0].Package_Process_Status__c =='Completed'))){
+                                    details.isEnableChangeCentre = false;
+                            }else{
+                                details.isEnableChangeCentre = true;
+                            }
+                             //@Nishi on 27-Aug-2019 to check An advance invoice is generated Change Or Package_Process_Status__c is Pending
+                             // then we disable Change Centre Button
                         }
                     }
                 }    
@@ -2955,7 +3109,10 @@ newBookingWrapperObj.studentList = sObjList;
                                                         String.isNotBlank(oldPackageId) && String.isNotBlank(timeSlot)){
                                                             IAdvanceAction upgradePackageObj;
                                                             upgradePackageObj = new UpgradeEnrolmentProcessController(bookingId, effectiveDateStr, newPackageId, 
-                                                                                                                    oldPackageId, timeSlot, myCaseId, caseRedirect, caseValues);
+                                                                                                                    oldPackageId, timeSlot, myCaseId, caseRedirect, caseValues,
+                                                                                                                    // added by nishi:start-11-Aug-2020: for we added new teacher in Ossia Oraganisation case
+                                                                                                                    '','');
+                                                                                                                    // added by nishi:start-11-Aug-2020: for we added new teacher in Ossia Oraganisation case
                                                             caseIdToReturn = upgradePackageObj.initProcess();
                                                      }
                                                      return caseIdToReturn;
@@ -3065,7 +3222,10 @@ newBookingWrapperObj.studentList = sObjList;
     public static List<Enrolment__c> getNextBillingDateSubscription(String enrollmentId){
         return [SELECT Id, Name, Parent__c, Parent__r.Name, effective_Date__c, Lesson_Day__c, New_Package_Id__r.Unit_Fee__c, class__r.name,
                 Package__r.Unit_Fee__c, Center__c, Teacher__c, package__r.Duration__c, new_package_Id__r.Duration__c, (SELECT Id, Subscription__c, Subscription__r.Center__c, Enrolment__c, Next_Bill_Date__c , Subscription__r.Parent__c, 
-                                                                                                                       Subscription__r.Parent__r.Stripe_Customer_Id__c FROM Subscription_Line_Items__r WHERE Subscription__c != NULL) 
+                                                                                                                       Subscription__r.Parent__r.Stripe_Customer_Id__c FROM Subscription_Line_Items__r 
+                                                                                                                       WHERE Subscription__c != NULL
+                                                                                                                       ANd Status__c =:ConstantsClass.activeStatus //4-sep-2020: added by nishi for new requirement one enrolment have two subscrition so we get active line item
+                                                                                                                       And Next_Bill_Date__c != null) 
                 FROM Enrolment__c WHERE Id =: enrollmentId];
     }
     @RemoteAction
@@ -3240,11 +3400,14 @@ Selected by the user from the calendar UI.
                                                           String caseIdToReturn;
                                                             if(String.isNotBlank(bookingId) && String.isNotBlank(effectiveDateStr) && String.isNotBlank(newPackageId) && 
                                                                 String.isNotBlank(oldPackageId) && String.isNotBlank(timeSlot)){
-                                                                    IAdvanceAction downgradePackageObj;
-                                                                    downgradePackageObj = new DowngradeEnrolmentProcessController(bookingId, effectiveDateStr, newPackageId, 
-                                                                                                                            oldPackageId, timeSlot, myCaseId, caseRedirect,
-                                                                                                                            amount,depositAmount,lessonsFees, caseValues);
-                                                                    caseIdToReturn = downgradePackageObj.initProcess();
+                                                                IAdvanceAction downgradePackageObj;
+                                                                downgradePackageObj = new DowngradeEnrolmentProcessController(bookingId, effectiveDateStr, newPackageId, 
+                                                                                                                        oldPackageId, timeSlot, myCaseId, caseRedirect,
+                                                                                                                        amount,depositAmount,lessonsFees, caseValues,
+                                                                                                                         // added by nishi:start-11-Aug-2020: for we added new teacher in Ossia Oraganisation case
+                                                                                                                        '','');
+                                                                                                                         // added by nishi:start-11-Aug-2020: for we added new teacher in Ossia Oraganisation case
+                                                                caseIdToReturn = downgradePackageObj.initProcess();
                                                             }
                                                             return caseIdToReturn;
                                                          
@@ -3304,17 +3467,22 @@ Selected by the user from the calendar UI.
     public static String fetchCurrentMonthPaymentEntry(Enrolment__c objEnrol,Date lastLessonDateObj){
         Date firstDate = Date.newInstance(lastLessonDateObj.Year(),lastLessonDateObj.month(),01);
         Date lastDate = firstDate.addMonths(1).addDays(-1);
+        system.debug('firstDate'+firstDate);
+        system.debug('lastDate'+lastDate);
         String chargeId ='';
         List<Invoice__c> listOfInvoice =[SELECT Id,Stripe_Charge_Id__c FROM Invoice__c WHERE 
                                          Id IN (SELECT Invoice__c FROM 
                                          Invoice_Line_Item__c WHERE Enrolment__c=: objEnrol.id AND
-                                                Createddate >=: firstDate AND createddate <=: lastDate 
+                                                Month__C >=: firstDate AND Month__C <=: lastDate 
+                                                //commented by nishi: 20-Aug-2020: Createddate >=: firstDate AND createddate <=: lastDate 
                                                 AND Booking__c = NULL)
                                          AND Invoice_Date__c >=: firstDate AND Invoice_Date__c <=: lastDate AND Status__c = 'Paid' 
                                          Order By total_amount__c ];
+                                         system.debug('listOfInvoice'+listOfInvoice);
         if(listOfInvoice.size()>0){
             chargeId = listOfInvoice[0].Stripe_charge_id__c;
         }
+        system.debug('chargeId'+chargeId);
         return chargeId;                                  
     }
     /* Commented by jatin: this function is not using in Calendar
@@ -3628,8 +3796,8 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
         List<Lessons> lastLessonsList = new List<Lessons>();
         List<Lessons> makeupPendingList = new List<Lessons>();
         Enrolment__c enrolment;
-        Country__c countryObj = new Country__c();
-        
+        //Country__c countryObj = new Country__c();//commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+        Organisation__c  organisationObj = new Organisation__c();
         if(String.isNotBlank(withdrawEndDate)){
             withdrawEndDateObj = Date.valueOf(lastLessonDate);
         }
@@ -3639,10 +3807,14 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
         if(String.isNotBlank(bookingId)){
             
             enrolment = getEnrolDetails(bookingId);
-            if(String.isNotBlank(enrolment.Center__r.Country__r.Id)){
-                countryObj = enrolment.Center__r.Country__r;    
+            ////commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+            // if(String.isNotBlank(enrolment.Center__r.Country__r.Id)){
+            //     countryObj = enrolment.Center__r.Country__r;    
+            // }
+            //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+            if(String.isNotBlank(enrolment.Center__r.Organisation__r.Id)){
+                organisationObj = enrolment.Center__r.Organisation__r;    
             }
-            
         }
         
         if(String.isNotBlank(enrolment.Id)){
@@ -3669,8 +3841,11 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
                 for(Lessons currentLesson : withdrawSummary.finalDeposits){
                     total += currentLesson.unitPrice;
                 }
-                if(total > 0 && countryObj.Tax_Rate__c > 0){
-                    gst = total  * (countryObj.Tax_Rate__c / 100);
+                // if(total > 0 && countryObj.Tax_Rate__c > 0){
+                //     gst = total  * (countryObj.Tax_Rate__c / 100);
+                // }
+                 if(total > 0 && organisationObj.Tax_Rate__c > 0){
+                    gst = total  * (organisationObj.Tax_Rate__c / 100);
                 }
             }
             withdrawSummary.refund = 0;
@@ -3679,11 +3854,23 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
             if(withdrawSummary.deposit > 0){
                 withdrawSummary.refund = withdrawSummary.deposit - withdrawSummary.total;
             }
-            //System.debug('lastLessonDateObj'+lastLessonDateObj);
+            System.debug('lastLessonDateObj'+lastLessonDateObj);
+            System.debug('withdrawSummary.refund'+withdrawSummary.refund);
+            System.debug('withdrawSummary.deposit'+withdrawSummary.deposit);
+            System.debug('withdrawSummary.total'+withdrawSummary.total);
             String chargeId = fetchCurrentMonthPaymentEntry(enrolment,lastLessonDateObj);
+            // 14 Sep, 2020 <  01/10/2020
             if(String.isNotBlank(chargeId) && (lastLessonDateObj < nextBillingDate)){
-                withdrawSummary.refund += getLessonRefundAmount(enrolment,lastLessonDateObj);        
+                withdrawSummary.refund += getLessonRefundAmount(enrolment,lastLessonDateObj);  
+                 //start:  added by nishi: 21-aug-2020: if next Billing date is greated then next month
+                date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1); // 1-10-2020
+                if(nextBillingDate >= nextMonthDate && lastLessonDateObj.Month() < nextMonthDate.addMonths(-1).Month()){ 
+                    withdrawSummary.refund += getLessonRefundAmount(enrolment,nextMonthDate.addMonths(-1));  
+                }
+                //start:  added by nishi: 21-aug-2020: if next Billing date is greated then next month
+       
             }
+            System.debug('withdrawSummary.refund'+withdrawSummary.refund);
         }
         return withdrawSummary;
     }
@@ -3716,14 +3903,19 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
         for(Payment__c payment : [SELECT Id, Payment_Amount__c 
                                     FROM Payment__c 
                                     WHERE Enrolment__c =: enrolId 
-                                    AND ((RecordType.Name =: ConstantsClass.paymentAsDepositRecordType AND Payment_Status__c != :ConstantsClass.paymentVoid) OR (RecordType.Name = 'Refund' AND Payment_Status__c =: ConstantsClass.paymentSuccessStatus))]){
+                                    AND ((RecordType.Name =: ConstantsClass.paymentAsDepositRecordType 
+                                    AND Payment_Status__c != :ConstantsClass.paymentVoid) OR
+                                     (RecordType.Name = 'Refund' AND Payment_Status__c =: ConstantsClass.paymentSuccessStatus))]){
             paymentDeposit += payment.Payment_Amount__c;
         }
-        
+        system.debug('invoiceDeposit'+invoiceDeposit);
+        system.debug('paymentDeposit'+paymentDeposit);
         depositToReturn = invoiceDeposit - paymentDeposit;
-       ////system.debug('depositToReturn'+depositToReturn);
+       system.debug('depositToReturn'+depositToReturn);
         return depositToReturn;
     }  
+
+
     public  static Date getNextBillingDate(String enrolId){
         Date nextBillingDate;
         List<Subscription_Line_Item__c> subscriptionLineItemList = [SELECT Id, Next_Bill_Date__c FROM Subscription_Line_Item__c WHERE Enrolment__c =: enrolId];
@@ -3736,30 +3928,45 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
     public static Decimal getLessonRefundAmount(Enrolment__c objEnrol,Date lastLessonDate){
         Decimal amount = 0;
         List<Booking__c> bookings = getCurrentBilledBooking(objEnrol.id,lastLessonDate);
+        system.debug('bookings'+bookings);
         Integer count= 0;
         for(Booking__c objBook : bookings){
             if(objBook.booking_date__c > lastLessonDate){
                 count+=1;
             }
         }
+        system.debug('count'+count);
         if(count >0){
             amount = count * objEnrol.package__r.unit_fee__c;
+            //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+            // if(objEnrol.Center__r != null 
+            // && objEnrol.Center__r.Country__r != null 
+            // && objEnrol.Center__r.Country__r.Tax_Rate__c != null
+            // && objEnrol.Center__r.Country__r.Tax_Rate__c > 0){
+            //     amount+= (amount  * objEnrol.Center__r.Country__r.Tax_Rate__c)  / 100;
+            // }
+            //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
             if(objEnrol.Center__r != null 
-            && objEnrol.Center__r.Country__r != null 
-            && objEnrol.Center__r.Country__r.Tax_Rate__c != null
-            && objEnrol.Center__r.Country__r.Tax_Rate__c > 0){
-                amount+= (amount  * objEnrol.Center__r.Country__r.Tax_Rate__c)  / 100;
+            && objEnrol.Center__r.Organisation__r != null 
+            && objEnrol.Center__r.Organisation__r.Tax_Rate__c != null
+            && objEnrol.Center__r.Organisation__r.Tax_Rate__c > 0){
+                amount+= (amount  * objEnrol.Center__r.Organisation__r.Tax_Rate__c)  / 100;
             }
-            
         }
+        system.debug('amount'+amount);
         return amount;
     }
     
     
     // return currentBilledBookings
+
+    //1-aug-2020 last lesson and 1-Oct-2020 is nextBillingDate then we get all Booking upto nextBillingDate
     private static List<Booking__c> getCurrentBilledBooking(String enrolId,Date lastLessonDate){
         Date firstDate = Date.newInstance(lastLessonDate.year(),lastLessonDate.month(),01);
         Date lastDate = firstDate.addMonths(1).addDays(-1);
+        system.debug('firstDate'+firstDate);
+        system.debug('lastDate'+lastDate);
+
         return [SELECT Booking_Date__c FROM Booking__c WHERE Enrolment__c=: enrolId AND Booking_Date__c >=: firstDate AND Booking_Date__c <=: lastDate
                 AND (Type__c='Regular' or Type__c ='Ad-hoc') and 
                 (Status__c = :ConstantsClass.statusScheduled OR Status__c = :ConstantsClass.statusPending)];
@@ -3788,29 +3995,33 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
                                   WHERE Enrolment__c =: enrolId 
                                   AND Type__c =: typeRegular 
                                   AND Booking_Date__c <= :lastLessonDateObj ORDER BY Booking_Date__c DESC LIMIT 4]){
-                                      lesson = new Lessons();
-                                      bookingIdSet.add(bookObj.Id);                          
-                                      formatedDate = DateTime.newInstance(bookObj.Booking_Date__c, bookObj.Start_Time__c);
-                                      lesson.bookingId = bookObj.Id;
-                                      lesson.Lesson = bookObj.Package__r.Name;
-                                      lesson.bookingDate = formatedDate.format('dd MMM, yyyy');
-                                      lesson.bookingTime = formatedDate.format('hh:mma');
-                                      lesson.duration = bookObj.Duration__c;
-                                      lesson.unitPrice = bookObj.Package__r.Unit_Fee__c;
-                                      lesson.student = bookObj.Student__r.Name;
-                                      lesson.qty = 1;
-                                      if(bookObj.Booking_Date__c < nextBillingDate){
-                                          if(mapOfInvoiceName.keyset().size() > 0){
-                                              lesson.status = mapOfInvoiceName.get('Id')+':'+ mapOfInvoiceName.get('Name');
-                                          }else{
-                                              lesson.status = 'Billed';
-                                          }
-                                          
-                                      }else if(bookObj.Booking_Date__c >= nextBillingDate){
-                                          lesson.status = 'Deposit';
-                                      }
-                                      reverselessonList.add(lesson); 
-                                  }
+            lesson = new Lessons();
+            bookingIdSet.add(bookObj.Id);                          
+            formatedDate = DateTime.newInstance(bookObj.Booking_Date__c, bookObj.Start_Time__c);
+            lesson.bookingId = bookObj.Id;
+            lesson.Lesson = bookObj.Package__r.Name;
+            lesson.bookingDate = formatedDate.format('dd MMM, yyyy');
+            lesson.bookingTime = formatedDate.format('hh:mma');
+            lesson.duration = bookObj.Duration__c;
+            lesson.unitPrice = bookObj.Package__r.Unit_Fee__c;
+            lesson.student = bookObj.Student__r.Name;
+            lesson.qty = 1;
+            system.debug('nextBillingDate'+nextBillingDate);
+            system.debug('bookObj.Booking_Date__c'+bookObj.Booking_Date__c);
+            if(bookObj.Booking_Date__c < nextBillingDate){
+                if(mapOfInvoiceName.keyset().size() > 0){
+                    lesson.status = mapOfInvoiceName.get('Id')+':'+ mapOfInvoiceName.get('Name');
+                }else{
+                    lesson.status = 'Billed';
+                }
+                
+            }else if(bookObj.Booking_Date__c >= nextBillingDate){
+                lesson.status = 'Deposit';
+            }
+            system.debug('lesson.status'+lesson.status);
+            reverselessonList.add(lesson); 
+        }
+        system.debug('reverselessonList'+reverselessonList);
         if(reverselessonList.size() > 0){
             for(integer i = reverselessonList.size() - 1; i >= 0; i--){
                 lessonsList.add(reverselessonList[i]);
@@ -3854,6 +4065,7 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
             lesson.nextExpiryDate = lastDateObj.format('dd MMM, yyyy');
             lessonsList.add(lesson);
         }
+        system.debug('lessonsList'+lessonsList);
         return lessonsList;
     } 
     
@@ -3862,7 +4074,9 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
         List<Enrolment__c> enrolList = [SELECT Id,Name, Student__r.Name,Parent__c, Package__r.Name, Package__r.Deposit_Fee__c, Package__r.Unit_Fee__c,
                                         Center__r.Name, Lessons_Start_Date__c, Lesson_Start_time__c, Notice_Period_End_Date__c, Effective_Date__c, 
                                         Center__r.country__r.Id, Center__r.Country__r.Stripe_Base_Url__c, Center__r.Country__r.Stripe_Secret_Key__c, 
-                                        Center__r.Country__r.Tax_Rate__c 
+                                        Center__r.Country__r.Tax_Rate__c ,
+                                        Center__r.Organisation__r.Stripe_Base_Url__c, Center__r.Organisation__r.Stripe_Secret_Key__c, 
+                                        Center__r.Organisation__r.Tax_Rate__c 
                                         FROM Enrolment__c WHERE Id IN 
                                         (SELECT Enrolment__c FROM Booking__c WHERE Id =: bookingId)];
         if(enrolList.size() > 0){
@@ -3875,6 +4089,7 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
     public  static List<Lessons> getFinalDepositSummary(List<lessons> lessons){
         List<Lessons> depositLessons = new List<Lessons>();
         Lessons currentLesson = new Lessons();
+        system.debug('lessons'+lessons);
         if(lessons.size() > 0){
             for(Lessons lesson : lessons){
                 if(lesson.status == 'Deposit'){
@@ -3890,6 +4105,7 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
                 
             }
         }
+        system.debug('depositLessons'+depositLessons);
         return depositLessons;
     }
     
@@ -3961,11 +4177,11 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
         if(String.isNotBlank(upgradePackage)){
             newPackageList = [SELECT Id, Duration__c FROM Package__c WHERE Id =: upgradePackage];
         }
-       //system.debug('@availTimeslots'+availTimeslots);
+      //system.debug('@availTimeslots'+availTimeslots);
         if(availTimeSlots.size() > 0 && String.isNotBlank(enrolmentId)){
             bookingTimeSlots = getScheduledBookingSlots(enrolmentId, effectiveDate.date(), centerId, teacherId);
         }
-       //system.debug('@bookingTimeSlots'+bookingTimeSlots);
+      //system.debug('@bookingTimeSlots'+bookingTimeSlots);
         if(bookingTimeSlots != Null && bookingTimeSlots.size() > 0){
             for(String currentValue : bookingTimeSlots){
                 if(availTimeslots.contains(currentValue)){
@@ -3973,12 +4189,12 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
                 }
             }
         }
-       //system.debug('@availTimeslots'+availTimeslots);
+      //system.debug('@availTimeslots'+availTimeslots);
         // @@jatin:2Jan-2020: for get Group class bookings time slots
         if(availTimeSlots.size() > 0  && String.isNotBlank(enrolmentId)){
             groupClassTimeSlots = fetchSelectedGroupClassTimeSlots(effectiveDate.date(), centerId, teacherId);
         }
-       //system.debug('@groupClassTimeSlots'+groupClassTimeSlots);
+      //system.debug('@groupClassTimeSlots'+groupClassTimeSlots);
         if(groupClassTimeSlots != Null && groupClassTimeSlots.size() > 0){
             for(String currentValue : groupClassTimeSlots){
                 if(availTimeslots.contains(currentValue)){
@@ -3986,11 +4202,11 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
                 }
             }
         }
-       //system.debug('@availTimeslots'+availTimeslots);
+      //system.debug('@availTimeslots'+availTimeslots);
         if(availTimeSlots.size() > 0  && String.isNotBlank(enrolmentId)){
             fifthLessonTimeSlots = fetchSelectedFifthLessons(effectiveDate.date(), centerId, teacherId, enrolmentId);
         }
-        //system.debug('@fifthLessonTimeSlots'+fifthLessonTimeSlots);
+       //system.debug('@fifthLessonTimeSlots'+fifthLessonTimeSlots);
         if(fifthLessonTimeSlots != Null && fifthLessonTimeSlots.size() > 0){
             for(String currentValue : fifthLessonTimeSlots){
                 if(availTimeslots.contains(currentValue)){
@@ -3998,12 +4214,12 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
                 }
             }
         }
-        //system.debug('@availTimeslots'+availTimeslots);
-        
-        if(availTimeSlots != null || availTimeSlots.size() > 0 && newPackageList.size() > 0){
+       //system.debug('@availTimeslots'+availTimeslots);
+       //system.debug('@newPackageList'+newPackageList);
+        if(availTimeSlots != null && availTimeSlots.size() > 0 && newPackageList.size() > 0){
             unOrderedTimeSlots  = removeUnselectableSlots(availTimeSlots, Integer.valueOf(newPackageList[0].Duration__c));
         }
-       //system.debug('@unOrderedTimeSlots'+unOrderedTimeSlots);
+      //system.debug('@unOrderedTimeSlots'+unOrderedTimeSlots);
         if(unOrderedTimeSlots != Null && unOrderedTimeSlots.size() > 0){
             for(String currentValue : unOrderedTimeSlots){
                 if(availTimeslots.contains(currentValue)){
@@ -4011,7 +4227,7 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
                 }
             }
         }
-       //system.debug('availTimeSlots'+availTimeSlots);
+      //system.debug('availTimeSlots'+availTimeSlots);
         return availTimeSlots;
     }
 
@@ -4091,6 +4307,7 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
         if(String.isNotBlank(teacherId) && String.isNotBlank(centerId) && effectiveDate != NULL){
             availTimeSlots = getTeacherWorkingHourTimeSlotList(teacherId, centerId, effectiveDate.format('EEE'));
         }
+       //system.debug('availTimeSlots'+availTimeSlots);
         return  getAvailTimeSlots( centerId,  teacherId,  upgradePackage,  enrolmentId, 
                                                     effectiveDate,availTimeSlots);
        
@@ -4304,9 +4521,11 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
             if(enrolSummary.containsKey('currentDay')){
                 summary.currentDayAndTime = enrolSummary.get('currentDay');
             }
-            
             if(enrolSummary.containsKey('currentMonthInvoice')){
                 summary.invoiceForCurrentMonth = Decimal.valueOf(enrolSummary.get('currentMonthInvoice'));
+               //added by nishi:14-Aug-2020: for manage facility fee
+               // summary.invoiceForCurrentMonth += summary.oldfacilityFee;
+                
             }
             enrolmentList = getNextBillingDateSubscription(enrolmentId);
             if(enrolmentList.size() > 0){
@@ -4344,33 +4563,117 @@ countWithNewPackage +=1;
             Decimal depositeFee = (newPackg.Deposit_Fee__c - summary.currentPackageDeposit);
             summary.invoiceDepositTopup = depositeFee;
             Decimal newPackageUnitPrice = (newPackg.Unit_Fee__c - oldPackg.Unit_Fee__c)*countWithNewPackage ;
-            
-            
+            Decimal newPackageFacilityPrice = 0;
+             //start: added by nishi: 17-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+            // if(summary.newfacilityFee >  0 && summary.oldfacilityFee > 0){
+            //     newPackageFacilityPrice =  (summary.newfacilityFee - summary.oldfacilityFee)*countWithNewPackage ;
+            // }
+             //end: added by nishi: 17-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                  
+           //system.debug('oldPackg.Unit_Fee__c'+oldPackg.Unit_Fee__c);
+           //system.debug('newPackg.Unit_Fee__c'+newPackg.Unit_Fee__c);
+           //system.debug('countWithNewPackage'+countWithNewPackage);
+           //system.debug('newPackageUnitPrice'+newPackageUnitPrice);
             if(typeOfSummary == 'upgrade'){
                 if(summary.taxRate>0){
-                    newPackageUnitPrice += BillingUtility.roundOffAmount(newPackageUnitPrice) * ((BillingUtility.roundOffAmount(Decimal.valueOf(summary.taxRate))/100));
+                    newPackageUnitPrice += newPackageUnitPrice * (Decimal.valueOf(summary.taxRate)/100);
+                     //start: added by nishi: 17-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                    // if(newPackageFacilityPrice > 0){
+                    //     newPackageFacilityPrice += newPackageFacilityPrice * (Decimal.valueOf(summary.taxRate)/100);
+                    // }
+                     //end: added by nishi: 17-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+            
                 }
-                summary.invoiceDepositLessonTopup = BillingUtility.roundOffAmount(newPackageUnitPrice);
-                totalAmount = BillingUtility.roundOffAmount(newPackageUnitPrice);
-                totalAmount +=   BillingUtility.roundOffAmount(depositeFee) ;
+               //system.debug('newPackageFacilityPrice with gst - '+newPackageFacilityPrice);
+                totalAmount = newPackageUnitPrice;
+                //start: added by nishi: 17-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                // if(newPackageFacilityPrice > 0){
+                //     totalAmount += newPackageFacilityPrice;
+                //     newPackageUnitPrice+= newPackageFacilityPrice;
+                // }
+                 //end: added by nishi: 17-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+            
+                //system.debug('newPackageUnitPrice'+newPackageUnitPrice);
+                totalAmount +=   depositeFee ;
+               //system.debug('totalAmount - '+totalAmount);
                 if(newDateTime <= nextBillDate){
-                    summary.invoiceTopup = BillingUtility.roundOffAmount(totalAmount);
+                    ////system.debug('totalAmount'+totalAmount);
+                      // added by Nishi: 12-aug-2020: if next billing date is greater then next month then we create new invoice for adjuct new upgraded package unitfee 
+                        //  ex: 12-Aug-2020 effective date and next Billing date 01-Oct-2020 
+                        date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1);
+                        ////system.debug('nextMonthDate'+nextMonthDate);
+                        ////system.debug('nextBillDate'+nextBillDate);
+                        Integer countWithNextPackage = 0;
+                        Decimal nextPackageUnitPrice =0;
+                        if(nextBillDate >= nextMonthDate && newDateTime.month() < nextMonthDate.addMonths(-1).month()){
+                            if(String.isNotBlank(enrolmentId)){
+                                List<Booking__c> nextMonthlistOfBookings =UpgradeDowngradeController.fetchListOfNextMonthBookings(enrolmentId);
+                                //system.debug('nextMonthlistOfBookings'+nextMonthlistOfBookings);
+                                for(Booking__c objBooking : nextMonthlistOfBookings){
+                                    if(objBooking.Booking_Date__c <= nextMonthDate){
+                                        if(objBooking.Type__c == ConstantsClass.bookTypeRegular ){
+                                            countWithNextPackage += 1;
+                                        }
+                                    }
+                                }
+                            }
+                            nextPackageUnitPrice = (newPackg.Unit_Fee__c - oldPackg.Unit_Fee__c)*countWithNextPackage ;
+                           //system.debug('nextPackageUnitPrice'+nextPackageUnitPrice);
+                            Decimal nextPackageFacilityPrice = 0;
+                            //start: added by nishi: 17-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                            // if(summary.newfacilityFee > 0 && summary.oldfacilityFee > 0){
+                            //     nextPackageFacilityPrice =  (summary.newfacilityFee - summary.oldfacilityFee)*countWithNextPackage ;
+                            // }
+                            // if(summary.taxRate > 0 && nextPackageFacilityPrice > 0){
+                            //     nextPackageFacilityPrice += nextPackageFacilityPrice * (Decimal.valueOf(summary.taxRate)/100);
+                            // }
+                            //end: added by nishi: 17-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                            
+                            if(summary.taxRate > 0 && nextPackageUnitPrice > 0){
+                                nextPackageUnitPrice += nextPackageUnitPrice * (Decimal.valueOf(summary.taxRate)/100);
+                            }
+                           
+                           //system.debug('oldPackg.Unit_Fee__c'+oldPackg.Unit_Fee__c);
+                           //system.debug('newPackg.Unit_Fee__c'+newPackg.Unit_Fee__c);
+                           //system.debug('nextPackageUnitPrice'+nextPackageUnitPrice);
+                           //system.debug('countWithNextPackage'+countWithNextPackage);
+                           //system.debug('nextPackageFacilityPrice with gst - '+nextPackageFacilityPrice);
+                            totalAmount +=   nextPackageUnitPrice ;
+                            //start: added by nishi: 17-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                            // if(nextPackageFacilityPrice > 0){
+                            //     totalAmount +=   nextPackageFacilityPrice ; 
+                            //     nextPackageUnitPrice+= nextPackageFacilityPrice;
+                            // }
+                            //end: added by nishi: 17-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                            
+                            //system.debug('totalAmount - '+totalAmount);
+                        }
+                        // added by Nishi: 12-aug-2020: if next billing date is greater then next month then we create new invoice for adjuct new upgraded package unitfee 
+                        summary.invoiceTopup = BillingUtility.roundOffAmount(totalAmount);
+                        summary.invoiceDepositLessonTopup = BillingUtility.roundOffAmount(newPackageUnitPrice+nextPackageUnitPrice);
                 }else{
                     summary.invoiceTopup = BillingUtility.roundOffAmount(depositeFee);
                     summary.invoiceDepositLessonTopup = 0;
+                   //system.debug('depositeFee'+depositeFee);
                 }
             }else if(typeOfSummary == 'downgrade'){
                 totalAmount = 0;
+
                 Date firstDate = Date.newInstance(newDateTime.year(), newDateTime.month(), 01);
                 Integer daysInMonth = Date.daysInMonth(newDateTime.year(), newDateTime.month());
                 Date lastDate = Date.newInstance(newDateTime.year(), newDateTime.month(), daysInMonth);
                 Map<String, List<Date>> mapOfDates = new Map<String, List<Date>>();
                 if(newDateTime >= nextBillDate){
+                    //2020-08-01 - 2020-08-31
                     mapOfDates = BillingUtility.getDateMap(firstDate,lastDate);
                 }else{
+                    //2020-08-22 - 2020-08-31
                     mapOfDates = BillingUtility.getDateMap(newDateTime.date(),lastDate);
                 }
-                
+               //system.debug('newDateTime'+newDateTime); //2020-08-22
+               //system.debug('firstDate'+firstDate);//2020-08-01
+               //system.debug('lastDate'+lastDate);//2020-08-31
+               //system.debug('mapOfDates'+mapOfDates);
                 Integer countWithOldPackage = 0;
                 Integer countWithNewPackageDowngrade = 0;
                 if(enrolmentList.size() > 0 && String.isNotBlank(enrolmentList[0].Lesson_Day__c) && mapOfDates.containsKey(enrolmentList[0].Lesson_Day__c)){
@@ -4378,50 +4681,160 @@ countWithNewPackage +=1;
                     if(listOfDates.size() == 5){
                         listOfDates.remove(4);
                     }
+                   //system.debug('listOfDates'+listOfDates);//listOfDates(2020-08-22 00:00:00, 2020-08-29 00:00:00)
                     for(Date objDate : listOfDates){
                         if(objDate.day() <29){
+                            //2020-08-1 < 2020-08-22
                             if(objDate < newDateTime.date() ){
-                                countWithOldPackage +=1;
+                                countWithOldPackage +=1;   
                             }else if(objDate >= newDateTime.date()){
                                 countWithNewPackageDowngrade +=1;
                             }
                         }
                     }
                 }
+               //system.debug('mapOfDates'+mapOfDates);
+               //system.debug('countWithOldPackage'+countWithOldPackage); // 3
+               //system.debug('countWithNewPackageDowngrade'+countWithNewPackageDowngrade);//1
+                //22-aug-2020 >= 1-Aug-2020
                 if(newDateTime >= nextBillDate){
                     Decimal newPackageLessonFee = 0;
-                    
+                    Decimal newPackageFacilityFee = 0;
+                    Decimal oldPackageFacilityFee = 0;
                     newPackageUnitPrice = 0;
-                    newPackageUnitPrice = BillingUtility.roundOffAmount(newPackg.Unit_Fee__c) * BillingUtility.roundOffAmount(countWithNewPackageDowngrade) ;
-                    Decimal oldPackageUnitPrice = BillingUtility.roundOffAmount(oldPackg.Unit_Fee__c)* BillingUtility.roundOffAmount(countWithOldPackage);
-                    newPackageUnitPrice = BillingUtility.roundOffAmount(newPackageUnitPrice) + BillingUtility.roundOffAmount(oldPackageUnitPrice);
+                    newPackageUnitPrice = newPackg.Unit_Fee__c * countWithNewPackageDowngrade ;
+                    Decimal oldPackageUnitPrice = oldPackg.Unit_Fee__c* countWithOldPackage;
+                    // start:added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                    // if(summary.newfacilityFee > 0){
+                    //     newPackageFacilityFee = summary.newfacilityFee * countWithNewPackageDowngrade ;
+                    // }
+                    
+                    // if(summary.newfacilityFee > 0){
+                    //     oldPackageFacilityFee = summary.oldfacilityFee * countWithOldPackage ;
+                    // }
+                    // newPackageFacilityFee = newPackageFacilityFee + oldPackageFacilityFee;
+                     //end: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                    newPackageUnitPrice = newPackageUnitPrice + oldPackageUnitPrice;
                     if(summary.taxRate > 0){
-                        newPackageUnitPrice += BillingUtility.roundOffAmount(newPackageUnitPrice) * ((BillingUtility.roundOffAmount(Decimal.valueOf(summary.taxRate))/100));
+                        newPackageUnitPrice += newPackageUnitPrice * ((Decimal.valueOf(summary.taxRate))/100);
+                        // start:added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                        // if(newPackageFacilityFee > 0){
+                        //     newPackageFacilityFee += newPackageFacilityFee * ((Decimal.valueOf(summary.taxRate))/100);
+                        // }
+                        //end: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                    
                     }
-                    summary.invoiceDepositLessonTopup = newPackageUnitPrice;
+                   // summary.invoiceFacilityLessonTopup = newPackageFacilityFee;
+                    summary.invoiceDepositLessonTopup = newPackageUnitPrice ;
                     totalAmount += newPackageUnitPrice;
-                    totalAmount += BillingUtility.roundOffAmount(depositeFee);
+                    //totalAmount += newPackageFacilityFee;
+                    totalAmount += depositeFee;
                     summary.invoiceTopup = BillingUtility.roundOffAmount(totalAmount);
-                }else if(newDateTime < nextBillDate){
+                } // ex: 12-Aug-2020 effective date and next Billing date 01-Oct-2020  (If next month biiling Advance created Paid September payment) 
+                // ex: 12-Aug-2020 effective date and next Billing date 1-sep-2020  (If current month biiling created Paid Augest payment)   
+                else if(newDateTime < nextBillDate){
+                    Decimal newPackageFacilityFee = 0;
+                    Decimal oldPackageFacilityFee = 0;
+                    Integer countWithNextMonthPackageDowngrade = 0;
+                    Decimal newNextMonthPackageUnitPrice =0;
+                    // added by Nishi: 19-aug-2020: if next billing date is greater then next month then we create new invoice for adjuct new upgraded package unitfee 
+                     // 1-oct-2020
+                    date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1);
+                    if(nextBillDate >= nextMonthDate && newDateTime.month() < nextMonthDate.addMonths(-1).month()){
+                        firstDate = Date.newInstance(nextMonthDate.addMonths(-1).year(), nextMonthDate.addMonths(-1).Month(), 1);
+                        mapOfDates = BillingUtility.getDateMap(firstDate,nextMonthDate.addDays(-1));
+                        if(enrolmentList.size() > 0 && String.isNotBlank(enrolmentList[0].Lesson_Day__c) && mapOfDates.containsKey(enrolmentList[0].Lesson_Day__c)){
+                            List<Date> listOfDates = mapOfDates.get(enrolmentList[0].Lesson_Day__c);
+                            if(listOfDates.size() == 5){
+                                listOfDates.remove(4);
+                            }
+                            for(Date objDate : listOfDates){
+                                if(objDate.day() <29){
+                                    if(objDate < nextMonthDate){
+                                        countWithNextMonthPackageDowngrade +=1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                     // added by Nishi: 12-aug-2020: if next billing date is greater then next month then we create new invoice for adjuct new upgraded package unitfee 
+                    //system.debug('countWithNewPackageDowngrade'+countWithNewPackageDowngrade);//1 
                     if(summary.currentPackageDeposit == null){
                         summary.currentPackageDeposit = 0;
                     }
                     depositeFee = (newPackg.Deposit_Fee__c - summary.currentPackageDeposit);    
+                   //system.debug('depositeFee'+depositeFee);
                     summary.invoiceDepositTopup = BillingUtility.roundOffAmount(depositeFee);
+                    summary.positiveInvoiceAmount = BillingUtility.roundOffAmount(countWithNewPackageDowngrade * newPackg.Unit_Fee__c) ;
+                    if(countWithNextMonthPackageDowngrade > 0){
+                        summary.positiveNextMonthInvoiceAmount = BillingUtility.roundOffAmount(countWithNextMonthPackageDowngrade * newPackg.Unit_Fee__c) ;
+                    }
+                   //system.debug('summary.positiveInvoiceAmount'+summary.positiveInvoiceAmount);
+                   //system.debug('summary.newfacilityFee'+summary.newfacilityFee);
+                   
+                   // start:added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                //    if(summary.newfacilityFee > 0){
+                //         summary.positiveFacilityInvoiceAmount = BillingUtility.roundOffAmount(countWithNewPackageDowngrade * summary.newfacilityFee) ;
+                //     }
+                   // end:added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
                     
+                    summary.negativeInvoiceAmount = - (BillingUtility.roundOffAmount(countWithNewPackageDowngrade * oldPackg.Unit_Fee__c));
+                    if(countWithNextMonthPackageDowngrade > 0){
+                        summary.negativeNextMonthInvoiceAmount =- (BillingUtility.roundOffAmount(countWithNextMonthPackageDowngrade * oldPackg.Unit_Fee__c)) ;
+                    }
+                   //system.debug('summary.negativeInvoiceAmount'+summary.negativeInvoiceAmount);
+                   //system.debug('summary.oldfacilityFee'+summary.oldfacilityFee);
+                   //start: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                //    if(summary.oldfacilityFee > 0){
+                //         summary.negativeFacilityInvoiceAmount = - (BillingUtility.roundOffAmount(countWithNewPackageDowngrade * summary.oldfacilityFee));
+                //     }
+                    //end: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
                     
-                    summary.positiveInvoiceAmount = BillingUtility.roundOffAmount(countWithNewPackageDowngrade) * BillingUtility.roundOffAmount(newPackg.Unit_Fee__c) ;
-                    summary.negativeInvoiceAmount = - (BillingUtility.roundOffAmount(countWithNewPackageDowngrade) * BillingUtility.roundOffAmount(oldPackg.Unit_Fee__c));
-                    
-                    newPackageUnitPrice = BillingUtility.roundOffAmount(countWithNewPackageDowngrade) * (BillingUtility.roundOffAmount(newPackg.Unit_Fee__c) - BillingUtility.roundOffAmount(oldPackg.Unit_Fee__c));
+                   //system.debug('summary.negativeFacilityInvoiceAmount'+summary.negativeFacilityInvoiceAmount);
+                   //system.debug('summary.positiveFacilityInvoiceAmount'+summary.positiveFacilityInvoiceAmount);
+
+                    newPackageUnitPrice = countWithNewPackageDowngrade * 
+                                        (newPackg.Unit_Fee__c - oldPackg.Unit_Fee__c);
+                    if(countWithNextMonthPackageDowngrade > 0){
+                        newNextMonthPackageUnitPrice  =   countWithNextMonthPackageDowngrade *  (newPackg.Unit_Fee__c - oldPackg.Unit_Fee__c);   
+                        newNextMonthPackageUnitPrice += (BillingUtility.roundOffAmount(newPackg.Unit_Fee__c) / Integer.valueOf(newPackg.duration__c))*minutesOfFifthBooking; 
+                        if(summary.taxRate > 0){
+                            newNextMonthPackageUnitPrice += newNextMonthPackageUnitPrice * (Decimal.valueOf(summary.taxRate)/100);
+                        }
+                    }              
+                   //system.debug('newPackageUnitPrice'+newPackageUnitPrice);
+                    //start: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                //    if(summary.newfacilityFee > 0 && summary.oldfacilityFee > 0){
+                //         newPackageFacilityFee = countWithNewPackageDowngrade *  (summary.newfacilityFee - summary.oldfacilityFee);
+                //     }
+                     //end: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                  
+                    //system.debug('newPackageFacilityFee'+newPackageFacilityFee);
                     newPackageUnitPrice += (BillingUtility.roundOffAmount(newPackg.Unit_Fee__c) / Integer.valueOf(newPackg.duration__c))*minutesOfFifthBooking;
                     if(summary.taxRate > 0){
-                        newPackageUnitPrice += BillingUtility.roundOffAmount(newPackageUnitPrice) * (BillingUtility.roundOffAmount((Decimal.valueOf(summary.taxRate))/100));
+                        newPackageUnitPrice += newPackageUnitPrice * (Decimal.valueOf(summary.taxRate)/100);
+                         //start: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                        // if(newPackageFacilityFee != 0){
+                        //     newPackageFacilityFee += newPackageFacilityFee * (Decimal.valueOf(summary.taxRate)/100);
+                        // }
+                         //end: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                  
                     }
+                   //system.debug('newPackageUnitPrice'+newPackageUnitPrice);
+                   //system.debug('newPackageFacilityFee'+newPackageFacilityFee);
+                   // summary.invoiceFacilityLessonTopup = newPackageFacilityFee;
                     summary.invoiceDepositLessonTopup = BillingUtility.roundOffAmount(newPackageUnitPrice);
                     totalAmount = newPackageUnitPrice;
+                    system.debug('newNextMonthPackageUnitPrice'+newNextMonthPackageUnitPrice);
+                    system.debug('countWithNextMonthPackageDowngrade'+countWithNextMonthPackageDowngrade);
+                    if(newNextMonthPackageUnitPrice != 0){
+                        summary.invoiceDepositLessonNextMonthTopup = BillingUtility.roundOffAmount(newNextMonthPackageUnitPrice);
+                        totalAmount += newNextMonthPackageUnitPrice;
+                    }
+                   // totalAmount += newPackageFacilityFee;
                     totalAmount += depositeFee;
                     summary.invoiceTopup = BillingUtility.roundOffAmount(totalAmount);
+                   //system.debug('totalAmount'+totalAmount);
                 }
             }
             
@@ -4442,7 +4855,8 @@ countWithNewPackage +=1;
         }
         ////system.debug('@@packageIds'+packageIds);
         if(packageIds.size() > 0){
-            packageList = [SELECT Id, Name, Deposit_Fee__c, duration__c, Unit_Fee__c, Location__r.Country__r.Tax_Rate__c  
+            packageList = [SELECT Id, Name, Deposit_Fee__c, duration__c, Unit_Fee__c, Location__r.Country__r.Tax_Rate__c  ,
+                             /*facility_Fee__c,*/Grade__c,Location__r.Organisation__r.Name,Location__r.Organisation__r.Tax_Rate__c  
                             FROM Package__c 
                             WHERE Id IN: packageIds];
             //commented by jatin : 13-dec-2019: for if any package is same then list size is one
@@ -4454,21 +4868,37 @@ countWithNewPackage +=1;
                         summary.oldPackageName = packageObj.Name; 
                         summary.oldPackageId = packageObj.Id;
                         summary.oldDuration = packageObj.duration__c;
-                        summary.currentPackageDeposit = packageObj.Deposit_Fee__c;
+                        summary.currentPackageDeposit = packageObj.Deposit_Fee__c ;
+                        //added by nishi: 14-Aug-2020: added facility if package organisation is ossia 
+                        // if(String.isNotBlank(packageObj.Location__c) && String.isNotBlank(packageObj.Location__r.Organisation__c) && String.isNotBlank(packageObj.Location__r.Organisation__r.Name) && packageObj.facility_Fee__c != null){
+                        //     summary.oldfacilityFee = (packageObj.facility_Fee__c/4);
+                        // }else{
+                        //     summary.oldfacilityFee = 0;
+                        // }
+                        //added by nishi: 14-Aug-2020: added facility if package organisation is ossia 
                         //Added by jatin 5-Dec-2019 : for add Change Enrolment
                         summary.currentUnitFee = packageObj.Unit_Fee__c;
+                        
                         if(String.isNotBlank(packageObj.Location__c) && String.isNotBlank(packageObj.Location__r.Country__c) && packageObj.Location__r.Country__r.Tax_Rate__c != null ){
                             summary.taxRate = packageObj.Location__r.Country__r.Tax_Rate__c;
                         }else{
                             summary.taxRate = 0;
                         }
+                        
                     }
                     if(packageObj.Id == newPackageId){
                         summary.newPackage = packageObj;
                         summary.newPackageName = packageObj.Name; 
                         summary.newPackageId = packageObj.Id;
                         summary.newDuration = packageObj.Duration__c;
-                        summary.newPackageDeposit = packageObj.Deposit_Fee__c;
+                        summary.newPackageDeposit = packageObj.Deposit_Fee__c ;
+                        //added by nishi: 14-Aug-2020: added facility if package organisation is ossia 
+                        // if(String.isNotBlank(packageObj.Location__c) && String.isNotBlank(packageObj.Location__r.Organisation__c) && String.isNotBlank(packageObj.Location__r.Organisation__r.Name) && packageObj.facility_Fee__c != null){
+                        //     summary.newfacilityFee = (packageObj.facility_Fee__c/4);
+                        // }else{
+                        //     summary.newfacilityFee = 0;
+                        // }
+                        //added by nishi: 14-Aug-2020: added facility if package organisation is ossia 
                         //Added by jatin 5-Dec-2019 : for add Change Enrolment
                         summary.newUnitFee = packageObj.Unit_Fee__c;
                         if(String.isNotBlank(packageObj.Location__c) && String.isNotBlank(packageObj.Location__r.Country__c) && packageObj.Location__r.Country__r.Tax_Rate__c != null ){
@@ -4476,6 +4906,7 @@ countWithNewPackage +=1;
                         }else{
                             summary.taxRate = 0;
                         }
+                       
                     }
                 }
             }
@@ -4489,7 +4920,10 @@ countWithNewPackage +=1;
         DateTime dt;
         List<Enrolment__c> enrolList = [SELECT Id, Lessons_Start_Date__c, Lesson_Day__c, Parent__c, Lesson_Start_time__c, 
                                         Package__c, Package__r.Package_Fee__c, Package__r.Deposit_Fee__c,Class__r.name ,
-                                        Package__r.Instrument__c,Class__c,
+                                        Package__r.Instrument__c,Class__c,Center__r.Organisation__r.Name,
+                                        //start: added by nishi: 14-aug-2020 for if user select package then we show related details like: duration,monthly fee, grade,Facility fee
+                                        /*Package__r.facility_Fee__c,*/Package__r.Grade__c,
+                                         // end:added by nishi: 14-aug-2020 for if user select package then we show related details like: duration,monthly fee, grade,Facility fee
                                         Package__r.Name, Teacher__c, Teacher__r.Name, Package__r.Duration__c, 
                                         Student__r.name,Parent__r.name,Student__r.Also_a_Student__c,Student__r.Parent__c,
                                         center__c, center__r.Name FROM Enrolment__c WHERE Id =: enrolmentId];
@@ -4508,10 +4942,23 @@ countWithNewPackage +=1;
                     mapToReturn.put('currentLessonDay', objEnrol.Lesson_Day__c);
                 }
             }
-            mapToReturn.put('currentCenter', objEnrol.center__c);
+
+            // added by nishi: 10-aug-2020: for manage ossia Upgrade ,downGrade Subscription model
+            if( String.isNotBlank(objEnrol.Center__c) && String.isNotBlank(objEnrol.Center__r.Organisation__c) && 	
+            String.isNotBlank(objEnrol.Center__r.Organisation__r.Name) && 	
+            objEnrol.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){	
+                mapToReturn.put('isOssia', 'true'); 
+            }	else{
+                mapToReturn.put('isOssia', 'false'); 
+            }
+             // added by nishi: 10-aug-2020: for manage ossia Upgrade ,downGrade Subscription model
+             mapToReturn.put('currentCenter', objEnrol.center__c);
+            mapToReturn.put('currentOrganisation', objEnrol.Center__r.Organisation__c);
+            mapToReturn.put('currentCenterName', objEnrol.center__r.name);
             mapToReturn.put('currentPackage', objEnrol.Package__r.Name);
             mapToReturn.put('parentId', objEnrol.Parent__c);
              mapToReturn.put('instrument', objEnrol.Package__r.Instrument__c);
+             
               // @jatin: 4:Jan:2020 : for show Class name in upgrade group class
               mapToReturn.put('currentClass', objEnrol.Class__c);
               mapToReturn.put('currentClassName', objEnrol.Class__r.Name);
@@ -4527,7 +4974,12 @@ countWithNewPackage +=1;
             mapToReturn.put('currentPackageDuration', objEnrol.Package__r.Duration__c);
             mapToReturn.put('currentMonthInvoice', String.valueOf(objEnrol.Package__r.Package_Fee__c));
             mapToReturn.put('currentPackageDepositFee', String.valueOf(objEnrol.Package__r.Deposit_Fee__c));
-            //28-Nov-2019 added by jatin for change class details
+             //start:14-Aug-2020 added by nishi for show ossia change package details
+           // mapToReturn.put('currentPackageFacilityFee', String.valueOf(objEnrol.Package__r.facility_Fee__c));
+            mapToReturn.put('currentPackageGrade', String.valueOf(objEnrol.Package__r.Grade__c));
+             //end: 14-Aug-2020 added by nishi for show ossia change package details
+            
+             //28-Nov-2019 added by jatin for change class details
             //mapToReturn.put('currentClass', String.valueOf(objEnrol.Class__r.name));
             // added by arpit for change enrolment process
             mapToReturn.put('currentTeacherId',objEnrol.Teacher__c);
@@ -4562,28 +5014,67 @@ countWithNewPackage +=1;
             if(enrolDetails.containsKey('instrument')){
                 enrolEdit.currentInstrument = enrolDetails.get('instrument');
             }
-           
+           // added by nishi: 10-aug-2020:start: for manage ossia Upgrade ,downGrade Subscription model
+            if(enrolDetails.containsKey('isOssia')){
+                enrolEdit.isOssia = enrolDetails.get('isOssia');
+            }
+            // added by nishi: 10-aug-2020:end: for manage ossia Upgrade ,downGrade Subscription model
             enrolEdit.currentTeacherId = enrolDetails.containsKey('currentTeacherId') ? enrolDetails.get('currentTeacherId') : '';
             enrolEdit.currentPackageId = enrolDetails.containsKey('currentPackageId') ? enrolDetails.get('currentPackageId') : '';
             
+            //14-Aug-2020 added by nishi for show ossia change package details
+            enrolEdit.currentPackageduration = enrolDetails.containsKey('currentPackageDuration') && string.isnotBlank(enrolDetails.get('currentPackageDuration'))? enrolDetails.get('currentPackageDuration') : '0';
+            /*enrolEdit.currentPackagefacilityFee = enrolDetails.containsKey('currentPackageFacilityFee') && string.isnotBlank( enrolDetails.get('currentPackageFacilityFee'))?
+                                                decimal.valueOf(enrolDetails.get('currentPackageFacilityFee')) : 0;*/
+            enrolEdit.currentPackagegrade = enrolDetails.containsKey('currentPackageGrade') && string.isnotBlank(enrolDetails.get('currentPackageGrade'))? enrolDetails.get('currentPackageGrade') : '';
+            enrolEdit.currentPackageMonthlyFee = enrolDetails.containsKey('currentMonthInvoice') && string.isnotBlank(enrolDetails.get('currentMonthInvoice'))?
+                                                decimal.valueOf(enrolDetails.get('currentMonthInvoice')) : 0;
+            //14-Aug-2020 added by nishi for show ossia change package details
+
+            // added by nishi: 10-aug-2020:end: for manage ossia Upgrade ,downGrade Subscription model
             if(enrolDetails.containsKey('currentCenter')){
                 enrolEdit.center = enrolDetails.get('currentCenter');
+                 //start: added by nishi: 27-Aug-2020: for get All center accoding to organisation
+                 enrolEdit.centerName = enrolDetails.get('currentCenterName');
+                 enrolEdit.centers = new List<Data>();
+                List<Data> multipleCentersData = new List<Data>();
+                Data centerdata = new Data();
+                List<Account> centers = getOrganisationRelatedCenters(enrolDetails.get('currentOrganisation'));
+                for(Account center : centers){
+                    centerdata = new Data();
+                    centerdata.Id = center.Id;
+                    centerdata.name = center.Name;
+                    multipleCentersData.add(centerdata); 
+                }    
+                if(multipleCentersData.size() > 0){
+                    enrolEdit.centers = multipleCentersData;
+                }
+                 //end added by nishi: 27-Aug-2020: for get All center accoding to organisation
                 enrolEdit.teachers = new List<Data>();
-                List<Data> multipleData = new List<Data>();
-                Data data = new Data();
+                List<Data> multipleTeachersData = new List<Data>();
+                Data teacherdata = new Data();
                 List<Account> teachers = AureusCalendarControllerHelper.getListOfTeacher(enrolDetails.get('currentCenter'));
                 for(Account teacher : teachers){
-                    data = new Data();
-                    data.Id = teacher.Id;
-                    data.name = teacher.Name;
-                    multipleData.add(data); 
+                    teacherdata = new Data();
+                    teacherdata.Id = teacher.Id;
+                    teacherdata.name = teacher.Name;
+                    multipleTeachersData.add(teacherdata); 
                 }    
-                if(multipleData.size() > 0){
-                    enrolEdit.teachers = multipleData;
+                if(multipleTeachersData.size() > 0){
+                    enrolEdit.teachers = multipleTeachersData;
                 }
             }       
         }
         return enrolEdit; 
+    }
+    // added by nishi: 27-Aug-2020: for get All center accoding to organisation
+    public static List<Account> getOrganisationRelatedCenters(string organisationId) {
+        Id recordTypeCenter = Schema.SObjectType.Account.getRecordTypeInfosByName().get('Centre').getRecordTypeId();
+        return [SELECT id, Name FROM Account 
+                WHERE recordTypeId =: recordTypeCenter 
+                AND Centre_Status__c =: ConstantsClass.activeStatus 
+                AND Organisation__c=:organisationId
+                ORDER BY Name];
     }
     
     @RemoteAction
@@ -4611,12 +5102,13 @@ countWithNewPackage +=1;
                     
                 }
             }
-            if(instruments.size() > 0 && String.isNotBlank(centerId)){        
+            if(instruments.size() > 0 && String.isNotBlank(centerId)){  
                 for(Package__c pkg : [SELECT Id, Name FROM Package__c WHERE Location__c =: centerId AND Program__r.Status__c =: ConstantsClass.activeStatus  AND Program__r.Instrument__c IN: instruments       
-                                      AND Program__r.Billing__c != null AND Program__r.Scheduling__c != null AND        
-                                      Active__c = True AND (Type__c = 'Individual' OR Type__c = 'Home') AND 
-                                      RecordtypeId =: pkgLessRecId AND Duration__c =: String.valueOf(duration) AND Type_of_package__c = 'Normal' ORDER BY Program__r.Name]){
-                                          dt = new Data();
+                                    AND Program__r.Billing__c != null AND Program__r.Scheduling__c != null AND        
+                                    Active__c = True AND (Type__c = 'Individual' OR Type__c = 'Home') AND 
+                                    RecordtypeId =: pkgLessRecId AND Duration__c =: String.valueOf(duration) 
+                                    AND Type_of_package__c = 'Normal' ORDER BY Program__r.Name]){
+                                                            dt = new Data();
                                           dt.Id = pkg.Id;
                                           dt.name = pkg.Name;
                                           packageList.add(dt);
@@ -4653,7 +5145,9 @@ countWithNewPackage +=1;
                                             Package__c, Package__r.Duration__c,Parent__c, Center__r.Country__r.Tax_Rate__c, Center__r.Country__r.Currency_Code__c, 
                                             Center__r.Country__r.Stripe_Secret_Key__c, Center__r.Country__r.Stripe_Base_Url__c,Center__r.Country__r.Id, 
                                             Center__r.Organisation__c, (Select Id, Next_Bill_Date__c, Subscription__r.Parent__r.Stripe_Customer_Id__c,
-                                             Subscription__c, Subscription__r.Center__c, Enrolment__c, Enrolment__r.Center__r.Country__r.Tax_Rate__c FROM Subscription_Line_Items__r),
+                                             Subscription__c, Subscription__r.Center__c, Enrolment__c, Enrolment__r.Center__r.Country__r.Tax_Rate__c FROM Subscription_Line_Items__r
+                                             Where Status__c =:ConstantsClass.activeStatus //4-sep-2020: added by nishi for new requirement one enrolment have two subscrition so we get active line item
+                                             And Next_Bill_Date__c != null),
                                             //Start : added by Nishi : 30-Jul-2020 for update Resource id in reschadul future booking
                                              Resource__c ,Lesson_Mode__c,Online_Lesson_Passcode__c,Online_Lesson_URL__c,name
                                              //End: added by Nishi : 30-Jul-2020 for update Resource id in reschadul future booking
@@ -4722,7 +5216,9 @@ countWithNewPackage +=1;
     
     
     //Get All Future Busy Bookings According to the category
-    private static List<Booking__c> getFutureBusyBookings(Booking__c BookingObj){
+      // Commented by nishi: 20:jul:2020: change private to public for use in OssiaCalendarController 
+    //private static List<Booking__c> getFutureBusyBookings(Booking__c BookingObj){
+     public  static List<Booking__c> getFutureBusyBookings(Booking__c BookingObj){
         String typeBusy = ConstantsClass.typeBusy;
         String statusCanceled = ConstantsClass.statusCanceled;
         return [SELECT Id, start_Time__c, End_Time__c, Duration__c, Booking_Date__c, Type__c,
@@ -4738,7 +5234,9 @@ countWithNewPackage +=1;
     }
     
     //Cancel all Future Busy Bookings 
-    private static boolean cancelAllFutureBusyBookings(List<Booking__c> listOfBookings){
+    // Commented by nishi: 20:jul:2020: chante private to public for use in OssiaCalendarController 
+   // Private  static boolean cancelAllFutureBusyBookings(List<Booking__c> listOfBookings){
+    public  static boolean cancelAllFutureBusyBookings(List<Booking__c> listOfBookings){
         List<Booking__c> bookingsToUpdate = new List<Booking__c>();
         Boolean isSuccess = true;
         if(listOfBookings.size() > 0){
@@ -4783,7 +5281,10 @@ countWithNewPackage +=1;
         String instrument, duration, center;
         if(String.isNotBlank(enrolId)){
             for(Enrolment__c enrolObj : [SELECT Id, Center__c, Package__r.Duration__c, Package__r.Program__r.Instrument__c, 
-                                         (SELECT Id, Next_Bill_Date__c FROM Subscription_Line_Items__r) FROM Enrolment__c WHERE Id =: enrolId LIMIT 1]){
+                                         (SELECT Id, Next_Bill_Date__c FROM Subscription_Line_Items__r
+                                         Where Status__c =:ConstantsClass.activeStatus //4-sep-2020: added by nishi for new requirement one enrolment have two subscrition so we get active line item
+                                         And Next_Bill_Date__c != null)
+                                          FROM Enrolment__c WHERE Id =: enrolId LIMIT 1]){
                                              instrument =  enrolObj.Package__r.Program__r.Instrument__c;
                                              duration = enrolObj.Package__r.Duration__c; 
                                              center = enrolObj.Center__c;
@@ -4894,43 +5395,58 @@ countWithNewPackage +=1;
         List<GroupPackage> grpPackages = new List<GroupPackage>();
         List<string> instruments = New List<string>();
         GroupPackage grpPackage = new GroupPackage(); 
+
         if(String.isNotBlank(centreId) && String.isNotBlank(teacherId)){
-            // 7-jan-2020: show packages according to teachers instruements
-            List<Account> tchrList = [SELECT Id,Major_Instruments_Disciplines__c,Minor_Instruments_Disciplines__c 
-                                    FROM Account WHERE Id =:teacherId];
-            if(tchrList.size() > 0){        
-                for(Account acc: tchrList){        
-                    if(acc.Major_Instruments_Disciplines__c != null){       
-                        for(String strIns : acc.Major_Instruments_Disciplines__c.split(';'))        
-                            instruments.add(strIns);        
-                    }       
-                    if(acc.Minor_Instruments_Disciplines__c != null){       
-                        for(String strIns : acc.Minor_Instruments_Disciplines__c.split(';'))        
-                            instruments.add(strIns);        
-                    }       
+            //start: 1-Sep-2020: added by nishi: for get organisation is related to  ossia then we show Grade list not packages
+            List<Account> ossiaCenterList = [Select id,Organisation__r.Name 
+                                        from Account
+                                         Where Id=:centreId 
+                                        and Organisation__r.Name =:System.Label.Ossia_Organisation_Name];
+            if(ossiaCenterList != null && ossiaCenterList.size() > 0){
+                grpPackage = new GroupPackage();
+                grpPackage.isOssia = true;
+                grpPackages.add(grpPackage);
+            } else{   
+            //end: 1-Sep-2020: added by nishi: for get organisation is related to  ossia then we show Grade list not packages      
+
+                // 7-jan-2020: show packages according to teachers instruements
+                List<Account> tchrList = [SELECT Id,Major_Instruments_Disciplines__c,Minor_Instruments_Disciplines__c 
+                                        FROM Account WHERE Id =:teacherId];
+                if(tchrList.size() > 0){        
+                    for(Account acc: tchrList){        
+                        if(acc.Major_Instruments_Disciplines__c != null){       
+                            for(String strIns : acc.Major_Instruments_Disciplines__c.split(';'))        
+                                instruments.add(strIns);        
+                        }       
+                        if(acc.Minor_Instruments_Disciplines__c != null){       
+                            for(String strIns : acc.Minor_Instruments_Disciplines__c.split(';'))        
+                                instruments.add(strIns);        
+                        }       
+                    }
                 }
+            //system.debug('instruments'+instruments);
+                if(instruments != null && instruments.size() > 0){
+                    for(Package__c packageObj : [SELECT Id, Name, of_Students__c, Duration__c, Package_Fee__c,Instrument__c
+                                                FROM Package__c WHERE
+                                                Type__c =: ConstantsClass.packageTypeGroup
+                                                AND Active__c = TRUE 
+                                                AND Location__c =: centreId
+                                                AND Program__r.Status__c =:  ConstantsClass.activeStatus
+                                                AND Program__r.Instrument__c IN: instruments]){
+                                                    
+                                                    grpPackage = new GroupPackage();
+                                                    grpPackage.isOssia = false; //added by nishi: for get organisation is related to  ossia or not
+                                                    grpPackage.id =  packageObj.Id;
+                                                    grpPackage.name = packageObj.Name;
+                                                    grpPackage.price = packageObj.Package_Fee__c;
+                                                    grpPackage.duration = packageObj.Duration__c;
+                                                    grpPackage.studentCapacity = packageObj.of_Students__c != null ?packageObj.of_Students__c :0;
+                                                    // @jatin: 18-dec-2019:for show instrument
+                                                    grpPackage.instrument = packageObj.Instrument__c;
+                                                    grpPackages.add(grpPackage);
+                                                } 
+                }   
             }
-           //system.debug('instruments'+instruments);
-            if(instruments != null && instruments.size() > 0){
-                for(Package__c packageObj : [SELECT Id, Name, of_Students__c, Duration__c, Package_Fee__c,Instrument__c
-                                            FROM Package__c WHERE
-                                            Type__c =: ConstantsClass.packageTypeGroup
-                                            AND Active__c = TRUE 
-                                            AND Location__c =: centreId
-                                            AND Program__r.Status__c =:  ConstantsClass.activeStatus
-                                            AND Program__r.Instrument__c IN: instruments]){
-                                                
-                                                grpPackage = new GroupPackage();
-                                                grpPackage.id =  packageObj.Id;
-                                                grpPackage.name = packageObj.Name;
-                                                grpPackage.price = packageObj.Package_Fee__c;
-                                                grpPackage.duration = packageObj.Duration__c;
-                                                grpPackage.studentCapacity = packageObj.of_Students__c != null ?packageObj.of_Students__c :0;
-                                                // @jatin: 18-dec-2019:for show instrument
-                                                grpPackage.instrument = packageObj.Instrument__c;
-                                                grpPackages.add(grpPackage);
-                                            } 
-            }   
         }
         return grpPackages;
     }
@@ -4945,6 +5461,19 @@ countWithNewPackage +=1;
                                         String duration, Integer countOfStudent,
                                         string classType,Integer minAge,Integer maxAge){
         Boolean isSuccess = false;
+                                            
+        string insertedClassid =  saveNewGroupClass(centreId,  teacherId,  packageId,  classDateStr, classTimeStr,  duration, countOfStudent,
+                                    classType, minAge, maxAge,false,'');
+        if(string.isNotBlank(insertedClassid)){
+            isSuccess = true;
+        }         
+        return isSuccess;
+    }
+
+    public static string saveNewGroupClass(String centreId, String teacherId, String packageId, 
+                                        String classDateStr, String classTimeStr, 
+                                        String duration, Integer countOfStudent,
+                                        string classType,Integer minAge,Integer maxAge,Boolean isOssia,string grade){
         Class__c currentClass = new Class__c();
         DateTime startDateTime, endDateTime;
         
@@ -4958,26 +5487,26 @@ countWithNewPackage +=1;
         }
         
         if(startDateTime != NULL && endDateTime != NULL && String.isNotBlank(centreId) && String.isNotBlank(teacherId) && 
-           String.isNotBlank(duration) && String.isNotBlank(packageId)){
+           String.isNotBlank(duration) && ((!isOssia && String.isNotBlank(packageId)) || (isOssia && String.isBlank(packageId)))){
                currentClass.Centre_Name__c = centreId;
                currentClass.Class_Date__c = startDateTime.date();
                currentClass.Teacher__c = teacherId;
-               currentClass.Package__c = packageId;
+               currentClass.Package__c = (!isOssia && String.isNotBlank(packageId)) ? packageId : null;
                currentClass.Class_Start_Date__c = startDateTime.date();
                currentClass.Start_Time__c = startDateTime.time();
                currentClass.Minimum_age__c = minAge;
                currentClass.Maximum_age__c = maxAge;
                currentClass.Class_Type__c = classType;
-               
+               currentClass.grade__c =  String.isNotBlank(grade) ? grade :'';
                if(countOfStudent > 0){
                    currentClass.Total_Capacity__c = countOfStudent;
                }
                currentClass.End_Time__c = currentClass.Start_Time__c.addMinutes(Integer.valueOf(duration));
-               isSuccess = true;
                insert currentClass;
+               return  currentClass.id;
            }
         
-        return isSuccess;
+        return '';
     }
     
     /*
@@ -5021,14 +5550,23 @@ countWithNewPackage +=1;
         public String currentPackage;
         public String currentDayTimeSlot;
         public String center;
+        public String centerName; //start: added by nishi: 27-Aug-2020: for get All center accoding to organisation
         public Integer duration;
         public List<Data> teachers;
+        public List<Data> centers; //start: added by nishi: 27-Aug-2020: for get All center accoding to organisation
         public String currentWeekDay;
-        public String currentTeacherId;
-        public String currentPackageId;
+      
         // @jatin:19-dec-2019: added instument for group class upgrade to regular user get packages list according to instruments
        public String currentInstrument;
-        
+       public String isOssia; // added by nishi: 10-aug-2020 for manage ossia center Upgrade downGrade requirement
+       //added by nishi: for if user select package then we show related details like: duration,monthly fee, grade,Facility fee
+       public String currentTeacherId;
+       public String currentPackageId;
+       public String currentPackageduration; 
+       //public Decimal currentPackagefacilityFee; 
+       public String currentPackagegrade; 
+       public Decimal currentPackageMonthlyFee; 
+        //added by nishi: for if user select package then we show related details like: duration,monthly fee, grade,Facility fee
     }
 
     public class UpgradeDowngradePackageSummary{
@@ -5050,6 +5588,13 @@ countWithNewPackage +=1;
         public Decimal invoiceTopup;
         public Decimal invoiceDepositTopup;
         public Decimal invoiceDepositLessonTopup;
+        public Decimal invoiceNextMonthTopup; //added by nishi:26-Aug-2020 : for manage NextMonth calclulation
+        public Decimal invoiceDepositLessonNextMonthTopup; //added by nishi:26-Aug-2020 : for manage NextMonth calclulation
+        //public Decimal invoiceFacilityLessonTopup; //added by nishi:19-Aug-2020 : for manage Facility fee calclulation
+        //public Decimal positiveFacilityInvoiceAmount; //added by nishi:19-Aug-2020 : for manage Facility fee calclulation
+        //public Decimal negativeFacilityInvoiceAmount; //added by nishi:19-Aug-2020 : for manage Facility fee calclulation
+        public Decimal positiveNextMonthInvoiceAmount; //added by nishi:26-Aug-2020 : for manage NextMonth calclulation
+        public Decimal negativeNextMonthInvoiceAmount; //added by nishi:26-Aug-2020 : for manage NextMonth calclulation
         public Decimal positiveInvoiceAmount;
         public Decimal negativeInvoiceAmount;
         Public Double taxRate;
@@ -5072,6 +5617,15 @@ countWithNewPackage +=1;
         //Added by jatin 5-Dec-2019 : for add Change Enrolment
         public Decimal currentUnitFee;
         public Decimal newUnitFee;
+        //public Decimal newfacilityFee; //added by nishi: 14-Aug-2020: for manage facilityFee if package center is ossia
+        //public Decimal oldfacilityFee; //added by nishi: 14-Aug-2020: for manage facilityFee if package center is ossia
+        //satrt: added by nishi: 28-aug:2020: for added new and old center details
+        public String newCenterId;
+        public String newCenterName;
+        public String oldCenterId;
+        public String oldCenterName;
+        //end: added by nishi: 28-aug:2020: for added new and old center details
+
     }
     
     public class WithdrawalSummary{
@@ -5106,7 +5660,8 @@ countWithNewPackage +=1;
     }  
     public class Data{      
         public String Id;       
-        public String Name;     
+        public String Name;   
+
     }       
     public class EnrolmentProcessCenterData{        
         Data currentCenter;     
@@ -5179,7 +5734,9 @@ countWithNewPackage +=1;
         Boolean isPackagePromotional;
         //@JAtin on 9-Dec-2019 to check that User has the access of the Change Enrolment Admin
         Boolean  isChange_Enrolment_Admin;
-        
+        Boolean isOssia; // added by nishi: 10-aug-2020 for manage ossia center Upgrade downGrade requirement
+        Boolean isChangeEnrolmentCentre;
+        Boolean isEnableChangeCentre;
     }
     
     public class GradePackage{
@@ -5203,6 +5760,7 @@ countWithNewPackage +=1;
     public class NewBookingWrapper{
         public List<TeacherAndCenter> entities;
         public List<packageWrapper> packages;
+          public Boolean isOssia; // added by nishi: 22-Jul-2020 for manage ossia center new Booking
         Public List<Resource__c> listOfAvailableResources;  // added by nishi: 30-jul-2020: for get all aureus lesson avalilable resources
         // Added By Ravi on 13 july 2020
         public List<string> lessonTypeList;
@@ -5297,11 +5855,13 @@ countWithNewPackage +=1;
         public String Individual;
         public String category;
         public Boolean isClass;
+         public Boolean isOssia; // added by Arpit 16-Jul-2020 : for manage Ossia Organization student
         // Added By Ravi on 2nd july 2020 
         public String lessonType;
         // Added By Ravi on 2nd july 2020 
         public Events(){
             isClass = false;
+             isOssia = false;
         }
     }
     
@@ -5366,7 +5926,7 @@ countWithNewPackage +=1;
         public string lessonURL;
         public string lessonPassCode;
         Public List<Resource__c> listOfAvailableResources; //added by nishi: 30-Jul-2020: for get all Available_For_Aureus_Lesson__c resources
-           
+        public Boolean isOssia; // added by Arpit 13-aug-2020 : for manage Ossia Organization student  
     }
     //Booking History Wrapper Class
     public class BookingHistory{
@@ -5393,15 +5953,16 @@ countWithNewPackage +=1;
     
     //Class Packages
     public class GroupPackage{
-        String id;
-        String name;
-        Decimal price;
-        String duration;
+        public String id{get;set;}
+        public String name{get;set;}
+        public Decimal price{get;set;}
+        public String duration{get;set;}
         //@jatin: 13-dec-2019 :for show package capacity 
-        Decimal studentCapacity;
+        public Decimal studentCapacity{get;set;}
         // @jatin:18-dec-2019 :for show instrument 
-        String instrument ;
-        
+        public String instrument {get;set;}
+        public Boolean isOssia{get;set;} //added by nishi: 1-Sep-2020 : for check new group class created in ossia org or aureus 
+        public decimal deposit{get;set;}
     }
     
     // class details

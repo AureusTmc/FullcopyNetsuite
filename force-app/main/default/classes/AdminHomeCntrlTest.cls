@@ -10,6 +10,5 @@ public class AdminHomeCntrlTest {
         insert cenUserObj;
         
         AdminHomeCntrl adminObj = new AdminHomeCntrl();
-        
     }
 }

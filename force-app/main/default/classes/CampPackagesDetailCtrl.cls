@@ -11,8 +11,18 @@ public class CampPackagesDetailCtrl {
     public string stuPreExperience{get;set;}
     public string birthDate{get;set;}
     public boolean showDiscountAlert{get;set;}
+    //Arpit/Junied 27-Aug-2020
+    public boolean isOssia {get;set;}
+    
     public CampPackagesDetailCtrl() {
         accountStudentObj = new Account();
+        system.debug('is ossia -->'+ ApexPages.currentPage().getParameters().get('org'));
+        //Arpit/Junied 27-Aug-2020
+        isOssia = false;
+        //Juneid 28 Aug 2020 Orgnization wise logic as per new Requierment
+        if(String.isNotBlank(ApexPages.currentPage().getParameters().get('org'))){
+            isOssia = ApexPages.currentPage().getParameters().get('org').equalsIgnoreCase('ossia') ? true : false;
+        }
     }
     public Camp__c getCampDetails(){
         Camp__c campObj = new Camp__c ();

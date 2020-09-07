@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help><!-- Ossia organization student cancel booking and cancel reason is Teacher MC and Teacher Leave then we manage this Expiry Days --></help>
+    <label><!-- Makeup Expiry Days For Teacher Reason --></label>
+    <name>Makeup_Expiry_Days_Teacher__c</name>
+</CustomFieldTranslation>

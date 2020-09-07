@@ -160,8 +160,9 @@ Note : 3 Sep 2020 This method was taken from another class -> PianoRentalPurchas
                     objEmailAttchmt.setBody(new PageReference('/apex/PianoRentalPurchasePageV2?Id=' + enrolment.Id).getContentAsPDF()); 
                     objOutGoingEmail.setFileAttachments(new Messaging.EmailFileAttachment[] {objEmailAttchmt});
                     
-                    Messaging.sendEmail(new Messaging.SingleEmailMessage[] {objOutGoingEmail});
-                
+                    if(!Test.isRunningTest())
+                        Messaging.sendEmail(new Messaging.SingleEmailMessage[] {objOutGoingEmail});
+                    
                 }else{ //__________________________________________________  incase if any enrolment's centre doesnot have any address in OWA
                     
                     isErrorOnSave = true;

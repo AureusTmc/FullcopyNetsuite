@@ -363,7 +363,7 @@ WHERE Id IN: parIds AND Lead__c != null AND Lead__r.IsConverted = False]);
         cas.Location__c           = enrParenInfo.Center__r.Location__c;        
         //Added by Rajesh on 5th Aug 2020. As per discussion with Prashant and Gandhi
         cas.UTM_Campaign__c = enrParenInfo.Parent__r.UTM_Campaign__pc;
-        cas.UTM_Content__c  = enrParenInfo.Parent__r.UTM_Content__pc;
+		cas.UTM_Content__c  = enrParenInfo.Parent__r.UTM_Content__pc;
         cas.UTM_Medium__c = enrParenInfo.Parent__r.UTM_Medium__pc;
         cas.UTM_Source__c = enrParenInfo.Parent__r.UTM_Source__pc;
         cas.UTM_Term__c   = enrParenInfo.Parent__r.UTM_Term__pc; 
@@ -388,7 +388,7 @@ WHERE Id IN: parIds AND Lead__c != null AND Lead__r.IsConverted = False]);
             //comment/update on 1st july 2020, Need to manage revenue on case as well As per discussion with Gandi,Prashant and Anuj
             //if(enr.Opportunity__c != null && enr.Stage__c == 'Enrolled')
             if(enr.Stage__c == 'Enrolled')
-                enrMap.put(enr.Id, null);
+            	enrMap.put(enr.Id, null);
         }
         
         //Map<Id,Decimal> enrRegPrgSumMap = new Map<Id,Decimal>();
@@ -514,7 +514,7 @@ update caseUpdList; */
                                              WHERE Enrolment__c IN: enrIds AND Remarks__c IN:lineItmType 
                                                    AND Amount__c > 0]){
             Decimal tempAmt = invLnItm.Amount__c;                                     
-            if(enrRegPrgSumMap.containsKey(invLnItm.Enrolment__c))
+        	if(enrRegPrgSumMap.containsKey(invLnItm.Enrolment__c))
                 tempAmt += enrRegPrgSumMap.get(invLnItm.Enrolment__c);
             enrRegPrgSumMap.put(invLnItm.Enrolment__c, tempAmt);                                     
         }
@@ -525,7 +525,7 @@ update caseUpdList; */
            
             if(enrRegPrgSumMap.get(enr.Id) != null){
                 if(enr.Opportunity__c != null)
-                    oppUpdList.add(new Opportunity(Id = enr.Opportunity__c, Amount = enrRegPrgSumMap.get(enr.Id)));
+        			oppUpdList.add(new Opportunity(Id = enr.Opportunity__c, Amount = enrRegPrgSumMap.get(enr.Id)));
                 
                 if(enrSalesEnqCaseMap.containsKey(enr.Id))
                     caseUpdList.add(new Case(Id = enrSalesEnqCaseMap.get(enr.Id),  Revenue__c = enrRegPrgSumMap.get(enr.Id)));

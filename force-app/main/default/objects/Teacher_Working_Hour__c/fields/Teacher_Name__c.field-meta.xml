@@ -6,16 +6,10 @@
     <label>Teacher Name</label>
     <lookupFilter>
         <active>true</active>
-        <booleanFilter>1 OR 2</booleanFilter>
-        <filterItems>
-            <field>Account.RecordType.DeveloperName</field>
-            <operation>equals</operation>
-            <value>Teacher</value>
-        </filterItems>
         <filterItems>
             <field>Account.RecordType.Name</field>
             <operation>equals</operation>
-            <value>Employee</value>
+            <value>Teacher</value>
         </filterItems>
         <isOptional>false</isOptional>
     </lookupFilter>

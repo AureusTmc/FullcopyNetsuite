@@ -1,3 +1,5 @@
+//CH01 : Karan Singh Soni 7 Sep 2020 : uncomment following methods as to deploy in production -> 
+//method names -> getuserSessionID,createCustomer,createPayment,reverseInvoice,reversePayment,invoiceVoid,getRevRecognitionSchedule,getRevRecognitionEntries,updateRevRecEntries,createAdjustmentJournalEntries,createInvoice,activateOrderEntry,createCreditMemoForVoidInvoice,applyCreditToInvoice,fetchARInvoiceKey,fetchVATprocessStatus,applyARPayment
 Public without sharing class SageIntacctIntegrationUtility{
     
     public static sessionWrapper getuserSessionID(string locationId){
@@ -130,7 +132,8 @@ Public without sharing class SageIntacctIntegrationUtility{
     
     public static void getGlAccountCodes(){
         
-        /*SessionWrapper sw = SageIntacctIntegrationUtility.getuserSessionID(null);
+        /* -removed by KaranSinghSoni */
+         SessionWrapper sw = SageIntacctIntegrationUtility.getuserSessionID(null);
         
         if(sw.sessionId!=null && sw.sessionId.trim().length()>0){
             HttpRequest req = new HttpRequest();
@@ -233,11 +236,12 @@ Public without sharing class SageIntacctIntegrationUtility{
                     Database.rollback(sp);
                 }
             }
-        }*/
+        }/*-removed by KaranSinghSoni */
     }
     
     public static  Account createCustomer(SessionWrapper sw, Account customer){
-        /*resultWrapper crw = new resultWrapper();
+        /*-removed by KaranSinghSoni 7 Sep 2020 */
+        resultWrapper crw = new resultWrapper();
         string body;
         string response;
         if(customer!=null && customer.Id!=null){
@@ -387,13 +391,15 @@ Public without sharing class SageIntacctIntegrationUtility{
             customer.Sage_Error_Message__c = '';
         }else{
             customer.Sage_Error_Message__c = crw.errorMsg; 
-        }*/           
+        }/*-removed by KaranSinghSoni 7 Sep 2020 */
+            
         return customer;
         
     }
     
     public static Payment__c createPayment(sessionWrapper sw, Payment__c payment, string invoiceKey){
-        /*resultWrapper rw = new resultWrapper();
+        /*-removed by KaranSinghSoni 7 Sep 2020 */
+        resultWrapper rw = new resultWrapper();
         
         string body;
         string response;
@@ -573,12 +579,13 @@ Public without sharing class SageIntacctIntegrationUtility{
             payment.Sage_Error_Message__c = '';
         }else{
             payment.Sage_Error_Message__c = rw.errorMsg;
-        }*/           
+        }/*-removed by KaranSinghSoni 7 Sep 2020 */           
         return payment;
     }
     
     Public static Invoice__c reverseInvoice(SessionWrapper sw, Invoice__c invoice){
-        /*string body;
+        /*-removed by KaranSinghSoni 7 Sep 2020 */
+        string body;
         string response;
         if(invoice!=null && invoice.Id!=null){
             List<Invoice__c> invList = [Select id,SageInvoiceKey__c,Voided_on_Sage__c,Sage_Error_Message__c,Invoice_Date__c,Remarks__c,Center__r.Organisation__r.Sage_Company__c from Invoice__c where Id=:invoice.Id and SageInvoiceKey__c!=null and Voided_on_Sage__c=false limit 1];
@@ -684,12 +691,13 @@ Public without sharing class SageIntacctIntegrationUtility{
                     }
                 }
             }
-        }*/
+        }/*-removed by KaranSinghSoni 7 Sep 2020 */
         return Invoice;
     }
     
     Public static Payment__c reversePayment(SessionWrapper sw, Payment__c payment){
-        /*if(payment!=null && payment.Id!=null){
+        /*-removed by KaranSinghSoni 7 Sep 2020 */
+         if(payment!=null && payment.Id!=null){
             
             Date reverseDate = system.today();
             
@@ -783,7 +791,7 @@ Public without sharing class SageIntacctIntegrationUtility{
             }else{
                 payment.Sage_Error_Message__c = sw.errorMsg;
             }   
-        }*/
+        }/*-removed by KaranSinghSoni 7 Sep 2020 */
         
         return payment;
     }
@@ -964,7 +972,8 @@ Public without sharing class SageIntacctIntegrationUtility{
     public static Invoice__c invoiceVoid(SessionWrapper sw, string invoiceId, Boolean isUpdateInvoice){
         Invoice__c invToUpdate = new Invoice__c();
         invToUpdate.Id = invoiceId;
-        /*If(invoiceId!=null && invoiceId.trim().length()>0){
+        /*-removed by KaranSinghSoni 7 Sep 2020 */
+         If(invoiceId!=null && invoiceId.trim().length()>0){
             List<Invoice__c> invList = [Select Id,New_GST_Amount_Admin_Fee__c,New_GST_Amount__c,Name,Parent_Account__c,Parent_Account__r.AccountID_Customer__c,Parent_Account__r.Name,Center__c,Due_Date__c,Total_Amount__c,Voided_on_Sage__c,
                                                 Invoice_Date__c,Status__c,GST_Tax_Amount__c,Discount_Amount__c,Admin_Fees__c,Center__r.Name,MovedToSage__c,Sage_Error_Message__c,SageInvoiceKey__c,Center__r.Organisation__r.Sage_Company__c,
                                                 center__r.Organisation__r.Country__r.Currency_Code_PI__c,center__r.Organisation__r.Country__r.Tax_Rate__c,Internal_Ref_No__c,SageOrderEntryKey__c,SageCreditMemoOrderEntryKey__c,Invoice_Void_Date__c,
@@ -1020,7 +1029,7 @@ Public without sharing class SageIntacctIntegrationUtility{
                         update invToUpdate;
                 }
             }
-        }*/
+        }/*-removed by KaranSinghSoni 7 Sep 2020 */
         return invToUpdate;
     }    
     
@@ -1116,7 +1125,8 @@ Public without sharing class SageIntacctIntegrationUtility{
     }
     
     Public class revenueRecogWrapper{
-        /*public string glCode{get;set;}
+        /*-removed by KaranSinghSoni 7 Sep 2020 */
+        public string glCode{get;set;}
         public string locationId{get;set;}
         public string projectId{get;set;}
         public string classId{get;set;}
@@ -1126,7 +1136,8 @@ Public without sharing class SageIntacctIntegrationUtility{
         public decimal discountGstAmount{get;set;}
         public date fromDate{get;set;}
         public date toDate{get;set;}
-        public string revenueTemplate{get;set;}*/
+        public string revenueTemplate{get;set;}
+        /*-removed by KaranSinghSoni 7 Sep 2020 */
     }
     
     Public class exchangeRateWrapper{
@@ -1136,7 +1147,8 @@ Public without sharing class SageIntacctIntegrationUtility{
     
     Public static revRecWrapper getRevRecognitionSchedule(SessionWrapper sw, string orderEntryKey){
         revRecWrapper rrw = new revRecWrapper();
-        /*If(orderEntryKey!=null && orderEntryKey.trim().length()>0){
+        /*-removed by KaranSinghSoni 7 Sep 2020 */
+         If(orderEntryKey!=null && orderEntryKey.trim().length()>0){
             
             if(sw.sessionId!=null && sw.sessionId.trim().length()>0){
                 HttpRequest req = new HttpRequest();
@@ -1250,13 +1262,14 @@ Public without sharing class SageIntacctIntegrationUtility{
                     }
                 }
             }
-        }*/
+        }/*-removed by KaranSinghSoni 7 Sep 2020 */
         return rrw;
     }
     
     Public static RevRecEntryWrapper getRevRecognitionEntries(SessionWrapper sw, Set<string> revRecSet){
         RevRecEntryWrapper rrw = new RevRecEntryWrapper();
-        /*If(revRecSet!=null && revRecSet.size()>0){
+        /*-removed by KaranSinghSoni 7 Sep 2020 */
+         If(revRecSet!=null && revRecSet.size()>0){
             string revRecKeys = '(';
             for(string str:revRecSet){
                 revRecKeys += str+',';
@@ -1401,12 +1414,13 @@ Public without sharing class SageIntacctIntegrationUtility{
                     }
                 }
             }
-        }*/
+        }/*-removed by KaranSinghSoni 7 Sep 2020 */
         return rrw;
     }
     
     Public static void updateRevRecEntries(SessionWrapper sw, Map<string,string> updRevRecEntryMap, Map<string,string> newRevRecEntryMap){
-        /*HttpRequest req = new HttpRequest();
+        /*-removed by KaranSinghSoni 7 Sep 2020 */
+        HttpRequest req = new HttpRequest();
         req.setMethod('POST');
         req.setEndpoint(sw.endPointUrl);
         req.setHeader('Content-Type','application/xml');
@@ -1462,7 +1476,7 @@ Public without sharing class SageIntacctIntegrationUtility{
         }
         
         system.debug('response=='+response);
-        */
+        /*-removed by KaranSinghSoni 7 Sep 2020 */
     }
     
     public class revRecWrapper{
@@ -1483,15 +1497,18 @@ Public without sharing class SageIntacctIntegrationUtility{
     }
     
     Public class revRecEntry{
-        /*public string recordNo{get;set;}
+        /* -removed by KaranSinghSoni 7 Sep 2020 */
+        public string recordNo{get;set;}
         public decimal amount{get;set;}
         public date postingDate{get;set;}
         public string accountNo{get;set;}
-        public string revAccKey{get;set;}*/
+        public string revAccKey{get;set;}
+        /*-removed by KaranSinghSoni 7 Sep 2020 */
     }
     
     public static Stripe_Payout_Log__c createStripeJournalEntries(Stripe_Payout_Log__c stripePayLog,List<Payment__c> paymentList){//update GLCodes
-        /*stripePayLog.Sage_Error_Message__c = '';
+        /*-removed by KaranSinghSoni 7 Sep 2020 */
+        stripePayLog.Sage_Error_Message__c = '';
         Map<string,string> glCodeMap = new Map<string,string>();
         List<Sage_GL_Account__c> glList = [Select id,Name,GL_Account_No__c from Sage_GL_Account__c];
         for(Sage_GL_Account__c gl: glList){
@@ -1686,12 +1703,13 @@ Public without sharing class SageIntacctIntegrationUtility{
             }
         }else{
             stripePayLog.Sage_Error_Message__c = 'GL code not found.';
-        }*/
+        }/*-removed by KaranSinghSoni 7 Sep 2020 */
         return stripePayLog;
     }
     
     Public static Payment__c createAdjustmentJournalEntries(SessionWrapper sw, Payment__c payment){
-        /*string departmentId = 'Aureus Academy';
+        /*-removed by KaranSinghSoni 7 Sep 2020 */
+        string departmentId = 'Aureus Academy';
         if(payment!=null && payment.Id!=null){
             If(payment.Payment_Date__c!=null){
                 if(sw==null || sw.sessionId==null || sw.sessionId.trim().length()==0){
@@ -1878,12 +1896,13 @@ Public without sharing class SageIntacctIntegrationUtility{
             }
         }else{
             payment.Sage_Error_Message__c = 'Payment date is blank.';
-        }*/   
+        }/*-removed by KaranSinghSoni 7 Sep 2020 */   
         return payment;
     }
     
     public static Invoice__c createInvoice(SessionWrapper sw, Invoice__c invoice){
-        /*string departmentId = 'Aureus Academy'; 
+        /*-removed by KaranSinghSoni 7 Sep 2020 */
+         string departmentId = 'Aureus Academy'; 
         
         string body;
         string response;
@@ -2614,7 +2633,7 @@ Public without sharing class SageIntacctIntegrationUtility{
             }
         }else{
             invoice.Sage_Error_Message__c = rw.errorMsg;
-        }*/           
+        }/*-removed by KaranSinghSoni 7 Sep 2020 */           
         return invoice;
     }
     
@@ -2622,7 +2641,8 @@ Public without sharing class SageIntacctIntegrationUtility{
         
         resultWrapper rw = new resultWrapper();
         
-        /*string departmentId = 'Aureus Academy'; 
+        /*-removed by KaranSinghSoni 7 Sep 2020 */
+        string departmentId = 'Aureus Academy'; 
         
         string body;
         string response;
@@ -3153,7 +3173,7 @@ Public without sharing class SageIntacctIntegrationUtility{
         }else{
             rw.isSuccess = false;
             rw.errorMsg = 'Invoice not found.';
-        }*/
+        }/*-removed by KaranSinghSoni 7 Sep 2020 */
                  
         return rw;
     }
@@ -3162,7 +3182,8 @@ Public without sharing class SageIntacctIntegrationUtility{
         
         resultWrapper rw = new resultWrapper();
         
-        /*string departmentId = 'Aureus Academy'; 
+        /*-removed by KaranSinghSoni 7 Sep 2020 */
+        string departmentId = 'Aureus Academy'; 
         
         string body;
         string response;
@@ -3568,7 +3589,7 @@ Public without sharing class SageIntacctIntegrationUtility{
         }else{
             rw.isSuccess = false;
             rw.errorMsg = 'Invoice not found.';
-        }*/
+        }/*-removed by KaranSinghSoni 7 Sep 2020 */
                  
         return rw;
     }
@@ -3576,7 +3597,8 @@ Public without sharing class SageIntacctIntegrationUtility{
     //This function is used to apply credits for voided invoices
     public static resultWrapper applyCreditToInvoice(SessionWrapper sw, Invoice__c invoice, String creditMemoKey){
         resultWrapper rrw = new resultWrapper();    
-        /*if(sw.sessionId!=null && sw.sessionId.trim().length()>0){
+        /*-removed by KaranSinghSoni 7 Sep 2020 */
+         if(sw.sessionId!=null && sw.sessionId.trim().length()>0){
             HttpRequest req = new HttpRequest();
             req.setMethod('POST');
             req.setEndpoint(sw.endPointUrl);
@@ -3680,13 +3702,14 @@ Public without sharing class SageIntacctIntegrationUtility{
                     }
                 }
             }
-        }*/
+        }/*-removed by KaranSinghSoni 7 Sep 2020 */
         return rrw;
     }
     
     public static resultWrapper fetchARInvoiceKey(SessionWrapper sw, string orderEntryKey){
         resultWrapper rrw = new resultWrapper();    
-        /*if(sw.sessionId!=null && sw.sessionId.trim().length()>0){
+        /*-removed by KaranSinghSoni 7 Sep 2020 */
+         if(sw.sessionId!=null && sw.sessionId.trim().length()>0){
             HttpRequest req = new HttpRequest();
             req.setMethod('POST');
             req.setEndpoint(sw.endPointUrl);
@@ -3792,13 +3815,14 @@ Public without sharing class SageIntacctIntegrationUtility{
                     }
                 }
             }
-        }*/  
+        }/*-removed by KaranSinghSoni 7 Sep 2020 */  
         return rrw;
     }
     
     public static string fetchVATprocessStatus(SessionWrapper sw, string invoiceNumber){
         string status = '';
-        /*if(sw.sessionId!=null && sw.sessionId.trim().length()>0){
+        /*-removed by KaranSinghSoni 7 Sep 2020 */
+          if(sw.sessionId!=null && sw.sessionId.trim().length()>0){
             HttpRequest req = new HttpRequest();
             req.setMethod('POST');
             req.setEndpoint(sw.endPointUrl);
@@ -3880,13 +3904,14 @@ Public without sharing class SageIntacctIntegrationUtility{
                     }
                 }
             }
-        }*/
+        }/*-removed by KaranSinghSoni 7 Sep 2020 */
         return status;
     }
     
     public static resultWrapper applyARPayment(SessionWrapper sw,Invoice__c invoice){
         resultWrapper rw = new resultWrapper();
-        /*if(sw.sessionId!=null && sw.sessionId.trim().length()>0){
+        /*-removed by KaranSinghSoni 7 Sep 2020 */
+         if(sw.sessionId!=null && sw.sessionId.trim().length()>0){
             if(invoice!=null && invoice.Id!=null){
                 if(invoice.Invoice_Date__c!=null){
                     if(invoice.Discount_Amount__c>0){
@@ -3994,7 +4019,7 @@ Public without sharing class SageIntacctIntegrationUtility{
                     }
                 }
             }
-        }*/
+        }/*-removed by KaranSinghSoni 7 Sep 2020 */
         return rw;
     }
 }

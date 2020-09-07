@@ -22,8 +22,8 @@ public class MonthlyPaymentBatchHelper{
         String payCreditRecType = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get(ConstantsClass.paymentAsCredit).getRecordTypeId();    
         
         //Map Of Countries of the centre's
-        Map<String, Country__c> mapOfCountries = BillingUtility.getCountryMap('');
-        
+       // Map<String, Country__c> mapOfCountries = BillingUtility.getCountryMap('');
+        Map<String,Organisation__c>organisationMap = BillingUtility.getOrganisationMap('');
         for(Stripe_Declined_Code__mdt decMdt : [Select Label From Stripe_Declined_Code__mdt]){
             declinedSet.add(decMdt.Label);
         } 
@@ -32,18 +32,24 @@ public class MonthlyPaymentBatchHelper{
                                                     FROM EmailTemplate 
                                                     WHERE DeveloperName ='Payment_Collection_Failed'];
         system.debug('@@listOfEmailTemplate'+listOfEmailTemplate);
-        system.debug(listOfInvoice);
         List<Messaging.SingleEmailMessage> sendSingleEmailMessage = new List<Messaging.SingleEmailMessage>();
         for(Invoice__c objInvoice : listOfInvoice){
             Stripe_Payment_Log__c iLog = new Stripe_Payment_Log__c();
-            system.debug('In loop 1');
             try{
+               // start:comment by nishi:24-aug-2020:Organisation wise charge as per new logic
                 //Country Object to store the country object for the perticular Invoice...
-                Country__c countryObj = new Country__c();
-                if(mapOfCountries.containsKey(objInvoice.Center__r.Country__c)){
-                    countryObj = mapOfCountries.get(objInvoice.Center__r.Country__c);
+               // Country__c countryObj = new Country__c();
+                // if(mapOfCountries.containsKey(objInvoice.Center__r.Country__c)){
+                //     countryObj = mapOfCountries.get(objInvoice.Center__r.Country__c);
+                // }
+                 // end:comment by nishi:24-aug-2020:Organisation wise charge as per new logic
+                Organisation__c organisationObj = new Organisation__c();
+                if(organisationMap.containsKey(objInvoice.Center__r.Organisation__c)){
+                    organisationObj = organisationMap.get(objInvoice.Center__r.Organisation__c);
                 }
-                System.debug('In Loop');
+                 //End: added by nishi:17-aug-2020: for related to Ossia Organisation Center  then we manage facility fees
+
+                /* // start:comment by nishi:24-aug-2020:Organisation wise charge as per new logic
                 if(objInvoice.Balance_Amount__c >= 0.30 && String.isNotBlank(countryObj.Id) && String.isNotBlank(countryObj.Currency_Code__c) 
                     && String.isNotBlank(countryObj.Stripe_Base_Url__c) && String.isNotBlank(countryObj.Stripe_Secret_Key__c)){
                     BillingUtility.StripeCharge objStripeCharge = BillingUtility.createChargeForCustomerWithInvoice(
@@ -51,6 +57,15 @@ public class MonthlyPaymentBatchHelper{
                                                                     objInvoice.Balance_Amount__c, countryObj.Currency_Code__c,
                                                                     objInvoice.Name, countryObj.Stripe_Base_Url__c, 
                                                                     countryObj.Stripe_Secret_Key__c);
+                //// end:comment by nishi:24-aug-2020:Organisation wise charge as per new logic
+                */
+                if(objInvoice.Balance_Amount__c >= 0.30 && String.isNotBlank(organisationObj.Id) && String.isNotBlank(organisationObj.Country__r.Currency_Code__c) 
+                && String.isNotBlank(organisationObj.Stripe_Base_Url__c) && String.isNotBlank(organisationObj.Stripe_Secret_Key__c)){
+                BillingUtility.StripeCharge objStripeCharge = BillingUtility.createChargeForCustomerWithInvoice(
+                                                                objInvoice.Parent_Account__r.Stripe_Customer_Id__c,
+                                                                objInvoice.Balance_Amount__c, organisationObj.Country__r.Currency_Code__c,
+                                                                objInvoice.Name, organisationObj.Stripe_Base_Url__c, 
+                                                                organisationObj.Stripe_Secret_Key__c);                                                   
                     System.debug('@@@objStripeCharge'+objStripeCharge);
                     if(objStripeCharge.statusCode == 200 && objStripeCharge.paid){
                         objInvoice.status__c = ConstantsClass.paidStatus;
@@ -253,7 +268,7 @@ public class MonthlyPaymentBatchHelper{
         return datesMap;
     }
     /*
-    // this method create next 4 appointment for that enrolment.
+	// this method create next 4 appointment for that enrolment.
     public static void createNextAppointments(List<Enrolment__c> listOfEnrolment){
         String lessonRecorType = Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get('Lesson').getRecordTypeId();
         List<Booking__c> listOfBookings = new List<Booking__c>();

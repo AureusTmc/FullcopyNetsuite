@@ -15,36 +15,45 @@
             @media(min-width:768px){
             .vh-lg{height:100vh;}
             }
+            
+            <!--Juneid-18 Aug 2020, For ossia Organization-->
+            .btn-red, .btn-red:hover, .btn-red:focus {
+            background-color:#ed1c24;
+            color:#fff;
+            font-size:1.2rem;
+            display:block;
+            }
         </style>
     </head>
     <body class="">
         <apex:form id="frm">
             <apex:actionFunction name="redirectToEnrolment"  action="/apex/searchtrial_ipad?country={!countryCode}" />
-          <!--  <apex:actionFunction name="redirectToTrial"  action="/apex/freetrialprocess?country={!countryCode}" />-->
-            <apex:actionFunction name="redirectToTrial"  action="/apex/freetrial_ipad1?country={!countryCode}" />
-            <apex:actionFunction name="redirectToInstrumentRentalRequest"  action="/apex/instrumentrental_ipad2?country={!countryCode}" />
+            <!--  <apex:actionFunction name="redirectToTrial"  action="/apex/freetrialprocess?country={!countryCode}" />-->
+            <apex:actionFunction name="redirectToTrial"  action="/apex/freetrial_ipad1?org={!org}&country={!countryCode}" />
+              <apex:actionFunction name="redirectToInstrumentRentalRequest"  action="/apex/instrumentrental_ipad2?country={!countryCode}" />
             <apex:actionFunction name="redirectToInstrumentRental"  action="/apex/SearchInstrumentRental_Ipad1?country={!countryCode}" />
-            <apex:actionFunction name="redirectToCampEnrolment"  action="/apex/AllCampEnrolment_MultiStudents" />
-            
+            <apex:actionFunction name="redirectToCampEnrolment"  action="/apex/AllCampEnrolment_MultiStudents?country={!countryCode}&org={!org}" />
             <div class="slds-grid slds-grid_vertical-align-center slds-grid_align-center slds-p-vertical_xx-large">
                 <div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-text-align_center slds-large-order_2 slds-p-bottom_large">
-                    <h3 class="slds-text-heading_large" style="font-weight:bold;">Welcome to Aureus Academy {!countryName}!</h3>
+                    <!--@Juneid 18 Aug 2020, Organization wise header chnage -->
+                    <h3 class="slds-text-heading_large" style="font-weight:bold;">{!IF(org=='ossia','Welcome to Ossia Music School !','Welcome to Aureus Academy ' + countryName)}</h3>
                 </div>
             </div>
             <div class="slds-grid slds-grid_vertical-align-center slds-grid_align-center slds-p-vertical_xx-large">
                 <div class="slds-size_11-of-12 slds-medium-size_2-of-3 slds-large-size_1-of-3">
-                    <a href="#" class="slds-button btn-yellow slds-p-around_x-small slds-m-bottom_large" onclick="redirectToTrial();"  style="">New Trial Lesson</a>
-                    <a href="#" class="slds-button btn-yellow slds-p-around_x-small slds-m-bottom_large" onclick="redirectToEnrolment();" style="">New Enrolment</a>
-                    <a href="#" class="slds-button btn-yellow slds-p-around_x-small slds-m-bottom_large" style="">Re-Enrol Customer</a>
-                    <a href="#" class="slds-button btn-yellow slds-p-around_x-small slds-m-bottom_large" onclick="redirectToInstrumentRentalRequest();" style="">Piano Viewing Request</a>
-                    
-                    <!--CH01 Karan Singh Soni 25 Aug 2020 changing the label
+                    <!--@Juneid 18 Aug 2020, Color chnage as per organization wise -->
+                    <a href="#" class="{!IF(org=='ossia','slds-button btn-red slds-p-around_x-small slds-m-bottom_large','slds-button btn-yellow slds-p-around_x-small slds-m-bottom_large')}"  onclick="redirectToTrial();"  style="">New Trial Lesson</a>
+                    <a href="#" class="{!IF(org=='ossia','slds-button btn-red slds-p-around_x-small slds-m-bottom_large','slds-button btn-yellow slds-p-around_x-small slds-m-bottom_large')}" onclick="redirectToEnrolment();" style="">New Enrolment</a>
+                    <a href="#" class="{!IF(org=='ossia','slds-button btn-red slds-p-around_x-small slds-m-bottom_large','slds-button btn-yellow slds-p-around_x-small slds-m-bottom_large')}" style="">Re-Enrol Customer</a>
+                     <a href="#" class="{!IF(org=='ossia','slds-button btn-red slds-p-around_x-small slds-m-bottom_large','slds-button btn-yellow slds-p-around_x-small slds-m-bottom_large')}" onclick="redirectToInstrumentRentalRequest();" style="">Piano Viewing Request</a>
+                      <!--CH01 Karan Singh Soni 25 Aug 2020 changing the label
                     <a href="#" class="slds-button btn-yellow slds-p-around_x-small slds-m-bottom_large" onclick="redirectToInstrumentRental();" style="">Piano Rental or Purchase</a>-->
-                    <a href="#" class="slds-button btn-yellow slds-p-around_x-small slds-m-bottom_large" onclick="redirectToInstrumentRental();" style="">Piano Rental</a>
+                    <a href="#" class="{!IF(org=='ossia','slds-button btn-red slds-p-around_x-small slds-m-bottom_large','slds-button btn-yellow slds-p-around_x-small slds-m-bottom_large')}" onclick="redirectToInstrumentRental();" style="">Piano Rental</a>
                     <!-- CH01 -->
                     
-                    <a href="#" class="slds-button btn-yellow slds-p-around_x-small slds-m-bottom_large" onclick="redirectToCampEnrolment();" style="">Enrol Camp</a>
-                </div>
+                    <a href="#" class="{!IF(org=='ossia','slds-button btn-red slds-p-around_x-small slds-m-bottom_large','slds-button btn-yellow slds-p-around_x-small slds-m-bottom_large')}" onclick="redirectToCampEnrolment();" style="">Enrol Camp</a>
+                                         
+</div>
             </div>
         </apex:form>
     </body>

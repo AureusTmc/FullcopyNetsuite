@@ -24,16 +24,16 @@
     <apex:includeScript value="{!$Resource.aljs}"/>
     <apex:includeScript value="{!$Resource.datepicker}"/>
     <apex:slds />
+     <!-- Added by Nishi:start: 17-Jul-2020: for manage Ossian Organization students -->
+     <c:OssianCalendarCMP />
+     <!-- Added by Nishi:end: 17-Jul-2020: for manage Ossian Organization students -->
+    
     <c:ClassEditCMP />
     <!--Commented by Jatin: 11_mar-2020: for Depolyment
         " <c:PianoRentalEditCalendarCMP />-->
-    <!--Start:UnCommented by Nishi: 27_Jul-2020: for new Changes-->
-    <!-- <c:PianoRentalEditCalendarCMP /> -->
-    <!--End:UnCommented by Nishi: 27_Jul-2020: for new Changes-->
-    <c:FifthLessonCMP /> 
+    <c:FifthLessonCMP />
     <c:aureusCalendarCMP />
-    
-        <script> 
+        <script>
             // 29-feb-2020: jatin: set timeout :By default, the response of the remote call must return within 30 seconds, after which the call will time out. 
             //If your request needs longer to complete, configure a longer timeout, up to 120 seconds.
             Visualforce.remoting.timeout = 60000; // Set timeout at page level

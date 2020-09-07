@@ -19,7 +19,7 @@
                 font-family: 'Lato', sans-serif !important;
             font-size:16px;
             }
-            @media(min-width:991px){.class-true{margin:0px 120px;} .m-lg-4{margin-right:35px;}}
+        	@media(min-width:991px){.class-true{margin:0px 120px;} .m-lg-4{margin-right:35px;}}
             .icon-collapse,.icon-collapse:focus, .icon-collapse:hover {color:#000; font-weight:bold; font-size:26px;text-decoration: none;}
             input{
             height: calc(1.875rem + (1px * 10));}
@@ -165,32 +165,32 @@
                 border-left: 2px solid #F44336;          
             }  
             .f-title {
-                font-size: 14px !important;
+            	font-size: 14px !important;
             } 
             .student-policy-class
             {
                 height: 260px;
-                overflow-y: scroll;
+    			overflow-y: scroll;
             }
         </style>      
         <script>
-            //CH01 Karan Singh
-            function bypassPandaDocValidation( bypassChckBox){
-            
-            if(bypassChckBox.checked){
-                $('#payBtn').removeClass('disableButton');
-                $('#payNowAlrdyCstmr').removeClass('disableButton');
-                $('#payAmericanCstmr').removeClass('disableButton');
-                 $('#signAgreementBtn').addClass('disableButton');
-                
-            }else{
-                $('#payBtn').addClass('disableButton');
-                $('#payNowAlrdyCstmr').addClass('disableButton');
-                $('#payAmericanCstmr').addClass('disableButton');
-                 $('#signAgreementBtn').removeClass('disableButton');
-            }
-        }
-        //CH01 end
+            //CH01 Karan Singh	
+            function bypassPandaDocValidation( bypassChckBox){	
+            	
+                if(bypassChckBox.checked){	
+                    $('#payBtn').removeClass('disableButton');	
+                    $('#payNowAlrdyCstmr').removeClass('disableButton');	
+                    $('#payAmericanCstmr').removeClass('disableButton');	
+                     $('#signAgreementBtn').addClass('disableButton');	
+                        
+                }else{	
+                    $('#payBtn').addClass('disableButton');	
+                    $('#payNowAlrdyCstmr').addClass('disableButton');	
+                    $('#payAmericanCstmr').addClass('disableButton');	
+                     $('#signAgreementBtn').removeClass('disableButton');	
+                }	
+            }	
+            //CH01 end
             $(document).ready(function() { 
                 //Increase years in date picker
                 var select = document.getElementById('calYearPicker');
@@ -205,10 +205,11 @@
         </script>
     </head>
     <body class="">
-         <apex:outputPanel rendered="{!isSiteGuestUser}">     
-             <div  class="slds-p-around_medium" style="font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;">Aureus Academy Enrolment Process       
+    	 <apex:outputPanel rendered="{!isSiteGuestUser}">     
+             <!--@Juneid 20,Aug 2020, Organization wise condition -->
+             <div  class="slds-p-around_medium" style="font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;">{!IF(isOssia,'Ossia Music School','Aureus Academy Enrolment')} Process       
              </div>
-             <p style="text-align:center;"><apex:image url="{!$Resource.Aureus_logo_png}" /></p>
+             <p style="text-align:center;"><apex:image url="{!iF(isOssia,$Resource.Osia_Logo,$Resource.Aureus_logo_png)}" /></p>
          </apex:outputPanel>    
          <div id="step-3" class="container slds-p-around_small slds-large-p-around_large {!IF(isSiteGuestUser, 'class-true','')}">
                 <apex:form id="frm">
@@ -239,7 +240,7 @@
                      
                      <apex:actionFunction name="getSession" status="spinner" action="{!createSession}" reRender="framePanel,enrolBillDetailsPanel" oncomplete="showModal();"/>
                      <apex:actionFunction name="sendAgreement" status="spinner" action="{!sendAgreement}" oncomplete="getSession();return false;"/>
-                     <apex:actionFunction name="waitAgreement" status="spinner" action="{!waitAgreement}" reRender="frm" oncomplete="sendAgreement();return false;"/>
+                         <apex:actionFunction name="waitAgreement" status="spinner" action="{!waitAgreement}" reRender="frm" oncomplete="sendAgreement();return false;"/>
                      <apex:actionFunction name="signAgreement" status="spinner" action="{!signAgreement}" oncomplete="waitForTwoSecond();return false;"/>   
                      <apex:actionFunction name="updateCustomer" status="spinner" action="{!updateCstmrDetail}" reRender="enrolBillDetailsPanel" oncomplete="signAgreement();return false;" />
                      <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error slds-hide cmpErrDiv"  style="margin-bottom: 6px;"  role="alert">
@@ -425,8 +426,8 @@
                     </div>
                     <apex:outputPanel id="parentDetailsPanel">
                         <script>
-                            checkRequiredPostalCode('{!enrolDetails.parent.country}');
-                        </script>
+    				  		checkRequiredPostalCode('{!enrolDetails.parent.country}');
+                      	</script>
                         <div class="parentdetails">
                             <div class="slds-grid slds-wrap slds-p-top_large">
                                 <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
@@ -553,7 +554,7 @@
                     </div>
                     <div class="policyform">
                         <div class="slds-grid">
-                            <div class="slds-size_11-of-12"><p>By checking this box and enrolling into Aureus Academy, you agree to all of our policies and accept that they may be subject to change. To see our full policies, please see below or click here. </p>
+                            <div class="slds-size_11-of-12"><p>By checking this box and enrolling into {!IF(isOssia,'Ossia Music School','Aureus Academy')}, you agree to all of our policies and accept that they may be subject to change. To see our full policies, please see below or click here. </p>
                             </div>
                             <div class="slds-size_1-of-12">
                                 <div dir="rtl">
@@ -581,22 +582,22 @@
                             <div class="slds-form-element__control">
                                 <div class="terms-info">
                                     <c:StudentPolicyForHK rendered="{!cntryName=='HK'}"/>
-                                    <c:StudentPolicyForSg rendered="{!cntryName!='HK'}"/>
+                                    <c:StudentPolicyForSg rendered="{!cntryName!='HK' && isOssia!=True }"/>
+                                    <!--@Juneid 20 Aug 2020, For Ossia Student policy-->
+                                    <c:StudentPolicyForOssia rendered="{!isOssia==True}"/>
                                 </div>
                             </div>
                         </div>
                         <div class="slds-grid slds-grid_align-center slds-p-top_x-large">
                             <div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-medium-size_1-of-2">
-                                
-                                <!-- CH01 Karan Singh for bypass validation -->
-                                <apex:outputPanel rendered="{!isPandaDocUnderMaintance}">
-                                    <div class="slds-align_absolute-center" id="pandaDocByPass">
-                                        <apex:inputCheckbox onclick="bypassPandaDocValidation(this);" value="{!isCustmrOptedOfflineSign}" />
-                                        &nbsp;&nbsp;<span>Click here to sign offline</span>  
-                                    </div> 
-                                </apex:outputPanel>
+                                  <!-- CH01 Karan Singh for bypass validation -->	
+                                  <apex:outputPanel rendered="{!isPandaDocUnderMaintance}">	
+                                    <div class="slds-align_absolute-center" id="pandaDocByPass">	
+                                        <apex:inputCheckbox onclick="bypassPandaDocValidation(this);" value="{!isCustmrOptedOfflineSign}" />	
+                                        &nbsp;&nbsp;<span>Click here to sign offline</span>  	
+                                    </div> 	
+                                </apex:outputPanel>	
                                <!-- CH01 END -->
-                                
                                 <a class="slds-button btn-block slds-button_success  slds-p-around_x-small slds-m-bottom_large" href="#" id="signAgreementBtn" onclick="updateCustomer();return false;">Click Here to Sign</a>
                             </div>
                         </div>
@@ -634,7 +635,7 @@
                                     <div class="slds-col slds-large-size_1-of-3 slds-text-align_right  slds-p-bottom_small">
                                         <p>${!enrolDetails.feeModelObj[enrolment].prgFees} 
                                            <span style="{!IF(enrolDetails.billingDetails.gstTot > 0,'','display:none;')}">(T)</span>
-                                        </p>
+                                		</p>
                                     </div>
                                 </div>
                                 <div class="slds-grid slds-wrap">
@@ -646,25 +647,34 @@
                                     </div>
                                 </div>
                                 <apex:outputPanel rendered="{!enrolDetails.feeModelObj[enrolment].refrelDiscount > 0}">
-                                 <div class="slds-grid slds-wrap">
-                                    <div class="slds-col slds-large-size_2-of-3 slds-p-bottom_small">
-                                        <p style="Color:#3ECF8E">Referral Discount</p>
+                                    <div class="slds-grid slds-wrap">
+                                        <div class="slds-col slds-large-size_2-of-3 slds-p-bottom_small">
+                                            <p style="Color:#3ECF8E">Referral Discount</p>
+                                        </div>
+                                        <div class="slds-col slds-large-size_1-of-3 slds-text-align_right  slds-p-bottom_small">
+                                            <p style="Color:#3ECF8E">(${!enrolDetails.feeModelObj[enrolment].refrelDiscount}) </p>
+                                        </div>
                                     </div>
-                                    <div class="slds-col slds-large-size_1-of-3 slds-text-align_right  slds-p-bottom_small">
-                                        <p style="Color:#3ECF8E">(${!enrolDetails.feeModelObj[enrolment].refrelDiscount}) </p>
-                                    </div>
-                                </div>
                                 </apex:outputPanel>
+                                <!--<apex:outputPanel rendered="{!enrolDetails.feeModelObj[enrolment].facilityFee > 0}">
+                                    <div class="slds-grid slds-wrap">
+                                        <div class="slds-col slds-large-size_2-of-3 slds-p-bottom_small">
+                                            <p>Facility Fee</p>
+                                        </div>
+                                        <div class="slds-col slds-large-size_1-of-3 slds-text-align_right  slds-p-bottom_small">
+                                            <p>${!enrolDetails.feeModelObj[enrolment].facilityFee}</p>
+                                        </div>
+                                    </div>
+                                </apex:outputPanel>-->
                                 <div class="slds-grid slds-wrap">
                                     <div class="slds-col slds-large-size_2-of-3 slds-p-bottom_small">
                                         <p>Registration Fee</p>
                                     </div>
                                     <div class="slds-col slds-large-size_1-of-3 slds-text-align_right  slds-p-bottom_small">
                                         <p>${!enrolDetails.feeModelObj[enrolment].regiFees} 
-                                            <span style="{!IF(enrolDetails.billingDetails.gstTot > 0,'','display:none;')}">(T)</span>
-                                        </p>
+                      						<span style="{!IF(enrolDetails.billingDetails.gstTot > 0,'','display:none;')}">(T)</span>
+                      					</p>
                                     </div>
-                                    
                                 </div>
                                 <hr class="slds-m-vertical_x-large" />
                             </apex:repeat>
@@ -749,7 +759,8 @@
                     <form method="post" id="payment-form">
                         <div class="slds-p-around_small slds-col slds-size_1-of-1 slds-p-horizontal_medium"  style="background-color: #f2f2f2;">
                             <p><b>Card Detail</b></p>
-                            <p style="padding:8px 0px;">The payment methods accepted at Aureus Academy are credit cards via Visa, Mastercard, and American Express.</p>
+                            <!-- Juneid 20 Aug 2020, For cheking Organization-->
+                            <p style="padding:8px 0px;">The payment methods accepted at {!IF(isOssia,'Ossia Music School','Aureus Academy')} are credit cards via Visa, Mastercard, and American Express.</p>
                             <div id="card-element">
                             </div>
                             <div id="card-errors" role="alert"></div>
@@ -822,8 +833,8 @@
                                 $('.contentErrorDiv').html(errorMsg);
                             }
                         }
-                        
-                        function checkError(){
+                    	
+                    	function checkError(){
                             var isErrOnSave = '{!isError}'; 
                             
                             if(isErrOnSave == 'true'){
@@ -840,7 +851,7 @@
                 </apex:outputPanel>                            
                                             
                 <script>
-                      checkRequiredPostalCode('{!enrolDetails.parent.country}');
+    				  checkRequiredPostalCode('{!enrolDetails.parent.country}');
                                
                       var eventMethod = window.addEventListener ? 'addEventListener' : 'attachEvent',
                       messageEvent = eventMethod === 'attachEvent' ? 'onmessage' : 'message';
@@ -1034,9 +1045,8 @@
                         $('#payBtn').removeClass('disableButton');
                         $('#payNowAlrdyCstmr').removeClass('disableButton');
                         $('#payAmericanCstmr').removeClass('disableButton');  
-                          
-                          //CH01 Karan Singh Soni if once pandaDoc is Signed then user should not opt for offline signing
-                           $('#pandaDocByPass').addClass('slds-hide');
+                          //CH01 Karan Singh Soni if once pandaDoc is Signed then user should not opt for offline signing	
+                          $('#pandaDocByPass').addClass('slds-hide');	
                           //CH01 End
                       }
                       
@@ -1064,7 +1074,7 @@
                           }
                       }
     
-                      function sendEmail(){
+    				  function sendEmail(){
                           var blockingHour = {!$Label.Enrolment_expiry_period};
                           var confirmMessage = 'Please note this action will block the timeslot for '+blockingHour+' hours. Do you still want  to send an email';
                           if (confirm(confirmMessage)) {
@@ -1072,13 +1082,13 @@
                           }
                       }
     
-                    function checkRequiredPostalCode(cntryVal){
+    				function checkRequiredPostalCode(cntryVal){
                         if(cntryVal && cntryVal == 'HK'){
                             $('.postalCode').removeClass('requiredInput');
                             $('.address').css('background-color', '#fff');
                             $('.city').css('background-color', '#fff');
                         }else{
-                            $('.postalCode').addClass('requiredInput');
+                        	$('.postalCode').addClass('requiredInput');
                             $('.address').css('background-color', '#e0dddb');
                             $('.city').css('background-color', '#e0dddb');
                         }

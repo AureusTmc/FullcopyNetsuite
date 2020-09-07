@@ -245,6 +245,11 @@
             width: 100% !important;
             overflow-x: scroll !important;
         }
+         .custom-Btn_ossia {
+             background-color: #ed1c24 !important;
+        	color: white !important;
+        	cursor: default;
+        }
     </style>
     <apex:actionFunction name="saveParentCardDetailsAndGenerateInvoice" action="{!saveParentCardDetailsAndGenerateInvoice}" reRender="enrolBillDetailsPanel"
         oncomplete="checkError('{!isError}','{!errorMsg}');return false;" status="spinner">
@@ -657,7 +662,7 @@ Camp Day - {!objcampDay.CampDay} -
                             <div class="policyform">
                                 <div class="slds-grid">
                                     <div class="slds-size_11-of-12">
-                                        <p>By checking this box and enrolling into Aureus Academy, you agree to all of our policies
+                                        <p>By checking this box and enrolling into {!IF(isOssia,'Ossia Music School','Aureus Academy')}, you agree to all of our policies
                                             and accept that they may be subject to change. To see our full policies, please
                                             see below or click here. </p>
                                     </div>
@@ -666,9 +671,9 @@ Camp Day - {!objcampDay.CampDay} -
                                             <div class="slds-form-element">
                                                 <div class="slds-form-element__control">
                                                     <div class="slds-checkbox slds-text-heading_medium">
-                                                        <!--<input id="policyAgree" name="options" type="checkbox" value="checkbox-11"  class="inputchk"/>-->
-                                                        <apex:inputCheckbox value="{!agreementCheckbox}" id="policyAgree" styleclass="inputchk" style="position: absolute;"/>
-                                                        <label class="slds-checkbox__label" for="j_id0:frm:j_id98:j_id99:j_id124:j_id125:policyAgree">
+                                                        <!--  <input id="policyAgree" name="options" type="checkbox" value="checkbox-11"  class="inputchk"/>-->
+                                                      <apex:inputCheckbox value="{!agreementCheckbox}" id="policyAgree" styleclass="inputchk" style="position: absolute;"/>
+                                                        <label class="slds-checkbox__label" for="j_id0:frm:j_id98:j_id99:j_id114:j_id115:policyAgree">
                                                             <span class="slds-checkbox_faux"></span>
                                                         </label>
                                                     </div>
@@ -686,8 +691,10 @@ Camp Day - {!objcampDay.CampDay} -
 </p>-->
                                     <div class="slds-form-element__control">
                                         <div class="terms-info">
+                                            <!--Juneid 28 Aug 2020, Org wise Policy -->
                                             <c:StudentPolicyForHK rendered="{!EnrolStudentDetails.objCountry.name=='HK'}" />
-                                            <c:StudentPolicyForSg rendered="{!EnrolStudentDetails.objCountry.name!='HK'}" />
+                                            <c:StudentPolicyForSg rendered="{!EnrolStudentDetails.objCountry.name!='HK' && isOssia ==False}" />
+                                            <c:StudentPolicyForOssia rendered="{!isOssia}" />
                                         </div>
                                     </div>
                                 </div>
@@ -815,7 +822,8 @@ Camp Day - {!objcampDay.CampDay} -
 
                                     <div class="slds-grid slds-grid_align-center slds-p-vertical_x-large">
                                         <div class="slds-size_1-of-1 slds-large-size_1-of-3 slds-medium-size_1-of-2">
-                                            <button id="SiteGuestUserpayBtn" class="slds-button btn-block slds-button_success custom-Btn slds-p-around_x-small slds-m-bottom_large disableButton">
+                                              <!--Juneid 28 Aug 2020 Ossia Css -->
+                                            <button id="SiteGuestUserpayBtn" class="slds-button btn-block slds-button_success {!IF(isOssia,'custom-Btn_ossia','custom-Btn')} slds-p-around_x-small slds-m-bottom_large disableButton">
                                                 Complete Enrolment
                                                 <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
                                                     <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
@@ -1158,6 +1166,8 @@ Camp Day - {!objcampDay.CampDay} -
             console.log('errorMessage', errorMessage);
             $('#payBtn').css('pointer-events', 'none');
             $('#payAmericanCstmr').css('pointer-events', 'none');
+            //Juneid 29 Aug 2020, Org wwise conditions -->
+            var isOssia ='{!isOssia}';
             if (isErrOnSave == 'true') {
                // $("#payBtn").css('pointer-events', '');
                 $('.paymentCmpErrDiv').removeClass('slds-hide');
@@ -1168,9 +1178,9 @@ Camp Day - {!objcampDay.CampDay} -
                 $('.paymentCmpErrDiv').addClass('slds-hide');
                 var isSiteGuestUser = {!isSiteGuestUser};
                 if(isSiteGuestUser){
-                    window.location.href = "/apex/thankyoupage";
+                    window.location.href = "/apex/thankyoupage?isOssia="+isOssia;
                 }else{
-                    window.location.href = "/apex/thankyoupage_ipad";
+                    window.location.href = "/apex/thankyoupage_ipad?isOssia="+isOssia;
                 }
             }
         }

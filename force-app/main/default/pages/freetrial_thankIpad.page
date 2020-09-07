@@ -1,4 +1,17 @@
 <apex:page showHeader="false" standardStylesheets="false" sidebar="false" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False">
+    <style>
+        <!--@juneid 21 Aug 2020, ossia Org Css-->
+        form .custom-btn_Ossia {
+        padding: 5px 10px 3px !important;
+        color: #fff !important;
+        background: #ed1c24 !important;
+        font-size: 16px !important;
+        text-transform: uppercase;
+        line-height: 20px !important;
+        margin: 15px 0 20px;
+        float:right;
+        }
+    </style>
     <head>
         <title>Music SCHOOL</title>
        <!-- <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous"/>-->
@@ -6,7 +19,7 @@
         <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}"/>
     </head>
     
-    <body class="slds-scope" style=" width: 100%;">
+    <body class="slds-scope" style=" width: 100%;" >
         <div class="-content">
             <div class="slds-grid slds-wrap slds-grid--pull-padded0 slds-grid--align-center container">
                 
@@ -15,8 +28,8 @@
                 <div class="slds-col content-box">
                 
                     <div class="header slds-col"><div class="slds-col">
-                    <h2 style="text-align: center;font-size: 26px;/* margin-bottom: 20px; */line-height: normal;font-weight: bold;">Welcome to</h2>
-                    <a href="#" class="logo"><!--<img src="https://aureusacademy.com/wp-content/uploads/2017/03/cropped-Aureus-Logo-Small.png"/>--><apex:image url="{!$Resource.Aureus_logo_png}" /></a></div>
+                    <h2 style="text-align: center;font-size: 26px;/* margin-bottom: 20px; */line-height: normal;font-weight: bold;">Welcome to </h2>
+                    <a href="#" class="logo"><!--<img src="https://aureusacademy.com/wp-content/uploads/2017/03/cropped-Aureus-Logo-Small.png"/>--><apex:image url="{!iF($CurrentPage.parameters.org=='osia',$Resource.Osia_Logo,$Resource.Aureus_logo_png)}" /></a></div>
                         
                     </div>
                     <apex:form styleclass="slds-col">
@@ -36,7 +49,7 @@
                                 </div>
                             </div>
                         </div>
-                        <center><a href="#" onclick="redirectToAdminHome();" class="slds-button custom-btn" style="float:none;">Click here to go back Home</a></center>
+                        <center><a href="#" onclick="redirectToAdminHome();" class="slds-button  {!IF($CurrentPage.parameters.org=='osia','custom-btn_Ossia','custom-btn')}" style="float:none;">Click here to go back Home</a></center>
                         <!-------  Fourth block  End ------------------->
                     </apex:form>
                 </div>
@@ -45,11 +58,11 @@
     </body>
     <style>
         body{
-        background-image: url("{!$Resource.music}") !important;
+        <!--background-image: url("{!$Resource.music}") !important;-->
         background-size:100% 100% !important;
         background-repeat:no-repeat !important;
         background-position:left !important;
-        background-color: #f3613c !important;
+        background-color: #f6f9fc !important;
         
         }
         .container {

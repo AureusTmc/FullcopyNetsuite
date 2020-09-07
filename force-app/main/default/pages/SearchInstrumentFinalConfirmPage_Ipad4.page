@@ -163,7 +163,7 @@
             />
             <apex:actionFunction name="sendAgreement" status="spinner" action="{!sendAgreement}" oncomplete="getSession();return false;"
             />
-            <apex:actionFunction name="getSession" status="spinner" action="{!createSession}" reRender="framePanel,refreshScript" oncomplete="showModal();"
+            <apex:actionFunction name="getSession" status="spinner" action="{!createSession}" reRender="framePanel" oncomplete="showModal();"
             />
             <apex:actionFunction name="createSessForAureusRep" status="spinner" action="{!createSessForAureusGrp}" reRender="framePanel"
                 oncomplete="showModal();" />
@@ -499,14 +499,7 @@
                 <apex:outputPanel rendered="{!isRentalOrSellType=='Rent'}">
                     <div class="slds-grid slds-wrap">
                         <div class="slds-size_6-of-12 slds-large-size_1-of-2 slds-p-bottom_small">
-                             <!-- //Start: nishi: 27-Jul-2020: Existing Student – one month (with any active enrolment) ; 
-                            others – two months
                             <p class="">Deposit (1-month)</p>
-                            -->
-                            <p class="">Deposit (
-                                <apex:outputText value="{!IF(isAlreadyStripCstmr,'1',' 2')}" />-month)</p>
-                            <!-- //End: nishi: 27-Jul-2020: Existing Student – one month (with any active enrolment) ; others – two months -->
-
                         </div>
                         <div class="slds-size_6-of-12 slds-large-size_1-of-2 slds-p-bottom_small slds-text-align_right">
                             <p class="">${!fm.depFee}</p>
@@ -1024,7 +1017,7 @@
                 });
 
                 // Handle form submission.
-                var form = document.getElementById('pg:payment');//document.getElementById('payment-form');
+                var form = document.getElementById('payment-form');
                 form.addEventListener('submit', function (event) {
                     event.preventDefault();
 
@@ -1051,7 +1044,7 @@
                 
                 
                 function stripeTokenHandler(token) {
-                    var form = document.getElementById('pg:payment');//document.getElementById('payment-form');
+                    var form = document.getElementById('payment-form');
                     var hiddenInput = document.createElement('input');
                     hiddenInput.setAttribute('type', 'hidden');
                     hiddenInput.setAttribute('name', 'stripeToken');
@@ -1069,11 +1062,7 @@
                         // var concatePhoneNo = '+' + $('[class$=btn-cc]').html().match(/\d+/);
                         //concatePhoneNo += $('[id$=phoneNumber]').val();
                         //alert(token.id);
-                        console.log('getStripeId',getStripeId);
-                        if(getStripeId == false){
-                            getStripeId = true;
-                            prcEnrolment(token.id);
-                        }
+                        prcEnrolment(token.id);
                     } else {
                         $('#payBtn').before('<div class="slds-form-element__help errortxt" style="color:#F44336">Please fill all mandatory fields.</div>');
                         //Added by Rajesh 26th June 2019, for enable pay button if any error 
@@ -1193,10 +1182,7 @@
 
                     //var checkErr = false;
                     if (!checkErr) {
-                        if(getStripeId == false){
-                            getStripeId = true;
-                            prcEnrolment('');
-                        }
+                        prcEnrolment('');
                     } else {
                         $('#payNowAlrdyCstmr').before('<div class="slds-form-element__help errortxt" style="color:#F44336">Please fill all mandatory fields.</div>');
                         $('#payNowAlrdyCstmr').css('pointer-events', '');
@@ -1262,7 +1248,6 @@
             </script>
         </apex:outputPanel>
         <script>
-            var getStripeId = false;
             /* 20-Feb-2020:jatin:start: show model for payment via online and offline card */
             function selectedPaymentMethodNowAlrdyCstmr() {
                 $.each($("input[name='paymentMethod']:checked"), function () {

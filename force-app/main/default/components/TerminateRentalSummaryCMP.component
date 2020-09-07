@@ -416,8 +416,7 @@
                             window.open('/' + enrolmentId, '_self');
                         } else {
                             $('.sucess_validation').css('display', '');
-                            window.open('/apex/thankyouPage', '_self');
-                           // window.location.href = 'https://full-aureusgroup.cs74.force.com/apex/thankyouPage';
+                            window.location.href = 'https://full-aureusgroup.cs74.force.com/apex/thankyouPage';
                             $('.sucess_validation').find('.sucessMessage').text('Confirmation is submited Sucessfully!... ');
 
                         }

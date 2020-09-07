@@ -25,8 +25,21 @@ public without Sharing class FifthLessonController {
                 eventDetail.studentId = fifthLessonList[0].Student__c;
                 eventDetail.parentId = fifthLessonList[0].Parent__c;
                 eventDetail.newPackage = fifthLessonList[0].Package__c; 
-                eventDetail.newPackageName = fifthLessonList[0].Package__r.Name; 
-                eventDetail.amm = fifthLessonList[0].Parent__r.Available_Make_up_Units__c;
+                eventDetail.newPackageName = fifthLessonList[0].Package__r.Name;
+                //start:added by nishi: 13-aug-2020: for manaege makeup mins for ossia organisation
+                if( String.isNotBlank(fifthLessonList[0].Center__c) && String.isNotBlank(fifthLessonList[0].Center__r.Organisation__c) && 	
+                String.isNotBlank(fifthLessonList[0].Center__r.Organisation__r.Name) && 	
+                fifthLessonList[0].Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){	
+                    if( String.isNotBlank(fifthLessonList[0].Enrolment__c)){
+                        eventDetail.enrolment = fifthLessonList[0].Enrolment__c;
+                        eventDetail.amm= fifthLessonList[0].Enrolment__r.Available_Make_up_mins__c;	
+                    }
+                    eventDetail.isOssia = true;
+                }else{
+                    eventDetail.isOssia = false;
+                    eventDetail.amm = fifthLessonList[0].Parent__r.Available_Make_up_Units__c;
+                }
+                //end:added by nishi: 13-aug-2020: for manaege makeup mins for ossia organisation
             }
             
        }

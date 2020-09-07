@@ -498,6 +498,13 @@
         <value>https://aureusacademy.com/trial-booking-confirmation</value>
     </labels>
     <labels>
+        <fullName>Trial_booking_confirmation_url_for_Ossia</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Trial booking confirmation url for Ossia</shortDescription>
+        <value>https://www.ossia.edu.sg/</value>
+    </labels>
+    <labels>
         <fullName>Tuning_Fee</fullName>
         <language>en_US</language>
         <protected>false</protected>

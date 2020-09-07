@@ -16,7 +16,7 @@
                 
                     <div class="header slds-col"><div class="slds-col">
                     <h2 style="text-align: center;font-size: 26px;/* margin-bottom: 20px; */line-height: normal;font-weight: bold;">Welcome to</h2>
-                    <a href="#" class="logo"><!--<img src="https://aureusacademy.com/wp-content/uploads/2017/03/cropped-Aureus-Logo-Small.png"/>--><apex:image url="{!$Resource.Aureus_logo_png}" /></a></div>
+                    <a href="#" class="logo"><!--<img src="https://aureusacademy.com/wp-content/uploads/2017/03/cropped-Aureus-Logo-Small.png"/>--><apex:image url="{!iF(isOssia,$Resource.Osia_Logo,$Resource.Aureus_logo_png)}" /></a></div>
                         
                     </div>
                     <apex:form styleclass="slds-col">
@@ -43,7 +43,7 @@
                                 </div>
                             </div>
                         </div>
-                        <center><a href="#" onclick="redirectToAdminHome();" class="slds-button custom-btn" style="float:none;">Click here to go back Home</a></center>
+                        <center><a href="#" onclick="redirectToAdminHome();" class="slds-button {!IF(isOssia,'custom-btn_Ossia','custom-btn')}" style="float:none;">Click here to go back Home</a></center>
                         <!-------  Fourth block  End ------------------->
                     </apex:form>
                 </div>
@@ -52,11 +52,11 @@
     </body>
     <style>
         body{
-        background-image: url("{!$Resource.music}") !important;
+       <!-- background-image: url("{!$Resource.music}") !important;-->
         background-size:100% 100% !important;
         background-repeat:no-repeat !important;
         background-position:left !important;
-        background-color: #f3613c !important;
+        background-color: #f6f9fc !important;
         
         }
         .container {
@@ -117,6 +117,7 @@
         margin: 15px 0 20px;
         float:right;
         }
+        
         .slds-form-element {
         margin-bottom: 15px;
         }
@@ -154,6 +155,17 @@
                 margin: auto 0px;
                 border-radius: 0px;
             }
+        }
+        <!--@juneid 21 Aug 2020, ossia Org Css-->
+form .custom-btn_Ossia {
+        padding: 5px 10px 3px !important;
+        color: #fff !important;
+        background: #ed1c24 !important;
+        font-size: 16px !important;
+        text-transform: uppercase;
+        line-height: 20px !important;
+        margin: 15px 0 20px;
+        float:right;
         }
     </style>
 </apex:page>

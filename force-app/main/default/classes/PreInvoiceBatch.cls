@@ -33,7 +33,8 @@ global class PreInvoiceBatch implements Database.Batchable<sObject>, database.st
                                          Package_Process_Type__c, Package_Process_Request_Date__c, 
                                          New_Package_Id__c, Package_Process_Status__c, Effective_Date__c,
                                          New_Teacher__c, Next_Lesson_Start_time__c, New_Lesson_Day__c, Stage__c,
-                                         Type__c 
+                                         Type__c ,
+                                         Center__r.Organisation__r.Name,Available_Make_up_mins__c // added by nishi : 13-Aug-2020:for ossia organisation requirement
                                          FROM Enrolment__c 
                                          WHERE Type__c In: enrolTypes AND
                                          //Commented by jatin: 9-jan-2020 : For manage regular and group type enrolments

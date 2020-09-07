@@ -36,12 +36,22 @@ public without sharing class AdvanceActionsHelper {
         List<Enrolment__c> enrolmentList = new List<Enrolment__c>();
         Enrolment__c enrolmentObj = new Enrolment__c();
         if(String.isNotBlank(enrolmentId)){
-            enrolmentList = [SELECT Id,name, Effective_Date__c,class__C, New_class__C,Lesson_Day__c, Teacher__c, Teacher__r.Employee_Duty_Type__c, package__r.unit_fee__c,
+            enrolmentList = [SELECT Id,name, Effective_Date__c,class__C, New_class__C,Lesson_Day__c, Teacher__r.Employee_Duty_Type__c, package__r.unit_fee__c,
                             Lessons_Start_Date__c, Center__c, Student__c, Student__r.Name, Lesson_Start_time__c, Center__r.Country__c,Next_Lesson_Start_time__c,
                              Package__c, Package__r.Duration__c,Parent__c, Center__r.Country__r.Tax_Rate__c, Center__r.Country__r.Currency_Code__c, 
                              Center__r.Country__r.Stripe_Secret_Key__c, Center__r.Country__r.Stripe_Base_Url__c,Center__r.Country__r.Id, 
+                             // added by nishi for update new Teacher Id for ossia organization
+                             New_Teacher__c,Teacher__c,Center__r.Organisation__r.Name,Available_Make_up_mins__c,
+                             //start:added by @nishi 24 Aug 2020,Organisation wise charge as per new logic*/
+                             Center__r.Organisation__r.Tax_Rate__c, Center__r.Organisation__r.Country__r.Currency_Code__c, 
+                             Center__r.Organisation__r.Stripe_Secret_Key__c, Center__r.Organisation__r.Stripe_Base_Url__c,Center__r.Organisation__r.Id, 
+                             //end:added by @nishi 24 Aug 2020,Organisation wise charge as per new logic*/
                              Center__r.Organisation__c, (Select Id, Next_Bill_Date__c, Subscription__r.Parent__r.Stripe_Customer_Id__c,
-                                                         Subscription__c, Subscription__r.Center__c, Enrolment__c, Enrolment__r.Center__r.Country__r.Tax_Rate__c FROM Subscription_Line_Items__r) 
+                                                         Subscription__c, Subscription__r.Center__c, Enrolment__c, 
+                                                         Enrolment__r.Center__r.Country__r.Tax_Rate__c,
+                                                         Enrolment__r.Center__r.Organisation__r.Tax_Rate__c FROM Subscription_Line_Items__r
+                                                         Where Status__c =:ConstantsClass.activeStatus //4-sep-2020: added by nishi for new requirement one enrolment have two subscrition so we get active line item
+                                                         And Next_Bill_Date__c != null)
                              FROM Enrolment__c WHERE Id =: enrolmentId];
             if(enrolmentList.size() > 0){
                 enrolmentObj = enrolmentList[0];
@@ -130,14 +140,23 @@ public without sharing class AdvanceActionsHelper {
 
     Public  static Enrolment__c fetchEnrolment(String enrolmentId){
         Enrolment__c enrolmentObj = new Enrolment__c();
-        
         List<Enrolment__c> enrolmentList = [SELECT Id,name, Effective_Date__c, Lesson_Day__c, Teacher__c, Teacher__r.Employee_Duty_Type__c, 
                                             class__C,New_Class__c,Center__c, Student__c, Student__r.Name, Lesson_Start_time__c, package__r.unit_fee__c,
                                             Next_Lesson_Start_time__c,new_package_Id__c,New_Teacher__c,new_package_Id__r.Duration__c,Lessons_Start_Date__c,
-                                            New_Teacher__r.id,New_Teacher__r.Employee_Duty_Type__c,Package__c, Package__r.Duration__c,Parent__c, Center__r.Country__r.Tax_Rate__c, Center__r.Country__r.Currency_Code__c, 
+                                            New_Teacher__r.id,New_Teacher__r.Employee_Duty_Type__c,Package__c, Package__r.Duration__c,Parent__c,
+                                            Center__r.Country__r.Tax_Rate__c, Center__r.Country__r.Currency_Code__c, 
                                             Center__r.Country__r.Stripe_Secret_Key__c, Center__r.Country__r.Stripe_Base_Url__c,Center__r.Country__r.Id, 
-                                            Center__r.Organisation__c, (Select Id, Next_Bill_Date__c, Subscription__r.Parent__r.Stripe_Customer_Id__c,
-                                             Subscription__c, Subscription__r.Center__c, Enrolment__c, Enrolment__r.Center__r.Country__r.Tax_Rate__c FROM Subscription_Line_Items__r) 
+                                            //Start: added by nishi: 24-Aug-2020: for manage tax according to organisation
+                                            Center__r.Organisation__r.Tax_Rate__c, Center__r.Organisation__r.Country__r.Currency_Code__c, 
+                                            Center__r.Organisation__r.Stripe_Secret_Key__c, Center__r.Organisation__r.Stripe_Base_Url__c,Center__r.Organisation__r.Id, 
+                                            Center__r.Organisation__c,Center__r.Organisation__r.name, New_Centre__c,
+                                            //End: added by nishi: 24-Aug-2020: for manage tax according to organisation
+                                            (Select Id, Next_Bill_Date__c, Subscription__r.Parent__r.Stripe_Customer_Id__c,
+                                            Subscription__c, Subscription__r.Center__c, Enrolment__c, Enrolment__r.Center__r.Country__r.Tax_Rate__c,
+                                            Enrolment__r.Center__r.Organisation__r.Tax_Rate__c,Subscription_Expiry_Date__c,Status__c
+                                            FROM Subscription_Line_Items__r
+                                            where Status__c =:ConstantsClass.activeStatus //4-sep-2020: added by nishi for new requirement one enrolment have two subscrition so we get active line item
+                                            And Next_Bill_Date__c != null)  
                                             FROM Enrolment__c WHERE Id =: enrolmentId];
         if(enrolmentList.size() > 0){
             enrolmentObj = enrolmentList[0];
@@ -304,6 +323,8 @@ public without sharing class AdvanceActionsHelper {
         if(fifthLessonList.size() >0){
             UPSERT fifthLessonList;
         }
+        system.debug('fifthLessonList'+fifthLessonList);
+        system.debug('makeupBookingsSet'+makeupBookingsSet);
         return makeupBookingsSet;
     }
     

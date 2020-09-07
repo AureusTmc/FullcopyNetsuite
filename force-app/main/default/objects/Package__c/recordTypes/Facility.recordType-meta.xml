@@ -991,6 +991,65 @@
         </values>
     </picklistValues>
     <picklistValues>
+        <picklist>Grade__c</picklist>
+        <values>
+            <fullName>Beginner</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>DipABRSM</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Grade 1</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Grade 2</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Grade 3</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Grade 4</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Grade 5</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Grade 6</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Grade 7</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Grade 8</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Introductory</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>LRSM</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>LTCL</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>PC%2FARSM</fullName>
+            <default>false</default>
+        </values>
+    </picklistValues>
+    <picklistValues>
         <picklist>Location_Sharing__c</picklist>
         <values>
             <fullName>Aureus AMK Hub</fullName>

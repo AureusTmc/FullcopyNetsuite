@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Class_Name__c</fullName>
+    <description>This field is used to get a description of which group class we are using for a particular record.</description>
+    <externalId>false</externalId>
+    <label>Class Name</label>
+    <referenceTo>Class__c</referenceTo>
+    <relationshipLabel>Ossia Group Grade Packages</relationshipLabel>
+    <relationshipName>Ossia_Group_Grade_Packages</relationshipName>
+    <relationshipOrder>0</relationshipOrder>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <trackTrending>false</trackTrending>
+    <type>MasterDetail</type>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+</CustomField>

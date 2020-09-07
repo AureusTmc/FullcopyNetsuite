@@ -30,12 +30,16 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
     Public String initProcess(){
         Boolean isSuccess = true;
         String caseIdToReturn;
-        Country__c countryObj = new Country__c();
+        //Country__c countryObj = new Country__c();
+        Organisation__c  organisationObj = new Organisation__c();
         string enrollmentId;
         if(String.isNotBlank(bookingId)){
             enrolObj = AdvanceActionsHelper.fetchEnrolmentDetailsFromBooking(bookingId);
-            if(String.isNotBlank(enrolObj.Center__r.Country__r.Id)){
-            countryObj = enrolObj.Center__r.Country__r;
+        // if(String.isNotBlank(enrolObj.Center__r.Country__r.Id)){
+        //     countryObj = enrolObj.Center__r.Country__r;
+        // }
+        if(String.isNotBlank(enrolObj.Center__r.Organisation__r.Id)){
+            organisationObj = enrolObj.Center__r.Organisation__r;
         }
              enrollmentId = enrolObj.Id;
         }
@@ -365,8 +369,42 @@ system.debug('depositAmount'+depositAmount);
         System.debug('isRefund'+isRefund);
          // we need to refund current month amount if applicable
         if(isRefund){
-            String chargeId =  fetchCurrentMonthPaymentEntry(objEnrol,lastLessonDateObj);
-            Decimal refundAmount = getLessonRefundAmount(objEnrol,lastLessonDateObj);
+            String chargeId =  fetchCurrentMonthPaymentEntry(objEnrol,lastLessonDateObj); // 21-8-2020
+            Decimal refundAmount = getLessonRefundAmount(objEnrol,lastLessonDateObj);//8
+            date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1); // 1-10-2020
+            Boolean isNextMonthInvoicCreated = false;
+            // 1-10-2020 >= 1-10-2020 && 8<9
+            system.debug('nextBillDate'+nextBillDate);
+            system.debug('nextMonthDate'+nextMonthDate);
+            system.debug('lastLessonDateObj'+lastLessonDateObj);
+            system.debug('nextMonthDate.addMonths(-1).Month()'+nextMonthDate.addMonths(-1).Month());
+            if(nextBillDate >= nextMonthDate && lastLessonDateObj.Month() < nextMonthDate.addMonths(-1).Month()){ 
+                Decimal refundNextMonthAmount = getLessonRefundAmount(objEnrol,nextMonthDate.addMonths(-1)); // 1-9-2020
+                if(refundNextMonthAmount > 0){
+                    Payment__c objPay = new Payment__c();
+                    if(hasMoreEnrolment){
+                            objPay = BillingUtility.fillPayment(objEnrol.Parent__c,null, refundNextMonthAmount, ConstantsClass.paymentPendingStatus);
+                    }else{
+                            objPay = BillingUtility.fillPayment(objEnrol.Parent__c,null, refundNextMonthAmount, ConstantsClass.paymentSuccessStatus);
+                    }
+                    objPay.RecordTypeId =  payAsCredit ;
+                    objPay.Payment_Date__c = lastLessonDateObj;
+                    if(String.isNotBlank(chargeId)){
+                            objPay.Transaction_ID__c = chargeId;
+                    }//14-Jan:2020 If current month payment is not get then we send error .
+                    else{
+                        throw new RefundException('Refund Failed. Charge Id Not found');
+                    }
+                    objPay.Remarks__c ='Refund  (Next month invoice amount)';
+                    objPay.last_lesson_date__c = lastLessonDateObj;
+                    system.debug('objPay'+objPay);
+                    paymentList.add(objPay);
+                    isNextMonthInvoicCreated = true;
+                }
+                system.debug('refundNextMonthAmount'+refundNextMonthAmount);
+                system.debug('paymentList'+paymentList);
+            }
+            
             system.debug(refundAmount);
             if(refundAmount > 0){
                 Payment__c objPay = new Payment__c();
@@ -384,7 +422,9 @@ system.debug('depositAmount'+depositAmount);
                     throw new RefundException('Refund Failed. Charge Id Not found');
                 }
                 objPay.last_lesson_date__c = lastLessonDateObj;
-
+                if(isNextMonthInvoicCreated){
+                    objPay.Remarks__c ='Refund  (Effective month invoice amount)';
+                }
                 /*Payment__c objPay = new Payment__c();
                 objPay.RecordTypeId =  payAsCredit ;
                 objPay.Payment_Date__c = lastLessonDateObj;
@@ -400,6 +440,7 @@ system.debug('depositAmount'+depositAmount);
                 system.debug('objPay'+objPay);
                 paymentList.add(objPay);
             }
+            
         }
         
         if(refundPayments.size() > 0){
@@ -419,7 +460,9 @@ system.debug('depositAmount'+depositAmount);
         String chargeId ='';
         List<Invoice__c> listOfInvoice =[SELECT Id,Stripe_Charge_Id__c FROM Invoice__c WHERE 
                                          Id IN (SELECT Invoice__c FROM Invoice_Line_Item__c WHERE Enrolment__c=: objEnrol.id AND
-                                                Createddate >=: firstDate AND createddate <=: lastDate AND Booking__c = NULL)
+                                                //commented by nishi: 20_aug-2020: Createddate >=: firstDate AND createddate <=: lastDate
+                                                Month__C >=: firstDate AND Month__C <=: lastDate 
+                                                 AND Booking__c = NULL)
                                          AND Invoice_Date__c >=: firstDate AND Invoice_Date__c <=: lastDate AND Status__c = 'Paid' 
                                          Order By total_amount__c ];
         if(listOfInvoice.size()>0){
@@ -445,19 +488,19 @@ system.debug('depositAmount'+depositAmount);
             if(String.isNotBlank(objEnrol.Id) && String.isNotBlank(objEnrol.Center__c) && String.isNotBlank(objEnrol.Center__r.Country__c) && objEnrol.Center__r.Country__r.Tax_Rate__c > 0){
                 amount+= (amount  *  objEnrol.Center__r.Country__r.Tax_Rate__c) / 100;
             }
+            
         }
         return amount;
     }
     
     // return currentBilledBookings
-    private static List<Booking__c> getCurrentBilledBooking(String enrolId,Date lastLessonDate){
-        Date firstDate = Date.newInstance(lastLessonDate.year(),lastLessonDate.month(),01);
-        Date lastDate = firstDate.addMonths(1).addDays(-1);
+    private static List<Booking__c> getCurrentBilledBooking(String enrolId,Date lastLessonDate){ // 21-aug-2020  /// 1-Sep-2020
+        Date firstDate = Date.newInstance(lastLessonDate.year(),lastLessonDate.month(),01);//1-aug-2020 ///// 1-Sep-2020
+        Date lastDate = firstDate.addMonths(1).addDays(-1);//31-aug-2020///// 30-Sep-2020
         return [SELECT Booking_Date__c FROM Booking__c WHERE Enrolment__c=: enrolId AND Booking_Date__c >=: firstDate AND Booking_Date__c <=: lastDate
                 AND (Type__c='Regular' or Type__c ='Ad-hoc') 
                 and (Status__c = :ConstantsClass.statusScheduled OR Status__c = :ConstantsClass.statusPending)];
     }   
-    
 
     //check that the Parent Has other Enrolment or Not
     private static Boolean checkParentHasMultipleEnrolments(String parentId){

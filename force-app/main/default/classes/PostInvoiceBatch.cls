@@ -42,6 +42,7 @@ global class PostInvoiceBatch implements Database.Batchable<sObject>, database.s
                                           Package_Process_Type__c, Package_Process_Request_Date__c, 
                                           New_Package_Id__c, Package_Process_Status__c, Effective_Date__c,
                                           New_Teacher__c, Next_Lesson_Start_time__c, New_Lesson_Day__c, Stage__c,
+                                          New_Centre__c,//added by nishi: 4-sep-2020: for manage change center process 
                                           //Commented by jatin: 9-jan-2020 : For manage  group class in enrolments
                                           Type__c, Class__c,New_Class__c 
                                           FROM Enrolment__c 

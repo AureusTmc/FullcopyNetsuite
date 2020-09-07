@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>Param Name</label>
+    <protected>false</protected>
+    <values>
+        <field>Param_Name__c</field>
+        <value xsi:type="xsd:string">Ossia</value>
+    </values>
+    <values>
+        <field>Param_SF_Value__c</field>
+        <value xsi:type="xsd:string">a1A6F00000BkCMtUAN</value>
+    </values>
+</CustomMetadata>

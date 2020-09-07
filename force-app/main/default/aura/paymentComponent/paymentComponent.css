@@ -1,0 +1,101 @@
+.THIS .Green{
+    background: limegreen;
+    color: white;
+    margin-top: 30px;
+    min-width:160px;
+}
+.THIS .payment{
+    float: right;
+}
+.THIS .yellow{
+    background: #c39f28;
+    color: white;
+    margin-top: 5%;
+    margin-left:10px;
+}
+.THIS .avlCheckbox{
+    float:left;
+}
+.THIS .GreenInModel{
+    background: limegreen;
+    color: white;
+}
+.THIS .lable2hide .slds-form-element__label{
+    display:none;
+}
+.THIS .btn_yellow{
+    background-color:#ffbf2f;
+    color:#fff;
+    min-width:160px;
+    margin-top: 30px;
+}
+/* added by jatin:Start: 26-Feb-2020:for Adhoc service button show as a toggle */
+.THIS .btn_AdhocPOSServicesEnable{
+    background-color: rgba(152, 152, 157, 0.46);
+    color:#fff;
+    min-width:160px;
+    margin-top: 30px;
+}
+.THIS .btn_AdhocPOSServicesDisable{
+    background-color: #98989d;
+    color:#fff;
+    min-width:160px;
+    margin-top: 30px;
+}
+/* added by jatin:end: 26-Feb-2020:for Adhoc service button show as a toggle */
+.THIS .slds-form-element__label{
+    font-weight:bold;
+    font-size:15px;
+    margin-bottom:15px;
+}
+.THIS table th{
+    color:#353c43;
+    font-size:16px;
+    padding:8px 12px;
+}
+.THIS table td{
+    font-size:16px;
+    padding:8px 12px;
+}
+.THIS .slds-icon-action-delete {
+    background-color: #e52b20;
+    border-radius: 3px;
+    padding:0.2rem;
+}
+.THIS .slds-icon {
+    width: 1rem;
+    height: 1rem;   
+}
+/*.THIS .slds-radio .slds-form-element__label{
+padding-bottom:15px;
+}*/
+.THIS .slds-card__header, .THIS .slds-card__body{padding:0px; margin:0px;}
+.THIS .time-list .slds-radio__label{
+    display:block;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: solid 1px #dcdcdc;
+}
+.THIS .time-list .slds-radio{
+    display:inline-block;
+    width:50%;
+    padding-right:15px;
+    margin-bottom:20px;
+}
+.THIS .time-list .slds-radio [type="radio"]:checked + .slds-radio__label {
+    background-color: #ffbf2f;
+    color:   #fff;
+}
+.THIS .slds-radio [type="radio"]:checked + .slds-form-element__label, 
+.THIS .slds-radio [type="radio"]:checked + .slds-radio__label > .slds-form-element__label, .THIS .slds-radio [type="radio"]:checked .slds-radio__label *  {
+    color: #ffffff !important;
+}
+
+.THIS  .quntityInput{
+    width: 120px;
+}
+
+.THIS.slds-spinner_container {
+    z-index: 10000;
+    position: fixed;  
+}

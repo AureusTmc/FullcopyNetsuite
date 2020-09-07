@@ -1,0 +1,76 @@
+<aura:component controller="PaymentComponentController" implements="force:hasRecordId,force:hasSObjectName,flexipage:availableForRecordHome"  access="global">
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <!-- Brand variant: Identifies the primary action in a group of buttons -->
+    <aura:attribute name="showmodal" type="Boolean" default="false"/>
+    <aura:attribute name="options" type="List" default="" />
+    <aura:attribute name="value" type="String" default="Cash" />
+    <aura:attribute name="recordId" type="String" />
+    <lightning:button variant="brand" label="Pay at Centre" onclick="{!c.handlePayNow }" />
+    <aura:attribute name="openPopUp" type="boolean" default="false" />
+    <aura:attribute name="creditAmount" type="Decimal"  />
+    <aura:attribute name="selectedOption" type="String" />
+    <aura:attribute name="inputValue" type="String" />
+    <aura:attribute name="chkValue" type="boolean" default="false" />
+     <aura:attribute name="isEnabled" type="boolean" default="true" />
+    
+    
+    
+    <!--Use aura:if tag to display/hide popup based on isModalOpen value-->
+    <aura:if isTrue="{!v.showmodal}">
+        <!-- Modal/Popup Box starts here-->
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                 aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <!-- Modal/Popup Box Header Starts here-->
+                <header class="slds-modal__header">
+                    <lightning:buttonIcon iconName="utility:close" 
+                                          alternativeText="close" variant="bare-inverse"  onclick="{!c.closeModel}" class="slds-modal__close" />
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Payment Detail</h2>
+                </header>
+                <!--Modal/Popup Box Body Starts here-->
+                <div class="slds-modal__content slds-p-around_medium time-list" id="modal-content-id-1">
+                    <lightning:radioGroup name="radioGroup" aura:id="mygroup" class="slds-p-top_medium"
+                                          label="Please Select Payment Method"  options="{! v.options }" 
+                                          type="radio" onchange="{! c.handleChange }"/>
+                    <span>  <lightning:input name="input1" label="Enter Transaction No" aura:id="transacInput" value="{!v.inputValue}" required="true"/></span><br/>
+                    <span><lightning:input type="checkbox" aura:id="checkbox" disabled="{!v.isEnabled}" checked="{!v.chkValue}"  name="vehicle3" /> Available
+                        payment credit: {! v.creditAmount } </span>
+                </div>
+                
+                <!--Modal/Popup Box Footer Starts here-->
+                <footer class="slds-modal__footer">
+                    <lightning:button variant="neutral" label="Cancel"  onclick="{!c.closeModel}"  title="Cancel"
+                                      />
+                    <lightning:button variant="brand" label="Save" title="Save" onclick="{!c.handelSave}" />
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </aura:if>
+    
+    <aura:if isTrue="{!v.openPopUp}">
+        <!-- Modal/Popup Box starts here-->
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                 aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <!-- Modal/Popup Box Header Starts here-->
+                <header class="slds-modal__header">
+                    <lightning:buttonIcon iconName="utility:close" onclick="{!c.closePopup}"
+                                          alternativeText="close" variant="bare-inverse" class="slds-modal__close" />
+                </header>
+                <!--Modal/Popup Box Body Starts here-->
+                <div class="slds-modal__content slds-p-around_medium time-list" id="modal-content-id-1"
+                     style="text-align: center;">
+                    <span style="color:firebrick;font-weight:bold;"> Did you received the amount?</span>
+                </div>
+                <!--Modal/Popup Box Footer Starts here-->
+                <footer class="slds-modal__footer">
+                    <lightning:button variant="neutral" label="Cancel" title="Cancel"
+                                      onclick="{!c.closePopup}" />
+                    <lightning:button variant="brand" label="Save" title="Save" onclick="{!c.saveGeneratePaymet}" />
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </aura:if>
+</aura:component>

@@ -15,6 +15,7 @@ public  class CampStudentSummaryWrapperClass {
     public Decimal grossAmount{get;set;}
     public camp__c objCampClass{get;set;}
     public  Country__c objCountry{get;set;}
+    public  Organisation__c organisationOfCentre{get;set;} //added by @nishi 24 Aug 2020,Organisation wise charge as per new logic
     public boolean isAmcClubMember{get;set;}
     public boolean isAlreadyStripCstmr{get;set;}
     public string stripeCstmrId{get;set;}
@@ -35,6 +36,7 @@ public  class CampStudentSummaryWrapperClass {
         set<string> selectedDates = new set<string>();
         listOfBillSummary = new list<BillingSummary>();
         objCountry =  new Country__c();
+        organisationOfCentre = new Organisation__c();//added by @nishi 24 Aug 2020,Organisation wise charge as per new logic
         totalAmount = 0;
         gstAmount =0;
         discountAmount = 0;
@@ -63,6 +65,7 @@ public  class CampStudentSummaryWrapperClass {
             // 14-feb-2020:jatin:check early bird start and date is exist and discount amount is greater then 0 
             // user enrol in middel of this early dates then give discount other wise not  
             objCampClass =ListOfCamp[0];
+           
             
             map<Id,Camp_Days__c> mapofcampDay =((objCampClass.Camp_Days__r != null && objCampClass.Camp_Days__r.size() > 0 ) 
                                                 ? new map<Id,Camp_Days__c>(objCampClass.Camp_Days__r) 
@@ -77,6 +80,12 @@ listOfBillSummary.add(new BillingSummary(objCampClass.Camp_Available_Packages__r
             if(string.isNotBlank(objCampClass.Centre__r.id) && objCampClass.Centre__r.Country__c != null && string.isNotBlank(objCampClass.Centre__r.Country__r.id)){
                 objCountry = objCampClass.Centre__r.Country__r;
             }
+            //start:added by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+            if(string.isNotBlank(objCampClass.Centre__r.id) && objCampClass.Centre__r.Organisation__c != null
+             && string.isNotBlank(objCampClass.Centre__r.Organisation__r.id)){
+                organisationOfCentre = objCampClass.Centre__r.Organisation__r;
+            }
+            //end:added by @nishi 24 Aug 2020,Organisation wise charge as per new logic
              system.debug('!!'+objCampClass.Camp_Available_Packages__r);
             mapOfCampPackage =((objCampClass.Camp_Available_Packages__r != null && objCampClass.Camp_Available_Packages__r.size() > 0 )
                                                                     ? new map<Id,Camp_Available_Package__c>(objCampClass.Camp_Available_Packages__r) 

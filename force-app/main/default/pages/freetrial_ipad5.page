@@ -1,6 +1,6 @@
 <apex:page id="pg" showHeader="false" sidebar="false" controller="FreeTrial_IpadCntrl"  standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False" action="{!checkExistingCustomer}">
     <head>
-        <title>Aureus Academy Trial Booking</title>
+        <title>{!IF(org=='osia','Ossia Music School','Aureus Academy')} Trial Booking</title>
         <c:IpadHeaderJqueryCmp />
         <!--
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0"/>
@@ -85,7 +85,7 @@
                 
             }
         }
-        function bookTrial(){
+            function bookTrial(){
                 disableBookBtn(true);
                 var isErr = false;
                 $('.errortxt').remove();
@@ -100,7 +100,7 @@
                     disableBookBtn(false);
                     return;
                 }
-
+                
                 saveTrialBook();
             }
         
@@ -139,7 +139,6 @@
                             }   
                           }
                           return;
-                          
                       }else{
                           $('.cmpErrDiv').addClass('slds-hide');
                       }
@@ -148,9 +147,9 @@
           </apex:outputPanel> 
       </apex:outputPanel>    
       <apex:outputPanel rendered="{!isSiteGuestUser}">     
-            <div  class="slds-p-around_medium" style="font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;">Aureus Academy Enrolment Process       
+            <div  class="slds-p-around_medium" style="{!iF(org =='osia','font-size:15px; background-color: #ed1c24; text-align:center; color:#fff; font-weight:bold;','font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;')}">{!IF( org ='osia','Ossia Music School','Aureus Academy')} Enrolment Process       
             </div>
-            <p style="text-align:center;"><apex:image url="{!$Resource.Aureus_logo_png}" /></p>
+             <p style="text-align:center;"><apex:image url="{!iF(org =='osia',$Resource.Osia_Logo,$Resource.Aureus_logo_png)}" /></p>
       </apex:outputPanel>    
       <apex:form id="frm">
         <apex:actionFunction name="backBtn" action="{!backBtnCmp5}" status="spinner"/>
@@ -377,7 +376,7 @@
                         <apex:inputCheckbox value="{!iWantReceivedLatestNew}" id="receiveNews" styleClass="slds-checkbox inputchk"/>
                         <label class="slds-checkbox__label" for="pg:frm:receiveNews">
                             <span class="slds-checkbox_faux"></span>
-                            <span class="slds-form-element__label">By signing up for a trial lesson at Aureus Academy, you will be subscribed to our latest news and updates.</span>
+                            <span class="slds-form-element__label">By signing up for a trial lesson at {!iF(org =='osia','Ossia Music School','Aureus Academy')}, you will be subscribed to our latest news and updates.</span>
                         </label>
                     </div>
                 </div>

@@ -1,9 +1,12 @@
 public without sharing class EnrolmentThankyouIpadCntrl {
-    
+    public Boolean isOssia{get;set;}//@Juneid 22 Aug 2020, For Checking ossia
     public EnrolmentThankyouIpadCntrl(){
+        isOssia = false;
         //String parId = ApexPages.currentPage().getParameters().get('id');
         //String status  = ApexPages.currentPage().getParameters().get('status');
-        //
+        system.debug('thanku url -->'+ApexPages.currentPage().getParameters().get('isOssia'));
+        isOssia = Boolean.valueOf((ApexPages.currentPage().getParameters().get('isOssia')));
+        system.debug('isOssia in thanku -->'+isOssia);
     }
     
     public pagereference generateInvPdf(){
@@ -26,7 +29,7 @@ public without sharing class EnrolmentThankyouIpadCntrl {
                 }else{
                     String bookId = ApexPages.currentPage().getParameters().get('bookId');
                     if(String.isNotBlank(bookId))
-                    	sendEmailWithPdfOnStudio(bookId);
+                        sendEmailWithPdfOnStudio(bookId);
                 }
             }
         }
@@ -39,28 +42,36 @@ public without sharing class EnrolmentThankyouIpadCntrl {
         
         if(String.isNotBlank(stripeChargeId)){
             String invNumbers = '';
-            List<Invoice__c> invList = [SELECT Id,Name,Center__r.Country__r.Stripe_Secret_Key__c,Center__r.Country__r.Stripe_Base_Url__c FROM Invoice__c WHERE Id IN: invIds];
+            //@Juneid 26 Aug 2020, Updated logic for stripe country wise to Organization wise as per New Organization req
+            List<Invoice__c> invList = [SELECT Id,Name,Center__r.Organisation__r.Stripe_Secret_Key__c,Center__r.Organisation__r.Stripe_Base_Url__c FROM Invoice__c WHERE Id IN: invIds];
             if(invList.size() > 0){
                 for(Invoice__c inv: invList)
                     invNumbers =+ inv.Name + ',';
                 
                 if(invNumbers.endsWith(','))
                     invNumbers = invNumbers.substring(0, (invNumbers.length()-1));
-                      
+                    //@Juneid 26 Aug 2020, Updated logic for stripe country wise to Organization wise as per New Organization req    
                 //Update invoice number on Stripe
-                String baseUrl = invList.get(0).Center__r.Country__r.Stripe_Base_Url__c;
-                String apiKey  = invList.get(0).Center__r.Country__r.Stripe_Secret_Key__c;
+                    String baseUrl = invList.get(0).Center__r.Organisation__r.Stripe_Base_Url__c;
+                String apiKey  = invList.get(0).Center__r.Organisation__r.Stripe_Secret_Key__c;
                 BillingUtility.updateCharge(stripeChargeId, invNumbers, baseUrl, apiKey);
             }
         }
     }
     public pagereference sendEmailWithPdf(Set<String> invIds){
-        List<EmailTemplate> templateList =  [Select Id,name,developerName from EmailTemplate where developerName =:Label.Enrolment_Summary_Email limit 1];
+        //@Juneid 26 Aug 2020, Organizatuion wise Templates
+        List<EmailTemplate> templateList =  new List<EmailTemplate>();
+        if(isOssia){
+            templateList =  [Select Id,name,developerName from EmailTemplate where developerName =:'Ossia_Enrolment_Summary_Email' limit 1];
+        }else{
+            templateList =  [Select Id,name,developerName from EmailTemplate where developerName =:Label.Enrolment_Summary_Email limit 1];
+        }
+       // List<EmailTemplate> templateList =  [Select Id,name,developerName from EmailTemplate where developerName =:Label.Enrolment_Summary_Email limit 1];
         List<Messaging.SingleEmailMessage> emailList = new List<Messaging.SingleEmailMessage>();
         
         
         if(invIds.size() > 0 && templateList.size() > 0){
-        	Map<String,OrgWideEmailAddress> mapOfOrgWide = new Map<String,OrgWideEmailAddress>();
+            Map<String,OrgWideEmailAddress> mapOfOrgWide = new Map<String,OrgWideEmailAddress>();
             Attachment stuPolicyAtt = new Attachment();
             
             List<Invoice__c> invList = [SELECT Id, Name, Parent_Account__c, Parent_Account__r.personContactId,Center__r.Location__c, 
@@ -95,18 +106,18 @@ public without sharing class EnrolmentThankyouIpadCntrl {
            String amcClubEmail = ''; 
            if(invList.size() > 0){
                 //Added by Rajesh, 19th Aug 2019. To exclude invoice attachment in email for american club member 
-           		if(invList.get(0).Parent_Account__r.Is_Club_Member__c)
-               		isClubMem = True;
+                if(invList.get(0).Parent_Account__r.Is_Club_Member__c)
+                    isClubMem = True;
                
-           		if(invList.get(0).Parent_Account__r.Is_Club_Member__c && invList.get(0).Parent_Account__r.Membership_Type__c == ConstantsClass.amcClubMember &&
+                if(invList.get(0).Parent_Account__r.Is_Club_Member__c && invList.get(0).Parent_Account__r.Membership_Type__c == ConstantsClass.amcClubMember &&
                    String.isNotBlank(invList.get(0).Parent_Account__r.American_club__r.PersonEmail)){
                        amcClubEmail = invList.get(0).Parent_Account__r.American_club__r.PersonEmail;
                 }
                if(String.isNotBlank(enrName)){
                     enrName = '%'+enrName+'%';
-               		List<Attachment> stuPolicyAttList = [SELECT Id,Name,Body FROM Attachment WHERE ParentId=:invList.get(0).Parent_Account__c AND Name Like:enrName ORDER BY CreatedDate DESC LIMIT 1];
-                	if(stuPolicyAttList.size() > 0) 
-                		stuPolicyAtt = stuPolicyAttList.get(0);    
+                    List<Attachment> stuPolicyAttList = [SELECT Id,Name,Body FROM Attachment WHERE ParentId=:invList.get(0).Parent_Account__c AND Name Like:enrName ORDER BY CreatedDate DESC LIMIT 1];
+                    if(stuPolicyAttList.size() > 0) 
+                        stuPolicyAtt = stuPolicyAttList.get(0);    
                }
            }
             
@@ -137,8 +148,8 @@ public without sharing class EnrolmentThankyouIpadCntrl {
                 if(!test.isRunningTest()){
                    // email_att.setBody(pdf.getContent());
                     if(stuPolicyAtt.Body != null){
-                    	stuPolicyEmail_att.setFileName(stuPolicyAtt.Name);
-                    	stuPolicyEmail_att.setBody(stuPolicyAtt.Body);
+                        stuPolicyEmail_att.setFileName(stuPolicyAtt.Name);
+                        stuPolicyEmail_att.setBody(stuPolicyAtt.Body);
                         email_attachments.add(stuPolicyEmail_att);
                     }
                     
@@ -158,7 +169,7 @@ public without sharing class EnrolmentThankyouIpadCntrl {
                 //Added by Rajesh, 30th July 2019. For add invoice pdf in email
                 //Added by Rajesh, 19th Aug 2019. To exclude invoice attachment in email for american club member 
                 if(!isClubMem)
-                	email_attachments.add(inv_att);
+                    email_attachments.add(inv_att);
                 
                 //Attaching Student Policy Form pdf
           
@@ -176,7 +187,7 @@ public without sharing class EnrolmentThankyouIpadCntrl {
                 
                 //Added by Rajesh, 11th June 2019, for check American club invoice to Club member
                 if(String.isNotBlank(amcClubEmail))
-                	mail.setCCAddresses( new String[]{amcClubEmail});
+                    mail.setCCAddresses( new String[]{amcClubEmail});
                 
                 if(email_attachments.size()  > 0)
                     mail.setFileAttachments(email_attachments);
@@ -185,13 +196,13 @@ public without sharing class EnrolmentThankyouIpadCntrl {
             
             if(emailList.size() > 0){
                 try{
-                	if(!test.isRunningTest())
-                    	Messaging.sendEmail(emailList);
+                    if(!test.isRunningTest())
+                        Messaging.sendEmail(emailList);
                 }catch(Exception e){
                     System.debug('Error:  '+e.getMessage());
                 }
                 //if(invoiceSummarAttList.size() > 0)
-                //	insert invoiceSummarAttList;
+                //  insert invoiceSummarAttList;
                     
                 //pagereference pg = new pagereference(Label.Enrolment_completed_url);
                 //return pg;
@@ -203,7 +214,14 @@ public without sharing class EnrolmentThankyouIpadCntrl {
     
     //Send email code for the studiorental process
     public void sendEmailWithPdfOnStudio(String bookId){
-        List<EmailTemplate> templateList =  [Select Id,name,developerName from EmailTemplate where developerName =:Label.Studio_Booking_Confirmation_Email limit 1];
+        //@Juneid 26 Aug 2020, Organizatuion wise Templates
+        List<EmailTemplate> templateList =  new List<EmailTemplate>();
+        if(isOssia){
+            templateList =  [Select Id,name,developerName from EmailTemplate where developerName =:'Ossia_Studio_Booking_Confirmation' limit 1];
+        }else{
+            templateList =  [Select Id,name,developerName from EmailTemplate where developerName =:Label.Studio_Booking_Confirmation_Email limit 1];
+        }
+       // List<EmailTemplate> templateList =  [Select Id,name,developerName from EmailTemplate where developerName =:Label.Studio_Booking_Confirmation_Email limit 1];
         List<Messaging.SingleEmailMessage> emailList = new List<Messaging.SingleEmailMessage>();
         
         

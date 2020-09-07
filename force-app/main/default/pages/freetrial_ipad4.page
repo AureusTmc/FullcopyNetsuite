@@ -1,4 +1,4 @@
-<apex:page id="pg" showHeader="false" controller="FreeTrial_IpadCntrl"  standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False" >
+<apex:page id="pg" showHeader="false" controller="FreeTrial_IpadCntrl"  standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False">
     <head>
         <title>Aureus Academy Trial Booking</title>
         <c:IpadHeaderJqueryCmp />
@@ -89,11 +89,19 @@
             .d-sm-block{display:block !important;}
             }
             .d-none{display:none;}
-            .d-block{display:block;}            
+            .d-block{display:block;}     
+            
+             <!--Juneid-->
+            .btn-red, .btn-red:hover, .btn-red:focus {
+            background-color:#ed1c24;
+            color:#fff;
+            }
+            
+                   
+          
         </style>
         
         <script>
-     
             $(document).ready(function() { 
                 var select = document.getElementById('calYearPicker');
                 if (select){
@@ -139,15 +147,24 @@
                         isvalue=true;
                 });
                 if(isvalue){
-                    $("#next_step3").addClass("btn-gray").removeClass("btn-yellow");                    
-                    $('#bookTrialId').css('pointer-events', 'none');
+                    if({!org='osia'}){
+                        $("#next_step3").addClass("btn-red").removeClass("btn-red");                    
+                        $('#bookTrialId').css('pointer-events', 'none');
+                    }else{
+                        $("#next_step3").addClass("btn-gray").removeClass("btn-yellow");                    
+                        $('#bookTrialId').css('pointer-events', 'none');
+                    }
                 }else{
-                    $("#next_step3").addClass("btn-yellow").removeClass("btn-gray");
-                    $('#bookTrialId').css('pointer-events', '');
+                    if({!org='osia'}){
+                        $("#next_step3").addClass("btn-red").removeClass("btn-gray");
+                        $('#bookTrialId').css('pointer-events', '');
+                    }else{
+                        $("#next_step3").addClass("btn-yellow").removeClass("btn-gray");
+                        $('#bookTrialId').css('pointer-events', '');
+                    }
                 }
             }
             
-        
             function checkErrorOnNext(){
                 var isErr = false;
                 
@@ -316,9 +333,9 @@
     </head>
     <body style="background-color:#f9f9fb;" >
         <apex:outputPanel id="logoId" rendered="{!isSiteGuestUser}">     
-            <p  class="slds-p-around_medium" style="font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;">Aureus Academy Enrolment Process       
+            <p  class="slds-p-around_medium" style="{!iF(org =='osia','font-size:15px; background-color: #ed1c24; text-align:center; color:#fff; font-weight:bold;','font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;')}">{!IF(org =='osia','Ossia Enrolment Process','Aureus Academy Enrolment Process')}         
             </p>
-            <p style="text-align:center;"><apex:image url="{!$Resource.Aureus_logo_png}" /></p>
+             <p style="text-align:center;"><apex:image url="{!iF(org =='osia',$Resource.Osia_Logo,$Resource.Aureus_logo_png)}" /></p>
         </apex:outputPanel>  
         <apex:form id="frm">
             <apex:actionFunction name="nextBtn" action="{!nextBtnCmp4}" status="spinner">

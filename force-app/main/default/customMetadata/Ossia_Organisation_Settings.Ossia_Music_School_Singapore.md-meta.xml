@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>Ossia Music School Singapore</label>
+    <protected>false</protected>
+    <values>
+        <field>Makeup_Expiry_Days_For_Public_Holiday__c</field>
+        <value xsi:type="xsd:double">365.0</value>
+    </values>
+    <values>
+        <field>Makeup_Expiry_Days_Teacher__c</field>
+        <value xsi:type="xsd:double">180.0</value>
+    </values>
+    <values>
+        <field>Makeup_Expiry_Days__c</field>
+        <value xsi:type="xsd:double">90.0</value>
+    </values>
+    <values>
+        <field>Ossia_at_Home_Id__c</field>
+        <value xsi:nil="true"/>
+    </values>
+</CustomMetadata>

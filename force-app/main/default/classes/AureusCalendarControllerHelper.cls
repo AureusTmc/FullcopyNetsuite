@@ -370,7 +370,7 @@ this method returns the list of events or bookings to show on the calendar for t
 */
 
     public static string BookingObjectQueryFields(String classLessonBookingType){
-        return ' Id,Enrolment__r.Package_Process_Type__c,Enrolment__r.Effective_Date__c,Lesson_Type__c,Camp_Id__r.id, Name, Class__r.Id, Class__r.package__r.name,Class__r.Total_Enrolment__c,(Select id from Bookings1__r where type__c=:classLessonBookingType), Class__r.Available_Capacity__c,Class__r.Total_Capacity__c, Class__r.Name, Category__c, Teacher_Account__r.Name, start_Time__c, Event_Color__c, End_Time__c, status__c, type__c, Student__r.Name, RecordTypeId, Student__r.Parent__r.Name, Center_Id__c, Booking_Date__c, Instrument__c, Resource__c, Resource__r.Name, Individual_Booking__c, Remarks__c ';
+        return ' Id,Enrolment__r.Package_Process_Type__c,Center__r.Organisation__r.Name,Enrolment__r.Effective_Date__c,Lesson_Type__c,Camp_Id__r.id, Name, Class__r.Class_Type__c, Class__r.grade__c, Class__r.Id, Class__r.package__r.name,Class__r.Total_Enrolment__c,(Select id from Bookings1__r where type__c=:classLessonBookingType), Class__r.Available_Capacity__c,Class__r.Total_Capacity__c, Class__r.Name, Category__c, Teacher_Account__r.Name, start_Time__c, Event_Color__c, End_Time__c, status__c, type__c, Student__r.Name, RecordTypeId, Student__r.Parent__r.Name, Center_Id__c, Booking_Date__c, Instrument__c, Resource__c, Resource__r.Name, Individual_Booking__c, Remarks__c ';
     }
     public static List<AureusCalendarController.Events> getEventsListOfBooking(Set<String> setOfTeacher, Set<String> setOfResources, String centerId, List<String> datesOfAppointments, String instrument){
         // commneted by jatin: 19-feb:2020 :start: for add camp lesson record_type condition 
@@ -487,20 +487,30 @@ this method returns the list of events or bookings to show on the calendar for t
                     if(String.isNotBlank(book.Camp_Id__r.id)){
                         currentEvent.isClass = TRUE;
                     }
+                     //added by Nishi:Start: 17-Jul-2020: for manage Ossia Organization student	
+                    if( String.isNotBlank(book.Center__c) && String.isNotBlank(book.Center__r.Organisation__c) && 	
+                        String.isNotBlank(book.Center__r.Organisation__r.Name) && 	
+                        book.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){	
+                        currentEvent.isOssia = TRUE;	
+                    }	
+                      //added by End:Start: 17-Jul-2020: for manage Ossia Organization student
                     if(String.isNotBlank(book.Class__r.Id)){
-                    // eventTitle = book.Class__r.Name;
-                    // eventTitle = book.Class__r.package__r.Name+' '+book.Class__r.Available_Capacity__c+'/'+book.Class__r.Total_Capacity__c;
-                    // 7-Jan-2020:jatin:Need to Replace the Available Capacity to Total Enrolment on the Calendar View of Class Booking 
-                    string classCapacity = ''+(string.valueOf(book.Class__r.Total_Enrolment__c) != null ? string.valueOf(book.Class__r.Total_Enrolment__c) :  '0' )+'/';
-                    classCapacity += ''+(string.valueOf(book.Class__r.Total_Capacity__c) != null ? string.valueOf(book.Class__r.Total_Capacity__c) : '0' );
-                    // 15-Jan-2020: add Group Class Trial Count 
-                    String  trialBookingSize = '';
-                    if(book.Bookings1__r != null && book.Bookings1__r.size() > 0){
-                        trialBookingSize += ' T:'+book.Bookings1__r.size(); 
-                    }
-                    
-                    eventTitle = book.Class__r.package__r.Name+' '+classCapacity + trialBookingSize;
+                        // eventTitle = book.Class__r.Name;
+                        // eventTitle = book.Class__r.package__r.Name+' '+book.Class__r.Available_Capacity__c+'/'+book.Class__r.Total_Capacity__c;
+                        // 7-Jan-2020:jatin:Need to Replace the Available Capacity to Total Enrolment on the Calendar View of Class Booking 
+                        string classCapacity = ''+(string.valueOf(book.Class__r.Total_Enrolment__c) != null ? string.valueOf(book.Class__r.Total_Enrolment__c) :  '0' )+'/';
+                        classCapacity += ''+(string.valueOf(book.Class__r.Total_Capacity__c) != null ? string.valueOf(book.Class__r.Total_Capacity__c) : '0' );
+                        // 15-Jan-2020: add Group Class Trial Count 
+                        String  trialBookingSize = '';
+                        if(book.Bookings1__r != null && book.Bookings1__r.size() > 0){
+                            trialBookingSize += ' T:'+book.Bookings1__r.size(); 
+                        }
+                        
+                        eventTitle = book.Class__r.package__r.Name+' '+classCapacity + trialBookingSize;
                         currentEvent.isClass = TRUE;
+                        if(currentEvent.isOssia){
+                            eventTitle = book.Class__r.Class_Type__c +' '+classCapacity + trialBookingSize;
+                        }
                     }
                 }
                 currentEvent.title = eventTitle ;
@@ -941,7 +951,7 @@ parentList.add(new Account(Id = currentParent, Available_Make_up_Units__c = sumO
     }
     
     public static List<Booking__c> createAppointmentForAdhoc(Package__c packageObj, String teacherId, String studentId, String centerId, Integer recurring, 
-    String bookingDate, String parentId,String lessonMode,String resourceId){
+    String bookingDate, String parentId,String lessonMode,String resourceId,String enrolmentId){
         Date bookDate;
         Time bookStartTime;
         Time bookEndTime;
@@ -966,12 +976,19 @@ parentList.add(new Account(Id = currentParent, Available_Make_up_Units__c = sumO
                 bookingObj.End_Time__c = bookEndTime;
                 bookingObj.Type__c = ConstantsClass.typeAdhoc;
                 bookingObj.Status__c = ConstantsClass.statusScheduled;
+                // added by nishi: 18-Aug:2020: for manage enolment id in Adhoc bookings
+                if(string.isNotBlank(enrolmentId)){
+                    bookingObj.enrolment__c = enrolmentId;
+                }
+                 // added by nishi: 18-Aug:2020: for manage enolment id in Adhoc bookings
+                  // added by nishi: 18-sep:2020: for manage Resouce and lesson type
                 if(string.isNotBlank(lessonMode)){
                     bookingObj.Lesson_Type__c = lessonMode;
                 }
-               if(string.isNotBlank(resourceId)){
-                   bookingObj.resource__c = resourceId;
-               } 
+                if(string.isNotBlank(resourceId)){
+                    bookingObj.resource__c = resourceId;
+                } 
+                // added by nishi: 18-sep:2020: for manage Resouce and lesson type
                 bookingObj.Parent__c = String.isNotBlank(parentId)  ? parentId : null;
                 bookingList.add(bookingObj);
                 bookDate = bookDate.addDays(7);
@@ -1062,7 +1079,11 @@ system.debug('@@About to sendBookingCancelMail');
                 currentCase.Type = ConstantsClass.enrollmentProcessDowngradeType;
             }else if(origin == 'change'){
                 currentCase.Type = ConstantsClass.enrollmentProcessChanged;
-            }  
+            } 
+            //added by nishi: 28-Aug:2020: for if user can change center then we added this type
+            else if(origin == 'changeCenter'){
+                currentCase.Type = ConstantsClass.enrollmentProcessChangedCenter;
+            } 
             currentCase.Priority = 'Medium';
             currentCase.Subject = currentCase.Type;
             if(isDML){
@@ -1124,7 +1145,7 @@ system.debug('@@About to sendBookingCancelMail');
         return [SELECT Id, Duration__c FROM Package__c WHERE Id =: packageId LIMIT 1];
     }
     
-    private static Decimal fetchParentMakeup(String parentId){
+    public static Decimal fetchParentMakeup(String parentId){
         Decimal availableMakeUps = 0; 
         List<Account> parentObjList = [SELECT Id, Name, RecordType.Name, Available_Make_up_Units__c FROM Account WHERE Id =: parentId AND RecordType.Name =:ConstantsClass.recordTypeCustomer];
         if(parentObjList.size() > 0){
@@ -1149,7 +1170,8 @@ system.debug('@@About to sendBookingCancelMail');
         if(availableUnits >= timeDiff && String.isNotBlank(enrol.Parent__c)){
             cancelBookings = fetchCancelBookings(fetchChildrens(enrol.Parent__c));
         }
-        
+        system.debug('cancelBookings'+cancelBookings);
+        system.debug('availableUnits'+availableUnits);
         for(String bookingId : mapOfFifthBookings.keySet()){
             Booking__c bookObj = mapOfFifthBookings.get(bookingId);
             Booking__c newBook = new Booking__c();
@@ -1169,7 +1191,7 @@ system.debug('@@About to sendBookingCancelMail');
                     newBook.Student__c = bookObj.Student__c;
                     for(Booking__c bookingObj : cancelBookings){
                         Integer hoursToDeduct = timeDiff;
-                        if(hoursToDeduct <= bookObj.Available_Make_up_Units__c){
+                        if(hoursToDeduct <= bookingObj.Available_Make_up_Units__c){
                             bookingObj.Available_Make_up_Units__c = bookingObj.Available_Make_up_Units__c - hoursToDeduct;
                             utilizedBookings += bookingObj.Id+'-'+hoursToDeduct+';'; 
                             hoursToDeduct = 0;
@@ -1209,10 +1231,10 @@ system.debug('@@About to sendBookingCancelMail');
         if(bookingsList.size() > 0){
             upsert bookingsList; 
         }
-        
+        system.debug('bookingsList'+bookingsList);
         
     }
-    private static Set<String> fetchChildrens(String setOfParentIds){
+    public  static Set<String> fetchChildrens(String setOfParentIds){
         Set<String> setOfStuParentIds = new Set<String>();
         if(String.isNotBlank(setOfParentIds)){
             for( Account objAcc : [SELECT Id, also_A_Student__c FROM Account WHERE Id =: setOfParentIds OR Parent__c =: setOfParentIds]){
@@ -1740,7 +1762,9 @@ and booking date > 28 of month.
                            End_Time__c, Enrolment__c, Event_Color__c, Package__r.Name, Parent__r.FirstName, Parent__r.LastName, Parent__r.Stripe_Customer_Id__c, 
                            Parent__r.PersonMobilePhone, Parent__r.PersonEmail, Parent__r.Available_Make_up_Units__c,
                            //Start: added by nishi: 31-Jul-2020: if enrolment Lesson mode is Is center ther we added resource Id
-                           Enrolment__r.Lesson_Mode__c,  Enrolment__r.Resource__c,
+                           Enrolment__r.Lesson_Mode__c,  Enrolment__r.Resource__c,Center__r.Organisation__r.Name,Enrolment__r.Available_Make_up_mins__c,
+                           Enrolment__r.Center__r.Organisation__r.Tax_Rate__c,  Enrolment__r.Center__r.Organisation__r.Country__r.Currency_Code__c, 
+                           Enrolment__r.Center__r.Organisation__r.Stripe_Base_Url__c, Enrolment__r.Center__r.Organisation__r.Stripe_Secret_Key__c ,
                            //end: added by nishi: 31-Jul-2020: if enrolment Lesson mode is Is center ther we added resource Id
                            Start_Time__c, Student__r.FirstName, Student__r.LastName, Teacher_Account__r.FirstName,
                            Teacher_Account__r.LastName, IsActive__c, Enrolment__r.center__c,  Enrolment__r.Package__r.Duration__c, 
@@ -1779,7 +1803,15 @@ and booking date > 28 of month.
             bookObj.recordTypeId = lessonRecordType;
             bookObj.Center__c = fifthLesson.Center__c;
             bookObj.End_Time__c = fifthLesson.End_Time__c;
-            bookObj.Enrolment__c = fifthLesson.Enrolment__c;
+            //Start:added by nishi: if fifth lesson convert Makeup booking and this center is ossia then we manage Enrolment Id
+            if(String.isNotBlank(fifthLesson.Center__c) && 
+            String.isNotBlank(fifthLesson.Center__r.Organisation__c) && 
+            String.isNotBlank(fifthLesson.Center__r.Organisation__r.Name) && 
+            fifthLesson.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                bookObj.Enrolment__c = fifthLesson.Enrolment__c;
+            }
+            //End:added by nishi: if fifth lesson convert Makeup booking and this center is ossia then we manage Enrolment Id
+
             //Start: added by nishi: 31-Jul-2020: if enrolment Lesson mode is Is center ther we added resource Id
              //start:Commented By nishi: 4-Aur-2020: Now this work managed in Booking trigger so we don't want to insert resource
                         

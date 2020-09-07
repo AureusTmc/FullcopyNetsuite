@@ -44,6 +44,7 @@ public class FreeTrial_IpadCntrlTest {
                 objCentr.CentreName_Cust__c='Aureus Forum'; 
                 objCentr.Location__c='Aureus Forum';
                 Insert objCentr;
+                system.assert(objCentr.Id !=Null);
                 
                 Centre_Users__c centerUserObj = new Centre_Users__c();
                 centerUserObj.Designation__c = 'Centre Manager';
@@ -55,8 +56,8 @@ public class FreeTrial_IpadCntrlTest {
                 objTeachr.Minor_Instruments_Disciplines__c='Piano';
                 objTeachr.Major_Instruments_Disciplines__c = 'Piano';
                 objTeachr.Status__c = ConstantsClass.teacherWorkingStatus;
-                objTeachr.Enable_Trial_Bookings__c = true;
                 insert objTeachr;
+                system.assert(objTeachr.Id !=Null);
                 
                 List <Teacher_Working_Hour__c> listTWH = new List <Teacher_Working_Hour__c>();
                 For( Teacher_Working_Hour__c objTechWorkHour : TestUtil.createTeacher_Working_Hour(objTeachr.id,objCentr.Id,false,False,7)){
@@ -72,12 +73,22 @@ public class FreeTrial_IpadCntrlTest {
                 Class__c objCLass = AureusCalendarControllerTestHelper.createGroupClass('test Group Class1',objPack.id,objCentr.Id,objProg.id,date.today(),date.today().addYears(1),Time.newInstance(11,0,0,0),Time.newInstance(11,30,0,0),objTeachr.Id,false);
                 objCLass.Total_Enrolment__c = 2;
                 objCLass.Centre_Name__c = objCentr.Id; 
-                // objClass.Teacher__c = objTeachr.Id;
+               // objClass.Teacher__c = objTeachr.Id;
                 objCLass.Start_Time__c = Time.newInstance(10, 0, 0, 0);
                 objCLass.End_Time__c = Time.newInstance( 10, 30, 0, 0);
                 insert objClass;
                 
                 
+                /* Account objCustmr=TestUtil.createAccount('Customer',True,false);
+objCustmr.personEmail = 'test@tmc.com';
+objCustmr.Stripe_Customer_Id__c='ch_1AxWbTFytruJp2FXW6iuRd1X';
+objCustmr.Gender__c = 'Male';
+objCustmr.PersonBirthdate = date.today();
+INSERT objCustmr;
+
+Account objCustmrStu = objCustmr.clone( false, true, false, false );
+objCustmrStu.Parent__c = objCustmr.Id;
+insert objCustmrStu;*/
                 
             }//end of profile list size
         }Catch( System.DmlException dmlExcep ){
@@ -88,29 +99,19 @@ public class FreeTrial_IpadCntrlTest {
         }
     }
     
-    
-    //Method 1st
     public static testMethod void TestData(){
         List< User > listCurrentUser = [ SELECT Id 
                                         FROM User 
                                         WHERE Name = 'testUser'];
-        
-        Account refrelCustomer=TestUtil.createAccount('Customer',True,false);
-        refrelCustomer.FirstName ='test';
-        refrelCustomer.LastName = 'Class';
-        refrelCustomer.PersonEmail = 'Aureas@Gmail.test'; 
-        insert refrelCustomer;
-        
-        account refrelAccount = [SELECT id,name,Unique_Referral_Code__c from account where id =:refrelCustomer.id];
-        string uniqueRefrelCode = refrelAccount.Unique_Referral_Code__c;
-        
+        // List< Account > listAccountCenter = [ SELECT Id
+        //                                   FROM Account 
+        //                                 WHERE Name = 'Aureus 112 Katong'];
         Account objCustmr=TestUtil.createAccount('Customer',True,false);
         objCustmr.personEmail = 'test@tmc.com';
         objCustmr.Stripe_Customer_Id__c='ch_1AxWbTFytruJp2FXW6iuRd1X';
         objCustmr.Gender__c = 'Male';
         objCustmr.PersonBirthdate = date.today();
         INSERT objCustmr;
-        
         
         
         Account objCustmrStu = new Account();
@@ -122,11 +123,11 @@ public class FreeTrial_IpadCntrlTest {
         objCustmrStu.PersonBirthdate = date.today();
         objCustmrStu.Parent__c = objCustmr.Id;
         insert objCustmrStu;
-        
+        system.debug('teacher records aree -->'+[ Select id from account where name = 'testTeacher' ]);
         Booking__c objBook = TestUtil.createBooking([ Select id from account where name = 'testTeacher' ].Id,'Lesson','Regular',false);
         objBook.Student__c = objCustmrStu.Id;
-        objBook.Start_Time__c = Time.newInstance(8, 30, 0,0);
-        objBook.End_Time__c = Time.newInstance(12, 4, 3, 4);
+        objBook.Start_Time__c = Time.newInstance(1, 2, 3, 4);
+        objBook.End_Time__c = Time.newInstance(4, 2, 3, 4);
         objBook.Status__c = 'Pending';
         objBook.Type__c = 'Trial';
         objBook.Booking_Date__c = System.today().addDays(7);
@@ -147,8 +148,7 @@ public class FreeTrial_IpadCntrlTest {
         
         Enrolment__c objENrol=TestUtil.createEnrolment(objCentr.Id,objTeachr.Id,objCustmr.Id,objPack.id,false); 
         objENrol.Stage__c = 'Enrolled';
-        objENrol.Referral_code_used__c = refrelAccount.Unique_Referral_Code__c;
-        objENrol.Referred_by__c = refrelAccount.Id;
+        
         insert objENrol;
         
         Fifth_Lesson__c  objFifthLesson = new Fifth_Lesson__c(Booking_Date__c=date.newInstance(2019, 10, 29), Center__c=Label.Aureus_at_Home_Id, End_Time__c=time.newInstance(10, 0, 0, 0), Enrolment__c=objEnrol.id,
@@ -161,15 +161,11 @@ public class FreeTrial_IpadCntrlTest {
         if( listCurrentUser.size() > 0  ){
             
             system.runAs( listCurrentUser[0] ){
-                ApexPages.currentPage().getParameters().put('refcode',uniqueRefrelCode);
                 
                 FreeTrial_IpadCntrl objFreeTrialIpadCntrl = new FreeTrial_IpadCntrl();
-                objFreeTrialIpadCntrl.uniqueRefCode = uniqueRefrelCode;
-                objFreeTrialIpadCntrl.checkExistingCustomer();
-                
-                
+                objFreeTrialIpadCntrl.getCenters();
                 objFreeTrialIpadCntrl.slcdNoOfStudent = '1';
-                
+                // if( listAccountCenter.size() > 0 )
                 objFreeTrialIpadCntrl.slcdCenter = 'Aureus Forum';
                 objFreeTrialIpadCntrl.slcdDate= '12/12/2019';
                 objFreeTrialIpadCntrl.getNoOfStudent();
@@ -187,9 +183,7 @@ public class FreeTrial_IpadCntrlTest {
                 objFreeTrialIpadCntrl.slcdSlot ='12:15';
                 objFreeTrialIpadCntrl.enrModelList[0].slcdInstrument = 'Piano';
                 objFreeTrialIpadCntrl.fetchTeacherDetails();
-                objFreeTrialIpadCntrl.getCenters();
                 
-                Test.startTest();
                 objFreeTrialIpadCntrl.backBtnCmp1();
                 objFreeTrialIpadCntrl.nextBtnCmp1();
                 objFreeTrialIpadCntrl.backBtnCmp2();
@@ -205,12 +199,15 @@ public class FreeTrial_IpadCntrlTest {
                 objFreeTrialIpadCntrl.nextBtnCmp4();
                 objFreeTrialIpadCntrl.enrModelList[0].slcdSlot = '12:15';
                 objFreeTrialIpadCntrl.enrModelList[0].slcdDuration = 30;
-                objFreeTrialIpadCntrl.saveTrialData();
                 objFreeTrialIpadCntrl.parentAcc.PersonEmail = 'test1@tmc.com';
                 objFreeTrialIpadCntrl.saveTrialData();
                 
                 
+                // objFreeTrialIpadCntrl.saveTrialData();
+                // objFreeTrialIpadCntrl.validateSlcdSlot();
                 
+                //added on 18,19 March 2020 
+                Test.startTest();
                 objFreeTrialIpadCntrl.slcdLessonType();
                 objFreeTrialIpadCntrl.fetchInstrumentForGrpLsn();
                 objFreeTrialIpadCntrl.slcdCenter = objFreeTrialIpadCntrl.slcdCenter.replace('U','K');
@@ -234,9 +231,8 @@ public class FreeTrial_IpadCntrlTest {
                 FreeTrial_IpadCntrl.TeacherModel objTeacherModel = new FreeTrial_IpadCntrl.TeacherModel( objBook.Teacher_Account__c, 'tecName', 'teacBioCon', 'highestQualification', new List< String > {'highestQualification'});
                 objFreeTrialIpadCntrl.slcdTeacher();
                 objFreeTrialIpadCntrl.slcdCenter = Label.Aureus_at_Home_Id;
+                //objFreeTrialIpadCntrl.checkAtHome();
                 objFreeTrialIpadCntrl.saveTrialData();
-                
-                
                 objFreeTrialIpadCntrl.slcdStuIndex = 1;
                 objFreeTrialIpadCntrl.enrModelList[0].slcdInstrument = 'Piano';
                 
@@ -258,100 +254,21 @@ public class FreeTrial_IpadCntrlTest {
                 system.debug('objFifthLesson ---> ' + objFifthLesson );
                 objFreeTrialIpadCntrl.enrModelList[0].calStartDate = System.today().addDays(6);
                 objFreeTrialIpadCntrl.enrModelList[0].slcdDuration = 30;
-                objFreeTrialIpadCntrl.slcdCenter = objCentr.Id;
+                 objFreeTrialIpadCntrl.slcdCenter = objCentr.Id;
                 objFreeTrialIpadCntrl.fetchTimeSlot( objFreeTrialIpadCntrl.enrModelList[0] );
                 
                 objFreeTrialIpadCntrl.isParAlsoAStudent = false;
-                objFreeTrialIpadCntrl.checkExistingCustomer();
                 objFreeTrialIpadCntrl.slcdCenter = Label.Aureus_at_Home_Id;
-                objFreeTrialIpadCntrl.fetchInstrument();
-                Test.stopTest();
+                 Test.stopTest();
+               // objFreeTrialIpadCntrl.checkAtHome();
+                //objFreeTrialIpadCntrl.saveTrialData();
                 
+               /* Test.startTest();
+                objFreeTrialIpadCntrl.enrModelList[0].slcdLsnType = 'Individual';
+                objFreeTrialIpadCntrl.fetchTimeSlot( objFreeTrialIpadCntrl.enrModelList[0] );
+                Test.stopTest();*/
+                //end 18,19 March 2020
             }
         }
     }
-     @isTest
-    private static void unitTest2(){
-        
-        List< User > listCurrentUser = [ SELECT Id 
-                                        FROM User 
-                                        WHERE Name = 'testUser'];
-        
-        Country__c cntry = new Country__c();
-        cntry.Name = 'SG';
-        cntry.Country_Name__c ='Singapore';
-        cntry.Currency_Code__c ='SGD';
-        cntry.Tax_Rate__c = 7;
-        cntry.Student_Policies_Template_Id__c= 'DLe9tWht6W9PNHEabs2ruT';
-        cntry.Stripe_Base_Url__c ='https://api.stripe.com';
-        cntry.Stripe_Publishable_Key__c ='pk_test_eGeu4Z0mLSfXmekcJcLt7TVH';
-        cntry.Stripe_Secret_Key__c ='sk_test_M3pk8qvbMs03SWjDuf6m1bss';
-        insert cntry;
-        
-        School__c schl =  TestUtil.createSchool(false);
-        schl.Country__c = cntry.Id;
-        INSERT schl;
-        
-        Organisation__c organisation = new Organisation__c(
-            Name = 'Aureus Academy Singapore',
-            Bank_Account_Number__c = '647743343001',
-            Bank_Name__c = 'OVERSEA-CHINESE BANKING CORP GROUP',
-            Branch_Code__c = '001',
-            CPF_Advice_Code__c = '01',
-            CPF_Payment_Type__c = 'PTE',
-            Country__c =cntry.Id,
-            Sage_Company__c = 'AGP');
-        insert organisation;
-        
-        
-        Referral_Discount__c referral_discount = new Referral_Discount__c(
-            Name = 'Std. Referral (SG)',
-            Discount_Amount_Referrer__c = 70.09,
-            Discount_Amount_Referee__c = 70.09,
-            Country__c = cntry.Id,
-            Default__c = 'Yes',
-            Active__c = 'Yes');
-        insert referral_discount;
-        
-        
-        Account objTeachr=testUtil.createAccount('Teacher',false,False);
-        objTeachr.Minor_Instruments_Disciplines__c='Piano';
-        insert objTeachr;
-        
-        Account objCentr=TestUtil.createAccount('Centre',false,FALSE);
-        objCentr.Country__c = cntry.Id;
-        objCentr.Organisation__c = organisation.Id;
-           Insert objCentr;
-        
-        
-             Account refrelCustomer=TestUtil.createAccount('Customer',True,false);
-        refrelCustomer.FirstName ='test';
-        refrelCustomer.LastName = 'Class';
-        refrelCustomer.PersonEmail = 'Aureas@Gmail.test'; 
-        insert refrelCustomer;
-        
-        
-        account refrelAccount = [SELECT id,name,Unique_Referral_Code__c from account where id =:refrelCustomer.id];
-        string uniqueRefrelCode = refrelAccount.Unique_Referral_Code__c;
-         Account objtechr=TestUtil.createAccount('Teacher',False,true);
-           Account objCustmr=TestUtil.createAccount('Customer',True,false);
-        objCustmr.Referred_by__c =refrelAccount.Id;
-           Program__C objProg=TestUtil.createProgram('Active','Piano',true);
-            Package__c objPack=testUtil.createPackage(objProg.id,objCentr.id,'60',true); 
-          Enrolment__c objENrol=TestUtil.createEnrolment(objCentr.Id,objtechr.Id,objCustmr.Id,objPack.id,False);
-        objENrol.Type__c='Trial';
-        objEnrol.Stage__c='Pending Enrolment';
-        objEnrol.Lessons_Start_Date__c = System.today().addDays(10);
-         objEnrol.Referral_code_used__c = refrelAccount.Unique_Referral_Code__c;
-        objEnrol.Referred_by__c = refrelAccount.Id;
-        insert objENrol;
-      
-     
-        FreeTrial_IpadCntrl freeTrailObj = new FreeTrial_IpadCntrl();
-        freeTrailObj.sendMailToReffrel(objENrol);
-                    
-        
-    }
-    
-    
 }

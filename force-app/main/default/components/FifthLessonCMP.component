@@ -140,7 +140,10 @@
                                     }else{
                                         $('#AMMFifth').text('0 Mins');
                                     }
-                                    
+                                    if(result.isOssia){
+                                        $('#bookMakeup').attr('data-isOssia', result.isOssia);
+                                        $('#bookMakeup').attr('data-enrolment', result.enrolment);
+                                    }
 
                                     $('#replacePlaceholder').attr('data-id', result.Id);
                                     $('#bookMakeup').attr('data-id', result.Id);

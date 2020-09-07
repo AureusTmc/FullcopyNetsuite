@@ -41,9 +41,37 @@ public class PackageUpgradeController implements PackageProcessInterface{
             }*/
             if(countWithOldPackage >= 1){
                 listOfInvoiceLineItems.add(createInvoiceLineItem(objInvoice.id,objSubLineItem,oldPackageUnitPrice ,objSubLineItem.Enrolment__r.Package__c,FALSE,objSubLineItem.Enrolment__r.Teacher__c));
+                 //added by nishi: 21-Aug-2020: for manage Facility Fee if its ossia organistion 
+                //  if(string.isNotBlank(objSubLineItem.Enrolment__r.Center__c) && string.isNotBlank(objSubLineItem.Enrolment__r.Center__r.Organisation__c) &&
+                //  string.isNotBlank(objSubLineItem.Enrolment__r.Center__r.Organisation__r.Name)&& 
+                //  objSubLineItem.Enrolment__r.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                //      if(objSubLineItem.Enrolment__r.Package__r.Facility_Fee__c != null){
+                //          Decimal facilityCharge = (objSubLineItem.Enrolment__r.Package__r.Facility_Fee__c/4)*countWithOldPackage ; 
+                //          Invoice_Line_Item__c objinvLineItm =  createInvoiceLineItem(objInvoice.id,objSubLineItem,facilityCharge ,objSubLineItem.Enrolment__r.Package__c,FALSE,objSubLineItem.Enrolment__r.Teacher__c); 
+                //          objinvLineItm.remarks__c = objSubLineItem.Enrolment__r.Package__r.Name+' (Facility Fee)';
+                //          listOfInvoiceLineItems.add(objinvLineItm);
+                //      }
+                //  }
+                //added by nishi: 21-Aug-2020: for manage Facility Fee if its ossia organistion 
+             
             }
             if(countWithNewPackage >= 1){
-                listOfInvoiceLineItems.add(createInvoiceLineItem(objInvoice.id,objSubLineItem,newPackageUnitPrice ,objSubLineItem.Enrolment__r.New_Package_Id__c,FALSE,objSubLineItem.Enrolment__r.Teacher__c));
+                  //added by nishi: 21-Aug-2020: for manage Facility Fee 
+                  if(string.isNotBlank(objSubLineItem.Enrolment__r.Center__c) && string.isNotBlank(objSubLineItem.Enrolment__r.Center__r.Organisation__c) &&
+                  string.isNotBlank(objSubLineItem.Enrolment__r.Center__r.Organisation__r.Name)&& 
+                  objSubLineItem.Enrolment__r.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                    //   if(objSubLineItem.Enrolment__r.New_Package_Id__r.Facility_Fee__c != null){
+                    //       Decimal facilityCharge = (objSubLineItem.Enrolment__r.New_Package_Id__r.Facility_Fee__c/4)*countWithNewPackage ; 
+                    //       Invoice_Line_Item__c objinvLineItm =  createInvoiceLineItem(objInvoice.id,objSubLineItem,facilityCharge ,objSubLineItem.Enrolment__r.New_Package_Id__c,FALSE,objSubLineItem.Enrolment__r.New_Teacher__c); 
+                    //       objinvLineItm.remarks__c = objSubLineItem.Enrolment__r.New_Package_Id__r.Name+' (Facility Fee)';
+                    //       listOfInvoiceLineItems.add(objinvLineItm);
+                    //   }
+                    //if its ossia organistion upgrade condition in ossia teacher is also change so we added new teacher also
+                    listOfInvoiceLineItems.add(createInvoiceLineItem(objInvoice.id,objSubLineItem,newPackageUnitPrice ,objSubLineItem.Enrolment__r.New_Package_Id__c,FALSE,objSubLineItem.Enrolment__r.New_Teacher__c));
+                  }else{
+                    listOfInvoiceLineItems.add(createInvoiceLineItem(objInvoice.id,objSubLineItem,newPackageUnitPrice ,objSubLineItem.Enrolment__r.New_Package_Id__c,FALSE,objSubLineItem.Enrolment__r.Teacher__c));
+                  }
+                 //added by nishi: 21-Aug-2020: for manage Facility Fee if its ossia organistion 
             } 
         }
         return listOfInvoiceLineItems;
@@ -70,7 +98,6 @@ public class PackageUpgradeController implements PackageProcessInterface{
                     Double gstAmount = BillingUtility.roundOffAmount(Double.valueOf(amount) * (objSubLineItem.Enrolment__r.Center__r.Country__r.Tax_Rate__c / 100));
                     invLineItm.gst_Amount__c = gstAmount;
             }
-            
         }
         return invLineItm;
     }

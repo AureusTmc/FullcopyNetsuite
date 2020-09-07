@@ -10,9 +10,9 @@ public class EnrolmentProcessIpadCntrl {
     public String errorMsg{get;set;}
     public Boolean isAmcClubMember{get;set;}
     public String userAuthCode{get;set;}
-	public Boolean isSiteGuestUser{get;set;}
-	
-    public Integer currSlcd{get;set;}	
+    public Boolean isSiteGuestUser{get;set;}
+    
+    public Integer currSlcd{get;set;}   
     public String perEmail{get;set;}
     
     public String slcdLsnType{get;set;}
@@ -20,6 +20,8 @@ public class EnrolmentProcessIpadCntrl {
     //Added by Rajesh, 16th Sep 2019. To store enrolment source on Enrolment/Case object and country for filtercentre
     String enrolmentSource;
     String countryCode;
+    string currentOrg;//@Juneid 19 Aug 2020, Storing current organization id
+    public string defaultOrg{get;set;}//@Juneid 19 Aug 2020, Storing current users organization name
     
     public EnrolmentProcessIpadCntrl(){
         studentWrapList = new List<StudentWrapper>();
@@ -29,7 +31,11 @@ public class EnrolmentProcessIpadCntrl {
         selectedIndex=1;
         slcdLsnType = 'Individual';
         Set<String> enrIds = new Set<String>();
-        Map<String, String> params  =  ApexPages.currentPage().getParameters();
+        system.debug('currebt org -->'+ApexPages.currentPage().getParameters().get('currentOrg'));
+        currentOrg = ApexPages.currentPage().getParameters().get('currentOrg');//@Juneid 19 Aug 2020, Current Organization id
+        system.debug('org default--->'+ApexPages.currentPage().getParameters().get('orgType'));
+        defaultOrg = ApexPages.currentPage().getParameters().get('orgType');
+        Map<String, String> params  =  ApexPages.currentPage().getParameters(); 
         if(params != null && params.size() > 0){
             for(String strKey : params.keySet()){
                 if(strKey == 'es')
@@ -52,7 +58,7 @@ public class EnrolmentProcessIpadCntrl {
             List<Enrolment__c> enrList = [SELECT Id, Center__c, Teacher__c, Package__c, Package__r.Type__c,Package__r.Duration__c, Package__r.Program__r.Instrument__c, Parent__r.Also_a_Student__c, Parent__r.Personemail,
                                                  Student__c, Student__r.Name, Parent__c, Parent__r.Name, Trial_Date__c, Trial_Start_Time__c, Center__r.Travel_Time__c, Center__r.Name, Parent__r.Is_Club_Member__c,
                                                  Parent__r.Membership_Type__c, Parent__r.personContactId, Lessons_Start_Date__c, Lesson_Start_Time__c,Type__c,Stage__c,
-                                          		Center__r.Country__r.Name
+                                                Center__r.Country__r.Name
                                           FROM Enrolment__c
                                           WHERE Id IN: enrIds AND (Type__c = 'Trial' OR Type__c = 'Group') AND Student__c != null AND Parent__c != null AND 
                                           ((Stage__c =: ConstantsClass.enrollStageAttended AND Trial_Date__c != null AND Trial_Start_Time__c != null) OR 
@@ -78,15 +84,15 @@ public class EnrolmentProcessIpadCntrl {
                     Date tempDT;
                     Time tempTime;
                     if(enr.Stage__c.equalsIgnoreCase('Attended')){
-                    	 tempDT= enr.Trial_Date__c.addDays(7);
-                    	 tempTime= enr.Trial_Start_Time__c;
+                         tempDT= enr.Trial_Date__c.addDays(7);
+                         tempTime= enr.Trial_Start_Time__c;
                     //Updated by Rajesh: 12th Nov 2011, Added lost condition for the pardot trial as per discussion with Ashish ji
                     }else if(enr.Stage__c.equalsIgnoreCase('Lost')){
-                    	 tempDT= enr.Trial_Date__c.addDays(7);
-                    	 tempTime= enr.Trial_Start_Time__c;
+                         tempDT= enr.Trial_Date__c.addDays(7);
+                         tempTime= enr.Trial_Start_Time__c;
                     }else if(enr.Stage__c.equalsIgnoreCase('Pending Enrolment')){
-                    	tempDT = enr.Lessons_Start_Date__c;
-                   		tempTime = enr.Lesson_Start_Time__c;
+                        tempDT = enr.Lessons_Start_Date__c;
+                        tempTime = enr.Lesson_Start_Time__c;
                     }
                     lsn.lessonSlcdDate = tempDT.day()+'/'+tempDT.month()+'/'+tempDT.year() ;
                     lsn.lessonSlcdDateD = tempDT;
@@ -133,7 +139,8 @@ public class EnrolmentProcessIpadCntrl {
         
         String centerRecId =  Schema.SObjectType.Account.getRecordTypeInfosByName().get(ConstantsClass.centerRecTypeName).getRecordTypeId();
         if(slcdLsnType.equalsIgnoreCase('Individual')){
-            for(Account acc : [SELECT Id, Name,CentreName_Cust__c FROM Account WHERE RecordType.Id =: centerRecId AND Centre_Status__c =:ConstantsClass.activeStatus AND CentreName_Cust__c != null AND Country__r.Name =:countryCode ORDER BY CentreName_Cust__c])
+            //@Juneid 19 Aug 2020, Organization ise centre logic
+            for(Account acc : [SELECT Id, Name,CentreName_Cust__c FROM Account WHERE (RecordType.Id =: centerRecId AND Centre_Status__c =:ConstantsClass.activeStatus) AND (CentreName_Cust__c != null AND Country__r.Name =:countryCode) AND Organisation__c=:currentOrg ORDER BY CentreName_Cust__c])
                 options.add(new SelectOption(acc.Id, acc.CentreName_Cust__c));
         }else if(slcdLsnType.equalsIgnoreCase('Group')){
             Map<Id,String> centMap = new Map<Id,String>();
@@ -181,7 +188,7 @@ public class EnrolmentProcessIpadCntrl {
                 teacherOptions.add(new SelectOption(tchrId, tchrMap.get(tchrId))); 
         }
         return teacherOptions;
-    }	     
+    }        
     
     public list<SelectOption> fetchPlans(LessonWrapper lessonWrap, Boolean isSelectDefPkg){
         list<SelectOption> options = new list<SelectOption>();
@@ -240,15 +247,57 @@ public class EnrolmentProcessIpadCntrl {
                 }
             }else if(lessonWrap.selectedLsnType.equalsIgnoreCase('Group')){
                 Set<String> pkgSet = new Set<String>();
-            	List<Class__c> clsList = [SELECT Id,Name,Package__c,Package__r.Name FROM Class__c WHERE Centre_Name__c =:  lessonWrap.selectedCenter AND Teacher__c =: lessonWrap.selectedTeacher AND Active__c = True AND 
-                                          		Available_Capacity__c > 0 AND Package__r.Type__c = 'Group' AND Package__r.RecordtypeId =: pkgLessRecId AND (Package__r.Type_of_package__c = 'Normal' OR Package__r.Type_of_package__c = 'Promo')
-                                                ORDER BY Package__r.Program__r.Name, Package__r.Duration__c]; 
-                for(Class__c cls: clsList){
-                    if(!pkgSet.contains(cls.Package__c)){
-                    	pkgSet.add(cls.Package__c);
-                		options.add(new SelectOption(cls.Package__c, cls.Package__r.Name));                 
+                // Start :added by nishi: 1-sep-2020: for if class related to ossia organisation then we show package list into  
+                //new created object Ossia_Group_Grade_Packages__r other wise we get package list into package field 
+                if(defaultOrg=='ossia'){ 
+                    for(Class__c cls: [SELECT Id,Name,Package__c,Package__r.Name,
+                                        Package__r.Type__c,Package__r.RecordtypeId,Package__r.Type_of_package__c,
+                                        Centre_Name__r.Organisation__r.Name,
+                                        (SELECT Class_Name__c, Package__c,Package__r.Name,  Name, Id ,
+                                            Package__r.Type__c,Package__r.RecordtypeId,Package__r.Type_of_package__c
+                                            FROM Ossia_Group_Grade_Packages__r 
+                                            WHERE  Package__r.Type__c = 'Group' 
+                                            AND Package__r.RecordtypeId =: pkgLessRecId 
+                                            AND (Package__r.Type_of_package__c = 'Normal' 
+                                            OR Package__r.Type_of_package__c = 'Promo')
+                                            ORDER BY Package__r.Program__r.Name, Package__r.Duration__c)
+                                        FROM Class__c 
+                                        WHERE Centre_Name__c =:  lessonWrap.selectedCenter
+                                        AND Teacher__c =: lessonWrap.selectedTeacher 
+                                        AND Active__c = True 
+                                        AND Available_Capacity__c > 0 
+                                    ]){
+                        if(string.isNotBlank(cls.Centre_Name__c) && string.isNotBlank(cls.Centre_Name__r.Organisation__c) &&
+                        cls.Centre_Name__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                            if(cls.Ossia_Group_Grade_Packages__r != null && cls.Ossia_Group_Grade_Packages__r.size() > 0){
+                                for(Ossia_Group_Grade_Package__c objpackage: cls.Ossia_Group_Grade_Packages__r){
+                                    if(!pkgSet.contains(objpackage.Package__c)){
+                                        pkgSet.add(objpackage.Package__c);
+                                        options.add(new SelectOption(objpackage.Package__c, objpackage.Package__r.Name));                 
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
+                // End :added by nishi: 1-sep-2020: for if class related to ossia organisation then we show package list into  
+                //new created object Ossia_Group_Grade_Packages__r other wise we get package list into package field 
+                else{
+                    for(Class__c cls: [SELECT Id,Name,Package__c,Package__r.Name,
+                                        Package__r.Type__c,Package__r.RecordtypeId,Package__r.Type_of_package__c
+                                            FROM Class__c 
+                                            WHERE Centre_Name__c =:  lessonWrap.selectedCenter
+                                            AND Teacher__c =: lessonWrap.selectedTeacher 
+                                            AND Active__c = True 
+                                            AND Available_Capacity__c > 0 
+                                           ]){
+                            if(!pkgSet.contains(cls.Package__c)){
+                                pkgSet.add(cls.Package__c);
+                                options.add(new SelectOption(cls.Package__c, cls.Package__r.Name));                 
+                            }
+                    }
+                }
+                
             }
         }
         return options;
@@ -256,10 +305,10 @@ public class EnrolmentProcessIpadCntrl {
     
     public void slcdLessonType(){
        // slcdLsnType
-    	/*list<SelectOption> centOpt = getCenters();
+        /*list<SelectOption> centOpt = getCenters();
         
         for(StudentWrapper st : studentWrapList){            
-        	LessonWrapper lsn = new LessonWrapper();
+            LessonWrapper lsn = new LessonWrapper();
             lsn.centerOptions = centOpt;
             
             st.lesson = lsn;
@@ -283,14 +332,14 @@ public class EnrolmentProcessIpadCntrl {
         //List<Package__c> pkgLst = [SELECT Id, Name, Program__r.Instrument__c, Program__c, Program__r.Name,Duration__c, Location__r.Name 
           //                         FROM Package__c WHERE Id =: lessonWrap.selectedPlan];
         
-    	LessonWrapper lessonWrap = stuWrap.lesson;
+        LessonWrapper lessonWrap = stuWrap.lesson;
         String slcdCenter = lessonWrap.selectedCenter;
         String slcdTeacher = lessonWrap.selectedTeacher;
         Map<String,TimeSlotModelCntrl> tSlotDateMap = new Map<String,TimeSlotModelCntrl>();
         
         if(stuWrap.lesson.selectedLsnType.equalsIgnoreCase('Individual')){
             Map<String,List<Teacher_Working_Hour__c>> teachWorkSchMap = new Map<String,List<Teacher_Working_Hour__c>>();
-            List<Teacher_Working_Hour__c> techWorkSchList = [SELECT Id,Name,Teacher_Name__c,Teacher_Name__r.Name,Teacher_Name__r.Teacher_Bio__c,Working_Day__c,
+            List<Teacher_Working_Hour__c> techWorkSchList = [SELECT Id,Name,Teacher_Name__c,Teacher_Name__r.Engagement_Type__c,Teacher_Name__r.Name,Teacher_Name__r.Teacher_Bio__c,Working_Day__c,
                                                              Start_Time__c,End_Time__c,Active__c
                                                              FROM  Teacher_Working_Hour__c 
                                                              WHERE Center_Name__c =: slcdCenter AND Active__c = true AND Working_Day__c != null AND 
@@ -308,7 +357,7 @@ public class EnrolmentProcessIpadCntrl {
             }
             
             Map<String,LessonWrapper> addTimeSlotMap = new Map<String,LessonWrapper>();
-            /*	      
+            /*        
             for(StudentWrapper sWrap : studentWrapList){
                 LessonWrapper lWrap = sWrap.lesson;
                 if(String.isNotBlank(lWrap.lessonSlctSlot) && lWrap.pkgDuration > 0){
@@ -388,36 +437,79 @@ public class EnrolmentProcessIpadCntrl {
                 if(teachWorkSchMap.containsKey(currDay)){
                     List<Teacher_Working_Hour__c> tchWorSchLst = teachWorkSchMap.get(currDay);
                     
-                    for(Teacher_Working_Hour__c teachWorkSch: tchWorSchLst){                                      
-                        Time stTime = teachWorkSch.Start_Time__c;
-                        
-                        Integer endTimeDef = lessonWrap.pkgDuration  > 0 ? lessonWrap.pkgDuration : 30;
-                        
-                        //Adding trial time during Aureus at home center
-                        /*if(currFreeTrailEnr.Id != null && currFreeTrailEnr.Center__c == Label.Aureus_at_Home_Id && currFreeTrailEnr.Center__r.Travel_Time__c != null){
-                            endTimeDef = endTimeDef + Integer.valueOf(currFreeTrailEnr.Center__r.Travel_Time__c); 
-                        }*/
-                        
-                        while(stTime <= teachWorkSch.End_Time__c.addMinutes(-endTimeDef)){
-                            if(st != date.Parse(lessonWrap.lessonSlcdDate) && (morningTimesTemp.size() > 0 && afternoonTimesTemp.size() > 0)){
-                                break;
-                            } 
-                
-                            String key = st + ':'+ stTime;
-                            if(bookMap.containsKey(key)){
-                                Booking__c bookTmp = bookMap.get(key);
-                                stTime = bookTmp.End_Time__c;
-                            }else{
-                                string key2 = st + ':'+ stTime.addMinutes(ConstantsClass.defaultMinutesDiffinSlot);
-                                
-                                if(bookMap.containsKey(key2)){
-                                    Booking__c bookTmp = bookMap.get(key2);
+                    for(Teacher_Working_Hour__c teachWorkSch: tchWorSchLst){    
+                         // start:nishi: 4-Sep-2020: for check teacher engagement type is part-time and is day is greater then 28 mean (5th lesson booking) so we not consider this teacher
+                       //remove any timeslot for 5th days for part-time teachers.
+                       Boolean isPartTimeTeacher = false; 
+                       if(teachWorkSch.Teacher_Name__r.Engagement_Type__c =='Part-Time' && st.day() > 28){
+                           isPartTimeTeacher = true;
+                       }
+                       system.debug('%%%%isPartTimeTeacher'+isPartTimeTeacher +'  '+st); 
+                       if(!isPartTimeTeacher){
+                        //end: nishi: 4-Sep-2020: for check teacher engagement type is part-time and is day is greater then 28 mean (5th lesson booking) so we not consider this teacher
+                        //remove any timeslot for 5th days for part-time teachers.
+
+                            Time stTime = teachWorkSch.Start_Time__c;
+                            
+                            Integer endTimeDef = lessonWrap.pkgDuration  > 0 ? lessonWrap.pkgDuration : 30;
+                            
+                            //Adding trial time during Aureus at home center
+                            /*if(currFreeTrailEnr.Id != null && currFreeTrailEnr.Center__c == Label.Aureus_at_Home_Id && currFreeTrailEnr.Center__r.Travel_Time__c != null){
+                                endTimeDef = endTimeDef + Integer.valueOf(currFreeTrailEnr.Center__r.Travel_Time__c); 
+                            }*/
+                            
+                            while(stTime <= teachWorkSch.End_Time__c.addMinutes(-endTimeDef)){
+                                if(st != date.Parse(lessonWrap.lessonSlcdDate) && (morningTimesTemp.size() > 0 && afternoonTimesTemp.size() > 0)){
+                                    break;
+                                } 
+                    
+                                String key = st + ':'+ stTime;
+                                if(bookMap.containsKey(key)){
+                                    Booking__c bookTmp = bookMap.get(key);
                                     stTime = bookTmp.End_Time__c;
                                 }else{
-                                    if(stTime.hour() < 12){
-                                        if(stTime.addMinutes(15) < teachWorkSch.End_Time__c){
-                                            //Time currTime = Time.newInstance(System.now().hour(), System.now().minute(), System.now().second(), System.now().millisecond());
-                                            //currTime = currTime.addHours(4);    
+                                    string key2 = st + ':'+ stTime.addMinutes(ConstantsClass.defaultMinutesDiffinSlot);
+                                    
+                                    if(bookMap.containsKey(key2)){
+                                        Booking__c bookTmp = bookMap.get(key2);
+                                        stTime = bookTmp.End_Time__c;
+                                    }else{
+                                        if(stTime.hour() < 12){
+                                            if(stTime.addMinutes(15) < teachWorkSch.End_Time__c){
+                                                //Time currTime = Time.newInstance(System.now().hour(), System.now().minute(), System.now().second(), System.now().millisecond());
+                                                //currTime = currTime.addHours(4);    
+                                                DateTime tempTodayTime = System.now().addHours(4);
+                                                DateTime tempStDtTime  = Datetime.newInstance(st, stTime);
+                                                
+                                                //if(st > System.today() || (st == System.today() && stTime > currTime)){
+                                                if(tempStDtTime > tempTodayTime){
+                                                    String dayKey  =  currDay + ':'+ stTime;
+                                                    
+                                                    //Checking that time slot is already added in student or not
+                                                    String cuDtStr = st.day() +'/'+ st.month()+'/'+ st.year();
+                                                    String minTmp = stTime.hour() + ':' + (stTime.minute() != 0 ?  (stTime.minute() +'') : '00');
+                                                    String addTimeSlotKeyTemp = addTimeSlotKey + ':'+ cuDtStr +':'+ minTmp;
+                                                    
+                                                    //Added by Rajesh, 21st Aug 2019, to solve time slot issue
+                                                    Boolean isTimeSlotNotAvl = false;
+                                                    if(bookDayMap.containsKey(dayKey)){
+                                                        for(Date dt: bookDayMap.get(dayKey)){
+                                                            if(dt >= st && st.daysBetween(dt) <= 28){
+                                                                isTimeSlotNotAvl = true;
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                    
+                                                    //if(!(bookDayMap.containsKey(dayKey) || addTimeSlotMap.containsKey(addTimeSlotKeyTemp)))   
+                                                    if(!(isTimeSlotNotAvl || addTimeSlotMap.containsKey(addTimeSlotKeyTemp)))                                                                                     
+                                                        morningTimesTemp.add(stTime);  
+                                                }
+                                            }
+                                            stTime = stTime.addMinutes(ConstantsClass.defaultMinutesDiffinSlot);
+                                        }else{
+                                        // Time currTime = Time.newInstance(System.now().hour(), System.now().minute(), System.now().second(), System.now().millisecond());
+                                            //currTime = currTime.addHours(4);
                                             DateTime tempTodayTime = System.now().addHours(4);
                                             DateTime tempStDtTime  = Datetime.newInstance(st, stTime);
                                             
@@ -440,45 +532,14 @@ public class EnrolmentProcessIpadCntrl {
                                                         }
                                                     }
                                                 }
-                                                
-                                                //if(!(bookDayMap.containsKey(dayKey) || addTimeSlotMap.containsKey(addTimeSlotKeyTemp)))   
-                                                if(!(isTimeSlotNotAvl || addTimeSlotMap.containsKey(addTimeSlotKeyTemp)))                                                                                     
-                                                    morningTimesTemp.add(stTime);  
+                                                //if(!(bookDayMap.containsKey(dayKey) || addTimeSlotMap.containsKey(addTimeSlotKeyTemp)))
+                                                if(!(isTimeSlotNotAvl || addTimeSlotMap.containsKey(addTimeSlotKeyTemp)))
+                                                    afternoonTimesTemp.add(stTime);
                                             }
+                                            stTime = stTime.addMinutes(ConstantsClass.defaultMinutesDiffinSlot);
                                         }
-                                        stTime = stTime.addMinutes(ConstantsClass.defaultMinutesDiffinSlot);
-                                    }else{
-                                       // Time currTime = Time.newInstance(System.now().hour(), System.now().minute(), System.now().second(), System.now().millisecond());
-                                        //currTime = currTime.addHours(4);
-                                        DateTime tempTodayTime = System.now().addHours(4);
-                                        DateTime tempStDtTime  = Datetime.newInstance(st, stTime);
-                                        
-                                        //if(st > System.today() || (st == System.today() && stTime > currTime)){
-                                        if(tempStDtTime > tempTodayTime){
-                                            String dayKey  =  currDay + ':'+ stTime;
-                                            
-                                            //Checking that time slot is already added in student or not
-                                            String cuDtStr = st.day() +'/'+ st.month()+'/'+ st.year();
-                                            String minTmp = stTime.hour() + ':' + (stTime.minute() != 0 ?  (stTime.minute() +'') : '00');
-                                            String addTimeSlotKeyTemp = addTimeSlotKey + ':'+ cuDtStr +':'+ minTmp;
-                                            
-                                            //Added by Rajesh, 21st Aug 2019, to solve time slot issue
-                                            Boolean isTimeSlotNotAvl = false;
-                                            if(bookDayMap.containsKey(dayKey)){
-                                                for(Date dt: bookDayMap.get(dayKey)){
-                                                    if(dt >= st && st.daysBetween(dt) <= 28){
-                                                        isTimeSlotNotAvl = true;
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                            //if(!(bookDayMap.containsKey(dayKey) || addTimeSlotMap.containsKey(addTimeSlotKeyTemp)))
-                                            if(!(isTimeSlotNotAvl || addTimeSlotMap.containsKey(addTimeSlotKeyTemp)))
-                                                afternoonTimesTemp.add(stTime);
-                                        }
-                                        stTime = stTime.addMinutes(ConstantsClass.defaultMinutesDiffinSlot);
-                                    }
-                                }                            
+                                    }                            
+                                }
                             }
                         }
                     }
@@ -515,28 +576,71 @@ public class EnrolmentProcessIpadCntrl {
                 tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp);
             }
         }else if(stuWrap.lesson.selectedLsnType.equalsIgnoreCase('Group')){
-        	Map<String,List<Class__c>> clsSchMap = new Map<String,List<Class__c>>();
+            Map<String,List<Class__c>> clsSchMap = new Map<String,List<Class__c>>();
             Map<String,Booking__c> bookMap = new Map<String,Booking__c>();
             String bookGrpClsRecId =  Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get('Group Class').getRecordTypeId();   
             
             Date startDt   = System.today();
             Date endDtTemp = startDt.addMonths(2);
-            for(Class__c cls: [SELECT Id, Name, Package__c, Package__r.Name, Teacher__c, Class_Day__c, Start_Time__c,End_Time__c,
-                               		  (SELECT Id, Booking_Date__c FROM Bookings__r WHERE RecordTypeId =: bookGrpClsRecId AND (Booking_Date__c >=: startDt AND Booking_Date__c <=: endDtTemp))
-                               FROM Class__c WHERE Teacher__c =:slcdTeacher AND Package__c =: lessonWrap.selectedPlan 
-                               		AND Centre_Name__c =:  lessonWrap.selectedCenter AND Active__c = True AND Available_Capacity__c > 0]){                                                               
-                List<Class__c> clsList = clsSchMap.get(cls.Class_Day__c);
-                if(clsList == null)
-                    clsList = new List<Class__c>();
-                
-                clsList.add(cls);                                                  
-                clsSchMap.put(cls.Class_Day__c, clsList);   
-                                        
-                for(Booking__c book: cls.Bookings__r)
-                	bookMap.put(cls.Id+'#'+book.Booking_Date__c, book);                 
-            }    
+            //added by nishi: 1-sep-2020: for is organaization belongs to ossia then we show time slots according to pacakge list
+            // selected package is exist to Ossia_Group_Grade_Package__c records that group class slots we show  
+            if(defaultOrg=='ossia'){ 
+                set<String> listOfGradePackageClass= new set<String>();
+                for(Ossia_Group_Grade_Package__c objGradePackage: [SELECT Class_Name__c, Package__c,  Name, Id 
+                                                                        FROM Ossia_Group_Grade_Package__c
+                                                                        Where Package__c =: lessonWrap.selectedPlan ]){
+                        listOfGradePackageClass.add(objGradePackage.Class_Name__c);
+                    }
+                if(listOfGradePackageClass != null &&listOfGradePackageClass.size()> 0){                                                        
+                    for(Class__c cls: [SELECT Id, Name, Package__c, Package__r.Name, Teacher__c, Class_Day__c, Start_Time__c,End_Time__c,
+                                (SELECT Id, Booking_Date__c 
+                                    FROM Bookings__r 
+                                    WHERE RecordTypeId =: bookGrpClsRecId 
+                                    AND (Booking_Date__c >=: startDt 
+                                    AND Booking_Date__c <=: endDtTemp))
+                                FROM Class__c 
+                                WHERE Teacher__c =:slcdTeacher 
+                                AND Id IN:listOfGradePackageClass 
+                                AND Centre_Name__c =:  lessonWrap.selectedCenter 
+                                AND Active__c = True AND Available_Capacity__c > 0]){
+                        List<Class__c> clsList = clsSchMap.get(cls.Class_Day__c);
+                        if(clsList == null)
+                            clsList = new List<Class__c>();
+                        
+                        clsList.add(cls);                                                  
+                        clsSchMap.put(cls.Class_Day__c, clsList);   
+                                                
+                        for(Booking__c book: cls.Bookings__r)
+                            bookMap.put(cls.Id+'#'+book.Booking_Date__c, book);                 
+                    } 
+                } 
+            }else{
+                //end by nishi: 1-sep-2020: for is organaization belongs to ossia then we show time slots according to pacakge list
+            // selected package is exist to Ossia_Group_Grade_Package__c records that group class slots we show
             
-          
+                for(Class__c cls:[SELECT Id, Name, Package__c, Package__r.Name, Teacher__c, Class_Day__c, Start_Time__c,End_Time__c,
+                                (SELECT Id, Booking_Date__c 
+                                    FROM Bookings__r 
+                                    WHERE RecordTypeId =: bookGrpClsRecId 
+                                    AND (Booking_Date__c >=: startDt 
+                                    AND Booking_Date__c <=: endDtTemp))
+                                FROM Class__c
+                                WHERE Teacher__c =:slcdTeacher 
+                                AND Package__c =: lessonWrap.selectedPlan 
+                                AND Centre_Name__c =:  lessonWrap.selectedCenter 
+                                AND Active__c = True AND Available_Capacity__c > 0]){
+                    List<Class__c> clsList = clsSchMap.get(cls.Class_Day__c);
+                    if(clsList == null)
+                        clsList = new List<Class__c>();
+                    
+                    clsList.add(cls);                                                  
+                    clsSchMap.put(cls.Class_Day__c, clsList);   
+                                            
+                    for(Booking__c book: cls.Bookings__r)
+                        bookMap.put(cls.Id+'#'+book.Booking_Date__c, book);                 
+                } 
+            }
+            
             Date endDt = startDt.addMonths(1);
             for(Date st=startDt; st<=endDt; st=st.addDays(1)){
                 TimeSlotModelCntrl tSlotMapTemp = new TimeSlotModelCntrl();
@@ -595,13 +699,13 @@ public class EnrolmentProcessIpadCntrl {
         lessonWrap.tSlotStr = JSON.serialize(tSlotDateMap);
         lessonWrap.tSlotMap = tSlotDateMap.get(lessonWrap.lessonSlcdDate);
     }
-	
+    
     public pageReference redirectOnSrch(){
         PageReference pageRef = Page.searchtrial_ipad; 
         pageRef.getParameters().put('country', countrycode);    
         return pageRef;
     }
-	    
+        
     public void refreshSlots(){
         if(selectedIndex > 0){
             Integer selectedInd = selectedIndex-1;
@@ -752,7 +856,7 @@ public class EnrolmentProcessIpadCntrl {
             errorMsg = 'success';
             return null;
         }else{
-        	errorMsg = 'Error: Enrolment not found..';
+            errorMsg = 'Error: Enrolment not found..';
             return null;
         }
     }
@@ -776,8 +880,8 @@ public class EnrolmentProcessIpadCntrl {
                 isNotCompleted = true;
             
             if(isNotCompleted){
-            	enrId = stu.enrl.Id;    
-             	break;
+                enrId = stu.enrl.Id;    
+                break;
             }
         }
         
@@ -791,7 +895,7 @@ public class EnrolmentProcessIpadCntrl {
             errorMsg = 'success';
             return null;
         }else{
-        	return saveEnrolment();
+            return saveEnrolment();
         }
     }
     
@@ -815,14 +919,47 @@ public class EnrolmentProcessIpadCntrl {
                     pkgSet.add(stu.lesson.selectedPlan);
                 }
             }
+            System.debug('@@@centSet'+centSet);
+            System.debug('@@@tchrSet'+tchrSet);
+            System.debug('@@@pkgSet'+pkgSet);
             Map<String,Class__c> clsSchMap = new Map<String,Class__c>();
             if(centSet.size() > 0 && tchrSet.size() > 0 && pkgSet.size() > 0){
-                for(Class__c cls: [SELECT Id, Name, Centre_Name__c, Teacher__c, Package__c, Class_Day__c, Start_Time__c,End_Time__c FROM Class__c WHERE Teacher__c IN:tchrSet AND Package__c IN:pkgSet 
-                                   AND Centre_Name__c IN:centSet AND Teacher__c IN:tchrSet AND Package__c IN:pkgSet AND Active__c = True AND Available_Capacity__c > 0]){                                                               
-                	String key = cls.Centre_Name__c +'#'+ cls.Teacher__c +'#'+ cls.Package__c +'#'+ cls.Class_Day__c +'#'+ cls.Start_Time__c;
-                    clsSchMap.put(key, cls);                                                  
+                if(defaultOrg=='ossia'){ 
+                   // start :added by nishi: 1-sep-2020: for if class related to ossia organisation then we show package list into  
+                 //new created object Ossia_Group_Grade_Packages__r other wise we get package list into package field 
+                    for(Class__c cls: [SELECT Id, Name, Centre_Name__c, Teacher__c, Package__c, Class_Day__c, Start_Time__c,End_Time__c, 
+                                        (SELECT Class_Name__c, Package__c,Package__r.Name,  Name, Id ,
+                                            Package__r.Type__c,Package__r.RecordtypeId,Package__r.Type_of_package__c
+                                            FROM Ossia_Group_Grade_Packages__r 
+                                            WHERE  Package__c =: pkgSet
+                                        )
+                                        FROM Class__c 
+                                        WHERE Teacher__c IN:tchrSet 
+                                        AND Centre_Name__c IN:centSet 
+                                        AND Active__c = True
+                                        AND Available_Capacity__c > 0]){  
+                        if(cls.Ossia_Group_Grade_Packages__r != null && cls.Ossia_Group_Grade_Packages__r.size() > 0){ 
+                            for(Ossia_Group_Grade_Package__c objGradePackage: cls.Ossia_Group_Grade_Packages__r)    {                                                                            
+                                String key = cls.Centre_Name__c +'#'+ cls.Teacher__c +'#'+ objGradePackage.Package__c +'#'+ cls.Class_Day__c +'#'+ cls.Start_Time__c;
+                                clsSchMap.put(key, cls);
+                                System.debug('key'+key); 
+                            }
+                        }    
+                        System.debug('@@cls.Ossia_Group_Grade_Packages__r'+cls.Ossia_Group_Grade_Packages__r);             
+                    } 
+                    
+                }else{
+                // end :added by nishi: 1-sep-2020: for if class related to ossia organisation then we show package list into  
+                 //new created object Ossia_Group_Grade_Packages__r other wise we get package list into package field 
+                    for(Class__c cls: [SELECT Id, Name, Centre_Name__c, Teacher__c, Package__c, Class_Day__c, Start_Time__c,End_Time__c FROM Class__c WHERE Teacher__c IN:tchrSet AND Package__c IN:pkgSet 
+                                    AND Centre_Name__c IN:centSet AND Teacher__c IN:tchrSet AND Package__c IN:pkgSet AND Active__c = True AND Available_Capacity__c > 0]){                                                               
+                        String key = cls.Centre_Name__c +'#'+ cls.Teacher__c +'#'+ cls.Package__c +'#'+ cls.Class_Day__c +'#'+ cls.Start_Time__c;
+                        clsSchMap.put(key, cls);                                                  
+                    }
+                    System.debug('@@clsSchMap'+clsSchMap);
                 }
-        	}
+            }
+            System.debug('@@clsSchMap'+clsSchMap);
             
             Set<String> grpClsBookSet = new Set<String>();
             for(StudentWrapper stu : studentWrapList){
@@ -839,7 +976,7 @@ public class EnrolmentProcessIpadCntrl {
                 if(stu.enrl.Id == null){
                     stu.enrl.Type__c = 'Trial';
                 }
-                
+                System.debug('@@startTime'+startTime);
                 stu.enrl.Stage__c   = 'Pending Enrolment';    
                 stu.enrl.Center__c  = stu.lesson.selectedCenter;
                 stu.enrl.Teacher__c = stu.lesson.selectedTeacher;
@@ -848,16 +985,20 @@ public class EnrolmentProcessIpadCntrl {
                 stu.enrl.Lesson_Start_time__c =  startTime;
                 stu.enrl.Enrolment_Email_Date__c = System.now();
                 
-            	//updated by Rajesh, 7th Aug 2019. to store enrolmentsource on enrolment/case object
-            	if(String.isNotBlank(enrolmentSource))
-                	stu.enrl.Enrolment_Source__c = enrolmentSource;
+                //updated by Rajesh, 7th Aug 2019. to store enrolmentsource on enrolment/case object
+                if(String.isNotBlank(enrolmentSource))
+                    stu.enrl.Enrolment_Source__c = enrolmentSource;
                 
                 if(stu.lesson.selectedLsnType.equalsIgnoreCase('Group')){
                     String currDay =  DateTime.newInstance(lessDt, Time.newInstance(0, 0, 0, 0)).format('E');
+                    System.debug('@@currDay'+currDay);
                     String key = stu.enrl.Center__c +'#'+ stu.enrl.Teacher__c +'#'+stu.enrl.Package__c +'#'+ currDay +'#'+ startTime;
+                    System.debug('key'+key);
+                    System.debug('@@clsSchMap'+clsSchMap);
                     if(clsSchMap.containsKey(key)){
                         stu.enrl.Class__c = clsSchMap.get(key).Id;
                         grpClsBookSet.add(stu.enrl.Class__c);
+                        System.debug('@@@'+clsSchMap.get(key).Id);
                     }
                     stu.enrl.Type__c    = 'Group';
                 }
@@ -866,7 +1007,7 @@ public class EnrolmentProcessIpadCntrl {
             }      
             upsert enrList;
             
-            
+            System.debug('@@@grpClsBookSet'+grpClsBookSet);
             Map<String, Booking__c> grpClsBookMap = new Map<String, Booking__c>();
             if(grpClsBookSet.size() > 0){
                 String bookGrpClsRecId =  Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get('Group Class').getRecordTypeId();   
@@ -875,10 +1016,10 @@ public class EnrolmentProcessIpadCntrl {
                                    FROM Class__c WHERE Id IN:grpClsBookSet AND Active__c = True AND Available_Capacity__c > 0]){                                                               
                                        
                  for(Booking__c book: cls.Bookings__r)
-                 	grpClsBookMap.put(cls.Id+'#'+book.Booking_Date__c, book);                                   
+                    grpClsBookMap.put(cls.Id+'#'+book.Booking_Date__c, book);                                   
                  }    
             }
-            
+            System.debug('@@@grpClsBookMap'+grpClsBookMap);
             //For aureus home centers 
             centSet = new Set<String>();
             tchrSet = new Set<String>();
@@ -901,24 +1042,24 @@ public class EnrolmentProcessIpadCntrl {
                                                     FROM Teacher_Working_Hour__c 
                                                     WHERE Teacher_Name__c IN: tchrSet AND Working_Day__c IN:daySet  AND Center_Name__c IN: centSet AND Active__c = true AND Break_Time__c = False 
                                                     AND Teacher_Name__r.Status__c =: ConstantsClass.teacherWorkingStatus AND Start_Time__c != null AND End_Time__c != null ]){
-                	String key = tchr.Teacher_Name__c+'#'+tchr.Center_Name__c+'#'+tchr.Working_Day__c;
-                	tcrWrkHourMap.put(key,tchr);                                                                     
+                    String key = tchr.Teacher_Name__c+'#'+tchr.Center_Name__c+'#'+tchr.Working_Day__c;
+                    tcrWrkHourMap.put(key,tchr);                                                                     
                 }
             }
             
-			enrList  = [SELECT Id, Parent__r.Name, Student__r.Name, Center__c, Teacher__c, Package__c, Package__r.Duration__C, Package__r.Program__r.Instrument__c,Field_1__c, Type__c, Class__c,
-										Parent__r.Also_a_Student__c, Student__c,  Parent__c, Trial_Date__c,  Trial_Start_Time__c, Center__r.Travel_Time__c, Lessons_Start_Date__c, Lesson_Start_Time__c ,
-                        				Parent__r.personContactId, Center__r.Location__c
-										FROM Enrolment__c  
-										WHERE  Id IN: enrList];
-			
+            enrList  = [SELECT Id, Parent__r.Name, Student__r.Name, Center__c, Teacher__c, Package__c, Package__r.Duration__C, Package__r.Program__r.Instrument__c,Field_1__c, Type__c, Class__c,
+                                        Parent__r.Also_a_Student__c, Student__c,  Parent__c, Trial_Date__c,  Trial_Start_Time__c, Center__r.Travel_Time__c, Lessons_Start_Date__c, Lesson_Start_Time__c ,
+                                        Parent__r.personContactId, Center__r.Location__c
+                                        FROM Enrolment__c  
+                                        WHERE  Id IN: enrList];
+            
             List<Booking__c> bookLstForDel = [SELECT Id,Name FROM Booking__c WHERE Status__c = 'Blocked' AND Enrolment__c IN: enrList];
             if(bookLstForDel.size() > 0)
                 delete bookLstForDel;
            
             for(Enrolment__c enr : enrList){
                 String remStr    =  enr.Parent__r.Name;
-                remStr	 =  remStr +':'+enr.Student__r.Name;
+                remStr   =  remStr +':'+enr.Student__r.Name;
                 
                 String bookLessRecId =  Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get(ConstantsClass.recordTypeLesson).getRecordTypeId();  
                 Boolean isGrpEnrolment = false;
@@ -982,7 +1123,7 @@ public class EnrolmentProcessIpadCntrl {
                     }
                 }
                 
-                remStr   = 	'Placeholder booking for 5th lesson of '+remStr;
+                remStr   =  'Placeholder booking for 5th lesson of '+remStr;
                 Date lessDate = enr.Lessons_Start_Date__c;
                 Date stDate  = lessDate;
                 Date endDate = stDate.addMonths(12); 
@@ -993,7 +1134,7 @@ public class EnrolmentProcessIpadCntrl {
                 Date dt=lessDate;   
                 Integer countBookingForMonth = 0;
                 Date currLesDt; 
-                while(dt<=lastDayOfEndDateMonth){		
+                while(dt<=lastDayOfEndDateMonth){       
                     Boolean isCreate5thPlaceBooking = false;
                     
                     if(currLesDt == null)
@@ -1026,6 +1167,7 @@ public class EnrolmentProcessIpadCntrl {
                         }catch(exception e){}
                         book.End_Time__c = book.Start_Time__c.addMinutes(pkgDur);
                     }
+                    system.debug('@@@grpClsBookMap'+grpClsBookMap);
                     if(isGrpEnrolment){
                         if(grpClsBookMap.get(enr.Class__c+'#'+dt) != null)
                             book.Group_Class__c = grpClsBookMap.get(enr.Class__c+'#'+dt).Id;
@@ -1037,12 +1179,12 @@ public class EnrolmentProcessIpadCntrl {
                         book.Category__c= 'Placeholder';
                         
                         book.Remarks__c = remStr; 
-                    }			
-                    
+                    }           
+                    system.debug('@@@bookList'+bookList);
                     if(!isGrpEnrolment)
-                    	bookList.add(book);	
-                    else if(!isCreate5thPlaceBooking)                    	
-                        bookList.add(book);	
+                        bookList.add(book); 
+                    else if(!isCreate5thPlaceBooking)                       
+                        bookList.add(book); 
                     
                     Boolean isAureusAtHome = (enr.Center__c == Label.Aureus_at_Home_Id ? true : false);
                     if(isAureusAtHome){
@@ -1072,10 +1214,10 @@ public class EnrolmentProcessIpadCntrl {
                         }
                         
                         if(!isGrpEnrolment)
-                            bookList.add(befBook);	
-                        else if(!isCreate5thPlaceBooking)                    	
-                            bookList.add(befBook);	
-                    }		
+                            bookList.add(befBook);  
+                        else if(!isCreate5thPlaceBooking)                       
+                            bookList.add(befBook);  
+                    }       
                     dt = dt.addDays(7);
                         
                 }
@@ -1104,7 +1246,7 @@ public class EnrolmentProcessIpadCntrl {
         errorMsg = '';
             
         try{
-			sp = Database.setSavepoint();
+            sp = Database.setSavepoint();
             
             Set<String> centSet = new Set<String>();
             Set<String> tchrSet = new Set<String>();
@@ -1116,14 +1258,46 @@ public class EnrolmentProcessIpadCntrl {
                     pkgSet.add(stu.lesson.selectedPlan);
                 }
             }
+            system.debug('@@pkgSet'+pkgSet);
             Map<String,Class__c> clsSchMap = new Map<String,Class__c>();
             if(centSet.size() > 0 && tchrSet.size() > 0 && pkgSet.size() > 0){
-                for(Class__c cls: [SELECT Id, Name, Centre_Name__c, Teacher__c, Package__c, Class_Day__c, Start_Time__c,End_Time__c FROM Class__c WHERE Teacher__c IN:tchrSet AND Package__c IN:pkgSet 
-                                   AND Centre_Name__c IN:centSet AND Teacher__c IN:tchrSet AND Package__c IN:pkgSet AND Active__c = True AND Available_Capacity__c > 0]){                                                               
-                                       String key = cls.Centre_Name__c +'#'+ cls.Teacher__c +'#'+ cls.Package__c +'#'+ cls.Class_Day__c +'#'+ cls.Start_Time__c;
-                                       clsSchMap.put(key, cls);                                                  
+                if(defaultOrg=='ossia'){ 
+                    // start :added by nishi: 1-sep-2020: for if class related to ossia organisation then we show package list into  
+                  //new created object Ossia_Group_Grade_Packages__r other wise we get package list into package field 
+                     for(Class__c cls: [SELECT Id, Name, Centre_Name__c, Teacher__c, Package__c, Class_Day__c, Start_Time__c,End_Time__c, 
+                                         (SELECT Class_Name__c, Package__c,Package__r.Name,  Name, Id ,
+                                             Package__r.Type__c,Package__r.RecordtypeId,Package__r.Type_of_package__c
+                                             FROM Ossia_Group_Grade_Packages__r 
+                                             WHERE  Package__c =: pkgSet
+                                         )
+                                         FROM Class__c 
+                                         WHERE Teacher__c IN:tchrSet 
+                                         AND Centre_Name__c IN:centSet 
+                                         AND Active__c = True
+                                         AND Available_Capacity__c > 0]){  
+                         if(cls.Ossia_Group_Grade_Packages__r != null && cls.Ossia_Group_Grade_Packages__r.size() > 0){ 
+                             for(Ossia_Group_Grade_Package__c objGradePackage: cls.Ossia_Group_Grade_Packages__r)    {                                                                            
+                                 String key = cls.Centre_Name__c +'#'+ cls.Teacher__c +'#'+ objGradePackage.Package__c +'#'+ cls.Class_Day__c +'#'+ cls.Start_Time__c;
+                                 clsSchMap.put(key, cls);
+                                 System.debug('key'+key); 
+                             }
+                         }    
+                         System.debug('@@cls.Ossia_Group_Grade_Packages__r'+cls.Ossia_Group_Grade_Packages__r);             
+                     } 
+                     
+                 }else{
+                 // end :added by nishi: 1-sep-2020: for if class related to ossia organisation then we show package list into  
+                  //new created object Ossia_Group_Grade_Packages__r other wise we get package list into package field 
+                    
+                    for(Class__c cls: [SELECT Id, Name, Centre_Name__c, Teacher__c, Package__c, Class_Day__c, Start_Time__c,End_Time__c FROM Class__c WHERE Teacher__c IN:tchrSet AND Package__c IN:pkgSet 
+                    AND Centre_Name__c IN:centSet AND Teacher__c IN:tchrSet AND Package__c IN:pkgSet AND Active__c = True AND Available_Capacity__c > 0]){                                                               
+                        String key = cls.Centre_Name__c +'#'+ cls.Teacher__c +'#'+ cls.Package__c +'#'+ cls.Class_Day__c +'#'+ cls.Start_Time__c;
+                        clsSchMap.put(key, cls);                                                  
+                    }
                 }
-        	}
+
+            }
+            system.debug('@@clsSchMap'+clsSchMap);
         
             List<Enrolment__c> enrList = new List<Enrolment__c>();            
             for(StudentWrapper stu : studentWrapList){
@@ -1148,12 +1322,14 @@ public class EnrolmentProcessIpadCntrl {
                 stu.enrl.Lessons_Start_Date__c =  lessDt;
                 stu.enrl.Lesson_Start_time__c =  startTime;
                 //updated by Rajesh, 7th Aug 2019. to store enrolmentsource on enrolment/case object
-            	if(String.isNotBlank(enrolmentSource))
-                	stu.enrl.Enrolment_Source__c = enrolmentSource;
+                if(String.isNotBlank(enrolmentSource))
+                    stu.enrl.Enrolment_Source__c = enrolmentSource;
                 
                 if(stu.lesson.selectedLsnType.equalsIgnoreCase('Group')){
                     String currDay =  DateTime.newInstance(lessDt, Time.newInstance(0, 0, 0, 0)).format('E');
                     String key = stu.enrl.Center__c +'#'+ stu.enrl.Teacher__c +'#'+stu.enrl.Package__c +'#'+ currDay +'#'+ startTime;
+                    system.debug('@@clsSchMap'+clsSchMap);
+
                     if(clsSchMap.containsKey(key))
                         stu.enrl.Class__c = clsSchMap.get(key).Id;
                     stu.enrl.Type__c    = 'Group';
@@ -1161,7 +1337,7 @@ public class EnrolmentProcessIpadCntrl {
                 enrList.add(stu.enrl);
             }      
             upsert enrList;      
-            
+             system.debug('@@enrList'+enrList);
             List<Booking__c> bookLstForDel = [SELECT Id,Name FROM Booking__c WHERE Status__c = 'Blocked' AND Enrolment__c IN: enrList];
             if(bookLstForDel.size() > 0)
                 delete bookLstForDel;
@@ -1171,8 +1347,8 @@ public class EnrolmentProcessIpadCntrl {
             Integer counter = 1;
             for(Enrolment__c enr: enrList){
                 String enrlStr = 'enr'+counter;
-                pageRef.getParameters().put(enrlStr, enr.Id);    
-                
+                pageRef.getParameters().put(enrlStr, enr.Id); 
+               
                 counter = counter+1;            
             }        
             
@@ -1188,12 +1364,18 @@ public class EnrolmentProcessIpadCntrl {
     }
     
     private void sendEmail(List<Enrolment__c> enrListTemp){
-        
-        List<EmailTemplate> templateList =  [Select Id,name,developerName from EmailTemplate where developerName ='Send_Pending_Enrolment_Link_Email' limit 1];
+          List<EmailTemplate> templateList =  new List<EmailTemplate>();
+                //@Juneid 26 Aaug 2020, Orgnization wise templates
+                if(defaultOrg=='ossia'){
+                    templateList = [Select Id,name,developerName from EmailTemplate where developerName =:'Ossia_Send_Pending_Enrolment_Link_Email']; 
+                }else{
+                    templateList =  [Select Id,name,developerName from EmailTemplate where developerName ='Send_Pending_Enrolment_Link_Email' limit 1];
+                }
+        //List<EmailTemplate> templateList =  [Select Id,name,developerName from EmailTemplate where developerName ='Send_Pending_Enrolment_Link_Email' limit 1];
         List<Messaging.SingleEmailMessage> emailList = new List<Messaging.SingleEmailMessage>();
         
         if(enrListTemp.size() > 0 && templateList.size() > 0){
-        	Map<String,OrgWideEmailAddress> mapOfOrgWide = new Map<String,OrgWideEmailAddress>();
+            Map<String,OrgWideEmailAddress> mapOfOrgWide = new Map<String,OrgWideEmailAddress>();
             
             for(OrgWideEmailAddress objAddress : [SELECT Address, DisplayName, Id FROM OrgWideEmailAddress])
                mapOfOrgWide.put(objAddress.DisplayName,objAddress);
@@ -1218,8 +1400,9 @@ public class EnrolmentProcessIpadCntrl {
             }
         }
     }
+   
     
-    
+    @TestVisible
     private Static Booking__c fillBook(LessonWrapper lw, String recTypeId, Enrolment__c enrl, String status, Date bookDate){
         Booking__c book   = new Booking__c(Student__c=enrl.Student__c, Teacher_Account__c = lw.selectedTeacher, Enrolment__c = enrl.Id);
         book.RecordTypeId = recTypeId;

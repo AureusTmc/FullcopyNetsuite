@@ -7,6 +7,10 @@
         <translation><!-- Cancellation --></translation>
     </picklistValues>
     <picklistValues>
+        <masterLabel>Centre Change</masterLabel>
+        <translation><!-- Centre Change --></translation>
+    </picklistValues>
+    <picklistValues>
         <masterLabel>Downgrade</masterLabel>
         <translation><!-- Downgrade --></translation>
     </picklistValues>

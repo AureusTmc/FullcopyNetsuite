@@ -52,10 +52,10 @@
 
                         <div id="DetailsTab" class="slds-tabs--default__content slds-p-around_medium slds-hide" role="tabpanel" aria-labelledby="DetailsTabitem"
                             style="height: 300px;overflow-y: auto;">
-                            <div class="slds-grid slds-wrap">
+                            <div class="slds-grid slds-wrap slds-m-top_small">
                                 <!-- center or teacher-->
-                                <div class="slds-col slds-size_12-of-12 slds-grid  slds-m-top_small">
-                                    <div class="slds-col slds-size_6-of-12 slds-grid ">
+                                
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
                                         <div class="slds-col slds-size_4-of-12">
                                             <span>
                                                 <b>Location:</b>
@@ -67,8 +67,8 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-grid ">
-                                        <div class="slds-col slds-size_5-of-12">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
+                                        <div class="slds-col slds-size_4-of-12">
                                             <span>
                                                 <b>Teacher:</b>
                                             </span>
@@ -79,12 +79,9 @@
                                             </span>
                                         </div>
                                     </div>
-                                </div>
-
-                                <!-- duration or instrument-->
-                                <div class="slds-col slds-size_12-of-12 slds-grid  slds-m-top_small">
+                                
                                      <!-- added by jatin: 18-dec-2019: for show class type-->
-                                     <div class="slds-col slds-size_6-of-12 slds-grid ">
+                                     <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
                                         <div class="slds-col slds-size_4-of-12">
                                             <span>
                                                 <b>Class Type:</b>
@@ -97,24 +94,23 @@
                                         </div>
                                     </div>
                                     <!-- added by jatin: 18-dec-2019: for show class instrument-->
-                                    <div class="slds-col slds-size_6-of-12 slds-grid ">
-                                        <div class="slds-col slds-size_5-of-12">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small aureusGroupClassBookingDetail">
+                                        <div class="slds-col slds-size_4-of-12">
                                             <span>
                                                 <b>Class Instrument :</b>
                                             </span>
                                         </div>
-                                        <div class="slds-col slds-size_7-of-12">
+                                        <div class="slds-col slds-size_8-of-12">
                                             <span>
                                                 <label id="ClassInstrumentEditLabel"></label>
                                             </span>
                                         </div>
                                     </div>
-                                </div>
+                                
 
                                 <!-- time or class type-->
-                                <div class="slds-col slds-size_12-of-12 slds-grid  slds-m-top_small">
                                     <!-- added by jatin: 31-dec-2019: for show class start date -->
-                                    <div class="slds-col slds-size_6-of-12 slds-grid ">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
                                         <div class="slds-col slds-size_4-of-12">
                                             <span>
                                                 <b>Start Date:</b>
@@ -126,25 +122,20 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-grid ">
-                                        <div class="slds-col slds-size_5-of-12">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
+                                        <div class="slds-col slds-size_4-of-12">
                                             <span>
                                                 <b>Time:</b>
                                             </span>
                                         </div>
-                                        <div class="slds-col slds-size_7-of-12">
+                                        <div class="slds-col slds-size_8-of-12">
                                             <span>
                                                 <label id="ClassTimeEditLabel"></label>
                                             </span>
                                         </div>
                                     </div>
-                                </div>
-
-
                                 
-
-                                <div class="slds-col slds-size_12-of-12 slds-grid  slds-m-top_small">
-                                    <div class="slds-col slds-size_6-of-12 slds-grid ">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small aureusGroupClassBookingDetail">
                                         <div class="slds-col slds-size_4-of-12">
                                             <span>
                                                 <b>Package:</b>
@@ -157,23 +148,23 @@
                                         </div>
                                     </div>
                                     
-                                    <div class="slds-col slds-size_6-of-12 slds-grid ">
-                                        <div class="slds-col slds-size_5-of-12">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
+                                        <div class="slds-col slds-size_4-of-12">
                                             <span>
                                                 <b>Duration:</b>
                                             </span>
                                         </div>
-                                        <div class="slds-col slds-size_7-of-12">
+                                        <div class="slds-col slds-size_8-of-12">
                                             <span>
                                                 <label id="ClassDurationEditLabel"></label>
                                             </span>
                                         </div>
                                     </div>
-                                </div>
+                                
 
                                  <!-- Class Capacity or Package -->
-                                 <div class="slds-col slds-size_12-of-12 slds-grid  slds-m-top_small">
-                                    <div class="slds-col slds-size_6-of-12 slds-grid ">
+                                
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
                                         <div class="slds-col slds-size_4-of-12">
                                             <span>
                                                 <b>Class Capacity:</b>
@@ -186,25 +177,21 @@
                                         </div>
                                     </div>
                                   
-                                    <div class="slds-col slds-size_6-of-12 slds-grid ">
-                                        <div class="slds-col slds-size_5-of-12">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
+                                        <div class="slds-col slds-size_4-of-12">
                                             <span>
                                                 <b>Available Capacity:</b>
                                             </span>
                                         </div>
-                                        <div class="slds-col slds-size_7-of-12">
+                                        <div class="slds-col slds-size_8-of-12">
                                             <span>
                                                 <label id="AvailableCapacityEditLabel"></label>
                                             </span>
                                         </div>
                                     </div>
-                                </div>
                                 
-                                
-
                                 <!--  added by jatin: 18-dec-2019: for show Minimum or Maximum Age-->
-                                <div class="slds-col slds-size_12-of-12 slds-grid  slds-m-top_small">
-                                    <div class="slds-col slds-size_6-of-12 slds-grid ">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
                                         <div class="slds-col slds-size_4-of-12">
                                             <span>
                                                 <b>Minimum Age:</b>
@@ -216,23 +203,22 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-grid ">
-                                        <div class="slds-col slds-size_5-of-12">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
+                                        <div class="slds-col slds-size_4-of-12">
                                             <span>
                                                 <b>Maximum Age:</b>
                                             </span>
                                         </div>
-                                        <div class="slds-col slds-size_7-of-12">
+                                        <div class="slds-col slds-size_8-of-12">
                                             <span>
                                                 <label id="ClassMaximumAgeEditLabel"></label>
                                             </span>
                                         </div>
                                     </div>
-                                </div>
-
+                                
                                 <!-- time or class type-->
-                                <div class="slds-col slds-size_12-of-12 slds-grid  slds-m-top_small">
-                                    <div class="slds-col slds-size_6-of-12 slds-grid ">
+                               
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small aureusGroupClassBookingDetail">
                                         <div class="slds-col slds-size_4-of-12">
                                             <span>
                                                 <b>Price:</b>
@@ -244,7 +230,29 @@
                                             </span>
                                         </div>
                                     </div>
-                                </div>
+                                    <!-- added by nishi: 2-Sep-2020: for manage ossia group lesson details in ossia case we show grade other wise we show package realed details -->
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small ossiaGroupClassBookingDetail">
+                                        <div class="slds-col slds-size_4-of-12">
+                                            <span>
+                                                <b>Grade:</b>
+                                            </span>
+                                        </div>
+                                        <div class="slds-col slds-size_8-of-12 slds-grid slds-wrap">
+                                            <div class="slds-col slds-size_12-of-12">
+                                                <span>
+                                                    <label id="ClassOssiaGradeEditLabel"></label>
+                                                </span>
+                                            </div>
+                                            <div class="slds-col slds-size_12-of-12">
+                                                <div>
+                                                    <a href="javascript:void(0);" id="showGroupClassGradeDetials">
+                                                        Grade Details 
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <!-- added by nishi: 2-Sep-2020: for manage ossia group lesson details in ossia case we show grade other wise we show package realed details -->
                             </div>
                         </div>
                         <div id="CustomersTab" class="slds-tabs--default__content slds-hide" role="tabpanel" aria-labelledby="CustomersTabitem">
@@ -320,142 +328,183 @@
                 </header>
                 <div class="slds-modal__content slds-p-around_medium" id="newGroupMakupBookingDetailsBody" style="overflow-y: auto;height:280">
                     <div class="slds-grid slds-wrap slds-p-around_xx-small">
-
-                        <div class="slds-col slds-size_1-of-1">
-                            <div class="slds-grid slds-gutters">
-                                <div class="slds-col slds-size_1-of-12">
-                                    <label class="slds-form-element__label hyphens-none-fix" style="hyphens:none" for="GroupMakupCenterNameLabel">
-                                        <b>Location:</b>
-                                    </label>
-                                </div>
-                                <div class="slds-col slds-size_4-of-12">
-                                    <div class="slds-form-element__control" style="top: 3px;padding-left:10px;">
-                                        <label id="GroupMakupCenterNameLabel"></label>
+                        <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap slds-m-top_large">
+                            <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-right_large slds-m-top_medium">
+                                <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_4-of-12">
+                                        <label class="slds-form-element__label hyphens-none-fix" style="hyphens:none" for="GroupMakupCenterNameLabel">
+                                            <b>Location:</b>
+                                        </label>
+                                    </div>
+                                    <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-form-element__control" style="top: 3px;padding-left:10px;">
+                                            <label id="GroupMakupCenterNameLabel"></label>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="slds-col slds-size_1-of-12">
-                                    <label class="slds-form-element__label hyphens-none-fix" for="GroupMakupStudentInput">
-                                        <b>Student:</b>
-                                    </label>
-                                </div>
-                                <div class="slds-col slds-size_6-of-12" style="padding-left:20px;">
-
-                                    <div class="slds-form-element__control">
-                                        <div class="slds-combobox_container">
-                                            <div class="slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click " aria-expanded="false" aria-haspopup="listbox"
-                                                role="combobox" id="GroupMakupStudentSelectContainer">
-                                                <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
-                                                    <input class="slds-input slds-combobox__input" id="GroupMakupStudentInput" aria-autocomplete="list" aria-controls="listbox-id-1"
-                                                        autocomplete="off" role="textbox" type="text" placeholder="Student Name"
-                                                        value="" />
-
+                            </div> 
+                            <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-right_large slds-m-top_medium">
+                                <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_4-of-12">
+                                        <label class="slds-form-element__label hyphens-none-fix" for="GroupMakupStudentInput">
+                                            <b>Student:</b>
+                                        </label>
+                                    </div>
+                                    <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-form-element__control">
+                                            <div class="slds-combobox_container">
+                                                <div class="slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click " aria-expanded="false" aria-haspopup="listbox"
+                                                    role="combobox" id="GroupMakupStudentSelectContainer">
+                                                    <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
+                                                        <input class="slds-input slds-combobox__input" id="GroupMakupStudentInput" aria-autocomplete="list" aria-controls="listbox-id-1"
+                                                            autocomplete="off" role="textbox" type="text" placeholder="Student Name"
+                                                            value="" />
+    
+                                                    </div>
+                                                    <div id="listbox-id-1" class="slds-dropdown slds-dropdown_length-with-icon-7 slds-dropdown_fluid" role="listbox" style="max-height: 160px;">
+                                                        <ul class="slds-listbox slds-listbox_vertical" role="presentation" id="GroupMakupStudentSearchList">
+    
+                                                        </ul>
+                                                    </div>
+    
                                                 </div>
-                                                <div id="listbox-id-1" class="slds-dropdown slds-dropdown_length-with-icon-7 slds-dropdown_fluid" role="listbox" style="max-height: 160px;">
-                                                    <ul class="slds-listbox slds-listbox_vertical" role="presentation" id="GroupMakupStudentSearchList">
-
-                                                    </ul>
-                                                </div>
-
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div class="slds-grid slds-gutters">
-                                <div class="slds-col slds-size_1-of-12" style="padding-top:10px;">
-                                    <label class="slds-form-element__label hyphens-none-fix" for="GroupMakupDateLabel">
-                                        <b>Date:</b>
-                                    </label>
-                                </div>
-                                <div class="slds-col slds-size_4-of-12" style="padding-top:14px;">
-                                    <div class="slds-form-element__control" style="padding-left:10px;">
-                                        <label class="slds-form- element__label" id="GroupMakupDateLabel"></label>
+                            </div> 
+                        
+                            <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-right_large slds-m-top_medium">
+                                <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_4-of-12">
+                                        <label class="slds-form-element__label hyphens-none-fix" for="GroupMakupDateLabel">
+                                            <b>Date:</b>
+                                        </label>
+                                    </div>
+                                    <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-form-element__control" >
+                                            <label class="slds-form- element__label" id="GroupMakupDateLabel"></label>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="slds-col slds-size_1-of-12" style="padding-top:10px;">
-                                    <label class="slds-form-element__label hyphens-none-fix" for="GroupMakupParentInput">
-                                        <b>Parent:</b>
-                                    </label>
-                                </div>
-                                <div class="slds-col slds-size_6-of-12" style="padding-top:10px;">
-                                    <div class="slds-form-element__control" style="padding-left:9px;">
-                                        <input id="GroupMakupParentInput" placeholder="Parent Name" class="slds-input" type="text" value="" />
+                            </div> 
+                            <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-right_large slds-m-top_medium">
+                                <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_4-of-12">
+                                        <label class="slds-form-element__label hyphens-none-fix" for="GroupMakupParentInput">
+                                            <b>Parent:</b>
+                                        </label>
+                                    </div>
+                                    <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-form-element__control" >
+                                            <input id="GroupMakupParentInput" placeholder="Parent Name" class="slds-input" type="text" value="" />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div class="slds-grid slds-gutters">
-                                <div class="slds-col slds-size_1-of-12" style="padding-top:10px;">
-                                    <label class="slds-form-element__label" for="GroupMakupTimeLabel">
-                                        <b>Time:</b>
-                                    </label>
-                                </div>
-                                <div class="slds-col slds-size_4-of-12" style="padding-top:14px;">
-                                    <div class="slds-form-element__control" style="padding-left:10px;">
-                                        <label id="GroupMakupTimeLabel"></label>
+                            </div> 
+                            <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-right_large slds-m-top_medium">
+                                <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_4-of-12">
+                                        <label class="slds-form-element__label" for="GroupMakupTimeLabel">
+                                            <b>Time:</b>
+                                        </label>
+                                    </div>
+                                    <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-form-element__control" >
+                                            <label id="GroupMakupTimeLabel"></label>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="slds-col slds-size_1-of-12" style="padding-top:10px;">
-                                    <label class="slds-form-element__label" for="GroupMakupPhoneInput">
-                                        <b>Phone:</b>
-                                    </label>
-                                </div>
-                                <div class="slds-col slds-size_6-of-12" style="padding-top:10px;">
-                                    <div class="slds-form-element__control" style="padding-left:9px;">
-                                        <input id="GroupMakupPhoneInput" placeholder="Phone" class="slds-input" type="text" value="" />
+                            </div> 
+                            <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-right_large slds-m-top_medium">
+                                <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_4-of-12">
+                                        <label class="slds-form-element__label" for="GroupMakupPhoneInput">
+                                            <b>Phone:</b>
+                                        </label>
+                                    </div>
+                                    <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-form-element__control" >
+                                            <input id="GroupMakupPhoneInput" placeholder="Phone" class="slds-input" type="text" value="" />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div class="slds-grid slds-gutters">
-                                <div class="slds-col slds-size_1-of-12" style="padding-top:10px;">
-                                    <label class="slds-form-element__label hyphens-none-fix" for="GroupMakupPackageLabel">
-                                        <b>Package:</b>
-                                    </label>
-                                </div>
-                                <div class="slds-col slds-size_4-of-12" style="padding-top:14px;">
-                                    <div class="slds-form-element__control" style="padding-left:10px;">
-                                        <label id="GroupMakupPackageLabel"></label>
+                            </div> 
+                            <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-right_large slds-m-top_medium ">
+                                <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_4-of-12">
+                                        <label class="slds-form-element__label" for="GroupMakupPackageLabel">
+                                            <b>Package:</b>
+                                        </label>
+                                    </div>
+                                    <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-form-element__control" >
+                                            <label id="GroupMakupPackageLabel"></label>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="slds-col slds-size_1-of-12" style="padding-top:10px;">
-                                    <label class="slds-form-element__label" for="GroupMakupEmailInput">
-                                        <b>Email:</b>
-                                    </label>
-                                </div>
-                                <div class="slds-col slds-size_6-of-12" style="padding-top:10px;">
-                                    <div class="slds-form-element__control" style="padding-left:9px;">
-                                        <input id="GroupMakupEmailInput" placeholder="Email" class="slds-input" type="text" value="" />
+                            </div>   
+                            <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-right_large slds-m-top_medium">
+                                <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_4-of-12">
+                                        <label class="slds-form-element__label" for="GroupMakupEmailInput">
+                                            <b>Email:</b>
+                                        </label>
+                                    </div>
+                                    <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-form-element__control" >
+                                            <input id="GroupMakupEmailInput" placeholder="Email" class="slds-input" type="text" value="" />
+                                        </div>
                                     </div>
                                 </div>
-
-                            </div>
-
-                            <div class="slds-grid slds-gutters">
-                                <div class="slds-col slds-size_1-of-12" style="padding-top:10px;">
-                                    <label class="slds-form-element__label hyphens-none-fix" for="GroupMakupDurationLabel">
-                                        <b>Duration:</b>
-                                    </label>
-                                </div>
-                                <div class="slds-col slds-size_4-of-12" style="padding-top:14px;">
-                                    <div class="slds-form-element__control" style="padding-left:10px;">
-                                        <label id="GroupMakupDurationLabel"></label>
+                            </div>    
+                            <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-right_large slds-m-top_medium">
+                                <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_4-of-12">
+                                        <label class="slds-form-element__label hyphens-none-fix" for="GroupMakupDurationLabel">
+                                            <b>Duration:</b>
+                                        </label>
+                                    </div>
+                                    <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-form-element__control" style="padding-left:10px;">
+                                            <label id="GroupMakupDurationLabel"></label>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="slds-col slds-size_1-of-12" style="padding-top:10px;">
-                                    <label class="slds-form-element__label" for="GroupMakupHoursLabel">
-                                        <b>AMM:</b>
-                                    </label>
-                                </div>
-                                <div class="slds-col slds-size_4-of-12" style="padding-top:14px;">
-                                    <div class="slds-form-element__control" style="padding-left:10px;">
-                                        <label id="GroupMakupHoursLabel"></label>
-                                        <br/>
-                                        <label class="" id="GroupMakupHoursErrorMsg" style="color:red;"></label>
+                            </div>    
+                            
+                            <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-right_large slds-m-top_medium ossiaGroupClassMakeupBooking slds-hide">
+                                <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_4-of-12">
+                                        <label class="slds-form-element__label hyphens-none-fix" for="GroupMakupInstrumentLabel">
+                                            <b>Instrument:</b>
+                                        </label>
+                                    </div>
+                                    <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-form-element__control" >
+                                            <select class="slds-select" id="ossiaGroupClassInstrment" disabled="true"  onchange="handleOssiaGroupclassMakeupMin(); return false;"> 
+                                            </select>
+                                            <label class="" id="ossiaGroupClassInstrmentErrorMsg" style="color:red;"></label>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div>    
+                            <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-right_large slds-m-top_medium">
+                                <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_4-of-12">
+                                        <label class="slds-form-element__label" for="GroupMakupHoursLabel">
+                                            <b>AMM:</b>
+                                        </label>
+                                    </div>
+                                    <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-form-element__control">
+                                            <label id="GroupMakupHoursLabel"></label>
+                                            <br/>
+                                            <label class="" id="GroupMakupHoursErrorMsg" style="color:red;"></label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>      
                         </div>
                     </div>
                 </div>
@@ -1486,7 +1535,19 @@
             bookingData.groupClassId = selectedStudentData.groupClassId;
             bookingData.centerId = selectedStudentData.centerId;
             bookingData.teacherId = selectedStudentData.teacherId;
+            bookingData.isOssia =selectedStudentData.isOssia;
             bookingData.isRecurring = 'false';
+            // added by nishi: 3-Sep-2020: for manage Ossia group class makeup mins 
+            if(selectedStudentData.isOssia == true){
+               // $('.aureusGroupClassMakeupBooking').addClass('slds-hide');
+                $('.ossiaGroupClassMakeupBooking').removeClass('slds-hide');
+                bookingData.selgroupClassId = selectedStudentData.selgroupClassId;
+            }else{
+               // $('.aureusGroupClassMakeupBooking').removeClass('slds-hide');
+                $('.ossiaGroupClassMakeupBooking').addClass('slds-hide');
+                $('#GroupMakupPackageLabel').html(selectedStudentData.packageName);
+            }
+            // added by nishi: 3-Sep-2020: for manage Ossia group class makeup mins
             $('#GroupMakupHoursErrorMsg').text('');
             $('#GroupMakupCenterNameLabel').html(selectedStudentData.centerName);
             $('#saveNewGroupMakupBooking').attr('data-teacher', selectedStudentData.teacherName);
@@ -1495,7 +1556,6 @@
             $('#GroupMakupTimeLabel').html(convertTimeToMoment(dateOfAppointment.split('T')[1].split(':')[0], dateOfAppointment.split('T')[1].split(':')[1]));
             $('#saveNewGroupMakupBooking').attr('disabled', '');
             $('#newGroupMakupBookingDetails').removeClass('slds-hide');
-            $('#GroupMakupPackageLabel').html(selectedStudentData.packageName);
             $('#GroupMakupDurationLabel').html(selectedStudentData.duration);  
         }
            
@@ -1536,6 +1596,7 @@
                         $(ResultOfEvent).each(function (index4, value4) {
                             if (value4.id == studentId) {
                                 bookingData.studentId = value4.id;
+
                                 if (value4.label) {
                                     $('#GroupMakupStudentInput').val(value4.label);
                                 } else {
@@ -1559,21 +1620,26 @@
                                 } else {
                                     $('#GroupMakupEmailInput').val('');
                                 }
-                                $('#GroupMakupHoursLabel').html(value4.makeupHours + ' min');
+                                if(bookingData.isOssia){
+                                    ossiaGroupClassMakeupEnrolment(centerid,bookingData.teacherId,bookingData.selgroupClassId,value4.id);
+                                }else{
+                                    $('#GroupMakupHoursLabel').html(value4.makeupHours + ' min');
+                                    bookingData.availableHours = value4.makeupHours;
+                                    if (bookingData.availableHours < bookingData.duration) {
+                                        $('#saveNewGroupMakupBooking').attr('disabled', '');
+                                        $('#GroupMakupHoursErrorMsg').text('Insufficient Makup minutes');
+                                    } else {
+                                        $('#saveNewGroupMakupBooking').removeAttr('disabled');
+                                        $('#GroupMakupHoursErrorMsg').text('');
+                                    }
+                                }
                                 $('#GroupMakupParentInput').attr('disabled', '');
                                 $('#GroupMakupPhoneInput').attr('disabled', '');
                                 $('#GroupMakupEmailInput').attr('disabled', '');
                                 $('#GroupMakupStudentSelectContainer').removeClass('slds-is-open');
                                 $('#GroupMakupStudentSelectContainer').attr('aria-expanded', 'false');
                                 $('#GroupMakupStudentSearchList').empty();
-                                bookingData.availableHours = value4.makeupHours;
-                                if (bookingData.availableHours < bookingData.duration) {
-                                    $('#saveNewGroupMakupBooking').attr('disabled', '');
-                                    $('#GroupMakupHoursErrorMsg').text('Insufficient Makup minutes');
-                                } else {
-                                    $('#saveNewGroupMakupBooking').removeAttr('disabled');
-                                    $('#GroupMakupHoursErrorMsg').text('');
-                                }
+                                
 
                             }
                         });
@@ -1860,12 +1926,40 @@
             $('#GroupMakupHoursErrorMsg').text('');
         }
         function createGroupMakupBooking() {
-            $('.confirmModal').removeClass('slds-hide');
-            $('#confirmBody').html('Do you want to send an email?');
-            $('#confirmHeader').html('Email Confirmation');
-            $('#confirmModalYes').attr('data-origin', 'createGroupBooking');
-            $('#confirmModalNo').attr('data-origin', 'createGroupBooking');
-            $('#newGroupMakupBookingDetails').addClass('slds-hide');
+            var errorFlag = false;
+            if(bookingData.isOssia){
+                var enrolInstrument = $('#ossiaGroupClassInstrment').val(); 	
+                if(!enrolInstrument || enrolInstrument == '' || enrolInstrument == undefined  ){	
+                    $('#ossiaGroupClassInstrmentErrorMsg').html('Please Select the Instrument...');	
+                    $('#saveNewGroupMakupBooking').attr('disabled', '');
+                    errorFlag = true;           	
+                }	
+                var selectedInstrument = $('#saveNewGroupMakupBooking').attr('data-enrolInstrument');
+                var selectedTeacherInstrument = bookingData.classInstrument;
+                console.log('selectedInstrument',selectedInstrument);
+                console.log('selectedTeacherInstrument',selectedTeacherInstrument);
+                if(!(selectedInstrument && selectedInstrument != null && selectedInstrument != undefined && selectedInstrument.length > 0 &&	
+                    selectedTeacherInstrument && selectedTeacherInstrument != null && selectedTeacherInstrument != undefined && selectedTeacherInstrument.length > 0	
+                    && selectedTeacherInstrument.includes(selectedInstrument))){	
+                    $('#saveNewGroupMakupBooking').attr('disabled', '');
+                    $('#ossiaGroupClassInstrmentErrorMsg').text('Please Select the different Instrument.Current teacher skills do not match the instrument you have chosen.');	
+                    errorFlag = true;   	
+                }
+            }
+
+            if (bookingData.availableHours < bookingData.duration) {
+                    $('#saveNewGroupMakupBooking').attr('disabled', '');
+                    $('#GroupMakupHoursErrorMsg').text('Insufficient Makup minutes');
+                    errorFlag = true;   
+            } 
+            if(!errorFlag){
+                $('.confirmModal').removeClass('slds-hide');
+                $('#confirmBody').html('Do you want to send an email?');
+                $('#confirmHeader').html('Email Confirmation');
+                $('#confirmModalYes').attr('data-origin', 'createGroupBooking');
+                $('#confirmModalNo').attr('data-origin', 'createGroupBooking');
+                $('#newGroupMakupBookingDetails').addClass('slds-hide');
+            }
         }
         // jatin:19-dec-2019 :show group package list
         $('#GroupMakupPackageSelect').focusin(function () {
@@ -2461,7 +2555,7 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                     '{!$RemoteAction.ClassEditController.fetchBookDetailsForScreen}',
                     bookingId,
                     function (result, event) {
-                        //console.log('result', result);
+                        console.log('result', result);
                         $('#ClassPackageEditSelect').empty();
                         $('#attendiesTableBody').empty();
                         var packages = result.groupPackages;
@@ -2498,9 +2592,39 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                         $('#AvailableCapacityEditLabel').html('');
                         $('#ClassTypeEditLabel').html('');
                         $('#StartDateEditLabel').html(''); 
+                        
+                        //added by nishi: 2-Sep-2020: for manage ossia group lesson details
+                        $('#ClassOssiaGradeEditLabel').html('');
+                        $('.ossiaGroupClassBookingDetail').addClass('slds-hide');
+                        $('.aureusGroupClassBookingDetail').removeClass('slds-hide');
+                        
                         if (result.bookObj.Id) {
-                           //console.log(result.bookObj);
-                            selectedStudentData.packageId = result.bookObj.Package__r.Id;
+                           console.log(result.bookObj);
+                           // added by nishi: 2-Sep-2020: for manage ossia group lesson details in ossia case we show grade other wise we show package realed details 
+                           selectedStudentData.isOssia =result.isOssia;
+                            if(result.isOssia){
+                                $('.aureusGroupClassBookingDetail').addClass('slds-hide');
+                                $('.ossiaGroupClassBookingDetail').removeClass('slds-hide');
+                                if(result.bookObj.Class__r.Grade__c != null && result.bookObj.Class__r.Grade__c != undefined){
+                                    $('#ClassOssiaGradeEditLabel').html(result.bookObj.Class__r.Grade__c.replace(/;/g, ", "));
+                                    $('#ClassDurationEditLabel').html(result.bookObj.Class__r.Duration__c + ' Mins');
+                                    $('#showGroupClassGradeDetials').attr('data-classId',result.bookObj.Class__c);
+                                    $('#newOssiaClassBookingDetailsHeader').html('Grade Details ' + result.bookObj.Class__r.Name);
+                                    selectedStudentData.duration =result.bookObj.Class__r.Duration__c;
+                                    selectedStudentData.selgroupClassId = result.bookObj.Class__c;
+                                }
+                            }else{
+                                selectedStudentData.packageId = result.bookObj.Package__r.Id;
+                                $('#ClassPackageEditSelect').html(result.bookObj.Package__r.Name);
+                                $('#ClassDurationEditLabel').html(result.bookObj.Package__r.Duration__c + ' Mins');
+                                
+                                $('#ClassPriceEditLabel').html('$' + result.bookObj.Package__r.Package_Fee__c);
+                                selectedStudentData.duration = result.bookObj.Package__r.Duration__c;
+                                selectedStudentData.packageName = result.bookObj.Package__r.Name;
+                                $('.ossiaGroupClassBookingDetail').addClass('slds-hide');
+                                $('.aureusGroupClassBookingDetail').removeClass('slds-hide');
+                            }
+                            // added by nishi: 2-Sep-2020: for manage ossia group lesson details in ossia case we show grade other wise we show package realed details 
                             selectedStudentData.groupClassId = result.bookObj.Id;
                             selectedStudentData.ClassCapacity = result.bookObj.Class__r.Total_Capacity__c;
 							 $('#newGroupClassCMP').attr('data-groupclassid',  result.bookObj.Id);
@@ -2530,12 +2654,7 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                             $('#MakeupCustomer').attr('data-teacherId', result.bookObj.Teacher_Account__r.Id);
                             $('#MakeupCustomer').attr('data-bookingDate', appointmentStartDate);
                             selectedStudentData.date = appointmentStartDate;
-                            $('#ClassPackageEditSelect').html(result.bookObj.Package__r.Name);
-                            $('#ClassDurationEditLabel').html(result.bookObj.Package__r.Duration__c + ' Mins');
                             
-                            $('#ClassPriceEditLabel').html('$' + result.bookObj.Package__r.Package_Fee__c);
-                            selectedStudentData.duration = result.bookObj.Package__r.Duration__c;
-                            selectedStudentData.packageName = result.bookObj.Package__r.Name;
                               
                             $('#ClassTimeEditLabel').html(moment(result.bookObj.Booking_Date__c + result.bookObj.Start_Time__c).utc().format('ddd, MMM DD YYYY LT'));
                         }
@@ -2598,6 +2717,9 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                 );
             }
         }
+        $('#showGroupClassGradeDetials').click(function(){
+            showossiaGroupClassGradeDetials();
+        });
         function backToUpgradeChangesPopup(){
             $('#upgradeGroupClassSummaryModal').addClass('slds-hide');
             $('#enrolmentUpdateGroupPopup').removeClass('slds-hide'); 

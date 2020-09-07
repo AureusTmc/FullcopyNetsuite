@@ -14,6 +14,8 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
     Private decimal depositAmount;
     Private decimal lessonsFees;
     Private String myCaseId;
+    Private String oldTeacherId;
+    Private String newTeacherId;
     Private Time timeslot;
     Private Map<String, String> mapOfCase;
     
@@ -23,13 +25,16 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
     Private Country__c countryObj;
     public DowngradeEnrolmentProcessController(String bookingId, String effectiveDateStr, String newPackageId, 
                                                String oldPackageId, String timeSlot, String myCaseId, String caseRedirect, 
-                                               String amount, String depositAmount, String lessonsFees, Map<String, String> caseValues) {
+                                               String amount, String depositAmount, String lessonsFees, Map<String, String> caseValues,
+                                               String oldTeacherId,String newTeacherId) {
                                                    this.bookingId = bookingId;
                                                    effectiveDate = AdvanceActionsHelper.convertToDateForUpgrade(effectiveDateStr);
                                                    this.newPackageId = newPackageId;
                                                    this.oldPackageId = oldPackageId;
                                                    this.timeslot = AdvanceActionsHelper.getDateTimeFromString(timeSlot).time();
                                                    this.myCaseId = myCaseId;
+                                                   this.newTeacherId = newTeacherId;
+                                                   this.oldTeacherId = oldTeacherId;
                                                    this.caseRedirect =caseRedirect;
                                                    this.amount = Decimal.valueOf(amount);
                                                    this.depositAmount = Decimal.valueOf(depositAmount);
@@ -44,28 +49,31 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
     Public String initProcess(){
         Boolean isSuccess = true;
         String caseIdToReturn;String enrollmentId;
-        Country__c centreCountry = new Country__c();
+        //Country__c centreCountry = new Country__c();
+        Organisation__c  organisationObj = new Organisation__c();
         String studentId, teacherId, lessonDay, oldPackage, newPackage, centreId;
                                                           Integer duration, newPackageDuration; 
                                                           Time startTime, newStartTime;
         if(String.isNotBlank(bookingId)){
             enrollmentId = upgradeDowngradeController.getEnrolmentId(bookingId);
         }
-        system.debug('@@@enrolmentObj'+enroll);
+       //system.debug('@@@enrolmentObj'+enroll);
         // get old and new Package Time Differnce
         Integer timeDiff = 0;
         AdvanceActionsHelper.UpDownSummary objSummary =  AdvanceActionsHelper.getOldNewPackage(oldPackageId,newPackageId);                                         
         if(String.isNotBlank(objSummary.oldPack.Id) && String.isNotBlank(objSummary.newPack.Id)){
             timeDiff =   Integer.valueOf(objSummary.oldPack.Duration__c) - Integer.valueOf(objSummary.newPack.Duration__c);                                                
         }
-        System.debug('@@@timeDiff'+timeDiff);
+       //system.debug('@@@timeDiff'+timeDiff);
         if(String.isNotBlank(enrollmentId)){
             enroll = AdvanceActionsHelper.fetchEnrolment(enrollmentId);
             
-            if(String.isNotBlank(enroll.Center__r.country__r.Id)){
-                centreCountry = enroll.Center__r.country__r;    
+            // if(String.isNotBlank(enroll.Center__r.country__r.Id)){
+            //     centreCountry = enroll.Center__r.country__r;    
+            // }
+            if(String.isNotBlank(enroll.Center__r.Organisation__r.Id)){
+                organisationObj = enroll.Center__r.Organisation__r;    
             }
-            
             newPackage = newPackageId;
             studentId = enroll.Student__c;
             teacherId = enroll.Teacher__c;
@@ -78,16 +86,18 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
 		system.debug('isSuccessCreatePaymentsDowngradeProcess'+depositamount);
         if(String.isNotBlank(enrollmentId)){
             isSuccess = isSuccessCreatePaymentsDowngradeProcess(mapOfCase, enroll, effectiveDate, depositamount, lessonsFees, 
-                        oldPackageId, newPackageId,centreCountry);
+                        oldPackageId, newPackageId,newTeacherId,organisationObj);//centreCountry);
         }
-         
+       //system.debug('isSuccess'+isSuccess); 
 
         if(isSuccess){
             if(String.isNotBlank(enrollmentId)){
                 enroll.Id = enrollmentId;
                 enroll = AdvanceActionsHelper.initEnroll(enroll);
                 enroll.New_Package_Id__c = newPackageId;
-                
+                if(string.isNotBlank(newTeacherId)){
+                    enroll.New_Teacher__c = newTeacherId;
+                }
                 
                 enroll.Package_Process_Type__c = ConstantsClass.enrollmentProcessDowngradeType;
                 if(effectiveDate != NULL){
@@ -104,6 +114,9 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                 }else{
                     enroll.Package_Process_Status__c = ConstantsClass.enrollmentProcessCompletedStatus;      
                     enroll.Package__c = newPackageId;
+                    if(string.isNotBlank(newTeacherId)){
+                        enroll.Teacher__c = newTeacherId;
+                    }
                 }
                 enroll.Next_Lesson_Start_time__c = timeslot;
                 enroll.Advance_Action_Requested_By__c = Userinfo.getUserId();
@@ -135,7 +148,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                 }
             }                                                             
         }
-        
+       //system.debug('caseRedirect'+caseRedirect); 
         if(isSuccess && caseRedirect == 'true'){
             caseIdToReturn = getCaseIdToReturn(mapOfCase,myCaseId,enrollmentId,amount,lessonsFees,depositAmount);
         }else if(!isSuccess){
@@ -153,6 +166,16 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
         if(amount >= 0){
             objCase.Total_Invoice_topup__c = amount;
             ObjCase.Lesson_Charge_Topup__c = math.abs(lessonsFees);
+            if(caseValues.containsKey('lessonNextLessonCharge')){
+                ObjCase.Lesson_Charge_Topup__c += math.abs(decimal.valueOf(caseValues.get('lessonNextLessonCharge')));    
+            }
+            ObjCase.Lesson_Charge_Topup__c = math.abs(lessonsFees);
+           //start: added by nishi: 17-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+            // if(caseValues.containsKey('facilityFee') && Decimal.valueOf(caseValues.get('facilityFee')) != null && Decimal.valueOf(caseValues.get('facilityFee')) != 0){
+            //     ObjCase.Lesson_Charge_Topup__c += Decimal.valueOf(caseValues.get('facilityFee'));
+            // }
+            //end: added by nishi: 17-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                            
             ObjCase.deposit_Topup__c = depositAmount;
             if(caseValues.containsKey('previousPackage')){
                 objCase.Previous_Package__c = caseValues.get('previousPackage');    
@@ -160,6 +183,15 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
             if(caseValues.containsKey('newPackage')){
                 objCase.New_Package__c = caseValues.get('newPackage');    
             }
+             // added by nishi:start-18-Aug-2020: for manage ossia organisation new teacher
+             if(caseValues.containsKey('previousTeacher')){
+                objCase.Previous_teacher__c = caseValues.get('previousTeacher');     
+            }
+            if(caseValues.containsKey('newTeacher')){
+                objCase.New_Teacher__c = caseValues.get('newTeacher');     
+            }
+             // added by nishi:end-19-Aug-2020: for manage ossia organisation new teacher
+           
             if(caseValues.containsKey('previousLessonDayTime')){
                 objCase.Previous_Lesson_Day_Time__c = caseValues.get('previousLessonDayTime');    
             }
@@ -177,13 +209,22 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
             }
         }
         upsert objCase; 
-        System.debug('@@caseObj'+objCase);
+       //system.debug('@@caseObj'+objCase);
         caseIdToReturn = objCase.Id;
         return caseIdToReturn;
     }
     
-    private static Boolean createPaymentsForDowngradeProcess(Enrolment__c objEnrol, Date lastLessonDateObj, Date nextBillDate, Decimal depositAmount, Decimal lessonsAmt, Decimal positiveInvoiceAmount, Decimal negativeInvoiceAmount, String oldPackId,String newPackId, Date effectiveDate, Country__c centreCountry){
-        
+    private static Boolean createPaymentsForDowngradeProcess(Enrolment__c objEnrol, Date lastLessonDateObj, Date nextBillDate, Decimal depositAmount,
+     Decimal lessonsAmt, Decimal positiveInvoiceAmount, Decimal negativeInvoiceAmount, String oldPackId,String newPackId,String newTeacherId, Date effectiveDate, 
+     Organisation__c  organisationObj/*Country__c centreCountry*/,Map<String, String> mapOfCase ){
+        // added by nishi: 19_aug-2020: for added facility fee is exist
+        // Decimal facilityFee =  mapOfCase.containsKey('facilityFee') ? Decimal.valueOf(mapOfCase.get('facilityFee')) : 0;
+        // Decimal negativeFacilityInvoiceAmount =  mapOfCase.containsKey('negativeFacilityInvoiceAmount') ? Decimal.valueOf(mapOfCase.get('negativeFacilityInvoiceAmount')) : 0;
+        // Decimal positiveFacilityInvoiceAmount =  mapOfCase.containsKey('positiveFacilityInvoiceAmount') ? Decimal.valueOf(mapOfCase.get('positiveFacilityInvoiceAmount')) : 0;
+        // // added by nishi: 19_aug-2020: for added facility fee is exist
+        Decimal positiveNextMonthInvoiceAmount  = mapOfCase.containsKey('positiveNextMonthInvoiceAmount') ? Decimal.valueOf(mapOfCase.get('positiveNextMonthInvoiceAmount')) : 0;
+        Decimal negativeNextMonthInvoiceAmount =  mapOfCase.containsKey('negativeNextMonthInvoiceAmount') ? Decimal.valueOf(mapOfCase.get('negativeNextMonthInvoiceAmount')) : 0;
+        Decimal nextMonthAmount =  mapOfCase.containsKey('lessonNextLessonCharge') ? Decimal.valueOf(mapOfCase.get('lessonNextLessonCharge')) : 0;
         Boolean isTransaction = false;
         Subscription_Line_Item__c objSubLineItem;
         String stripeId;
@@ -193,17 +234,26 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
         String payAsCredit = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get('Payment As Credit').getRecordTypeId();
         String paymentRecordTypeId =  Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get(ConstantsClass.paymentAsDepositRecordType).getRecordTypeId();
         String paymentTransaction = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get(ConstantsClass.paymentTransactionRecType).getRecordTypeId();
-        
+       system.debug('nextMonthAmount'+nextMonthAmount);
+       system.debug('positiveNextMonthInvoiceAmount'+positiveNextMonthInvoiceAmount);
+       system.debug('negativeNextMonthInvoiceAmount'+negativeNextMonthInvoiceAmount);
+       system.debug('negativeInvoiceAmount'+negativeInvoiceAmount);
+       system.debug('positiveInvoiceAmount'+positiveInvoiceAmount);
+       system.debug('lessonsAmt'+lessonsAmt);
+       system.debug('depositAmount'+depositAmount);
         if(depositAmount > 0){
             depositAmount = BillingUtility.roundOffAmount(depositAmount);
         }
-        system.debug('@depositAmount'+depositAmount);
+       //system.debug('@depositAmount'+depositAmount);
         if(depositAmount > 0 && objEnrol.Subscription_Line_Items__r.size() > 0){
             
             objSubLineItem = objEnrol.Subscription_Line_Items__r[0];
             stripeId = objSubLineItem.Subscription__r.Parent__r.Stripe_Customer_Id__c; 
             if(String.isNotBlank(stripeId)){
-                BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId, depositAmount, centreCountry.Currency_Code__c, centreCountry.Stripe_Base_Url__c, centreCountry.Stripe_Secret_Key__c);                 
+               //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+                //BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId, depositAmount, centreCountry.Currency_Code__c, centreCountry.Stripe_Base_Url__c, centreCountry.Stripe_Secret_Key__c);                 
+                
+                BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId, depositAmount, organisationObj.country__r.Currency_Code__c, organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c);                 
                 if(chargeResponse.statusCode == 200 && chargeResponse.paid){
                     isTransaction = true;
                     
@@ -222,9 +272,11 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                     
                     if(String.isNotBlank(objInvoice.Id)){
                         objInvoice = [SELECT Id,Name,Total_Amount__c,Parent_Account__c FROM Invoice__c WHERE Id =:objInvoice.Id];
-                        if(!Test.isRunningTest())
-                            BillingUtility.updateCharge(chargeResponse.Id,objInvoice.Name, centreCountry.Stripe_Base_Url__c, centreCountry.Stripe_Secret_Key__c);
-                        
+                        if(!Test.isRunningTest()){
+                            ////commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+                            //  BillingUtility.updateCharge(chargeResponse.Id,objInvoice.Name, centreCountry.Stripe_Base_Url__c, centreCountry.Stripe_Secret_Key__c);
+                            BillingUtility.updateCharge(chargeResponse.Id,objInvoice.Name, organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c);
+                        }
                         Payment__c objPayment = BillingUtility.fillPayment(objInvoice.Parent_Account__c, objInvoice.Id, depositAmount, ConstantsClass.successStatus);
                         objPayment.Transaction_ID__c = chargeResponse.Id;
                         objPayment.recordTypeId = paymentTransaction;
@@ -236,13 +288,15 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
         }else if(depositAmount <= 0){
             isTransaction = true;
             
-            //Invoice If the deposit amount is less than 0.
+            //Invoice If the deposit amount is less than 0. Some time next dilling date is greater than effective date 
+            // that time invoice line item not greated becaue that time we create no line item invioce (0 balance invoice) for manage sage 
             objInvoice = new Invoice__c(Status__c=ConstantsClass.paidStatus,
                                         Due_Date__c = system.today().AddDays(ConstantsClass.addInvoiceDueDays),
                                         Invoice_Date__c =system.today(),
                                         Parent_Account__c = objEnrol.Parent__c, 
                                         Center__c=objEnrol.Center__c);
             INSERT objInvoice;
+           //system.debug('@objInvoice'+objInvoice);
             // JATIN  25-Nov-2019 :for add transaction id in payment reocrds
             Map<String, Payment__c> mapOfInvoicePayments = new Map<String, Payment__c>();
             List<Id> invoiceIds = NEW List<Id>();
@@ -271,7 +325,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                         }
                     } 
                 }
-                system.debug('@@transactionID'+transactionID);
+               //system.debug('@@transactionID'+transactionID);
                 listOfPayments.add(new Payment__c(Payment_Date__c = lastLessonDateObj, 
                                                   RecordTypeId = paymentRecordTypeId, 
                                                   Transaction_ID__c = transactionID,
@@ -280,18 +334,23 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                                   Parent_Account__c = objEnrol.Parent__c, 
                                                   Enrolment__c = objEnrol.Id));    
             }
-            
+           //system.debug('@listOfPayments'+listOfPayments);
         }   
         
         if(lastLessonDateObj < nextBillDate){
             decimal gstAmount = 0;
             decimal positiveInvoiceAmountGST =0;
             decimal negativeInvoiceAmountGST =0;
+            decimal positiveFacilityInvoiceAmountGST =0;
+            decimal negativeFacilityInvoiceAmountGST =0;
+            decimal positiveNextMonthInvoiceAmountGST =0;
+            decimal negativeNextMonthInvoiceAmountGST =0;
             if( string.isNotBlank(objEnrol.Center__c) && string.isNotBlank(objEnrol.Center__r.Country__c) &&
              objEnrol.Center__r.Country__r.Tax_Rate__c != null ){
                  gstAmount = BillingUtility.roundOffAmount(objEnrol.Center__r.Country__r.Tax_Rate__c);
              }
 
+           
             if(positiveInvoiceAmount != NULL && negativeInvoiceAmount != NULL && String.isNotBlank(objInvoice.Id)){
                 if(positiveInvoiceAmount != NULL && gstAmount > 0){
                      positiveInvoiceAmountGST  = (BillingUtility.roundOffAmount(positiveInvoiceAmount) * gstAmount) /100;
@@ -299,18 +358,78 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                 if(negativeInvoiceAmount != NULL  && gstAmount > 0){
                      negativeInvoiceAmountGST  = (BillingUtility.roundOffAmount(negativeInvoiceAmount) * gstAmount) /100;
                 }
+                // added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                // if(positiveFacilityInvoiceAmount != NULL && positiveFacilityInvoiceAmount != 0 && negativeFacilityInvoiceAmount != NULL && negativeFacilityInvoiceAmount != 0){
+                //     if(positiveFacilityInvoiceAmount != NULL && gstAmount > 0){
+                //         positiveFacilityInvoiceAmountGST  = (BillingUtility.roundOffAmount(positiveFacilityInvoiceAmount) * gstAmount) /100;
+                //    }
+                //    if(negativeFacilityInvoiceAmount != NULL  && gstAmount > 0){
+                //          negativeFacilityInvoiceAmountGST  = (BillingUtility.roundOffAmount(negativeFacilityInvoiceAmount) * gstAmount) /100;
+                //    }
+                //     //Line Item for positive amount
+                //    //system.debug('@positiveFacilityInvoiceAmountGST'+positiveFacilityInvoiceAmountGST);
+                //    //system.debug('@negativeFacilityInvoiceAmountGST'+negativeFacilityInvoiceAmountGST);
+                //     invoiceLineItems.add(new Invoice_Line_Item__c(Invoice__c = objInvoice.id,Amount__c = BillingUtility.roundOffAmount(positiveFacilityInvoiceAmount), 
+                //                         GST_Amount__c = positiveFacilityInvoiceAmountGST,Remarks__c='Facility Fee Positive Amount',
+                //                         Teacher_Id__c = newTeacherId,Package__c=newPackId,Month__c= effectiveDate, Subscription_Line_Item__c = objEnrol.Subscription_Line_Items__r[0].Id));
+
+                //         //Line Item for negative amount.
+
+                //     invoiceLineItems.add(new Invoice_Line_Item__c(invoice__c = objInvoice.id,Amount__c = BillingUtility.roundOffAmount(negativeFacilityInvoiceAmount), 
+                //                             GST_Amount__c = negativeFacilityInvoiceAmountGST,Remarks__c='Facility Fee Negative Amount',
+                //                             Teacher_Id__c = objEnrol.Teacher__c,Package__c=oldPackId,Month__c= effectiveDate, Subscription_Line_Item__c = objEnrol.Subscription_Line_Items__r[0].Id));
+
+                // }
+                 // added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+
+                 // added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                if(positiveNextMonthInvoiceAmount != NULL && positiveNextMonthInvoiceAmount != 0 && negativeNextMonthInvoiceAmount != NULL && negativeNextMonthInvoiceAmount != 0){
+                    date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1);
+                    if(positiveNextMonthInvoiceAmount != NULL && gstAmount > 0){
+                        positiveNextMonthInvoiceAmountGST  = (BillingUtility.roundOffAmount(positiveNextMonthInvoiceAmount) * gstAmount) /100;
+                   }
+                   if(negativeNextMonthInvoiceAmount != NULL  && gstAmount > 0){
+                     negativeNextMonthInvoiceAmountGST  = (BillingUtility.roundOffAmount(negativeNextMonthInvoiceAmount) * gstAmount) /100;
+                   }
+                    //Line Item for positive amount
+                   system.debug('@positiveFacilityInvoiceAmountGST'+positiveFacilityInvoiceAmountGST);
+                   system.debug('@negativeFacilityInvoiceAmountGST'+negativeFacilityInvoiceAmountGST);
+                    invoiceLineItems.add(new Invoice_Line_Item__c(Invoice__c = objInvoice.id,Amount__c = BillingUtility.roundOffAmount(positiveNextMonthInvoiceAmount), 
+                                        GST_Amount__c = positiveNextMonthInvoiceAmountGST,
+                                        Teacher_Id__c = newTeacherId,Package__c=newPackId,Month__c= nextMonthDate.addMonths(-1), 
+                                        Subscription_Line_Item__c = objEnrol.Subscription_Line_Items__r[0].Id));
+
+                        //Line Item for negative amount.
+
+                    invoiceLineItems.add(new Invoice_Line_Item__c(invoice__c = objInvoice.id,Amount__c = BillingUtility.roundOffAmount(negativeNextMonthInvoiceAmount), 
+                                            GST_Amount__c = negativeNextMonthInvoiceAmountGST,
+                                            Teacher_Id__c = objEnrol.Teacher__c,Package__c=oldPackId,Month__c= nextMonthDate.addMonths(-1), 
+                                            Subscription_Line_Item__c = objEnrol.Subscription_Line_Items__r[0].Id));
+                }
+                 // added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+
                 //Line Item for positive amount
                 
                 invoiceLineItems.add(new Invoice_Line_Item__c(Invoice__c = objInvoice.id,Amount__c = BillingUtility.roundOffAmount(positiveInvoiceAmount), 
                                                              GST_Amount__c = positiveInvoiceAmountGST,
-                                                             Teacher_Id__c = objEnrol.Teacher__c,Package__c=newPackId,Month__c= effectiveDate, Subscription_Line_Item__c = objEnrol.Subscription_Line_Items__r[0].Id));
+                                                             Teacher_Id__c = newTeacherId,Package__c=newPackId,Month__c= effectiveDate, Subscription_Line_Item__c = objEnrol.Subscription_Line_Items__r[0].Id));
                 
                 //Line Item for negative amount.
                 
                 invoiceLineItems.add(new Invoice_Line_Item__c(invoice__c = objInvoice.id,Amount__c = BillingUtility.roundOffAmount(negativeInvoiceAmount), 
                                                                GST_Amount__c = negativeInvoiceAmountGST,
                                                               Teacher_Id__c = objEnrol.Teacher__c,Package__c=oldPackId,Month__c= effectiveDate, Subscription_Line_Item__c = objEnrol.Subscription_Line_Items__r[0].Id));
-                
+                //start: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                // if(facilityFee  != null && facilityFee != 0){
+                //     lessonsAmt+=facilityFee;
+                // }
+                 //end: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                 //start: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                if(nextMonthAmount  != null && nextMonthAmount != 0){
+                    lessonsAmt+=nextMonthAmount;
+                }
+                system.debug('lessonsAmt'+lessonsAmt);
+                 //end: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
                 listOfPayments.add(new Payment__c(RecordTypeId = payAsCredit, Payment_Amount__c = BillingUtility.roundOffAmount(lessonsAmt), Payment_Status__c = ConstantsClass.paymentPendingStatus,
                                                   
                                                   Parent_Account__c = objEnrol.Parent__c, Payment_Date__c = lastLessonDateObj));
@@ -323,7 +442,26 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                 }if( math.abs(BillingUtility.roundOffAmount(negativeInvoiceAmount)) > BillingUtility.roundOffAmount(positiveInvoiceAmount)){
                     balancedInvoice =  math.abs(BillingUtility.roundOffAmount(negativeInvoiceAmount)) - BillingUtility.roundOffAmount(positiveInvoiceAmount);
                 }
-                system.debug('@@@balancedInvoice'+balancedInvoice);
+               system.debug('@@@balancedInvoice'+balancedInvoice);
+               // start:added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                if(positiveNextMonthInvoiceAmount != NULL && positiveNextMonthInvoiceAmount != 0 && negativeNextMonthInvoiceAmount != NULL && negativeNextMonthInvoiceAmount != 0){
+                        if(BillingUtility.roundOffAmount(positiveNextMonthInvoiceAmount) > math.abs(BillingUtility.roundOffAmount(negativeNextMonthInvoiceAmount))){
+                            balancedInvoice += -(BillingUtility.roundOffAmount(positiveNextMonthInvoiceAmount) - math.abs(BillingUtility.roundOffAmount(negativeNextMonthInvoiceAmount)));
+                        }if( math.abs(BillingUtility.roundOffAmount(negativeNextMonthInvoiceAmount)) > BillingUtility.roundOffAmount(positiveNextMonthInvoiceAmount)){
+                            balancedInvoice +=  math.abs(BillingUtility.roundOffAmount(negativeNextMonthInvoiceAmount)) - BillingUtility.roundOffAmount(positiveNextMonthInvoiceAmount);
+                        }
+                    }
+                 //end: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                // start:added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+            //    if(positiveFacilityInvoiceAmount != NULL && positiveFacilityInvoiceAmount != 0 && negativeFacilityInvoiceAmount != NULL && negativeFacilityInvoiceAmount != 0){
+            //         if(BillingUtility.roundOffAmount(positiveFacilityInvoiceAmount) > math.abs(BillingUtility.roundOffAmount(negativeFacilityInvoiceAmount))){
+            //             balancedInvoice += -(BillingUtility.roundOffAmount(positiveFacilityInvoiceAmount) - math.abs(BillingUtility.roundOffAmount(negativeFacilityInvoiceAmount)));
+            //         }if( math.abs(BillingUtility.roundOffAmount(negativeFacilityInvoiceAmount)) > BillingUtility.roundOffAmount(positiveFacilityInvoiceAmount)){
+            //             balancedInvoice +=  math.abs(BillingUtility.roundOffAmount(negativeFacilityInvoiceAmount)) - BillingUtility.roundOffAmount(positiveFacilityInvoiceAmount);
+            //         }
+            //     }
+                 //end: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+               system.debug('@@@balancedInvoice'+balancedInvoice);
                 if(balancedInvoice != NULL && balancedInvoice != 0){
                     if(balancedInvoice != NULL  && balancedInvoice != 0 && gstAmount > 0){
                         balancedInvoiceGST  = (BillingUtility.roundOffAmount(balancedInvoice) * gstAmount) /100;
@@ -345,36 +483,50 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
         if(invoiceLineItems.size() > 0){
             insert invoiceLineItems;
         }
-        
+       system.debug('@@@invoiceLineItems'+invoiceLineItems);
+       
         if(String.isNotBlank(objInvoice.id) && isTransaction){
             SageIntacctIntegrationUtility.changeEnrolment(objInvoice.Id);
             BillingUtility.createAttachment(new Set<String> {objInvoice.id});
         }  
-        
+        system.debug('@@@listOfPayments'+listOfPayments);
         if(listOfPayments.size() > 0){
             insert listOfPayments;
         }
-        system.debug('@@@listOfPayments'+listOfPayments);
-        
+       //system.debug('@@@listOfPayments'+listOfPayments);
+       //system.debug('@@@isTransaction'+isTransaction);
         return isTransaction;
         
     }
     
     private Static Boolean isSuccessCreatePaymentsDowngradeProcess(Map<String, String> mapOfCase,Enrolment__c enrolmentObj,
-    Date effectiveDate, Decimal depositamount,Decimal lessonsFees,Id oldPackageId,Id newPackageId ,Country__c centreCountry){
+    Date effectiveDate, Decimal depositamount,Decimal lessonsFees,Id oldPackageId,Id newPackageId ,string newTeacherId,Organisation__c  organisationObj/*Country__c centreCountry*/){
         
         Decimal positiveAmt  = mapOfCase.containsKey('positiveInvoiceAmount') ? Decimal.valueOf(mapOfCase.get('positiveInvoiceAmount')) : 0;
         Decimal negativeAmt =  mapOfCase.containsKey('negativeInvoiceAmount') ? Decimal.valueOf(mapOfCase.get('negativeInvoiceAmount')) : 0;
+        /*start:commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
         if(centreCountry != null && String.isNotBlank(centreCountry.Id)
            && String.isNotBlank(centreCountry.Currency_Code__c) 
            && String.isNotBlank(centreCountry.Stripe_Base_Url__c) 
            && String.isNotBlank(centreCountry.Stripe_Secret_Key__c) 
            && effectiveDate != NULL && enrolmentObj.Subscription_Line_Items__r != null && 
            enrolmentObj.Subscription_Line_Items__r[0].Next_Bill_Date__c != null){
-               system.debug('@@@enrolmentObj.Center__r.country__r'+enrolmentObj.Center__r.country__r);
+              //system.debug('@@@enrolmentObj.Center__r.country__r'+enrolmentObj.Center__r.country__r);
                return createPaymentsForDowngradeProcess(enrolmentObj, effectiveDate, enrolmentObj.Subscription_Line_Items__r[0].Next_Bill_Date__c,
-                                                        depositamount, lessonsFees, positiveAmt,negativeAmt, oldPackageId,newPackageId, 
-                                                        effectiveDate,centreCountry);    
+                                                        depositamount, lessonsFees, positiveAmt,negativeAmt, oldPackageId,newPackageId, newTeacherId,
+                                                        effectiveDate,centreCountry,mapOfCase);    
+           }
+           end:commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic*/
+           if(organisationObj != null && String.isNotBlank(organisationObj.Id)
+           && String.isNotBlank(organisationObj.country__r.Currency_Code__c) 
+           && String.isNotBlank(organisationObj.Stripe_Base_Url__c) 
+           && String.isNotBlank(organisationObj.Stripe_Secret_Key__c) 
+           && effectiveDate != NULL && enrolmentObj.Subscription_Line_Items__r != null && 
+           enrolmentObj.Subscription_Line_Items__r[0].Next_Bill_Date__c != null){
+              //system.debug('@@@enrolmentObj.Center__r.country__r'+enrolmentObj.Center__r.country__r);
+               return createPaymentsForDowngradeProcess(enrolmentObj, effectiveDate, enrolmentObj.Subscription_Line_Items__r[0].Next_Bill_Date__c,
+                                                        depositamount, lessonsFees, positiveAmt,negativeAmt, oldPackageId,newPackageId, newTeacherId,
+                                                        effectiveDate,organisationObj,mapOfCase);    
            }
         return false;    
     }
@@ -382,10 +534,10 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
     
     /*Private Static Boolean updatedEnrollment(Enrolment__c enroll,Date effectiveDate,String newPackageId,String centreId,AdvanceActionsHelper.UpDownSummary objSummary,Time startTime, Time timeSlot,Integer timediff, boolean isSuccess){
         if(String.isNotBlank(enroll.id)){
-            system.debug('@@enroll.id'+enroll.id);
+           //system.debug('@@enroll.id'+enroll.id);
             enroll = AdvanceActionsHelper.getUpdatedEnrollmentFields(enroll.Id,ConstantsClass.enrollmentProcessDowngradeType,
                     effectiveDate.addDays(-30),effectiveDate,newPackageId,timeSlot);
-            system.debug('@@enroll'+enroll);
+           //system.debug('@@enroll'+enroll);
         }
         
         if(enroll != NULL){

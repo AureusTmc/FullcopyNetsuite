@@ -91,6 +91,38 @@
             .d-none{display:none;}
             .d-block{display:block;}
             .slds-radio{border-radius:10px;}
+            <!--Juneid 14 Aug 2020, Osia css -->
+               span.slds-radio input + .slds-radio__label__Osia{display: block; border-radius:10px;}
+            span.slds-radio input:checked + .slds-radio__label__Osia {
+            background: #ed1c24;
+            border-radius:10px;
+            color:#fff;
+            }
+			
+			 @media(max-width:991px){
+            .slds-radio [type="radio"] + .slds-radio__label__Osia .slds-radio_faux {margin-right:0px;}
+            .slds-radio__label__Osia.slds-p-around_medium{padding: .75rem;}
+            .teach-img{width: 19vw;height: 12rem;}
+            }
+            
+             <!--Juneid-->
+            .btn-red, .btn-red:hover, .btn-red:focus {
+            background-color:#ed1c24;
+            color:#fff;
+            }
+            <!--Juneid-->
+            input[type="radio"]:checked ~ label .slds-radio--faux::after, 
+            input[type="radio"]:checked ~ label .slds-radio_faux::after {
+            width: .5rem;
+            height: .5rem;
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate3d(-50%,-50%,0);
+            border-radius: 50%;
+            background: #0070d2;
+            } 
         </style>
         <script>
             $(document).ready(function() { 
@@ -143,13 +175,18 @@
                             break;
                         }
                     }
-                    if(isSuccess){
-                        $("#next_step3").addClass("btn-yellow").removeClass("btn-gray").css('pointer-events', 'auto');
-                        
-                    }
-                    else{
-                        $("#next_step3").attr("disabled", "true").addClass("btn-gray").removeClass("btn-yellow").css('pointer-events', 'none');
-                    }
+                           
+                if(isSuccess){
+                    if({!org =='osia'})
+                        $("#next_step3").addClass("btn-red").removeClass("btn-gray").css("pointer-events", "auto"); 
+                    else
+                        $("#next_step3").addClass("btn-yellow").removeClass("btn-gray").css("pointer-events", "auto"); 
+                }else{
+                    if({!org =='osia'})
+                        $("#next_step3").addClass("btn-gray").removeClass("btn-yellow").css("pointer-events", "none");
+                    else
+                        $("#next_step3").addClass("btn-gray").removeClass("btn-red").css("pointer-events", "none");
+                }  
     
             }   
         
@@ -201,10 +238,11 @@
         
     </head>
     <body class="">
-        <apex:outputPanel rendered="{!isSiteGuestUser}">     
-            <div  class="slds-p-around_medium" style="font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;">Aureus Academy Enrolment Process       
+        <apex:outputPanel rendered="{!isSiteGuestUser}">   
+            <!--@Juneid 14 Aug, 2020, For osia orgnization -->
+          <div  class="slds-p-around_medium" style="{!iF(org =='osia','font-size:15px; background-color: #ed1c24; text-align:center; color:#fff; font-weight:bold;','font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;')}">{!IF(org =='osia','Ossia Enrolment Process','Aureus Academy Enrolment Process')}
             </div>
-            <p style="text-align:center;"><apex:image url="{!$Resource.Aureus_logo_png}" /></p>
+           <p style="text-align:center;"><apex:image url="{!iF(org =='osia',$Resource.Osia_Logo,$Resource.Aureus_logo_png)}" /></p>
         </apex:outputPanel>  
         <apex:form >
             <apex:actionFunction name="nextBtn" action="{!nextBtnCmp3}" status="spinner"/>
@@ -291,11 +329,9 @@
                     <apex:repeat value="{!enrTrial.slcdSlotTchrs}" var="teachMod"> 
                         <fieldset class="slds-form-element bg-white slds-m-bottom_medium" style="border-radius: 10px;  border: solid 1px #dcdcdc;">
                             <div class="slds-form-element__control">
-                            
                                 <span class="slds-radio">
                                     <input type="radio" id="{!teachMod.tecId}{!stuIndex}" value="{!teachMod.tecId}" onChange="setTeacher('{!stuIndex}');"  name="teacherOpt{!stuIndex}" />
-                                    <label class="slds-radio__label slds-p-around_medium" for="{!teachMod.tecId}{!stuIndex}">
-                                         
+                                    <label class="{!IF(org=='osia','slds-radio__label__Osia slds-p-around_medium','slds-radio__label slds-p-around_medium')}" for="{!teachMod.tecId}{!stuIndex}" >
                                         <div class="slds-grid slds-wrap ">
                                             <div class="slds-col slds-medium-size_3-of-12" style="align-self:top;">
                                                 <span class="slds-radio_faux"></span>

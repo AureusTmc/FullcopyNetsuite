@@ -4,6 +4,7 @@ public class LeaveRequestHelper {
     // fetching the name of lesson from constant class
     private static string lesson = ConstantsClass.recordTypeLesson;
     public static void sickLeave(list<Leave_Request__c> leaveReqList){
+        system.debug('leaveReqList'+leaveReqList);
         // sicleave recorrd type id
    		Id sickRecordTypeId = Schema.SObjectType.Leave_Request__c.getRecordTypeInfosByDeveloperName().get('Sick_Leave').getRecordTypeId();
         string message='Success';
@@ -32,13 +33,33 @@ public class LeaveRequestHelper {
             for(Leave_Request__c reqLeavObj:leaveReqList){
                 mapToTeacherDate.put(reqLeavObj.Employee__c,reqLeavObj);
             }
-            
+            system.debug('mapToTeacherDate'+mapToTeacherDate);
             List<Booking__c> bookingMakeUpList = new List<Booking__c>();
             Map<Id,Booking__c> bookingMakeUpMap = new Map<Id,Booking__c>();
             List<Booking__c> cancelBookingList = new List<Booking__c>();
             
+            // added by nishi: 22-jul-2020: for manage ossia organization student we added 180 days in expiry dates
+            List<Ossia_Organisation_Settings__mdt> listOfOssia_Organisation_Settings = [SELECT Id, DeveloperName, MasterLabel, 
+            Language, NamespacePrefix, Label, QualifiedApiName, Makeup_Expiry_Days__c,
+            Makeup_Expiry_Days_Teacher__c FROM Ossia_Organisation_Settings__mdt
+            WHERE Label =:System.Label.Ossia_Organisation_Name];
+            // added by nishi: 22-jul-2020: for manage ossia organization student  we added 180 days in expiry dates
+
             // fetching the booking list as per the teacher ID
-            for(Booking__c bkgObj:[select Id,Duration__c,End_Time__c,Teacher_Account__r.Name,Teacher_Account__r.Id,Type__c,Status__c,Booking_Date__c,Start_Time__c,Parent__c,Student__c,Parent__r.PersonContactId,Parent__r.personEmail,Center__c,Center__r.Location__c,Student__r.Name,Teacher_Account__c,Enrolment__c,Available_Make_up_Units__c,Make_up_Utilize_Bookings__c  from Booking__c where Teacher_Account__c in:mapToTeacherDate.keySet() and Booking_Date__c>=today and  Type__c in ('Trial','Regular','Make-up','Ad-hoc','Busy') And Status__c in ('Pending','Scheduled') AND Category__c Not in ('Leave','Placeholder','Holiday')]){
+            for(Booking__c bkgObj:[select Id,Duration__c,End_Time__c,Teacher_Account__r.Name,Teacher_Account__r.Id,
+                                Type__c,Status__c,Booking_Date__c,Start_Time__c,Parent__c,Student__c,Parent__r.PersonContactId,
+                                Parent__r.personEmail,Center__c,Center__r.Location__c,Student__r.Name,Teacher_Account__c,Enrolment__c,
+                                Available_Make_up_Units__c,Make_up_Utilize_Bookings__c ,
+                                // added by nishi : 22-jul-2020:start: for manage ossia oranization students 
+                                Center__r.Name,Center__r.Organisation__r.Name
+                                // added by nishi : 22-jul-2020:start: for manage ossia oranization students 
+                                from Booking__c 
+                                where Teacher_Account__c in:mapToTeacherDate.keySet() 
+                                and Booking_Date__c>=today 
+                                and  Type__c in ('Trial','Regular','Make-up','Ad-hoc','Busy') 
+                                And Status__c in ('Pending','Scheduled') 
+                                AND Category__c Not in ('Leave','Placeholder','Holiday')
+                                ]){
                 
                 if(mapToTeacherDate.containsKey(bkgObj.Teacher_Account__c)){
                     Leave_Request__c reqLeavObj = mapToTeacherDate.get(bkgObj.Teacher_Account__c);
@@ -93,20 +114,50 @@ public class LeaveRequestHelper {
                             system.debug('bkgObj.Start_Time__c'+bkgObj.Start_Time__c +'====>'+reqLeavObj.Sick_leave_start_Time__c );
                             if( (bkgObj.Start_Time__c>=reqLeavObj.Sick_leave_start_Time__c && reqLeavObj.Leave_Start_Date__c ==bkgObj.Booking_Date__c )
                                || reqLeavObj.Leave_Start_Date__c !=bkgObj.Booking_Date__c){
-                                   bkgObj.Make_up_Expiry_Date__c=bkgObj.Booking_Date__c.addDays(120);
-                                   string description='placeholder booking for cancelling '+ bkgObj.Student__r.Name +' booking';
-                                   Booking__c placIns= new Booking__c(Center__c=bkgObj.Center__c,RecordTypeId=lessonRecordType,
-                                                                      Teacher_Account__c=bkgObj.Teacher_Account__r.Id,Type__c='Busy',Category__c='Placeholder',Remarks__c=description,
-                                                                      Booking_Date__c=bkgObj.Booking_Date__c,Start_Time__c=bkgObj.Start_Time__c,End_Time__c=bkgObj.End_Time__c,Status__c='Scheduled');
-                                   placeholdeBooking.add(placIns);
+                                
+                                // Added by nishi: 22-Jul-2020:Start: for ossia students booking will cancel then we added expiry date 180
+                                // otherwise we added 120 days for other students
+                                if(String.isNotBlank(bkgObj.Center__c) && 
+                                String.isNotBlank(bkgObj.Center__r.Organisation__c) && 
+                                String.isNotBlank(bkgObj.Center__r.Organisation__r.Name) && 
+                                bkgObj.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){ 
+                                    if(listOfOssia_Organisation_Settings != null && listOfOssia_Organisation_Settings.size() > 0){
+                                        bkgObj.Make_up_Expiry_Date__c=bkgObj.Booking_Date__c.addDays(Integer.valueOf((listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days_Teacher__c)));
+                                    }
+                                }else{
+                                    bkgObj.Make_up_Expiry_Date__c=bkgObj.Booking_Date__c.addDays(120);
+                                }
+                                // Added by nishi: 22-Jul-2020:end: for ossia students booking will cancel then we added expiry date 180
+                                // otherwise we added 120 days for other students
+
+                                string description='placeholder booking for cancelling '+ bkgObj.Student__r.Name +' booking';
+                                Booking__c placIns= new Booking__c(Center__c=bkgObj.Center__c,RecordTypeId=lessonRecordType,
+                                                                    Teacher_Account__c=bkgObj.Teacher_Account__r.Id,Type__c='Busy',Category__c='Placeholder',Remarks__c=description,
+                                                                    Booking_Date__c=bkgObj.Booking_Date__c,Start_Time__c=bkgObj.Start_Time__c,End_Time__c=bkgObj.End_Time__c,Status__c='Scheduled');
+                                placeholdeBooking.add(placIns);
                                }
+                                system.debug('bkgObj'+bkgObj);
                         }else if(bkgObj.Type__c=='Regular' && reqLeavObj.Sick_leave_start_Time__c == null){
-                            bkgObj.Make_up_Expiry_Date__c=bkgObj.Booking_Date__c.addDays(120);
+                            // Added by nishi: 22-Jul-2020:Start: for ossia students booking will cancel then we added expiry date 180
+                                // otherwise we added 120 days for other students
+                            if(String.isNotBlank(bkgObj.Center__c) && 
+                                String.isNotBlank(bkgObj.Center__r.Organisation__c) && 
+                                String.isNotBlank(bkgObj.Center__r.Organisation__r.Name) && 
+                                bkgObj.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){ 
+                                    if(listOfOssia_Organisation_Settings != null && listOfOssia_Organisation_Settings.size() > 0){
+                                        bkgObj.Make_up_Expiry_Date__c=bkgObj.Booking_Date__c.addDays(Integer.valueOf((listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days_Teacher__c)));
+                                    }
+                            }else{
+                                bkgObj.Make_up_Expiry_Date__c=bkgObj.Booking_Date__c.addDays(120);
+                            }
+                             // Added by nishi: 22-Jul-2020:End: for ossia students booking will cancel then we added expiry date 180
+                            // otherwise we added 120 days for other students
                             string description='placeholder booking for cancelling '+ bkgObj.Student__r.Name +' booking';
                             Booking__c placIns= new Booking__c(Center__c=bkgObj.Center__c,RecordTypeId=lessonRecordType,
                                                                Teacher_Account__c=bkgObj.Teacher_Account__r.Id,Type__c='Busy',Category__c='Placeholder',Remarks__c=description,
                                                                Booking_Date__c=bkgObj.Booking_Date__c,Start_Time__c=bkgObj.Start_Time__c,End_Time__c=bkgObj.End_Time__c,Status__c='Scheduled');
                             placeholdeBooking.add(placIns);
+                            system.debug('bkgObj'+bkgObj);
                         }
                         // upating Available Make up min to sum of total given Credit for Regular and Ad-hoc  
                         if((bkgObj.Type__c=='Regular' || bkgObj.Type__c=='Ad-hoc') && bkgObj.Duration__c != null && reqLeavObj.Sick_leave_start_Time__c != null){
@@ -147,6 +198,7 @@ public class LeaveRequestHelper {
                 }
                 
             } 
+            system.debug('cancelBookingList'+cancelBookingList);
             if(bookingMakeUpMap.size()>0){
                 update bookingMakeUpMap.values();
             }

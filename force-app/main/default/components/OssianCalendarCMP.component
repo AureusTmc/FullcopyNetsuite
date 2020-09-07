@@ -1,0 +1,2191 @@
+<apex:component controller="OssiaCenterCalendarController" allowDML="true">
+    <script>  
+
+        function showGroupClassGradepackages(centreId,teacherId,grade,duration){
+            $('#newOssiaClassBookingDetailsHeader').html('Select Grade Packages');
+            $('#newGroupClassModal').addClass('slds-hide');
+            $('#newossiaGroupClassModal').removeClass('slds-hide');
+            $('.newossiaGroupClassFooter').removeClass('slds-hide');
+            $('.newossiaGroupGradeClassFooter').addClass('slds-hide');
+            $('#newGroupOssiaClassModalBody').empty();
+            var trRow ='';
+            $(grade).each(function (index, value) {
+                trRow += '<tr class="slds-hint-parent">';
+                //trRow +='<td data-label="Sr.No"><div class="slds-truncate" title="Sr.No">' + (index + 1) + '</div></td>';
+                trRow += '<td data-label="Grade"><div class="slds-truncate" title="Grade Name">' + value+'</div></td>';
+                trRow += `<td data-label="Package Name">
+                            <div class="slds-truncate" title="Package Name"> 
+                                <div class="slds-grid slds-wrap slds-p-right_large slds-m-top_small">
+                                    <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
+                                        <div class="slds-col slds-size_12-of-12">
+                                            <select class="slds-select" data-packageGrade="`+(value)+`" id="ClassGradePackageSelect`+(index)+`" data-toggle="tooltip" data-placement="top" title="" onclick="groupOssiaPackageSelect(`+(index)+`);return false;">
+                                                <option value="">Select Package</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap slds-m-top_small">
+                                        <div class="slds-col slds-size_12-of-12">
+                                            <p id="ClassGradePackageError`+(index)+`" class="slds-hide" style="color:red;">Please Select Package ...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>`;
+                trRow += '<td data-label="Instrument"><div class="slds-truncate" title="Instrument"><span id="OssiaGroupClassInstrument'+(index)+'" class="slds-col slds-size_1-of-2"></span></div></td>';
+                trRow += '<td data-label="Monthly Fee"><div class="slds-truncate" title="Monthly Fee"><span id="OssiaGroupClassPackageFee'+(index)+'" class="slds-col slds-size_1-of-2"></span></div></td>';
+                trRow += '<td data-label="Deposit Fee"><div class="slds-truncate" title="Deposit Fee"><span id="OssiaGroupClassDepositFee'+(index)+'" class="slds-col slds-size_1-of-2"></span></div></td>';
+                trRow += '</tr>';
+            });
+            $('#newGroupOssiaClassModalBody').append(trRow);
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.OssiaCenterCalendarController.getOssiaGroupClassPackages}',
+                centreId,teacherId,grade,duration,
+                function (result, event) {
+                    console.log('result', result);
+                    var ossiaGroupPackage  = result;
+                    if (ossiaGroupPackage && ossiaGroupPackage != null && ossiaGroupPackage != undefined && ossiaGroupPackage.length > 0) {
+                        $(grade).each(function (gradeindex, gradevalue) {
+                            $(ossiaGroupPackage).each(function (ossiaGroupPackageindex, ossiaGroupPackagevalue) {
+                                if(gradevalue == ossiaGroupPackagevalue.grade){
+                                    var grpPackages = ossiaGroupPackagevalue.grpPackages;
+                                    $('#ClassGradePackageSelect'+gradeindex).empty();
+                                    var packageStr = '<option value="">Select Package</option>';
+                                    if (grpPackages && grpPackages != null && grpPackages != undefined && grpPackages.length > 0) {
+                                        $(grpPackages).each(function(index, grpPackagesvalue){
+                                            packageStr += '<option value="'+grpPackagesvalue.id+':'+grpPackagesvalue.deposit+':'+grpPackagesvalue.price+':'+grpPackagesvalue.instrument+'">'+grpPackagesvalue.name+'</option>';
+                                        });
+                                        $('#ClassGradePackageSelect'+gradeindex).append(packageStr);
+                                    }
+                                }
+                            });
+                        });
+                    }
+                },
+                { escape: true }
+            );
+        }
+        function groupOssiaPackageSelect(indexNumber){
+            $('#ClassGradePackageError'+indexNumber).addClass('slds-hide');
+            $('#OssiaGroupClassInstrument'+indexNumber).html('');
+            $('#OssiaGroupClassPackageFee'+indexNumber).html('');
+            $('#OssiaGroupClassDepositFee'+indexNumber).html('');
+            var packageVal = $('#ClassGradePackageSelect'+indexNumber).val();
+            if(packageVal){
+                $('#OssiaGroupClassDepositFee'+indexNumber).html('$'+packageVal.split(':')[1]);
+                $('#OssiaGroupClassPackageFee'+indexNumber).html('$'+packageVal.split(':')[2]);
+                $('#OssiaGroupClassInstrument'+indexNumber).html(packageVal.split(':')[3]);
+            }
+        }
+
+        function saveNewOssiaClassFunc(){
+            var iserror = false;
+            var gradevalues = {};
+            var grades = $('#ClassGradeSelect').val();
+            var centreId = $('#saveNewClass').attr('data-centre');
+            var teacherId = $('#saveNewClass').attr('data-teacher');
+            var dateTime = moment($('#saveNewClass').attr('data-date'));
+            var classType = $('#ClassTypeSelect').val();
+            var minAge = $('#ClassMinimumAgeInput').val();
+            var maxAge = $('#ClassMaximumAgeInput').val();
+            var capacity = $('#ClassCapacityInput').val();
+            var grade = $('#ClassGradeSelect').val();
+            var duration = $('#ClassDurationSelect').val();
+            
+            $(grades).each(function (indexNumber, value) {
+                var packageId =$('#ClassGradePackageSelect'+indexNumber).val();
+                if(!packageId || packageId == undefined || packageId == ''){
+                    $('#ClassGradePackageError'+indexNumber).removeClass('slds-hide');
+                    iserror =true;
+                }else{
+                    var packageGrade = $('#ClassGradePackageSelect'+indexNumber).attr('data-packageGrade');
+                    gradevalues[packageGrade] = packageId.split(':')[0];
+                }
+            });
+            console.log('gradevalues',gradevalues);
+            if(!iserror){
+                $('#newossiaGroupClassModal').addClass('slds-hide');
+                $('#statusOnPage').show();
+                Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.OssiaCenterCalendarController.saveNewOssiaClass}',
+                        centreId, teacherId, gradevalues, dateTime.format('YYYY-MM-DD'), 
+                        dateTime.format('HH:mm:ss'), duration, capacity, 
+                        classType,minAge,maxAge,grades,
+                        function(result, event){
+                            if(result){
+                                $('#statusOnPage').hide();
+                                refreshCalendar();
+                                $('#toastMsg').html('Class Successfully Created..');
+                                $('.toastclass').removeClass('slds-theme_error');
+                                $('.toastclass').addClass('slds-theme_success');
+                                toastLaunch();
+                            }else{
+                                
+                                $('#statusOnPage').hide();
+                                refreshCalendar();
+                                $('#toastMsg').html('Class has not created Sucessfully...');
+                                $('.toastclass').removeClass('slds-theme_success');
+                                $('.toastclass').addClass('slds-theme_error');
+                                toastLaunch();
+                            }
+                            
+                        }
+                    );
+            }
+        }
+
+        // added by nishi: 3-Sep-2020: for manage Ossia group class makeup mins 
+        function ossiaGroupClassMakeupEnrolment(centerid,teacherId,groupClassId,studentId){
+            $('#OssiaInstrumentSelect').val('');
+            $('#OssiaInstrumentSelect').empty();
+            $('#OssiaInstrumentSelect').attr('disabled', 'true');
+            $('#ossiaGroupClassInstrmentErrorMsg').text('');
+            var instrumentStr = '<option value="">Select Insturment</option>';
+            console.log('centerid'+centerid);
+            console.log('teacherId'+teacherId);
+            console.log('groupClassId'+groupClassId);
+            console.log('studentId'+studentId);
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.OssiaCenterCalendarController.getOssiaGroupClassStudentInstrument}',
+                centerid,teacherId,groupClassId,studentId, 
+                function (result, event) {
+                    console.log('result', result);
+                    if (result) {
+                        $('#ossiaGroupClassInstrment').empty();
+                        bookingData.packageId = result.packageId;
+                        bookingData.classInstrument = result.classInstrument;
+                        $('#GroupMakupPackageLabel').html(result.packageName);
+                        $('#GroupMakupHoursLabel').html('0 min');
+                        if (result.listOfEnrolmentInstrumentWrapper && result.listOfEnrolmentInstrumentWrapper != null && result.listOfEnrolmentInstrumentWrapper != undefined && result.listOfEnrolmentInstrumentWrapper.length > 0) {
+                            $(result.listOfEnrolmentInstrumentWrapper).each(function (index, value) {
+                                instrumentStr += '<option value="' + value.enrolmentId + ';' + value.makeupHours + ';' + value.instrument + '">[' + value.enrolmentName + '] - ' + value.instrument + '</option>';
+                            });
+                            $('#ossiaGroupClassInstrment').append(instrumentStr);
+                            $('#ossiaGroupClassInstrment').removeAttr('disabled');
+                        } else {
+                            $('#ossiaGroupClassInstrment').append(instrumentStr);
+                        }
+                       
+                    }
+                },
+                { escape: true }
+            );
+        }
+        // mange enrolment id and makeup min accroding to user selected enrolment 
+        function  handleOssiaGroupclassMakeupMin(){
+            var enrolInstrument = $('#ossiaGroupClassInstrment').val();
+            $('#GroupMakupHoursLabel').html('0 min');
+            $('#OssiaStudentErrorMsg').text('');
+            $('#ossiaGroupClassInstrmentErrorMsg').text('');
+            $('#GroupMakupHoursErrorMsg').text('');
+            $('#saveNewGroupMakupBooking').attr('disabled', '');
+            if (enrolInstrument && enrolInstrument != '' && enrolInstrument != null && enrolInstrument != undefined && enrolInstrument.length > 0) {
+                bookingData.enrolementId = enrolInstrument.split(';')[0];
+                bookingData.availableHours = enrolInstrument.split(';')[1];
+                $('#GroupMakupHoursLabel').html(enrolInstrument.split(';')[1] + ' min');
+                $('#saveNewGroupMakupBooking').attr('data-enrolInstrument',enrolInstrument.split(';')[2]);
+                $('#saveNewGroupMakupBooking').removeAttr('disabled');
+                if (bookingData.availableHours < bookingData.duration) {
+                    $('#saveNewGroupMakupBooking').attr('disabled', '');
+                    $('#GroupMakupHoursErrorMsg').text('Insufficient Makup minutes');
+                } else {
+                    $('#saveNewGroupMakupBooking').removeAttr('disabled');
+                    $('#GroupMakupHoursErrorMsg').text('');
+                }
+            } else {
+                bookingData.enrolementId ='';
+                bookingData.availableHours=0;
+            }
+        }
+        // if user can create ossia new booking then we get enrolment and if enrolment teacher and current teacher is not matched then we show a error
+        function getOssiaStudentEnrolments(studentId, parentId) {
+            var centerId = $('#saveNewBooking').attr('data-centerId');
+            var teacherId = $('#saveNewBooking').attr('data-teacher');
+            $('#saveNewBooking').css('pointer-events', '');
+        
+            $('#OssiaInstrumentSelect').val('');
+            $('#OssiaInstrumentSelect').empty();
+            $('#OssiaTeacherSelect').val('');
+            $('#OssiaTeacherSelect').empty();
+            $('#OssiaInstrumentSelect').attr('disabled', 'true');
+            $('#OssiaTeacherSelect').attr('disabled', 'true');
+            $('#makeupHoursLabel').html('0 min');
+            $('#OssiaStudentErrorMsg').text('');
+            $('#OssiaInstrumentErrorMsg').text('');
+            var instrumentStr = '<option value="">Select Insturment</option>';
+            var teacherStr = '<option value="">Select Teacher</option>';
+            console.log('parentId', parentId);
+            console.log('studentId', studentId);
+            console.log('centerId', centerId);
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.OssiaCenterCalendarController.getOssiaStudentInstrument}',
+                studentId, parentId, centerId,
+                function (result, event) {
+                    console.log('result', result);
+                    if (result) {
+                        $('#OssiaTeacherSelect').empty();
+                        $('#OssiaInstrumentSelect').empty();
+                        if (result.listOfEnrolmentInstrumentWrapper && result.listOfEnrolmentInstrumentWrapper != null && result.listOfEnrolmentInstrumentWrapper != undefined && result.listOfEnrolmentInstrumentWrapper.length > 0) {
+                            $(result.listOfEnrolmentInstrumentWrapper).each(function (index, value) {
+                                instrumentStr += '<option value="' + value.enrolmentId + ';' + value.teacherId + ';' + value.makeupHours + ';' + value.instrument + '">[' + value.enrolmentName + '] - ' + value.instrument + '</option>';
+                            });
+                            $('#OssiaInstrumentSelect').append(instrumentStr);
+                            $('#OssiaInstrumentSelect').removeAttr('disabled');
+                            //for(var i=0 ;i<result.length ;i++){
+
+                            // $('#saveNewBooking').attr('data-enrolteacherId', result[i].teacherId);
+                            // $('#makeupHoursLabel').html('0 min');
+                            // if(result[0].enrolmentId && result[0].enrolmentId!= null && result[0].enrolmentId != undefined && result[0].enrolmentId.length > 0){
+                            //     $('#saveNewBooking').attr('data-enrolementId', result[i].enrolmentId);
+                            //     $('#makeupHoursLabel').html(result[0].makeupHours+' min');
+                            //     break;
+                            // }
+                            //}$('#ClassPackageSelect').val();
+                        } else {
+                            $('#OssiaInstrumentSelect').append(instrumentStr);
+                        }
+                        if (result.teacherList && result.teacherList != null && result.teacherList != undefined && result.teacherList.length > 0) {
+                            var teacherVal = '';
+                            $(result.teacherList).each(function (index, value) {
+                                console.log('Minor_Instruments_Disciplines__c', value.Minor_Instruments_Disciplines__c);
+                                console.log('Major_Instruments_Disciplines__c', value.Major_Instruments_Disciplines__c)
+                                teacherStr += '<option value="' + value.Id + '-';
+                                var instrument = '';
+                                if (value.Minor_Instruments_Disciplines__c != null && value.Minor_Instruments_Disciplines__c != undefined) {
+                                    instrument += value.Minor_Instruments_Disciplines__c;
+                                }
+                                if (value.Major_Instruments_Disciplines__c != null && value.Major_Instruments_Disciplines__c != undefined) {
+                                    if (instrument != '') {
+                                        instrument += ';';
+                                    }
+                                    instrument += value.Major_Instruments_Disciplines__c;
+                                }
+                                if (value.Id == teacherId) {
+                                    teacherVal = value.Id + '-' + instrument;
+                                }
+                                teacherStr += instrument + '">' + value.Name + '</option>';
+                            });
+                            $('#OssiaTeacherSelect').append(teacherStr);
+                            $('#OssiaTeacherSelect').val(teacherVal);
+                            handleOssiaTeacher();
+                            //$('#OssiaTeacherSelect').removeAttr('disabled');
+                        } else {
+                            $('#OssiaTeacherSelect').append(teacherStr);
+                        }
+                    }
+                },
+                { escape: true }
+            );
+        }
+        function handleOssiaMakeupMin() {
+            var enrolInstrument = $('#OssiaInstrumentSelect').val();
+            $('#makeupHoursLabel').html('0 min');
+            $('#OssiaStudentErrorMsg').text('');
+            $('#OssiaInstrumentErrorMsg').text('');
+            $('#saveNewBooking').css('pointer-events', '');
+            if (enrolInstrument && enrolInstrument != '' && enrolInstrument != null && enrolInstrument != undefined && enrolInstrument.length > 0) {
+                $('#saveNewBooking').attr('data-enrolementId', enrolInstrument.split(';')[0]);
+                $('#saveNewBooking').attr('data-enrolteacherId', enrolInstrument.split(';')[1]);
+                $('#saveNewBooking').attr('data-makeupHours', enrolInstrument.split(';')[2]);
+                $('#makeupHoursLabel').html(enrolInstrument.split(';')[2] + ' min');
+                $('#saveNewBooking').attr('data-instrument', enrolInstrument.split(';')[3]);
+            } else {
+                $('#saveNewBooking').attr('data-enrolementId');
+                $('#saveNewBooking').attr('data-enrolteacherId');
+                $('#saveNewBooking').attr('data-makeupHours');
+                $('#saveNewBooking').attr('data-instrument');
+            }
+        }
+        function handleOssiaTeacher() {
+            var enrolTeacher = $('#OssiaTeacherSelect').val();
+            $('#OssiaStudentErrorMsg').text('');
+            $('#OssiaInstrumentErrorMsg').text('');
+            $('#saveNewBooking').css('pointer-events', '');
+            if (enrolTeacher && enrolTeacher != '' && enrolTeacher != null && enrolTeacher != undefined && enrolTeacher.length > 0) {
+                $('#saveNewBooking').attr('data-newTeacherId', enrolTeacher.split('-')[0]);
+                $('#saveNewBooking').attr('data-teacherinstrument', enrolTeacher.split('-')[1]);
+            } else {
+                $('#saveNewBooking').attr('data-newTeacherId');
+                $('#saveNewBooking').attr('data-teacherinstrument');
+            }
+        }
+        function OssiaStudentCancelWithMakeupBooking(bookingId) {
+            console.log('bookingId', bookingId);
+            $('#OssiaStudentCancelBookingBody').empty();
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.OssiaCenterCalendarController.getOssiaStudentDetail}',
+                bookingId,
+                function (result, event) {
+                    console.log('result', result);
+                    if (result) {
+                        $('.cancellationReasonPopup').addClass('slds-hide');
+                        $('#cancelBookingWithMakeupBtn').attr({ 'data-id': bookingId, 'data-reason': '' });
+                        $('#no-makeup').attr({ 'data-id': bookingId, 'data-reason': '' });
+                        if (result.errorCode = '200') {
+                            var trRow = '';
+                            var total = 0;
+                            var gstTotal = 0;
+                            var listOfOssiaStudentCancelBooking = result.listOfOssiaStudentCancelBooking;
+                            console.log('listOfOssiaStudentCancelBooking', listOfOssiaStudentCancelBooking);
+                            for (var i = 0; i < result.cancelBookingrecordsSize; i++) {
+                                trRow += '<tr class="slds-hint-parent">';
+                                //trRow +='<td data-label="Sr.No"><div class="slds-truncate" title="Sr.No">' + (i + 1) + '</div></td>';
+                                trRow += '<td data-label="Booking Name"><div class="slds-truncate" title="Booking Name"><a id="ossiaBookingName" target="_blank" href="/' + listOfOssiaStudentCancelBooking[i].bookingName.split(';')[0] + '">' + listOfOssiaStudentCancelBooking[i].bookingName.split(';')[1] + ' </a></div></td>';
+                                //trRow += '<td data-label="Center Name"><div class="slds-truncate" title="Center Name"><a id="ossiaCenterName" target="_blank" href="/' + listOfOssiaStudentCancelBooking[i].centerName.split(';')[0] + '">' + listOfOssiaStudentCancelBooking[i].centerName.split(';')[1] + ' </a></div></td>';
+                                // trRow += '<td data-label="Teacher Name"><div class="slds-truncate" title="Teacher Name"><a id="ossiateacherName" target="_blank" href="/' + listOfOssiaStudentCancelBooking[i].teacherName.split(';')[0] + '">' + listOfOssiaStudentCancelBooking[i].teacherName.split(';')[1] + ' </a></div></td>';
+                                trRow += '<td data-label="Booking Date/Time"><div class="slds-truncate" title="Booking Date/Time">' + listOfOssiaStudentCancelBooking[i].bookingDateTime + '</div></td>';
+                                trRow += '<td data-label="Duration"><div class="slds-truncate" title="Duration">' + (listOfOssiaStudentCancelBooking[i].duration != null && listOfOssiaStudentCancelBooking[i].duration != undefined ? listOfOssiaStudentCancelBooking[i].duration : 0) + ' Min </div></td>';
+                                trRow += '<td data-label="Status"><div class="slds-truncate" title="Status">' + listOfOssiaStudentCancelBooking[i].status + '</div></td>';
+                                trRow += '<td data-label="Type"><div class="slds-truncate" title="type">' + listOfOssiaStudentCancelBooking[i].bookingtype + '</div></td>';
+
+                                trRow += '<td data-label="Cancellation Reason"><div class="slds-truncate" title="Cancellation Reason">' + listOfOssiaStudentCancelBooking[i].cancellationReason + ' </div></td>';
+                                trRow += '<td data-label="Available Make up minutes"><div class="slds-truncate" title="Available Make up minutes">' + (listOfOssiaStudentCancelBooking[i].availableMakeupMinutes != null && listOfOssiaStudentCancelBooking[i].availableMakeupMinutes != undefined ? listOfOssiaStudentCancelBooking[i].availableMakeupMinutes : 0) + ' Min </div></td>';
+
+                                //trRow += '<td data-label="Cancel Date/Time"><div class="slds-truncate" title="Cancel Date/Time">' + listOfOssiaStudentCancelBooking[i].cancelDateTime + '</div></td>';
+                                trRow += '</tr>';
+                            }
+                            if (result.parentName.length > 0 && result.parentName.split(';').length > 0) {
+                                $('#OssiaParentName').html(result.parentName.split(';')[1]);
+                                $('#OssiaParentName').attr('href', '/' + result.parentName.split(';')[0]);
+                            }
+                            if (result.studentName.length > 0 && result.studentName.split(';').length > 0) {
+                                $('#OssiastudentName').html(result.studentName.split(';')[1]);
+                                $('#OssiastudentName').attr('href', '/' + result.studentName.split(';')[0]);
+                            }
+                            $('#OssiaStudentCancelBookingBody').append(trRow);
+                            $('#OssiaStudentCancelList').removeClass('slds-hide');
+
+                            $('#confirmModalYes').attr('data-id', bookingId);
+                            $('#confirmModalNo').attr('data-id', bookingId);
+                            $('#confirmModalYes').attr('cancelReason', $('#cancelOssiaBookingWithoutMakeup').attr('data-reason'));
+                            $('#confirmModalNo').attr('cancelReason', $('#cancelOssiaBookingWithoutMakeup').attr('data-reason'));
+                        }
+                    }
+                },
+                { escape: true }
+            );
+        }
+
+        function OssiaStudentCancelBooking(bookingId) {
+            console.log('bookingId', bookingId);
+            if ($('#cancelOssiaBookingWithoutMakeup').attr('data-reason')) {
+                OssiaStudentCancelWithMakeupBooking(bookingId);
+            } else {
+                $('#errorMsgReason').html('Please select the reason');
+            }
+
+        }
+        function cancelOssiaShowBooking() {
+            $('#OssiaStudentCancelList').addClass('slds-hide');
+        }
+
+        function cancelOssiaStudentBooking(bookingId, cancelReason, caseId, isfuture, isNoMakeup, redirectCaseId, makeupReason, makeupRemark) {
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.OssiaCenterCalendarController.cancelOssiaMakeupBooking}',
+                bookingId, cancelReason, redirectCaseId, caseId, isfuture, isNoMakeup, makeupReason, makeupRemark,
+                function (result, event) {
+                    $('#OssiaStudentCancelList').addClass('slds-hide');
+                    if (result.caseId) {
+                        redirectToCaseRecord(result.caseId);
+                        refreshCalendar();
+                    } else {
+                        refreshCalendar();
+                    }
+                    // //@jatin:1Jan-2020: for refresh calendar then show class booking popup if exist group-class popop
+                    var bookingid= $('#newGroupClassCMP').attr('data-groupclassid');
+                    var newdate =$('#cancelBooking').attr('data-date');
+                    var bookingStatus = $('#cancelBooking').attr('data-bookingtype');
+                    if(bookingStatus =='Group Lesson'){
+                        $('#newGroupClassCMP').addClass('slds-hide');
+                        editClassAppointments(bookingid,newdate);
+                        $('#CustomersTabitem').trigger('click');
+                    }
+
+                },
+                { escape: true }
+            );
+        }
+        function cancelOssiaBookingConfirmation(isNoMakeup) {
+            //  If we want to open table and manage makeup mins
+            //if(isNoMakeup == 'true'){
+            //     $('#OssiaStudentCancelList').addClass('slds-hide');
+            //     $('.confirmModal').removeClass('slds-hide');
+            //     $('.confirmModalYes').removeClass('slds-hide');
+            //     $('#confirmBody').html('Do you want to send an email?');
+            //     $('#confirmHeader').html('Email Confirmation');
+            //     $('#confirmModalYes').attr('data-origin','cancelOssia');
+            //     $('#confirmModalNo').attr('data-origin','cancelOssia');
+            //     $('#confirmModalYes').attr('data-isNoMakeup',isNoMakeup);
+            //     $('#confirmModalNo').attr('data-isNoMakeup',isNoMakeup);
+
+            // }else{
+            //     cancelOssiaStudentBookingWithMakupReason($('#cancelOssiaBookingWithoutMakeup').attr('data-id'));
+            // }
+            $('#OssiaStudentCancelList').addClass('slds-hide');
+            $('.confirmModal').removeClass('slds-hide');
+            $('.confirmModalYes').removeClass('slds-hide');
+            $('#confirmBody').html('Do you want to send an email?');
+            $('#confirmHeader').html('Email Confirmation');
+            $('#confirmModalYes').attr('data-origin', 'cancelOssia');
+            $('#confirmModalNo').attr('data-origin', 'cancelOssia');
+            $('#confirmModalYes').attr('data-isNoMakeup', isNoMakeup);
+            $('#confirmModalNo').attr('data-isNoMakeup', isNoMakeup);
+        }
+
+        //10-Aug-2020:nishi:start manage ossia Upgrade ,downGrade Subscription model 
+        function changeOssiaEnrolment(changeEnrolmentType) {
+            console.log('changeEnrolmentType', changeEnrolmentType);
+            $('#showEffectiveDateEnrolOssiaUpdate').addClass('slds-hide');
+            if (changeEnrolmentType === 'UpgradeEnrolment') {
+                $('#enrolmentOssiaUpdatePopupHeader').html('Upgrade Subscription');
+                $('#selectTeacherEnrolOssiaUpdate').attr('data-enrolmentType', changeEnrolmentType);
+                updateOssiaEnrolment();
+            } else if (changeEnrolmentType === 'DowngradeEnrolment') {
+                $('#enrolmentOssiaUpdatePopupHeader').html('Downgrade Subscription');
+                $('#selectTeacherEnrolOssiaUpdate').attr('data-enrolmentType', changeEnrolmentType);
+                updateOssiaEnrolment();
+            }// added by  nishi: 27-Aug-2020: for manage Change Centre 
+            else if (changeEnrolmentType === 'UpdateEnrolmentCenter') {
+                $('#enrolmentOssiaUpdatePopupHeader').html('Change Centre');
+                $('#CenterUpdateEnrolmentonClick').attr('data-enrolmentType', changeEnrolmentType);
+                getupdateCenterEnrolment();
+            }// added by  nishi: 27-Aug-2020: for manage Change Centre 
+            else {
+                $('#enrolmentOssiaUpdatePopupHeader').html('Update Enrolment');
+            }
+            console.log('changeEnrolmentType', changeEnrolmentType);
+
+        }
+        //10-Aug-2020:nishi:end manage ossia Upgrade ,downGrade Subscription model
+
+        function updateOssiaEnrolment() {
+            console.log('hellos updateOssiaEnrolment');
+            $('#OssiateacherSelectErrorMsg').html('');
+            $('#OssiapackageSelectErrorMsg').html('');
+            $('#OssiaeffectiveDateErrorMsg').html('');
+            $('#OssiatimeSlotErrorMsg').html('');
+            $('#currentTeacherEnrolOssiaUpdate').html('');
+            $('#currentDateTimeEnrolOssiaUpdate').html('');
+            $('#currentPackageEnrolOssiaUpdate').html('');
+            $('#selectTeacherEnrolOssiaUpdate').empty();
+            $('#selectPackageEnrolOssiaUpdate').empty();
+            $('#selectPackageEnrolOssiaUpdate').attr('disabled', 'true');
+            $('#advanceOptionPopup').addClass('slds-hide');
+            $('.currentOssiaPackageUpdate').addClass('slds-hide');
+            $('#newPackageDurationOssiaUpdate').html('');
+            // $('#newPackageFacilityFeeOssiaUpdate').html('');
+            $('#newPackageGradeOssiaUpdate').html('');
+            $('#newPackageMonthlyFeeOssiaUpdate').html('');
+            $('#currentPackageDurationOssiaUpdate').html('');
+            // $('#currentPackageFacilityFeeOssiaUpdate').html('');
+            $('#currentPackageGradeOssiaUpdate').html('');
+            $('#currentPackageMonthlyFeeOssiaUpdate').html('');
+            $('#selectEffectiveDateEnrolOssiaUpdate').empty();
+            var enrolmentId = $('#updateEnrolmentBtn').attr('data-enrol');
+            var changeEnrolmentType = $('#selectTeacherEnrolOssiaUpdate').attr('data-enrolmentType');
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.OssiaCenterCalendarController.getOssiaEnrolmentUpdateDetails}',
+                enrolmentId,
+                function (result, event) {
+                    $('#currentTeacherEnrolOssiaUpdate').html(result.currentTeacher);
+                    $('#currentTeacherEnrolOssiaUpdate').attr('data-currentTeacherId', result.currentTeacherId);
+                    $('#currentDateTimeEnrolOssiaUpdate').html(result.currentDayTimeSlot);
+                    $('#currentPackageEnrolOssiaUpdate').html(result.currentPackage);
+                    $('#currentPackageEnrolOssiaUpdate').attr('data-currentPackageId', result.currentPackageId);
+                    $('#currentPackageDurationOssiaUpdate').html(result.currentPackageduration + ' mins');
+                    //$('#currentPackageFacilityFeeOssiaUpdate').html('$'+result.currentPackagefacilityFee);
+                    $('#currentPackageGradeOssiaUpdate').html(result.currentPackagegrade.replace(/;/g, ", "));
+                    $('#currentPackageMonthlyFeeOssiaUpdate').html('$' + result.currentPackageMonthlyFee);//+result.currentPackagefacilityFee);
+                    $('#selectTeacherEnrolOssiaUpdate').attr({ 'data-duration': result.duration, 'data-center': result.center });
+                    if ('teachers' in result) {
+                        var teachersEnrol = '<option>Select Teacher</option>';
+                        $(result.teachers).each(function (index, value) {
+                            teachersEnrol += '<option value="' + value.Id + '">' + value.Name + '</option>';
+                        });
+                        $('#selectTeacherEnrolOssiaUpdate').append(teachersEnrol);
+                    }
+                    $('#enrolmentOssiaUpdatePopup').removeClass('slds-hide');
+                    if (changeEnrolmentType == 'UpgradeEnrolment') {
+                        var weekDatesList = getWeekDayDates(result.currentWeekDay, 1, 4);
+                        if (weekDatesList.length > 0) {
+                            var effectiveDateStr = '<option>Select Effective Date</option>';
+                            $(weekDatesList).each(function (index, value) {
+                                effectiveDateStr += '<option value="' + value.value + '">' + value.label + '</option>';
+                            });
+                            $('#selectEffectiveDateEnrolOssiaUpdate').append(effectiveDateStr);
+                            $('#selectNewEffectiveDateEnrolOssiaUpdate').val('');
+                            $('#selectNewEffectiveDateEnrolOssiaUpdate').empty();
+                            $('#selectNewEffectiveDateEnrolOssiaUpdate').attr('disabled', 'true');
+
+
+                            $('#availableTimeSlotsOssiaUpdateEnrolment').val('');
+                            $('#availableTimeSlotsOssiaUpdateEnrolment').empty();
+                            $('#availableTimeSlotsOssiaUpdateEnrolment').attr('disabled', 'true');
+                        }
+                    } else if (changeEnrolmentType == 'DowngradeEnrolment') {
+                        var dates = [];
+                        var week = result.currentWeekDay;
+                        var add30 = moment();
+                        if (userDetail.Designation__c != 'Regional Manager') {
+                            add30.add(30, 'days');
+                            //add30.add(1, 'days');  
+                        } else {
+                            add30.add(1, 'days');
+                        }
+
+                        dates = getWeekDayDates(week, 3, 0);
+                        var selectDate = '<option value="">Select an Option</option>';
+                        if (dates.length > 0) {
+                            $(dates).each(function (index, value) {
+                                if (moment(value.value) > add30) {
+                                    selectDate += '<option value="' + value.value + '">' + value.label + '</option>';
+                                }
+                            });
+                            $('#selectEffectiveDateEnrolOssiaUpdate').append(selectDate);
+                            $('#selectNewEffectiveDateEnrolOssiaUpdate').val('');
+                            $('#selectNewEffectiveDateEnrolOssiaUpdate').empty();
+                            $('#selectNewEffectiveDateEnrolOssiaUpdate').attr('disabled', 'true');
+
+
+                            $('#availableTimeSlotsOssiaUpdateEnrolment').val('');
+                            $('#availableTimeSlotsOssiaUpdateEnrolment').empty();
+                            $('#availableTimeSlotsOssiaUpdateEnrolment').attr('disabled', 'true');
+                        }
+                    }
+                }
+            );
+        }
+        function getupdateCenterEnrolment() {
+            $('#CenterteacherSelectErrorMsg').html('');
+            $('#CenterpackageSelectErrorMsg').html('');
+            $('#CentereffectiveDateErrorMsg').html('');
+            $('#CentertimeSlotErrorMsg').html('');
+            $('#currentTeacherEnrolCenterUpdate').html('');
+            $('#currentDateTimeEnrolCenterUpdate').html('');
+            $('#currentPackageEnrolCenterUpdate').html('');
+            $('#selectTeacherEnrolCenterUpdate').empty();
+            $('#selectCentreEnrolCenterUpdate').empty();
+            $('#selectPackageEnrolCenterUpdate').empty();
+            $('#selectPackageEnrolCenterUpdate').attr('disabled', 'true');
+            $('#selectTeacherEnrolCenterUpdate').attr('disabled', 'true');
+            $('#advanceOptionPopup').addClass('slds-hide');
+            $('.currentCenterPackageUpdate').addClass('slds-hide');
+            $('#newPackageDurationCenterUpdate').html('');
+            //$('#newPackageFacilityFeeCenterUpdate').html('');
+            $('#newPackageGradeCenterUpdate').html('');
+            $('#newPackageMonthlyFeeCenterUpdate').html('');
+            $('#currentPackageDurationCenterUpdate').html('');
+            //$('#currentPackageFacilityFeeCenterUpdate').html('');
+            $('#currentPackageGradeCenterUpdate').html('');
+            $('#currentPackageMonthlyFeeCenterUpdate').html('');
+            $('#selectEffectiveDateEnrolCenterUpdate').empty();
+            $('#currentPackageUpdate').addClass('slds-hide');
+            $('#currentOssiaPackageUpdate').addClass('slds-hide');
+            $('.newPackageUpdate').addClass('slds-hide');
+            $('.newOssiaPackageUpdate ').addClass('slds-hide');
+            var enrolmentId = $('#updateEnrolmentBtn').attr('data-enrol');
+            var changeEnrolmentType = $('#selectTeacherEnrolCenterUpdate').attr('data-enrolmentType');
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.OssiaCenterCalendarController.getOssiaEnrolmentUpdateDetails}',
+                enrolmentId,
+                function (result, event) {
+                    $('#currentCenterEnrolCenterUpdate').html(result.centerName);
+                    $('#currentCenterEnrolCenterUpdate').attr('data-currentCenterId', result.center);
+                    $('#CenterUpdateEnrolmentonClick').attr({                        
+                        'data-currentCenterId': result.center, 'data-currentTeacherId': result.currentTeacherId, 'data-currentPackageId': result.currentPackageId,
+                        'data-currentDayTimeSlot': result.currentDayTimeSlot, 'data-duration': result.duration                    
+                    });
+                    $('#currentTeacherEnrolCenterUpdate').html(result.currentTeacher);
+                    $('#currentTeacherEnrolCenterUpdate').attr('data-currentTeacherId', result.currentTeacherId);
+                    $('#currentDateTimeEnrolCenterUpdate').html(result.currentDayTimeSlot);
+                    $('#currentPackageEnrolCenterUpdate').html(result.currentPackage);
+                    $('#currentPackageEnrolCenterUpdate').attr('data-currentPackageId', result.currentPackageId);
+                    $('#currentPackageDurationCenterUpdate').html(result.currentPackageduration + ' mins');
+                    //$('#currentPackageFacilityFeeCenterUpdate').html('$'+result.currentPackagefacilityFee);
+                    $('#currentPackageGradeCenterUpdate').html(result.currentPackagegrade.replace(/;/g, ", "));
+                    $('#currentPackageMonthlyFeeCenterUpdate').html('$' + result.currentPackageMonthlyFee);//+result.currentPackagefacilityFee);
+
+                    if ('centers' in result) {
+                        var centerEnrol = '<option>Select Centre</option>';
+                        $(result.centers).each(function (index, value) {
+                            centerEnrol += '<option value="' + value.Id + '">' + value.Name + '</option>';
+                        });
+                        $('#selectCentreEnrolCenterUpdate').append(centerEnrol);
+                    }
+                    $('#enrolmentCenterUpdatePopup').removeClass('slds-hide');
+                    $('.currentPackageUpdate').removeClass('slds-hide');
+                    var isOssia = $('#confirmModalYes').attr('data-isOssia');
+                    if (isOssia === 'true') {
+                        $('.currentOssiaPackageUpdate').removeClass('slds-hide');
+                    }
+                    var week = result.currentWeekDay;
+                    var weekDatesList = [];
+                    var effectiveDate = moment();
+                    for (var startday = 1; startday <= 7; startday++) {
+                        var day = new Date(effectiveDate.year(), parseInt(effectiveDate.month()) + 1, startday);
+                        var startedDate = new moment(day);
+                        if (startedDate.format('ddd') == week) {
+                            newEffectiveDayObj = {};
+                            newEffectiveDayObj.value = startedDate.format('MM/DD/YYYY');
+                            newEffectiveDayObj.label = startedDate.format('ddd, MMM DD YYYY');
+                            weekDatesList.push(newEffectiveDayObj);
+                        }
+                    }
+                    console.log('weekDatesList', weekDatesList);
+                    console.log('result.currentWeekDay' + result.currentWeekDay);
+                    if (weekDatesList.length > 0) {
+                        var effectiveDateStr = '<option>Select Effective Date</option>';
+                        $(weekDatesList).each(function (index, value) {
+                            effectiveDateStr += '<option value="' + value.value + '">' + value.label + '</option>';
+                        });
+                        $('#selectEffectiveDateEnrolCenterUpdate').append(effectiveDateStr);
+                        $('#selectEffectiveDateEnrolCenterUpdate').val(weekDatesList[0].value);
+                        $('#selectEffectiveDateEnrolCenterUpdate').attr('disabled', 'true');
+                        $('#availableTimeSlotsCenterUpdateEnrolment').val('');
+                        $('#availableTimeSlotsCenterUpdateEnrolment').empty();
+                        $('#availableTimeSlotsCenterUpdateEnrolment').attr('disabled', 'true');
+                    }
+
+                }
+            );
+        }
+
+        function getOssiaPackageByTeacher() {
+            $('#selectPackageEnrolOssiaUpdate').empty();
+            $('#selectPackageEnrolOssiaUpdate').attr('disabled', 'true');
+            $('.currentOssiaPackageUpdate').addClass('slds-hide');
+            $('#newPackageDurationOssiaUpdate').html('');
+            // $('#newPackageFacilityFeeOssiaUpdate').html('');
+            $('#newPackageGradeOssiaUpdate').html('');
+            $('#newPackageMonthlyFeeOssiaUpdate').html('');
+            var teacherId = $('#selectTeacherEnrolOssiaUpdate').val();
+            var duration = $('#selectTeacherEnrolOssiaUpdate').attr('data-duration');
+            var centerId = $('#selectTeacherEnrolOssiaUpdate').attr('data-center');
+            var enrolmentType = $('#selectTeacherEnrolOssiaUpdate').attr('data-enrolmentType');
+            var booingid = $('#OssiaUpdateEnrolmentonClick').attr('data-id');
+            console.log('teacherId',teacherId);
+            console.log('centerId',centerId);
+            console.log('duration',duration);
+            console.log('enrolmentType',enrolmentType);
+            console.log('booingid',booingid);
+            if (teacherId != 'Select Teacher' && centerId && duration && booingid) {
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.OssiaCenterCalendarController.getPackageAccordingToOssiaTeacher}',
+                    centerId, teacherId, duration, booingid, enrolmentType,
+                    function (result, event) {
+                        console.log('result',result);
+                        var packageEnrol = '<option value="Select Package">Select an Option</option>';
+                        $(result).each(function (index, value) {
+                            console.log('value', value);
+                            packageEnrol += '<option value="' + value.Id + '-' + value.duration + '- ' /*+ value.facilityFee*/ + '-' + value.grade + '-' + value.packageFee + '">' + value.Name + '</option>';
+                        });
+                        $('#selectPackageEnrolOssiaUpdate').append(packageEnrol);
+                        $('#selectPackageEnrolOssiaUpdate').removeAttr('disabled');
+
+                    }
+                );
+            }
+        }
+        function getOssiaChangeEnrolmentPackageByTeacher() {
+            $('#selectPackageEnrolUpdate').empty();
+            $('#selectPackageEnrolUpdate').attr('disabled', 'true');
+            $('#newPackageDurationOssiaEnrolUpdate').html('');
+            $('#newPackageMonthlyFeeOssiaEnrolUpdate').html('');
+            $('#newPackageGradeOssiaEnrolUpdate').html('');
+            // $('#newPackageFacilityFeeOssiaEnrolUpdate').html('');
+            $('.newossiaEnrolUpdate').addClass('slds-hide');
+            var teacherId = $('#selectTeacherEnrolUpdate').val();
+            var duration = $('#selectTeacherEnrolUpdate').attr('data-duration');
+            var centerId = $('#selectTeacherEnrolUpdate').attr('data-center');
+            var enrolmentType = 'UpdateEnrolment';
+            var booingid = $('#updateEnrolmentonClick').attr('data-id');
+            if (teacherId != 'Select Teacher' && centerId && duration && booingid) {
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.OssiaCenterCalendarController.getPackageAccordingToOssiaTeacher}',
+                    centerId, teacherId, duration, booingid, enrolmentType,
+                    function (result, event) {
+                        var packageEnrol = '<option value="Select Package">Select an Option</option>';
+                        $(result).each(function (index, value) {
+                            console.log('value', value);
+                            packageEnrol += '<option value="' + value.Id + '-' + value.duration + '-' + /*value.facilityFee*/' ' + '-' + value.grade + '-' + value.packageFee + '">' + value.Name + '</option>';
+                        });
+                        $('#selectPackageEnrolUpdate').append(packageEnrol);
+                        $('#selectPackageEnrolUpdate').removeAttr('disabled');
+                        $('#selectTeacherEnrolOssiaUpdate').attr('data-enrolmentType', 'UpdateEnrolment');
+                    }
+                );
+            }
+        }
+        function availOssiaTimeSlots() {
+            var changeEnrolmentType = $('#selectTeacherEnrolOssiaUpdate').attr('data-enrolmentType');
+            availTimeSlots(changeEnrolmentType);
+        }
+
+        function OssiaUpdateEnrolmentClick() {
+            var changeEnrolmentType = $('#selectTeacherEnrolOssiaUpdate').attr('data-enrolmentType');
+            var grade = '';
+            if (changeEnrolmentType === 'UpgradeEnrolment') {
+                grade = 'upgrade';
+            } else if (changeEnrolmentType === 'DowngradeEnrolment') {
+                grade = 'downgrade';
+            }
+            $('#upgradeBookingclass').addClass('slds-hide');
+            var bookingId, oldPackageId, newPackageId, effectiveDate, availableTimeSlots, enrolmentId, oldTeacher, newTeacher;
+            bookingId = $('#OssiaUpdateEnrolmentonClick').attr('data-id');
+            oldPackageId = $('#currentPackageEnrolOssiaUpdate').attr('data-currentPackageId');
+            newPackageId = $('#selectPackageEnrolOssiaUpdate').val();
+            effectiveDate = $('#selectEffectiveDateEnrolOssiaUpdate').val();
+            availableTimeSlots = $('#availableTimeSlotsOssiaUpdateEnrolment').val();
+            enrolmentId = $('#submitUpgradeRequest').attr('data-enrolment');
+            oldTeacher = $('#currentTeacherEnrolOssiaUpdate').attr('data-currentTeacherId');
+            newTeacher = $('#selectTeacherEnrolOssiaUpdate').val();
+            $('.invoiceTopupItem').addClass('slds-hide');
+            $('#nextInvoiceItem').addClass('slds-hide');
+
+            $('#upgradeDowngradeSummaryHeader').html('');
+            $('#confirmUpgradeEnrolment').addClass('slds-hide');
+            $('#confirmDowngradeEnrolment').addClass('slds-hide');
+            $('#confirmUpgradeOssiaEnrolment').addClass('slds-hide');
+            $('#confirmDowngradeOssiaEnrolment').addClass('slds-hide');
+            $('#confirmOssiaUpgradeEnrolmentCancel').addClass('slds-hide');
+            $('#confirmUpgradeEnrolmentCancel').removeClass('slds-hide');
+            var error = false;
+
+            var today = moment();
+            if (bookingId && oldPackageId && enrolmentId && oldTeacher) {
+
+                if (newTeacher == "Select Teacher") {
+                    $('#OssiateacherSelectErrorMsg').html('Please select the Teacher...');
+                    error = true;
+                } else {
+                    $('#OssiateacherSelectErrorMsg').html('');
+                }
+                if (newPackageId == "Select Package") {
+                    $('#OssiapackageSelectErrorMsg').html('Please select the package...');
+                    error = true;
+                } else {
+                    $('#OssiapackageSelectErrorMsg').html('');
+                }
+
+                if (effectiveDate == 'Select Effective Date') {
+                    $('#OssiaEffectiveDateErrorMsg').html('Select the effective date....');
+                    error = true;
+                } else {
+                    var effectiveDateMoment = moment();
+                    effectiveDateMoment.year(effectiveDate.split('/')[2]).month(effectiveDate.split('/')[0] - 1).date(effectiveDate.split('/')[1]);
+                    if (today.diff(effectiveDateMoment) > 0) {
+                        $('#OssiaEffectiveDateErrorMsg').html('Select Future effective date....');
+                        error = true;
+                    } else {
+                        $('#OssiaEffectiveDateErrorMsg').html('');
+                    }
+                }
+
+                if (availableTimeSlots == 'Select Time Slot') {
+                    $('#OssiatimeSlotErrorMsg').html('Select the Time Slot....');
+                    error = true;
+                } else {
+                    $('#OssiatimeSlotErrorMsg').html('');
+                }
+
+                if (!error) {
+                    getUpgradeDowngradeOssiaPackageSummary(effectiveDate, oldPackageId, newPackageId.split('-')[0], availableTimeSlots, enrolmentId, grade, oldTeacher, newTeacher);
+                }
+            }
+        }
+        function getUpgradeDowngradeOssiaPackageSummary(effectiveDate, oldPackageId, newPackageId, availableTimeSlots, enrolmentId, grade, oldTeacher, newTeacher) {
+            $('#upgradeBookingclass').addClass('slds-hide');
+            $('#enrolmentOssiaUpdatePopup').addClass('slds-hide');
+
+            var dtObj = moment();
+            if (effectiveDate) {
+                dtObj.year(effectiveDate.split('/')[2]).month(effectiveDate.split('/')[0] - 1).date(effectiveDate.split('/')[1]);
+            }
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.OssiaCenterCalendarController.getUpgradeDowngradePackageSummary}',
+                oldPackageId, newPackageId, dtObj.format('YYYY-MM-DD'), availableTimeSlots, enrolmentId,
+                grade, oldTeacher, newTeacher,
+                function (result, event) {
+                    console.log(result);
+                    $('#ossiaBookingTeacher').removeClass('slds-hide');
+                    $('#confirmOssiaUpgradeEnrolmentCancel').removeClass('slds-hide');
+                    $('#confirmUpgradeEnrolmentCancel').addClass('slds-hide');
+                    if (grade == 'upgrade') {
+                        $('#upgradeDowngradeSummaryHeader').html('Upgrade Summary');
+                        $('#confirmUpgradeOssiaEnrolment').removeClass('slds-hide');
+                        $('.invoiceTopupItem').removeClass('slds-hide');
+                        if ('invoiceTopup' in result) {
+                            if (result.invoiceTopup >= 0) {
+                                $('#invoiceTopUpSummary').html('$' + result.invoiceTopup.toFixed(2));
+                            }
+                        }
+                    } else if (grade == 'downgrade') {
+                        $('#upgradeDowngradeSummaryHeader').html('Downgrade Summary');
+                        $('#confirmDowngradeOssiaEnrolment').removeClass('slds-hide');
+                        $('#nextInvoiceItem').removeClass('slds-hide');
+                        $('.invoiceTopupItem').removeClass('slds-hide');
+                        $('#invoiceTopupItem').addClass('slds-hide');
+                        if ('invoiceTopup' in result) {
+                            $('#confirmModalYes').attr('data-amount', result.invoiceTopup.toFixed(2));
+                            //$('#nextInvoiceItemSummary').html('$'+result.invoiceTopup.toFixed(2));
+                            if (result.invoiceTopup >= 0) {
+                                $('#nextInvoiceItemSummary').html('$' + result.invoiceTopup.toFixed(2));
+                            } else {
+                                $('#nextInvoiceItemSummary').html('-$' + Math.abs(result.invoiceTopup).toFixed(2));
+                            }
+                        }
+                        if ('positiveInvoiceAmount' in result) {
+                            $('#confirmModalYes').attr('data-positiveInvoiceAmount', result.positiveInvoiceAmount.toFixed(2));
+                        }
+                        if ('negativeInvoiceAmount' in result) {
+                            $('#confirmModalYes').attr('data-negativeInvoiceAmount', result.negativeInvoiceAmount.toFixed(2));
+                        }
+                        //start: added by nishi: 26-Aug-2020: for is next month is differce and differce is greater then 0 then we manage Invoice
+                        if ('positiveNextMonthInvoiceAmount' in result) {
+                            $('#confirmModalYes').attr('data-positiveNextMonthInvoiceAmount', result.positiveNextMonthInvoiceAmount.toFixed(2));
+                        }
+                        if ('negativeNextMonthInvoiceAmount' in result) {
+                            $('#confirmModalYes').attr('data-negativeNextMonthInvoiceAmount', result.negativeNextMonthInvoiceAmount.toFixed(2));
+                        }
+                        //end: added by nishi: 26-Aug-2020: for is next month is differce and differce is greater then 0 then we manage Invoice
+                        // if('positiveFacilityInvoiceAmount' in result){
+                        //     $('#confirmModalYes').attr('data-positiveFacilityInvoiceAmount', result.positiveFacilityInvoiceAmount.toFixed(2));
+                        // }
+                        // if('negativeFacilityInvoiceAmount' in result){
+                        //     $('#confirmModalYes').attr('data-negativeFacilityInvoiceAmount', result.negativeFacilityInvoiceAmount.toFixed(2));
+                        // }
+                    }
+
+                    //$('#gradeSubscriptionPopup').addClass('slds-hide');
+                    if ('newPackageName' in result) {
+                        $('#newPackageNameSummary').html(result.newPackageName);
+                        $('#confirmModalYes').attr('data-newPackageName', result.newPackageName);
+                    }
+                    if ('oldPackageName' in result) {
+                        $('#oldPackageNameSummary').html(result.oldPackageName);
+                        $('#confirmModalYes').attr('data-previousPackage', result.oldPackageName);
+                    }
+                    if ('newTeacherName' in result) {
+                        $('#newOssiaTeacherNameSummary').html(result.newTeacherName);
+                        $('#confirmModalYes').attr('data-newTeacherName', result.newTeacherId);
+                    }
+                    if ('oldTeacherName' in result) {
+                        $('#oldOssiaTeacherNameSummary').html(result.oldTeacherName);
+                        $('#confirmModalYes').attr('data-oldTeacherId', result.oldTeacherId);
+                    }
+                    if ('currentPackageDeposit' in result) {
+                        if (result.currentPackageDeposit || result.currentPackageDeposit == 0) {
+                            $('#currentDepositFileSummary').html('$' + result.currentPackageDeposit.toFixed(2));
+                            $('#confirmModalYes').attr('data-currentDepositonFile', result.currentPackageDeposit);
+                        }
+
+                    }
+                    if ('newPackageDeposit' in result) {
+                        if (result.newPackageDeposit) {
+                            $('#newPackageDepositSummmary').html('$' + result.newPackageDeposit.toFixed(2));
+                            $('#confirmModalYes').attr('data-newPackageDeposit', result.newPackageDeposit);
+                        }
+                    }
+                    if ('currentDayAndTime' in result) {
+                        $('#previousLessonDTSummary').html(result.currentDayAndTime);
+                        $('#confirmModalYes').attr('data-previousLessonDayTime', result.currentDayAndTime);
+                    }
+                    if ('invoiceForCurrentMonth' in result) {
+                        if (result.invoiceForCurrentMonth) {
+                            $('#invoiceForCurrentMonthSummary').html('$' + result.invoiceForCurrentMonth.toFixed(2));
+                            $('#confirmModalYes').attr('data-invoiceForCurrentMonth', result.invoiceForCurrentMonth);
+                        }
+                    }
+                    if ('newDayAndTime' in result) {
+                        $('#newLessonDTSummary').html(result.newDayAndTime);
+                        $('#confirmModalYes').attr('data-newLessonDayTime', result.newDayAndTime);
+                    }
+
+                    if ('effectiveDate' in result) {
+                        $('#invoiceEffectiveDate').html(result.effectiveDate);
+                    }
+
+                    if ('invoiceDepositLessonTopup' in result) {
+                        var invoiceDepositLessonTopup = 0;
+                        if (result.invoiceDepositLessonTopup >= 0) {
+                            invoiceDepositLessonTopup = parseFloat(result.invoiceDepositLessonTopup);
+                            //start: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                            // if('invoiceFacilityLessonTopup' in result){
+                            //     invoiceDepositLessonTopup+=  parseFloat(result.invoiceFacilityLessonTopup.toFixed(2));
+                            // }
+                            //end: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                            //start: added by nishi: 26-Aug-2020: for is next month is differce and differce is greater then 0 then we manage Invoice
+                            if ('invoiceDepositLessonNextMonthTopup' in result) {
+                                invoiceDepositLessonTopup += parseFloat(result.invoiceDepositLessonNextMonthTopup);
+                            }
+                            //end: added by nishi: 26-Aug-2020: for is next month is differce and differce is greater then 0 then we manage Invoice
+                            $('#invoiceLessonDepositTopupSummary').html('$' + invoiceDepositLessonTopup);
+                        } else {
+                            invoiceDepositLessonTopup = parseFloat(Math.abs(result.invoiceDepositLessonTopup.toFixed(2)));
+                            //start: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                            // if('invoiceFacilityLessonTopup' in result){
+                            //     invoiceDepositLessonTopup+=  parseFloat(Math.abs(result.invoiceFacilityLessonTopup).toFixed(2));
+                            // }
+                            //end: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                            //start: added by nishi: 26-Aug-2020: for is next month is differce and differce is greater then 0 then we manage Invoice
+                            if ('invoiceDepositLessonNextMonthTopup' in result) {
+                                invoiceDepositLessonTopup += parseFloat(Math.abs(result.invoiceDepositLessonNextMonthTopup));
+                            }
+                            //end: added by nishi: 26-Aug-2020: for is next month is differce and differce is greater then 0 then we manage Invoice
+                            $('#invoiceLessonDepositTopupSummary').html('-$' + invoiceDepositLessonTopup.toFixed(2));
+                        }
+
+                        $('#confirmModalYes').attr('data-lessonCharge', result.invoiceDepositLessonTopup.toFixed(2));
+                        if ('invoiceDepositLessonNextMonthTopup' in result) {
+                            $('#confirmModalYes').attr('data-lessonNextLessonCharge', result.invoiceDepositLessonNextMonthTopup.toFixed(2));
+                        }
+                        //start: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+                        // if('invoiceFacilityLessonTopup' in result){
+                        //     $('#confirmModalYes').attr('data-facilityCharge', result.invoiceFacilityLessonTopup.toFixed(2));
+                        // }
+                        //end: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+
+                    }
+
+                    if ('invoiceDepositTopup' in result) {
+                        if (result.invoiceDepositTopup >= 0) {
+                            $('#invoiceDepositTopupSummary').html('$' + result.invoiceDepositTopup.toFixed(2));
+                        } else {
+                            $('#invoiceDepositTopupSummary').html('-$' + Math.abs(result.invoiceDepositTopup).toFixed(2));
+                        }
+                        $('#confirmModalYes').attr('data-deposit', result.invoiceDepositTopup.toFixed(2));
+                    }
+                    $('#upgradeDowngradeSummaryModal').removeClass('slds-hide');
+                }
+            );
+        }
+
+        function submitUpgradeOssiaPackageRequest() {
+            var error = false;
+            var bookingId, oldPackageId, newPackageId, effectiveDate, availableTimeSlots, enrolmentId, oldTeacher, newTeacher;
+            bookingId = $('#OssiaUpdateEnrolmentonClick').attr('data-id');
+            oldPackageId = $('#currentPackageEnrolOssiaUpdate').attr('data-currentPackageId');
+            newPackageId = $('#selectPackageEnrolOssiaUpdate').val();
+            effectiveDate = $('#selectEffectiveDateEnrolOssiaUpdate').val();
+            availableTimeSlots = $('#availableTimeSlotsOssiaUpdateEnrolment').val();
+            enrolmentId = $('#submitUpgradeRequest').attr('data-enrolment');
+            oldTeacher = $('#currentTeacherEnrolOssiaUpdate').attr('data-currentTeacherId');
+            newTeacher = $('#selectTeacherEnrolOssiaUpdate').val();
+            var today = moment();
+            var changeEnrolmentType = $('#selectTeacherEnrolOssiaUpdate').attr('data-enrolmentType');
+            var grade = '';
+            if (changeEnrolmentType === 'UpgradeEnrolment') {
+                grade = 'upgrade';
+            } else if (changeEnrolmentType === 'DowngradeEnrolment') {
+                grade = 'downgrade';
+            }
+            $('#gradeSubscriptionPopup').addClass('slds-hide');
+            $('#upgradeDowngradeSummaryModal').addClass('slds-hide');
+            $('#confirmUpgradeEnrolment').css('pointer-events', 'none');
+            $('#confirmUpgradeEnrolment').attr('disabled', 'true');
+            $('#confirmModalYes').attr({
+                'data-origin': changeEnrolmentType, 'data-id': bookingId, 'data-date': effectiveDate,
+                'data-newPackage': newPackageId.split('-')[0], 'data-oldPackage': oldPackageId, 'data-timeslot': availableTimeSlots,
+                'data-oldTeacher': oldTeacher, 'data-newTeacher': newTeacher
+            });
+            $('#confirmModalYes').trigger('click');
+        }
+        // 12-aug-2020- for show selected ossia organisation package detials
+        function showSelectedPackageDetails() {
+            var newPackageId = $('#selectPackageEnrolOssiaUpdate').val();
+
+            if (newPackageId != '' && newPackageId != null && newPackageId.length > 0 && newPackageId != undefined && newPackageId != "Select Package") {
+                $('.currentOssiaPackageUpdate').removeClass('slds-hide');
+                $('#newPackageDurationOssiaUpdate').html((newPackageId.split('-')[1] != null && newPackageId.split('-')[1] != 'undefined' ? newPackageId.split('-')[1] + ' min' : ''));
+                //$('#newPackageFacilityFeeOssiaUpdate').html('$' + (newPackageId.split('-')[2] != null && newPackageId.split('-')[2] != 'undefined' ? parseFloat(newPackageId.split('-')[2]) : 0));
+                $('#newPackageGradeOssiaUpdate').html((newPackageId.split('-')[3] != null && newPackageId.split('-')[3] != 'undefined' ? newPackageId.split('-')[3].replace(/;/g, ", ") : ''));
+                var monthlyFee = (newPackageId.split('-')[4] != null && newPackageId.split('-')[4] != 'undefined' ? parseFloat(newPackageId.split('-')[4]) : 0);
+                //monthlyFee+= (newPackageId.split('-')[2] != null && newPackageId.split('-')[2] != 'undefined' ? parseFloat(newPackageId.split('-')[2]) : 0);
+                $('#newPackageMonthlyFeeOssiaUpdate').html('$' + (monthlyFee != null && monthlyFee != undefined ? monthlyFee : 0));
+                $('#OssiapackageSelectErrorMsg').html('');
+            } else {
+                $('.currentOssiaPackageUpdate').addClass('slds-hide');
+                $('#newPackageDurationOssiaUpdate').html('');
+                //$('#newPackageFacilityFeeOssiaUpdate').html('');
+                $('#newPackageGradeOssiaUpdate').html('');
+                $('#newPackageMonthlyFeeOssiaUpdate').html('');
+            }
+        }
+
+        // 19-aug-2020- for show selected ossia organisation package detials
+        function showSelectedOssiaPackageDetails() {
+            var isossia = $('#advanceOptionsBtn').attr('data-isossia');
+            if (isossia && isossia == 'true') {
+                var newPackageId = $('#selectPackageEnrolUpdate').val();
+
+                if (newPackageId != '' && newPackageId != null && newPackageId.length > 0 && newPackageId != undefined && newPackageId != "Select Package") {
+                    $('.newossiaEnrolUpdate').removeClass('slds-hide');
+                    $('#newPackageDurationOssiaEnrolUpdate').html((newPackageId.split('-')[1] != null && newPackageId.split('-')[1] != 'undefined' ? newPackageId.split('-')[1] + ' min' : ''));
+                    //$('#newPackageFacilityFeeOssiaEnrolUpdate').html('$' + (newPackageId.split('-')[2] != null && newPackageId.split('-')[2] != 'undefined' ? parseFloat(newPackageId.split('-')[2]) : 0));
+                    $('#newPackageGradeOssiaEnrolUpdate').html((newPackageId.split('-')[3] != null && newPackageId.split('-')[3] != 'undefined' ? newPackageId.split('-')[3].replace(/;/g, ", ") : ''));
+                    var monthlyFee = (newPackageId.split('-')[4] != null && newPackageId.split('-')[4] != 'undefined' ? parseFloat(newPackageId.split('-')[4]) : 0);
+                    //monthlyFee+= (newPackageId.split('-')[2] != null && newPackageId.split('-')[2] != 'undefined' ? parseFloat(newPackageId.split('-')[2]) : 0);
+                    $('#newPackageMonthlyFeeOssiaEnrolUpdate').html('$' + (monthlyFee != null && monthlyFee != undefined ? monthlyFee : 0));
+                    $('#packageSelectErrorMsg').html('');
+                } else {
+                    $('.newossiaEnrolUpdate').addClass('slds-hide');
+                    $('#newPackageDurationOssiaEnrolUpdate').html('');
+                    // $('#newPackageFacilityFeeOssiaEnrolUpdate').html('');
+                    $('#newPackageGradeOssiaEnrolUpdate').html('');
+                    $('#newPackageMonthlyFeeOssiaEnrolUpdate').html('');
+                }
+            }
+        }
+
+        function upgradeEnrolmentProcess(caseId) {
+            console.log('updatePackageOfCustomer', caseId);
+            $('#confirmModalYes').css('pointer-events', 'none');
+            $('#confirmModalYes').attr('disabled');
+            $('#confirmModalNo').css('pointer-events', 'none');
+            $('#confirmModalNo').attr('disabled');
+            $('#statusOnPage').show();
+            var bookingId, effectiveDate, newPackageId, oldPackageId, timeSlot, oldTeacher, newTeacher, casevalues = {};
+            bookingId = $('#confirmModalYes').attr('data-id');
+            effectiveDate = $('#confirmModalYes').attr('data-date');
+            newPackageId = $('#confirmModalYes').attr('data-newPackage');
+            oldPackageId = $('#confirmModalYes').attr('data-oldPackage');
+            timeSlot = $('#confirmModalYes').attr('data-timeslot');
+            oldTeacher = $('#confirmModalYes').attr('data-oldTeacher');
+            newTeacher = $('#confirmModalYes').attr('data-newTeacher');
+            casevalues.previousPackage = $('#confirmModalYes').attr('data-previousPackage');
+            casevalues.previousPackage = $('#confirmModalYes').attr('data-previousPackage');
+            casevalues.newPackage = $('#confirmModalYes').attr('data-newPackageName');
+            casevalues.previousLessonDayTime = $('#confirmModalYes').attr('data-previousLessonDayTime');
+            casevalues.newLessonDayTime = $('#confirmModalYes').attr('data-newLessonDayTime');
+            casevalues.currentDepositonFile = $('#confirmModalYes').attr('data-currentDepositonFile');
+            casevalues.newPackageDeposit = $('#confirmModalYes').attr('data-newPackageDeposit');
+            casevalues.invoiceForCurrentMonth = $('#confirmModalYes').attr('data-invoiceForCurrentMonth');
+
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.OssiaCenterCalendarController.updatePackageOfCustomer}',
+                bookingId, effectiveDate, newPackageId, oldPackageId, timeSlot, caseId, 'true', casevalues, oldTeacher, newTeacher,
+                function (result, event) {
+                    console.log('result', result);
+                    $('#enrolmentOssiaUpdatePopup').addClass('slds-hide');
+                    if (result && result != 'error') {
+                        console.log('result', result);
+                        redirectToOssiaCaseRecord(result);
+                    } else {
+                        $('#upgradeDowngradeSummaryModal').addClass('slds-hide');
+                        $('#toastMsg').html('Request failure!<br/>Please try again....');
+                        $('.toastclass').removeClass('slds-theme_success');
+                        $('.toastclass').addClass('slds-theme_error');
+                        toastLaunch();
+                    }
+                    $('#confirmModalYes').css('pointer-events', 'auto');
+                    $('#confirmModalYes').removeAttr('disabled');
+                    $('#confirmModalNo').css('pointer-events', 'auto');
+                    $('#confirmModalNo').removeAttr('disabled');
+                    refreshCalendar();
+                }
+            );
+        }
+
+        function redirectToOssiaCaseRecord(caseIdToRedirect) {
+            console.log('caseIdToRedirect', caseIdToRedirect);
+            window.open("/" + caseIdToRedirect, '_blank');
+            //window.location.href = "/"+caseIdToRedirect;
+        }
+        function downGradeEnrolmentProcess(caseId) {
+            $('#statusOnPage').show();
+            var bookingId, requestDate, newPackageId, oldPackageId, timeslot, amount, depositAmount, lessonFeeAmount, oldTeacher, newTeacher, casevalues = {};
+            bookingId = $('#confirmModalYes').attr('data-id');
+            requestDate = $('#confirmModalYes').attr('data-date');
+            newPackageId = $('#confirmModalYes').attr('data-newPackage');
+            oldPackageId = $('#confirmModalYes').attr('data-oldPackage');
+            timeslot = $('#confirmModalYes').attr('data-timeslot');
+            amount = $('#confirmModalYes').attr('data-amount');
+            depositAmount = $('#confirmModalYes').attr('data-deposit');
+            lessonFeeAmount = Math.abs(parseFloat($('#confirmModalYes').attr('data-lessonCharge')));
+            oldTeacher = $('#confirmModalYes').attr('data-oldTeacher');
+            newTeacher = $('#confirmModalYes').attr('data-newTeacher');
+            casevalues.previousPackage = $('#confirmModalYes').attr('data-previousPackage');
+            casevalues.newPackage = $('#confirmModalYes').attr('data-newPackageName');
+            casevalues.previousTeacher = $('#confirmModalYes').attr('data-oldTeacher');
+            casevalues.newTeacher = $('#confirmModalYes').attr('data-newTeacher');
+            casevalues.previousLessonDayTime = $('#confirmModalYes').attr('data-previousLessonDayTime');
+            casevalues.newLessonDayTime = $('#confirmModalYes').attr('data-newLessonDayTime');
+            casevalues.currentDepositonFile = $('#confirmModalYes').attr('data-currentDepositonFile');
+            casevalues.newPackageDeposit = $('#confirmModalYes').attr('data-newPackageDeposit');
+            casevalues.invoiceForCurrentMonth = $('#confirmModalYes').attr('data-invoiceForCurrentMonth');
+            casevalues.positiveInvoiceAmount = $('#confirmModalYes').attr('data-positiveInvoiceAmount');
+            casevalues.negativeInvoiceAmount = $('#confirmModalYes').attr('data-negativeInvoiceAmount');
+            //start: added by nishi: 17-Aug-2020: for next month invoice is differce and differce is greater then 0 then we manage Invoice
+            casevalues.lessonNextLessonCharge = Math.abs(parseFloat($('#confirmModalYes').attr('data-lessonNextLessonCharge')));
+            casevalues.positiveNextMonthInvoiceAmount = $('#confirmModalYes').attr('data-positiveNextMonthInvoiceAmount');
+            casevalues.negativeNextMonthInvoiceAmount = $('#confirmModalYes').attr('data-negativeNextMonthInvoiceAmount');
+            //start: added by nishi: 17-Aug-2020: for next month invoice is differce and differce is greater then 0 then we manage Invoice
+
+            //start: added by nishi: 17-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+            // casevalues.facilityFee = $('#confirmModalYes').attr('data-facilityCharge'); //added by nishi:19_aug-2020: for manage Facility Fee
+            // casevalues.positiveFacilityInvoiceAmount = $('#confirmModalYes').attr('data-positiveFacilityInvoiceAmount'); //added by nishi 19_aug-2020:for manage Facility Fee
+            // casevalues.negativeFacilityInvoiceAmount = $('#confirmModalYes').attr('data-negativeFacilityInvoiceAmount'); //added by nishi 19_aug-2020: for manage Facility Fee
+            //end: added by nishi: 17-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+            console.log('casevalues', casevalues);
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.OssiaCenterCalendarController.downgradeSubscriptionRequest}',
+                bookingId, requestDate, newPackageId, oldPackageId, timeslot, caseId, 'true', amount, depositAmount,
+                lessonFeeAmount, casevalues, oldTeacher, newTeacher,
+                function (result, event) {
+                    console.log('result', result);
+                    $('#enrolmentOssiaUpdatePopup').addClass('slds-hide');
+                    if (result == 'error') {
+                        $('#toastMsg').html('Request failure!<br/>Please try again....');
+                        $('.toastclass').removeClass('slds-theme_success');
+                        $('.toastclass').addClass('slds-theme_error');
+                        toastLaunch();
+                    } else if (!result) {
+                        $('#upgradeDowngradeSummaryModal').addClass('slds-hide');
+                        $('#toastMsg').html('Request logged successfully');
+                        $('.toastclass').removeClass('slds-theme_error');
+                        $('.toastclass').addClass('slds-theme_success');
+                        toastLaunch();
+                    } else if (result && result != 'error') {
+                        console.log('result', result);
+                        redirectToOssiaCaseRecord(result);
+                    }
+                    $('#downgradePopup').addClass('slds-hide');
+                    $('#confirmDowngradeEnrolment').css('pointer-events', 'auto');
+                    $('#confirmDowngradeEnrolment').removeAttr('disabled');
+                    refreshCalendar();
+                }
+            );
+        }
+
+        function getSelectedCenterTeacher() {
+            var centreid = $('#selectCentreEnrolCenterUpdate').val();
+            $('#selectTeacherEnrolCenterUpdate').empty();
+            $('#selectTeacherEnrolCenterUpdate').attr('disabled', 'true');
+            $('#CenterUpdateEnrolmentonClick').removeAttr('data-newCentreId');
+            var teacherStr = '<option value="">Select Teacher</option>';
+            if (centreid && centreid != null && centreid != undefined && centreid != 'Select Centre') {
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.OssiaCenterCalendarController.getListOfTeacher}',
+                    centreid,
+                    function (result, event) {
+                        console.log('result', result);
+                        $(result).each(function (index, value) {
+                            teacherStr += '<option value="' + value.Id + '">' + value.Name + '</option>';
+                        });
+                        $('#selectTeacherEnrolCenterUpdate').append(teacherStr);
+                        $('#selectTeacherEnrolCenterUpdate').removeAttr('disabled');
+                        $('#CenterUpdateEnrolmentonClick').attr('data-newCentreId', centreid);
+                    });
+            }
+        }
+        function getCenterPackageByTeacher() {
+            $('#selectPackageEnrolCenterUpdate').empty();
+            $('#selectPackageEnrolCenterUpdate').attr('disabled', 'true');
+            $('.currentCenterPackageUpdate').addClass('slds-hide');
+            $('#newPackageDurationCenterUpdate').html('');
+            // $('#newPackageFacilityFeeOssiaUpdate').html('');
+            $('#newPackageGradeCenterUpdate').html('');
+            $('#newPackageMonthlyFeeCenterUpdate').html('');
+            $('#CenterUpdateEnrolmentonClick').removeAttr('data-newTeacherId');
+            var teacherId = $('#selectTeacherEnrolCenterUpdate').val();
+            var duration = $('#CenterUpdateEnrolmentonClick').attr('data-duration');
+            var centerId = $('#selectCentreEnrolCenterUpdate').val();
+            var enrolmentType = $('#CenterUpdateEnrolmentonClick').attr('data-enrolmentType');
+            var booingid = $('#CenterUpdateEnrolmentonClick').attr('data-id');
+            if (teacherId != 'Select Teacher' && centerId && duration && booingid) {
+                $('#CenterUpdateEnrolmentonClick').attr('data-newTeacherId', teacherId);
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.OssiaCenterCalendarController.getPackageAccordingToOssiaTeacher}',
+                    centerId, teacherId, duration, booingid, enrolmentType,
+                    function (result, event) {
+                        var packageEnrol = '<option value="Select Package">Select an Option</option>';
+                        $(result).each(function (index, value) {
+                            console.log('value', value);
+                            packageEnrol += '<option value="' + value.Id + '-' + value.duration + '- ' /*+ value.facilityFee*/ + '-' + value.grade + '-' + value.packageFee + '">' + value.Name + '</option>';
+                        });
+                        $('#selectPackageEnrolCenterUpdate').append(packageEnrol);
+                        $('#selectPackageEnrolCenterUpdate').removeAttr('disabled');
+
+                    }
+                );
+            }
+        }
+
+        // 12-aug-2020- for show selected ossia organisation package detials
+        function showSelectedCenterPackageDetails() {
+            var newPackageId = $('#selectPackageEnrolCenterUpdate').val();
+            $('.newPackageUpdate').addClass('slds-hide');
+            $('.newOssiaPackageUpdate ').addClass('slds-hide');
+            $('#CenterUpdateEnrolmentonClick').removeAttr('data-newPackageId');
+            if (newPackageId != '' && newPackageId != null && newPackageId.length > 0 && newPackageId != undefined && newPackageId != "Select Package") {
+                $('#newPackageDurationCenterUpdate').html((newPackageId.split('-')[1] != null && newPackageId.split('-')[1] != 'undefined' ? newPackageId.split('-')[1] + ' min' : ''));
+                //$('#newPackageFacilityFeeOssiaUpdate').html('$' + (newPackageId.split('-')[2] != null && newPackageId.split('-')[2] != 'undefined' ? parseFloat(newPackageId.split('-')[2]) : 0));
+                $('#newPackageGradeCenterUpdate').html((newPackageId.split('-')[3] != null && newPackageId.split('-')[3] != 'undefined' ? newPackageId.split('-')[3].replace(/;/g, ", ") : ''));
+                var monthlyFee = (newPackageId.split('-')[4] != null && newPackageId.split('-')[4] != 'undefined' ? parseFloat(newPackageId.split('-')[4]) : 0);
+                //monthlyFee+= (newPackageId.split('-')[2] != null && newPackageId.split('-')[2] != 'undefined' ? parseFloat(newPackageId.split('-')[2]) : 0);
+                $('#newPackageMonthlyFeeCenterUpdate').html('$' + (monthlyFee != null && monthlyFee != undefined ? monthlyFee : 0));
+                $('#CenterpackageSelectErrorMsg').html('');
+                $('.newPackageUpdate').removeClass('slds-hide');
+                var isOssia = $('#confirmModalYes').attr('data-isOssia');
+                if (isOssia === 'true') {
+                    $('.newOssiaPackageUpdate').removeClass('slds-hide');
+                }
+                $('#CenterUpdateEnrolmentonClick').attr('data-newPackageId', newPackageId.split('-')[0]);
+            } else {
+                $('.currentCenterPackageUpdate').addClass('slds-hide');
+                $('#newPackageDurationCenterUpdate').html('');
+                //$('#newPackageFacilityFeeOssiaUpdate').html('');
+                $('#newPackageGradeCenterUpdate').html('');
+                $('#newPackageMonthlyFeeCenterUpdate').html('');
+                $('.newPackageUpdate').addClass('slds-hide');
+                $('.newOssiaPackageUpdate').addClass('slds-hide');
+            }
+        }
+        function availCenterTimeSlots() {
+            var changeEnrolmentType = $('#CenterUpdateEnrolmentonClick').attr('data-enrolmentType');
+            availTimeSlots(changeEnrolmentType);
+        }
+
+        //9-Dec-2019 : @@jatin  :for get Change Enrollment   Package Summary
+        function CenterUpdateEnrolmentClick() {
+            $('#CenterSelectErrorMsg').html('');
+            $('#CenterteacherSelectErrorMsg').html('');
+            $('#CenterpackageSelectErrorMsg').html('');
+            $('#CenterEffectiveDateErrorMsg').html('');
+            $('#CentertimeSlotErrorMsg').html('');
+
+            var errorFlag = false;
+            var enrolmentId, newCenterId, oldCenterId, newPackage, newTeacher, newTime, newEffectiveDate, oldTeacher, oldPackage, oldTime;
+            enrolmentId = $('#CenterUpdateEnrolmentonClick').attr('data-enrol');
+            newCenterId = $('#selectCentreEnrolCenterUpdate').val();
+            newPackage = $('#selectPackageEnrolCenterUpdate').val();
+            newTeacher = $('#selectTeacherEnrolCenterUpdate').val();
+            newEffectiveDate = $('#selectEffectiveDateEnrolCenterUpdate').val();
+            newTime = $('#availableTimeSlotsCenterUpdateEnrolment').val();
+
+            oldTeacher = $('#currentTeacherEnrolCenterUpdate').data('currentteacherid');
+            oldPackage = $('#currentPackageEnrolCenterUpdate').data('currentpackageid');
+            oldTime = $('#currentDateTimeEnrolCenterUpdate').text().split('@')[1];
+            oldCenterId = $('#currentCenterEnrolCenterUpdate').data('currentcenterid');
+            if (!newCenterId || newCenterId == 'Select Centre') {
+                $('#CenterSelectErrorMsg').html('Please Select the Centre...');
+                errorFlag = true;
+            }
+            if (!newPackage || newPackage == 'Select Package') {
+                $('#CenterpackageSelectErrorMsg').html('Please Select the Package...');
+                errorFlag = true;
+            }
+            if (!newTeacher || newTeacher == 'Select Teacher') {
+                $('#CenterteacherSelectErrorMsg').html('Please Select the Teacher...');
+                errorFlag = true;
+            }
+            if (!newEffectiveDate || newEffectiveDate == 'Select Effective Date') {
+                $('#CenterEffectiveDateErrorMsg').html('Please Select Date...');
+                errorFlag = true;
+            }
+            if (!newTime || newTime == 'Select Time Slot') {
+                $('#CentertimeSlotErrorMsg').html('Please Select Time Slot...');
+                errorFlag = true;
+            }
+            if (enrolmentId && (newPackage && newPackage != 'Select Package')
+                && (newTeacher && newTeacher != 'Select Teacher')
+                && (newEffectiveDate && newEffectiveDate != 'Select Effective Date')
+                && (newTime && newTime != 'Select Time Slot') && !errorFlag) {
+                $('#CenterUpdateEnrolmentonClick').removeAttr('disabled');
+                $('#enrolmentCenterUpdatePopup').addClass('slds-hide');
+                
+                newPackage = newPackage.split('-')[0];
+                getEntrollmentChangeCenterSummary('change enrollment', enrolmentId, newTeacher, oldTeacher, newPackage, oldPackage,
+                    newEffectiveDate, newTime, oldTime, newCenterId, oldCenterId);
+            }
+        }
+        // //28-Aug-2020 : @@nishi  :for submit Change center Enrollemnt Package Request
+        function getEntrollmentChangeCenterSummary(grade, enrolmentId, newTeacher, oldTeacher, newPackage, oldPackage,
+            newEffectiveDate, newTime, oldTime, newCenterId, oldCenterId) {
+            var newEffectiveDateObj = moment();
+            if (newEffectiveDate) {
+                newEffectiveDateObj.year(newEffectiveDate.split('/')[2]).month(newEffectiveDate.split('/')[0] - 1).date(newEffectiveDate.split('/')[1]);
+            }
+            //console.log('@@newPackage'+newPackage);
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.OssiaCenterCalendarController.getChangeEnrollmentPackageSummary}',
+                grade, enrolmentId, newTeacher, oldTeacher, newPackage, oldPackage, newEffectiveDateObj.format('YYYY-MM-DD'),
+                newTime, oldTime.trim(), newCenterId, oldCenterId,
+                function (result, event) {
+                    console.log('result', result);
+                    if (result) {
+                        $('#ChangeCenterEnrollmentSummaryHeader').html('Change Centre Summary');
+                        $('#confirmChangeCenterEnrolment').css('pointer-events', 'auto');
+                        $('#confirmChangeCenterEnrolment').removeAttr('disabled');
+                        $('#updateCenterEnrolmentonClickNo').css('pointer-events', 'auto');
+                        $('#updateCenterEnrolmentonClickNo').removeAttr('disabled');
+                        //$('#gradeSubscriptionPopup').addClass('slds-hide');
+                        if ('newCenterName' in result) {
+                            $('#ChangeCenterEnrollmentNewCenterName').html(result.newCenterName);
+                        }
+                        if ('oldCenterName' in result) {
+                            $('#ChangeCenterEnrollmentOldCenterName').html(result.oldCenterName);
+                        }
+
+                        if ('newTeacherName' in result) {
+                            $('#ChangeCenterEnrollmentNewTeacherName').html(result.newTeacherName);
+                        }
+                        if ('oldTeacherName' in result) {
+                            $('#ChangeCenterEnrollmentOldTeacherName').html(result.oldTeacherName);
+                        }
+
+
+                        //console.log('@@newPackage'+result.newPackageName);
+                        if ('newPackageName' in result) {
+                            $('#ChangeCenterEnrollmentNewPackageNameSummary').html(result.newPackageName);
+                        }
+                        if ('oldPackageName' in result) {
+                            $('#ChangeCenterEnrollmentOldPackageNameSummary').html(result.oldPackageName);
+                        }
+                        if ('currentDayAndTime' in result) {
+                            $('#ChangeCenterEnrollmentPreviousLessonDTSummary').html(result.currentDayAndTime);
+                        }
+
+                        if ('newDayAndTime' in result) {
+                            $('#ChangeCenterEnrollmentNewLessonDTSummary').html(result.newDayAndTime);
+                        }
+
+                        if ('effectiveDate' in result) {
+                            $('#ChangeCenterEnrollmentNewEffectiveDate').html(result.effectiveDate);
+                        }
+                        if ('studentName' in result) {
+                            $('#ChangeCenterEnrollmentStudentName').html(result.studentName);
+                        }
+                        if ('parentName' in result) {
+                            $('#ChangeCenterEnrollmentParentName').html(result.parentName);
+                        }
+                        $('#ChangeCenterEnrollmentSummaryModal').removeClass('slds-hide');
+                    }
+                }
+            );
+        }
+        //9-Dec-2019 : @@jatin  :for submit ChangeEnrollemnt Package Request
+        function submitChangeCenterEnrollemntPackageRequest() {
+            var enrolmentId, newPackage, newTeacher,newCenter, newTime, newDate, oldTeacher, oldPackage,oldCenter, oldTime, newPackageName, oldPackageName,oldCenterName;
+            enrolmentId =  $('#CenterUpdateEnrolmentonClick').attr('data-enrol');
+            newPackage = $('#selectPackageEnrolCenterUpdate').val();
+            newPackage = newPackage.split('-')[0];
+            newCenter = $('#selectCentreEnrolCenterUpdate').val();
+            newTeacher = $('#selectTeacherEnrolCenterUpdate').val();
+            newEffectiveDate = $('#selectEffectiveDateEnrolCenterUpdate').val();
+            newTime = $('#availableTimeSlotsCenterUpdateEnrolment').val();
+
+            oldCenter = $('#currentCenterEnrolCenterUpdate').data('currentcenterid');
+            oldTeacher = $('#currentTeacherEnrolCenterUpdate').data('currentteacherid');
+            oldPackage = $('#currentPackageEnrolCenterUpdate').data('currentpackageid');
+            oldTime = $('#currentDateTimeEnrolCenterUpdate').text();
+            newPackageName = $('#selectPackageEnrolCenterUpdate option:selected').text();
+            oldPackageName = $('#currentPackageEnrolCenterUpdate').text();
+            oldCenterName = $('#currentCenterEnrolCenterUpdate').text();
+            //$('#confirmChangeEnrolment').addClass('slds-hide');
+            $('#confirmChangeCenterEnrolment').css('pointer-events', 'none');
+            $('#confirmChangeCenterEnrolment').attr('disabled', 'true');
+            $('#updateCenterEnrolmentonClickNo').css('pointer-events', 'none');
+            $('#updateCenterEnrolmentonClickNo').attr('disabled', 'true');
+            
+            $('#confirmModalYes').attr({                
+                'data-origin': 'changeCenter', 'data-enrol': enrolmentId,'data-center': newCenter, 'data-teacher': newTeacher,
+                'data-package': newPackage, 'data-newEffectiveDate': newEffectiveDate,'data-time': newTime,
+                'data-oldCenter': oldCenter,'data-oldteacher': oldTeacher, 'data-oldPackage': oldPackage, 'data-oldTime': oldTime, 
+                'data-oldPackageName': oldPackageName,'data-newPackageName': newPackageName,'data-oldCenterName': oldCenterName            
+            });
+            $('#confirmModalYes').trigger('click');
+        }
+        function changeCenterEnrolmentProcess(){
+            $('#statusOnPage').show();
+            var enrolmentId, newTeacher,newCenter, newPackage, effectiveDate, newTime,oldTeacher,oldCenter,oldPackage, oldTime, oldPackageName, newPackageName;
+            enrolmentId = $('#confirmModalYes').attr('data-enrol');
+            newCenter = $('#confirmModalYes').attr('data-center');
+            newTeacher = $('#confirmModalYes').attr('data-teacher');
+            newPackage = $('#confirmModalYes').attr('data-package');
+            effectiveDate = $('#confirmModalYes').attr('data-newEffectiveDate');
+            newTime = $('#confirmModalYes').attr('data-time');
+            oldTeacher =  $('#confirmModalYes').attr('data-oldteacher');
+            oldCenter =  $('#confirmModalYes').attr('data-oldCenter');
+            oldPackage = $('#confirmModalYes').attr('data-oldpackage');
+            oldTime = $('#confirmModalYes').attr('data-oldTime');
+            oldPackageName = $('#confirmModalYes').attr('data-oldPackageName'); 
+            newPackageName = $('#confirmModalYes').attr('data-newPackageName'); 
+            // console.log('enrolmentId'+enrolmentId);
+            // console.log('newCenter'+newCenter);
+            // console.log('newTeacher'+newTeacher);
+            // console.log('newPackage'+newPackage);
+            // console.log('newEffectiveDate'+newEffectiveDate);
+            // console.log('newTime'+newTime);
+            // console.log('oldTeacher'+oldTeacher);
+            // console.log('oldCenter'+oldCenter);
+            // console.log('oldPackage'+oldPackage);
+            // console.log('oldTime'+oldTime);
+            // console.log('oldPackageName'+oldPackageName);
+            // console.log('newPackageName'+newPackageName);
+
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.OssiaCenterCalendarController.changeEnrolmentCenter}',
+                enrolmentId, newTeacher,newCenter, newPackage, effectiveDate, newTime, caseId,
+                 'true', oldTime, oldPackageName, newPackageName, oldCenter,
+                function(result, event){
+                    console.log('@@@@@@@result',result);
+                    if(result && result != 'error'){
+                        
+                        $('#ChangeCenterEnrollmentSummaryModal').addClass('slds-hide');
+                        $('#toastMsg').html('Enrolment Update Successfully');
+                        $('.toastclass').removeClass('slds-theme_error');
+                        $('.toastclass').addClass('slds-theme_success');
+                        toastLaunch();
+                        redirectToCaseRecord(result);
+                    }else if(!result){
+                        $('#ChangeCenterEnrollmentSummaryModal').addClass('slds-hide');
+                        //$('#enrolmentUpdatePopup').addClass('slds-hide');
+                        $('#toastMsg').html('Enrolment Update Successfully');
+                        $('.toastclass').removeClass('slds-theme_error');
+                        $('.toastclass').addClass('slds-theme_success');
+                        toastLaunch();
+                    }else if(result.msg == 'error'){
+                        $('#ChangeCenterEnrollmentSummaryModal').addClass('slds-hide');
+                        //$('#enrolmentUpdatePopup').addClass('slds-hide');
+                        $('#toastMsg').html('');
+                        $('.toastclass').removeClass('slds-theme_success');
+                        $('.toastclass').addClass('slds-theme_error');
+                        toastLaunch();
+                    }
+                    refreshCalendar();
+                }
+            );
+        }
+
+
+
+        //start: Added By Nishi on 2-Sep-2020 : show Ossia Group class grade details...
+   function showossiaGroupClassGradeDetials(){
+        var classId= $('#showGroupClassGradeDetials').attr('data-classId');
+        $('#newossiaGroupClassModal').removeClass('slds-hide');
+        $('#newGroupClassCMP').addClass('slds-hide');
+        $('.newossiaGroupClassFooter').addClass('slds-hide');
+        $('.newossiaGroupGradeClassFooter').removeClass('slds-hide');
+        $('#newGroupOssiaClassModalBody').empty();
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.OssiaCenterCalendarController.getlistOfOssiaGroupGradePackage}',
+            classId,
+            function (result, event) {
+                console.log('result', result);
+                var ossiaGroupPackage  = result;
+                var trRow ='';
+                if (ossiaGroupPackage && ossiaGroupPackage != null && ossiaGroupPackage != undefined && ossiaGroupPackage.length > 0) {
+                    $(ossiaGroupPackage).each(function (gradeindex, grpPackagesvalue) {
+                        trRow += '<tr class="slds-hint-parent">';
+                        //trRow +='<td data-label="Sr.No"><div class="slds-truncate" title="Sr.No">' + (index + 1) + '</div></td>';
+                        trRow += '<td data-label="Grade"><div class="slds-truncate" title="Grade Name">' + grpPackagesvalue.id+'</div></td>';
+                        trRow += '<td data-label="Package Name"><div class="slds-truncate" title="Package Name"><span  class="slds-col slds-size_1-of-2">' + grpPackagesvalue.name+'</span></div></td>';
+                        trRow += '<td data-label="Instrument"><div class="slds-truncate" title="Instrument"><span  class="slds-col slds-size_1-of-2">' + grpPackagesvalue.instrument+'</span></div></td>';
+                        trRow += '<td data-label="Monthly Fee"><div class="slds-truncate" title="Monthly Fee"><span class="slds-col slds-size_1-of-2">' + grpPackagesvalue.price+'</span></div></td>';
+                        trRow += '<td data-label="Deposit Fee"><div class="slds-truncate" title="Deposit Fee"><span  class="slds-col slds-size_1-of-2">' + grpPackagesvalue.deposit+'</span></div></td>';
+                        trRow += '</tr>';
+                    });
+                    $('#newGroupOssiaClassModalBody').append(trRow);
+                }
+            },
+            { escape: true }
+        );
+    }
+    </script>
+
+
+
+    <div class=" slds-hide" id="OssiaStudentCancelList">
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1"
+            class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container" style="width: 65%;">
+                <div class="slds-modal__content" id="modal-content-id-1" style="min-height: 385px; max-height: 440px;overflow-y: hidden; ">
+                    <div class="slds-grid slds-wrap customHeader" style="background: #303a42;">
+                        <div class="slds-col slds-size_10-of-12">
+                            <h1>
+                                <span class="slds-page-header__title slds-truncate" id="detailOssiaPopupTitle">
+                                    Cancel Appointment Details
+                                </span>
+                            </h1>
+                        </div>
+                        <div class="slds-col slds-size_2-of-12 slds-text-align_right">
+                            <span class="pointerForClick" onclick="$('#OssiaStudentCancelList').addClass('slds-hide'); return false;">
+                                <svg class="slds-button__icon slds-button__icon_left" aria-hidden="true">
+                                    <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS,'/assets/icons/action-sprite/svg/symbols.svg#close')}"></use>
+                                </svg>
+                            </span>
+                        </div>
+
+                    </div>
+                    <div class="slds-m-around--large" style="margin-bottom: 0px" role="group">
+                        <h1>
+                            <span class=" slds-truncate">
+                                Please see the cancellations for this student in the previous 12-month:
+                            </span>
+                        </h1>
+                        <div class="slds-m-top--large">
+                            <div class="slds-grid slds-gutters">
+                                <div class="slds-col slds-size_5-of-12">
+                                    <span class="slds-form-element__label slds-text-align_right">
+                                        <b>Parent:</b>
+                                    </span>
+                                    <!--<span id="centerName"></span>-->
+                                    <span>
+                                        <a id="OssiaParentName" href="" target="_blank"></a>
+                                    </span>
+                                </div>
+                                <div class="slds-col slds-size_7-of-12">
+                                    <span class="slds-form-element__label slds-text-align_right">
+                                        <b>Student:</b>
+                                    </span>
+                                    <!--<span id="name1"></span>-->
+                                    <span>
+                                        <a id="OssiastudentName" target="_blank" href=""></a>
+                                    </span>
+                                </div>
+                            </div>
+                            <div style="overflow: auto;height: 15rem;">
+                                <table class="slds-table slds-no-row-hover slds-table_bordered slds-wrap slds-scrollable_x">
+                                    <thead>
+                                        <tr class="slds-line-height_reset">
+                                            <!--<th class="" scope="col">
+                                            <div class="slds-truncate">Sr.No</div>
+                                        </th>-->
+                                            <th class="" scope="col">
+                                                <div class="slds-truncate">Booking Id</div>
+                                            </th>
+                                            <!-- <th class="" scope="col">
+                                                <div class="slds-truncate">Center Name</div>
+                                            </th>
+                                            <th class="" scope="col">
+                                                <div class="slds-truncate">Teacher Name</div>
+                                            </th>-->
+                                            <th class="" scope="col">
+                                                <div class="slds-truncate">Booking Date Time</div>
+                                            </th>
+                                            <th class="" scope="col">
+                                                <div class="slds-truncate">Duration</div>
+                                            </th>
+                                            <th class="" scope="col">
+                                                <div class="slds-truncate">Status</div>
+                                            </th>
+                                            <th class="" scope="col">
+                                                <div class="slds-truncate">Type</div>
+                                            </th>
+                                            <th class="" scope="col">
+                                                <div class="slds-truncate">Cancellation Reason</div>
+                                            </th>
+                                            <th class="" scope="col">
+                                                <div class="slds-truncate">Available Make up minutes </div>
+                                            </th>
+                                            <!-- <th class="" scope="col">
+                                                <div class="slds-truncate">Cancel Date Time</div>
+                                            </th>-->
+
+                                        </tr>
+                                    </thead>
+                                    <tbody id="OssiaStudentCancelBookingBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_neutral close-popup" onclick="cancelOssiaShowBooking();return false;">
+                        Close
+                    </button>
+                    <button class="slds-button slds-button_neutral " href="javascript:void(0);" id="cancelOssiaBookingWithoutMakeup" onclick="cancelOssiaBookingConfirmation('true'); return false;">
+                        Without Make-up
+                    </button>
+                    <button class="slds-button slds-button_neutral " href="javascript:void(0);" id="cancelOssiaBookingWithMakeup" onclick="cancelOssiaBookingConfirmation('false'); return false;">
+                        With Make-up
+                    </button>
+                </footer>
+            </div>
+        </section>
+    </div>
+
+    <!--OssiaUpdate Enrolment Button Click Popup-->
+    <div class="slds-hide" id="enrolmentOssiaUpdatePopup">
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1"
+            class="slds-modal slds-fade-in-open slds-modal_medium">
+            <div class="slds-modal__container" style="width:55%;">
+                <header class="slds-modal__header" style="background: #303a42; color: white;">
+                    <h2 id="enrolmentOssiaUpdatePopupHeader" class="slds-text-heading_medium slds-hyphenate">Update Enrolment</h2>
+                    <a href="javascript:void(0);" class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close"
+                        onclick="$('#enrolmentOssiaUpdatePopup').addClass('slds-hide');">
+                        <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                            <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Close</span>
+                    </a>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="enrolmentOssiaUpdatePopupBody">
+                    <div class="slds-col slds-size_1-of-1">
+                        <div class="slds-grid slds-gutters">
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2">
+                                    <b>Current Teacher:</b>
+                                </span>
+                                <span id="currentTeacherEnrolOssiaUpdate" class="slds-col slds-size_1-of-2"></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2">
+                                    <b>Current Date And Time:</b>
+                                </span>
+                                <span id="currentDateTimeEnrolOssiaUpdate" class="slds-col slds-size_1-of-2"></span>
+                            </div>
+                        </div>
+                        <!-- added by nishi: 12-aug-2020: for if user select package then we show related details like: duration,monthly fee, grade,Facility fee -->
+
+
+                        <div class="slds-grid slds-gutters margin-top5px " style="margin-top: 20px;">
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2">
+                                    <b>Current Package: </b>
+                                </span>
+                                <span id="currentPackageEnrolOssiaUpdate" class="slds-col slds-size_1-of-2"></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2 ">
+                                    <b>Current Package Duration: </b>
+                                </span>
+                                <span id="currentPackageDurationOssiaUpdate" class="slds-col slds-size_1-of-2"></span>
+                            </div>
+                        </div>
+
+                        <div class="slds-grid slds-gutters margin-top5px " style="margin-top: 20px;">
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2">
+                                    <b>Current Package Monthly Fee: </b>
+                                </span>
+                                <span id="currentPackageMonthlyFeeOssiaUpdate" class="slds-col slds-size_1-of-2"></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2 ">
+                                    <b>Current Package Grade: </b>
+                                </span>
+                                <span id="currentPackageGradeOssiaUpdate" class="slds-col slds-size_1-of-2"></span>
+                            </div>
+                        </div>
+
+                        <!-- added by nishi: 12-aug-2020: for if user select package then we show related details like: duration,monthly fee, grade,Facility fee -->
+
+                        <!-- <div class="slds-grid slds-gutters margin-top5px" style="margin-top: 20px;">
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2">
+                                    <b>Current Package Facility Fee:</b>
+                                </span>
+                                <span id="currentPackageFacilityFeeOssiaUpdate" class="slds-col slds-size_1-of-2"></span>
+                            </div> 
+                            
+                        </div> -->
+                        <!-- added by nishi: 12-aug-2020: for if user select package then we show related details like: duration,monthly fee, grade,Facility fee -->
+                        <div class="slds-grid slds-gutters margin-top5px " style="margin-top: 20px;">
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2">
+                                    <b>Select Teacher: </b>
+                                </span>
+                                <select class="slds-select slds-col slds-size_1-of-2" id="selectTeacherEnrolOssiaUpdate" onchange="getOssiaPackageByTeacher();availTimeSlots('OssiaUpdate');createNewEffectiveDates();return false;">
+                                </select>
+                            </div>
+
+                            <div class="slds-col slds-size_1-of-2  slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2">
+                                    <b>Select Package: </b>
+                                </span>
+                                <select class="slds-select slds-col slds-size_1-of-2" id="selectPackageEnrolOssiaUpdate" disabled="true" onchange="availOssiaTimeSlots();showSelectedPackageDetails();return false;">
+                                </select>
+                            </div>
+
+                        </div>
+                        <div class="slds-grid slds-gutters">
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <label class="slds-col slds-size_1-of-3" style="color:red;"></label>
+                                <label id="OssiateacherSelectErrorMsg" class="slds-col slds-size_2-of-3" style="color:red;margin-left: 35px;"></label>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <label class="slds-col slds-size_1-of-3" style="color:red;"></label>
+                                <label id="OssiapackageSelectErrorMsg" class="slds-col slds-size_2-of-3" style="color:red;margin-left: 35px;"></label>
+                            </div>
+                        </div>
+
+                        <div class="slds-grid slds-gutters margin-top5px" style="margin-top: 20px;">
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2 ">
+                                    <b>Select Effective Date: </b>
+                                </span>
+                                <select class="slds-select slds-col slds-size_1-of-2 " id="selectEffectiveDateEnrolOssiaUpdate" onchange="availOssiaTimeSlots();return false;">
+                                </select>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2">
+                                    <b>Select TimeSlot: </b>
+                                </span>
+                                <select class="slds-select slds-col slds-size_1-of-2" id="availableTimeSlotsOssiaUpdateEnrolment" disabled="true">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="slds-grid slds-gutters ">
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <label class="slds-col slds-size_1-of-3" style="color:red;"></label>
+                                <label id="OssiaEffectiveDateErrorMsg" class="slds-col slds-size_2-of-3" style="color:red;margin-left: 35px;"></label>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <label class="slds-col slds-size_1-of-3" style="color:red;"></label>
+                                <label id="OssiatimeSlotErrorMsg" class="slds-col slds-size_2-of-3" style="color:red;margin-left: 35px;"></label>
+                            </div>
+                        </div>
+                        <!-- added by nishi: 12-aug-2020: for if user select package then we show related details like: duration,monthly fee, grade,Facility fee -->
+
+                        <div class="slds-grid slds-gutters margin-top5px currentOssiaPackageUpdate slds-hide" style="margin-top: 20px;">
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2 ">
+                                    <b>New Package Duration: </b>
+                                </span>
+                                <span id="newPackageDurationOssiaUpdate" class="slds-col slds-size_1-of-2"></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2">
+                                    <b>New Package Monthly Fee: </b>
+                                </span>
+                                <span id="newPackageMonthlyFeeOssiaUpdate" class="slds-col slds-size_1-of-2"></span>
+                            </div>
+
+                        </div>
+
+                        <div class="slds-grid slds-gutters margin-top5px currentOssiaPackageUpdate slds-hide" style="margin-top: 20px;">
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2 ">
+                                    <b>New Package Grade: </b>
+                                </span>
+                                <span id="newPackageGradeOssiaUpdate" class="slds-col slds-size_1-of-2"></span>
+                            </div>
+                            <!-- <div class="slds-col slds-size_1-of-2 slds-grid">
+                                    <span class="slds-form-element__label slds-col slds-size_1-of-2 ">
+                                        <b>New Package Facility Fee: </b>
+                                    </span>
+                                    <span id="newPackageFacilityFeeOssiaUpdate" class="slds-col slds-size_1-of-2"></span>
+                                </div> -->
+
+                        </div>
+                        <!-- added by nishi: 12-aug-2020: for if user select package then we show related details like: duration,monthly fee, grade,Facility fee -->
+                    </div>
+                </div>
+                <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_neutral" onclick="$('#enrolmentOssiaUpdatePopup').addClass('slds-hide');">Cancel</button>
+                    <button class="slds-button slds-button_brand" id="OssiaUpdateEnrolmentonClick" onclick="OssiaUpdateEnrolmentClick();return false;">Next</button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </div>
+    <!--OssiaUpdate Enrolment Button Click Popup-->
+    <!--27-Aug-2020 - change centre Enrolment Button Click Popup-->
+    <div class="slds-hide" id="enrolmentCenterUpdatePopup">
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1"
+            class="slds-modal slds-fade-in-open slds-modal_medium">
+            <div class="slds-modal__container" style="width:55%;">
+                <header class="slds-modal__header" style="background: #303a42; color: white;">
+                    <h2 id="enrolmentCenterUpdatePopupHeader" class="slds-text-heading_medium slds-hyphenate">Update Centre</h2>
+                    <a href="javascript:void(0);" class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close"
+                        onclick="$('#enrolmentCenterUpdatePopup').addClass('slds-hide');">
+                        <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                            <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Close</span>
+                    </a>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="enrolmentCenterUpdatePopupBody">
+                    <div class="slds-col slds-size_1-of-1">
+                        <div class="slds-grid slds-gutters">
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2">
+                                    <b>Current Centre:</b>
+                                </span>
+                                <span id="currentCenterEnrolCenterUpdate" class="slds-col slds-size_1-of-2"></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2">
+                                    <b>Current Teacher:</b>
+                                </span>
+                                <span id="currentTeacherEnrolCenterUpdate" class="slds-col slds-size_1-of-2"></span>
+                            </div>
+                        </div>
+                        <!-- added by nishi: 12-aug-2020: for if user select package then we show related details like: duration,monthly fee, grade,Facility fee -->
+
+
+                        <div class="slds-grid slds-gutters margin-top5px " style="margin-top: 20px;">
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2">
+                                    <b>Current Date And Time:</b>
+                                </span>
+                                <span id="currentDateTimeEnrolCenterUpdate" class="slds-col slds-size_1-of-2"></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2">
+                                    <b>Current Package: </b>
+                                </span>
+                                <span id="currentPackageEnrolCenterUpdate" class="slds-col slds-size_1-of-2"></span>
+                            </div>
+                        </div>
+
+                        <div class="slds-grid slds-gutters margin-top5px currentPackageUpdate slds-hide" style="margin-top: 20px;">
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2 ">
+                                    <b>Current Package Duration: </b>
+                                </span>
+                                <span id="currentPackageDurationCenterUpdate" class="slds-col slds-size_1-of-2"></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2">
+                                    <b>Current Package Monthly Fee: </b>
+                                </span>
+                                <span id="currentPackageMonthlyFeeCenterUpdate" class="slds-col slds-size_1-of-2"></span>
+                            </div>
+
+                        </div>
+
+                        <!-- added by nishi: 12-aug-2020: for if user select package then we show related details like: duration,monthly fee, grade,Facility fee -->
+
+                        <div class="slds-grid slds-gutters margin-top5px currentOssiaPackageUpdate slds-hide" style="margin-top: 20px;">
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2 ">
+                                    <b>Current Package Grade: </b>
+                                </span>
+                                <span id="currentPackageGradeCenterUpdate" class="slds-col slds-size_1-of-2"></span>
+                            </div>
+
+                        </div>
+
+                        <!-- added by nishi: 12-aug-2020: for if user select package then we show related details like: duration,monthly fee, grade,Facility fee -->
+                        <div class="slds-grid slds-gutters margin-top5px " style="margin-top: 20px;">
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2">
+                                    <b>Select Centre: </b>
+                                </span>
+                                <select class="slds-select slds-col slds-size_1-of-2" id="selectCentreEnrolCenterUpdate" onchange="getSelectedCenterTeacher();availTimeSlots('CenterUpdate');return false;">
+                                </select>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2">
+                                    <b>Select Teacher: </b>
+                                </span>
+                                <select class="slds-select slds-col slds-size_1-of-2" id="selectTeacherEnrolCenterUpdate" onchange="getCenterPackageByTeacher();availTimeSlots('CenterUpdate');return false;">
+                                </select>
+                            </div>
+
+
+                        </div>
+                        <div class="slds-grid slds-gutters">
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <label class="slds-col slds-size_1-of-3" style="color:red;"></label>
+                                <label id="CenterSelectErrorMsg" class="slds-col slds-size_2-of-3" style="color:red;margin-left: 35px;"></label>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <label class="slds-col slds-size_1-of-3" style="color:red;"></label>
+                                <label id="CenterteacherSelectErrorMsg" class="slds-col slds-size_2-of-3" style="color:red;margin-left: 35px;"></label>
+                            </div>
+                        </div>
+
+                        <div class="slds-grid slds-gutters margin-top5px" style="margin-top: 20px;">
+                            <div class="slds-col slds-size_1-of-2  slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2">
+                                    <b>Select Package: </b>
+                                </span>
+                                <select class="slds-select slds-col slds-size_1-of-2" id="selectPackageEnrolCenterUpdate" disabled="true" onchange="availCenterTimeSlots();showSelectedCenterPackageDetails();return false;">
+                                </select>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2 ">
+                                    <b>Select Effective Date: </b>
+                                </span>
+                                <select class="slds-select slds-col slds-size_1-of-2 " id="selectEffectiveDateEnrolCenterUpdate" onchange="availCenterTimeSlots();return false;">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="slds-grid slds-gutters ">
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <label class="slds-col slds-size_1-of-3" style="color:red;"></label>
+                                <label id="CenterpackageSelectErrorMsg" class="slds-col slds-size_2-of-3" style="color:red;margin-left: 35px;"></label>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <label class="slds-col slds-size_1-of-3" style="color:red;"></label>
+                                <label id="CenterEffectiveDateErrorMsg" class="slds-col slds-size_2-of-3" style="color:red;margin-left: 35px;"></label>
+                            </div>
+
+                        </div>
+
+                        <div class="slds-grid slds-gutters margin-top5px" style="margin-top: 20px;">
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2">
+                                    <b>Select TimeSlot: </b>
+                                </span>
+                                <select class="slds-select slds-col slds-size_1-of-2" id="availableTimeSlotsCenterUpdateEnrolment" disabled="true">
+                                </select>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-grid newPackageUpdate slds-hide">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2 ">
+                                    <b>New Package Duration: </b>
+                                </span>
+                                <span id="newPackageDurationCenterUpdate" class="slds-col slds-size_1-of-2"></span>
+                            </div>
+                        </div>
+                        <div class="slds-grid slds-gutters ">
+                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                                <label class="slds-col slds-size_1-of-3" style="color:red;"></label>
+                                <label id="CentertimeSlotErrorMsg" class="slds-col slds-size_2-of-3" style="color:red;margin-left: 35px;"></label>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-grid"> </div>
+                        </div>
+                        <div class="slds-grid slds-gutters margin-top5px" style="margin-top: 20px;">
+                            <div class="slds-col slds-size_1-of-2 slds-grid newPackageUpdate slds-hide">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2">
+                                    <b>New Package Monthly Fee: </b>
+                                </span>
+                                <span id="newPackageMonthlyFeeCenterUpdate" class="slds-col slds-size_1-of-2"></span>
+                            </div>
+
+                            <div class="slds-col slds-size_1-of-2 slds-grid newOssiaPackageUpdate slds-hide">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2 ">
+                                    <b>New Package Grade: </b>
+                                </span>
+                                <span id="newPackageGradeCenterUpdate" class="slds-col slds-size_1-of-2"></span>
+                            </div>
+                        </div>
+                        <!-- added by nishi: 12-aug-2020: for if user select package then we show related details like: duration,monthly fee, grade,Facility fee -->
+
+                    </div>
+                </div>
+                <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_neutral" onclick="$('#enrolmentCenterUpdatePopup').addClass('slds-hide');">Cancel</button>
+                    <button class="slds-button slds-button_brand" id="CenterUpdateEnrolmentonClick" onclick="CenterUpdateEnrolmentClick();return false;">Next</button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </div>
+    <!--27-Aug-2020 - change centre Enrolment Button Click Popup-->
+
+    <!--4-Dec-2019 Change enrollment Summary Popup-->
+    <div class="slds-hide" id="ChangeCenterEnrollmentSummaryModal">
+
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1"
+            class="slds-modal slds-fade-in-open slds-modal_large">
+            <div class="slds-modal__container" style="width: 35%;">
+                <header class="slds-modal__header" style="background: #303a42; color: white;">
+                    <h2 id="ChangeCenterEnrollmentSummaryHeader" class="slds-text-heading_medium slds-hyphenate">Change Centre Summary</h2>
+                    <a href="javascript:void(0);" class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close"
+                        onclick="$('#ChangeCenterEnrollmentSummaryModal').addClass('slds-hide'); return false;">
+                        <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                            <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Close</span>
+                    </a>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="ChangeCenterEnrollmentSummaryBody">
+                    <div class="slds-form" role="list">
+                        <div class="slds-form__row">
+                            <!--Student Name-->
+                            <div class="slds-form__item" role="listitem">
+                                <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                    <span class="slds-form-element__label">Student Name:</span>
+                                    <div class="slds-form-element__control" id="ChangeCenterEnrollmentStudentName">
+
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- parent name -->
+                            <div class="slds-form__item" role="listitem">
+                                <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                    <span class="slds-form-element__label">Parent Name:</span>
+                                    <div class="slds-form-element__control" id="ChangeCenterEnrollmentParentName">
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!--start: added by nishi: 28-Aug-2020: for show Changed Center details-->
+                        <div class="slds-form__row ">
+                            <!--Previous Teacher Name-->
+                            <div class="slds-form__item" role="listitem">
+                                <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                    <span class="slds-form-element__label">Previous Centre:</span>
+                                    <div class="slds-form-element__control" id="ChangeCenterEnrollmentOldCenterName">
+
+                                    </div>
+                                </div>
+                            </div>
+                            <!--Current Teacher Name-->
+                            <div class="slds-form__item" role="listitem">
+                                <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                    <span class="slds-form-element__label">New Centre:</span>
+                                    <div class="slds-form-element__control" id="ChangeCenterEnrollmentNewCenterName">
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!--end: added by nishi: 28-Aug-2020: for show Changed Center details-->
+                        <div class="slds-form__row">
+                            <!--Previous Teacher Name-->
+                            <div class="slds-form__item" role="listitem">
+                                <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                    <span class="slds-form-element__label">Previous Teacher:</span>
+                                    <div class="slds-form-element__control" id="ChangeCenterEnrollmentOldTeacherName">
+
+                                    </div>
+                                </div>
+                            </div>
+                            <!--Current Teacher Name-->
+                            <div class="slds-form__item" role="listitem">
+                                <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                    <span class="slds-form-element__label">New Teacher:</span>
+                                    <div class="slds-form-element__control" id="ChangeCenterEnrollmentNewTeacherName">
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-form__row">
+                            <!--Previous Package Name-->
+                            <div class="slds-form__item" role="listitem">
+                                <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                    <span class="slds-form-element__label">Previous Package:</span>
+                                    <div class="slds-form-element__control" id="ChangeCenterEnrollmentOldPackageNameSummary">
+
+                                    </div>
+                                </div>
+                            </div>
+                            <!--Current Package Name-->
+                            <div class="slds-form__item" role="listitem">
+                                <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                    <span class="slds-form-element__label">New Package:</span>
+                                    <div class="slds-form-element__control" id="ChangeCenterEnrollmentNewPackageNameSummary">
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-form__row">
+                            <!--Previous Lesson Day & Time-->
+                            <div class="slds-form__item" role="listitem">
+                                <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                    <span class="slds-form-element__label">Previous Lesson Day &amp; Time:</span>
+                                    <div class="slds-form-element__control" id="ChangeCenterEnrollmentPreviousLessonDTSummary">
+
+                                    </div>
+                                </div>
+                            </div>
+                            <!--New Lesson Day & Time-->
+                            <div class="slds-form__item" role="listitem">
+                                <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                    <span class="slds-form-element__label">New Lesson Day &amp; Time:</span>
+                                    <div class="slds-form-element__control" id="ChangeCenterEnrollmentNewLessonDTSummary">
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="slds-form__row">
+                            <!--New  Effective Date-->
+                            <div class="slds-form__item" role="listitem">
+                                <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                    <span class="slds-form-element__label">Effective Date:</span>
+                                    <div class="slds-form-element__control" id="ChangeCenterEnrollmentNewEffectiveDate">
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!--Confirm Enrol Button-->
+                        <div class="slds-form-element slds-grid slds-grid_align-end" style="margin-top: 15px;">
+                            <!--start:added by nishi:28-dec-2020: for change center -->
+                            <button class="slds-button slds-button_neutral " id="updateCenterEnrolmentonClickNo" onclick="$('#ChangeCenterEnrollmentSummaryModal').addClass('slds-hide'); $('#enrolmentCenterUpdatePopup').removeClass('slds-hide'); return false;">BACK</button>
+                            <button class="slds-button slds-button_brand " id="confirmChangeCenterEnrolment" onclick="submitChangeCenterEnrollemntPackageRequest();return false;">CONFIRM UPDATE CENTRE</button>
+                            <!--end:added by nishi:28-dec-2020: for change center -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    <!--4 Dec 2019 Change enrollment Summary Popup end -->
+
+    <!-- group class popup start -->
+    <div class="slds-hide" id="newossiaGroupClassModal">
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header" style="background: #303a42; color: white;">
+                    <h2 id="newOssiaClassBookingDetailsHeader" class="slds-text-heading_medium slds-hyphenate"> Select Grade Packages </h2>
+                    <a href="javascript:void(0);" class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick="$('#newossiaGroupClassModal').addClass('slds-hide');">
+                        <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                            <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Close</span>
+                    </a>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium"  style="overflow-y: auto;height:400px">
+                    <div class="slds-grid slds-wrap">
+                        <table class="slds-table slds-no-row-hover slds-table_bordered slds-wrap slds-scrollable_x">
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate">Grade</div>
+                                    </th>
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate">Package Name</div>
+                                    </th>
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate">Instrument</div>
+                                    </th>
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate">Monthly Fee</div>
+                                    </th>
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate">Deposit Fee</div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="newGroupOssiaClassModalBody"></tbody>
+                        </table>
+                        <!-- Minimum or Maximum Age-->
+                        <!-- <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap slds-m-top_large" id="newGroupOssiaClassModalBody">
+                                <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-right_large">
+                                    <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
+                                        <div class="slds-col slds-size_4-of-12">
+                                            <span><b>Select Grade 1 Package:</b></span>
+                                        </div>
+                                        <div class="slds-col slds-size_8-of-12">
+                                            <select class="slds-select" id="ClassGradePackageSelect1" data-toggle="tooltip" data-placement="top" title="" >
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
+                                        <div class="slds-col slds-size_4-of-12">
+                                    
+                                        </div>
+                                        <div class="slds-col slds-size_8-of-12">
+                                            <p id="ClassGradePackageError1" style="color:red;">Please Select Package...</p>
+                                        </div>
+                                    </div>
+                                </div> 
+                            </div>   -->
+
+                         
+                    </div>    
+                </div>
+                <footer class="slds-modal__footer" style ="margin-bottom: -20px;">
+                    <button class="slds-button slds-button_neutral newossiaGroupClassFooter slds-hide" onclick="$('#newossiaGroupClassModal').addClass('slds-hide');$('#newGroupClassModal').removeClass('slds-hide');">Back</button>
+                    <button class="slds-button slds-button_brand newossiaGroupClassFooter slds-hide" id="saveNewOssiaClass" onclick="saveNewOssiaClassFunc();return false;">Add New Class</button>
+                    <button class="slds-button slds-button_neutral newossiaGroupGradeClassFooter slds-hide" onclick="$('#newossiaGroupClassModal').addClass('slds-hide');$('#newGroupClassCMP').removeClass('slds-hide');">Cancel</button>
+                   
+                </footer>  
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </div>
+</apex:component>

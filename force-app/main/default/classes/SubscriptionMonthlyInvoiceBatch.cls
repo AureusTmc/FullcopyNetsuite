@@ -16,6 +16,7 @@ global class SubscriptionMonthlyInvoiceBatch implements Database.Batchable<sObje
     global Database.QueryLocator start(Database.BatchableContext BC){
         // @02/26/2019 Next Billing Date filter added by Sanjay Bhati
         return Database.getQueryLocator([Select Id,Parent__c,Parent__r.personContactId,Next_Bill_Date__c,Center__c,
+                                            
                                          (Select Id,Amount__c,Enrolment__c,Plan_Package__c,Enrolment__r.Effective_Date__c,
                                           // Added by jatin: 28-jan-2020 : For create Invoices According to rental invoice fields
                                           Enrolment__r.Termination_request_date__c,Enrolment__r.recordtype.Name,
@@ -24,7 +25,10 @@ global class SubscriptionMonthlyInvoiceBatch implements Database.Batchable<sObje
                                           Enrolment__r.New_Package_Id__r.Deposit_Fee__c,Enrolment__r.New_Package_Id__r.Unit_Fee__c,
                                           Enrolment__r.Package__c,Enrolment__r.Teacher__c, Enrolment__r.New_Teacher__c,Enrolment__r.Promotional_Period_End_Date__c,
                                           Enrolment__r.Package__r.Deposit_Fee__c,Enrolment__r.Package__r.Unit_Fee__c,
-                                          Next_Bill_Date__c, Enrolment__r.Center__r.Country__r.Id, Enrolment__r.Center__r.Country__r.Tax_Rate__c 
+                                          Next_Bill_Date__c, Enrolment__r.Center__r.Country__r.Id, Enrolment__r.Center__r.Country__r.Tax_Rate__c ,
+                                          // added by nishi:18_aug-2020: for manage facility fee is ossia student Subscription invoice created
+                                          Enrolment__r.Center__r.Organisation__r.Name,//Enrolment__r.New_Package_Id__r.Facility_Fee__c,Enrolment__r.Package__r.Facility_Fee__c,
+                                          Enrolment__r.Package__r.Name,Enrolment__r.New_Package_Id__r.Name, Enrolment__r.Center__r.Organisation__r.Tax_Rate__c , Enrolment__r.Center__r.Organisation__r.Id
                                           FROM Subscription_Line_Items__r 
                                           WHERE Status__c=:ConstantsClass.activeStatus 
                                           AND Next_Bill_Date__c <= :system.today()

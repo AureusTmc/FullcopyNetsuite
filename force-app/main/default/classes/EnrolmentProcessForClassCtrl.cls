@@ -35,8 +35,9 @@ public class EnrolmentProcessForClassCtrl {
     String stripeApiSecKey;
     String countryCurrencyCode;
     String folderId;
-    String cenOrgId;
-    Integer enrolCount;//@Juneid 06 July 2020, This variable is use to store count of enrollment
+    String cenOrgId;           
+  Integer enrolCount;//@Juneid 06 July 2020, This variable is use to store count of enrollment
+    Public boolean isOssia{get;set;}//@Juneid 20 Aug 2020, For checking Organization
     
     //Added by Rajesh, 16th Sep 2019. To store enrolment source on Enrolment/Case object and country for filtercentre
     String enrolmentSource;
@@ -44,23 +45,23 @@ public class EnrolmentProcessForClassCtrl {
        List<Referral_Discount__c>countryWiseRfrelDiscount;//@Juneid 10 Aug 2020, To store reffrel discount country wise
     PandaDocUtility.CreateDocument documentDetails;
     PandaDocUtility.SessionDocument sessionDetails;
-    
-    //CH01 Karan Singh
-    public Boolean isPandaDocUnderMaintance{get;set;} //for showing the bypass checkbox
-    public Boolean isCustmrOptedOfflineSign{get;set;}
-    //CH01 END
-    
+
+     //CH01 Karan Singh 
+     public Boolean isPandaDocUnderMaintance{get;set;} //for showing the bypass checkbox    
+     public Boolean isCustmrOptedOfflineSign{get;set;}  
+     //CH01 END 
+     
     //Counstructor
     Public EnrolmentProcessForClassCtrl(){
-        
-        //CH01 Karan Singh
-        isPandaDocUnderMaintance = false;
-        isCustmrOptedOfflineSign = false;
-        if( String.isNotBlank(Label.Allow_Offline_Signing)){
-            isPandaDocUnderMaintance = Label.Allow_Offline_Signing.equalsIgnoreCase('true');
-        }
+            
+        //CH01 Karan Singh  
+        isPandaDocUnderMaintance = false;   
+        isCustmrOptedOfflineSign = false;   
+        if( String.isNotBlank(Label.Allow_Offline_Signing)){    
+            isPandaDocUnderMaintance = Label.Allow_Offline_Signing.equalsIgnoreCase('true');    
+        }   
         //CH01 END
-        
+
         isAmcClubMember     = false;
         isAlreadyStripCstmr = false;
         setOfEnrolments= new Set<String>();
@@ -76,17 +77,20 @@ public class EnrolmentProcessForClassCtrl {
         countries = new List<SelectOption>();
         countries.add(new SelectOption('', '--Select Country--'));
         countries.addAll(fillPicklistValues('Account', 'BillingCountryCode'));
-        enrolDetails = new EnrolDetails();      
+        enrolDetails = new EnrolDetails();
+        isOssia =  false;
         enrolmentSource = ApexPages.currentPage().getParameters().get('es');
         //@Juneid 05, Aug 2020
         enrolCount =  0;
         countryWiseRfrelDiscount =  new List<Referral_Discount__c>();
-
+        
+        isSiteGuestUser = (UserInfo.getName()).contains('Site');
         
         countryCurrencyCode = ConstantsClass.currencyCode;
         templateId = Label.Student_Policies_Template;
         if(setOfEnrolments.size() > 0){
             enrolDetails = fetchEnrolmentDetails(setOfEnrolments);
+            //system.debug('enrolDetails--->'+enrolDetails);
             if(enrolDetails.enrolments.size() > 0){
                 cntryName = enrolDetails.enrolments.values().get(0).Center__r.Country__r.Name;
                 cenOrgId  = enrolDetails.enrolments.values().get(0).Center__r.Organisation__c;
@@ -119,23 +123,37 @@ public class EnrolmentProcessForClassCtrl {
         Map<String, List<AccountDetails>> mapOfParentStudent = new Map<String, List<AccountDetails>>();
         Set<String> studentSet = new Set<String>();
         String parentId;
-         
         
-        List<Enrolment__c> enrList = [SELECT Id, Name, Center__c,Referral_code_used__c, Center__r.Name, Teacher__c, Teacher__r.Name, Package__r.Name, Lesson_Day__c,  Parent__r.Name,
-                                      Lesson_Start_time__c,Referred_by__c, Lessons_Start_Date__c, Student__r.Name, Student__r.FirstName, Student__r.LastName, Parent__c, Parent__r.FirstName, Parent__r.LastName, 
-                                      Package__c, Package__r.Package_Fee__c, Package__r.Deposit_Fee__c, Package__r.Registration_Fee__c, Package__r.Unit_Fee__c, 
-                                      Package__r.Is_Promotion_Discount__c,Center__r.Location__c, Package__r.Type_of_package__c,Package__r.Promotion_Discount__c, Package__r.Promotion_period_In_months__c, 
-                                      Package__r.Registration_Discount_Active__c, Package__r.Registration_Discount_Value__c, CreatedDate,Instrument__c, 
-                                      Package__r.of_Units__c,Referred_by__r.name, Package__r.Package_after_Promotion__c, Package__r.Duration__c, Center__r.Country__c, Package__r.Type__c, Type__c, Class__c,
-                                      Center__r.Country__r.Name,Enrolment__c.Referred_by__r.personContactId,Center__r.Organisation__r.name,Referee_discount_amount__c,Referrer_discount_amount__c, Center__r.Country__r.Country_Name__c, Center__r.Country__r.Tax_Rate__c, Center__r.Organisation__c,
+       List<Enrolment__c> enrList = [SELECT Id, Name, Center__c, Center__r.Name, Teacher__c,Teacher__r.Engagement_Type__c, Teacher__r.Name, Package__r.Name, Lesson_Day__c,  Parent__r.Name,
+                                      Lesson_Start_time__c, Lessons_Start_Date__c, Student__r.Name, Student__r.FirstName, Student__r.LastName, Parent__c, Parent__r.FirstName, Parent__r.LastName, 
+                                      Package__c, Package__r.Package_Fee__c, Package__r.Deposit_Fee__c, Package__r.Registration_Fee__c, Package__r.Unit_Fee__c,Referral_code_used__c,//Package__r.Facility_Fee__c,
+                                      Package__r.Is_Promotion_Discount__c, Package__r.Promotion_Discount__c, Package__r.Promotion_period_In_months__c,Referred_by__c,Referred_by__r.name,Referee_discount_amount__c,Referrer_discount_amount__c,Center__r.Location__c, 
+                                     Package__r.Type_of_package__c,Enrolment__c.Referred_by__r.personContactId, Package__r.Registration_Discount_Active__c, Package__r.Registration_Discount_Value__c, CreatedDate,Instrument__c, 
+                                      Package__r.of_Units__c, Package__r.Package_after_Promotion__c, Package__r.Duration__c, Center__r.Country__c, Package__r.Type__c, Type__c, Class__c,
+                                      Center__r.Country__r.Name, Center__r.Country__r.Country_Name__c, Center__r.Country__r.Tax_Rate__c, Center__r.Organisation__c,Center__r.Organisation__r.name,
                                       (SELECT Id, Subscription__c, Enrolment__c FROM Subscription_Line_Items__r) 
                                       FROM Enrolment__c WHERE Id IN: enrolIds AND Stage__c = 'Pending Enrolment'];
         if(enrList.size() > 0){
             Integer gstTaxPer;
-            
+            //@Juneid For Checking Organization
+            isOssia = enrList.get(0).Center__r.Organisation__r.name == Label.Ossia_Organisation_Name ? true : false;
             String countryId          = enrList.get(0).Center__r.Country__c;
-            system.debug('countryId--->'+countryId);
-            Map<String,Country__c> countryMap = BillingUtility.getCountryMap(countryId);
+            
+            //@Juneid 19 Aug 2020,Organisation wise charge as per new logic
+            String organisationId =  enrList.get(0).Center__r.Organisation__c;
+           Map<String,Organisation__c>organisationMap = BillingUtility.getOrganisationMap(organisationId);
+            if(organisationMap.containsKey(organisationId)){
+                stripeBaseUrl       = organisationMap.get(organisationId).Stripe_Base_Url__c;
+                apiKey              = organisationMap.get(organisationId).Stripe_Publishable_Key__c;
+                stripeApiSecKey     = organisationMap.get(organisationId).Stripe_Secret_Key__c;
+                countryCurrencyCode = organisationMap.get(organisationId).country__r.Currency_Code__c;
+                gstTaxPer           =  Integer.valueOf(organisationMap.get(organisationId).Tax_Rate__c);
+                templateId          = organisationMap.get(organisationId).Student_Policies_Template_Id__c;
+                folderId            = organisationMap.get(organisationId).Folder__c;
+                
+            }
+            //Juneid commented becauis elogic is change now country wise to orgnization wise
+             /*  Map<String,Country__c> countryMap = BillingUtility.getCountryMap(countryId);
             if(countryMap.containsKey(countryId)){
                 stripeBaseUrl       = countryMap.get(countryId).Stripe_Base_Url__c;
                 apiKey              = countryMap.get(countryId).Stripe_Publishable_Key__c;
@@ -144,8 +162,8 @@ public class EnrolmentProcessForClassCtrl {
                 gstTaxPer           =  Integer.valueOf(countryMap.get(countryId).Tax_Rate__c);
                 templateId          = countryMap.get(countryId).Student_Policies_Template_Id__c;
                 folderId            = countryMap.get(countryId).Folder__c;
-            }
-            system.debug('countryCurrencyCode-->'+countryCurrencyCode);
+            }*/
+           
             
             if(String.isBlank(countryCurrencyCode)) 
                 countryCurrencyCode = ConstantsClass.currencyCode;
@@ -180,9 +198,10 @@ public class EnrolmentProcessForClassCtrl {
                 enrolmentMap.put(enrolObj.Id, enrolObj); 
                 studentSet.add(enrolObj.Student__c);
                 parentId = enrolObj.Parent__c;
-                    system.debug('enrolObj before fee calc ---->'+enrolObj);
+                                 
                 //Fee calcuations for the selected package in enrolment
                 feeMap.put(enrolObj.Id, calculateFeeForEnrolment(enrolObj, gstTaxPer)); 
+                
             }
             
             if(studentSet.size() > 0){
@@ -193,9 +212,9 @@ public class EnrolmentProcessForClassCtrl {
                 enrolDetailsToReturn.enrolments = enrolmentMap;
                 enrolDetailsToReturn.enrolmentTimeSlotMap = enrolmentTimeSlotMap;
                 enrolDetailsToReturn.feeModelObj= feeMap;
+                //enrolDetailsToReturn.billingDetails = fetchBillDetails(enrolmentMap.values());
                 enrolDetailsToReturn.billingDetails = fetchBillDetails(feeMap.values(), gstTaxPer);
             }
-            
             if(mapOfParentStudent.size() > 0){
                 
                 if(mapOfParentStudent.containsKey('parent') && mapOfParentStudent.get('parent').size() > 0){
@@ -300,7 +319,6 @@ public class EnrolmentProcessForClassCtrl {
     }
     
     private List<SelectOption> fillSchools(String cntryName){
-        system.debug('cntryName is -->'+cntryName);
         List<SelectOption> schools = new List<SelectOption>(); 
         for(School__c school : [SELECT Id, Name FROM School__c WHERE Country__r.Name=:cntryName ORDER By Name]){
             schools.add(new SelectOption(school.Id, school.Name));
@@ -372,14 +390,33 @@ public class EnrolmentProcessForClassCtrl {
             }
         }    
     }
+
+    Public static Decimal calculateCurrentMonthPckFees(Date lessDate, Decimal unitFees,Boolean isTeacherPartime) {
+        Date tempDt = lessDate;        
+        Integer noOfLessInCurrMonth = 0;
+        
+        while(lessDate.month() == tempDt.month()){
+            if(tempDt.day() > 28 && isTeacherPartime)
+                break;
+            noOfLessInCurrMonth = noOfLessInCurrMonth+1;
+            tempDt = tempDt.addDays(7);
+        }
+        Decimal packFee = unitFees * noOfLessInCurrMonth;
+        system.debug('packFee'+packFee);
+        return packFee;
+    }
     
     private FeeModel calculateFeeForEnrolment(Enrolment__c enr, Integer gstTaxPer){
         FeeModel fm = new FeeModel();
         fm.selPckMonthFees = enr.package__r.Package_Fee__c;
         fm.depFees  = enr.package__r.Deposit_Fee__c != null ? enr.package__r.Deposit_Fee__c : 0 ;
         fm.regiFees = enr.package__r.Registration_Fee__c != null ? enr.package__r.Registration_Fee__c : 0 ;
-        
+        //@Juneid 18 Aug 2020, Facility Fee calucation
+       // fm.facilityFee = enr.package__r.Facility_Fee__c > 0 ? enr.package__r.Facility_Fee__c : 0;
+      //  system.debug('fm.facilityFee--->'+fm.facilityFee);
         Decimal tempUnitFee = enr.package__r.Unit_Fee__c;
+        //Decimal facilityFee = enr.Package__r.Facility_Fee__c;
+        //system.debug('facilityFee--->'+facilityFee);
         
         //Promotional fees discount calcuation
         fm.pkgFeesPromtnalDis  = 0;
@@ -389,21 +426,33 @@ public class EnrolmentProcessForClassCtrl {
             fm.prmtnalPkgInMonth   = 0;                        
             try{
                 fm.prmtnalPkgInMonth   = Integer.valueOf(enr.package__r.Promotion_period_In_months__c);
+
             }catch(Exception e){}
         }                    
         
         //Registration fees calcuation
         fm.regiFeesDis = (enr.package__r.Registration_Discount_Active__c && enr.package__r.Registration_Discount_Value__c > 0) ? enr.package__r.Registration_Discount_Value__c : 0;
-        
+       
         //Added by Rajesh on 21st oct 2019. calcuate individual gst amount for the invoice line items
         Decimal tempTotAmt = fm.regiFees - fm.regiFeesDis; 
         fm.gstAmount = BillingUtility.roundOffAmount((tempTotAmt > 0 && gstTaxPer > 0) ? ((tempTotAmt * gstTaxPer) / 100):0);
-        
         //Regular package fee calcuation on the bases of selected date
         if(enr.Lessons_Start_Date__c != null && tempUnitFee > 0){
-            Date lessDate = enr.Lessons_Start_Date__c;                      
-            fm.prgFees = BillingUtility.calculateCurrentMonthPckFees(lessDate, tempUnitFee);
+            Date lessDate = enr.Lessons_Start_Date__c;           
+          
+           //start : 3-Sep-2020: added by nishi: if teacher Engagement_Type__c type is part-time then not calclulate 5th lesson booking
+           // fm.prgFees = BillingUtility.calculateCurrentMonthPckFees(lessDate, tempUnitFee);
+           if(string.isNotBlank(enr.Teacher__c) && string.isNotBlank(enr.Teacher__r.Engagement_Type__c) && 
+            enr.Teacher__r.Engagement_Type__c.equalsIgnoreCase('Part-Time')){
+                fm.prgFees = calculateCurrentMonthPckFees(lessDate, tempUnitFee,true);
+            }else{
+                fm.prgFees = calculateCurrentMonthPckFees(lessDate, tempUnitFee,false);
+            }
+            //end:3-Sep-2020: added by nishi: if teacher Engagement_Type__c type is part-time then not calclulate 5th lesson booking
             
+            //@Juneid 08 Aug 2020, Facility Fees Calculation as per total lesson in month
+          //  fm.facilityFee =( BillingUtility.calculateCurrentMonthPckFees(lessDate, facilityFee) / 4);
+            //system.debug(' fm.facilityFee after calculation -->'+ fm.facilityFee);
             if(enr.Class__c != null && String.isNotBlank(enr.Package__r.Type__c) && enr.Package__r.Type__c.equalsIgnoreCase('Group')){
                 Date tempDt = lessDate;  
                 Integer noOfLessInCurrMonth = 0;
@@ -417,7 +466,6 @@ public class EnrolmentProcessForClassCtrl {
                 
                 fm.prgFees = tempUnitFee * noOfLessInCurrMonth;
             }
-            
         }
         
         //Promotional fees discount calcuation
@@ -506,7 +554,7 @@ public class EnrolmentProcessForClassCtrl {
                 }                                            
                 stDt = stDt.addDays(7);
             }
-            
+            system.debug('countDtforMonth'+countDtforMonth);
             if(countDtforMonth > 0){
                 Decimal tempPrgFee = prgFeeForSingleLess*countDtforMonth;
                 totPrgFee += BillingUtility.roundOffAmount(tempPrgFee);
@@ -522,6 +570,12 @@ public class EnrolmentProcessForClassCtrl {
             fm.pkgFeesPromtnalDis = totDiscount;
         }else{//Added by Rajesh on 21st oct 2019. calcuate individual gst amount for the line items
             fm.gstAmount += BillingUtility.roundOffAmount((fm.prgFees > 0 && gstTaxPer > 0) ? ((fm.prgFees * gstTaxPer) / 100):0);
+             // Decimal amount = fm.facilityFee > 0 ? BillingUtility.roundOffAmount(fm.facilityFee) : 0;
+          //  system.debug('amount--->'+amount);
+         //   system.debug('enr.Center__r.Country__r.Tax_Rate__c--->'+enr.Center__r.Country__r.Tax_Rate__c);
+         //   system.debug('BillingUtility.roundOffAmount-->'+BillingUtility.roundOffAmount(Double.valueOf(amount) * (enr.Center__r.Country__r.Tax_Rate__c / 100)));
+          //  fm.facilityGst += BillingUtility.roundOffAmount(Double.valueOf(amount) * (enr.Center__r.Country__r.Tax_Rate__c / 100));
+         //   system.debug(' fm.facilityGst-->'+ fm.facilityGst);
         }
        
         /*Integer gstTaxPer = ConstantsClass.defGST;
@@ -534,8 +588,8 @@ public class EnrolmentProcessForClassCtrl {
         fm.depFees = BillingUtility.roundOffAmount(fm.depFees);
         fm.prgFees = BillingUtility.roundOffAmount(fm.prgFees);
         fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);
-        
-        Decimal totTemp = fm.regiFees + fm.prgFees;
+        //@Juneid 08 Aug  2020, Adding Facililty Fee in Total
+        Decimal totTemp = fm.regiFees + fm.prgFees /*+(fm.facilityFee > 0 ?  fm.facilityFee : 0)*/;
         Decimal TempDisTot  =  (fm.regiFeesDis + fm.pkgFeesPromtnalDis);
         Decimal tempTot = totTemp - TempDisTot;
         
@@ -545,15 +599,10 @@ public class EnrolmentProcessForClassCtrl {
         //fm.totAmt = totTemp + gstAmt;
         fm.totAmt = totTemp + fm.gstAmount;
         
-        System.debug('@@@@ '+fm.totAmt);
-        
         /*
-fm.depFees = BillingUtility.roundOffAmount(fm.depFees);
-fm.prgFees = BillingUtility.roundOffAmount(fm.prgFees);
-fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
-      system.debug('enr.Referral_code_used__c--->'+enr.Referral_code_used__c);
-        system.debug('enr.Center__r.Organisation__r.name--->'+enr.Center__r.Organisation__r.name);
-        system.debug('enr.Package__r.Type_of_package__c--->'+enr.Package__r.Type_of_package__c);
+        fm.depFees = BillingUtility.roundOffAmount(fm.depFees);
+        fm.prgFees = BillingUtility.roundOffAmount(fm.prgFees);
+        fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
         //@Juneid 06 Aug 2020, Applying Refferel Discount 
         if((String.isNotBlank(enr.Referral_code_used__c) && checkOsiaForRefrel(enr.Center__r.Organisation__r.name) ==true) && enr.Package__r.Type_of_package__c =='Normal'){
             //@Juneid 05 Aug 2020 ,Give Reffrel Discount
@@ -573,18 +622,21 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
     
     private BillingDetails fetchBillDetails(List<FeeModel> feeModelList, Integer gstTaxPer){
         BillingDetails billDetails = new BillingDetails();
-        
-        for(FeeModel fm: feeModelList){
-            system.debug('fm.refrelDiscount--->'+fm.refrelDiscount);
-            //@Juneid 05,Aug 2020,Calculation for For Deduct the Refrel discount amount
-            Decimal totTemp = ((fm.regiFees + fm.prgFees)  - (fm.refrelDiscount !=null ? fm.refrelDiscount : 0));
+       
+        for(FeeModel fm: feeModelList){    
+//@Juneid 05,Aug 2020,Calculation for For Deduct the Refrel discount amount
+            //@Juneid 18 Aug 2020, Facility fees add
+           Decimal totTemp = ((fm.regiFees + fm.prgFees) /*+  (fm.facilityFee > 0 ? fm.facilityFee : 0)*/ - (fm.refrelDiscount !=null ? fm.refrelDiscount : 0));
+         
             
             billDetails.feesTot += totTemp;
-            billDetails.disTot  +=  (fm.regiFeesDis + fm.pkgFeesPromtnalDis);
+            billDetails.disTot  +=  (fm.regiFeesDis + fm.pkgFeesPromtnalDis );
             billDetails.depositTot += fm.depFees != null ? fm.depFees : 0;
             //Added by Rajesh on 21st oct 2019. calcuate individual gst amount for the line items
             billDetails.gstTot += fm.gstAmount;
+            //@Juneid 26 Aug 2020, facility Fees GSt
             
+            //billDetails.gstTot +=fm.facilityGst;
         }
         
         //Gst
@@ -602,9 +654,8 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
         //Commented by Rajesh on 21st oct 2019. calcuate individual gst amount for the line items
        // billDetails.gstTot   = BillingUtility.roundOffAmount(billDetails.gstTot);
         billDetails.depositTot = billDetails.depositTot;
-        billDetails.subsTot  = (billDetails.feesTot + billDetails.gstTot -(billDetails.disTot) );
+        billDetails.subsTot  = (billDetails.feesTot + billDetails.gstTot -(billDetails.disTot));
         billDetails.grandTot = BillingUtility.roundOffAmount((billDetails.subsTot + billDetails.depositTot));
-        
         
         /*billDetails.total = 0;
         Double packageTotal = 0;
@@ -624,10 +675,10 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
     }
     
     Public  PageReference saveAccountForEnrolmentAndGenerateInvoice(){
-        
         Savepoint sp;
         isError = false;
         errorMsg = '';
+        // Decimal facilityFeesGst = 0;//@Juneid 08 Aug 2020, String Facility Fee gst
         //BillingUtility.initConnection(countryId);
                     
         //Added by Prabhat (18-06-2019)
@@ -668,9 +719,8 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
                 
                  //Updated by Rajesh, 30th June 2019, for American club member
                 if(isAmcClubMember || String.isNotBlank(stripeCstmrId)){ 
-                   
-                    Decimal amountInSmallUnit      = enrolDetails.billingDetails.grandTot;
                     
+                    Decimal amountInSmallUnit      = enrolDetails.billingDetails.grandTot;
                     BillingUtility.stripeCharge sc = new BillingUtility.stripeCharge(); 
                     //Updated by Rajesh, 30th June 2019, Skip stripe customer creation for the American club member
                     if(!isAmcClubMember){
@@ -847,7 +897,6 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
                         
                         String bookLessRecId =  Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get(ConstantsClass.recordTypeLesson).getRecordTypeId();  
                         for(Enrolment__c enr: enrolDetails.enrolments.values()){
-                       
                             Boolean isLinkGrpBookClsId = false;
                             String bookType = ConstantsClass.bookTypeRegular;
                             if(enr.Class__c != null && String.isNotBlank(enr.Package__r.Type__c) && enr.Package__r.Type__c.equalsIgnoreCase('Group')){
@@ -944,23 +993,33 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
                             String payTrnRecId =  Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get(ConstantsClass.paymentTransactionRecType).getRecordTypeId();
                             Payment__c pay     = new Payment__c(RecordtypeId      = payTrnRecId);
                             if(cntrPayMap.containsKey(enr.Center__c)){
-                                
-                                Decimal totAmtTemp = fm.totAmt + fm.depFees;
-                              
-                                totAmtTemp = (totAmtTemp -(fm.regiFeesDis + fm.pkgFeesPromtnalDis));
-                                pay = cntrPayMap.get(enr.Center__c);
-                                pay.Payment_Amount__c += totAmtTemp;
-                            }else{                              
                                 Decimal totAmtTemp = fm.totAmt + fm.depFees;
                                 totAmtTemp = (totAmtTemp - (fm.regiFeesDis + fm.pkgFeesPromtnalDis));
-                               
-                                
+                                pay = cntrPayMap.get(enr.Center__c);
+                                pay.Payment_Amount__c += totAmtTemp;
+                            }else{ 
+                                Decimal totAmtTemp = fm.totAmt + fm.depFees;
+                                totAmtTemp = (totAmtTemp - (fm.regiFeesDis + fm.pkgFeesPromtnalDis));
                                 pay        = BillingUtility.fillPayment(parentAcc.Id, null, totAmtTemp, ConstantsClass.successStatus);
                                 //@Juneid 06 Aug 2020, Calucation of Refrel Discount - Payment
                                 if( fm.refrelDiscount > 0) {
                                    pay.Payment_Amount__c -=   fm.refrelDiscount;
                                 }
+                                //@juneid 18 Aug 2020, Gst on Payment
+                               /* if(fm.facilityGst > 0){
+                                    system.debug('pay.Payment_Amount__c-in gst-->'+pay.Payment_Amount__c);
+                                    system.debug('facilityFeesGst--->'+fm.facilityGst);
                                     
+                                    pay.Payment_Amount__c += fm.facilityGst;
+                                    system.debug('pay.Payment_Amount__c after gst -->'+pay.Payment_Amount__c);
+                                }*/
+                                
+                                //@Juneid 18 Aug,2020, Add Facility Fees in payment
+                                /*if(fm.facilityFee > 0){
+                                    system.debug('fm.facilityFee in payment -->'+ fm.facilityFee);
+                                     pay.Payment_Amount__c +=   fm.facilityFee ;
+                                    system.debug('pay.Payment_Amount__c--->'+pay.Payment_Amount__c);
+                                }*/
                                 pay.RecordtypeId      = payTrnRecId;
                                 pay.Method_of_Payment__c = 'Card';
                                 pay.Transaction_ID__c = sc.id; 
@@ -971,6 +1030,9 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
                                 cntrPayMap.put(enr.Center__c, pay);
                             
                              enr.Type__c        = 'Regular';
+                              //CH01  Karan Singh25 March   
+                            enr.Offline_Signing_Selected__c = isCustmrOptedOfflineSign; 
+                            //CH01 END
                              enr.Stage__c = ConstantsClass.enroledStatus;
                              enr.Cancellation_Policy_Agreed__c = true;
                              enr.Promotional_Period_End_Date__c= promPerEndDate;
@@ -987,10 +1049,6 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
                                 enr.Enrolment_Source__c = enrolmentSource;
                              if(isLinkGrpBookClsId)
                                 enr.Type__c        = 'Group';
-                            
-                            //CH01  Karan Singh25 March
-                            enr.Offline_Signing_Selected__c = isCustmrOptedOfflineSign;
-                            //CH01 END
                             
                              enrolmentList.add(enr);
                             
@@ -1202,6 +1260,7 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
                                             }
                                         }
                                     }else if(!enr.Package__r.Is_Promotion_Discount__c && lessDate.month() == dt.month() && lessDate.year() == dt.year()){
+                                        Boolean isCreate5thCurrentMonthPartTimeTeacherBooking = false;
                                         //bookList.add(EnrolmentProcessController.fillBook(stdnt, lw, bookLessRecId, enrl, ConstantsClass.scheduledStatus, dt));
                                         System.debug('@@@@--->'+enr.Class__c+'#'+dt);
                                         String grpBookClsId;
@@ -1212,46 +1271,61 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
                                                 //Show error its booked
                                             }
                                         }
-                                        bookList.add(fillBook(bookLessRecId, enr, ConstantsClass.scheduledStatus, bookType, dt, grpBookClsId));
-                                       
-                                         //Adding trial time during Aureus at home center
-                                        if(enr.Center__c == Label.Aureus_at_Home_Id){
-                                            String currDay =  DateTime.newInstance(dt, Time.newInstance(0, 0, 0, 0)).format('E');
-                                            String key = enr.Teacher__c+'#'+enr.Center__c+'#'+currDay;
-                                            
-                                            if(tcrWrkHourMap.containsKey(key)){
-                                                Teacher_Working_Hour__c tchrworkH = tcrWrkHourMap.get(key); 
+                                       //3-Sep:2020:Start: added by nishi: if teacher Engagement_Type__c type is part-time then not creating fifth lesson booking 
+                                        if(string.isNotBlank(enr.Teacher__c) && string.isNotBlank(enr.Teacher__r.Engagement_Type__c) && 
+                                        enr.Teacher__r.Engagement_Type__c.equalsIgnoreCase('Part-Time') && dt.day() > 28){
+                                            isCreate5thCurrentMonthPartTimeTeacherBooking = true;
+                                        }
+                                        //3-Sep:2020:End  added by nishi: if teacher Engagement_Type__c type is part-time then not creating fifth  booking  we creating fifth_lesson booking
+                                        if(!isCreate5thCurrentMonthPartTimeTeacherBooking){
+                                            bookList.add(fillBook(bookLessRecId, enr, ConstantsClass.scheduledStatus, bookType, dt, grpBookClsId));
+                                        
+                                            //Adding trial time during Aureus at home center
+                                            if(enr.Center__c == Label.Aureus_at_Home_Id){
+                                                String currDay =  DateTime.newInstance(dt, Time.newInstance(0, 0, 0, 0)).format('E');
+                                                String key = enr.Teacher__c+'#'+enr.Center__c+'#'+currDay;
                                                 
-                                                Time tempT = enr.Lesson_Start_time__c;
-                                               /* if(String.isNotBlank(lw.lessonSlctSlot)){
-                                                    List<String> timeList = lw.lessonSlctSlot.split(':');
-                                                    tempT = Time.newInstance(Integer.valueOf(timeList[0]), Integer.valueOf(timeList[1]) , 0, 0); 
-                                                }*/
-                                                
-                                                if(tchrworkH.Start_Time__c != tempT){
-                                                   //Traveling booking Before
-                                                  /*  Booking__c befBook = EnrolmentProcessController.fillBook(stdnt, lw, bookLessRecId, enrl, '', dt);
-                                                    befBook.RecordTypeId  = bookLessRecId;
-                                                    befBook.Type__c       = ConstantsClass.busyBookingType;
-                                                    befBook.Status__c    = ConstantsClass.scheduledStatus;
-                                                    befBook.Category__c   = 'Travel';
-                                                    befBook.Remarks__c    = 'Travel time slot for home regular booking'; 
-                                                    //Added by Rajesh: 12th July 2019, To solve Start and Endtime as same issue
-                                                    befBook.End_Time__c   = befBook.Start_Time__c;
-                                                    befBook.Start_Time__c = befBook.Start_Time__c.addMinutes(-lw.cntrTravHour);
-                                                    bookList.add(befBook);
-                                                    */
-                                                    Booking__c befBook = fillBook(bookLessRecId, enr, ConstantsClass.scheduledStatus, bookType, dt, null);
-                                                    befBook.Type__c       = ConstantsClass.busyBookingType;
-                                                    befBook.Category__c   = 'Travel';
-                                                    befBook.Remarks__c    = 'Travel time slot for home regular booking';
-                                                    befBook.End_Time__c   = befBook.Start_Time__c;
-                                                    befBook.Start_Time__c = befBook.Start_Time__c.addMinutes(-30);
-                                                     
-                                                    bookList.add(befBook);
+                                                if(tcrWrkHourMap.containsKey(key)){
+                                                    Teacher_Working_Hour__c tchrworkH = tcrWrkHourMap.get(key); 
+                                                    
+                                                    Time tempT = enr.Lesson_Start_time__c;
+                                                /* if(String.isNotBlank(lw.lessonSlctSlot)){
+                                                        List<String> timeList = lw.lessonSlctSlot.split(':');
+                                                        tempT = Time.newInstance(Integer.valueOf(timeList[0]), Integer.valueOf(timeList[1]) , 0, 0); 
+                                                    }*/
+                                                    
+                                                    if(tchrworkH.Start_Time__c != tempT){
+                                                    //Traveling booking Before
+                                                    /*  Booking__c befBook = EnrolmentProcessController.fillBook(stdnt, lw, bookLessRecId, enrl, '', dt);
+                                                        befBook.RecordTypeId  = bookLessRecId;
+                                                        befBook.Type__c       = ConstantsClass.busyBookingType;
+                                                        befBook.Status__c    = ConstantsClass.scheduledStatus;
+                                                        befBook.Category__c   = 'Travel';
+                                                        befBook.Remarks__c    = 'Travel time slot for home regular booking'; 
+                                                        //Added by Rajesh: 12th July 2019, To solve Start and Endtime as same issue
+                                                        befBook.End_Time__c   = befBook.Start_Time__c;
+                                                        befBook.Start_Time__c = befBook.Start_Time__c.addMinutes(-lw.cntrTravHour);
+                                                        bookList.add(befBook);
+                                                        */
+                                                        Booking__c befBook = fillBook(bookLessRecId, enr, ConstantsClass.scheduledStatus, bookType, dt, null);
+                                                        befBook.Type__c       = ConstantsClass.busyBookingType;
+                                                        befBook.Category__c   = 'Travel';
+                                                        befBook.Remarks__c    = 'Travel time slot for home regular booking';
+                                                        befBook.End_Time__c   = befBook.Start_Time__c;
+                                                        befBook.Start_Time__c = befBook.Start_Time__c.addMinutes(-30);
+                                                        
+                                                        bookList.add(befBook);
+                                                    }
                                                 }
+                                            }    
+                                        } else{
+                                            if(!isLinkGrpBookClsId){
+                                                //Added by nishi,  4th Sept, 5th lesson booking
+                                                Fifth_Lesson__c fifLes = fillFifthLesson(enr, dt);
+                                                fifLes.Remarks__c = remStr; 
+                                                fifthLsnList.add(fifLes);
                                             }
-                                        }                                                
+                                        }                                           
                                     }else{
                                         Boolean isCreate5thPlaceBooking = false;
                                         if(currLesDt == null)
@@ -1452,7 +1526,7 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
                                     //commented by Rajesh: 23rd Oct 2019. instead of lesson date we need to put invoice created date for the registration fees  
                                     //invLnItm.Month__c     =  enr.Lessons_Start_Date__c;
                                     invLnItm.Month__c     =  System.today();
-                                    if(fm.regiFeesDis> 0)
+                                    if(fm.regiFeesDis > 0)
                                         invLnItm.Discount_Amount__c = BillingUtility.roundOffAmount(fm.regiFeesDis); 
                                     
                                     //Added by Rajesh on 21st oct 2019. calcuate individual gst amount for the line items
@@ -1474,7 +1548,8 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
                                     invLnItm.Month__c     =  enr.Lessons_Start_Date__c;
                                     invLineItmList.add(invLnItm);
                                 }
-                                 if(fm.refrelDiscount > 0){
+                                       
+if(fm.refrelDiscount > 0){
                                      //@Juneid 06 Aug 2020, Filling invoice line Item for Reffrel Discount
                                      //String refDisc = ConstantsClass.refrelDiscount;
                                      String refDiscRemark = fm.refrelDiscountName;  
@@ -1503,8 +1578,26 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
                                      cutomerPayment.Payment_Amount__c = fm.refrelDiscount;// Payment Amount
                                      customerPaymentList.add(cutomerPayment);
                                  }
-                                   //-- End Invoice line item filling
-                             }
+                                 //@Juneid 18 Aug,2020,Invoice line Item for Facililty Fee
+                                 /*if(fm.facilityFee > 0){
+                                     String facilityFeeRemark = ConstantsClass.facilityFee;
+                                       // Decimal amount = fm.facilityFee > 0 ? BillingUtility.roundOffAmount(fm.facilityFee) : 0;
+                                     Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.facilityFee), facilityFeeRemark, enr.Teacher__c);
+                                     invLnItm.Package__c   = enr.Package__c;
+                                     invLnItm.Invoice__r   = inv;
+                                     invLnItm.Enrolment__c = enr.Id;
+                                     invLnItm.Subscription_Line_Item__r = subLItm;
+                                     invLnItm.Is_Deposit__c = false;
+                                     invLnItm.Month__c     =  enr.Lessons_Start_Date__c;
+                                     facilityFeesGst +=fm.facilityGst;
+                                     system.debug('facilityFeesGst-->'+facilityFeesGst);
+                                     fm.facilityGst = fm.facilityGst;
+                                       //facilityFeesGst = BillingUtility.roundOffAmount(Double.valueOf(amount) * (enr.Center__r.Country__r.Tax_Rate__c / 100));
+                                      invLnItm.GST_Amount__c = fm.facilityGst;
+                                     invLineItmList.add(invLnItm);
+                                 }*/
+                                //-- End Invoice line item filling
+                            }
                         }
                         if(enrolmentList.size() > 0){
                             update enrolmentList;
@@ -1529,10 +1622,17 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
                             if(cntrPayMap.size() > 0){
                                 for(Payment__c pay: cntrPayMap.values()){
                                     pay.Invoice__c = pay.Invoice__r.id;
-                                    if(refreldiscountGst < 0)
-                                    pay.Payment_Amount__c += refreldiscountGst;
+                                    //@juneid 18 Aug 2020, Gst on Payment
+                                 /*  if(facilityFeesGst > 0){
+                                        system.debug('pay.Payment_Amount__c-in gst-->'+pay.Payment_Amount__c);
+                                        system.debug('facilityFeesGst--->'+facilityFeesGst);
+                                        
+                                        pay.Payment_Amount__c += facilityFeesGst;
+                                        system.debug('pay.Payment_Amount__c after gst -->'+pay.Payment_Amount__c);
+                                    }*/
+                                    
                                     pay.Payment_Amount__c = BillingUtility.roundOffAmount(pay.Payment_Amount__c);
-                                }    
+                                }
                                 insert cntrPayMap.values(); 
                             }
                         
@@ -1587,13 +1687,11 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
                                                                    RecordtypeId, RecordType.Name, Category__c, Appointment_Day__c 
                                                             FROM Booking__c 
                                                             WHERE Id IN: bookList];
-                            system.debug('bookingList'+bookingList);
                             List<Fifth_Lesson__c> fifthLsnTempList = [SELECT Id, Name, Center__c, Booking_Date__c, Teacher_Account__c, Package__c, 
                                                                            Start_Time__c, Student__c, Student__r.Name, Student__r.Parent__c,Student__r.PersonContactId,
                                                                            Student__r.Parent__r.PersonContactId, End_Time__c, Enrolment__c, Center__r.Location__c
                                                                       FROM Fifth_Lesson__c 
                                                                       WHERE Id IN: fifthLsnList];
-                           system.debug('fifthLsnTempList'+fifthLsnTempList);
                             for(Booking__c b: bookingList){
                                 if(b.Booking_Date__c >= b.Enrolment__r.Lessons_Start_Date__c){
                                     List<Booking__c> bList = new List<Booking__c>();
@@ -1616,8 +1714,6 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
                                     tchrTempSet.add(b.Teacher_Account__c);
                                 }
                             }
-                            system.debug('tchrTempSet'+tchrTempSet);
-                            system.debug('bookingMap'+bookingMap);
                             for(Fifth_Lesson__c f: fifthLsnTempList){
                                 List<Fifth_Lesson__c> fifthLesnList = new List<Fifth_Lesson__c>();
                                 
@@ -1638,8 +1734,6 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
                                 
                                 tchrTempSet.add(f.Teacher_Account__c);
                             }
-                            system.debug('tchrTempSet'+tchrTempSet);
-                            system.debug('bookingMap'+bookingMap);
                             Set<Id> canBookIds = new Set<Id>();
                             for(Leave_Request__c lveReq: [SELECT Id, Name, Leave_Type__c, Employee__c, Leave_Start_Date__c, Leave_End_Date__c 
                                                           FROM Leave_Request__c 
@@ -1720,7 +1814,8 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
                             //Jatin: 6-Mar-2020: Start: For  not to Filter out the Camp Placeholder in enrolment Process 
                             campBookingCancelProcess(enrolmentTeacherIds,enrolmentCenterIds,bookingMap,fifthLessMap,canBookIds);
                             //Jatin: 6-Mar-2020: End: For  not to Filter out the Camp Placeholder in enrolment Process 
-                            PageReference pageRef = new PageReference('/apex/thankyoupage_ipad');
+                            //@Juneid 22 Aug 20202 , Passing organization to next page as per page filter
+                            PageReference pageRef = new PageReference('/apex/thankyoupage_ipad?&isOssia='+isOssia);
                             
                             Set<String> invIds = new Set<String>();
                             Integer invCounter = 1;
@@ -1881,12 +1976,12 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
                                                         }
                                                     }
                                                 }
-        system.debug('campCancellationList'+campCancellationList);
+                                                    
         if(campCancellationList.size() > 0){
             update campCancellationList;
             campBookingsCancellationProcess(campCancellationList);
         }
-        system.debug('campFifthLsnCanList'+campFifthLsnCanList);
+                                                    
         if(campFifthLsnCanList.size() > 0){
             createPlaceholderForCampFifthLsn(campFifthLsnCanList);
         }
@@ -1917,7 +2012,13 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
         Set<Id> csIds = new Set<Id>();
         for(Case c : caseList)
             csIds.add(c.Id);
-        AureusUtility.sendCaseEmail(csIds);    
+        //@Juneid 26 Aug 2020, Org wise Email
+        if(caseList[0].Centre_Name__r.Organisation__r.name  == Label.Ossia_Organisation_Name) {
+            AureusUtility.sendOssiaCaseEmail(csIds);
+        }else{
+               AureusUtility.sendCaseEmail(csIds);    
+        }
+     
     }
     // added by jatin: 6Mar-2020: for cancel booking and create placeholder for camp process
     public static void campBookingsCancellationProcess(List<Booking__c> bookingList){
@@ -1930,7 +2031,13 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
          Set<Id> csIds = new Set<Id>();
          for(Case c : caseList)
              csIds.add(c.Id);
-         AureusUtility.sendCaseEmail(csIds);    
+          //@Juneid 26 Aug 2020, Org wise Email
+        if(caseList[0].Centre_Name__r.Organisation__r.name  == Label.Ossia_Organisation_Name) {
+            AureusUtility.sendOssiaCaseEmail(csIds);
+        }else{
+               AureusUtility.sendCaseEmail(csIds);    
+        }
+         //AureusUtility.sendCaseEmail(csIds);    
      }
 // added by jatin: 6Mar-2020: for add  placeholder booking for camp process
      private static List<Booking__c> createCampPlaceholder(List<Booking__c> bookingObjList){
@@ -2389,9 +2496,15 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
         //return;
     }
     
-      private static void sendEmail(List<Enrolment__c> enrListTemp){
-        
-        List<EmailTemplate> templateList =  [Select Id,name,developerName from EmailTemplate where developerName ='Send_Pending_Enrolment_Link_Email' limit 1];
+    private  void sendEmail(List<Enrolment__c> enrListTemp){
+         List<EmailTemplate> templateList =  new List<EmailTemplate>();
+                //@Juneid 26 Aaug 2020, Orgnization wise templates
+                if(isOssia){
+                    templateList = [Select Id,name,developerName from EmailTemplate where developerName =:'Ossia_Send_Pending_Enrolment_Link_Email']; 
+                }else{
+                    templateList =  [Select Id,name,developerName from EmailTemplate where developerName ='Send_Pending_Enrolment_Link_Email' limit 1];
+                }
+        //List<EmailTemplate> templateList =  [Select Id,name,developerName from EmailTemplate where developerName ='Send_Pending_Enrolment_Link_Email' limit 1];
         List<Messaging.SingleEmailMessage> emailList = new List<Messaging.SingleEmailMessage>();
         
         if(enrListTemp.size() > 0 && templateList.size() > 0){
@@ -2594,7 +2707,7 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
         
         return fifthLesn;
     }
-    
+     
     //Juneid 10 Aug method to ger Refrrel discount Country Wise
     private List<Referral_Discount__c>referreldiscounts(String countryName){
         
@@ -2625,7 +2738,14 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
             if(enrol.Referred_by__c !=Null && String.isNotBlank(enrol.Referral_code_used__c)){
                 sendMobileNotification(enrol);
                 List<Messaging.SingleEmailMessage> emailList = new List<Messaging.SingleEmailMessage>();
-                List<EmailTemplate> emailTemplates =  [Select Id,name,developerName from EmailTemplate where developerName =:'Send_Referral_Enrollment_Details']; 
+                List<EmailTemplate> emailTemplates =  new List<EmailTemplate>();
+                //@Juneid 26 Aaug 2020, Orgnization wise templates
+                if(isOssia){
+                    emailTemplates = [Select Id,name,developerName from EmailTemplate where developerName =:'Ossia_Send_Referral_Enrollment_Details']; 
+                }else{
+                    emailTemplates =  [Select Id,name,developerName from EmailTemplate where developerName =:'Send_Referral_Enrollment_Details']; 
+                }
+                
                 if(emailTemplates.size() > 0){
                     Map<String,OrgWideEmailAddress> mapOfOrgWide = new Map<String,OrgWideEmailAddress>();                    
                     for(OrgWideEmailAddress objAddress : [SELECT Address, DisplayName, Id FROM OrgWideEmailAddress])
@@ -2647,7 +2767,7 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
             }
         }
     }
-    //@Juneid 10 Aug 2020, This method is use to send a notification on Mobile app 
+    //@Juneid 10 Aug 2020, This method is used to send a notification on Mobile app 
     Private void sendMobileNotification(Enrolment__c enrolObj ){
         String tittle = enrolObj.Referred_by__r.name+' has enrolled using your referral link!';
         String bodyMsg = enrolObj.Referrer_discount_amount__c+' has been credited to your Aureus account';
@@ -2678,7 +2798,6 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
             this.feeModelObj = feeModelObj;
         }
     }
-    
        
     public Class AccountDetails{
         
@@ -2701,16 +2820,17 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
         
     }
     
-    
     public class FeeModel{
          //Fee calculation variables
         public Decimal depFees{get;set;}
         public Decimal prgFees{get;set;}
         public Decimal pkgFeesPromtnalDis{get;set;}
         public Decimal regiFees{get;set;}
-        public Decimal regiFeesDis{get;set;}
-        //@Juneid 05 Aug 2020,Use For Refrel Discount
+        public Decimal regiFeesDis{get;set;}      
+ //@Juneid 05 Aug 2020,Use For Refrel Discount
         public Decimal refrelDiscount{get;set;}
+      //  public Decimal facilityFee{get;set;}//@Juneid 18 Aug 2020, Facility fee
+        //public Decimal facilityGst{get;set;}//@Juneid 18 Aug, 2020, For facility GSt 
         
         Decimal  selPckMonthFees;
         Decimal  totAmt;
@@ -2732,6 +2852,7 @@ fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
             actPkgFee = actDiscount= 0;
             //Juneid 05 Aug 2020
             refrelDiscount=0;
+           // facilityGst = 0;
             refrelDiscountName ='';
         }
     }

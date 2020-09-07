@@ -166,7 +166,7 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
         //@Jatin on 20th Nov 2019 to apply tax on discount...
         Map<String, Account> mapOfParent = new Map<String, Account>();
         for(Invoice__c objInv : [SELECT Id,Parent_Account__c, Parent_Account__r.Centre_Name__r.Country__r.Tax_Rate__c, 
-                                Total_Amount__c
+                                Total_Amount__c,Parent_Account__r.Centre_Name__r.Organisation__r.Tax_Rate__c
                                 FROM Invoice__c WHERE Id IN : setOfInvIds]){
             mapOfParentInv.put(objInv.parent_Account__c, objInv);
             mapOfParent.put(objInv.parent_Account__c, objInv.parent_Account__r);
@@ -202,13 +202,12 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
 
                 //@Jatin on 20th Nov 2019 to apply tax on discount invoice line item...
                 Decimal taxAmount  = 0;
-
                 if(mapOfParent.containsKey(parentId) && String.isNotBlank(mapOfParent.get(parentId).Centre_Name__r.Country__c) && 
                     mapOfParent.get(parentId).Centre_Name__r.Country__r.Tax_Rate__c != NULL && 
                     mapOfParent.get(parentId).Centre_Name__r.Country__r.Tax_Rate__c > 0){
                         taxAmount = (roundOffAmount((-1*discount.Discount_Amount__c)) * mapOfParent.get(parentId).Centre_Name__r.Country__r.Tax_Rate__c) / 100;
                 }
-
+               
                 Invoice_Line_Item__c discountItem = fillInvLnItm(invId,null,null, roundOffAmount(-1*discount.Discount_Amount__c), remarks,'');
                 discountItem.Month__c = invDate;
                 
@@ -805,6 +804,14 @@ List<Task> listOftask = new List<Task>();
         sc.statusCode = statusCode;
         return sc;
     }
+    //@Juneid 19 Aug 2020, This method is use for Create charge on the basis of Organisation
+    public static stripeCharge createChargeForCustomer(string customerId,Decimal amount,string organisationId){
+         BillingUtility.stripeCharge stripeChrg = new BillingUtility.stripeCharge(); 
+        List<Organisation__c> orgnizationList = [SELECT Id,name,Country__r.Currency_Code__c,Stripe_Publishable_Key__c,Stripe_Secret_Key__c,Stripe_Base_Url__c FROM Organisation__c WHERE Id =:organisationId];
+        if(!orgnizationList.isEmpty())
+            stripeChrg = createChargeForCustomer(customerId, amount, orgnizationList[0].Country__r.Currency_Code__c, orgnizationList[0].Stripe_Base_Url__c, orgnizationList[0].Stripe_Publishable_Key__c);
+        return stripeChrg;
+    }
     
     // call this method to take payment from customer when you have invoice number.
     public static stripeCharge createChargeForCustomerWithInvoice(string customerId,Decimal amount,string currencyCode,String invoiceName,String baseUrl,String apiKey){
@@ -1059,7 +1066,6 @@ List<Task> listOftask = new List<Task>();
             noOfLessInCurrMonth = noOfLessInCurrMonth+1;
             tempDt = tempDt.addDays(7);
         }
-        
         Decimal packFee = unitFees * noOfLessInCurrMonth;
         system.debug('packFee'+packFee);
         return packFee;
@@ -1177,9 +1183,11 @@ List<Task> listOftask = new List<Task>();
        // commented by :18-dec:2019 jatin for manage regular and group lesson bookings available mins 
        //Map<String, Decimal> mapOfParentAggregate = new Map<String, Decimal>();
         Map<String, String> mapOfParentAggregate = new Map<String, String>();
+        Map<String, String> mapOfEnrolmentAggregate = new Map<String, String>();
         Map<String, String> mapOfStudentAndParent = new Map<String,String>();
         Map<String,String> mapOfSelfParent = new Map<String,String>();
         List<Account> listOfAccountsToUpdate = new List<Account>();
+        List<Enrolment__C > listOfEnrolmentToUpdate = new List<Enrolment__C>();
         Set<String> setOfAccIds = new Set<String>();
         for(Account objAcc : [SELECT Id,Parent__c, Also_A_Student__c FROM Account WHERE Id In : setOfStudentIds OR 
                                 Parent__c IN : setOfStudentIds ]){
@@ -1202,59 +1210,109 @@ List<Task> listOftask = new List<Task>();
             }
         }
         system.debug('@@@setOfAccIds'+setOfAccIds);
-        for( AggregateResult agrResult : [SELECT SUM(Available_Make_up_Units__c) creditSum, Student__c FROM Booking__c 
+        for( AggregateResult agrResult : [SELECT SUM(Available_Make_up_Units__c) creditSum, Student__c,Enrolment__c enrollId,Center__r.Organisation__r.Name orgName FROM Booking__c 
                                         WHERE Student__c IN :setOfAccIds  
                                         AND RecordTypeId =:lessonTypeId   
                                         AND Makeup_Given__c = 'true' 
                                         AND Type__c IN ('Regular','Ad-hoc') 
                                         AND Make_up_Expiry_Date__c >= TODAY /*AND Available_Make_up_Units__c >=0*/
-                                        GROUP By Student__c]){
+                                        GROUP By Student__c,Enrolment__c,Center__r.Organisation__r.Name]){
             Decimal creditSum = (Decimal)agrResult.get('creditSum');
             String studentId = (String) agrResult.get('Student__c');
-            String parentId = mapOfStudentAndParent.get(studentId);
-            if(String.isBlank(parentId)){
-                parentId  = mapOfSelfParent.get(studentId);
+           // added by Nishi: 20-Jul-2020:Start: for Ossia student requirement :
+            // Makeup minutes will needs to be managed at enrolment level instead of parent level
+            String orgName = (String) agrResult.get('orgName');
+            system.debug('orgName'+orgName);
+            String enrollId = (String) agrResult.get('enrollId');
+            if(String.isNotBlank(enrollId) &&String.isNotBlank(orgName) &&  orgName.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                string availableMakeupMins =mapOfEnrolmentAggregate.containsKey(enrollId)
+                                        ? mapOfEnrolmentAggregate.get(enrollId) : '0-0';
+                    Decimal sumToAddAvailableMakeupMins = decimal.valueOf(availableMakeupMins.split('-')[0]);
+                    if(creditSum!= NULL){
+                        sumToAddAvailableMakeupMins += creditSum;
+                    }
+                    availableMakeupMins = sumToAddAvailableMakeupMins+'-'+ availableMakeupMins.split('-')[1];
+                    mapOfEnrolmentAggregate.put(enrollId, availableMakeupMins);
+                    system.debug('mapOfEnrolmentAggregate'+mapOfEnrolmentAggregate);
             }
-            if(String.isNotBlank(parentId)){
-                string availableMakeupMins =mapOfParentAggregate.containsKey(parentId)
-                                    ? mapOfParentAggregate.get(parentId) : '0-0';
-                Decimal sumToAddAvailableMakeupMins = decimal.valueOf(availableMakeupMins.split('-')[0]);
-                if(creditSum!= NULL){
-                    sumToAddAvailableMakeupMins += creditSum;
+            // added by Nishi: 20-Jul-2020:End: for Ossia student requirement 
+            else{
+                String parentId = mapOfStudentAndParent.get(studentId);
+                if(String.isBlank(parentId)){
+                    parentId  = mapOfSelfParent.get(studentId);
                 }
-                availableMakeupMins = sumToAddAvailableMakeupMins+'-'+ availableMakeupMins.split('-')[1];
-                mapOfParentAggregate.put(parentId, availableMakeupMins);
-            }   
+                if(String.isNotBlank(parentId)){
+                    string availableMakeupMins =mapOfParentAggregate.containsKey(parentId)
+                                        ? mapOfParentAggregate.get(parentId) : '0-0';
+                    Decimal sumToAddAvailableMakeupMins = decimal.valueOf(availableMakeupMins.split('-')[0]);
+                    if(creditSum!= NULL){
+                        sumToAddAvailableMakeupMins += creditSum;
+                    }
+                    availableMakeupMins = sumToAddAvailableMakeupMins+'-'+ availableMakeupMins.split('-')[1];
+                    mapOfParentAggregate.put(parentId, availableMakeupMins);
+                }   
+            }
         }
         System.debug('@@@mapOfParentAggregate'+mapOfParentAggregate);
-         // 20-dec-2019 : added by jatin for Add bookingTypes group lesson for calculate Available_Make_up_Units_for group lesson
+        // 20-dec-2019 : added by jatin for Add bookingTypes group lesson for calculate Available_Make_up_Units_for group lesson
         Set<String> bookingGroupTypes = new Set<String>{ConstantsClass.groupLessonTypeBooking};
-        for( AggregateResult agrResult : [SELECT SUM(Available_Make_up_Units__c) creditSum, Student__c FROM Booking__c 
+        for( AggregateResult agrResult : [SELECT SUM(Available_Make_up_Units__c) creditSum, Student__c, Enrolment__c enrollId,
+                                        Center__r.Organisation__r.Name orgName FROM Booking__c 
                                         WHERE Student__c IN :setOfAccIds  
                                         AND RecordTypeId =:grouplessonTypeId AND 
                                         Makeup_Given__c = 'true' 
                                         AND Type__c IN : bookingGroupTypes
                                         AND Make_up_Expiry_Date__c >= TODAY /*AND Available_Make_up_Units__c >=0*/
-                                        GROUP By Student__c]){
+                                        GROUP By Student__c,Enrolment__c,Center__r.Organisation__r.Name]){
             Decimal creditSum = (Decimal)agrResult.get('creditSum');
             String studentId = (String) agrResult.get('Student__c');
-            String parentId = mapOfStudentAndParent.get(studentId);
-            if(String.isBlank(parentId)){
-                parentId  = mapOfSelfParent.get(studentId);
-            }
-            if(String.isNotBlank(parentId)){
-                string availableMakeupMins =mapOfParentAggregate.containsKey(parentId)
-                                    ? mapOfParentAggregate.get(parentId) : '0-0';
-                Decimal sumToAddGroupLessonAvailableMakeupMins = decimal.valueOf(availableMakeupMins.split('-')[1]);
-                if(creditSum!= NULL){
-                    sumToAddGroupLessonAvailableMakeupMins += creditSum;
+            // added by Nishi: 21-Aug-2020:Start: for Ossia student requirement :
+            // Makeup minutes will needs to be managed at enrolment level instead of parent level
+            String orgName = (String) agrResult.get('orgName');
+            system.debug('orgName'+orgName);
+            String enrollId = (String) agrResult.get('enrollId');
+            if(String.isNotBlank(enrollId) &&String.isNotBlank(orgName) &&  orgName.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                string availableMakeupMins =mapOfEnrolmentAggregate.containsKey(enrollId)
+                                        ? mapOfEnrolmentAggregate.get(enrollId) : '0-0';
+                    Decimal sumToAddAvailableMakeupMins = decimal.valueOf(availableMakeupMins.split('-')[0]);
+                    if(creditSum!= NULL){
+                        sumToAddAvailableMakeupMins += creditSum;
+                    }
+                    availableMakeupMins = sumToAddAvailableMakeupMins+'-'+ availableMakeupMins.split('-')[1];
+                    mapOfEnrolmentAggregate.put(enrollId, availableMakeupMins);
+                    system.debug('mapOfEnrolmentAggregate'+mapOfEnrolmentAggregate);
+            }else{
+                // added by Nishi: 21-Aug-2020:End: for Ossia student requirement
+                String parentId = mapOfStudentAndParent.get(studentId);
+                if(String.isBlank(parentId)){
+                    parentId  = mapOfSelfParent.get(studentId);
                 }
-                availableMakeupMins = availableMakeupMins.split('-')[0]+'-'+sumToAddGroupLessonAvailableMakeupMins;
-                mapOfParentAggregate.put(parentId, availableMakeupMins);
+                if(String.isNotBlank(parentId)){
+                    string availableMakeupMins =mapOfParentAggregate.containsKey(parentId)
+                                        ? mapOfParentAggregate.get(parentId) : '0-0';
+                    Decimal sumToAddGroupLessonAvailableMakeupMins = decimal.valueOf(availableMakeupMins.split('-')[1]);
+                    if(creditSum!= NULL){
+                        sumToAddGroupLessonAvailableMakeupMins += creditSum;
+                    }
+                    availableMakeupMins = availableMakeupMins.split('-')[0]+'-'+sumToAddGroupLessonAvailableMakeupMins;
+                    mapOfParentAggregate.put(parentId, availableMakeupMins);
+                }
             }
         }
-        System.debug('@@@mapOfParentAggregate'+mapOfParentAggregate);
-        
+        // added by Nishi: 20-Jul-2020:Start: for Ossia student requirement :
+        // Makeup minutes will needs to be managed at enrolment level instead of parent level
+        System.debug('@@@mapOfParentAggregate'+listOfEnrolmentToUpdate);
+        for(String enrolmentId : mapOfEnrolmentAggregate.keySet()){
+            string availableMakeupMins = mapOfEnrolmentAggregate.get(enrolmentId);
+            Enrolment__C objenrolment = new Enrolment__C(Id =enrolmentId, Available_Make_up_mins__c = decimal.valueOf(availableMakeupMins.split('-')[0]));
+            listOfEnrolmentToUpdate.add(objenrolment);
+        }
+        System.debug('@@@listOfEnrolmentToUpdate'+listOfEnrolmentToUpdate);
+        if(listOfEnrolmentToUpdate.size() > 0){
+            update listOfEnrolmentToUpdate;
+        }
+        // added by Nishi: 20-Jul-2020:END: for Ossia student
+
         for(String parentId : mapOfParentAggregate.keySet()){
             string availableMakeupMins = mapOfParentAggregate.get(parentId);
             Account objAcc = new Account(Id =parentId, Available_Make_up_Units__c = decimal.valueOf(availableMakeupMins.split('-')[0]),
@@ -1415,6 +1473,21 @@ List<Task> listOftask = new List<Task>();
         query+= ' AND Parent_Account__c IN :setOfParentIds order by Payment_Amount__c Desc';
         System.debug('Query '+query);
         return query;
+    }
+    
+    //@Juneid 19 Aug 2020, Organization wise stripe Caluclation
+    public static Map<String,Organisation__c> getOrganisationMap(String orgId){
+        if(String.isNotBlank(orgId)){
+            return new Map<String,Organisation__c>([SELECT Id, Name, Stripe_Secret_Key__c, Stripe_Publishable_Key__c, Stripe_Base_Url__c,country__r.Currency_Code__c,
+                                                    Tax_Rate__c,Student_Policies_Template_Id__c, Folder__c 
+                                               FROM Organisation__c 
+                                               WHERE Id=:orgId AND Stripe_Secret_Key__c!= NULL AND Stripe_Base_Url__c != NULL]);
+        }else{
+            return new Map<String,Organisation__c>([SELECT Id, Name, Stripe_Secret_Key__c, Stripe_Publishable_Key__c, Stripe_Base_Url__c,country__r.Currency_Code__c,
+                                                    Tax_Rate__c,Student_Policies_Template_Id__c, Folder__c 
+                                               FROM Organisation__c 
+                                               WHERE Stripe_Secret_Key__c!= NULL AND Stripe_Base_Url__c != NULL ]);
+        }                                     
     }
     public class RollupCreditMins{
         public string parentId;

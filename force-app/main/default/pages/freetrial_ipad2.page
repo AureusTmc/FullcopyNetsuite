@@ -139,6 +139,85 @@
             /*.hideInMobile{display:none;}*/
             }
             
+            <!--@Juneid 11 Aug 2020 , For Osia--->
+             .time-list .slds-radio__label__osia {
+            width: 100%;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            border: solid 1px #dcdcdc;
+            font-size: 19px;
+            background-color: #ffffff;
+            font-weight:bold;
+            
+            }
+            .time-list label.slds-radio__label__osia, .slds-radio_button__label__osia{
+            display: block !important;
+            width:100%;
+            padding:6px 8px;
+            border-radius:6px;
+            }
+            
+            .time-list .slds-radio_button__label__osia {text-align:center;}
+            .slds-radio [type="radio"]:checked + .slds-radio__label__osia{
+            background-color:#ed1c24;
+            color:#fff;
+            }
+            
+              .slds-radio--button [type="radio"]:checked + .slds-radio--button__label:focus, .slds-radio--button [type="radio"]:checked + .slds-radio--button__label:hover, .slds-radio--button [type="radio"]:checked + .slds-radio--faux:focus, .slds-radio--button [type="radio"]:checked + .slds-radio--faux:hover, .slds-radio--button [type="radio"]:checked + .slds-radio__label__osia:focus, .slds-radio--button [type="radio"]:checked + .slds-radio__label__osia:hover, .slds-radio--button [type="radio"]:checked + .slds-radio_faux:focus, .slds-radio--button [type="radio"]:checked + .slds-radio_faux:hover, .slds-radio--button [type="radio"]:checked ~ .slds-radio--faux:focus, .slds-radio--button [type="radio"]:checked ~ .slds-radio--faux:hover, .slds-radio--button [type="radio"]:checked ~ .slds-radio_faux:focus, .slds-radio--button [type="radio"]:checked ~ .slds-radio_faux:hover, .slds-radio_button [type="radio"]:checked + .slds-radio--button__label:focus, .slds-radio_button [type="radio"]:checked + .slds-radio--button__label:hover, .slds-radio_button [type="radio"]:checked + .slds-radio--faux:focus, .slds-radio_button [type="radio"]:checked + .slds-radio--faux:hover, .slds-radio_button [type="radio"]:checked + .slds-radio_button__label__osia:focus, .slds-radio_button [type="radio"]:checked + .slds-radio_button__label__osia:hover, .slds-radio_button [type="radio"]:checked + .slds-radio_faux:focus, .slds-radio_button [type="radio"]:checked + .slds-radio_faux:hover, .slds-radio_button [type="radio"]:checked ~ .slds-radio--faux:focus, .slds-radio_button [type="radio"]:checked ~ .slds-radio--faux:hover, .slds-radio_button [type="radio"]:checked ~ .slds-radio_faux:focus, .slds-radio_button [type="radio"]:checked ~ .slds-radio_faux:hover {
+                background-color: #ed1c24;
+            }
+            
+            .slds-radio--button [type="radio"]:checked + .slds-radio--button__label, .slds-radio--button [type="radio"]:checked + .slds-radio--faux, .slds-radio--button [type="radio"]:checked + .slds-radio__label__osia, .slds-radio--button [type="radio"]:checked + .slds-radio_faux, .slds-radio--button [type="radio"]:checked ~ .slds-radio--faux, .slds-radio--button [type="radio"]:checked ~ .slds-radio_faux, .slds-radio_button [type="radio"]:checked + .slds-radio--button__label, .slds-radio_button [type="radio"]:checked + .slds-radio--faux, .slds-radio_button [type="radio"]:checked + .slds-radio_button__label__osia, .slds-radio_button [type="radio"]:checked + .slds-radio_faux, .slds-radio_button [type="radio"]:checked ~ .slds-radio--faux, .slds-radio_button [type="radio"]:checked ~ .slds-radio_faux {
+            background-color: #ed1c24;
+            color:#fff;
+            box-shadow:none !important;
+            }
+             .slds-radio [type="radio"]:checked + .slds-radio__label__osia> .slds-form-element__label, .slds-radio [type="radio"]:checked .slds-radio__label__osia * {color:#fff !important;}
+            .slds-radio [type="radio"]:checked + .slds-radio--faux::after, 
+            .slds-radio [type="radio"]:checked + .slds-radio__label__osia  .slds-radio--faux::after,
+            .slds-radio [type="radio"]:checked + .slds-radio__label__osia  .slds-radio_faux::after, 
+            .slds-radio [type="radio"]:checked + .slds-radio_faux::after, 
+            .slds-radio [type="radio"]:checked ~ .slds-radio--faux::after, 
+            .slds-radio [type="radio"]:checked ~ .slds-radio_faux::after {
+                 background-color: #fff; border:2px solid #ed1c24 !important;
+                 width: .5rem;
+                height: .5rem;
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate3d(-50%,-50%,0);
+                border-radius: 50%;
+            } 
+            
+              
+            <!--Juneid-->
+            .btn-red, .btn-red:hover, .btn-red:focus {
+            background-color:#ed1c24;
+            color:#fff;
+            }
+            
+             .time-list span.slds-button__Osia.slds-radio_button__Osia {
+            width: 100%;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0), 0 2px 6px 0 rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            color: #ed1c24;
+            font-weight: bold;
+            }
+            <!--@Juneid 26 Aug 2020, Dot css after 
+            .slds-radio__label__Osia slds-p-around_medium slds-radio_faux::after {
+            width: .5rem;
+            height: .5rem;
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate3d(-50%,-50%,0);
+            border-radius: 50%;
+            background: #0070d2;
+            }-->
         </style>
         <script>
             $(document).ready(function() { 
@@ -165,11 +244,17 @@
                         }
                     }
                        
-                   if(isSuccess){
-                        $("#next_step3").addClass("btn-yellow").removeClass("btn-gray").css("pointer-events", "auto");  
-                   }else{
+                if(isSuccess){
+                    if({!org =='osia'})
+                        $("#next_step3").addClass("btn-red").removeClass("btn-gray").css("pointer-events", "auto"); 
+                    else
+                        $("#next_step3").addClass("btn-yellow").removeClass("btn-gray").css("pointer-events", "auto"); 
+                }else{
+                    if({!org =='osia'})
                         $("#next_step3").addClass("btn-gray").removeClass("btn-yellow").css("pointer-events", "none");
-                        } 
+                    else
+                        $("#next_step3").addClass("btn-gray").removeClass("btn-red").css("pointer-events", "none");
+                }  
               
               
             }
@@ -207,9 +292,9 @@
     </head>
     <body class="">
         <apex:outputPanel rendered="{!isSiteGuestUser}">     
-            <div  class="slds-p-around_medium" style="font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;">Aureus Academy Enrolment Process       
+            <div  class="slds-p-around_medium" style="{!iF(org =='osia','font-size:15px; background-color: #ed1c24; text-align:center; color:#fff; font-weight:bold;','font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;')}">{!IF(org =='osia','Ossia Enrolment Process','Aureus Academy Enrolment Process')}
             </div>
-            <p style="text-align:center;"><apex:image url="{!$Resource.Aureus_logo_png}" /></p>
+           <p style="text-align:center;"><apex:image url="{!iF(org =='osia',$Resource.Osia_Logo,$Resource.Aureus_logo_png)}" /></p>   
         </apex:outputPanel>  
         <apex:form >
             <apex:actionFunction name="setDurationForStu" action="{!processDuration}" reRender="noOfEnrPanel" status="spinner">
@@ -312,8 +397,9 @@
                                 <div class="time-list m-lg-right">
                                     <div class="slds-form-element__control">
                                         <span class="slds-radio active">
+                                               <!--Juneid 17 Aug 2020,Ossia Org Logic-->
                                             <input type="radio" id="radiolessonThirty{!stuIndex}" value="30"  onClick="setDuration('{!stuIndex}');" name="options{!stuIndex}" disabled="" checked="checked" />
-                                            <label class="slds-radio__label" for="radiolessonThirty{!stuIndex}">
+                                            <label class="{!IF(org =='osia','slds-radio__label__osia','slds-radio__label')}" for="radiolessonThirty{!stuIndex}">
                                                 <span class="slds-radio_faux"></span>
                                                 <span class="slds-form-element__label">30 min</span>
                                             </label>
@@ -326,8 +412,9 @@
                                     <div class="time-list">
                                         <div class="slds-form-element__control">
                                             <span class="slds-radio">
+                                                   <!--Juneid 17 Aug 2020,Ossia Org Logic-->
                                                 <input type="radio" id="radiolessonFourtyfive{!stuIndex}" value="45" onClick="setDuration('{!stuIndex}');" name="options{!stuIndex}" disabled="" checked="" />
-                                                <label class="slds-radio__label" for="radiolessonFourtyfive{!stuIndex}">
+                                                <label class="{!IF(org =='osia','slds-radio__label__osia','slds-radio__label')}" for="radiolessonFourtyfive{!stuIndex}">
                                                     <span class="slds-radio_faux"></span>
                                                     <span class="slds-form-element__label">45 min</span>
                                                 </label>
@@ -340,8 +427,9 @@
                                     <div class="time-list">
                                         <div class="slds-form-element__control">
                                             <span class="slds-radio">
+                                                <!--Juneid 17 Aug 2020,Ossia Org Logic-->
                                                 <input type="radio" id="radiolessonSixty{!stuIndex}" value="60" onClick="setDuration('{!stuIndex}');" name="options{!stuIndex}" disabled="" checked="" />
-                                                <label class="slds-radio__label" for="radiolessonSixty{!stuIndex}">
+                                                <label class="{!IF(org =='osia','slds-radio__label__osia','slds-radio__label')}" for="radiolessonSixty{!stuIndex}">
                                                     <span class="slds-radio_faux"></span>
                                                     <span class="slds-form-element__label">60 min</span>
                                                 </label>
@@ -352,7 +440,7 @@
                             </apex:outputPanel>
                         </div>
                         
-                        <h3 class="slds-p-bottom_x-large" style="font-weight:bold; color:#ffbf2f; display:block; text-align:center; font-size: 1.2em;">
+                        <h3 class="slds-p-bottom_x-large" style="{!IF(org =='osia' == true,'font-weight:bold; color:#ed1c24; display:block; text-align:center; font-size: 1.2em;','font-weight:bold; color:#ffbf2f; display:block; text-align:center; font-size: 1.2em;')}">
                             <a href="#" onclick="preWeek('{!stuIndex}');"><span style="float:left; color:#000;" class="fa fa-angle-left"></span></a>
                             <apex:outputText value="{0, date, d MMMM}">
                                 <apex:param value="{!enrTrial.calStartDate}" /> 
@@ -403,9 +491,9 @@
                                         </p> 
                                           -->                                      
                                         <apex:repeat value="{!enrTrial.timeSlotMap[dateKey]}" var="tslot">
-                                            <span class="slds-button slds-radio_button slds-m-bottom_medium">        
+                                            <span class="slds-button slds-radio_button slds-m-bottom_medium" style="{!IF(org =='osia','color: #ed1c24;','')}">        
                                                 <input id="{!stuIndex}{!dateKey}{!tslot}" name="timeSlotRadio{!stuIndex}" onClick="setTimeSlot('{!stuIndex}', '{!enrTrial.timeSlotStrMap[dateKey]}');" type="radio" value="{!tslot}" onchange="enablebtn();" />
-                                                <label class="slds-radio_button__label" for="{!stuIndex}{!dateKey}{!tslot}">
+                                                <label class="{!IF(org =='osia','slds-radio_button__label__osia','slds-radio_button__label')}" for="{!stuIndex}{!dateKey}{!tslot}">
                                                    <!-- <span class="slds-radio_faux">{!tslot}</span>-->
                                                     <apex:outputText value="{!RIGHT(tslot, LEN(tslot)-4)}" /> 
                                                 </label>

@@ -25,7 +25,8 @@ global class FifthLessonBefore6DaysBatch implements Database.Batchable<sObject>,
                                             Enrolment__r.Center__r.Country__r.Country_Name__c, Enrolment__r.Center__r.Country__r.Tax_Rate__c,
                                             Parent__r.Stripe_Customer_Id__c, 
                                             Package__r.Duration__c, Enrolment__r.Center__r.Name, Enrolment__r.package__r.Duration__c, Enrolment__r.Center__c, 
-                                            Enrolment__r.Lesson_Start_time__c, isActive__c, Duration__c, Booking_Date__c, Enrolment__r.Teacher__c 
+                                            Enrolment__r.Lesson_Start_time__c, isActive__c, Duration__c, Booking_Date__c, Enrolment__r.Teacher__c,
+                                            Enrolment__r.Teacher__r.Engagement_Type__c,Enrolment__r.Center__r.Organisation__r.Name,Enrolment__r.Available_Make_up_mins__c  //added by nishi: 3-Sep-2020: for check teacher type is part-time then we not creating bookings
                                             FROM Fifth_Lesson__c 
                                             WHERE IsActive__c = TRUE 
                                             AND (Booking_date__c = : fifthLessonDate 

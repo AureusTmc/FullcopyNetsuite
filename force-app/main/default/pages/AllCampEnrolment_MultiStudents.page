@@ -28,12 +28,27 @@
             background-color: #ffbf2f !important;
             color: white;
         }
-
+        
+         #pageHeader_ossia {
+            background-color: #ed1c24  !important;
+            color: white;
+        }
+        
+		
         .custom-Btn {
             background-color: #ffaa00 !important;
             color: white !important;
             cursor: default;
         }
+        <!--Juneid 28 Aug 2020 Ossia Css -->
+        
+        .custom-Btn_ossia {
+             background-color: #ed1c24 !important;
+        	color: white !important;
+        	cursor: default;
+        }
+        
+        
         .btn-block {
             display: block;
             width: 100%;
@@ -45,10 +60,26 @@
             border: 1px solid #ffaa00;
             cursor: default;
         }
+          <!--Juneid 28 Aug 2020 Ossia Css -->
+         .custom-Btn_ossia:hover {
+            color: #ed1c24 !important;
+            background-color: white !important;
+            border: 1px solid #ed1c24;
+            cursor: default;
+        }
 
         .custom-Btn:disabled {
-            background: rgba(255, 170, 0, 0.69) !important;
-            cursor: not-allowed;
+        background: rgba(255, 170, 0, 0.69) !important;
+        cursor: not-allowed;
+        }
+        .backgroundcolor_ossia {
+        background: #ed1c24  !important;
+        }
+        
+        .page_header_ossia {
+        background: #ed1c24 !important;
+        background-color: #ed1c24 !important;
+        color: white !important;
         }
     </style>
     <apex:form id="frm">
@@ -70,8 +101,9 @@
         </apex:actionStatus>
         <!--start: Show All camps according to Center Id-->
         <div class="centerDiv">
-            <div class="">
-                <div class="slds-page-header" id="pageHeader">
+            <div>
+                 <!--Juneid 28 Aug 2020 Ossia Css -->
+                <div class="slds-page-header" id="{!IF(isOssia,'pageHeader_ossia','pageHeader')}">
                     <div class="slds-page-header__row">
                         <div class="slds-page-header__col-title">
                             <div class="slds-media">
@@ -80,6 +112,7 @@
                                         <div class="slds-page-header__name-title">
                                             <h1>
                                                 <span class="slds-page-header__title slds-truncate" title="Camps Details">Current Active Camps</span>
+                                             
                                             </h1>
                                         </div>
                                     </div>
@@ -236,12 +269,13 @@
                                                     <footer>
                                                         <div class="slds-grid slds-grid_align-end">
                                                             <div class="slds-col">
-                                                                <button class="slds-button slds-button_neutral custom-Btn" id="{!objListCamp.id}" data-campId="{!objListCamp.id}" data-centerId="{!objListCamp.Centre__r.id}" data-CenterName="{!objListCamp.Centre__r.Name}" data-countryCode="{!objListCamp.Centre__r.Country__r.name}" onclick="getCampId('{!objListCamp.id}'); return false;">
+                                                                  <!--Juneid 28 Aug 2020 Ossia Css -->
+                                                                <button class="slds-button slds-button_neutral {!IF(isOssia,'custom-Btn_ossia','custom-Btn' )}" id="{!objListCamp.id}" data-campId="{!objListCamp.id}" data-centerId="{!objListCamp.Centre__r.id}" data-CenterName="{!objListCamp.Centre__r.Name}" data-countryCode="{!objListCamp.Centre__r.Country__r.name}" onclick="getCampId('{!objListCamp.id}'); return false;">
                                                                 Enrol Now
                                                                 </button>
                                                             </div>
                                                         </div>
-                                                            
+                         
                                                     </footer>
                                                 </article>
                                             </div>
@@ -303,13 +337,15 @@
                 </apex:outputPanel>
             </apex:outputPanel>
             <!--end: student fill our details -->
-        </div>
+        </div>               <!-- Arpit/Junied 27 Aug 2020-->
         <div class="slds-docked-form-footer slds-hide" id="footerDiv">
             <!--commented by jatin: 4 mar,2020 according to camp feedbacks show "Add Student" button should be larger below the selection of camp dates
                 <button type="button" class="slds-hide slds-button slds-button_neutral custom-Btn" onclick="addNewStudentDetail();" id="addStudentandPackageDetails">Add Student</button>
-            --><button type="button" class="slds-button slds-button_neutral custom-Btn " onclick="clickPreviousBtn();" id="previousbtn">PREVIOUS</button>
-            <button type="button" class=" slds-button slds-button_neutral custom-Btn" onclick="clickNextBtn();" id="nextbtn">NEXT</button>
-            <button type="button" class="slds-hide slds-button slds-button_neutral custom-Btn" onclick="fetchStudentDetails();" id="saveNewStudentbtn">NEXT</button>
+            -->
+            <!--@Juneid 28 aug 2020, Orgnization wise css -->
+            <button type="button" class="slds-button slds-button_neutral {!IF(isOssia,'custom-Btn_ossia','custom-Btn' )} " onclick="clickPreviousBtn();" id="previousbtn">PREVIOUS</button>
+            <button type="button" class=" slds-button slds-button_neutral {!IF(isOssia,'custom-Btn_ossia','custom-Btn' )}" onclick="clickNextBtn();" id="nextbtn">NEXT</button>
+            <button type="button" class="slds-hide slds-button slds-button_neutral {!IF(isOssia,'custom-Btn_ossia','custom-Btn' )}" onclick="fetchStudentDetails();" id="saveNewStudentbtn">NEXT</button>
         </div>
     </apex:form>
     <script>

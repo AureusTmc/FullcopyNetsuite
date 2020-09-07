@@ -45,7 +45,6 @@
                 text-align: center;
                 font-weight: bold;
                 white-space: nowrap;
-                background-color:#f6901e;
                 color:white;
                 font-size:15px;
                 letter-spacing: 1px;
@@ -178,16 +177,40 @@
             font-size: small;
             }
             <!-- By Ravi -->
+            <!-- By Bhawna on 19-8-20 -->
+             .color_ossia{
+                color:#ed1c24;
+            }
+            
+            .backgroundcolor_ossia{
+             background-color:#ed1c24;
+            }
+            
+            .backgroundcolor{
+             background-color:#f6901e;
+            }
+            
+            
         </style>
     </head>
     <body style="margin:0px;padding:3%;padding-top:20px">
         <apex:pageMessages ></apex:pageMessages>
         <table class="header" style="width:100%" cellpadding="0" cellspacing="0" >
             <tr>
-                <td style="padding-bottom: 35px;width:50%"><apex:image url="{!$Resource.Aureus_logo}" /></td>
+                <td style="padding-bottom: 35px;width:50%">
+                <!-- added by nishi: 18-aug-2020: for if center is Ossia then we show ossiaLogo otherwise Aureus logo--> 
+                    <apex:outputPanel rendered="{!If(isOssia, true, false)}">
+                        <apex:image url="{!$Resource.Osia_Logo}" />
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!If(isOssia, FALSE, TRUE)}">
+                        <apex:image url="{!$Resource.Aureus_logo}" />
+                    </apex:outputPanel>
+                    <!-- added by nishi: 18-aug-2020: for if center is Ossia then we show ossiaLogo otherwise Aureus logo-->
+                 </td>
+
                 <td>
                     <table width="100%">
-                        <tr><td colspan="2" class="invoiceNo"><span style="font-size:18px;color:gray;"><b>TAX INVOICE</b></span> <span class="color">#{!invoice.Name}</span></td></tr>
+                        <tr><td colspan="2" class="invoiceNo"><span style="font-size:18px;color:gray;"><b>TAX INVOICE</b></span> <span class="{!IF(isOssia==true,'color_ossia','color')}">#{!invoice.Name}</span></td></tr>
                         <tr>
                             <td class="issueDate lightgray">Issue Date <Br/> <b>
                                 <apex:outputText value="{0,date,EEE, MMM dd yyyy}">
@@ -232,7 +255,7 @@
             <tr>
                 <td>
                     <div class="invoice-To">
-                        <b class="color">Invoice To</b><br/>
+                        <b class="{!IF(isOssia==true,'color_ossia','color')}">Invoice To</b><br/>
                         <b>{!invoice.Parent_Account__r.Name}</b><br/>
                         <b>A:</b><span class="grayColor">{!invoice.Parent_Account__r.Billingstreet} {!invoice.Parent_Account__r.BillingCountry} {!invoice.Parent_Account__r.BillingPostalcode}</span><br/>
                         <b>E:</b><span class="grayColor">{!invoice.Parent_Account__r.personEmail} <b>P:</b>{!invoice.Parent_Account__r.personMobilePhone}</span><br/>
@@ -240,7 +263,7 @@
                 </td>
                 <td>
                     <div class="invoice-from">
-                        <b class="color">Invoice From</b><br/>
+                        <b class="{!IF(isOssia==true,'color_ossia','color')}">Invoice From</b><br/>
                         <b>{!center.name}</b><br/>
                         <b>A:</b><span class="grayColor">{!center.address}</span><br/>
                         <!-- added on 14 july 2020 hardcoded '(Aureus Group Pte. Ltd.)'-->
@@ -262,18 +285,15 @@
                 <th style="width: 50%;background-color: lightgrey;height: 100%;position: relative;padding: 12px; ">
                     <span style="position: inherit;z-index: 9999;">Item Description</span>
                 <div  class="item-Description"></div></th>
-                <th ><div>QTY<span class="arrow">&rsaquo;</span></div>
+                <th class="{!IF(isOssia==true,'backgroundcolor_ossia','backgroundcolor')}" ><div>QTY<span class="arrow">&rsaquo;</span></div>
                 </th>
-                <th> Price <span class="arrow">&rsaquo;</span></th>
-                <th>Total <span class="arrow">&rsaquo;</span> </th>
+                <th class="{!IF(isOssia==true,'backgroundcolor_ossia','backgroundcolor')}"> Price <span class="arrow">&rsaquo;</span></th>
+                <th class="{!IF(isOssia==true,'backgroundcolor_ossia','backgroundcolor')}">Total <span class="arrow">&rsaquo;</span> </th>
             </tr>
             
             <apex:repeat value="{!invoice.Invoice_Line_Items__r}" var="invLineItm">
                 <tr class="border_bottom">
                     <td><div class="item-Name"><b>
-                        <apex:outputPanel rendered="{!invLineItm.Is_Discount__c}">
-                            Discount - 
-                        </apex:outputPanel>
                         {!invLineItm.Package_Name__c}</b><br/>
                         <span class="lightgray">{!invLineItm.Subscription_Line_Item__r.Student__r.Name}
                         <apex:outputPanel rendered="{!If(invLineItm.Package__r.Type__c == 'Adhoc', FALSE, TRUE)}">
@@ -344,16 +364,10 @@
                             </td>
                         </tr>
                         
-                        <!--<tr>
+                        <tr>
                             <td><apex:outputPanel rendered="{!IF(AND(invoice.Discount_Amount__c != 0,invoice.Discount_Amount__c != NULL), TRUE,FALSE)}"><div class="taxbox" style="color:red;">Discount</div> </apex:outputPanel></td>
                             <td><apex:outputPanel rendered="{!IF(AND(invoice.Discount_Amount__c != 0,invoice.Discount_Amount__c != NULL), TRUE,FALSE)}"><div class="taxbox taxbox-right" style="color:red;"><apex:outputField value="{!invoice.Discount_Amount__c}"/></div> </apex:outputPanel></td>
-                        </tr>-->
-                        <apex:outputPanel layout="none" rendered="{!invoice.Total_Discount__c!=null && invoice.Total_Discount__c>0}">
-                        <tr>
-                            <td><div class="taxbox" style="color:red;">Discount</div></td>
-                            <td><div class="taxbox taxbox-right" style="color:red;"><apex:outputField value="{!invoice.Total_Discount__c}"/></div></td>
                         </tr>
-                        </apex:outputPanel>
                        <tr>
                             <td><div class="taxbox border-none"><b>Grand Total</b></div></td>
                             <td>
@@ -426,7 +440,7 @@
                 </apex:outputPanel>
                  <apex:outputPanel rendered="{!OR(InvoiceStatus=='Due', InvoiceStatus=='Overdue') && (displayUpdate==false)}">
                     <Div style="float: right;margin-right: 6%;">
-                        <button type="button" class="button"><a href="{!customLabelValue +'/apex/UpdateCustomerCardForPortal?id='+ParentAccId}" style="color: white;font-weight: bold;text-decoration: none;font-size: medium;" target="_blank">Pay Now</a> </button>
+                        <button type="button" class="button"><a href="{!customLabelValue +'/apex/UpdateCustomerCard?id='+ParentAccId}" style="color: white;font-weight: bold;text-decoration: none;font-size: medium;" target="_blank">Pay Now</a> </button>
                         
                     </Div>
                 </apex:outputPanel>
@@ -436,7 +450,7 @@
             <!-- By Ravi -->
             <tr>
                 <td colspan="4" style="padding-top:100px;padding-left:35px"><b class="color">
-                    <h1 class="color" style="font-size: 18pt;">Thank You For Your Business!</h1><br/>
+                    <h1 class="{!IF(isOssia==true,'color_ossia','color')}" style="font-size: 18pt;">Thank You For Your Business!</h1><br/>
                     <div style="display: flex;padding-top: 13px;">
                         <div class="paddingInside"><apex:image url="{!URLFOR($Resource.invoiceIcons,'invoiceIcons/phone.png')}" width="11px"/> {!center.phone}</div>
                         <div class="paddingInside"><apex:image url="{!URLFOR($Resource.invoiceIcons,'invoiceIcons/post.png')}" width="11px"/> {!center.email}</div>

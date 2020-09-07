@@ -12,7 +12,8 @@ public class ClassEditController {
     	BookDetails bookDetails;
        // List<AureusCalendarController.GroupPackage> groupPackages;
         List<Booking__c> bookingList = new List<Booking__c>();
-        
+        Boolean isOssia = false; //added by nishi:2-sep-2020;
+                 
         if(String.isNotBlank(bookingId)){
             // selected Group lesson details
             Booking__c bookObj = fetchSelectedBookingDetails(bookingId);
@@ -24,9 +25,17 @@ public class ClassEditController {
             // selected Group lesson Booking details
             if(String.isNotBlank(bookObj.Id)){
                 bookingList = fetchAllBookingsForClass(bookObj.Id);
+                //start:added by nishi: 2-Sep-2020: for get selected class center is related to Ossia organization group class 
+                if(String.isNotBlank(bookObj.Class__r.Centre_Name__c) && String.isNotBlank(bookObj.Class__r.Centre_Name__r.Organisation__c) && String.isNotBlank(bookObj.Class__r.Centre_Name__r.Organisation__r.Name) &&
+                bookObj.Class__r.Centre_Name__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                    isOssia = true; 
+                }
+                //end:added by nishi: 2-Sep-2020: for get selected class center is related to Ossia organization group class 
             }
+            
+            
             // selected Group lesson history details
-            bookDetails = new BookDetails(bookObj, /*groupPackages, */bookingList);
+            bookDetails = new BookDetails(bookObj, /*groupPackages, */bookingList,isOssia);
             bookDetails.bookingHistoryList = AureusCalendarController.getBookingHistory(bookingId);
         }
         return bookDetails;
@@ -801,7 +810,8 @@ public class ClassEditController {
                                     Class__r.Class_Type__c,Class__r.Maximum_age__c,Class__r.Minimum_age__c,
                                     Class__r.Class_Start_Date__c,
                                    Class__c,Package__r.Package_Fee__c, Class__r.Start_Time__c,Class__r.Total_Capacity__c,
-                                   Class__r.Name, Class__r.Available_Capacity__c 
+                                   Class__r.Name, Class__r.Available_Capacity__c ,
+                                   Class__r.Centre_Name__r.Organisation__r.Name,Class__r.grade__c,Class__r.Duration__c // added by nishi: 2-sep-2020 : for get class grade and organisation 
                                    FROM Booking__c WHERE Id =: bookingId LIMIT 1]){
             bookingObjToReturn = bookObj;
         }
@@ -853,6 +863,11 @@ public class ClassEditController {
                     if(bookingMap.containsKey('packageId')){
                         bookingObj.Package__c = String.valueOf(bookingMap.get('packageId'));
                     }
+                    //added by nishi: in ossia orgnisation case we added enrolment Id with makeup bookings
+                    if(bookingMap.containsKey('enrolementId')){
+                        bookingObj.enrolment__c = String.valueOf(bookingMap.get('enrolementId'));
+                    }
+                    //added by nishi: in ossia orgnisation case we added enrolment Id with makeup bookings
                     if(bookingMap.containsKey('type')){
                         if(String.valueOf(bookingMap.get('type')) == ConstantsClass.groupLessonTypeBooking){
                             bookingObj.Type__c = ConstantsClass.typeMakeup;
@@ -993,8 +1008,10 @@ public class ClassEditController {
         //List<AureusCalendarController.GroupPackage> groupPackages;
         List<BookingDetais> bookingList;
         public List<AureusCalendarController.BookingHistory> bookingHistoryList;
-        public BookDetails(Booking__c bookObj, /*List<AureusCalendarController.GroupPackage> groupPackages,*/ List<Booking__c> bookList){
+        Boolean isOssia;
+        public BookDetails(Booking__c bookObj, /*List<AureusCalendarController.GroupPackage> groupPackages,*/ List<Booking__c> bookList,Boolean isOssiaOrg ){
             this.bookObj = bookObj;
+            this.isOssia =isOssiaOrg;
            // this.groupPackages = groupPackages;
             bookingList = new List<BookingDetais>();
             bookingHistoryList = new List<AureusCalendarController.BookingHistory>();

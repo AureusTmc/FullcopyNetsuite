@@ -217,6 +217,53 @@
             .modelErrDiv{
             border-radius: 10px;
             }
+            
+            <!--@Juneid 19 Aug 2020, Ossia  Css-->
+            .time-list label.slds-radio__label_osia {
+            display:block;
+            padding:5px 8px;
+            border-radius:3px;
+            color:#ed1c24;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0), 0 2px 6px 0
+            rgba(0, 0, 0, 0.1);
+            background-color:#ffffff;
+            color:#ed1c24;
+            }
+            
+          .slds-radio [type="radio"]:checked + .slds-radio__label_osia, .slds-radio [type="radio"]:checked + .slds-radio__label_osia:focus{
+            color: #fff;
+            box-shadow:none;
+            background-color: #ed1c24;
+            }
+            
+            .slds-radio--button [type="radio"]:checked + .slds-radio--button__label_osia:focus, .slds-radio--button [type="radio"]:checked + .slds-radio--button__label_osia:hover, .slds-radio--button [type="radio"]:checked + .slds-radio--faux:focus, .slds-radio--button [type="radio"]:checked + .slds-radio--faux:hover, .slds-radio--button [type="radio"]:checked + .slds-radio_button__label:focus, .slds-radio--button [type="radio"]:checked + .slds-radio_button__labe_osial:hover, .slds-radio--button [type="radio"]:checked + .slds-radio_faux:focus, .slds-radio--button [type="radio"]:checked + .slds-radio_faux:hover, .slds-radio--button [type="radio"]:checked ~ .slds-radio--faux:focus, .slds-radio--button [type="radio"]:checked ~ .slds-radio--faux:hover, .slds-radio--button [type="radio"]:checked ~ .slds-radio_faux:focus, .slds-radio--button [type="radio"]:checked ~ .slds-radio_faux:hover, .slds-radio_button [type="radio"]:checked + .slds-radio--button__labe_oisa:focus, .slds-radio_button [type="radio"]:checked + .slds-radio--button__label:hover, .slds-radio_button [type="radio"]:checked + .slds-radio--faux:focus, .slds-radio_button [type="radio"]:checked + .slds-radio--faux:hover, .slds-radio_button [type="radio"]:checked + .slds-radio_button__label:focus, .slds-radio_button [type="radio"]:checked + .slds-radio_button__label:hover, .slds-radio_button [type="radio"]:checked + .slds-radio_faux:focus, .slds-radio_button [type="radio"]:checked + .slds-radio_faux:hover, .slds-radio_button [type="radio"]:checked ~ .slds-radio--faux:focus, .slds-radio_button [type="radio"]:checked ~ .slds-radio--faux:hover, .slds-radio_button [type="radio"]:checked ~ .slds-radio_faux:focus, .slds-radio_button [type="radio"]:checked ~ .slds-radio_faux:hover, .slds-radio--button [type=radio]:checked + .slds-radio--button__label, .slds-radio--button [type=radio]:checked + .slds-radio--faux, .slds-radio--button [type=radio]:checked + .slds-radio_button__label, .slds-radio--button [type=radio]:checked + .slds-radio_faux, .slds-radio--button [type=radio]:checked ~ .slds-radio--faux, .slds-radio--button [type=radio]:checked ~ .slds-radio_faux, .slds-radio_button [type=radio]:checked + .slds-radio--button__label, .slds-radio_button [type=radio]:checked + .slds-radio--faux, .slds-radio_button [type=radio]:checked + .slds-radio_button__label__osia, .slds-radio_button [type=radio]:checked + .slds-radio_faux, .slds-radio_button [type=radio]:checked ~ .slds-radio--faux, .slds-radio_button [type=radio]:checked ~ .slds-radio_faux,  {
+            color: #fff;
+            box-shadow:none;
+            background-color: #ed1c24;
+            }
+            
+             .btn-red, .btn-red:hover, .btn-red:focus {
+            background-color:#ed1c24;
+            color:#fff;
+            }
+            <!--- By Bhawna on 19-8-2020 --->
+             .default-org-ossia .ui-datepicker-title, .default-org-ossia span.slds-button.slds-radio_button{ color:#ed1c24 !important;}
+            
+             <!--Juneid-->
+            input[type="radio"]:checked ~ label .slds-radio--faux::after, 
+            input[type="radio"]:checked ~ label .slds-radio_faux::after {
+            width: .5rem;
+            height: .5rem;
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate3d(-50%,-50%,0);
+            border-radius: 50%;
+            background: #0070d2;
+            } 
         </style>
         
         <script>
@@ -448,7 +495,7 @@
                                 <a href="javascript:void(0)"  class="slds-button slds-button_brand slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-m-bottom_small slds-p-horizontal_large slds-m-right_small" style="margin-bottom: 0px;" onclick="saveAndSend('{!studentWrapList.size}');">Email</a>
                             </apex:outputPanel>    
                             <apex:outputPanel id="nextRefresh">
-                                <a href="javascript:void(0)" id="next_step3" class="slds-button btn-yellow slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-m-bottom_small slds-p-horizontal_large" onclick="saveProcess('{!studentWrapList.size}');">Next</a>
+                                <a href="javascript:void(0)" id="next_step3" class="{!IF(defaultOrg=='ossia','slds-button btn-red slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-m-bottom_small slds-p-horizontal_large','slds-button btn-yellow slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-m-bottom_small slds-p-horizontal_large')}" onclick="saveProcess('{!studentWrapList.size}');">Next</a>
                             </apex:outputPanel>
                         </div>
                     </div>
@@ -511,7 +558,7 @@
                                             <div class="slds-form-element__control">
                                                 <span class="slds-radio">  
                                                     <input type="radio" id="lsnType{!count}" value="Individual" onClick="setLsnType('Individual','{!count}');" name="lsnType{!count}" disabled="" checked="checked"/>
-                                                    <label class="slds-radio__label" for="lsnType{!count}">
+                                                    <label class="{!IF(defaultOrg=='ossia','slds-radio__label_osia','slds-form-element__label')}" for="lsnType{!count}">
                                                         <span class="slds-radio_faux"></span>
                                                         <span class="slds-form-element__label">Individual Lesson</span>
                                                     </label>
@@ -525,7 +572,7 @@
                                             <div class="slds-form-element__control">
                                                 <span class="slds-radio">
                                                     <input type="radio" id="grpType{!count}" value="Group" onClick="setLsnType('Group', '{!count}');" name="lsnType{!count}" disabled="" checked='' />
-                                                    <label class="slds-radio__label"  for="grpType{!count}">
+                                                    <label class="{!IF(defaultOrg=='ossia','slds-radio__label_osia','slds-form-element__label')}"  for="grpType{!count}">
                                                         <span class="slds-radio_faux"></span>
                                                         <span class="slds-form-element__label">Group Lessons</span>
                                                     </label>
@@ -575,10 +622,10 @@
                                 
                                 <div class="slds-grid slds-wrap slds-p-top_large slds-p-top_large slds-grid_align-center">
                                     <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-medium-size_1-of-2 slds-p-bottom_large">
-                                        <div id="datepicker{!count}" class=""></div>
+                                        <div id="datepicker{!count}" class="{!IF(defaultOrg=='ossia','default-org-ossia','')}"></div>
                                     </div>
                                     <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-medium-size_1-of-2 slds-p-bottom_large">
-                                        <div class="slds-grid slds-wrap slds-text-align_center date-list">
+                                        <div class="slds-grid slds-wrap slds-text-align_center date-list {!IF(defaultOrg=='ossia','default-org-ossia','')}">
                                             <div class="slds-size_1-of-2">
                                                 
                                                 <div class="time-list morning">
@@ -781,7 +828,7 @@
 </div>-->
                 <div class="slds-grid slds-grid_align-center slds-p-vertical_large">
                     <div class="slds-size_1-of-1 slds-large-size_1-of-3">
-                        <a class="slds-button btn-block btn-yellow slds-p-around_x-small slds-m-bottom_large" href="#"  onclick="addFreshEnr();">Add a Fresh Enrolment</a>
+                        <a class="{!IF(defaultOrg=='ossia','slds-button btn-block btn-red slds-p-around_x-small slds-m-bottom_large','slds-button btn-block btn-yellow slds-p-around_x-small slds-m-bottom_large')}" href="#"  onclick="addFreshEnr();">Add a Fresh Enrolment</a>
                     </div>
                 </div>                
                 

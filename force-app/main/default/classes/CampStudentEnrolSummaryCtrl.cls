@@ -17,6 +17,8 @@ public without sharing class CampStudentEnrolSummaryCtrl {
     public string  personEmail{get;set;}
     public string sessionId{get;set;}
     public Boolean agreementCheckbox{get;set;}
+    public Boolean isOssia{get;set;}//Juneid 28 Aug 2020 for cheking org
+    
     public PandaDocUtility.CreateDocument documentDetails;
     PandaDocUtility.SessionDocument sessionDetails;
     Boolean isCreateStudent; // for manage multiple time create one student and realated invoice so we check and restrict this creation.
@@ -28,6 +30,8 @@ public without sharing class CampStudentEnrolSummaryCtrl {
         isSiteGuestUser = (UserInfo.getName()).contains('Site');
         templateId = Label.Student_Policies_Template;
         isCreateStudent = false;
+        isOssia = false;//Juneid 28 Aug 2020 for cheking org
+      
     }
     
     
@@ -38,7 +42,10 @@ public without sharing class CampStudentEnrolSummaryCtrl {
             CampDetailsForEnrolStudentController.AccountModal studentDetails= (CampDetailsForEnrolStudentController.AccountModal)JSON.deserialize(accountModalDetails, CampDetailsForEnrolStudentController.AccountModal.class); // Jsonstring is the above JSON
             system.debug('studentDetails'+studentDetails);
             studentSummaryDetails = new CampStudentSummaryWrapperClass(studentDetails);
-            system.debug('studentSummaryDetails'+studentSummaryDetails);
+            //Juneid 28 Aug 2020 for cheking org is ossia or not
+            if(studentSummaryDetails.organisationOfCentre.name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                isOssia= true;
+            }
         }
         
         return studentSummaryDetails;
@@ -462,7 +469,9 @@ Messaging.sendEmail(emailList, FALSE);
                     Account parentAcc =  newStudentDetails.parentAccDetails;
                     //for American club member
                     if(!studentSummaryDetails.isAmcClubMember && (!studentSummaryDetails.isAlreadyStripCstmr || String.isBlank(studentSummaryDetails.stripeCstmrId))){                    
-                        stripeCstmrDetails = createStripeCustomer(newStudentDetails.parentAccDetails,stripeToken,studentSummaryDetails.objCountry.Stripe_Base_Url__c,studentSummaryDetails.objCountry.Stripe_Secret_Key__c);
+                        //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+                        //stripeCstmrDetails = createStripeCustomer(newStudentDetails.parentAccDetails,stripeToken,studentSummaryDetails.objCountry.Stripe_Base_Url__c,studentSummaryDetails.objCountry.Stripe_Secret_Key__c);
+                        stripeCstmrDetails = createStripeCustomer(newStudentDetails.parentAccDetails,stripeToken,studentSummaryDetails.organisationOfCentre.Stripe_Base_Url__c,studentSummaryDetails.organisationOfCentre.Stripe_Secret_Key__c);
                         if(stripeCstmrDetails != null && stripeCstmrDetails.size() > 0){
                             if(stripeCstmrDetails.containsKey('Error')){
                                 isError = true;
@@ -482,7 +491,9 @@ Messaging.sendEmail(emailList, FALSE);
                         BillingUtility.stripeCharge sc = new BillingUtility.stripeCharge(); 
                         // Skip stripe customer creation for the American club member
                         if(!studentSummaryDetails.isAmcClubMember){
-                            sc = BillingUtility.createChargeForCustomer(studentSummaryDetails.stripeCstmrId,amountInSmallUnit, countryCurrencyCode, studentSummaryDetails.objCountry.Stripe_Base_Url__c, studentSummaryDetails.objCountry.Stripe_Secret_Key__c);
+                            ////commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+                            //      sc = BillingUtility.createChargeForCustomer(studentSummaryDetails.stripeCstmrId,amountInSmallUnit, countryCurrencyCode, studentSummaryDetails.objCountry.Stripe_Base_Url__c, studentSummaryDetails.objCountry.Stripe_Secret_Key__c);
+                            sc = BillingUtility.createChargeForCustomer(studentSummaryDetails.stripeCstmrId,amountInSmallUnit, countryCurrencyCode, studentSummaryDetails.organisationOfCentre.Stripe_Base_Url__c, studentSummaryDetails.organisationOfCentre.Stripe_Secret_Key__c);
                         }
                         
                         //for the American club member
@@ -518,9 +529,11 @@ Messaging.sendEmail(emailList, FALSE);
                             errorObj.stripeTransactionId = sc.id;
                             errorObj.stripeChargeAmount = sc.amount;
                             errorObj.customerSalesforceId = parentId;
-                            errorObj.baseUrl = studentSummaryDetails.objCountry.Stripe_Base_Url__c;
-                            errorObj.apiKey  = studentSummaryDetails.objCountry.Stripe_Secret_Key__c;
-                            
+                            //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+                            // errorObj.baseUrl = studentSummaryDetails.objCountry.Stripe_Base_Url__c;
+                            // errorObj.apiKey  = studentSummaryDetails.objCountry.Stripe_Secret_Key__c;
+                            errorObj.baseUrl = studentSummaryDetails.organisationOfCentre.Stripe_Base_Url__c;
+                            errorObj.apiKey  = studentSummaryDetails.organisationOfCentre.Stripe_Secret_Key__c;
                             updateCustomerAndGenerateInvoice(newStudentDetails,centrList,sc);
                             
                             isError  = false;
@@ -763,8 +776,10 @@ invLineItmList.add(invLnItm);
         List<DocumentWrapper.Sections> sections = new List<DocumentWrapper.Sections>();     
         List<DocumentWrapper.PricingTable> pricingTables = new List<DocumentWrapper.PricingTable>();        
         DocumentWrapper.CreateDocument createDocWrapper = new DocumentWrapper.CreateDocument();     
-        
-        createDocWrapper.template_uuid = Label.Camp_Class_Template_Id;   
+        //@Juneid 28 Aug 2020 commneted because as per new requiermnt Teplate is pull from orgnization
+        //createDocWrapper.template_uuid = Label.Camp_Class_Template_Id;   
+        createDocWrapper.template_uuid = studentSummaryDetails.organisationOfCentre.Camp_Class_Template__c;
+    
         createDocWrapper.folder_uuid = studentSummaryDetails.objCountry.Folder__c;
         if(String.isNotBlank(parentId)){       
             createDocWrapper.metadata.salesforceAccount_id = parentId;     

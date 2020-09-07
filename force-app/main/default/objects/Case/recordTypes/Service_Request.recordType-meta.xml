@@ -2284,6 +2284,10 @@
             <default>false</default>
         </values>
         <values>
+            <fullName>Centre Change</fullName>
+            <default>false</default>
+        </values>
+        <values>
             <fullName>Change Enrolment</fullName>
             <default>false</default>
         </values>

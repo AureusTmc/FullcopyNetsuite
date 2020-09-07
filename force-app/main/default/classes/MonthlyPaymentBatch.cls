@@ -20,7 +20,11 @@ global class MonthlyPaymentBatch implements Database.Batchable<sObject>,database
                                          Parent_Account__r.personEmail,Parent_Account__r.Centre_Name__r.Location__c,
                                          Center__r.Country__c, Center__r.Country__r.Id, Center__r.Country__r.Tax_Rate__c, 
                                          Center__r.Country__r.Currency_Code__c, Center__r.Country__r.Stripe_Base_Url__c, 
-                                         Center__r.Country__r.Stripe_Secret_Key__c FROM Invoice__c WHERE 
+                                         Center__r.Country__r.Stripe_Secret_Key__c,
+                                         Center__r.Organisation__c, Center__r.Organisation__r.Id, Center__r.Organisation__r.Tax_Rate__c, 
+                                         Center__r.Organisation__r.Country__r.Currency_Code__c, Center__r.Organisation__r.Stripe_Base_Url__c, 
+                                         Center__r.Organisation__r.Stripe_Secret_Key__c
+                                         FROM Invoice__c WHERE 
                                          Parent_Account__r.Stripe_Customer_Id__c != NULL AND Due_Date__c <= :system.today() 
                                          AND Status__c=:ConstantsClass.dueStatus AND Center__c != NULL AND Parent_Account__r.Is_Club_Member__c != TRUE 
                                          AND Parent_Account__r.Membership_Type__c != :ConstantsClass.amcClubMember]);

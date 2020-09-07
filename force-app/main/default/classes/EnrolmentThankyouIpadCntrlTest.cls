@@ -13,12 +13,28 @@ public class EnrolmentThankyouIpadCntrlTest {
         cntry.Stripe_Secret_Key__c ='sk_test_M3pk8qvbMs03SWjDuf6m1bss';
         insert cntry;
         
-        Account objCustmr=TestUtil.createAccount('Customer',True,True);
+         Organisation__c organisation = new Organisation__c(
+            Name = 'Aureus Academy Singapore',
+            Bank_Account_Number__c = '647743343001',
+            Bank_Name__c = 'OVERSEA-CHINESE BANKING CORP GROUP',
+            Branch_Code__c = '001',
+            CPF_Advice_Code__c = '01',
+            CPF_Payment_Type__c = 'PTE',
+            Country__c =cntry.Id,
+            Sage_Company__c = 'AGP');
+        insert organisation;
+        
+        Account objCustmr=TestUtil.createAccount('Customer',True,false);
+        objCustmr.Country__c =  cntry.Id;
+        Insert objCustmr;
         Account objCentr=TestUtil.createAccount('Centre',False,False);
         objCentr.Country__c = cntry.Id;
+        objCentr.Organisation__c = organisation.Id;
         Insert objCentr;
         
-        Account objtechr=TestUtil.createAccount('Teacher',False,true);
+        Account objtechr=TestUtil.createAccount('Teacher',False,false);
+        objtechr.Country__c =  cntry.Id;
+        Insert objtechr;
         Program__C objProg=TestUtil.createProgram('Active','Piano',true);
         Package__c objPack=testUtil.createPackage(objProg.id,objCentr.id,'60',true);             
         Enrolment__c objENrol=TestUtil.createEnrolment(objCentr.Id,objTechr.Id,objCustmr.Id,objPack.id,False);
@@ -46,6 +62,7 @@ public class EnrolmentThankyouIpadCntrlTest {
        
         ApexPages.currentPage().getParameters().put('inv','inv');
         ApexPages.currentPage().getParameters().put('bookId',objBook.id);
+          ApexPages.currentPage().getParameters().put('isOssia','true');
         EnrolmentThankyouIpadCntrl enrolObj = new EnrolmentThankyouIpadCntrl();
         enrolObj.generateInvPdf();
         enrolObj.sendEmailWithPdfOnStudio(objBook.Id);

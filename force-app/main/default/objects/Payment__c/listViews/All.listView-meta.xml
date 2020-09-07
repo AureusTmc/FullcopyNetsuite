@@ -7,11 +7,12 @@
     <columns>Payment_Date__c</columns>
     <columns>Remarks__c</columns>
     <columns>Transaction_ID__c</columns>
+    <columns>RECORDTYPE</columns>
     <filterScope>Everything</filterScope>
     <filters>
         <field>RECORDTYPE</field>
         <operation>equals</operation>
-        <value>Payment__c.Payment_Transaction</value>
+        <value>Payment__c.Payment_As_Credit,Payment__c.Payment_Transaction</value>
     </filters>
     <label>All</label>
 </ListView>

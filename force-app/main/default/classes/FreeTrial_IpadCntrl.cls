@@ -33,14 +33,19 @@ public Account      studentAcc{get;set;}
     public string PersonMobilePhoneCustom{get;set;}  
     public Boolean isPageInMobile{get;set;}
     public String  srcType{get;set;}
+    public String org{get;set;}// @Juneid 14 Aug 2020, this variable is used to store organization type 
     Boolean isAureusAtHome;
     Integer trvlDuration;
-    String formName;
-    public String uniqueRefCode{get;set;}//@Juneid ,04-Aug-2020,This variable is used to store Unique refrel code
+    String formName;             
+ public String uniqueRefCode{get;set;}//@Juneid ,04-Aug-2020,This variable is used to store Unique refrel code
     Boolean isOsiaApply; //@Juneid 05 Aug,2020, This Varibale is used to check Osia or not
     String centerCountry;//@Juneid 07 Aug 2020, This variable is used to store Center country name
     Id prsonContactId;
+    public Boolean isOsiaEnable{get;set;}//Juneid 14 Aug 2020
+    string currentOrg;//Juneid 17 Aug 2020, store the current organization
+    Map<String, String> urlParamMetaMap;//Juneid 17 Aug 2020,store metadata value 
     
+    string organization;    
     //Added by Rajesh, 6th Aug 2019. To store trial source on case object and country for filtercentre
     String trialSource;
     public FreeTrial_IpadCntrl(){
@@ -51,15 +56,29 @@ public Account      studentAcc{get;set;}
         iWantReceivedLatestNew = false;
         isSiteGuestUser = (UserInfo.getName()).contains('Site');
         PersonMobilePhoneCustom = '';
-        slcdLsnType = 'Individual';
-        uniqueRefCode =   ApexPages.currentPage().getParameters().get('refcode');
+        slcdLsnType = 'Individual';   
+ uniqueRefCode =   ApexPages.currentPage().getParameters().get('refcode');
+        system.debug('uniqueRefCode--->'+uniqueRefCode);
         isOsiaApply =  false;
+
+        currentOrg= '';
+        org ='';
+        urlParamMetaMap = new Map<String, String>();
+        
         //isNextWithoutError = false;
         
-        /* countryCode	 = ApexPages.currentPage().getParameters().get('country');
+        /* countryCode   = ApexPages.currentPage().getParameters().get('country');
 if(String.isBlank(countryCode))
 countryCode = 'SG';
 */
+        
+        //Juneid 17 Aug 2020, Getting metadata value of country and organization name
+        for(URL_Parameters__mdt urlMdt : [SELECT Param_Name__c,Param_SF_Value__c FROM URL_Parameters__mdt]){
+            urlParamMetaMap.put(urlMdt.Param_Name__c, urlMdt.Param_SF_Value__c);
+        }
+        system.debug('urlParam--->'+urlParamMetaMap);
+        
+        
         List<Centre_Users__c> cenUsrLst = [select Id,Centre_Name__c,Centre_Name__r.Name,Centre_Name__r.Country__c,Centre_Name__r.Country__r.Name, Centre_Name__r.Country__r.Country_Name__c
                                            from Centre_Users__c where User_Name__c=:UserInfo.getUserId()];
         if(cenUsrLst.size() > 0){
@@ -72,24 +91,43 @@ countryCode = 'SG';
         
         String cntryCodeForSiteUser = ApexPages.currentPage().getParameters().get('country');   
         if(isSiteGuestUser && String.isNotBlank(cntryCodeForSiteUser))
-            countryCode	 = cntryCodeForSiteUser;    
+            countryCode  = cntryCodeForSiteUser;    
+        
+        system.debug('countryCode--->'+countryCode);
+        org =  ApexPages.currentPage().getParameters().get('org');
+        system.debug('org-->'+org);
+        
+        if(String.isNotBlank(org)){
+            if(org.equalsIgnoreCase('ossia')){
+                org ='osia'; 
+                currentOrg = urlParamMetaMap.get('Ossia');
+            }else{
+                currentOrg = urlParamMetaMap.get(countryCode.toUpperCase());
+                org = 'aureus';
+            }
+        }else{
+            currentOrg = urlParamMetaMap.get(countryCode.toUpperCase());
+            org = 'aureus';
+        }
+        system.debug('currentOrg--->'+currentOrg);
+        
         
         formName = ApexPages.currentPage().getParameters().get('Formname');        
         //Added by Rajesh, 6th Aug 2019. To store trial source on case object and country for filtercentre
-        trialSource	 = ApexPages.currentPage().getParameters().get('ts');
+        trialSource  = ApexPages.currentPage().getParameters().get('ts');
         
         fetchInstrument();
     }
     public list<SelectOption> getCenters(){
         list<SelectOption> options = new list<SelectOption>();
-        
         String cenRecId  =  Schema.SObjectType.Account.getRecordTypeInfosByName().get(ConstantsClass.centerRecTypeName).getRecordTypeId();
         options.add(new SelectOption('','Select Centre')); 
         
+        //@Juneid 14 Aug 2020 , Logic for Specific organisation centres
         //updated by Rajesh, 7th Aug 2019. updated soql To package centre bases of the country
         //Updated by Rajesh, 13th Aug 2019. Updated soql to remove hardcoded centre and filter centres on the bases of centre status
         for(Account acc: [SELECT Id,Name,CentreName_Cust__c FROM Account 
-                          WHERE RecordtypeId =: cenRecId AND Centre_Status__c =:ConstantsClass.activeStatus AND Country__r.Name =:countryCode ORDER BY CentreName_Cust__c]){
+                          WHERE RecordtypeId =: cenRecId AND Centre_Status__c =:ConstantsClass.activeStatus AND Organisation__c =:currentOrg ORDER BY CentreName_Cust__c]){
                               options.add(new SelectOption(acc.Id,acc.CentreName_Cust__c)); 
                           }
         
@@ -164,12 +202,11 @@ stuWrap.lesson = lsn;
             if(!isAureusAtHome){
                 //Filling disabled Instruments for the selected Center
                 for(Teacher_Working_Hour__c teachTemp: techWorkSchList){
-                      system.debug('teachTemp.Center_Name__c--->'+teachTemp.Center_Name__c);
-                 
+                    system.debug('teachTemp--->'+teachTemp);
+                    system.debug('instrumentTempSet-->'+instrumentTempSet);
                     if(teachTemp.Center_Name__c != slcdCenter){
-                      
                         for(String strIns : teachTemp.Teacher_Name__r.Major_Instruments_Disciplines__c.split(';')){
-                            
+                            system.debug('strIns--->'+strIns);
                             if(!instrumentTempSet.contains(strIns)){
                                 String centNames =  disabledInstrument.containsKey(strIns) ? disabledInstrument.get(strIns) : teachTemp.Center_Name__r.Name;
                                 
@@ -257,7 +294,7 @@ stuWrap.lesson = lsn;
                 tm.instrumentList = instrumentList;
                 tm.disabledInstrument = disabledInstrument;
                 enrModelList.add(tm);    
-            }        		
+            }               
         }
     }
     
@@ -272,9 +309,12 @@ stuWrap.lesson = lsn;
     }
     
     public PageReference backBtnCmp1(){
+        system.debug('isOsiaEnable in  1st next-->'+isOsiaEnable);
+        isOsiaEnable = isOsiaEnable;
         return null;
     }
     public PageReference nextBtnCmp1(){
+        system.debug('isOsiaEnable in freetrial_ipad2-->'+isOsiaEnable);
         return page.freetrial_ipad2;
     }
     
@@ -465,6 +505,7 @@ stuWrap.lesson = lsn;
     }
     
     public void fetchTimeSlot(TrialEnrModel trialEnrMod){
+        system.debug('trialEnrMod--->'+trialEnrMod);
         trialEnrMod.teachModSlotMap = new Map<String,Map<String, List<TeacherModel>>>();
         /* validation
 if(String.isNotBlank(slcdCenter)){
@@ -481,7 +522,7 @@ ApexPages.addMessage(new ApexPages.message(Apexpages.Severity.ERROR,'Please sele
         Map<Id,List<String>> tcrQualMap = new Map<Id,List<String>>();
         
         if(trialEnrMod.slcdLsnType.equalsIgnoreCase('Individual')){
-            List<Teacher_Working_Hour__c> techWorkSchList = [SELECT Id,Name,Teacher_Name__c,Teacher_Name__r.Name, Teacher_Name__r.FirstName, Teacher_Name__r.LastName,
+            List<Teacher_Working_Hour__c> techWorkSchList = [SELECT Id,Name,Teacher_Name__c,Teacher_Name__r.Engagement_Type__c,Teacher_Name__r.Name, Teacher_Name__r.FirstName, Teacher_Name__r.LastName,
                                                              Teacher_Name__r.Teacher_Bio__c,Working_Day__c,Start_Time__c,End_Time__c,Active__c
                                                              FROM  Teacher_Working_Hour__c 
                                                              WHERE Center_Name__c =: slcdCenter AND Active__c = true AND Working_Day__c != null AND Break_Time__c = False 
@@ -492,13 +533,16 @@ ApexPages.addMessage(new ApexPages.message(Apexpages.Severity.ERROR,'Please sele
                 List<Teacher_Working_Hour__c> tchList = teachWorkSchMap.get(tchWrkSch.Working_Day__c);
                 if(tchList == null)
                     tchList = new List<Teacher_Working_Hour__c>();
-                
+                system.debug('tchWrkSch---->'+tchWrkSch);
                 tchList.add(tchWrkSch);                                                  
                 teachWorkSchMap.put(tchWrkSch.Working_Day__c, tchList);  
+                system.debug('teachWorkSchMap--->'+teachWorkSchMap);
                 
-                teachAttaImageMap.put(tchWrkSch.Teacher_Name__c,null);     
+                teachAttaImageMap.put(tchWrkSch.Teacher_Name__c,null);    
+                system.debug('teachAttaImageMap---->'+teachAttaImageMap);
                 
                 tcrQualMap.put(tchWrkSch.Teacher_Name__c, null);
+                system.debug('tcrQualMap--->'+tcrQualMap);
             }
             
             if(teachAttaImageMap.size() > 0){
@@ -612,117 +656,129 @@ Set<Time> afternoonTimesTemp    = new Set<Time>();*/
                 
                 Set<Time> timeSlotTemp      = new Set<Time>();
                 String currDay =  DateTime.newInstance(st, Time.newInstance(0, 0, 0, 0)).format('E');
-                
+                system.debug('@@@currDay'+currDay);
                 if(teachWorkSchMap.containsKey(currDay)){
                     List<Teacher_Working_Hour__c> tchWorSchLst = teachWorkSchMap.get(currDay);
                     
                     for(Teacher_Working_Hour__c teachWorkSch: tchWorSchLst){
-                        /* if(!(accTcrMap.containsKey(teachWorkSch.Teacher_Name__c))){
-List<String> tchrQual =  new List<String>();
-if(tcrQualMap.get(teachWorkSch.Teacher_Name__c) != null)
-tchrQual = tcrQualMap.get(teachWorkSch.Teacher_Name__c);
-TeacherModel acc  = new TeacherModel(teachWorkSch.Teacher_Name__c, teachWorkSch.Teacher_Name__r.Name,
-teachWorkSch.Teacher_Name__r.Teacher_Bio__c, '', tchrQual);
+                       // start:nishi: 4-Sep-2020: for check teacher engagement type is part-time and is day is greater then 28 mean (5th lesson booking) so we not consider this teacher
+                       //remove any timeslot for 5th days for part-time teachers.
+                        Boolean isPartTimeTeacher = false; 
+                        if(teachWorkSch.Teacher_Name__r.Engagement_Type__c =='Part-Time' && st.day() > 28){
+                            isPartTimeTeacher = true;
+                        }
+                        system.debug('%%%%isPartTimeTeacher'+isPartTimeTeacher +'  '+st); 
+                        if(!isPartTimeTeacher){
+                        //end: nishi: 4-Sep-2020: for check teacher engagement type is part-time and is day is greater then 28 mean (5th lesson booking) so we not consider this teacher
+                       //remove any timeslot for 5th days for part-time teachers.
 
-if(teachAttaImageMap.get(teachWorkSch.Teacher_Name__c) != null)
-acc.attachmentId = teachAttaImageMap.get(teachWorkSch.Teacher_Name__c);
-accTcrMap.put(teachWorkSch.Teacher_Name__c, acc);
-}*/
-                        
-                        Time stTime = teachWorkSch.Start_Time__c;
-                        /* if(st == System.today() && System.now().time() > stTime){
-stTime = System.now().time();
-}*/
-                        
-                        Integer endTimeDef = trialEnrMod.slcdDuration  > 0 ? trialEnrMod.slcdDuration : 30;
-                        
-                        while(stTime <= teachWorkSch.End_Time__c.addMinutes(-endTimeDef)){
-                            /*if(st != date.Parse(slcdDate) && (morningTimesTemp.size() > 0 && afternoonTimesTemp.size() > 0)){
-break;
-} */			
+                            /* if(!(accTcrMap.containsKey(teachWorkSch.Teacher_Name__c))){
+    List<String> tchrQual =  new List<String>();
+    if(tcrQualMap.get(teachWorkSch.Teacher_Name__c) != null)
+    tchrQual = tcrQualMap.get(teachWorkSch.Teacher_Name__c);
+    TeacherModel acc  = new TeacherModel(teachWorkSch.Teacher_Name__c, teachWorkSch.Teacher_Name__r.Name,
+    teachWorkSch.Teacher_Name__r.Teacher_Bio__c, '', tchrQual);
+
+    if(teachAttaImageMap.get(teachWorkSch.Teacher_Name__c) != null)
+    acc.attachmentId = teachAttaImageMap.get(teachWorkSch.Teacher_Name__c);
+    accTcrMap.put(teachWorkSch.Teacher_Name__c, acc);
+    }*/
                             
-                            String key = teachWorkSch.Teacher_Name__c + ':'+ st + ':'+ stTime;
-                            if(bookMap.containsKey(key)){
-                                Booking__c bookTmp = bookMap.get(key);
-                                stTime = bookTmp.End_Time__c;
-                            }else if(fifthLsnMap.containsKey(key)){
-                                Fifth_Lesson__c fifthTmp = fifthLsnMap.get(key);
-                                stTime = fifthTmp.End_Time__c;
-                            }else{
-                                string key2 = teachWorkSch.Teacher_Name__c + ':'+ st + ':'+ stTime.addMinutes(15);
+                            Time stTime = teachWorkSch.Start_Time__c;
+                            /* if(st == System.today() && System.now().time() > stTime){
+    stTime = System.now().time();
+    }*/
+                            
+                            Integer endTimeDef = trialEnrMod.slcdDuration  > 0 ? trialEnrMod.slcdDuration : 30;
+                            
+                            while(stTime <= teachWorkSch.End_Time__c.addMinutes(-endTimeDef)){
+                                /*if(st != date.Parse(slcdDate) && (morningTimesTemp.size() > 0 && afternoonTimesTemp.size() > 0)){
+    break;
+    } */            
                                 
-                                if(bookMap.containsKey(key2)){
-                                    Booking__c bookTmp = bookMap.get(key2);
+                                String key = teachWorkSch.Teacher_Name__c + ':'+ st + ':'+ stTime;
+                                if(bookMap.containsKey(key)){
+                                    Booking__c bookTmp = bookMap.get(key);
                                     stTime = bookTmp.End_Time__c;
-                                }else if(fifthLsnMap.containsKey(key2)){
-                                    Fifth_Lesson__c fifthTmp = fifthLsnMap.get(key2);
+                                }else if(fifthLsnMap.containsKey(key)){
+                                    Fifth_Lesson__c fifthTmp = fifthLsnMap.get(key);
                                     stTime = fifthTmp.End_Time__c;
                                 }else{
-                                    //if(stTime.hour() < 12){
-                                    String tempKey =  teachWorkSch.Teacher_Name__c + ':'+ st + ':'+ stTime;
-                                    //if(!(bookSet.contains(tempKey)) && stTime.addMinutes(ConstantsClass.defMinutes) < teachWorkSch.End_Time__c){
-                                    if(stTime.addMinutes(ConstantsClass.defMinutes) < teachWorkSch.End_Time__c){
-                                        // Time currTime = Time.newInstance(System.now().hour(), System.now().minute(), System.now().second(), System.now().millisecond());
-                                        //currTime = currTime.addHours(4);
-                                        
-                                        //DateTime tempTodayTime = System.now().addHours(4);
-                                        //Updated by Rajesh 13th Aug 2019, Add 2 hours window for today
-                                        DateTime tempTodayTime = System.now().addHours(4);
-                                        if(!isSiteGuestUser)
-                                            tempTodayTime = System.now().addMinutes(15);
-                                        
-                                        //DateTime tempTodayTime = System.now();
-                                        DateTime tempStDtTime  = Datetime.newInstance(st, stTime);
-                                        
-                                        //if(st > System.today() || (st == System.today() &&  stTime > currTime)){
-                                        if(tempStDtTime > tempTodayTime){
-                                            timeSlotTemp.add(stTime);
+                                    string key2 = teachWorkSch.Teacher_Name__c + ':'+ st + ':'+ stTime.addMinutes(15);
+                                    
+                                    if(bookMap.containsKey(key2)){
+                                        Booking__c bookTmp = bookMap.get(key2);
+                                        stTime = bookTmp.End_Time__c;
+                                    }else if(fifthLsnMap.containsKey(key2)){
+                                        Fifth_Lesson__c fifthTmp = fifthLsnMap.get(key2);
+                                        stTime = fifthTmp.End_Time__c;
+                                    }else{
+                                        //if(stTime.hour() < 12){
+                                        String tempKey =  teachWorkSch.Teacher_Name__c + ':'+ st + ':'+ stTime;
+                                        //if(!(bookSet.contains(tempKey)) && stTime.addMinutes(ConstantsClass.defMinutes) < teachWorkSch.End_Time__c){
+                                        if(stTime.addMinutes(ConstantsClass.defMinutes) < teachWorkSch.End_Time__c){
+                                            // Time currTime = Time.newInstance(System.now().hour(), System.now().minute(), System.now().second(), System.now().millisecond());
+                                            //currTime = currTime.addHours(4);
                                             
-                                            //Filling teacher according to time slot
-                                            List<TeacherModel> tchTempList = new List<TeacherModel>();
-                                            String timeStr = stTime.hour() + ':' + (stTime.minute() != 0 ?  (stTime.minute() +'') : '00');
+                                            //DateTime tempTodayTime = System.now().addHours(4);
+                                            //Updated by Rajesh 13th Aug 2019, Add 2 hours window for today
+                                            DateTime tempTodayTime = System.now().addHours(4);
+                                            if(!isSiteGuestUser)
+                                                tempTodayTime = System.now().addMinutes(15);
                                             
-                                            // if(trialEnrMod.teachModSlotMap.get(timeStr) != null)
-                                            //   tchTempList = trialEnrMod.teachModSlotMap.get(timeStr);
-                                            if(tempSlotMap.get(timeStr) != null)
-                                                tchTempList = tempSlotMap.get(timeStr);
+                                            //DateTime tempTodayTime = System.now();
+                                            DateTime tempStDtTime  = Datetime.newInstance(st, stTime);
                                             
-                                            List<String> tchrQual =  new List<String>();
-                                            if(tcrQualMap.get(teachWorkSch.Teacher_Name__c) != null)
-                                                tchrQual = tcrQualMap.get(teachWorkSch.Teacher_Name__c);
-                                            
-                                            TeacherModel tMod = new TeacherModel(teachWorkSch.Teacher_Name__c,teachWorkSch.Teacher_Name__r.FirstName,
-                                                                                 teachWorkSch.Teacher_Name__r.Teacher_Bio__c,'',tchrQual);
-                                            if(teachAttaImageMap.get(teachWorkSch.Teacher_Name__c) != null)
-                                                tMod.attachmentId = teachAttaImageMap.get(teachWorkSch.Teacher_Name__c);
-                                            tchTempList.add(tMod);
-                                            
-                                            tempSlotMap.put(timeStr, tchTempList);
-                                            // Map<String, List<TeacherModel>> tempSlotMap = Map<String, List<TeacherModel>>();
-                                            
-                                            //Filling teacher according to time slot
-                                            /*List<TeacherModel> tchTempList = new List<TeacherModel>();
-String timeStr = stTime.hour() + ':' + (stTime.minute() != 0 ?  (stTime.minute() +'') : '00');
+                                            //if(st > System.today() || (st == System.today() &&  stTime > currTime)){
+                                            if(tempStDtTime > tempTodayTime){
+                                                timeSlotTemp.add(stTime);
+                                                
+                                                //Filling teacher according to time slot
+                                                List<TeacherModel> tchTempList = new List<TeacherModel>();
+                                                String timeStr = stTime.hour() + ':' + (stTime.minute() != 0 ?  (stTime.minute() +'') : '00');
+                                                
+                                                // if(trialEnrMod.teachModSlotMap.get(timeStr) != null)
+                                                //   tchTempList = trialEnrMod.teachModSlotMap.get(timeStr);
+                                                if(tempSlotMap.get(timeStr) != null)
+                                                    tchTempList = tempSlotMap.get(timeStr);
+                                                
+                                                List<String> tchrQual =  new List<String>();
+                                                if(tcrQualMap.get(teachWorkSch.Teacher_Name__c) != null)
+                                                    tchrQual = tcrQualMap.get(teachWorkSch.Teacher_Name__c);
+                                                
+                                                TeacherModel tMod = new TeacherModel(teachWorkSch.Teacher_Name__c,teachWorkSch.Teacher_Name__r.FirstName,
+                                                                                    teachWorkSch.Teacher_Name__r.Teacher_Bio__c,'',tchrQual);
+                                                if(teachAttaImageMap.get(teachWorkSch.Teacher_Name__c) != null)
+                                                    tMod.attachmentId = teachAttaImageMap.get(teachWorkSch.Teacher_Name__c);
+                                                tchTempList.add(tMod);
+                                                
+                                                tempSlotMap.put(timeStr, tchTempList);
+                                                // Map<String, List<TeacherModel>> tempSlotMap = Map<String, List<TeacherModel>>();
+                                                
+                                                //Filling teacher according to time slot
+                                                /*List<TeacherModel> tchTempList = new List<TeacherModel>();
+    String timeStr = stTime.hour() + ':' + (stTime.minute() != 0 ?  (stTime.minute() +'') : '00');
 
-if(trialEnrMod.teachModSlotMap.get(timeStr) != null)
-tchTempList = trialEnrMod.teachModSlotMap.get(timeStr);
+    if(trialEnrMod.teachModSlotMap.get(timeStr) != null)
+    tchTempList = trialEnrMod.teachModSlotMap.get(timeStr);
 
-List<String> tchrQual =  new List<String>();
-if(tcrQualMap.get(teachWorkSch.Teacher_Name__c) != null)
-tchrQual = tcrQualMap.get(teachWorkSch.Teacher_Name__c);
+    List<String> tchrQual =  new List<String>();
+    if(tcrQualMap.get(teachWorkSch.Teacher_Name__c) != null)
+    tchrQual = tcrQualMap.get(teachWorkSch.Teacher_Name__c);
 
-TeacherModel tMod = new TeacherModel(teachWorkSch.Teacher_Name__c,teachWorkSch.Teacher_Name__r.Name,
-teachWorkSch.Teacher_Name__r.Teacher_Bio__c,'',tchrQual);
-if(teachAttaImageMap.get(teachWorkSch.Teacher_Name__c) != null)
-tMod.attachmentId = teachAttaImageMap.get(teachWorkSch.Teacher_Name__c);
-tchTempList.add(tMod);
+    TeacherModel tMod = new TeacherModel(teachWorkSch.Teacher_Name__c,teachWorkSch.Teacher_Name__r.Name,
+    teachWorkSch.Teacher_Name__r.Teacher_Bio__c,'',tchrQual);
+    if(teachAttaImageMap.get(teachWorkSch.Teacher_Name__c) != null)
+    tMod.attachmentId = teachAttaImageMap.get(teachWorkSch.Teacher_Name__c);
+    tchTempList.add(tMod);
 
-trialEnrMod.teachModSlotMap.put(timeStr,tchTempList);*/
-                                            // stTime = stTime.addMinutes(15);
+    trialEnrMod.teachModSlotMap.put(timeStr,tchTempList);*/
+                                                // stTime = stTime.addMinutes(15);
+                                            }
                                         }
+                                        stTime = stTime.addMinutes(ConstantsClass.defMinutes);
+                                        //  }
                                     }
-                                    stTime = stTime.addMinutes(ConstantsClass.defMinutes);
-                                    //  }
                                 }
                             }
                         }
@@ -763,9 +819,10 @@ if(aftSlotList.size() > 0)
 tSlotMapTemp2.isAvlAfternoonSlot = true;
 
 tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
-                
+                system.debug('st'+st.format());
+                system.debug('tempSlotMap'+tempSlotMap);
                 trialEnrMod.teachModSlotMap.put(st.format(),tempSlotMap);
-                
+                system.debug('timeSlotTemp------> '+timeSlotTemp);
                 List<String> slotList = new List<String>();
                 List<Time> tmpLst        = new List<Time>();
                 tmpLst.addAll(timeSlotTemp);tmpLst.sort();
@@ -775,6 +832,9 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
                     String minTmp = t.minute() != 0 ?  (t.minute() +'') : '00';
                     slotList.add(dayOfWeek+'-'+t.hour() + ':' + minTmp);
                 }
+                system.debug('st'+st);
+                system.debug('slotList'+slotList);
+                system.debug('st.format()'+st.format());
                 trialEnrMod.timeSlotMap.put(st, slotList);
                 trialEnrMod.timeSlotStrMap.put(st, st.format());
             }
@@ -789,26 +849,67 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
                 trialEnrMod.calEndDate = trialEnrMod.calStartDate.addDays(2);
             Date startDt = trialEnrMod.calStartDate;
             Date endDt   = trialEnrMod.calEndDate;
-            
+            system.debug('@@trialEnrMod.slcdInstrument'+trialEnrMod.slcdInstrument);
+            system.debug('@@slcdCenter'+slcdCenter);
+            system.debug('@@trialEnrMod.slcdDuration'+trialEnrMod.slcdDuration);
             String bookGrpClsRecId =  Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get('Group Class').getRecordTypeId(); 
-            for(Class__c cls: [SELECT Id, Name, Package__c, Package__r.Name, Teacher__c, Teacher__r.FirstName, Teacher__r.Teacher_Bio__c, Class_Day__c, Start_Time__c,End_Time__c,
-                               (SELECT Id, Booking_Date__c FROM Bookings__r WHERE RecordTypeId =: bookGrpClsRecId AND (Booking_Date__c >=: startDt AND Booking_Date__c <=: endDt))
-                               FROM Class__c WHERE Instrument__c =:trialEnrMod.slcdInstrument AND Centre_Name__c =:  slcdCenter AND Active__c = True AND Available_Capacity__c > 0 AND Duration__c =: trialEnrMod.slcdDuration]){ 
-                                   
-                                   if(cls.End_Time__c > cls.Start_Time__c){
-                                       teachAttaImageMap.put(cls.Teacher__c,null); 
-                                       tcrQualMap.put(cls.Teacher__c, null);
-                                       
-                                       List<Class__c> clsList = clsSchMap.get(cls.Class_Day__c);
-                                       if(clsList == null)
-                                           clsList = new List<Class__c>();                    
-                                       clsList.add(cls);                                                  
-                                       clsSchMap.put(cls.Class_Day__c, clsList);                       
-                                       for(Booking__c book: cls.Bookings__r)
-                                           bookMap.put(cls.Id+'#'+book.Booking_Date__c, book);    
-                                   }
-                               }
-            
+            //Start:Added by nishi:3-Sep-2020: for show ossia group class time slot we get instrument to Ossia_Group_Grade_Package__c object
+            if(org == 'osia'){
+                set<String> listOfGradePackageClass= new set<String>();
+                for(Ossia_Group_Grade_Package__c objGradePackage: [SELECT Class_Name__c, Package__c,  Name, Id 
+                                                                        FROM Ossia_Group_Grade_Package__c
+                                                                        Where Package__r.Program__r.Instrument__c =: trialEnrMod.slcdInstrument]){
+                    listOfGradePackageClass.add(objGradePackage.Class_Name__c);
+                }
+                for(Class__c cls: [SELECT Id, Name, Package__c, Package__r.Name, Teacher__c, Teacher__r.FirstName, Teacher__r.Teacher_Bio__c, Class_Day__c, Start_Time__c,End_Time__c,
+                                    (SELECT Id, Booking_Date__c FROM Bookings__r WHERE RecordTypeId =: bookGrpClsRecId AND (Booking_Date__c >=: startDt AND Booking_Date__c <=: endDt))
+                                    FROM Class__c WHERE 
+                                    ID In: listOfGradePackageClass
+                                    and Centre_Name__c =:  slcdCenter 
+                                    AND Active__c = True 
+                                    AND Available_Capacity__c > 0 
+                                    AND Duration__c =: trialEnrMod.slcdDuration]){ 
+                    
+                    if(cls.End_Time__c > cls.Start_Time__c){
+                        teachAttaImageMap.put(cls.Teacher__c,null); 
+                        tcrQualMap.put(cls.Teacher__c, null);
+                        system.debug('@@cls.Class_Day__c'+cls.Class_Day__c);
+                        List<Class__c> clsList = clsSchMap.get(cls.Class_Day__c);
+                        if(clsList == null)
+                            clsList = new List<Class__c>();                    
+                        clsList.add(cls);                                                  
+                        clsSchMap.put(cls.Class_Day__c, clsList);                       
+                        for(Booking__c book: cls.Bookings__r)
+                            bookMap.put(cls.Id+'#'+book.Booking_Date__c, book);    
+                    }
+                }
+            }else{
+                 //end: Added by nishi:3-Sep-2020: for show ossia group class time slot we get instrument to Ossia_Group_Grade_Package__c object
+                for(Class__c cls: [SELECT Id, Name, Package__c, Package__r.Name, Teacher__c, Teacher__r.FirstName, Teacher__r.Teacher_Bio__c, Class_Day__c, Start_Time__c,End_Time__c,
+                                    (SELECT Id, Booking_Date__c FROM Bookings__r WHERE RecordTypeId =: bookGrpClsRecId AND (Booking_Date__c >=: startDt AND Booking_Date__c <=: endDt))
+                                    FROM Class__c WHERE Instrument__c =:trialEnrMod.slcdInstrument 
+                                    AND Centre_Name__c =:  slcdCenter 
+                                    AND Active__c = True 
+                                    AND Available_Capacity__c > 0 
+                                    AND Duration__c =: trialEnrMod.slcdDuration]){ 
+                    
+                    if(cls.End_Time__c > cls.Start_Time__c){
+                        teachAttaImageMap.put(cls.Teacher__c,null); 
+                        tcrQualMap.put(cls.Teacher__c, null);
+                        system.debug('@@cls.Class_Day__c'+cls.Class_Day__c);
+                        List<Class__c> clsList = clsSchMap.get(cls.Class_Day__c);
+                        if(clsList == null)
+                            clsList = new List<Class__c>();                    
+                        clsList.add(cls);                                                  
+                        clsSchMap.put(cls.Class_Day__c, clsList);                       
+                        for(Booking__c book: cls.Bookings__r)
+                            bookMap.put(cls.Id+'#'+book.Booking_Date__c, book);    
+                    }
+                }
+            }
+           
+
+            system.debug('@@clsSchMap'+clsSchMap);
             if(teachAttaImageMap.size() > 0){
                 for(Account acc : [SELECT Id, (SELECT Id FROM Attachments WHERE Name Like '%Profile Image%' AND ContentType IN ('image/png', 'image/jpeg', 'image/gif') 
                                                ORDER BY LastModifiedDate DESC LIMIT 1) 
@@ -830,6 +931,8 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
                                                tcrQualMap.put(qu.Teacher__c, tchrQual);  
                                            }
             }
+            system.debug('@@startDt'+startDt);
+            system.debug('@@endDt'+endDt);
             
             for(Date st=startDt; st<=endDt; st=st.addDays(1)){
                 //    if(st >= System.today()){
@@ -867,7 +970,7 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
                     }
                 }
                 trialEnrMod.teachModSlotMap.put(st.format(),tempSlotMap);
-              
+                system.debug('timeSlotTemp------> '+timeSlotTemp);
                 List<String> slotList = new List<String>();
                 List<Time> tmpLst        = new List<Time>();
                 tmpLst.addAll(timeSlotTemp);tmpLst.sort();
@@ -887,11 +990,16 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
     public void fetchTeacherDetails(){        
         if(slcdStuIndex != null && slcdStuIndex >= 1){
             TrialEnrModel trialEnrMod = enrModelList.get(slcdStuIndex-1);
-            trialEnrMod.slcdDate 	= slcdDate;
+            trialEnrMod.slcdDate    = slcdDate;
             trialEnrMod.slcdDateDt  = date.parse(slcdDate);
             trialEnrMod.slcdFullSlot= slcdSlot;
             trialEnrMod.slcdSlot = trialEnrMod.slcdFullSlot.substring(4, trialEnrMod.slcdFullSlot.length());
             trialEnrMod.slcdSlotTchrs = new List<TeacherModel>();
+            System.debug('@@@@trialEnrMod.teachModSlotMap'+trialEnrMod.teachModSlotMap);
+            System.debug('@@@@slcdDate'+slcdDate);
+            System.debug('@@@@trialEnrMod.slcdSlot'+trialEnrMod.slcdSlot);
+            System.debug('@@@@trialEnrMod.teachModSlotMap.get(slcdDate)'+trialEnrMod.teachModSlotMap.get(slcdDate));
+            System.debug('@@@@trialEnrMod.teachModSlotMap.get(slcdDate).get(trialEnrMod.slcdSlot)'+trialEnrMod.teachModSlotMap.get(slcdDate).get(trialEnrMod.slcdSlot));
             if(trialEnrMod.teachModSlotMap.get(slcdDate) != null && trialEnrMod.teachModSlotMap.get(slcdDate).get(trialEnrMod.slcdSlot) != null)
                 trialEnrMod.slcdSlotTchrs = trialEnrMod.teachModSlotMap.get(slcdDate).get(trialEnrMod.slcdSlot);
             
@@ -914,7 +1022,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
             
             if(slcdStuIndex == 1 && enrModelList.size() > 1 && trialEnrMod.slcdInstrument == enrModelList.get(1).slcdInstrument && trialEnrMod.slcdSlotTchrs.size()==1){
                 
-                List<String> slotList = enrModelList.get(1).timeSlotMap.get(trialEnrMod.slcdDateDt);	
+                List<String> slotList = enrModelList.get(1).timeSlotMap.get(trialEnrMod.slcdDateDt);    
                 
                 
                 //Filling start time
@@ -949,7 +1057,6 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
     }
     
     public Pagereference saveTrialData(){
-        
         Savepoint sp = Database.setSavepoint();
         List<Account> refRelAccount = new List<Account>();
         Boolean isExisting = true;
@@ -959,7 +1066,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
             String csmrRecId =  Schema.SObjectType.Account.getRecordTypeInfosByName().get('Customer').getRecordTypeId(); 
             
             Map<String, Package__c> packMap = new Map<String, Package__c>();
-            
+            map<string,string> listOfGradePackageClass = new   map<string,string>(); //added by nishi: 3-sep-2020: for manage ossia packages
             Set<String> scldInst = new Set<String>();
             Set<String> scldTchr = new Set<String>();
             Set<Date>   scldDate = new Set<Date>();
@@ -993,8 +1100,20 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                                           String key = book.Class__r.Teacher__c +'#'+ book.Booking_Date__c+'#'+book.Class__r.Start_Time__c;                      
                                           grpLsnBookMap.put(key, book);
                                       }
+                //added by nishi: 3-sep-2020: for manage ossia packages                      
+                if(org == 'osia'){
+                    for(Ossia_Group_Grade_Package__c objGradePackage: [SELECT Class_Name__c, Package__c,  Name, Id ,Package__r.Program__r.Instrument__c
+                                                                        FROM Ossia_Group_Grade_Package__c
+                                                                        Where Package__r.Program__r.Instrument__c In:scldInst]){
+                        if(!listOfGradePackageClass.containsKey(objGradePackage.Class_Name__c)) {                       
+                            listOfGradePackageClass.put(objGradePackage.Class_Name__c+'-'+objGradePackage.Package__r.Program__r.Instrument__c,objGradePackage.Package__c);
+                        }
+                    }
+                }   
+                //added by nishi: 3-sep-2020: for manage ossia packages                   
             }
-            
+            system.debug('listOfGradePackageClass'+listOfGradePackageClass);
+            system.debug('grpLsnBookMap'+grpLsnBookMap);
             if(validateSlcdSlot()){
                 errorMsg = 'Timeslot not available.';
                 isError = true;
@@ -1023,9 +1142,11 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                     //Integer count = 0;
                     parentAcc.Id = accList.get(0).Id;
                 }else{
+                    system.debug('in else of refrel -->'+isOsiaApply);
                     //@Juneid 04-Aug 2020, Filling refrence code of rferree
                     if(String.isNotBlank(uniqueRefCode) && isOsiaApply == true){
                         refRelAccount = [SELECT Id,personContactId,billingcountry,Unique_Referral_Code__c FROM Account WHERE Unique_Referral_Code__c =:uniqueRefCode];
+                        system.debug('refRelAccount-->'+refRelAccount);
                         if(refRelAccount.size() > 0){
                             if(refRelAccount[0].billingcountry ==centerCountry)
                                 parentAcc.Referred_by__c =  refRelAccount[0].Id;
@@ -1047,6 +1168,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
             //system.debug('PersonMobilePhoneCustom---> '+PersonMobilePhoneCustom);
             parentAcc.PersonMobilePhone = parentAcc.Phone;
             //parentAcc.Phone = PersonMobilePhoneCustom;
+            system.debug('parentAcc'+parentAcc);
             upsert parentAcc;
             
             List<Account> stuList = new List<Account>();
@@ -1106,6 +1228,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                 Time startTime = Time.newInstance(Integer.valueOf(timeList[0]), Integer.valueOf(timeList[1]) , 0, 0); 
                 enrl.Trial_Start_Time__c = startTime;
                 
+                
                 if(String.isNotBlank(formName))
                     enrl.Form_Name__c = formName;
                 
@@ -1119,10 +1242,20 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                     enrl.Source_Type__c = 'Web';
                 
                 if(trMd.slcdLsnType.equalsIgnoreCase('Group')){
-                    String key = enrl.Teacher__c +'#'+ enrl.Trial_Date__c+'#'+enrl.Trial_Start_Time__c;                      
+                    String key = enrl.Teacher__c +'#'+ enrl.Trial_Date__c+'#'+enrl.Trial_Start_Time__c;    
+                    system.debug('key'+key);                  
                     if(grpLsnBookMap.containsKey(key)){
                         enrl.Class__c   = grpLsnBookMap.get(key).Class__c;
-                        enrl.Package__c = grpLsnBookMap.get(key).Class__r.Package__c;
+                        //start: added by nishi: 3-Sep-2020: for manage Ossia group grade Packages
+                        if(org == 'osia'){
+                            system.debug('check package' + (listOfGradePackageClass.containsKey(grpLsnBookMap.get(key).Class__c+'-'+trMd.slcdInstrument)));
+                            if(listOfGradePackageClass.containsKey(grpLsnBookMap.get(key).Class__c+'-'+trMd.slcdInstrument)){
+                                enrl.Package__c =listOfGradePackageClass.get(grpLsnBookMap.get(key).Class__c+'-'+trMd.slcdInstrument);
+                            }
+                        }else{
+                            enrl.Package__c = grpLsnBookMap.get(key).Class__r.Package__c;
+                        }
+                         // end: added by nishi: 3-Sep-2020: for manage Ossia group grade Packages
                         enrl.Type__c    = 'Group';
                     }
                 }
@@ -1132,6 +1265,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                 Booking__c book = new Booking__c(Student__r = studentAcc, Teacher_Account__c = trMd.slcdTchrId, Enrolment__r = enrl);
                 book.Center__c =  slcdCenter;
                 book.Type__c   = ConstantsClass.typeTrial;
+                book.Allow_Online_Guest_Joining__c=true;// added by Ravi on 7 sept 2020 for trial booking.
                 book.Status__c = ConstantsClass.statusPending;
                 book.RecordTypeId = bookLessRecId;
                 book.Package__c = enrl.Package__c;
@@ -1142,9 +1276,13 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                     String key = enrl.Teacher__c +'#'+ enrl.Trial_Date__c+'#'+enrl.Trial_Start_Time__c;                      
                     if(grpLsnBookMap.containsKey(key)){
                         book.RecordTypeId   =  Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get('Group Lesson').getRecordTypeId();
-                        //book.Type__c 		= 'Group Lesson';
+                        //book.Type__c      = 'Group Lesson';
                         book.Group_Class__c =  grpLsnBookMap.get(key).Id;
-                        book.Package__c = grpLsnBookMap.get(key).Class__r.Package__c;
+                        //start: added by nishi: 3-Sep-2020: for manage Ossia group grade Packages
+                        if(org != 'osia'){
+                            book.Package__c = grpLsnBookMap.get(key).Class__r.Package__c;
+                        }
+                        //end: added by nishi: 3-Sep-2020: for manage Ossia group grade Packages
                     }
                 }
                 bookList.add(book);
@@ -1154,7 +1292,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                     befBook.RecordTypeId  = bookLessRecId;
                     befBook.Center__c =  slcdCenter;
                     befBook.Type__c    = ConstantsClass.busyBookingType;
-                    book.Status__c 	   = ConstantsClass.scheduledStatus;
+                    book.Status__c     = ConstantsClass.scheduledStatus;
                     befBook.Category__c= 'Travel';
                     befBook.Remarks__c = 'Travel time slot for home trial booking';
                     book.Package__c = enrl.Package__c;
@@ -1165,9 +1303,13 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                         String key = enrl.Teacher__c +'#'+ enrl.Trial_Date__c+'#'+enrl.Trial_Start_Time__c;                      
                         if(grpLsnBookMap.containsKey(key)){
                             book.RecordTypeId   =  Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get('Group Lesson').getRecordTypeId();
-                            //book.Type__c 		= 'Group Lesson';
+                            //book.Type__c      = 'Group Lesson';
                             book.Group_Class__c =  grpLsnBookMap.get(key).Id;
-                            book.Package__c = grpLsnBookMap.get(key).Class__r.Package__c;
+                            //start: added by nishi: 3-Sep-2020: for manage Ossia group grade Packages
+                            if(org != 'osia'){
+                                book.Package__c = grpLsnBookMap.get(key).Class__r.Package__c;
+                            }
+                            //end: added by nishi: 3-Sep-2020: for manage Ossia group grade Packages
                         }
                     }
                     bookList.add(befBook);    
@@ -1175,23 +1317,22 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
             }
             
             if(stuList.size() > 0){
+                system.debug('stuList'+stuList);
                 upsert stuList;
-                
-                for(Enrolment__c enrl: enrList){
+                system.debug('enrList'+enrList);
+                for(Enrolment__c enrl: enrList)
                     enrl.Student__c = enrl.Student__r.Id;
-                }
                 
-                
-                insert enrList;
-                
-                
+                    insert enrList;
+                    system.debug('bookList'+bookList);
                 for(Booking__c book : bookList){
                     book.Student__c = book.Student__r.Id;
                     book.Enrolment__c = book.Enrolment__r.Id;
                 }
                 insert bookList;    
-                
-                sendMailToReffrel(enrList[0]);
+                if(enrList != null && enrList.size() > 0){
+                    sendMailToReffrel(enrList[0]);
+                }
                 
                 if(!isSiteGuestUser){
                     for(Enrolment__c enrl: enrList)
@@ -1203,16 +1344,21 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                     update bookList;
                 }                
             }
-            if(isSiteGuestUser)
-                return new Pagereference(Label.Trial_booking_confirmation_url);  
+            if(isSiteGuestUser){
+                if(org=='osia')
+                    return new Pagereference(Label.Trial_booking_confirmation_url_for_Ossia);  
+                else
+                    return new Pagereference(Label.Trial_booking_confirmation_url); 
+            }
             else
-                return new Pagereference('/apex/freetrial_thankIpad');  
+                return new Pagereference('/apex/freetrial_thankIpad?org='+org);  
             
             //Pagereference pg = new Pagereference('https://aureusacademy.com/trial-booking-confirmation'); 
             // errorMsg = 'success';
         }catch(Exception e){
             Database.rollback(sp);
             System.debug('Error:  '+e.getMessage());
+            System.debug('Error:  '+e.getStackTraceString() +e.getLineNumber());
             errorMsg = e.getMessage();
             isError = true;
             return null;
@@ -1307,7 +1453,14 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
         if(enrol.Id !=Null){
             if(enrol.Referred_by__c !=Null && String.isNotBlank(enrol.Referral_code_used__c)){
                 List<Messaging.SingleEmailMessage> emailList = new List<Messaging.SingleEmailMessage>();
-                List<EmailTemplate> emailTemplates =  [Select Id,name,developerName from EmailTemplate where developerName =:'Send_Trial_Referral_Enrollment_Details']; 
+                  //@Juneid 26 Aaug 2020, Orgnization wise templates
+                List<EmailTemplate>emailTemplates =  new List<EmailTemplate>();
+                if(org == 'osia'){
+                     emailTemplates =  [Select Id,name,developerName from EmailTemplate where developerName =:'Ossia_Send_Trial_Referral_Enrollment_Details']; 
+                }else{
+                    emailTemplates =  [Select Id,name,developerName from EmailTemplate where developerName =:'Send_Trial_Referral_Enrollment_Details']; 
+                }
+                
                 
                 if(emailTemplates.size() > 0){
                     Map<String,OrgWideEmailAddress> mapOfOrgWide = new Map<String,OrgWideEmailAddress>();                    
@@ -1378,8 +1531,8 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
             this.instrumentList = new List<String>();
             this.disabledInstrument = new Map<String,String>();
             this.slcdLsnType    = 'Individual';
-            this.classMinAge	= 0; 
-            this.classMaxAge	= 0;
+            this.classMinAge    = 0; 
+            this.classMaxAge    = 0;
         }
     }
     /*

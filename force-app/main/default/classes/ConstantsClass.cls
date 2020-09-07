@@ -60,7 +60,8 @@ public class ConstantsClass {
     public static String pkgPrgFeesDes  = 'Program Fees';
     public static String pkgRegFeesDes  = 'Registration Fees';
     public static String pkgDepFeesDes  = 'Deposit Fees';
-    
+    //@juneid 18 Aug,2020, facility Fees
+    public static string facilityFee = 'Facility Fees';
     
     public static String defAttSignName = 'Signature.png';
     public static String prePayAttSignName = 'PrePaySignature.png';
@@ -159,6 +160,7 @@ public class ConstantsClass {
     public static String enrollmentProcessCancelType = 'Cancellation';
     public static String enrollmentStageCancelled = 'Cancelled';
     public static String enrollmentProcessChanged = 'Enrolment Change';
+    public static String enrollmentProcessChangedCenter = 'Centre Change'; // added by nishi: 28-Aug-2020: for added new process value in Package_Process_Type__c field
     //Enrolment mapping values with Case and Opportunity for the Sales process
     //'Trial Lost'   => 'Lost',  Added by Rajesh on (17-06-2020), need to build this functionality from enrolment as per discussion with Ashish or Alex
     public static Map<String, String> salesProcessStatusMap = new Map<String, String>{'Trial Requested'  => 'Trial Requested',

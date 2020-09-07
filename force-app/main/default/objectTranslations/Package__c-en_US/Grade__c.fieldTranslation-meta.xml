@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Grade --></label>
+    <name>Grade__c</name>
+    <picklistValues>
+        <masterLabel>Beginner</masterLabel>
+        <translation><!-- Beginner --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>DipABRSM</masterLabel>
+        <translation><!-- DipABRSM --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Grade 1</masterLabel>
+        <translation><!-- Grade 1 --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Grade 2</masterLabel>
+        <translation><!-- Grade 2 --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Grade 3</masterLabel>
+        <translation><!-- Grade 3 --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Grade 4</masterLabel>
+        <translation><!-- Grade 4 --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Grade 5</masterLabel>
+        <translation><!-- Grade 5 --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Grade 6</masterLabel>
+        <translation><!-- Grade 6 --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Grade 7</masterLabel>
+        <translation><!-- Grade 7 --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Grade 8</masterLabel>
+        <translation><!-- Grade 8 --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Introductory</masterLabel>
+        <translation><!-- Introductory --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>LRSM</masterLabel>
+        <translation><!-- LRSM --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>LTCL</masterLabel>
+        <translation><!-- LTCL --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>PC/ARSM</masterLabel>
+        <translation><!-- PC/ARSM --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

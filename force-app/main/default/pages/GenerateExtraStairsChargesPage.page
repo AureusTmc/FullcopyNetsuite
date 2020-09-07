@@ -98,7 +98,7 @@
         </div>
     </apex:form>
     <script type="text/javascript">
-        var objEnrolmentId ='{!objEnrolment.id}';
+    
         function confirmExtraStairsCharges() {
             $('#messagePage').removeClass('slds-hide');
             $('#ConfirmModal').addClass('slds-hide');
@@ -114,7 +114,7 @@
                     .animate({ opacity: 1.0 }, 1500)
                     .effect("pulsate", { times: 1 }, 800)
                     .fadeOut('slow', function () {
-                        window.open('/'+objEnrolmentId, '_self');
+                        window.open('/{!objEnrolment.id}', '_self');
                     });
                 $('.error_validation').find('.errorMessage').text(errorString);
             } else {
@@ -124,13 +124,12 @@
                 } else if (errorString == 'createAttachmentForEmail') {
                     createAttachmentForEmail();
                     return false;
-                } else if (errorString.trim() === 'Success') {
-                    window.open('/'+objEnrolmentId, '_self');
+                } else if (errorString == 'Success') {
                     $('.sucess_validation').removeAttr('style')
                         .animate({ opacity: 1.0 }, 1500)
                         .effect("pulsate", { times: 1 }, 800)
                         .fadeOut('slow', function () {
-                            window.open('/'+objEnrolmentId, '_self');
+                            window.open('/{!objEnrolment.id}', '_self');
                         });
                     $('.sucess_validation').find('.sucessMessage').text('Piano Rental Extra Stairs Charged Sucessfully  !... ');
                 }
@@ -138,13 +137,11 @@
         }
         function closeError() {
             $('.error_validation').css('display', 'none');
-            window.open('/'+objEnrolmentId, '_self');
-           // window.open('/{!objEnrolment.id}', '_self');
+            window.open('/{!objEnrolment.id}', '_self');
         }
         function closeSucess() {
             $('.sucess_validation').css('display', 'none');
-            window.open('/'+objEnrolmentId, '_self');
-           // window.open('/{!objEnrolment.id}', '_self');
+            window.open('/{!objEnrolment.id}', '_self');
         }
     </script>
 </apex:page>

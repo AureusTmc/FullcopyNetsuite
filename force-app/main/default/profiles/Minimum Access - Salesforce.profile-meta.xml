@@ -538,6 +538,10 @@
         <enabled>false</enabled>
     </classAccesses>
     <classAccesses>
+        <apexClass>ChangeCenterEnrolmentProcessController</apexClass>
+        <enabled>false</enabled>
+    </classAccesses>
+    <classAccesses>
         <apexClass>ClashBookingClass</apexClass>
         <enabled>false</enabled>
     </classAccesses>
@@ -1086,6 +1090,10 @@
         <enabled>false</enabled>
     </classAccesses>
     <classAccesses>
+        <apexClass>InvoiceGeneraterController</apexClass>
+        <enabled>false</enabled>
+    </classAccesses>
+    <classAccesses>
         <apexClass>InvoiceMobileNotificationBatch</apexClass>
         <enabled>false</enabled>
     </classAccesses>
@@ -1298,6 +1306,10 @@
         <enabled>false</enabled>
     </classAccesses>
     <classAccesses>
+        <apexClass>OssiaCenterCalendarController</apexClass>
+        <enabled>false</enabled>
+    </classAccesses>
+    <classAccesses>
         <apexClass>PackageCancellationController</apexClass>
         <enabled>false</enabled>
     </classAccesses>
@@ -1379,6 +1391,10 @@
     </classAccesses>
     <classAccesses>
         <apexClass>PayItemTriggerTest</apexClass>
+        <enabled>false</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>PaymentComponentController</apexClass>
         <enabled>false</enabled>
     </classAccesses>
     <classAccesses>
@@ -1583,6 +1599,10 @@
     </classAccesses>
     <classAccesses>
         <apexClass>RescheduleAllBookingsTest</apexClass>
+        <enabled>false</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>RescheduleAllCenterBookings</apexClass>
         <enabled>false</enabled>
     </classAccesses>
     <classAccesses>
@@ -4818,6 +4838,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>Case.New_Center__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>Case.New_Lesson_Day_Time__c</field>
         <readable>false</readable>
     </fieldPermissions>
@@ -4889,6 +4914,11 @@
     <fieldPermissions>
         <editable>false</editable>
         <field>Case.Preferred_Session__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Case.Previous_Center__c</field>
         <readable>false</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -5274,6 +5304,11 @@
     <fieldPermissions>
         <editable>false</editable>
         <field>Class__c.Field_1__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Class__c.Grade__c</field>
         <readable>false</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -6478,6 +6513,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>Enrolment__c.Available_Make_up_mins__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>Enrolment__c.Block__c</field>
         <readable>false</readable>
     </fieldPermissions>
@@ -6748,6 +6788,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>Enrolment__c.New_Centre__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>Enrolment__c.New_Class__c</field>
         <readable>false</readable>
     </fieldPermissions>
@@ -6950,6 +6995,11 @@
         <editable>false</editable>
         <field>Enrolment__c.Rental_Start_date__c</field>
         <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Enrolment__c.Rental_Termination_Date__c</field>
+        <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
@@ -9058,7 +9108,17 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>Organisation__c.Camp_Class_Template__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>Organisation__c.Country__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Organisation__c.Folder__c</field>
         <readable>false</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -9073,7 +9133,57 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>Organisation__c.Stripe_Base_Url__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Organisation__c.Stripe_Publishable_Key__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Organisation__c.Stripe_Secret_Key__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Organisation__c.Student_Policies_Template_Id__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Organisation__c.Tax_Rate__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>Organisation__c.UEN__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Ossia_Group_Grade_Package__c.Package__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Ossia_Organisation_Settings__mdt.Makeup_Expiry_Days_For_Public_Holiday__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Ossia_Organisation_Settings__mdt.Makeup_Expiry_Days_Teacher__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Ossia_Organisation_Settings__mdt.Makeup_Expiry_Days__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Ossia_Organisation_Settings__mdt.Ossia_at_Home_Id__c</field>
         <readable>false</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -9104,6 +9214,11 @@
     <fieldPermissions>
         <editable>false</editable>
         <field>Package__c.Field_1__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Package__c.Grade__c</field>
         <readable>false</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -10898,6 +11013,16 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>URL_Parameters__mdt.Param_Name__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>URL_Parameters__mdt.Param_SF_Value__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>User.Authentication_code__c</field>
         <readable>false</readable>
     </fieldPermissions>
@@ -10952,10 +11077,19 @@
         <layout>DataUsePurpose-Data Use Purpose Layout</layout>
     </layoutAssignments>
     <layoutAssignments>
+        <layout>Ossia_Group_Grade_Package__c-Ossia Group Grade Package Layout</layout>
+    </layoutAssignments>
+    <layoutAssignments>
+        <layout>Ossia_Organisation_Settings__mdt-Ossia Organisation Settings Layout</layout>
+    </layoutAssignments>
+    <layoutAssignments>
         <layout>ReferAFriendEmail__mdt-ReferAFriendEmail Layout</layout>
     </layoutAssignments>
     <layoutAssignments>
         <layout>Referral_Discount__c-Referral Discount Layout</layout>
+    </layoutAssignments>
+    <layoutAssignments>
+        <layout>URL_Parameters__mdt-URL Parameter Layout</layout>
     </layoutAssignments>
     <layoutAssignments>
         <layout>UserProvAccount-User Provisioning Account Layout</layout>
@@ -11152,6 +11286,10 @@
     </pageAccesses>
     <pageAccesses>
         <apexPage>MyProfilePage</apexPage>
+        <enabled>false</enabled>
+    </pageAccesses>
+    <pageAccesses>
+        <apexPage>Ossiaprepayment_terms</apexPage>
         <enabled>false</enabled>
     </pageAccesses>
     <pageAccesses>

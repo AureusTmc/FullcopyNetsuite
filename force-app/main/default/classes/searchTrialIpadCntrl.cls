@@ -9,26 +9,41 @@ public class searchTrialIpadCntrl {
     public String  isErrMsg{get;set;}
         
     public String countryCode{get;set;}
+    string enrolmentOrg;//@Juneid 18 Aug 2020, This is use for store enrolment organization
+    public String orgType{get;set;}//@Juneid 19 Aug 2020, Storing currebt org name
     //public static
     public searchTrialIpadCntrl(){
         //system.debug('slcdCenter'+slcdCenter);
-        centerName= new List<Centre_Users__c>([select Id,Centre_Name__c,Centre_Name__r.Name from Centre_Users__c where User_Name__c=:UserInfo.getUserId()]);
+        centerName= new List<Centre_Users__c>([select Id,Centre_Name__c,Centre_Name__r.Name,Centre_Name__r.Organisation__c,Centre_Name__r.Organisation__r.name from Centre_Users__c where User_Name__c=:UserInfo.getUserId()]);
         slcdCenter=centerName[0].Centre_Name__c;
+        enrolmentOrg = centerName[0].Centre_Name__r.Organisation__c;//@Juneid 18 Aug,2020, Getting currentv user's Organization
+        system.debug('organization--->'+enrolmentOrg);
+        //@Juneid 19 Aug,2020 Checking Organization for Ossia and Aureus
+        if(String.isNotBlank(centerName[0].Centre_Name__r.Organisation__r.name))
+            if(centerName[0].Centre_Name__r.Organisation__r.name == Label.Ossia_Organisation_Name)
+            orgType = 'ossia';
+        else 
+            orgType ='aureus';
+        
         GetToday=system.today();
-        countryCode  = ApexPages.currentPage().getParameters().get('country');
+        countryCode	 = ApexPages.currentPage().getParameters().get('country');
         slcdEnrIds   = '';
         if(String.isBlank(countryCode))
             countryCode = 'SG';
-    }   
+    }	
     
     public list<SelectOption> getCenters(){
+        system.debug('enrId--->'+slcdEnrIds.split(','));
         list<SelectOption> options = new list<SelectOption>();
                 
         String cenRecId  =  Schema.SObjectType.Account.getRecordTypeInfosByName().get(ConstantsClass.centerRecTypeName).getRecordTypeId();
         options.add(new SelectOption('','Please select')); 
-        
+        system.debug('cenRecId--->'+cenRecId);
+        system.debug('countryCode--->'+countryCode);
+        system.debug('enrolmentOrg--->'+enrolmentOrg);
+        //@Juneid 18 Aug 2020, Added centre filter logic for Orgnaization wise
         for(Account acc: [SELECT Id,Name,CentreName_Cust__c FROM Account 
-                          WHERE RecordtypeId =: cenRecId AND CentreName_Cust__c != null AND Country__r.Name =:countryCode ORDER BY CentreName_Cust__c]){
+                          WHERE (RecordtypeId =: cenRecId AND CentreName_Cust__c != null) AND (Country__r.Name =:countryCode AND Organisation__c =:enrolmentOrg) ORDER BY CentreName_Cust__c]){
                               system.debug('----'+acc);
             options.add(new SelectOption(acc.Id,acc.CentreName_Cust__c)); 
         }
@@ -43,14 +58,14 @@ public class searchTrialIpadCntrl {
         Set<String> stgList = new Set<String>{ConstantsClass.enrollStageAttended,ConstantsClass.PendingEnrolment};
         if(String.isNotBlank(slcdCenter)){
             for(Enrolment__c enr: [SELECT Id, Name, Parent__c, Parent__r.Name, Parent__r.Personemail, Parent_Email__c, Student__c, Student__r.Name,
-                                             Teacher__c, Teacher__r.Name, Package__c, Package__r.Name, Trial_Date__c, Trial_Start_Time__c,
-                                             Center__c, Center__r.Name 
+                                      		 Teacher__c, Teacher__r.Name, Package__c, Package__r.Name, Trial_Date__c, Trial_Start_Time__c,
+                                      		 Center__c, Center__r.Name 
                                       FROM Enrolment__c 
                                       WHERE Parent__r.Personemail != null AND Type__c IN:typeSet  AND Stage__c IN:stgList 
-                                      AND Center__c=:slcdCenter and Trial_Date__c=:GetToday]){
+                                   	  AND Center__c=:slcdCenter and Trial_Date__c=:GetToday]){
                                         system.debug('----'+enr);  
                 String tempTSlot = DateTime.newInstance(enr.Trial_Date__c, enr.Trial_Start_Time__c).format('hh:mm a');                          
-                enrList.add(new EnrolmentModel(enr, tempTSlot));
+             	enrList.add(new EnrolmentModel(enr, tempTSlot));
              }
         }
         
@@ -69,10 +84,10 @@ public class searchTrialIpadCntrl {
             String tempSerch = srchKey + '%';
             system.debug('=====>'+tempSerch);
             String str = 'SELECT Id, Name, Parent__c, Parent__r.Name, Parent__r.Personemail, Parent_Email__c, Student__c, Student__r.Name,Teacher__c, '+
-                                 'Teacher__r.Name, Package__c, Package__r.Name, Trial_Date__c, Trial_Start_Time__c,Center__c, Center__r.Name  '+
-                         'FROM Enrolment__c WHERE Center__r.Country__r.Name =:cntryCode AND Parent__r.Personemail != null AND Student__c != null AND '+
-                              'Student__r.Name != null AND Stage__c IN:stgList AND Type__c IN:typeSet AND (Name like: tempSerch OR Parent__r.Name like: tempSerch OR '+
-                              'Student__r.Name like: tempSerch OR Parent__r.PersonEmail like: tempSerch OR Parent__r.Phone like: tempSerch )';  
+                				 'Teacher__r.Name, Package__c, Package__r.Name, Trial_Date__c, Trial_Start_Time__c,Center__c, Center__r.Name  '+
+                		 'FROM Enrolment__c WHERE Center__r.Country__r.Name =:cntryCode AND Parent__r.Personemail != null AND Student__c != null AND '+
+                		 	  'Student__r.Name != null AND Stage__c IN:stgList AND Type__c IN:typeSet AND (Name like: tempSerch OR Parent__r.Name like: tempSerch OR '+
+                		 	  'Student__r.Name like: tempSerch OR Parent__r.PersonEmail like: tempSerch OR Parent__r.Phone like: tempSerch )';  
             System.debug('@str@@@'+str);
             List<Enrolment__c> enrListing= database.query(str);
             
@@ -90,34 +105,35 @@ public class searchTrialIpadCntrl {
         system.debug('enrList---'+enrList.size());
         return enrList;
     }
-    
+	
     public PageReference redirectToEnrolment(){
         isError    = false;
         isErrMsg   = '';
+        
         PageReference pageRef;
         
         String userName = UserInfo.getUserName();
         if(userName.contains('site')){
             pageRef = new PageReference('/enrolmentprocess_ipad');
         }else{
-            pageRef = new PageReference('/apex/enrolmentprocess_ipad');
+            pageRef = new PageReference('/apex/enrolmentprocess_ipad?'+'currentOrg='+enrolmentOrg+'&'+'orgType='+orgType);
         } 
         pageRef.setRedirect(true);
         
         Integer counter = 1;
         for(String enrId: slcdEnrIds.split(',')){
             if(String.isNotBlank(enrId)){
-                String enrlStr = 'enr'+counter;
-                pageRef.getParameters().put(enrlStr, enrId);    
+            	String enrlStr = 'enr'+counter;
+        		pageRef.getParameters().put(enrlStr, enrId);    
             
                 counter = counter+1;
             }
         }
         if(counter > 1){
-             return pageRef;
+        	 return pageRef;
         }else{
             isError    = true;
-            isErrMsg   = 'Please select atleast 1 enrolment.';
+        	isErrMsg   = 'Please select atleast 1 enrolment.';
         }
         return null;
     }

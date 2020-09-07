@@ -115,6 +115,10 @@
                 <behavior>Edit</behavior>
                 <field>Product_Id__c</field>
             </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Rental_Termination_Date__c</field>
+            </layoutItems>
         </layoutColumns>
         <layoutColumns>
             <layoutItems>
@@ -156,6 +160,10 @@
             <layoutItems>
                 <behavior>Edit</behavior>
                 <field>Class__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Available_Make_up_mins__c</field>
             </layoutItems>
         </layoutColumns>
         <style>TwoColumnsTopToBottom</style>
@@ -267,6 +275,10 @@
             <layoutItems>
                 <behavior>Readonly</behavior>
                 <field>Advance_Action_Summary__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>New_Centre__c</field>
             </layoutItems>
         </layoutColumns>
         <style>TwoColumnsLeftToRight</style>
