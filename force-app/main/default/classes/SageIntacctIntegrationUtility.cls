@@ -132,7 +132,7 @@ Public without sharing class SageIntacctIntegrationUtility{
     
     public static void getGlAccountCodes(){
         
-        /* -removed by KaranSinghSoni */
+        /*
          SessionWrapper sw = SageIntacctIntegrationUtility.getuserSessionID(null);
         
         if(sw.sessionId!=null && sw.sessionId.trim().length()>0){
@@ -236,7 +236,7 @@ Public without sharing class SageIntacctIntegrationUtility{
                     Database.rollback(sp);
                 }
             }
-        }/*-removed by KaranSinghSoni */
+        }*/
     }
     
     public static  Account createCustomer(SessionWrapper sw, Account customer){
