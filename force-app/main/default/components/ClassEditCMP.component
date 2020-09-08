@@ -507,6 +507,61 @@
                             </div>      
                         </div>
                     </div>
+                    <div class="slds-grid slds-gutters">
+                        <div class="slds-col slds-size_1-of-1" style="padding-top:10px;">
+                            <div class="slds-form__row slds-hide" id="recurringgroupSection">
+                                <div class="slds-form__item" role="listitem" style="padding-left: 5px;">
+                                    <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
+                                        <table class="slds-table slds-no-row-hover recurrence ">
+                                            <tr>
+                                                <th>Repeat</th>
+                                                <td>
+                                                    <select class="slds-select" id="repeatgroupSelect" onchange="repeatSelectGroupFunc($(this).val());return false;">
+                                                        <option value="">None</option>
+                                                        <option value="Weeks">Weekly</option>
+                                                    </select>
+                                                </td>
+                                            </tr>
+                                            <tr class="repeatgroupSelection slds-hide">
+                                                <th>Repeat Every</th>
+                                                <td>
+                                                    <select class="slds-select" id="repeatgroupWeek">
+                                                        
+                                                    </select>
+                                                    <span id="repeatgroupValue">Week</span>
+                                                </td>
+                                            </tr>
+                                            <tr class="repeatgroupSelection slds-hide">
+                                                <th>Ends</th>
+                                                <td>
+                                                    <p>
+                                                        <span>
+                                                            <input name="radio" type="radio" id="aftergroupRadio" checked="true"/>
+                                                        </span>&nbsp;&nbsp; After
+                                                        <select class="slds-select" id="recurrencegroupOccure">
+                                                            
+                                                        </select>&nbsp;&nbsp;
+                                                        <span>occurrencess</span>
+                                                    </p>
+                                                    <!-- <p class="slds-m-top_xxx-small">
+                                                        <span>
+                                                            <input name="radio" type="radio" id="ongroupRadio"/>
+                                                        </span>&nbsp;&nbsp; on 
+                                                        <input class="slds-input" type="text" placeholder="Pick a Date" label="Date Picker Label" id="onSelectedgroupDate"/>
+                                                    </p> -->
+                                                    
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="slds-form__item" role="listitem"> 
+                                    
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
                 </div>
                 <footer class="slds-modal__footer">
                     <button class="slds-button slds-button_neutral" id="cancelNewGroupMakupBooking" onclick="$('#newGroupMakupBookingDetails').addClass('slds-hide');$('#newGroupClassCMP').removeClass('slds-hide');refreshNewGroupMakupBookingPopup();">No</button>
@@ -1322,6 +1377,7 @@
         <div class="slds-backdrop slds-backdrop_open"></div>
     </div>
     <script>
+
         var selectedStudentData = {};
 
         //@@jatin: 18-dec-2019:refresh New makeup Booking Popup
@@ -1536,12 +1592,12 @@
             bookingData.centerId = selectedStudentData.centerId;
             bookingData.teacherId = selectedStudentData.teacherId;
             bookingData.isOssia =selectedStudentData.isOssia;
-            bookingData.isRecurring = 'false';
+            bookingData.selgroupClassId = selectedStudentData.selgroupClassId;
+            //bookingData.isRecurring = 'false';
             // added by nishi: 3-Sep-2020: for manage Ossia group class makeup mins 
             if(selectedStudentData.isOssia == true){
                // $('.aureusGroupClassMakeupBooking').addClass('slds-hide');
                 $('.ossiaGroupClassMakeupBooking').removeClass('slds-hide');
-                bookingData.selgroupClassId = selectedStudentData.selgroupClassId;
             }else{
                // $('.aureusGroupClassMakeupBooking').removeClass('slds-hide');
                 $('.ossiaGroupClassMakeupBooking').addClass('slds-hide');
@@ -1557,6 +1613,7 @@
             $('#saveNewGroupMakupBooking').attr('disabled', '');
             $('#newGroupMakupBookingDetails').removeClass('slds-hide');
             $('#GroupMakupDurationLabel').html(selectedStudentData.duration);  
+            $('#recurringgroupSection').addClass('slds-hide');
         }
            
 
@@ -1633,6 +1690,7 @@
                                         $('#GroupMakupHoursErrorMsg').text('');
                                     }
                                 }
+                                $('#recurringgroupSection').removeClass('slds-hide');
                                 $('#GroupMakupParentInput').attr('disabled', '');
                                 $('#GroupMakupPhoneInput').attr('disabled', '');
                                 $('#GroupMakupEmailInput').attr('disabled', '');
@@ -1853,12 +1911,12 @@
         // @@jatin: 19-dec-2019: for create group lesson makeup booking
         function createGroupbooking(redirectCase) {
             var bookingDataStr = JSON.stringify(bookingData);
-           //console.log('bookingDataStr' + bookingDataStr);
+           console.log('bookingDataStr' + bookingDataStr);
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.ClassEditController.createGroupbooking}',
                 bookingDataStr, redirectCase, caseId,
                 function (result, event) {
-                   //console.log(result);
+                   console.log(result);
                     if (event.status) {
                         if (result.caseId) {
                             $('.confirmModal').addClass('slds-hide');
@@ -1953,6 +2011,23 @@
                     errorFlag = true;   
             } 
             if(!errorFlag){
+
+                bookingData.Repeat = $('#repeatgroupSelect').val();
+                if(bookingData.Repeat == 'None'){
+                    bookingData.isRecurring = 'false';
+                }else{
+                    bookingData.isRecurring = 'true';
+                }
+                
+                bookingData.RepeatEvery = $('#repeatgroupWeek').val();
+                if($('#aftergroupRadio').prop('checked')){
+                    bookingData.EndsAfter = $('#recurrencegroupOccure').val();
+                 }
+                 //else if($('#ongroupRadio').prop('checked')){
+                //     bookingData.EndsOn = $('#onSelectedgroupDate').val();
+                // }
+                
+                console.log('bookingData',bookingData);
                 $('.confirmModal').removeClass('slds-hide');
                 $('#confirmBody').html('Do you want to send an email?');
                 $('#confirmHeader').html('Email Confirmation');
@@ -2611,7 +2686,6 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                                     $('#showGroupClassGradeDetials').attr('data-classId',result.bookObj.Class__c);
                                     $('#newOssiaClassBookingDetailsHeader').html('Grade Details ' + result.bookObj.Class__r.Name);
                                     selectedStudentData.duration =result.bookObj.Class__r.Duration__c;
-                                    selectedStudentData.selgroupClassId = result.bookObj.Class__c;
                                 }
                             }else{
                                 selectedStudentData.packageId = result.bookObj.Package__r.Id;
@@ -2624,6 +2698,7 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                                 $('.ossiaGroupClassBookingDetail').addClass('slds-hide');
                                 $('.aureusGroupClassBookingDetail').removeClass('slds-hide');
                             }
+                            selectedStudentData.selgroupClassId = result.bookObj.Class__c;
                             // added by nishi: 2-Sep-2020: for manage ossia group lesson details in ossia case we show grade other wise we show package realed details 
                             selectedStudentData.groupClassId = result.bookObj.Id;
                             selectedStudentData.ClassCapacity = result.bookObj.Class__r.Total_Capacity__c;
@@ -2976,6 +3051,27 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                     }
                 }
             );
+        }
+
+        function repeatSelectGroupFunc(val){
+            $('#recurrencegroupOccure').empty();
+            $('#repeatgroupWeek').empty();
+            if(val == 'None'){
+                $('.repeatgroupSelection').addClass('slds-hide');
+            }else{
+                var optionRecursion = '';
+                for(let i = 1;i <= {!$Label.Recurring_occurrence};i++){
+                    optionRecursion += '<option value="'+i+'">'+i+'</option>';
+                }
+                $('#recurrencegroupOccure').append(optionRecursion);
+                optionRecursion = '';
+                
+                for(let j = 1; j<=1; j++){
+                    optionRecursion += '<option value="'+j+'">'+j+'</option>';
+                }
+                $('#repeatgroupWeek').append(optionRecursion);
+                $('.repeatgroupSelection').removeClass('slds-hide');
+            }
         }
     </script>
 
