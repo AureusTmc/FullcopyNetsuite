@@ -1,6 +1,6 @@
 <apex:component controller="OssiaCenterCalendarController" allowDML="true">
     <script>  
-        //nishi
+        //nishi jain
         function showGroupClassGradepackages(centreId,teacherId,grade,duration){
             $('#newOssiaClassBookingDetailsHeader').html('Select Grade Packages');
             $('#newGroupClassModal').addClass('slds-hide');
