@@ -232,38 +232,74 @@ stuWrap.lesson = lsn;
         Set<String> instrumentTempSet = new Set<String>();
         if(String.isNotBlank(slcdCenter)){  
             checkAtHome();
-            
-            List<Class__c> clssList = [SELECT Id,Teacher__c,Teacher__r.Name,Teacher__r.Teacher_Bio__c,Active__c,Centre_Name__c,Centre_Name__r.Name,Teacher__r.Major_Instruments_Disciplines__c,Instrument__c
-                                       FROM Class__c 
-                                       WHERE Active__c = true 
-                                       AND Instrument__c != null AND Centre_Name__r.Country__r.Name =:countryCode];
-            for(Class__c cls : clssList){
-                if(cls.Centre_Name__c == slcdCenter) {
-                    slcdCentrName = cls.Centre_Name__r.Name;
-                    for(String strIns : cls.Instrument__c.split(';'))
-                        instrumentTempSet.add(strIns); 
-                }                   
-            }
-            
-            
-            if(!isAureusAtHome){
-                //Filling disabled Instruments for the selected Center
-                for(Class__c cls : clssList){
-                    if(cls.Centre_Name__c != slcdCenter) {
-                        for(String strIns : cls.Instrument__c.split(';')){
-                            
-                            if(!instrumentTempSet.contains(strIns)){
-                                String centNames =  disabledInstrument.containsKey(strIns) ? disabledInstrument.get(strIns) : cls.Centre_Name__r.Name;
+             //Start:Added by nishi:3-Sep-2020: for show ossia group class time slot we get instrument to Ossia_Group_Grade_Package__c object
+            if(org == 'osia'){
+                List<Ossia_Group_Grade_Package__c> gradePackageList = [SELECT Class_Name__c, Package__c,  Name, Id ,Class_Name__r.Centre_Name__r.Name,
+                                                                        Package__r.Program__r.Instrument__c
+                                                                        FROM Ossia_Group_Grade_Package__c
+                                                                        Where Package__r.Program__r.Instrument__c != null and
+                                                                        Class_Name__r.Centre_Name__r.Country__r.Name =:countryCode
+                                                                        and Class_Name__r.Active__c = true ];
+                
+                for(Ossia_Group_Grade_Package__c objGradePackage: gradePackageList){
+                    if(objGradePackage.Class_Name__r.Centre_Name__c == slcdCenter) {
+                        slcdCentrName = objGradePackage.Class_Name__r.Centre_Name__r.Name;
+                        instrumentTempSet.add(objGradePackage.Package__r.Program__r.Instrument__c); 
+                    } 
+                }
+
+                if(!isAureusAtHome){
+                    //Filling disabled Instruments for the selected Center
+                    for(Ossia_Group_Grade_Package__c objGradePackage: gradePackageList){
+                        if(objGradePackage.Class_Name__r.Centre_Name__c != slcdCenter) {
+                            if(!instrumentTempSet.contains(objGradePackage.Package__r.Program__r.Instrument__c)){
+                                String centNames =  disabledInstrument.containsKey(objGradePackage.Package__r.Program__r.Instrument__c) ? disabledInstrument.get(objGradePackage.Package__r.Program__r.Instrument__c) : objGradePackage.Class_Name__r.Centre_Name__r.Name;
                                 
-                                if(!(centNames.contains(cls.Centre_Name__r.Name)))
-                                    centNames += ', '+cls.Centre_Name__r.Name;
+                                if(!(centNames.contains(objGradePackage.Class_Name__r.Centre_Name__r.Name)))
+                                    centNames += ', '+objGradePackage.Class_Name__r.Centre_Name__r.Name;
                                 
-                                disabledInstrument.put(strIns, centNames);  
+                                disabledInstrument.put(objGradePackage.Package__r.Program__r.Instrument__c, centNames);  
                             }   
-                        }   
+                              
+                        }
+                    }
+                }
+               
+            }else{
+                 //end:Added by nishi:3-Sep-2020: for show ossia group class time slot we get instrument to Ossia_Group_Grade_Package__c object
+                List<Class__c> clssList = [SELECT Id,Teacher__c,Teacher__r.Name,Teacher__r.Teacher_Bio__c,Active__c,Centre_Name__c,Centre_Name__r.Name,Teacher__r.Major_Instruments_Disciplines__c,Instrument__c
+                                        FROM Class__c 
+                                        WHERE Active__c = true 
+                                        AND Instrument__c != null AND Centre_Name__r.Country__r.Name =:countryCode];
+                for(Class__c cls : clssList){
+                    if(cls.Centre_Name__c == slcdCenter) {
+                        slcdCentrName = cls.Centre_Name__r.Name;
+                        for(String strIns : cls.Instrument__c.split(';'))
+                            instrumentTempSet.add(strIns); 
+                    }                   
+                }
+                if(!isAureusAtHome){
+                    //Filling disabled Instruments for the selected Center
+                    for(Class__c cls : clssList){
+                        if(cls.Centre_Name__c != slcdCenter) {
+                            for(String strIns : cls.Instrument__c.split(';')){
+                                
+                                if(!instrumentTempSet.contains(strIns)){
+                                    String centNames =  disabledInstrument.containsKey(strIns) ? disabledInstrument.get(strIns) : cls.Centre_Name__r.Name;
+                                    
+                                    if(!(centNames.contains(cls.Centre_Name__r.Name)))
+                                        centNames += ', '+cls.Centre_Name__r.Name;
+                                    
+                                    disabledInstrument.put(strIns, centNames);  
+                                }   
+                            }   
+                        }
                     }
                 }
             }
+            
+            
+            
         }
         
         instrumentList.addAll(instrumentTempSet);
@@ -664,7 +700,7 @@ Set<Time> afternoonTimesTemp    = new Set<Time>();*/
                        // start:nishi: 4-Sep-2020: for check teacher engagement type is part-time and is day is greater then 28 mean (5th lesson booking) so we not consider this teacher
                        //remove any timeslot for 5th days for part-time teachers.
                         Boolean isPartTimeTeacher = false; 
-                        if(teachWorkSch.Teacher_Name__r.Engagement_Type__c =='Part-Time' && st.day() > 28){
+                        if(teachWorkSch.Teacher_Name__r.Engagement_Type__c =='Part-Time' && st.day() > 28 && org == 'osia'){
                             isPartTimeTeacher = true;
                         }
                         system.debug('%%%%isPartTimeTeacher'+isPartTimeTeacher +'  '+st); 

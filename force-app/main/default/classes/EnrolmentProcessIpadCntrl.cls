@@ -441,7 +441,7 @@ public class EnrolmentProcessIpadCntrl {
                          // start:nishi: 4-Sep-2020: for check teacher engagement type is part-time and is day is greater then 28 mean (5th lesson booking) so we not consider this teacher
                        //remove any timeslot for 5th days for part-time teachers.
                        Boolean isPartTimeTeacher = false; 
-                       if(teachWorkSch.Teacher_Name__r.Engagement_Type__c =='Part-Time' && st.day() > 28){
+                       if(teachWorkSch.Teacher_Name__r.Engagement_Type__c =='Part-Time' && st.day() > 28 && defaultOrg=='ossia'){
                            isPartTimeTeacher = true;
                        }
                        system.debug('%%%%isPartTimeTeacher'+isPartTimeTeacher +'  '+st); 
