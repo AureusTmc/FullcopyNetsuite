@@ -35,6 +35,15 @@ global class PostInvoiceBatch implements Database.Batchable<sObject>, database.s
          enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus,ConstantsClass.enrolGroupType};
         
     }
+    // added by nishi: 9-Sep-2020: for creating next month invoice requirement we send next month date with enrolment id
+    public PostInvoiceBatch(Set<string> enrolIds,DateTime startingDate){
+      enrolmentIds = enrolIds;
+      enroledStatus = ConstantsClass.enroledStatus;
+      enrolRegularType = ConstantsClass.enrolRegularStatus;
+      noOfRecords  = 0;
+      startTime = startingDate;
+       enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus,ConstantsClass.enrolGroupType};
+  }
      global Database.QueryLocator start(Database.BatchableContext BC){
         return Database.getQueryLocator([SELECT Id, Student__c, Center__c, Center__r.Name, Teacher__c, Package__c,
                                           Lesson_Start_time__c, Package__r.Duration__c, Lesson_Day__c,
@@ -57,7 +66,9 @@ global class PostInvoiceBatch implements Database.Batchable<sObject>, database.s
      global void execute(Database.BatchableContext BC, List<Enrolment__c> enrolmentList){
         noOfRecords  += enrolmentList.size();
         system.debug('enrolmentList'+enrolmentList);
-        AureusUtility.postInvoiceJobOnEnrolment(enrolmentList);
+         // commented by nishi: 9-Sep-2020: for creating next month invoice requirement we send next month date with enrolment id
+         //AureusUtility.postInvoiceJobOnEnrolment(enrolmentList);
+         AureusUtility.postInvoiceJobOnEnrolment(enrolmentList,startTime.date());
      }
      
      global void finish(Database.BatchableContext BC){
