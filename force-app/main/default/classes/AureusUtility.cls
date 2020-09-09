@@ -62,7 +62,7 @@ public class AureusUtility{
         
         //Fill the set of Enrolments and map of enrolment
         for(Enrolment__c enrol : enrolmentList){
-            enrolmentMap.put(enrol.Id, enrol);
+                enrolmentMap.put(enrol.Id, enrol);
         }
         
         if(enrolmentMap.keySet().size() > 0){
@@ -82,7 +82,7 @@ C. Withdrawal of Enrolment
 D. Change of Enrolment
 2. creating 13th Month Bookings
 */
-    public static void postInvoiceJobOnEnrolment(List<Enrolment__c> enrolmentList){
+    public static void postInvoiceJobOnEnrolment(List<Enrolment__c> enrolmentList,date startingDate){
         
         Map<String, Enrolment__c> enrolmentMap = new Map<String, Enrolment__c>();
         Set<String> cancelledEnrolmentSet = new Set<String>();
@@ -104,7 +104,10 @@ D. Change of Enrolment
              }
             
         }
-        list<Enrolment__c> listOfUpdatedEnrolment = enrolmentAdvanceAction(enrolmentMap);
+        // commented by nishi: 9-Sep-2020: for creating next month invoice requirement we send next month date with enrolment id
+        //list<Enrolment__c> listOfUpdatedEnrolment = enrolmentAdvanceAction(enrolmentMap);
+
+        list<Enrolment__c> listOfUpdatedEnrolment = enrolmentAdvanceAction(enrolmentMap,startingDate);
         // @@jatin: 9-jan-2020: for manage Group lesson and regular bookings
         if(listOfUpdatedEnrolment.size() > 0){
             for(Enrolment__c enrolObj : listOfUpdatedEnrolment){
@@ -142,18 +145,23 @@ D. Change of Enrolment
         system.debug('!!enrolmentRegularMap'+enrolmentRegularMap);
 
          if(enrolmentRegularMap != null && enrolmentRegularMap.size() > 0 ){
-           createBookingFor13Month(enrolmentRegularMap.values(), cancelledEnrolmentSet);
+             // commented by nishi: 9-Sep-2020: for creating next month invoice requirement we send next month date with enrolment id
+             //createBookingFor13Month(enrolmentRegularMap.values(), cancelledEnrolmentSet);
+           createBookingFor13Month(enrolmentRegularMap.values(), cancelledEnrolmentSet,startingDate);
         }
         if(groupEnrolmentMap!= null && groupEnrolmentMap.size() > 0 ){
             //@@jatin: 9-jan-2020 Create 4 group lesson bookings of per enrolment for 13 month
-            createGroupLessonBookingFor13Month(groupEnrolmentMap.values(), cancelledGroupEnrolmentSet,getmapOfEffectiveDateGroupLesson(classIds));
+            // commented by nishi: 9-Sep-2020: for creating next month invoice requirement we send next month date with enrolment id
+            //createGroupLessonBookingFor13Month(groupEnrolmentMap.values(), cancelledGroupEnrolmentSet,getmapOfEffectiveDateGroupLesson(classIds));
+            createGroupLessonBookingFor13Month(groupEnrolmentMap.values(), cancelledGroupEnrolmentSet,getmapOfEffectiveDateGroupLesson(classIds,startingDate));
         }
     }     
     // /@@jatin: 9-jan-2020  get date and group lesson of 13th months according to classIds  
-    private  static Map<String,Map<Date,String>> getmapOfEffectiveDateGroupLesson(List<Id> classIds){
+    private  static Map<String,Map<Date,String>> getmapOfEffectiveDateGroupLesson(List<Id> classIds,Date startingDate){
         Map<String,Map<Date,String>> mapOfClassDates = New  Map<String,Map<Date,String>>();
         Map<Date,String> mapOfDateGroupLesson = New  Map<Date,String>();
-        Date current = System.today().addMonths(13);
+       // Date current = System.today().addMonths(13); // commented by nishi: 9-Sep-2020: for creating next month invoice requirement we send next month date with enrolment id
+        Date current = startingDate.addMonths(13);
         Date firstDate = Date.newInstance(current.year(),current.month(),01);
         Date lastDate = Date.newInstance(current.year(),current.month(),Date.daysInMonth(current.month(),current.year()));
         system.debug('firstDate'+firstDate);
@@ -174,7 +182,71 @@ D. Change of Enrolment
                                         mapOfDateGroupLesson.put(objBook.Booking_Date__c ,objBook.id);
                                         mapOfClassDates.put(objBook.Class__c,mapOfDateGroupLesson);
                                   }
-                                  system.debug('mapOfClassDates'+mapOfClassDates);
+        system.debug('mapOfClassDates'+mapOfClassDates);
+        mapOfClassDates = check13MonthGroupLessonExistOrNot(classIds,firstDate,lastDate,mapOfClassDates);  
+        system.debug('mapOfClassDates'+mapOfClassDates);  
+        return mapOfClassDates;
+    }
+    
+     // added by nishi: 9-Sep-2020: for if group lesson instance creates.
+        //we firslty check the group lesson booking is already created or not is group lesson booking not found then we are  creating new group lesson instance. 
+    private static Map<String,Map<Date,String>> check13MonthGroupLessonExistOrNot(List<Id> classIds,Date firstDate,Date lastDate,Map<String,Map<Date,String>> mapOfClassDates){
+        if(classIds != null && classIds.size() > 0){
+            if(mapOfClassDates != null && mapOfClassDates.size() > 0 ){
+                List<Id> newClassIds = new List<Id>();
+                for(string classId : classIds){
+                    if(!mapOfClassDates.containsKey(classId)){
+                        newClassIds.add(classId);
+                    }
+                }
+                system.debug('newClassIds'+newClassIds);
+                if(newClassIds != null && newClassIds.size()>0 ){
+                    mapOfClassDates = createGroupClassInstance(newClassIds,firstDate,lastDate,mapOfClassDates);    
+                }
+            }else{
+                system.debug('classIds'+classIds);
+                mapOfClassDates = createGroupClassInstance(classIds,firstDate,lastDate,mapOfClassDates);    
+            }
+        }
+        return mapOfClassDates;
+    }
+
+     // added by nishi: 9-Sep-2020: for we creating group lesson instance  
+    private static  Map<String,Map<Date,String>> createGroupClassInstance(List<Id> classIds,Date firstDate,Date lastDate,Map<String,Map<Date,String>> mapOfClassDates){
+        Map<Date,String> mapOfDateGroupLesson = New  Map<Date,String>();
+        List<Booking__c> bookingListForClass = new List<Booking__c>();
+        
+        if(classIds != null && classIds.size() > 0){
+            for(Class__c objClass :[SELECT Id,name, Centre_Name__c, Package_Fee__c, Program__c, Total_Capacity__c, Class_Type__c, Class_Start_Date__c, End_Time__c, Start_Time__c, Teacher__c,
+                                        Package__c, Active__c, Total_Enrolment__c, Class_Date__c, Class_End_Date__c, Class_Day__c, Minimum_age__c, Maximum_age__c, Instrument__c, Available_Capacity__c 
+                                        FROM Class__c 
+                                        WHERE Active__c = true 
+                                        AND Class_Start_Date__c <= THIS_MONTH 
+                                        And (Class_End_Date__c = null OR Class_End_Date__c >=:lastDate)
+                                        AND Id In: classIds]){
+                if(objClass.Start_Time__c != null ){ 
+                    system.debug('firstDate'+firstDate);    
+                    system.debug('lastDate'+lastDate);    
+                    DateTime startTime  = AureusUtility.getFirstWeekDayDate(objClass.Class_Day__c,firstDate.month(),firstDate.year());
+                    DateTime endTime =objClass.Class_End_Date__c != null && objClass.Class_End_Date__c.month() == firstDate.month() ? 
+                            DateTime.newInstance(objClass.Class_End_Date__c,objClass.Start_Time__c) :
+                            DateTime.newInstance(Date.newInstance(lastDate.year(),lastDate.month(),Date.daysInMonth(lastDate.month(),lastDate.year())),objClass.Start_Time__c);
+                    system.debug('startTime'+startTime);    
+                    system.debug('endTime'+endTime);   
+                    bookingListForClass.addAll(ClassTriggerHelper.createBookingsForClass(objClass,startTime,endTime));
+                }
+            }
+            if(bookingListForClass.size() > 0){
+                upsert   bookingListForClass;    
+                system.debug('bookingListForClass'+bookingListForClass); 
+                for(Booking__c objBook: bookingListForClass){
+                    mapOfDateGroupLesson = mapOfClassDates.containsKey(objBook.Class__c) ?  mapOfClassDates.get(objBook.Class__c):New Map<Date,String>();
+                    mapOfDateGroupLesson.put(objBook.Booking_Date__c ,objBook.id);
+                    mapOfClassDates.put(objBook.Class__c,mapOfDateGroupLesson);
+                }
+                system.debug('mapOfClassDates'+mapOfClassDates); 
+            }
+        }
         return mapOfClassDates;
     }
 
@@ -193,7 +265,7 @@ D. Change of Enrolment
 
 
     //@@jatin: 9-jan-2020 Create 4 group lesson bookings of per enrolment for 13 month
-    private static void createGroupLessonBookingFor13Month(List<Enrolment__c> enrolmentList, Set<String> cancelledBookingsSet,Map<String,Map<Date,String>> mapOfClassDates ){
+    private static void createGroupLessonBookingFor13Month(List<Enrolment__c> enrolmentList, Set<String> cancelledBookingsSet,Map<String,Map<Date,String>> mapOfClassDates){
         String groupLessonBookingRecordType = Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get(ConstantsClass.groupLessonBookingRecordType).getRecordTypeId();
         
         List<Booking__c> listOfBookings = new List<Booking__c>();
@@ -315,11 +387,18 @@ D. Change of Enrolment
                 if(enrolObj.type__c != ConstantsClass.enrolGroupType){
                     //Start:added by nishi: 13-aug-2020: for if enrolment is Ossia then we manage available makeup mins in enroment otherwise we mange parent records
                     if(mapOfDates.containskey(enrolObj.Lesson_Day__c) && mapOfDates.get(enrolObj.Lesson_Day__c).size() == 5 && mapOfDates.get(enrolObj.Lesson_Day__c)[4].day() > 28){
-                        if(String.isNotBlank(enrolObj.Center__c) && 
-                        String.isNotBlank(enrolObj.Center__r.Organisation__c) && 
-                        String.isNotBlank(enrolObj.Center__r.Organisation__r.Name) && 
-                        enrolObj.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
-                            fifthOssiaBookingMap.put(enrolObj, mapOfDates.get(enrolObj.Lesson_Day__c)[4]);
+                        if(String.isNotBlank(enrolObj.Center__c) && String.isNotBlank(enrolObj.Center__r.Organisation__c) && 
+                        String.isNotBlank(enrolObj.Center__r.Organisation__r.Name) && enrolObj.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                            //7-Sep:2020:Start: added by nishi: if teacher Engagement_Type__c type is part-time then not creating fifth lesson booking 
+                            Boolean isTeaacherPartTime = false;
+                            if(string.isNotBlank(enrolObj.Teacher__c) && string.isNotBlank(enrolObj.Teacher__r.Engagement_Type__c) && 
+                                enrolObj.Teacher__r.Engagement_Type__c.equalsIgnoreCase('Part-Time')){
+                                isTeaacherPartTime = true;
+                            }
+                            //7-Sep:2020:Start: added by nishi: if teacher Engagement_Type__c type is part-time then not creating fifth lesson booking 
+                            if(!isTeaacherPartTime){
+                                    fifthOssiaBookingMap.put(enrolObj, mapOfDates.get(enrolObj.Lesson_Day__c)[4]);
+                            }
                         }else{
                             fifthBookingMap.put(enrolObj, mapOfDates.get(enrolObj.Lesson_Day__c)[4]);
                         }
@@ -624,12 +703,13 @@ D. Change of Enrolment
     }
     
     //Update Enrolment According to the Advance Action
-    public static List<Enrolment__c> enrolmentAdvanceAction(Map<String, Enrolment__c> enrolmentMap){
+    public static List<Enrolment__c> enrolmentAdvanceAction(Map<String, Enrolment__c> enrolmentMap,Date startingDate){
         system.debug('enrolmentAdvanceAction');
         Enrolment__c objEnrolment;
         List<Enrolment__c> enrolmentList = new List<Enrolment__c>();
         
-        Date startDate = System.today().toStartOfMonth();
+        //Date startDate = System.today().toStartOfMonth();// commented by nishi: 9-Sep-2020: for creating next month invoice requirement we send next month date with enrolment id
+        Date startDate = startingDate.toStartOfMonth();
         Date endDate = startDate.addMonths(1).addDays(-1);
         system.debug('!!endDate'+endDate);
         for(String enrolId : enrolmentMap.keyset()){
@@ -755,11 +835,12 @@ D. Change of Enrolment
     }
     
     //Create 4 bookings of per enrolment for 13 month
-    private static void createBookingFor13Month(List<Enrolment__c> enrolmentList, Set<String> cancelledBookingsSet){
+    private static void createBookingFor13Month(List<Enrolment__c> enrolmentList, Set<String> cancelledBookingsSet,Date startingdate){
         String lessonRecorType = Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get(ConstantsClass.recordTypeLesson).getRecordTypeId();
         
         List<Booking__c> listOfBookings = new List<Booking__c>();
-        Date current = System.today().addMonths(13);
+        //Date current = System.today().addMonths(13); // commented by nishi: 9-Sep-2020: for creating next month invoice requirement we send next month date with enrolment id
+        Date current = startingdate.addMonths(13);
         Date firstDate = Date.newInstance(current.year(),current.month(),01);
         Date lastDate = Date.newInstance(current.year(),current.month(),Date.daysInMonth(current.month(),current.year()));
         Map<String, List<Date>> mapOfDates = getDateMap(firstDate,lastDate);
@@ -1023,7 +1104,8 @@ D. Change of Enrolment
 
             //Start: added by nishi: 3-Sep-2020: for check teacher type is part-time then we not creating bookings
             isCreateFifthlessonBooking = true;
-            if(string.isNotBlank(fifthLessons.Enrolment__c) && string.isNotBlank(fifthLessons.Enrolment__r.Teacher__c) && mapOfteacherType != null && mapOfteacherType.size() > 0){
+            if(string.isNotBlank(fifthLessons.Enrolment__c) && string.isNotBlank(fifthLessons.Enrolment__r.Teacher__c) && mapOfteacherType != null && mapOfteacherType.size() > 0
+            && ossiaEnrolmentIds != null && ossiaEnrolmentIds.size() > 0 && ossiaEnrolmentIds.contains(fifthLessons.Enrolment__c)){
                 if(mapOfteacherType.containsKey(fifthLessons.Enrolment__r.Teacher__c) && mapOfteacherType.get(fifthLessons.Enrolment__r.Teacher__c).equalsIgnoreCase('Part-Time')){
                     isCreateFifthlessonBooking = false;
                 }
