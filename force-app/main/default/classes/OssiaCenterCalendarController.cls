@@ -3,6 +3,7 @@ public with sharing class OssiaCenterCalendarController {
     @RemoteAction
     public static OssiaCalendarResponse getOssiaStudentDetail(String bookingId){
         List<OssiaStudentCancelBooking>  listOfOssiaStudentCancelBooking = new List<OssiaStudentCancelBooking>();
+        Set<string> recordTypes = new set<string>{ConstantsClass.recordTypeLesson,ConstantsClass.groupLessonBookingRecordType};
         datetime last12Month = system.today().addDays(-365);
         if(string.isNotBlank(bookingId)){ 
             Booking__c objOssiaEnrolmentBooking =getOssiaStudentEntolment(bookingId);
@@ -28,7 +29,7 @@ public with sharing class OssiaCenterCalendarController {
                                                 AND (Canceled_Date__c >=: last12Month
                                                 AND status__c =: ConstantsClass.statusCanceled
                                                 //AND Type__c =: ConstantsClass.typeRegular
-                                                AND RecordType.Name =:ConstantsClass.recordTypeLesson)
+                                                AND RecordType.Name in:recordTypes)
                                                 Order by Booking_date__c DESC]){
                                                     DateTime bookingDate = DateTime.newInstance(objBooking.Booking_date__c, objBooking.Start_Time__c);
                                                     listOfOssiaStudentCancelBooking.add(new OssiaStudentCancelBooking(
@@ -302,6 +303,7 @@ public with sharing class OssiaCenterCalendarController {
         Map<string,List<Enrolment__c>> mapOfEnrolmentRelatedStudent = new Map<string,List<Enrolment__c>>();
         List<Enrolment__c> listOfEnrolment = new List<Enrolment__c>();
         list<string> accountIds = new list<string>();
+        
         // if(string.isNotBlank(parentId)){
         //     accountIds.add(parentId);
         // }
@@ -719,7 +721,7 @@ public with sharing class OssiaCenterCalendarController {
                         List<Package__c> getPackageList = new List<Package__c> ();
                         if(bookingType =='UpgradeEnrolment'){
                             getPackageList = [SELECT Id, Name, Program__r.Instrument__c, Active__c, Package_Fee__c, Location__c, Duration__c,//facility_Fee__c,
-                                                Grade__c
+                                                Grade_new__c
                                                 FROM Package__c 
                                                 WHERE 
                                                 //Duration__c > :bookingList[0].enrolment__r.Package__r.Duration__c AND 
@@ -734,7 +736,7 @@ public with sharing class OssiaCenterCalendarController {
                                                 ORDER BY Duration__c];
                         }else if(bookingType =='DowngradeEnrolment'){
                             getPackageList = [SELECT Id, Name, Program__r.Instrument__c, Active__c, Package_Fee__c, Location__c, Duration__c,//facility_Fee__c,
-                                                Grade__c
+                                                Grade_new__c
                                                 FROM Package__c 
                                                 WHERE 
                                                 //Duration__c < :bookingList[0].enrolment__r.Package__r.Duration__c AND 
@@ -749,7 +751,7 @@ public with sharing class OssiaCenterCalendarController {
                                                 ORDER BY Duration__c];
                         }else if(bookingType =='UpdateEnrolment'){
                             getPackageList = [SELECT Id, Name, Program__r.Instrument__c, Active__c, Package_Fee__c, Location__c, Duration__c,//facility_Fee__c,
-                                                Grade__c
+                                                Grade_new__c
                                                 FROM Package__c 
                                                 WHERE 
                                                 //Duration__c = :bookingList[0].enrolment__r.Package__r.Duration__c AND 
@@ -767,7 +769,7 @@ public with sharing class OssiaCenterCalendarController {
                             // other wise Packages whose monthly fee is equal to the current monthly fee 
                             if(athomeCenterIds.contains(centerId)){
                                 getPackageList = [SELECT Id, Name, Program__r.Instrument__c, Active__c, Package_Fee__c, Location__c, Duration__c,//facility_Fee__c,
-                                                Grade__c
+                                                Grade_new__c
                                                 FROM Package__c 
                                                 WHERE 
                                                 //Duration__c = :bookingList[0].enrolment__r.Package__r.Duration__c AND 
@@ -782,7 +784,7 @@ public with sharing class OssiaCenterCalendarController {
                                                 ORDER BY Duration__c];
                             }else{
                                 getPackageList = [SELECT Id, Name, Program__r.Instrument__c, Active__c, Package_Fee__c, Location__c, Duration__c,//facility_Fee__c,
-                                                Grade__c
+                                                Grade_new__c
                                                 FROM Package__c 
                                                 WHERE 
                                                 //Duration__c = :bookingList[0].enrolment__r.Package__r.Duration__c AND 
@@ -805,7 +807,7 @@ public with sharing class OssiaCenterCalendarController {
                             dt.name = pkg.Name;
                             dt.duration = pkg.Duration__c;
                             //dt.facilityFee = BillingUtility.roundOffAmount(pkg.facility_Fee__c);
-                            dt.grade = string.isnotBlank(pkg.Grade__c)?pkg.Grade__c:'';
+                            dt.grade = string.isnotBlank(pkg.Grade_new__c)?pkg.Grade_new__c:'';
                             dt.packageFee = BillingUtility.roundOffAmount(pkg.Package_Fee__c);
                             packageList.add(dt);
                         }    
@@ -845,8 +847,9 @@ public with sharing class OssiaCenterCalendarController {
                 }
                 Map<string,List<AureusCalendarController.GroupPackage>> mapOfGradePackages = new Map<string,List<AureusCalendarController.GroupPackage>>();
                 //system.debug('instruments'+instruments);
+                set<string> packageIds = new set<string>();
                 if(instruments != null && instruments.size() > 0){
-                    for(Package__c packageObj : [SELECT Id, Name, of_Students__c, Duration__c, Package_Fee__c,Instrument__c,Grade__c,Deposit_Fee__c
+                    for(Package__c packageObj : [SELECT Id, Name, of_Students__c, Duration__c, Package_Fee__c,Instrument__c,Grade_new__c,Deposit_Fee__c
                                                 FROM Package__c WHERE
                                                 Type__c =: ConstantsClass.packageTypeGroup
                                                 AND Active__c = TRUE 
@@ -855,20 +858,25 @@ public with sharing class OssiaCenterCalendarController {
                                                 AND Program__r.Status__c =:  ConstantsClass.activeStatus
                                                 AND Program__r.Instrument__c IN: instruments]){
                         grpPackages = new List<AureusCalendarController.GroupPackage>();
-                        if(string.isNotBlank(packageObj.Grade__c)){
-                            for(String grade : packageObj.Grade__c.split(';')){ 
+                        if(string.isNotBlank(packageObj.Grade_new__c)){
+                            for(String grade : packageObj.Grade_new__c.split(';')){ 
                                 if(grades.contains(grade)){   
                                     if(mapOfGradePackages.containsKey(grade)){
                                         grpPackages = mapOfGradePackages.get(grade);
                                     }
-                                    grpPackage = new AureusCalendarController.GroupPackage();
-                                    grpPackage.isOssia = false; //added by nishi: for get organisation is related to  ossia or not
-                                    grpPackage.id =  packageObj.Id;
-                                    grpPackage.name = packageObj.Name;
-                                    grpPackage.price = packageObj.Package_Fee__c;
-                                    grpPackage.deposit = packageObj.Deposit_Fee__c;
-                                    grpPackage.instrument = packageObj.Instrument__c;
-                                    grpPackages.add(grpPackage);
+                                    for(AureusCalendarController.GroupPackage objgrpPackage : grpPackages){
+                                        packageIds.add(objgrpPackage.id);
+                                    }
+                                    if(!packageIds.contains(packageObj.Id)){
+                                        grpPackage = new AureusCalendarController.GroupPackage();
+                                        grpPackage.isOssia = false; //added by nishi: for get organisation is related to  ossia or not
+                                        grpPackage.id =  packageObj.Id;
+                                        grpPackage.name = packageObj.Name;
+                                        grpPackage.price = packageObj.Package_Fee__c;
+                                        grpPackage.deposit = packageObj.Deposit_Fee__c;
+                                        grpPackage.instrument = packageObj.Instrument__c;
+                                        grpPackages.add(grpPackage);
+                                    }
                                     mapOfGradePackages.put(grade,grpPackages);
                                 }
                             }
@@ -907,11 +915,11 @@ public with sharing class OssiaCenterCalendarController {
     public static Boolean saveNewOssiaClass(String centreId, String teacherId, map<string,string> gradevalues, 
                                         String classDateStr, String classTimeStr, 
                                         String duration, Integer countOfStudent,
-                                        string classType,Integer minAge,Integer maxAge,list<string> grades){
+                                        string classType,Integer minAge,Integer maxAge,list<string> grades,Boolean isGroupclassEndDate,String classEndDateStr){
         Boolean isSuccess = false;
                                             
         string insertedClassid =  AureusCalendarController.saveNewGroupClass(centreId,  teacherId,  '',  classDateStr, classTimeStr,  duration, countOfStudent,
-                                    classType, minAge, maxAge,true,string.join(grades, ';'));
+                                 classType, minAge, maxAge,true,string.join(grades, ';'),isGroupclassEndDate, classEndDateStr);
         if(string.isNotBlank(insertedClassid)){
             List<Ossia_Group_Grade_Package__c> listOfOssiaGroupGradePackage = new List<Ossia_Group_Grade_Package__c>();
             if(gradevalues != null && gradevalues.size() > 0){

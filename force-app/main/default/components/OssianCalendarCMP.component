@@ -1,6 +1,6 @@
 <apex:component controller="OssiaCenterCalendarController" allowDML="true">
     <script>  
-
+        //nishi
         function showGroupClassGradepackages(centreId,teacherId,grade,duration){
             $('#newOssiaClassBookingDetailsHeader').html('Select Grade Packages');
             $('#newGroupClassModal').addClass('slds-hide');
@@ -84,6 +84,7 @@
             var centreId = $('#saveNewClass').attr('data-centre');
             var teacherId = $('#saveNewClass').attr('data-teacher');
             var dateTime = moment($('#saveNewClass').attr('data-date'));
+            var classEndDate = moment($('#saveNewClass').attr('data-date'));
             var classType = $('#ClassTypeSelect').val();
             var minAge = $('#ClassMinimumAgeInput').val();
             var maxAge = $('#ClassMaximumAgeInput').val();
@@ -105,11 +106,30 @@
             if(!iserror){
                 $('#newossiaGroupClassModal').addClass('slds-hide');
                 $('#statusOnPage').show();
+                var repeatval = $('#repeatgroupSelect').val();
+                console.log('repeatval',repeatval);
+                var isGroupclassEndDate = false;
+                if(repeatval == 'None'){
+                    isGroupclassEndDate = false;
+                }else{
+                    isGroupclassEndDate= true;
+                    
+                    if($('#aftergroupRadio').prop('checked')){
+                        var recurringdays = $('#recurrencegroupOccure').val();
+                        console.log('recurringdays',recurringdays);
+                        classEndDate.add(parseInt(recurringdays), 'weeks');  
+                    }else if($('#ongroupRadio').prop('checked')){
+                        classEndDate = $('#onSelectedgroupDate').val();
+                    }
+                }
+                console.log('isGroupclassEndDate',isGroupclassEndDate);
+                console.log('classEndDate',classEndDate);
+                console.log('classEndDate',classEndDate.format('YYYY-MM-DD'));
                 Visualforce.remoting.Manager.invokeAction(
                         '{!$RemoteAction.OssiaCenterCalendarController.saveNewOssiaClass}',
                         centreId, teacherId, gradevalues, dateTime.format('YYYY-MM-DD'), 
                         dateTime.format('HH:mm:ss'), duration, capacity, 
-                        classType,minAge,maxAge,grades,
+                        classType,minAge,maxAge,grades,isGroupclassEndDate,classEndDate.format('YYYY-MM-DD'),
                         function(result, event){
                             if(result){
                                 $('#statusOnPage').hide();
