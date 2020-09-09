@@ -443,7 +443,7 @@ public class EnrolmentProcessForClassCtrl {
            //start : 3-Sep-2020: added by nishi: if teacher Engagement_Type__c type is part-time then not calclulate 5th lesson booking
            // fm.prgFees = BillingUtility.calculateCurrentMonthPckFees(lessDate, tempUnitFee);
            if(string.isNotBlank(enr.Teacher__c) && string.isNotBlank(enr.Teacher__r.Engagement_Type__c) && 
-            enr.Teacher__r.Engagement_Type__c.equalsIgnoreCase('Part-Time')){
+            enr.Teacher__r.Engagement_Type__c.equalsIgnoreCase('Part-Time') && isOssia){
                 fm.prgFees = calculateCurrentMonthPckFees(lessDate, tempUnitFee,true);
             }else{
                 fm.prgFees = calculateCurrentMonthPckFees(lessDate, tempUnitFee,false);
@@ -1273,7 +1273,7 @@ public class EnrolmentProcessForClassCtrl {
                                         }
                                        //3-Sep:2020:Start: added by nishi: if teacher Engagement_Type__c type is part-time then not creating fifth lesson booking 
                                         if(string.isNotBlank(enr.Teacher__c) && string.isNotBlank(enr.Teacher__r.Engagement_Type__c) && 
-                                        enr.Teacher__r.Engagement_Type__c.equalsIgnoreCase('Part-Time') && dt.day() > 28){
+                                        enr.Teacher__r.Engagement_Type__c.equalsIgnoreCase('Part-Time') && dt.day() > 28 && isOssia){
                                             isCreate5thCurrentMonthPartTimeTeacherBooking = true;
                                         }
                                         //3-Sep:2020:End  added by nishi: if teacher Engagement_Type__c type is part-time then not creating fifth  booking  we creating fifth_lesson booking
