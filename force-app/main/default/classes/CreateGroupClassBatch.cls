@@ -49,7 +49,8 @@ global class CreateGroupClassBatch implements Database.Batchable<sObject>, datab
                 //if(objClass.Class_End_Date__c != null && objClass.Start_Time__c != null ){   
                 if(objClass.Start_Time__c != null ){    
                     DateTime startTime  = AureusUtility.getFirstWeekDayDate(objClass.Class_Day__c,startDate.month(),startDate.year());
-                    DateTime endTime = objClass.Class_End_Date__c != null && objClass.Class_End_Date__c.month() == startDate.month() ? DateTime.newInstance(objClass.Class_End_Date__c,objClass.Start_Time__c) :
+                    DateTime endTime = objClass.Class_End_Date__c != null && objClass.Class_End_Date__c.month() == startDate.month() ? 
+                                        DateTime.newInstance(objClass.Class_End_Date__c,objClass.Start_Time__c) :
                                         DateTime.newInstance(Date.newInstance(startDate.year(),startDate.month(),Date.daysInMonth(startDate.month(),startDate.year())),objClass.Start_Time__c);
                 
                     /*commented by jatin: 17-Mar-2020: according to new requirement  Class_End_Date__c field  is only update manually 
@@ -63,7 +64,7 @@ global class CreateGroupClassBatch implements Database.Batchable<sObject>, datab
             }
             System.debug('@@@@bookingListForClass'+bookingListForClass);
             if(bookingListForClass.size() > 0){
-                insert  bookingListForClass;     
+                upsert   bookingListForClass;     
             }
             //System.debug('@@@@listOfClass'+listOfClass);
         /*  if(listOfClass.size() > 0){
