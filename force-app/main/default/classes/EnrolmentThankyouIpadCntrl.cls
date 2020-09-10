@@ -4,8 +4,11 @@ public without sharing class EnrolmentThankyouIpadCntrl {
         isOssia = false;
         //String parId = ApexPages.currentPage().getParameters().get('id');
         //String status  = ApexPages.currentPage().getParameters().get('status');
-        system.debug('thanku url -->'+ApexPages.currentPage().getParameters().get('isOssia'));
-        isOssia = Boolean.valueOf((ApexPages.currentPage().getParameters().get('isOssia')));
+        //system.debug('thanku url -->'+ApexPages.currentPage().getParameters().get('isOssia'));
+       //added by nishi: 10-Sep-2020: for get ossia organisation parameter then we change colors
+        if(String.isNotBlank(ApexPages.currentPage().getParameters().get('isOssia'))){
+            isOssia =  Boolean.valueOf((ApexPages.currentPage().getParameters().get('isOssia')));
+        }
         system.debug('isOssia in thanku -->'+isOssia);
     }
     

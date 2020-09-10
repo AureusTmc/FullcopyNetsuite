@@ -6,7 +6,11 @@ public without sharing class EnrolmentThankyouCntrl {
        
         //String parId = ApexPages.currentPage().getParameters().get('id');
         //String status  = ApexPages.currentPage().getParameters().get('status');
-        isOssia = Boolean.valueOf((ApexPages.currentPage().getParameters().get('isOssia')));
+       // isOssia = Boolean.valueOf((ApexPages.currentPage().getParameters().get('isOssia')));
+       //added by nishi: 10-Sep-2020: for get ossia organisation parameter then we change colors
+       if(String.isNotBlank(ApexPages.currentPage().getParameters().get('isOssia'))){
+            isOssia =  Boolean.valueOf((ApexPages.currentPage().getParameters().get('isOssia')));
+        }
     }
     
     public pagereference generateInvPdf(){
