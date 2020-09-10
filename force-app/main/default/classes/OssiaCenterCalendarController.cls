@@ -684,7 +684,7 @@ public with sharing class OssiaCenterCalendarController {
                                                 Makeup_Expiry_Days_Teacher__c FROM Ossia_Organisation_Settings__mdt
                                                 WHERE Label =:System.Label.Ossia_Organisation_Name];
                                                 athomeCenterIds.add(Label.Aureus_at_Home_Id);   
-            if(listOfOssia_Organisation_Settings != null && listOfOssia_Organisation_Settings.size() > 0){
+            if(listOfOssia_Organisation_Settings != null && listOfOssia_Organisation_Settings.size() > 0 && string.isNotBlank(listOfOssia_Organisation_Settings[0].Ossia_at_Home_Id__c)){
                 athomeCenterIds.add(listOfOssia_Organisation_Settings[0].Ossia_at_Home_Id__c);   
             }                        
             String pkgLessRecId =  Schema.SObjectType.Package__c.getRecordTypeInfosByName().get(ConstantsClass.recordTypeLesson).getRecordTypeId(); 
