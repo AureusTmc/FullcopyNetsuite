@@ -242,7 +242,7 @@ system.debug('depositAmount'+depositAmount);
                                                 }
             
             if(invoiceIds.size() > 0){
-                for(Payment__c payment : [SELECT Id, Transaction_ID__c, Invoice__c  
+                for(Payment__c payment : [SELECT Id, Transaction_ID__c, Invoice__c ,Method_of_Payment__c 
                                             FROM Payment__c 
                                             WHERE Invoice__c IN: invoiceIds AND 
                                             RecordType.Name =:ConstantsClass.paymentTransactionRecType]){
@@ -266,9 +266,12 @@ system.debug('depositAmount'+depositAmount);
                 }
                 for( string invoiceId : mapOfInvoicePayments.keyset()){
                     if(mapOfInvoicePayments.containsKey(invoiceId)){
-                        paymentObj.Transaction_ID__c = mapOfInvoicePayments.get(invoiceId).Transaction_ID__c;    
+                        paymentObj.Transaction_ID__c = mapOfInvoicePayments.get(invoiceId).Transaction_ID__c;  
+                        // added by nishi: 10-Sep-2020: if the deposit was paid by card then we can set it to Card and vice-versa
+                        paymentObj.Method_of_Payment__c =   mapOfInvoicePayments.get(invoiceId).Method_of_Payment__c; 
                     }
                 }
+               
                 paymentObj.RecordTypeId =  paymentRecordTypeId;
                 paymentObj.Enrolment__c = objEnrol.id;
                 paymentObj.last_lesson_date__c = lastLessonDateObj;
