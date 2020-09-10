@@ -878,7 +878,7 @@
                                             <!-- Added By Ravi on 8 july 2020 online lesson Tab-->
                                         </ul>
                                         <div id="tab-default-1" class="slds-tabs--default__content slds-show" role="tabpanel" aria-labelledby="tab-default-1__item">
-                                            <div class="slds-grid slds-wrap slds-p-around_xx-small">
+                                            <div class="slds-grid slds-wrap slds-p-around_xxx-small">
                                                 
                                                 <div class="slds-col slds-size_1-of-1">
                                                     <div class="editBookingDetailBody">
@@ -1144,7 +1144,7 @@ Enrol now
                                         </div>
                                         <!-- Added By Ravi on 8 july 2020 .. for Online leesson Tab-->
                                         <div id="tab-default-6" class="slds-tabs--default__content slds-hide" role="tabpanel" aria-labelledby="tab-default-2__item">
-                                            <div class="slds-grid slds-wrap slds-p-around_xx-small">
+                                            <div class="slds-grid slds-wrap slds-p-around_xxx-small">
                                                 <div class="slds-col slds-size_1-of-1">
                                                         <div class="slds-grid slds-gutters">
                                                             <!-- div class="slds-col slds-size_5-of-12">
@@ -1538,7 +1538,7 @@ Enrol now
                                 </a>
                             </header>
                             <div class="slds-modal__content slds-p-around_medium" id="newBookingDetailsBody" style="overflow-y: auto;height:600px">
-                                <div class="slds-grid slds-wrap slds-p-around_xx-small">
+                                <div class="slds-grid slds-wrap slds-p-around_xxx-small">
                                     
                                     <div class="slds-col slds-size_1-of-1">
                                         <div class="slds-grid slds-gutters">
@@ -3727,7 +3727,7 @@ Enrol now
                             <div class="slds-grid slds-wrap">
                                 <!-- center or teacher-->
                                 <div class="slds-col slds-size_12-of-12 slds-grid  slds-wrap  slds-m-top_small">
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_x-small slds-wrap  slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_xxx-small slds-wrap  slds-m-top_small">
                                         <div class="slds-col slds-size_5-of-12">
                                             <span><b>Location :</b></span>
                                         </div>
@@ -3735,7 +3735,7 @@ Enrol now
                                             <span><label id="LocationNameClass"></label></span>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_x-small slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_xxx-small slds-m-top_small">
                                         <div class="slds-col slds-size_5-of-12">
                                             <span><b>Teacher :</b></span>
                                         </div>
@@ -3748,7 +3748,7 @@ Enrol now
 
                                 <!-- time or class type-->
                                
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_x-small slds-wrap slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_xxx-small slds-wrap slds-m-top_small">
                                         <div class="slds-col slds-size_5-of-12">
                                             <span><b>Time :</b></span>
                                         </div>
@@ -3756,7 +3756,7 @@ Enrol now
                                             <span><label id="ClassTimeLabel"></label></span>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-around_x-small slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-around_xxx-small slds-m-top_small">
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
                                             <div class="slds-col slds-size_5-of-12">
                                                 <span><b>Class Type :</b></span>
@@ -3782,7 +3782,7 @@ Enrol now
 
                                 <!-- Minimum or Maximum Age-->
                               
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_x-small slds-wrap  slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_xxx-small slds-wrap  slds-m-top_small">
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
                                             <div class="slds-col slds-size_5-of-12">
                                                 <span><b>Minimum Age :</b></span>
@@ -3800,7 +3800,7 @@ Enrol now
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_x-small slds-wrap slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_xxx-small slds-wrap slds-m-top_small">
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
                                             <div class="slds-col slds-size_5-of-12">
                                                 <span><b>Maximum Age :</b></span>
@@ -3823,7 +3823,7 @@ Enrol now
                                 
                                  <!-- Class Capacity or Package -->
                                
-                                    <div class="slds-col slds-size_6-of-12 slds-p-around_x-small slds-grid slds-wrap  slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-p-around_xxx-small slds-grid slds-wrap  slds-m-top_small">
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
                                             <div class="slds-col slds-size_5-of-12">
                                                 <span><b>Class Capacity :</b></span>
@@ -3841,7 +3841,7 @@ Enrol now
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-p-around_x-small slds-grid slds-wrap aureusAddGroupClass slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-p-around_xxx-small slds-grid slds-wrap aureusAddGroupClass slds-m-top_small">
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
                                             <div class="slds-col slds-size_5-of-12">
                                                 <span><b>Package :</b></span>
@@ -3864,7 +3864,7 @@ Enrol now
                                     </div>
                                     <!-- added by nishi: 1-Sep-2020: for manage new Ossia group  class requirement we not select one package we select multiple grade then 
                                         user can select package according to selected grades-->
-                                    <div class="slds-col slds-size_6-of-12 slds-p-around_x-small slds-grid slds-wrap  slds-hide ossiaAddGroupClass slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-p-around_xxx-small slds-grid slds-wrap  slds-hide ossiaAddGroupClass slds-m-top_small">
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
                                             <div class="slds-col slds-size_5-of-12">
                                                 <span><b>Class Duration :</b></span>
@@ -3885,7 +3885,7 @@ Enrol now
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-p-around_x-small slds-grid slds-wrap  slds-hide ossiaAddGroupClass slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-p-around_xxx-small slds-grid slds-wrap  slds-hide ossiaAddGroupClass slds-m-top_small">
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
                                             <div class="slds-col slds-size_5-of-12">
                                                 <span><b>Grade :</b></span>
@@ -3912,7 +3912,7 @@ Enrol now
                                 
                                 <!-- duration or instrument-->
                                 
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_x-small aureusAddGroupClass slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_xxx-small aureusAddGroupClass slds-m-top_small">
                                         <div class="slds-col slds-size_5-of-12">
                                             <span><b>Duration :</b></span>
                                         </div>
@@ -3920,7 +3920,7 @@ Enrol now
                                             <span><label id="ClassDurationLabel"></label></span>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_x-small aureusAddGroupClass slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_xxx-small aureusAddGroupClass slds-m-top_small">
                                         <div class="slds-col slds-size_5-of-12">
                                             <span><b>Class Instrument :</b></span>
                                         </div>
@@ -3933,7 +3933,7 @@ Enrol now
 
                                 <!-- Price or Class Capacity-->
                                 
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_x-small aureusAddGroupClass slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_xxx-small aureusAddGroupClass slds-m-top_small">
                                         <div class="slds-col slds-size_5-of-12">
                                             <span><b>Price :</b></span>
                                         </div>
@@ -3941,7 +3941,7 @@ Enrol now
                                             <span><label id="ClassPriceLabel"></label></span>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-p-around_x-small slds-grid  slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-p-around_xxx-small slds-grid  slds-m-top_small">
                                         <div class="slds-col slds-size_5-of-12">
                                             <span> <b> Makup Available :</b></span>
                                         </div>
@@ -3954,7 +3954,7 @@ Enrol now
                                  <!--start: added by nishi: 9-sep-2020: for we added recurring group class -->
                                 <div class="slds-col slds-size_12-of-12 slds-grid  slds-wrap slds-hide slds-m-top_small" id="recurringgroupSection">
                                     
-                                     <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_x-small  slds-wrap   slds-m-top_small">
+                                     <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_xxx-small  slds-wrap   slds-m-top_small">
                                         <div class="slds-col slds-size_5-of-12">
                                             <span><b>Repeat:</b></span>
                                         </div>
@@ -3966,7 +3966,7 @@ Enrol now
                                         </div>
                                     </div>
                                   
-                                    <div class="slds-col slds-size_6-of-12 slds-grid  slds-wrap slds-p-around_x-small  slds-m-top_small repeatgroupSelection slds-hide">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid  slds-wrap slds-p-around_xxx-small  slds-m-top_small repeatgroupSelection slds-hide">
                                         <div class="slds-col slds-size_5-of-12">
                                             <span><b>Repeat Every:</b></span>
                                         </div>
@@ -3976,7 +3976,7 @@ Enrol now
                                             <span id="repeatgroupValue" class="slds-col slds-size_4-of-12 slds-p-left_medium">Week</span>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_8-of-12 slds-grid slds-p-around_x-small slds-wrap  slds-m-top_small repeatgroupSelection slds-hide">
+                                    <div class="slds-col slds-size_8-of-12 slds-grid slds-p-around_xxx-small slds-wrap  slds-m-top_small repeatgroupSelection slds-hide">
                                         <div class="slds-col slds-size_5-of-12">
                                             <span><b>Ends:</b></span>
                                         </div>
