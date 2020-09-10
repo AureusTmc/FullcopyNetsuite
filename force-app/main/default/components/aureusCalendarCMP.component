@@ -3727,19 +3727,19 @@ Enrol now
                             <div class="slds-grid slds-wrap">
                                 <!-- center or teacher-->
                                 <div class="slds-col slds-size_12-of-12 slds-grid  slds-wrap  slds-m-top_small">
-                                    <div class="slds-col slds-size_6-of-12 slds-grid  slds-wrap  slds-p-right_large slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span><b>Location:</b></span>
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_x-small slds-wrap  slds-m-top_small">
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <span><b>Location :</b></span>
                                         </div>
-                                        <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-col slds-size_7-of-12">
                                             <span><label id="LocationNameClass"></label></span>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-grid  slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span><b>Teacher:</b></span>
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_x-small slds-m-top_small">
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <span><b>Teacher :</b></span>
                                         </div>
-                                        <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-col slds-size_7-of-12">
                                             <span><label id="TeacherNameClass"></label></span>
                                         </div>
                                     </div>
@@ -3748,30 +3748,30 @@ Enrol now
 
                                 <!-- time or class type-->
                                
-                                    <div class="slds-col slds-size_6-of-12 slds-grid  slds-wrap  slds-p-right_large slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span><b>Time:</b></span>
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_x-small slds-wrap slds-m-top_small">
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <span><b>Time :</b></span>
                                         </div>
-                                        <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-col slds-size_7-of-12">
                                             <span><label id="ClassTimeLabel"></label></span>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-around_x-small slds-m-top_small">
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
-                                                <span><b>Class Type:</b></span>
+                                            <div class="slds-col slds-size_5-of-12">
+                                                <span><b>Class Type :</b></span>
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <select class="slds-select" id="ClassTypeSelect">
                                                 </select>
                                             </div>
                                         </div>
-                                        <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap ">
+                                        <div class="slds-col slds-size_12-of-12  slds-grid slds-wrap ">
                                             <div class="slds-col slds-size_12-of-12 slds-grid ">
-                                                <div class="slds-col slds-size_4-of-12">
+                                                <div class="slds-col slds-size_5-of-12">
                                                 
                                                 </div>
-                                                <div class="slds-col slds-size_8-of-12">
+                                                <div class="slds-col slds-size_7-of-12">
                                                     <p id="ClassTypeSelectError" class="slds-hide" style="color:red;">Please Select the Class Type...</p>
                                                 </div>
                                             </div>
@@ -3782,38 +3782,38 @@ Enrol now
 
                                 <!-- Minimum or Maximum Age-->
                               
-                                    <div class="slds-col slds-size_6-of-12 slds-grid  slds-wrap slds-p-right_large slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_x-small slds-wrap  slds-m-top_small">
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
-                                                <span><b>Minimum Age:</b></span>
+                                            <div class="slds-col slds-size_5-of-12">
+                                                <span><b>Minimum Age :</b></span>
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <input type="number" id="ClassMinimumAgeInput" class="slds-input" />
                                             </div>
                                         </div>
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
+                                            <div class="slds-col slds-size_5-of-12">
                                         
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <p id="ClassMinimumAgeInputError" class="slds-hide" style="color:red;">Please Enter Minimum Age...</p>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-grid  slds-wrap slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_x-small slds-wrap slds-m-top_small">
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
-                                                <span><b>Maximum Age:</b></span>
+                                            <div class="slds-col slds-size_5-of-12">
+                                                <span><b>Maximum Age :</b></span>
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <input type="number" id="ClassMaximumAgeInput" class="slds-input" />
                                             </div>
                                         </div>
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
+                                            <div class="slds-col slds-size_5-of-12">
                                         
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <p id="ClassMaximumAgeInputError" class="slds-hide" style="color:red;">Please Enter Maximum Age ...</p>
                                             </div>
                                         </div>
@@ -3823,30 +3823,30 @@ Enrol now
                                 
                                  <!-- Class Capacity or Package -->
                                
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-right_large slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-p-around_x-small slds-grid slds-wrap  slds-m-top_small">
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
-                                                <span><b>Class Capacity:</b></span>
+                                            <div class="slds-col slds-size_5-of-12">
+                                                <span><b>Class Capacity :</b></span>
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <input type="number" id="ClassCapacityInput" class="slds-input" />
                                             </div>
                                         </div>
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
+                                            <div class="slds-col slds-size_5-of-12">
                                         
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <p id="ClassCapacityInputError" class="slds-hide" style="color:red;">Please Enter Class Capacity...</p>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap aureusAddGroupClass slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-p-around_x-small slds-grid slds-wrap aureusAddGroupClass slds-m-top_small">
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
-                                                <span><b>Package:</b></span>
+                                            <div class="slds-col slds-size_5-of-12">
+                                                <span><b>Package :</b></span>
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <span>
                                                     <select class="slds-select" id="ClassPackageSelect" data-toggle="tooltip" data-placement="top" title="" onchange="groupPackageSelect();return false;">
                                                     </select>
@@ -3854,22 +3854,22 @@ Enrol now
                                             </div>
                                         </div>
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
+                                            <div class="slds-col slds-size_5-of-12">
                                         
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <p id="ClassPackageSelectError" class="slds-hide" style="color:red;">Please Enter Package...</p>
                                             </div>
                                         </div>
                                     </div>
                                     <!-- added by nishi: 1-Sep-2020: for manage new Ossia group  class requirement we not select one package we select multiple grade then 
                                         user can select package according to selected grades-->
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap  slds-hide ossiaAddGroupClass slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-p-around_x-small slds-grid slds-wrap  slds-hide ossiaAddGroupClass slds-m-top_small">
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
-                                                <span><b>Class Duration:</b></span>
+                                            <div class="slds-col slds-size_5-of-12">
+                                                <span><b>Class Duration :</b></span>
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <span>
                                                     <select class="slds-select" id="ClassDurationSelect"  data-toggle="tooltip" data-placement="top" title="">
                                                     </select>
@@ -3877,20 +3877,20 @@ Enrol now
                                             </div>
                                         </div>
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
+                                            <div class="slds-col slds-size_5-of-12">
                                         
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <p id="ClassDurationSelectError" class="slds-hide" style="color:red;">Please Select Duration...</p>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap  slds-hide ossiaAddGroupClass slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-p-around_x-small slds-grid slds-wrap  slds-hide ossiaAddGroupClass slds-m-top_small">
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
-                                                <span><b>Grade:</b></span>
+                                            <div class="slds-col slds-size_5-of-12">
+                                                <span><b>Grade :</b></span>
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <span>
                                                     <select class="slds-select" id="ClassGradeSelect" size="3" multiple="multiple"  data-toggle="tooltip" data-placement="top" title="" onchange="groupGradeSelect();return false;">
                                                     </select>
@@ -3898,10 +3898,10 @@ Enrol now
                                             </div>
                                         </div>
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
+                                            <div class="slds-col slds-size_5-of-12">
                                         
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <p id="ClassGradeSelectError" class="slds-hide" style="color:red;">Please Select Grade...</p>
                                             </div>
                                         </div>
@@ -3912,19 +3912,19 @@ Enrol now
                                 
                                 <!-- duration or instrument-->
                                 
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-right_large aureusAddGroupClass slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span><b>Duration:</b></span>
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_x-small aureusAddGroupClass slds-m-top_small">
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <span><b>Duration :</b></span>
                                         </div>
-                                        <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-col slds-size_7-of-12">
                                             <span><label id="ClassDurationLabel"></label></span>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-grid aureusAddGroupClass slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_x-small aureusAddGroupClass slds-m-top_small">
+                                        <div class="slds-col slds-size_5-of-12">
                                             <span><b>Class Instrument :</b></span>
                                         </div>
-                                        <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-col slds-size_7-of-12">
                                             <span><label id="ClassInstrumentLabel"></label></span>
                                         </div>
                                     </div>
@@ -3933,24 +3933,32 @@ Enrol now
 
                                 <!-- Price or Class Capacity-->
                                 
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-right_large aureusAddGroupClass slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span><b>Price:</b></span>
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_x-small aureusAddGroupClass slds-m-top_small">
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <span><b>Price :</b></span>
                                         </div>
-                                        <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-col slds-size_7-of-12">
                                             <span><label id="ClassPriceLabel"></label></span>
                                         </div>
+                                    </div>
+                                    <div class="slds-col slds-size_6-of-12 slds-p-around_x-small slds-grid  slds-m-top_small">
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <span> <b> Makup Available :</b></span>
+                                        </div>
+                                        <span class="slds-col slds-size_7-of-12 slds-p-left_medium">
+                                            <input name="onmakupAvailablegroup" type="checkbox" id="onmakupAvailablegroup" onchange="makupAvailablegroupFunc();return false;"/>
+                                        </span>
                                     </div>
                                 </div>
 
                                  <!--start: added by nishi: 9-sep-2020: for we added recurring group class -->
-                                <div class="slds-col slds-size_12-of-12 slds-grid  slds-wrap  slds-m-top_small" id="recurringgroupSection">
+                                <div class="slds-col slds-size_12-of-12 slds-grid  slds-wrap slds-hide slds-m-top_small" id="recurringgroupSection">
                                     
-                                     <div class="slds-col slds-size_6-of-12 slds-grid  slds-wrap  slds-p-right_large slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
+                                     <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_x-small  slds-wrap   slds-m-top_small">
+                                        <div class="slds-col slds-size_5-of-12">
                                             <span><b>Repeat:</b></span>
                                         </div>
-                                        <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-col slds-size_7-of-12">
                                             <select class="slds-select" id="repeatgroupSelect" onchange="repeatSelectGroupFunc($(this).val());return false;">
                                                 <option value="">None</option>
                                                 <option value="Weeks">Weekly</option>
@@ -3958,21 +3966,21 @@ Enrol now
                                         </div>
                                     </div>
                                   
-                                    <div class="slds-col slds-size_6-of-12 slds-grid  slds-wrap  slds-p-right_large slds-m-top_small repeatgroupSelection slds-hide">
-                                        <div class="slds-col slds-size_4-of-12">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid  slds-wrap slds-p-around_x-small  slds-m-top_small repeatgroupSelection slds-hide">
+                                        <div class="slds-col slds-size_5-of-12">
                                             <span><b>Repeat Every:</b></span>
                                         </div>
-                                        <div class="slds-col slds-size_8-of-12 slds-grid  slds-wrap">
+                                        <div class="slds-col slds-size_7-of-12 slds-grid  slds-wrap">
                                             <select class="slds-select slds-col slds-size_8-of-12" id="repeatgroupWeek">
                                             </select>
                                             <span id="repeatgroupValue" class="slds-col slds-size_4-of-12 slds-p-left_medium">Week</span>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_8-of-12 slds-grid  slds-wrap  slds-p-right_large slds-m-top_small repeatgroupSelection slds-hide">
-                                        <div class="slds-col slds-size_4-of-12">
+                                    <div class="slds-col slds-size_8-of-12 slds-grid slds-p-around_x-small slds-wrap  slds-m-top_small repeatgroupSelection slds-hide">
+                                        <div class="slds-col slds-size_5-of-12">
                                             <span><b>Ends:</b></span>
                                         </div>
-                                        <div class="slds-col slds-size_8-of-12 slds-grid  slds-wrap ">
+                                        <div class="slds-col slds-size_7-of-12 slds-grid  slds-wrap ">
                                             <div class="slds-col slds-size_12-of-12 slds-grid  slds-wrap ">
                                                 <div class="slds-col slds-size_4-of-12  slds-grid  slds-wrap">
                                                     <span class="slds-col slds-size_4-of-12">
@@ -4338,7 +4346,8 @@ Enrol now
             $('.repeatSelection').removeClass('slds-hide');
         }
     }
-    
+   
+    //added by nishi: 9-Sep-2020: for user can select makup group class schaduling
     function repeatSelectGroupFunc(val){
         $('#recurrencegroupOccure').empty();
         $('#repeatgroupWeek').empty();
@@ -5361,7 +5370,10 @@ Enrol now
         }// added by jatin: 19:dec:2019: for manage group booking
         else if(origin == 'createGroupBooking'){
             createGroupbooking('false');
-        }
+        }//start:added by nishi: 10-sep-2020: for reschadule group class bookings
+        else if(origin =='updategroupClass'){
+            updategroupClass('false');
+        }//end: added by nishi: 10-sep-2020: for reschadule group class bookings
         else if(origin == 'cancel'){
             $('.confirmModal').addClass('slds-hide');
             bookingId = $('#confirmModalNo').attr('data-id');
@@ -6785,13 +6797,17 @@ Enrol now
                                                         $('#confirmBody').html(confirmBody);
                                                         $('#confirmModal').removeClass('slds-hide');
                                                     }else{
-                                                        $('#confirmModalYes').addClass('slds-hide');
-                                                        $('#confirmModalNo').html('Cancel');
-                                                        $('#confirmModalNo').attr('data-origin', 'reschedule');
-                                                        $('#confirmModalNo').attr('onclick', "$('.confirmModal').addClass('slds-hide');closeRescheduleModal(); return false;");
-                                                        rescheduleThisGroupLessonOnly();
+                                                        // $('#confirmModalYes').addClass('slds-hide');
+                                                        // $('#confirmModalNo').html('Cancel');
+                                                        // $('#confirmModalNo').attr('data-origin', 'reschedule');
+                                                        // $('#confirmModalNo').attr('onclick', "$('.confirmModal').addClass('slds-hide');closeRescheduleModal(); return false;");
+                                                        // rescheduleThisGroupLessonOnly();
+                                                        revertFunc();
                                                     }
-                                                } 
+                                                }// nishi: 10-Sep-2020: for busy type group class bookings currently we revert all the functionality
+                                                else if(bookingReschedule.Type == 'Busy' && bookingReschedule.Individual == 'false' && event.isClass){
+                                                    revertFunc();
+                                                }
                                                 //end: Commented by nishi: 9-Sep-2020: for new requiremnt we reschadule group lesson booking this and future
                                                 else if(bookingReschedule.Type == 'Busy' && bookingReschedule.Individual == 'false'){
                                                       // Start : 30-Jul:2020 :if Resource Id is exist then we hide this Future button
@@ -7999,7 +8015,7 @@ Enrol now
                     }
                     function cancelRescheduling(){
                         $('.editDetails').addClass('slds-hide');
-                        $('.newGroupClassCMP').addClass('slds-hide');
+                        $('#newGroupClassCMP').addClass('slds-hide');
                         bookingReschedule.Id = '';
                         bookingReschedule.Type = '';
                         bookingReschedule.resource = '';
@@ -11422,7 +11438,15 @@ Enrol now
                             throw new Error("Something went badly wrong!");
                         }
                         
-                    }                        
+                    }       
+                    function makupAvailablegroupFunc(){
+                        if($('#onmakupAvailablegroup').prop('checked')){
+                            $('#recurringgroupSection').removeClass('slds-hide');
+                        }else{
+                            $('#recurringgroupSection').addClass('slds-hide');
+                        }
+                    }
+                                    
                     /*Method to create Class from Calendar UI.*/
                     function openAddClass(){
                         $('#newBookingModal').addClass('slds-hide');
@@ -11454,8 +11478,7 @@ Enrol now
                         $('#aftergroupRadio').prop('checked', true);
                         $('#repeatgroupSelect').val('None');
                         $('#aftergroupRadio').prop('checked');
-                         $('.repeatgroupSelection').addClass('slds-hide');
-                       // $('#recurringgroupSection').addClass('slds-hide');
+                        $('#recurringgroupSection').addClass('slds-hide');
                         var centerId = $('#addClass').attr('data-centerid');
                         var centerName = $('.centerList option:selected').text();
                         var teacherId =  $('#addClass').attr('data-teacherid');
@@ -11530,7 +11553,7 @@ Enrol now
                                                 function(durationResult, event){
                                                     if(durationResult){
                                                         $(durationResult).each(function(index, value){
-                                                            if(value !='Trial' &&  value !='15'){
+                                                            if(value !='Trial' &&  parseInt(value) > 15 && parseInt(value) < 75){
                                                                 durationStr += '<option value="'+value+'">'+value+'</option>';
                                                             }
                                                         });
@@ -11664,25 +11687,28 @@ Enrol now
                                 $('#statusOnPage').show();
                                 packageId = $('#ClassPackageSelect').val().split(':')[0];
                                 var duration = $('#ClassPackageSelect').val().split(':')[1];
-                                var repeatval = $('#repeatgroupSelect').val();
-                                console.log('repeatval',repeatval);
                                 var isGroupclassEndDate = false;
-                                
-                                if(repeatval == 'None'){
-                                    isGroupclassEndDate = false;
-                                }else{
-                                    isGroupclassEndDate= true;
-                                    
-                                    if($('#aftergroupRadio').prop('checked')){
-                                        var recurringdays = $('#recurrencegroupOccure').val();
-                                        classEndDate.add(parseInt(recurringdays), 'weeks');  
-                                    }else if($('#ongroupRadio').prop('checked')){
-                                        classEndDate = $('#onSelectedgroupDate').val();
+                                if($('#onmakupAvailablegroup').prop('checked')){
+                                    isGroupclassEndDate = true;
+                                    var repeatval = $('#repeatgroupSelect').val();
+                                    console.log('repeatval',repeatval);
+                                    if(repeatval == 'None'){
+                                        console.log('classEndDate',classEndDate);
+                                    }else{
+                                        
+                                        if($('#aftergroupRadio').prop('checked')){
+                                            var recurringdays = $('#recurrencegroupOccure').val();
+                                            classEndDate.add(parseInt(recurringdays), 'weeks');  
+                                        }else if($('#ongroupRadio').prop('checked')){
+                                            classEndDate = $('#onSelectedgroupDate').val();
+                                        }
                                     }
+                                    console.log('isGroupclassEndDate',isGroupclassEndDate);
+                                    console.log('classEndDate',classEndDate);
+                                    console.log('classEndDate',classEndDate.format('YYYY-MM-DD'));
                                 }
-                                console.log('isGroupclassEndDate',isGroupclassEndDate);
-                                console.log('classEndDate',classEndDate);
-                                console.log('classEndDate',classEndDate.format('YYYY-MM-DD'));
+                                
+                             
                                 
                                 $('#newGroupClassModal').addClass('slds-hide');
                                 Visualforce.remoting.Manager.invokeAction(

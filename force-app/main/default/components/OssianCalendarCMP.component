@@ -106,25 +106,27 @@
             if(!iserror){
                 $('#newossiaGroupClassModal').addClass('slds-hide');
                 $('#statusOnPage').show();
-                var repeatval = $('#repeatgroupSelect').val();
-                console.log('repeatval',repeatval);
                 var isGroupclassEndDate = false;
-                if(repeatval == 'None'){
-                    isGroupclassEndDate = false;
-                }else{
-                    isGroupclassEndDate= true;
-                    
-                    if($('#aftergroupRadio').prop('checked')){
-                        var recurringdays = $('#recurrencegroupOccure').val();
-                        console.log('recurringdays',recurringdays);
-                        classEndDate.add(parseInt(recurringdays), 'weeks');  
-                    }else if($('#ongroupRadio').prop('checked')){
-                        classEndDate = $('#onSelectedgroupDate').val();
+                if($('#onmakupAvailablegroup').prop('checked')){
+                    isGroupclassEndDate = true;
+                    var repeatval = $('#repeatgroupSelect').val();
+                    console.log('repeatval',repeatval);
+                    if(repeatval == 'None'){
+                        console.log('classEndDate',classEndDate);
+                    }else{
+                        if($('#aftergroupRadio').prop('checked')){
+                            var recurringdays = $('#recurrencegroupOccure').val();
+                            console.log('recurringdays',recurringdays);
+                            classEndDate.add(parseInt(recurringdays), 'weeks');  
+                        }else if($('#ongroupRadio').prop('checked')){
+                            classEndDate = $('#onSelectedgroupDate').val();
+                        }
                     }
-                }
-                console.log('isGroupclassEndDate',isGroupclassEndDate);
-                console.log('classEndDate',classEndDate);
-                console.log('classEndDate',classEndDate.format('YYYY-MM-DD'));
+                    console.log('isGroupclassEndDate',isGroupclassEndDate);
+                    console.log('classEndDate',classEndDate);
+                    console.log('classEndDate',classEndDate.format('YYYY-MM-DD'));
+                }              
+                
                 Visualforce.remoting.Manager.invokeAction(
                         '{!$RemoteAction.OssiaCenterCalendarController.saveNewOssiaClass}',
                         centreId, teacherId, gradevalues, dateTime.format('YYYY-MM-DD'), 
