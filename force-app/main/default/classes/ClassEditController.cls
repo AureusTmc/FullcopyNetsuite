@@ -40,6 +40,273 @@ public class ClassEditController {
         }
         return bookDetails;
     }
+
+    // added by nishi: 10-Sep-2020: for show new Reschadule group class details
+    @RemoteAction
+    public static RescheduledBookDetails showRescheduledGroupClassBookings(Map<String, Object> bookingReschedule){
+        RescheduledBookDetails objRescheduledBookDetails = new RescheduledBookDetails();
+        String teacherProfileName = ConstantsClass.teacherProfileName;
+        List<Account> accList = new List<Account>();
+        List<Resource__c> resourceList = new List<Resource__c>();
+        List<Booking__c> bookObjList = new List<Booking__c>();
+        List<Attachment> attachList = new List<Attachment>();
+        if(bookingReschedule.containsKey('Id')){
+            string bookingId = string.valueOf( bookingReschedule.get('Id'));
+            Booking__c bookingObj = fetchSelectedBookingDetails(bookingId);
+            objRescheduledBookDetails.bookObj =bookingObj;
+            objRescheduledBookDetails.isOssia = false; 
+            if(String.isNotBlank(bookingObj.Id)){
+                if(String.isNotBlank(bookingObj.Class__r.Centre_Name__c) && String.isNotBlank(bookingObj.Class__r.Centre_Name__r.Organisation__c) 
+                && String.isNotBlank(bookingObj.Class__r.Centre_Name__r.Organisation__r.Name) &&
+                bookingObj.Class__r.Centre_Name__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                    objRescheduledBookDetails.isOssia = true; 
+                }
+            }
+            objRescheduledBookDetails.resourceName =  bookingObj.Resource__r.Name;
+            objRescheduledBookDetails.resourceId = bookingObj.Resource__c;
+            if(bookingReschedule.containsKey('resource')){
+                if(bookingReschedule.get('resource') != bookingObj.Teacher_Account__c){
+                    accList = AureusCalendarControllerHelper.getListOfTeacher(bookingObj.Center__c, String.valueOf(bookingReschedule.get('resource')));
+                    if(accList.size() > 0){
+                        objRescheduledBookDetails.staffMember = accList[0].Name;
+                        objRescheduledBookDetails.staffMemberId = accList[0].id;
+                        attachList = [SELECT Id, Name, LastModifiedDate, ContentType FROM Attachment 
+                                      WHERE parentid=:accList[0].Id AND Name Like :teacherProfileName AND ContentType IN ('image/png', 'image/jpeg', 'image/gif')
+                                      ORDER BY LastModifiedDate DESC LIMIT 1];
+                        if(attachList.size() > 0){
+                            objRescheduledBookDetails.teacherAttachmentId = attachList[0].Id;
+                        }
+                    }else{
+                    //start: nish: 31-Jul-2020: If resource Calendar exist then teacher records not found then we check existing booking Teacher_Account__c details    
+                        accList = AureusCalendarControllerHelper.getListOfTeacher(bookingObj.Center__c, bookingObj.Teacher_Account__c);
+                        if(accList.size() > 0){
+                            objRescheduledBookDetails.staffMember = accList[0].Name;
+                            objRescheduledBookDetails.staffMemberId = accList[0].id;
+                            attachList = [SELECT Id, Name, LastModifiedDate, ContentType FROM Attachment 
+                                          WHERE parentid=:accList[0].Id AND Name Like :teacherProfileName AND ContentType IN ('image/png', 'image/jpeg', 'image/gif')
+                                          ORDER BY LastModifiedDate DESC LIMIT 1];
+                            if(attachList.size() > 0){
+                                objRescheduledBookDetails.teacherAttachmentId = attachList[0].Id;
+                            }
+                        }
+                        // get Resource Detail if change resource then we get resource 
+                        if(bookingReschedule.get('resource') != bookingObj.Resource__c){
+                            resourceList = AureusCalendarControllerHelper.getListOfResource(bookingObj.Center__c, String.valueOf(bookingReschedule.get('resource')));
+                            if(resourceList.size() > 0){
+                                objRescheduledBookDetails.resourceName = resourceList[0].Name;
+                                objRescheduledBookDetails.resourceId = resourceList[0].id;
+                            }
+                        }
+
+                    //start: nish: 31-Jul-2020: If resource Calendar exist then teacher records not found then we check existing booking Teacher_Account__c details    
+                    
+                    }
+                }else{
+                    objRescheduledBookDetails.staffMember = bookingObj.Teacher_Account__r.Name;
+                    objRescheduledBookDetails.staffMemberId = bookingObj.Teacher_Account__c;
+                    attachList = [SELECT Id, Name, LastModifiedDate, ContentType FROM Attachment 
+                                  WHERE parentid=:bookingObj.Teacher_Account__c AND Name Like :teacherProfileName AND ContentType IN ('image/png', 'image/jpeg', 'image/gif')
+                                  ORDER BY LastModifiedDate DESC LIMIT 1];
+                    if(attachList.size() > 0){
+                        objRescheduledBookDetails.teacherAttachmentId = attachList[0].Id;
+                    }
+                }
+                
+            }
+            if(bookingReschedule.containsKey('date')){
+                objRescheduledBookDetails.timeOfBooking = String.valueOf(bookingReschedule.get('date')).split('T')[1];
+                objRescheduledBookDetails.dateAndTime = String.valueOf(bookingReschedule.get('date'));
+            }
+        }
+        return objRescheduledBookDetails ;
+
+    }
+     //Json For reschadule Class Popup
+     Public Class RescheduledBookDetails{
+        public Booking__c bookObj;
+        public Boolean isOssia;
+        public String service;
+        public String resourceId;
+        public String resourceName;
+        public String staffMember;
+        public String staffMemberId;
+        public String dateAndTime;
+        public String timeOfBooking;
+        public String teacherAttachmentId;     
+     
+     }
+// added by nishi: 10-Sep-2020: for  Reschadule group class future and current with related group lessons
+     @RemoteAction 
+    public static AureusCalendarController.ProcessResult updateGroupClassBooking(String bookingId, String startDate, String endDate,
+     String teacherId, String placeholder, String isFuture/*, String redirectCase, String caseId,
+     String isResourceId*/){
+        
+        AureusCalendarController.ProcessResult objResult = new AureusCalendarController.ProcessResult();
+        Booking__c bookingObj = new Booking__c();
+        List<Booking__c> bookingObjList = new List<Booking__c>(); 
+        List<Booking__c> bookingList = new List<Booking__c>(); 
+        List<Booking__c> bookList = new List<Booking__c>();
+        List<Booking__c> oldBookList = new List<Booking__c>();
+        Booking__c oldBooking = new Booking__c();
+        List<Booking__c> placeholderList = new List<Booking__c>();
+        Map<Id ,Enrolment__c> enrollMap = new Map<Id, Enrolment__c>();
+        DateTime startDateTime, endDateTime;
+        Integer duration = 0;
+        Boolean isError = false;
+        String lessonRecordType = ConstantsClass.groupBookingRecordType;
+        String busyType = ConstantsClass.typeBusy;
+        if(String.isNotBlank(bookingId)){
+            bookingObjList = [SELECT Id, Name, Enrolment__c,Package__c , Student__c, Student__r.Name, Resource__c,Prev_Start_Time__c,
+                              Enrolment__r.Teacher__c, Individual_Booking__c, Type__c, Enrolment__r.Lesson_Day__c, Prev_Booking_Date__c,
+                              Enrolment__r.Lesson_Start_time__c, Booking_Date__c, Start_Time__c, End_Time__c, Group_Class__c,
+                              Status__c, Center__c, Teacher_Account__c, Teacher_Account__r.Name, Lesson_Type__c,
+                              Duration__c, RecordType.Name, Category__c, Appointment_Day__c,Enrolment__r.Resource__c,Prev_Teacher__c, 
+                              (SELECT Id, Name, Enrolment__c,Package__c , Student__c, Student__r.Name, Resource__c,Prev_Teacher__c,
+                                Enrolment__r.Teacher__c, Individual_Booking__c, Type__c, Enrolment__r.Lesson_Day__c, Prev_Start_Time__c,
+                                Enrolment__r.Lesson_Start_time__c, Booking_Date__c, Start_Time__c, End_Time__c, Prev_Booking_Date__c,
+                                Status__c, Center__c, Teacher_Account__c, Teacher_Account__r.Name, Lesson_Type__c,
+                                Duration__c, RecordType.Name, Category__c, Appointment_Day__c,Enrolment__r.Resource__c
+                                FROM Bookings1__r)
+                              FROM Booking__c WHERE Id =: bookingId];
+        }
+        if(bookingObjList.size() > 0 && isFuture == 'false'){
+            bookingObj = bookingObjList[0];
+            startDateTime = DateTime.newInstance(bookingObj.Booking_Date__c, bookingObj.Start_Time__c);
+            endDateTime = DateTime.newInstance(bookingObj.Booking_Date__c, bookingObj.End_Time__c);
+            duration = (Integer)(((endDateTime.getTime() - startDateTime.getTime()) / 1000) / 60);
+            oldBooking = bookingObjList[0].clone(false, false, false, false);
+            
+            if(String.isNotBlank(startDate)){
+                bookingObj.Prev_Start_Time__c = bookingObj.Start_Time__c;
+                bookingObj.Start_Time__c = Time.newInstance(Integer.valueOf(startDate.split('T')[1].split(':')[0]), Integer.valueOf(startDate.split('T')[1].split(':')[1]), Integer.valueOf(startDate.split('T')[1].split(':')[2]), 0); 
+                
+                bookingObj.Prev_Booking_Date__c = bookingObj.Booking_Date__c;
+                bookingObj.Booking_Date__c = Date.valueOf(startDate.split('T')[0]);
+            }
+            if(String.isNotBlank(endDate)){
+                bookingObj.End_Time__c = Time.newInstance(Integer.valueOf(endDate.split('T')[1].split(':')[0]), Integer.valueOf(endDate.split('T')[1].split(':')[1]), Integer.valueOf(endDate.split('T')[1].split(':')[2]), 0);    
+            }else if(String.isBlank(endDate)){
+                if(bookingObj.Duration__c != NULL){
+                    bookingObj.End_Time__c = bookingObj.Start_Time__c.addMinutes(Integer.valueOf(bookingObj.Duration__c));
+                }else if(duration > 0){
+                    
+                    bookingObj.End_Time__c = bookingObj.Start_Time__c.addMinutes(duration);
+                }
+                
+            }
+            if(String.isNotBlank(teacherId)){
+                //if teacher is change then related teacher working hrs resource Id we are update in Booking Resource field 
+                if(bookingObj.RecordType.Name == lessonRecordType){
+                    bookingObj.Prev_Teacher__c = bookingObj.Teacher_Account__r.Name;
+                    bookingObj.Teacher_Account__c = teacherId;
+                }
+            }
+            if(bookingObj.Bookings1__r != null && bookingObj.Bookings1__r.size() > 0){
+                for(Booking__c objBooking : bookingObj.Bookings1__r){
+                    objBooking.Prev_Start_Time__c = bookingObj.Prev_Start_Time__c;
+                    objBooking.Start_Time__c = bookingObj.Start_Time__c;
+                    objBooking.Prev_Booking_Date__c = bookingObj.Prev_Booking_Date__c ;
+                    objBooking.Booking_Date__c = bookingObj.Booking_Date__c;
+                    objBooking.End_Time__c =   bookingObj.End_Time__c;
+                    objBooking.Prev_Teacher__c =bookingObj.Prev_Teacher__c;
+                    objBooking.Teacher_Account__c =  bookingObj.Teacher_Account__c;
+                    if(objBooking.Type__c == ConstantsClass.typeRegular){
+                        objBooking.Individual_Booking__c = true;
+                    }
+                    bookingList.add(objBooking);
+                }
+            }
+            
+        }else if(bookingObjList.size() > 0 && isFuture == 'true'){
+            // bookingObj = bookingObjList[0];
+            // if(bookingObj.Type__c == ConstantsClass.groupTypeBooking){
+                
+            //     String studentId, oldTeacherId, lessonDay;
+            //     Integer oldDuration;
+            //     Time startTime;
+                
+            //     DateTime dateChange = DateTime.newInstance(Date.valueOf(startDate.split('T')[0]), Time.newInstance(0, 0, 0, 0));
+            //     Boolean isDayChange = false;
+            //     Enrolment__c enrolObj = new Enrolment__c();
+            //     /*if(bookingObj.Enrolment__r.Lesson_Day__c != dateChange.format('EEEE')){
+            //         isDayChange = true;
+            //     }*/
+
+            //     if(bookingObj.Booking_Date__c != dateChange.date()){
+            //         isDayChange = true;
+            //     }
+                
+            //     if(String.isNotBlank(bookingObj.Enrolment__c)){
+            //         enrolObj = fetchEnrolment(bookingObj.Enrolment__c);
+            //         studentId = enrolObj.student__c; 
+            //         oldTeacherId = enrolObj.teacher__c;
+            //         lessonDay = enrolObj.Lesson_Day__c; 
+            //         oldDuration = Integer.valueOf(enrolObj.Package__r.duration__c);  
+            //         startTime = enrolObj.Lesson_start_Time__c; 
+            //         //if teacher is change then related teacher working hrs resource Id we are update in Booking Resource field 
+            //         if(String.isNotBlank(teacherId)){
+            //             enrolObj.Teacher__c  = teacherId;
+            //         }
+            //         if(isDayChange){
+            //             enrolObj.Lesson_Day__c = dateChange.format('EEEE');
+            //         }
+            //         if(String.isNotBlank(startDate)){
+            //             enrolObj.Lesson_Start_time__c = Time.newInstance(Integer.valueOf(startDate.split('T')[1].split(':')[0]), Integer.valueOf(startDate.split('T')[1].split(':')[1]), Integer.valueOf(startDate.split('T')[1].split(':')[2]), 0); 
+            //         } 
+                    
+            //     }
+                
+            //     if(String.isNotBlank(enrolObj.Id)){
+            //         UPDATE enrolObj;
+            //     }
+                
+            //     /*Section of reschedule all regular booking*/
+            //     if(String.isNotBlank(bookingObj.Enrolment__c)){
+            //         RescheduleForAllFutureBookings allReschedule = new RescheduleForAllFutureBookings(isDayChange, enrolObj, dateChange.date(), bookingObj.Booking_Date__c);
+            //     }
+            // }
+            
+        }
+        
+        if(bookingObj != NULL && isFuture == 'false'){
+            bookingList.add(bookingObj);
+            oldBookList.add(oldBooking);
+        }
+        Booking__c placeholderObj = new Booking__c();
+        if(bookingList.size() > 0 && placeholder == 'true'){
+            placeholderList.addAll(AureusCalendarController.createPlaceholderForGroupClass(oldBookList, 'reschedule', startDate));
+        }
+        if(bookingList.size() > 0){
+            Database.SaveResult[] saveResults = Database.update(bookingList, false);
+            for(Database.SaveResult sr : saveResults){
+               
+                if(!sr.isSuccess()){
+                    // Operation failed, so get all errors                
+                    for(Database.Error err : sr.getErrors()) {
+                      //system.Debug('@@The following error has occurred.');                    
+                      //system.Debug('@@@@'+err.getStatusCode() + ': ' + err.getMessage());
+                      //system.Debug('@@@@Account fields that affected this error: ' + err.getFields());
+                    }
+                    isError = true;
+                }
+            }
+        }
+        
+        if(placeholderList.size() > 0){
+            insert placeholderList;
+        }
+        if(isError){
+            objResult.msg = 'Some Error Occured';
+        }else{
+            // if(/*isFuture == 'false' && */bookingList.size() > 0 && bookingList[0].Type__c != ConstantsClass.typeBusy && redirectCase == 'true'){
+            //     Case objCase =  AureusCalendarControllerHelper.createCase(caseId, bookingList[0].id,'Reschedule');
+            //     objResult.caseId = objCase.Id;
+            // }
+            objResult.msg = 'Success';
+        }
+        
+        return objResult;
+    }
     
     //@@jatin:17-Dec-2019:get All Group type students for manage available group lesson min.
     @RemoteAction
@@ -808,7 +1075,7 @@ public class ClassEditController {
         for(Booking__c bookObj : [SELECT Id, Name, Center__r.Name, Teacher_Account__r.Name, Duration__c, Start_Time__c, 
                                     Booking_Date__c, Package__r.Name, Package__r.Duration__C,Class__r.Instrument__c,
                                     Class__r.Class_Type__c,Class__r.Maximum_age__c,Class__r.Minimum_age__c,
-                                    Class__r.Class_Start_Date__c,
+                                    Class__r.Class_Start_Date__c,Resource__r.Name, 
                                    Class__c,Package__r.Package_Fee__c, Class__r.Start_Time__c,Class__r.Total_Capacity__c,
                                    Class__r.Name, Class__r.Available_Capacity__c ,
                                    Class__r.Centre_Name__r.Organisation__r.Name,Class__r.grade__c,Class__r.Duration__c // added by nishi: 2-sep-2020 : for get class grade and organisation 
