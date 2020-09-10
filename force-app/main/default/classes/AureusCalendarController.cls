@@ -5459,11 +5459,11 @@ countWithNewPackage +=1;
     public static Boolean saveNewClass(String centreId, String teacherId, String packageId, 
                                         String classDateStr, String classTimeStr, 
                                         String duration, Integer countOfStudent,
-                                        string classType,Integer minAge,Integer maxAge,Boolean isGroupclassEndDate,String classEndDateStr){
+                                        string classType,Integer minAge,Integer maxAge,Boolean isMakeupGroupclass,String classEndDateStr){
         Boolean isSuccess = false;
                                             
         string insertedClassid =  saveNewGroupClass(centreId,  teacherId,  packageId,  classDateStr, classTimeStr,  duration, countOfStudent,
-                                    classType, minAge, maxAge,false,'',isGroupclassEndDate, classEndDateStr);
+                                    classType, minAge, maxAge,false,'',isMakeupGroupclass, classEndDateStr);
         if(string.isNotBlank(insertedClassid)){
             isSuccess = true;
         }         
@@ -5473,7 +5473,7 @@ countWithNewPackage +=1;
     public static string saveNewGroupClass(String centreId, String teacherId, String packageId, 
                                         String classDateStr, String classTimeStr, 
                                         String duration, Integer countOfStudent,
-                                        string classType,Integer minAge,Integer maxAge,Boolean isOssia,string grade,Boolean isGroupclassEndDate,String classEndDateStr){
+                                        string classType,Integer minAge,Integer maxAge,Boolean isOssia,string grade,Boolean isMakeupGroupclass,String classEndDateStr){
         Class__c currentClass = new Class__c();
         DateTime startDateTime, endDateTime;
         
@@ -5482,10 +5482,10 @@ countWithNewPackage +=1;
                                                                                               Integer.valueOf(classTimeStr.split(':')[1]), 
                                                                                               Integer.valueOf(classTimeStr.split(':')[2]), 0));
         }  
-        if(startDateTime != NULL && !isGroupclassEndDate){
+        if(startDateTime != NULL && !isMakeupGroupclass){
             classEndDateStr = '';
            // endDateTime = startDateTime.addYears(ConstantsClass.periodOfClassesInMonths);
-        }else if(isGroupclassEndDate && String.isNotBlank(classEndDateStr) && String.isNotBlank(classTimeStr)){
+        }else if(isMakeupGroupclass && String.isNotBlank(classEndDateStr) && String.isNotBlank(classTimeStr)){
             endDateTime = DateTime.newInstance(Date.valueOf(classEndDateStr), Time.newInstance(Integer.valueOf(classTimeStr.split(':')[0]), 
                             Integer.valueOf(classTimeStr.split(':')[1]), 
                             Integer.valueOf(classTimeStr.split(':')[2]), 0));
@@ -5499,9 +5499,10 @@ countWithNewPackage +=1;
                currentClass.Package__c = (!isOssia && String.isNotBlank(packageId)) ? packageId : null;
                currentClass.Class_Start_Date__c = startDateTime.date();
                currentClass.Start_Time__c = startDateTime.time();
-                if(isGroupclassEndDate && endDateTime != null){
+                if(isMakeupGroupclass && endDateTime != null){
                     currentClass.Class_End_Date__c = endDateTime.date();
                 }
+                currentClass.Makeup_Available__c = isMakeupGroupclass;
                currentClass.Minimum_age__c = minAge;
                currentClass.Maximum_age__c = maxAge;
                currentClass.Class_Type__c = classType;
