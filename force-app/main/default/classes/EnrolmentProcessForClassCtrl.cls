@@ -820,7 +820,9 @@ public class EnrolmentProcessForClassCtrl {
                             String bookGrpClsRecId =  Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get('Group Class').getRecordTypeId();   
                             for(Class__c cls: [SELECT Id, Name, Package__c, Package__r.Name, Teacher__c, Class_Day__c, Start_Time__c,End_Time__c,
                                           (SELECT Id, Class__c, Booking_Date__c FROM Bookings__r WHERE RecordTypeId =: bookGrpClsRecId AND Booking_Date__c != null)
-                                   FROM Class__c WHERE Id IN:grpClsBookSet AND Active__c = True AND Available_Capacity__c > 0]){                                                               
+                                   FROM Class__c WHERE Id IN:grpClsBookSet AND Active__c = True AND Available_Capacity__c > 0
+                                   // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                   And Is_Makeup_Class__c = false]){                                                               
                               
                                 for(Booking__c book: cls.Bookings__r)
                                     grpClsBookMap.put(cls.Id+'#'+book.Booking_Date__c, book);                 
@@ -2286,7 +2288,9 @@ if(fm.refrelDiscount > 0){
                 String bookGrpClsRecId =  Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get('Group Class').getRecordTypeId();   
                 for(Class__c cls: [SELECT Id, Name, Package__c, Package__r.Name, Teacher__c, Class_Day__c, Start_Time__c,End_Time__c,
                                    (SELECT Id, Class__c, Booking_Date__c FROM Bookings__r WHERE RecordTypeId =: bookGrpClsRecId AND Booking_Date__c != null)
-                                   FROM Class__c WHERE Id IN:grpClsBookSet AND Active__c = True AND Available_Capacity__c > 0]){                                                               
+                                   FROM Class__c WHERE Id IN:grpClsBookSet AND Active__c = True AND Available_Capacity__c > 0
+                                   // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                   And Is_Makeup_Class__c = false]){                                                               
                                        
                  for(Booking__c book: cls.Bookings__r)
                     grpClsBookMap.put(cls.Id+'#'+book.Booking_Date__c, book);                                   

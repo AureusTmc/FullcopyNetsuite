@@ -146,7 +146,11 @@ public class EnrolmentProcessIpadCntrl {
             Map<Id,String> centMap = new Map<Id,String>();
             for(Class__c cls : [SELECT Id,Centre_Name__c,Centre_Name__r.Name,Centre_Name__r.CentreName_Cust__c FROM Class__c 
                                WHERE Centre_Name__r.RecordType.Id =: centerRecId AND Centre_Name__r.Centre_Status__c =:ConstantsClass.activeStatus 
-                               AND Centre_Name__r.CentreName_Cust__c != null AND Centre_Name__r.Country__r.Name =:countryCode ORDER BY Centre_Name__r.CentreName_Cust__c]){
+                               AND Centre_Name__r.CentreName_Cust__c != null AND Centre_Name__r.Country__r.Name =:countryCode 
+                                // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                And Is_Makeup_Class__c = false
+                               ORDER BY Centre_Name__r.CentreName_Cust__c
+                               ]){
                 centMap.put(cls.Centre_Name__c, cls.Centre_Name__r.CentreName_Cust__c);
             }
             if(centMap.size() > 0){
@@ -178,7 +182,9 @@ public class EnrolmentProcessIpadCntrl {
             for(String tchrId: tchrMap.keySet())
                 teacherOptions.add(new SelectOption(tchrId, tchrMap.get(tchrId))); 
         }else if(lessonWrap.selectedLsnType.equalsIgnoreCase('Group')){
-            List<Class__c> clsList = [SELECT Id,Name,Teacher__c,Teacher__r.Name FROM Class__c WHERE Centre_Name__c =: selCenter AND Active__c= true]; 
+            List<Class__c> clsList = [SELECT Id,Name,Teacher__c,Teacher__r.Name FROM Class__c WHERE Centre_Name__c =: selCenter AND Active__c= true
+                                        // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                        And Is_Makeup_Class__c = false]; 
             
             Map<String,String> tchrMap = new Map<String,String>();
             for(Class__c cls : clsList)
@@ -266,6 +272,8 @@ public class EnrolmentProcessIpadCntrl {
                                         AND Teacher__c =: lessonWrap.selectedTeacher 
                                         AND Active__c = True 
                                         AND Available_Capacity__c > 0 
+                                         // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                         And Is_Makeup_Class__c = false
                                     ]){
                         if(string.isNotBlank(cls.Centre_Name__c) && string.isNotBlank(cls.Centre_Name__r.Organisation__c) &&
                         cls.Centre_Name__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
@@ -290,6 +298,8 @@ public class EnrolmentProcessIpadCntrl {
                                             AND Teacher__c =: lessonWrap.selectedTeacher 
                                             AND Active__c = True 
                                             AND Available_Capacity__c > 0 
+                                             // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                             And Is_Makeup_Class__c = false
                                            ]){
                             if(!pkgSet.contains(cls.Package__c)){
                                 pkgSet.add(cls.Package__c);
@@ -602,7 +612,9 @@ public class EnrolmentProcessIpadCntrl {
                                 WHERE Teacher__c =:slcdTeacher 
                                 AND Id IN:listOfGradePackageClass 
                                 AND Centre_Name__c =:  lessonWrap.selectedCenter 
-                                AND Active__c = True AND Available_Capacity__c > 0]){
+                                AND Active__c = True AND Available_Capacity__c > 0
+                                 // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                 And Is_Makeup_Class__c = false]){
                         List<Class__c> clsList = clsSchMap.get(cls.Class_Day__c);
                         if(clsList == null)
                             clsList = new List<Class__c>();
@@ -628,7 +640,9 @@ public class EnrolmentProcessIpadCntrl {
                                 WHERE Teacher__c =:slcdTeacher 
                                 AND Package__c =: lessonWrap.selectedPlan 
                                 AND Centre_Name__c =:  lessonWrap.selectedCenter 
-                                AND Active__c = True AND Available_Capacity__c > 0]){
+                                AND Active__c = True AND Available_Capacity__c > 0
+                                 // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                 And Is_Makeup_Class__c = false]){
                     List<Class__c> clsList = clsSchMap.get(cls.Class_Day__c);
                     if(clsList == null)
                         clsList = new List<Class__c>();
@@ -937,7 +951,9 @@ public class EnrolmentProcessIpadCntrl {
                                         WHERE Teacher__c IN:tchrSet 
                                         AND Centre_Name__c IN:centSet 
                                         AND Active__c = True
-                                        AND Available_Capacity__c > 0]){  
+                                        AND Available_Capacity__c > 0
+                                         // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                         And Is_Makeup_Class__c = false]){  
                         if(cls.Ossia_Group_Grade_Packages__r != null && cls.Ossia_Group_Grade_Packages__r.size() > 0){ 
                             for(Ossia_Group_Grade_Package__c objGradePackage: cls.Ossia_Group_Grade_Packages__r)    {                                                                            
                                 String key = cls.Centre_Name__c +'#'+ cls.Teacher__c +'#'+ objGradePackage.Package__c +'#'+ cls.Class_Day__c +'#'+ cls.Start_Time__c;
@@ -952,7 +968,9 @@ public class EnrolmentProcessIpadCntrl {
                 // end :added by nishi: 1-sep-2020: for if class related to ossia organisation then we show package list into  
                  //new created object Ossia_Group_Grade_Packages__r other wise we get package list into package field 
                     for(Class__c cls: [SELECT Id, Name, Centre_Name__c, Teacher__c, Package__c, Class_Day__c, Start_Time__c,End_Time__c FROM Class__c WHERE Teacher__c IN:tchrSet AND Package__c IN:pkgSet 
-                                    AND Centre_Name__c IN:centSet AND Teacher__c IN:tchrSet AND Package__c IN:pkgSet AND Active__c = True AND Available_Capacity__c > 0]){                                                               
+                                    AND Centre_Name__c IN:centSet AND Teacher__c IN:tchrSet AND Package__c IN:pkgSet AND Active__c = True AND Available_Capacity__c > 0
+                                     // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                     And Is_Makeup_Class__c = false]){                                                               
                         String key = cls.Centre_Name__c +'#'+ cls.Teacher__c +'#'+ cls.Package__c +'#'+ cls.Class_Day__c +'#'+ cls.Start_Time__c;
                         clsSchMap.put(key, cls);                                                  
                     }
@@ -1013,7 +1031,9 @@ public class EnrolmentProcessIpadCntrl {
                 String bookGrpClsRecId =  Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get('Group Class').getRecordTypeId();   
                 for(Class__c cls: [SELECT Id, Name, Package__c, Package__r.Name, Teacher__c, Class_Day__c, Start_Time__c,End_Time__c,
                                    (SELECT Id, Class__c, Booking_Date__c FROM Bookings__r WHERE RecordTypeId =: bookGrpClsRecId AND Booking_Date__c != null)
-                                   FROM Class__c WHERE Id IN:grpClsBookSet AND Active__c = True AND Available_Capacity__c > 0]){                                                               
+                                   FROM Class__c WHERE Id IN:grpClsBookSet AND Active__c = True AND Available_Capacity__c > 0
+                                    // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                    And Is_Makeup_Class__c = false]){                                                               
                                        
                  for(Booking__c book: cls.Bookings__r)
                     grpClsBookMap.put(cls.Id+'#'+book.Booking_Date__c, book);                                   
@@ -1274,7 +1294,9 @@ public class EnrolmentProcessIpadCntrl {
                                          WHERE Teacher__c IN:tchrSet 
                                          AND Centre_Name__c IN:centSet 
                                          AND Active__c = True
-                                         AND Available_Capacity__c > 0]){  
+                                         AND Available_Capacity__c > 0
+                                          // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                          And Is_Makeup_Class__c = false]){  
                          if(cls.Ossia_Group_Grade_Packages__r != null && cls.Ossia_Group_Grade_Packages__r.size() > 0){ 
                              for(Ossia_Group_Grade_Package__c objGradePackage: cls.Ossia_Group_Grade_Packages__r)    {                                                                            
                                  String key = cls.Centre_Name__c +'#'+ cls.Teacher__c +'#'+ objGradePackage.Package__c +'#'+ cls.Class_Day__c +'#'+ cls.Start_Time__c;
@@ -1290,7 +1312,9 @@ public class EnrolmentProcessIpadCntrl {
                   //new created object Ossia_Group_Grade_Packages__r other wise we get package list into package field 
                     
                     for(Class__c cls: [SELECT Id, Name, Centre_Name__c, Teacher__c, Package__c, Class_Day__c, Start_Time__c,End_Time__c FROM Class__c WHERE Teacher__c IN:tchrSet AND Package__c IN:pkgSet 
-                    AND Centre_Name__c IN:centSet AND Teacher__c IN:tchrSet AND Package__c IN:pkgSet AND Active__c = True AND Available_Capacity__c > 0]){                                                               
+                    AND Centre_Name__c IN:centSet AND Teacher__c IN:tchrSet AND Package__c IN:pkgSet AND Active__c = True AND Available_Capacity__c > 0
+                     // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                     And Is_Makeup_Class__c = false]){                                                               
                         String key = cls.Centre_Name__c +'#'+ cls.Teacher__c +'#'+ cls.Package__c +'#'+ cls.Class_Day__c +'#'+ cls.Start_Time__c;
                         clsSchMap.put(key, cls);                                                  
                     }
