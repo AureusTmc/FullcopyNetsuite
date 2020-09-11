@@ -645,12 +645,12 @@
                     for (var startday = 1; startday <= 7; startday++) {
                         var day = new Date(effectiveDate.year(), parseInt(effectiveDate.month()) + 1, startday);
                         var startedDate = new moment(day);
-                        if (startedDate.format('ddd') == week) {
+                        //if (startedDate.format('ddd') == week) {
                             newEffectiveDayObj = {};
                             newEffectiveDayObj.value = startedDate.format('MM/DD/YYYY');
                             newEffectiveDayObj.label = startedDate.format('ddd, MMM DD YYYY');
                             weekDatesList.push(newEffectiveDayObj);
-                        }
+                       // }
                     }
                     console.log('weekDatesList', weekDatesList);
                     console.log('result.currentWeekDay' + result.currentWeekDay);
@@ -660,8 +660,9 @@
                             effectiveDateStr += '<option value="' + value.value + '">' + value.label + '</option>';
                         });
                         $('#selectEffectiveDateEnrolCenterUpdate').append(effectiveDateStr);
-                        $('#selectEffectiveDateEnrolCenterUpdate').val(weekDatesList[0].value);
-                        $('#selectEffectiveDateEnrolCenterUpdate').attr('disabled', 'true');
+                        // commented by nishi: 11-Sep-2020: for we show all 1 to 7 date list not first effective date
+                        // $('#selectEffectiveDateEnrolCenterUpdate').val(weekDatesList[0].value);
+                        //$('#selectEffectiveDateEnrolCenterUpdate').attr('disabled', 'true');
                         $('#availableTimeSlotsCenterUpdateEnrolment').val('');
                         $('#availableTimeSlotsCenterUpdateEnrolment').empty();
                         $('#availableTimeSlotsCenterUpdateEnrolment').attr('disabled', 'true');

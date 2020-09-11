@@ -22,6 +22,7 @@ public without sharing class RescheduleAllCenterBookings {
     Public Boolean isOssia; // added by nishi: 24-Aug-2020: if teacher Leave is found and we update  Ossia org enrolment then we added 180 expiry days otherwise we added 120 days for other students
     Public Enrolment__c enrolObj;
     Public Date effectiveDate;
+    Public Date effectivestartDate;
     Public Map<String, Booking__c> mapOfBooking = new Map<String, Booking__c>();
     Public Map<String, Fifth_Lesson__c> mapOfFifthLesson = new Map<String, Fifth_Lesson__c>();
     Public String centreOrgId;
@@ -37,6 +38,8 @@ public without sharing class RescheduleAllCenterBookings {
          // added by nishi: 22-Aug-2020: for manage ossia organization student  we added 180 days in expiry dates
         this.enrolObj = enrolObj;
         this.effectiveDate = effectiveDate;
+        //11-Sep-2020: Nishi:user can change lesson day so we manage this new lesson so we delete all future booking with the start of effective month
+        this.effectivestartDate = Date.newInstance(effectiveDate.year(),effectiveDate.month(),1);
         this.isOssia = false;
         // Added by nishi: 24-Aug-2020:Start: for ossia students booking will cancel then we added expiry date 180
         // otherwise we added 120 days for other students
@@ -49,7 +52,7 @@ public without sharing class RescheduleAllCenterBookings {
         if(enrolObj.Center__r != null && string.isNotBlank(enrolObj.Center__r.Organisation__c))
             centreOrgId = enrolObj.Center__r.Organisation__c;
         system.debug('@@@centreOrgId'+centreOrgId);
-        dayIsChanged(enrolObj, effectiveDate);
+        dayIsChanged(enrolObj, effectiveDate,effectivestartDate);
         
     }
 
@@ -62,7 +65,7 @@ public without sharing class RescheduleAllCenterBookings {
      *  o	All future placeholder related to 5th week will be cancelled 
      *  o	Remove all 5th lesson record
      */
-    private void dayIsChanged(Enrolment__c enrolmentObj, Date effectiveDate){
+    private void dayIsChanged(Enrolment__c enrolmentObj, Date effectiveDate,Date effectivestartDate){
 
         Set<String> makeupBookingSet = new Set<String>();
         Set<String> adhocBookingSet = new Set<String>();
@@ -71,7 +74,7 @@ public without sharing class RescheduleAllCenterBookings {
         List<Fifth_Lesson__c> allFifthLessonsToDelete = new List<Fifth_Lesson__c>();
 
         //Fifth Lesson Section
-        for(Fifth_Lesson__c fifthLesson : fetchAllFutureFifthLesson(enrolmentObj.Id, effectiveDate)){
+        for(Fifth_Lesson__c fifthLesson : fetchAllFutureFifthLesson(enrolmentObj.Id, effectivestartDate)){
             if((!fifthLesson.isActive__c) && String.isNotBlank(fifthLesson.Booking__c) && fifthLesson.Booking__r.Package__r.Type__c == ConstantsClass.pakageTypeMakeup){
                 makeupBookingSet.add(fifthLesson.Booking__c);
             }else if((!fifthLesson.isActive__c) && String.isNotBlank(fifthLesson.Booking__c) && fifthLesson.Booking__r.Package__r.Type__c == ConstantsClass.adhocPackageType){
@@ -105,7 +108,8 @@ public without sharing class RescheduleAllCenterBookings {
             maxDate = getMaxDateOfEnrolmentBookings(enrolmentObj.Id);
             Integer lastDayOfMonth = Date.daysInMonth(maxDate.year(), maxDate.month());
             maxDate = Date.newInstance(maxDate.year(), maxDate.month(), lastDayOfMonth);
-            processOldRegularBookings(enrolmentObj.Id, effectiveDate);
+            //11-Sep-2020: Nishi:user can change lesson day so we manage this new lesson so we delete all future booking with the start of effective month
+            processOldRegularBookings(enrolmentObj.Id, effectivestartDate);
         }
          system.debug('@@dayIsChanged all future FifthLessons To Delete =='+allFifthLessonsToDelete );
         if(allFifthLessonsToDelete.size() > 0){
@@ -270,6 +274,8 @@ public without sharing class RescheduleAllCenterBookings {
         System.debug('@@@@reCreateRegularBookingsAndFifthLesson enrolmentObj'+enrolmentObj);
         System.debug('@@@@reCreateRegularBookingsAndFifthLesson effectiveDate'+effectiveDate);
         if(String.isNotBlank(enrolmentObj.Id)){
+            // get new active subscription invoice 
+            List<Subscription_Line_Item__c> sublineItemList = ChangeCenterEnrolmentProcessController.fetchsublineItemList(enrolmentObj.id);
             Booking__c bookingObj = new Booking__c();
             Fifth_Lesson__c fifthLesson = new Fifth_Lesson__c();
             while(effectiveDate <= maxdate){
@@ -354,9 +360,9 @@ public without sharing class RescheduleAllCenterBookings {
                         bookingObj.End_Time__c =  bookingObj.Start_Time__c.addMinutes(Integer.valueOf(enrolmentObj.Package__r.Duration__c));       
                     }
 
-                    if(enrolmentObj.Subscription_Line_Items__r != null && enrolmentObj.Subscription_Line_Items__r.size() > 0 && 
-                       enrolmentObj.Subscription_Line_Items__r[0].Next_Bill_Date__c != null && effectiveDate != null && 
-                       effectiveDate >= enrolmentObj.Subscription_Line_Items__r[0].Next_Bill_Date__c){
+                    if(sublineItemList != null && sublineItemList.size() > 0 && 
+                    sublineItemList[0].Next_Bill_Date__c != null && effectiveDate != null && 
+                       effectiveDate >= sublineItemList[0].Next_Bill_Date__c){
                        bookingObj.Status__c = ConstantsClass.pendingStatus;
                     }else{
                         bookingObj.Status__c = ConstantsClass.scheduledStatus;

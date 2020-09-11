@@ -108,6 +108,15 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
             }
             enrolmentObj.Next_Lesson_Start_time__c = timeslot;
         }
+         //11-Sep-2020: Nishi:user can change lesson day so we manage this new lesson
+        Datetime effectiveDatetime = datetime.newInstance(effectiveDate,system.now().time());
+        if(enrolmentObj.Lesson_Day__c != effectiveDatetime.format('EEEE')){
+            enrolmentObj.New_Lesson_Day__c = effectiveDatetime.format('EEEE');
+        
+            if(isSameMonth){
+                enrolmentObj.Lesson_Day__c = effectiveDatetime.format('EEEE');
+            }
+        }
         enrolmentObj.Package_Process_Type__c = ConstantsClass.enrollmentProcessChangedCenter;
         enrolmentObj.Package_Process_Request_Date__c = System.today();
         enrolmentObj.Advance_Action_Requested_By__c = UserInfo.getUserId();
@@ -124,7 +133,8 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
             invoiceId =upgradeDetails.invoiceId;
             error = false;
         }
-        DateTime newEffectiveDateTime = DateTime.newInstance(effectiveDate, Time.newInstance(0, 0, 0, 0));
+        //11-Sep-2020: Nishi:user can change lesson day so we manage this new lesson so we delete all future booking with the start of effective month
+        Date newEffectiveDate = Date.newInstance(effectiveDate.year(),effectiveDate.month(),1);
         if(String.isNotBlank(enrolmentObj.Id)){
              Database.SaveResult saveResult = Database.update(enrolmentObj, false);
             if(saveResult.isSuccess()){
