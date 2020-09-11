@@ -306,7 +306,7 @@
                 </div>
                  <footer class="slds-modal__footer   slds-hide groupReschdule" >
                     <button class="slds-button slds-button_neutral" aria-pressed="false" id="cancelGroupChanges" onclick="cancelRescheduling();return false;">Cancel</button>
-                    <button class="slds-button slds-button_brand" aria-pressed="false" id="commitGroupChanges" onclick="commitgrouplesson();return false;">Confirm Changes</button>
+                    <button class="slds-button slds-button_brand" aria-pressed="false" id="ReschedulingGroupChanges" onclick="commitgrouplesson();return false;">Confirm Changes</button>
                 </footer>
             </div>
         </section>
@@ -3080,7 +3080,8 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                                 res =  dateTime.split("T"); 
                                 $('#ClassTimeEditLabel').text(convertDateToMoment(res[0]) +' '+ convertTimeToMoment(res[1].split(':')[0], res[1].split(':')[1]));
                             }
-                        
+                            console.log('result.bookObj.isDayChange'+result.isDayChange);
+                            $('#ReschedulingGroupChanges').attr({'data-isDayChange':result.isDayChange});
                     }
                 }
             );
@@ -3096,10 +3097,7 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                 }else{
                     updateGroupClassBooking(bookingReschedule.Id, bookingReschedule.date, '', bookingReschedule.resource, 'false', 'false');
                 }
-                
-            }/*commented by jatin :19-Nov-2019 for remove future reschaadule booking 
-            */ 
-                else if((bookingReschedule.Type == 'Group Class' || bookingReschedule.Type == 'Busy') &&  bookingReschedule.isRecurrence == 'true'){
+            }else if((bookingReschedule.Type == 'Group Class' || bookingReschedule.Type == 'Busy') &&  bookingReschedule.isRecurrence == 'true'){
                     updateGroupClassBooking(bookingReschedule.Id, bookingReschedule.date, '', bookingReschedule.resource, 'false', 'true');
             }else if(bookingReschedule.Type != 'Group Class'){
                 updateGroupClassBooking(bookingReschedule.Id, bookingReschedule.date, '', bookingReschedule.resource, 'false', 'false');
@@ -3119,49 +3117,58 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                 //     $('#confirmModalNo').trigger('click');
                 // }else{
                     if(bookingReschedule.Type != 'Busy' ){
-                        $('#confirmModalNo').attr({'data-id': id, 'start': start, 'end': end,'isResourceId':'false', 'teacherId': teacherId, 'isplaceholder': isplaceholder, 'isFuture': isFuture, 'data-origin': 'updategroupClass'});
-                        $('#confirmModalNo').trigger('click');
+                        if(isFuture =='true'){
+                            var isDayChange = $('#ReschedulingGroupChanges').attr('data-isDayChange');
+                            if(isDayChange == 'true'){
+                                $('#newGroupClassCMP').addClass('slds-hide');
+                                $('#confirmBody').html('Do you want Rescheduled all group class appointments?<br/> All Make-up bookings and Ad-hoc have been canceled and makeup credit will be added back to the parent record.');
+                                $('#confirmHeader').html('Rescheduled Class Appointment');
+                                $('#confirmModalYes').attr({'data-id': id, 'start': start, 'end': end,'isResourceId':'false', 'teacherId': teacherId, 'isplaceholder': isplaceholder, 'isFuture': isFuture, 'data-origin': 'updategroupClass'});
+                                $('#confirmModalYes').removeClass('slds-hide');
+                                $('#confirmModalNo').removeAttr('data-origin');
+                                $('.confirmModal').removeClass('slds-hide');
+                            }else{
+                                $('#confirmModalNo').attr({'data-id': id, 'start': start, 'end': end,'isResourceId':'false', 'teacherId': teacherId, 'isplaceholder': isplaceholder, 'isFuture': isFuture, 'data-origin': 'updategroupClass'});
+                                $('#confirmModalNo').trigger('click');
+                            }
+                        }else{
+                            $('#confirmModalNo').attr({'data-id': id, 'start': start, 'end': end,'isResourceId':'false', 'teacherId': teacherId, 'isplaceholder': isplaceholder, 'isFuture': isFuture, 'data-origin': 'updategroupClass'});
+                            $('#confirmModalNo').trigger('click');
+                        }
+                    }else{
+                        $('#statusOnPage').hide();
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.ClassEditController.updateGroupClassBooking}',
+                            id, start, end, teacherId, isplaceholder, isFuture, //'false', caseId, 'false',
+                            function(result, event){
+                                var msg = '';
+                                if (event.status) {
+                                    $('#newGroupClassCMP').addClass('slds-hide');
+                                    isReschedule = false;
+                                    $('#confirmModalNo').html('No');
+                                    $('#confirmHeader').parent().removeClass('slds-text-align_left');
+                                    $('#confirmBody').removeClass('slds-text-align_center');
+                                    $('#confirmModalYes').removeClass('slds-hide');
+                                    $("#rescheduleClose").trigger("click");
+                                    
+                                    bookingReschedule.Id = '';
+                                    bookingReschedule.Type = '';
+                                    bookingReschedule.resource = '';
+                                    bookingReschedule.date = '';
+                                    bookingReschedule.Individual = '';
+                                    bookingReschedule.isRecurrence = '';
+                                    bookingReschedule.scheduleType = '';
+                                }
+                                refreshCalendar();
+                            },
+                            {buffer: false, escape: true}
+                        );
                     }
                // }
             }
         }
-        function updategroupClass(redirectCase){
-            let bookingId = '';
-            let start = '';
-            let end = '';
-            let teacherId = '';
-            let isplaceholder = '';
-            let isFuture = '';
-            $('#newGroupClassCMP').addClass('slds-hide');
-            if($('#confirmModalNo').attr('data-id')){
-                bookingId = $('#confirmModalNo').attr('data-id');
-            }
-            if($('#confirmModalNo').attr('start')){
-                start = $('#confirmModalNo').attr('start');
-            }
-            if($('#confirmModalNo').attr('end')){
-                end = $('#confirmModalNo').attr('end')
-            }
-            if($('#confirmModalNo').attr('teacherId')){
-                teacherId = $('#confirmModalNo').attr('teacherId')
-            }
-            if($('#confirmModalNo').attr('isplaceholder')){
-                isplaceholder = $('#confirmModalNo').attr('isplaceholder')
-            }
-            if($('#confirmModalNo').attr('isFuture')){
-                isFuture = $('#confirmModalNo').attr('isFuture')
-            }
-            console.log('updategroupClass bookingId',bookingId);
-            console.log('updategroupClass start',start);
-            console.log('updategroupClass end',end);
-            console.log('updategroupClass teacherId',teacherId);
-            console.log('updategroupClass isplaceholder',isplaceholder);
-            console.log('updategroupClass isFuture',isFuture);
-            console.log('updategroupClass caseId',caseId);
-            // let isResourceId ='false';
-            // if(filter.resource && filter.resource != 'Select Resource'){
-            //     isResourceId = 'true';
-            // }
+        function updategroupClass( bookingId, start, end, teacherId, isplaceholder, isFuture /*,redirectCase, caseId, isResourceId*/){
+            $('.confirmModal').addClass('slds-hide');
             if(bookingId && start){
                 Visualforce.remoting.Manager.invokeAction(
                     '{!$RemoteAction.ClassEditController.updateGroupClassBooking}',
@@ -3170,10 +3177,9 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                     console.log('result',result);
                         var msg = '';
                         if (event.status) {
-                           
                             isReschedule = false;
                             $("#rescheduleClose").trigger("click");
-                                if(bookingReschedule.scheduleType == 'commit'){
+                            if(bookingReschedule.scheduleType == 'commit'){
                                 if(result.caseId){
                                     redirectToCaseRecord(result.caseId); 
                                 }

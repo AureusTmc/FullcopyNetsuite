@@ -3943,7 +3943,7 @@ Enrol now
                                     </div>
                                     <div class="slds-col slds-size_6-of-12 slds-p-around_xxx-small slds-grid  slds-m-top_small">
                                         <div class="slds-col slds-size_5-of-12">
-                                            <span> <b> Makup Available :</b></span>
+                                            <span> <b>Is Makeup Class :</b></span>
                                         </div>
                                         <span class="slds-col slds-size_7-of-12 slds-p-left_medium">
                                             <input name="onmakupAvailablegroup" type="checkbox" id="onmakupAvailablegroup" onchange="makupAvailablegroupFunc();return false;"/>
@@ -5047,7 +5047,48 @@ Enrol now
                 );
             }
             
-        }else if(origin == 'withdrawal'){
+        }//start:added by nishi: 10-sep-2020: for reschadule group class bookings
+        else if(origin =='updategroupClass'){
+            let bookingId = '';
+            let start = '';
+            let end = '';
+            let teacherId = '';
+            let isplaceholder = '';
+            let isFuture = '';
+            $('#statusOnPage').hide();
+            $('#newGroupClassCMP').addClass('slds-hide');
+            if($('#confirmModalYes').attr('data-id')){
+                bookingId = $('#confirmModalYes').attr('data-id');
+            }
+            if($('#confirmModalYes').attr('start')){
+                start = $('#confirmModalYes').attr('start');
+            }
+            if($('#confirmModalYes').attr('end')){
+                end = $('#confirmModalYes').attr('end')
+            }
+            if($('#confirmModalYes').attr('teacherId')){
+                teacherId = $('#confirmModalYes').attr('teacherId')
+            }
+            if($('#confirmModalYes').attr('isplaceholder')){
+                isplaceholder = $('#confirmModalYes').attr('isplaceholder')
+            }
+            if($('#confirmModalYes').attr('isFuture')){
+                isFuture = $('#confirmModalYes').attr('isFuture')
+            }
+            console.log('updategroupClass bookingId',bookingId);
+            console.log('updategroupClass start',start);
+            console.log('updategroupClass end',end);
+            console.log('updategroupClass teacherId',teacherId);
+            console.log('updategroupClass isplaceholder',isplaceholder);
+            console.log('updategroupClass isFuture',isFuture);
+            console.log('updategroupClass caseId',caseId);
+            // let isResourceId ='false';
+            // if(filter.resource && filter.resource != 'Select Resource'){
+            //     isResourceId = 'true';
+            // }
+            updategroupClass(bookingId, start, end, teacherId, isplaceholder, isFuture /*,'true', caseId, isResourceId*/);
+        }//end: added by nishi: 10-sep-2020: for reschadule group class bookings
+        else if(origin == 'withdrawal'){
             
             bookingId = $('#confirmModalYes').attr('data-id');
             var endDateStr = $('#confirmModalYes').attr('data-endDate');
@@ -5372,7 +5413,44 @@ Enrol now
             createGroupbooking('false');
         }//start:added by nishi: 10-sep-2020: for reschadule group class bookings
         else if(origin =='updategroupClass'){
-            updategroupClass('false');
+            let bookingId = '';
+            let start = '';
+            let end = '';
+            let teacherId = '';
+            let isplaceholder = '';
+            let isFuture = '';
+            $('#statusOnPage').hide();
+            $('#newGroupClassCMP').addClass('slds-hide');
+            if($('#confirmModalNo').attr('data-id')){
+                bookingId = $('#confirmModalNo').attr('data-id');
+            }
+            if($('#confirmModalNo').attr('start')){
+                start = $('#confirmModalNo').attr('start');
+            }
+            if($('#confirmModalNo').attr('end')){
+                end = $('#confirmModalNo').attr('end')
+            }
+            if($('#confirmModalNo').attr('teacherId')){
+                teacherId = $('#confirmModalNo').attr('teacherId')
+            }
+            if($('#confirmModalNo').attr('isplaceholder')){
+                isplaceholder = $('#confirmModalNo').attr('isplaceholder')
+            }
+            if($('#confirmModalNo').attr('isFuture')){
+                isFuture = $('#confirmModalNo').attr('isFuture')
+            }
+            console.log('updategroupClass bookingId',bookingId);
+            console.log('updategroupClass start',start);
+            console.log('updategroupClass end',end);
+            console.log('updategroupClass teacherId',teacherId);
+            console.log('updategroupClass isplaceholder',isplaceholder);
+            console.log('updategroupClass isFuture',isFuture);
+            console.log('updategroupClass caseId',caseId);
+            // let isResourceId ='false';
+            // if(filter.resource && filter.resource != 'Select Resource'){
+            //     isResourceId = 'true';
+            // }
+            updategroupClass(bookingId, start, end, teacherId, isplaceholder, isFuture/*, 'false', caseId, isResourceId*/);
         }//end: added by nishi: 10-sep-2020: for reschadule group class bookings
         else if(origin == 'cancel'){
             $('.confirmModal').addClass('slds-hide');
@@ -6781,32 +6859,68 @@ Enrol now
                                                 } 
                                                 // Commented by nishi: 9-Sep-2020: for new requiremnt we reschadule group lesson booking this and future
                                                 else if(bookingReschedule.Type == 'Group Class' && bookingReschedule.Individual == 'false'){
+                                                    var startdate = new Date(event.start.format('YYYY-MM-DD'));
+                                                    console.log('bookingReschedule.date',startdate.getDate());
+                                                   // console.log('bookingReschedule.date.day()',event.start.format('DD/MM/YYYY'));
+                                                    if(startdate.getDate() > 28){
+                                                        $('#toastMsg').html("You cann't transfer this group class to the last month of the date(29,30,31)...");
+                                                        $('.toastclass').removeClass('slds-theme_success');
+                                                        $('.toastclass').addClass('slds-theme_error');
+                                                        toastLaunch();
+                                                        refreshCalendar();
+                                                    }else{
+                                                        if(!isResource){
+                                                            isReschedule = false;
+                                                            $('#confirmModalYes').addClass('slds-hide');
+                                                            $('#confirmModalNo').html('Cancel');
+                                                            $('#confirmModalNo').attr('data-origin', 'reschedulegrouplesson');
+                                                            $('#confirmModalNo').attr('onclick', "$('.confirmModal').addClass('slds-hide');closeRescheduleModal(); return false;");
+                                                            $('#confirmHeader').html('Recurring Class event');
+                                                            $('#confirmHeader').parent().addClass('slds-text-align_left');
+                                                            $('#confirmBody').addClass('slds-text-align_center');
+                                                            var confirmBody ='<p>Would you like to apply this change to this event only,<br/>or the current and future events in the series?</p>';
+                                                            confirmBody += '<div><button class="slds-button slds-m-around_small slds-p-horizontal_large" style="background: #00b3f0;color:#fff;" id="thisReschedule" onclick="rescheduleThisGroupLessonOnly();return false;">This only</button>';
+                                                            confirmBody += '<button class="slds-button slds-m-around_small slds-p-horizontal_large" style="background: #00b3f0;color:#fff;" id="thisAndFutureReschedule" onclick="rescheduleFutureGroupLessonAlso();return false;">This and future</button>';
+                                                            confirmBody += '</div>';
+                                                            $('#confirmBody').html(confirmBody);
+                                                            $('#confirmModal').removeClass('slds-hide');
+                                                        }else{
+                                                            // $('#confirmModalYes').addClass('slds-hide');
+                                                            // $('#confirmModalNo').html('Cancel');
+                                                            // $('#confirmModalNo').attr('data-origin', 'reschedule');
+                                                            // $('#confirmModalNo').attr('onclick', "$('.confirmModal').addClass('slds-hide');closeRescheduleModal(); return false;");
+                                                            // rescheduleThisGroupLessonOnly();
+                                                            revertFunc();
+                                                        }
+                                                   }
+                                                }// nishi: 10-Sep-2020: for busy type group class bookings currently we revert all the functionality
+                                                else if(bookingReschedule.Type == 'Busy' && bookingReschedule.Individual == 'false' && event.isClass){
                                                     if(!isResource){
-                                                        isReschedule = false;
                                                         $('#confirmModalYes').addClass('slds-hide');
                                                         $('#confirmModalNo').html('Cancel');
                                                         $('#confirmModalNo').attr('data-origin', 'reschedulegrouplesson');
-                                                        $('#confirmModalNo').attr('onclick', "$('.confirmModal').addClass('slds-hide');closeRescheduleModal(); return false;");
-                                                        $('#confirmHeader').html('Recurring Class event');
+                                                        $('#confirmModalNo').attr('onclick', "$('.confirmModal').addClass('slds-hide');$('#confirmModalYes').removeClass('slds-hide');$('#confirmModalNo').html('No');refreshCalendar();return false;"); 
+                                                        $('#confirmHeader').html('Reschedule Busy Time');
                                                         $('#confirmHeader').parent().addClass('slds-text-align_left');
                                                         $('#confirmBody').addClass('slds-text-align_center');
-                                                        var confirmBody ='<p>Would you like to apply this change to this event only,<br/>or the current and future events in the series?</p>';
-                                                        confirmBody += '<div><button class="slds-button slds-m-around_small slds-p-horizontal_large" style="background: #00b3f0;color:#fff;" id="thisReschedule" onclick="rescheduleThisGroupLessonOnly();return false;">This only</button>';
-                                                        confirmBody += '<button class="slds-button slds-m-around_small slds-p-horizontal_large" style="background: #00b3f0;color:#fff;" id="thisAndFutureReschedule" onclick="rescheduleFutureGroupLessonAlso();return false;">This and future</button>';
-                                                        confirmBody += '</div>';
+                                                        var confirmBody = '<p>Would you like to apply this change to this Busy Time only,<br/>or the current and future Busy Time in the series?</p><div>';
+                                                        confirmBody +='<button class="slds-button slds-m-around_small slds-p-horizontal_large" style="background: #00b3f0;color:#fff;" id="thisReschedule" onclick="rescheduleThisGroupLessonOnly();return false;">This only</button>';
+                                                        // Commented by jatin :19-Nov-2019 : for remove future reshadule  booking
+                                                            confirmBody += '<button class="slds-button slds-m-around_small slds-p-horizontal_large" style="background: #00b3f0;color:#fff;" id="thisAndFutureReschedule" onclick="rescheduleFutureGroupLessonAlso();return false;">This and future</button>';
+                                                        confirmBody +='</div>';
                                                         $('#confirmBody').html(confirmBody);
                                                         $('#confirmModal').removeClass('slds-hide');
                                                     }else{
+                                                          // start : 1-aug:2020 -Nishi: we remove this prompt as we only supported single event update here. 
                                                         // $('#confirmModalYes').addClass('slds-hide');
                                                         // $('#confirmModalNo').html('Cancel');
                                                         // $('#confirmModalNo').attr('data-origin', 'reschedule');
-                                                        // $('#confirmModalNo').attr('onclick', "$('.confirmModal').addClass('slds-hide');closeRescheduleModal(); return false;");
-                                                        // rescheduleThisGroupLessonOnly();
+                                                        // $('#confirmModalNo').attr('onclick', "$('.confirmModal').addClass('slds-hide');$('#confirmModalYes').removeClass('slds-hide');$('#confirmModalNo').html('No');refreshCalendar();return false;"); 
+                                                        // rescheduleThisOnly();
+                                                        //   // end : 1-aug:2020 -Nishi: we remove this prompt as we only supported single event update here. 
                                                         revertFunc();
                                                     }
-                                                }// nishi: 10-Sep-2020: for busy type group class bookings currently we revert all the functionality
-                                                else if(bookingReschedule.Type == 'Busy' && bookingReschedule.Individual == 'false' && event.isClass){
-                                                    revertFunc();
+                                                     // Start : 30-Jul:2020 :if Resource Id is exist then we hide this Future button
                                                 }
                                                 //end: Commented by nishi: 9-Sep-2020: for new requiremnt we reschadule group lesson booking this and future
                                                 else if(bookingReschedule.Type == 'Busy' && bookingReschedule.Individual == 'false'){

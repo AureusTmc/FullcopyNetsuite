@@ -5256,7 +5256,7 @@ countWithNewPackage +=1;
         return isSuccess;
     }
     
-    private static Integer getTimeStampBetween(Time startTime, Time endTime){
+    public  static Integer getTimeStampBetween(Time startTime, Time endTime){
         DateTime startDTime, endDTime;
         Integer difference = 0;
         if(startTime != Null){
@@ -5502,7 +5502,7 @@ countWithNewPackage +=1;
                 if(isMakeupGroupclass && endDateTime != null){
                     currentClass.Class_End_Date__c = endDateTime.date();
                 }
-                currentClass.Makeup_Available__c = isMakeupGroupclass;
+                currentClass.Is_Makeup_Class__c = isMakeupGroupclass;
                currentClass.Minimum_age__c = minAge;
                currentClass.Maximum_age__c = maxAge;
                currentClass.Class_Type__c = classType;
