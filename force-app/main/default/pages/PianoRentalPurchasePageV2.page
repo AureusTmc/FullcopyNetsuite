@@ -5,28 +5,6 @@ Rental to Purchase Process for the Net Suite Integration. Please refer apex clas
 <apex:page standardController="Enrolment__c" extensions="PianoRentalPurchasePageV2Controller"  
            sidebar="false" showHeader="false" docType="html-5.0" id="apexPage">
     
-    <script>
-        function showSuccessToast( isEmailSent, isErrorOnSave) {
-            
-            if(isEmailSent & !isErrorOnSave){
-                sforce.one.showToast({
-                    "title": "Success!",
-                    "message": "Email Sent Successfully.",
-                    "type": "success"
-                });
-            }
-            else{
-                sforce.one.showToast({
-                    "title": "Error!",
-                    "message": "There was an error",
-                    "type": "error"
-                });
-                
-                }
-            
-        }
-    </script>
-  
     <html>
         
         <!--_______________________________________________________ Show This Page when Piano is Not SOld  ______________________________________________-->
@@ -238,7 +216,10 @@ Rental to Purchase Process for the Net Suite Integration. Please refer apex clas
                         <b>{!errorMessage}</b>
                     </div>
                 </apex:outputPanel>
-                <apex:commandButton id="sendEmailBtn" reRender="errorMsgSec,sendEmailBtn" oncomplete="showSuccessToast({!isEmailSent},{!isErrorOnSave}); return false;" value="Send Email" action="{!sendEmailToPOS}" disabled="{!isEmailSent}" 
+                
+                <apex:actionFunction name="sendEmail" action="{!sendEmailToPOS}" reRender="errorMsgSec,sendEmailBtn,jsScripts" oncomplete="showSuccessToast({!isEmailSent},{!isErrorOnSave}); return false;"/>
+                
+                <apex:commandButton id="sendEmailBtn"  value="Save & Send Email" onclick="confirmPurchase(); return false;" disabled="{!isEmailSent}" 
                                     style="padding: 5px 10px 3px !important;font-size: 16px !important;text-transform: uppercase;line-height: 20px !important;margin: 15px 0 20px;float: right;height: 40px;cursor: pointer;" />
                 <!-- ___________________________________________________________________ Page Modal END ___________________________________________________________________________________________________ -->
             </apex:form>
@@ -246,13 +227,44 @@ Rental to Purchase Process for the Net Suite Integration. Please refer apex clas
         
         <!--_______________________________________________________ Show This Page when Piano is SOld  ______________________________________________-->
         <apex:outputPanel rendered="{!isAlreadySold}">
-        
-        <div style="height: 420px;">
-            <strong>We cannot process your request at the moment Piano already sold. Please contact centre admin for further
+            
+            <div style="height: 420px;">
+                <strong>We cannot process your request at the moment Piano already sold. Please contact centre admin for further
                     assistance.
                 </strong>
-            
+                
             </div>
         </apex:outputPanel>
+        
+        <apex:outputPanel id="jsScripts">
+        <script>
+        
+        function confirmPurchase(){
+            
+            if( confirm("This will terminate the rental agreement and send the rental credit statement to " + '{!posUserName}' + "  for processing the Piano purchase") ){
+            sendEmail();
+            }
+        }
+        function showSuccessToast( isEmailSent, isErrorOnSave) {
+            
+            if(isEmailSent & !isErrorOnSave){
+                sforce.one.showToast({
+                    "title": "Success!",
+                    "message": "Email Sent Successfully.",
+                    "type": "success"
+                });
+            }
+            else{
+                sforce.one.showToast({
+                    "title": "Error!",
+                    "message": "There was an error",
+                    "type": "error"
+                });
+                
+            }
+            
+        }
+        </script>
+    </apex:outputPanel>
     </html>
 </apex:page>

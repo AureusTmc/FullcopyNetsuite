@@ -126,7 +126,7 @@
         </rules>
     </decisions>
     <description>Included &quot;only when specified changes are made&quot; condition</description>
-    <interviewLabel>Location_update_for_sharing_rule_Teacher-3_InterviewLabel</interviewLabel>
+    <interviewLabel>Location_update_for_sharing_rule_Teacher-4_InterviewLabel</interviewLabel>
     <label>Location update for sharing rule-Teacher</label>
     <processMetadataValues>
         <name>ObjectType</name>
@@ -301,6 +301,42 @@
             <field>Location__c</field>
             <value>
                 <elementReference>myVariable_current.Center_Name__r.Name</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <processMetadataValues>
+                <name>dataType</name>
+                <value>
+                    <stringValue>Picklist</stringValue>
+                </value>
+            </processMetadataValues>
+            <processMetadataValues>
+                <name>isRequired</name>
+                <value>
+                    <booleanValue>false</booleanValue>
+                </value>
+            </processMetadataValues>
+            <processMetadataValues>
+                <name>leftHandSideLabel</name>
+                <value>
+                    <stringValue>Organisation Sharing</stringValue>
+                </value>
+            </processMetadataValues>
+            <processMetadataValues>
+                <name>leftHandSideReferenceTo</name>
+                <value>
+                    <stringValue/>
+                </value>
+            </processMetadataValues>
+            <processMetadataValues>
+                <name>rightHandSideType</name>
+                <value>
+                    <stringValue>Reference</stringValue>
+                </value>
+            </processMetadataValues>
+            <field>Organisation_Sharing__c</field>
+            <value>
+                <elementReference>myVariable_current.Center_Name__r.Organisation__r.Name</elementReference>
             </value>
         </inputAssignments>
         <object>Account</object>

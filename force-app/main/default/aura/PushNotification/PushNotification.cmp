@@ -4,11 +4,14 @@
     <aura:attribute name="toggleSpinner" type="boolean" default="true"/>
     <aura:attribute name="CentreOptions" type="List" default="[]"/>
     <aura:attribute name="instrumentList" type="List" default="[]"/>
-     <aura:attribute name="SelectedCentre" type="List"/>
+     <aura:attribute name="SelectedCentre" type="string"/>
+     <aura:attribute name="SelectedInstrument" type="string"/>
     <aura:attribute name="countryList" type="List"/>
     <aura:attribute name="title" type="String"/>
     <aura:attribute name="url" type="String"/>
     <aura:attribute name="description" type="String"/>
+    <aura:attribute name="SelectedTeacher" type="string"/>
+    <aura:attribute name="parentCount" type="Integer"/>
     
     <aura:HTML tag="style">
         .slds-modal__container{
@@ -24,7 +27,8 @@
             	Push Notification  
             </h1>
             <div class="slds-p-vertical_medium">
-                <lightning:select name="select1" label="Select Country" required="true">
+                <lightning:select name="select1" label="Select Country" required="true" onchange="{!c.getCenterVal}">
+                    <option value="Select Country">Select Country</option>
                     <aura:iteration items="{!v.countryList}" var="item">
                         <option value="{! item.Id}">{! item.Country_Name__c}</option>
                     </aura:iteration>
@@ -50,44 +54,31 @@
                                                    selectedLabel="Selected"
                                                    fieldLevelHelp="Select your Instrument"
                                                    options="{!v.instrumentList}"
-                                                   onchange="{! c.handleCentreChange }"
+                                                   onchange="{! c.handleInstrumentChange }"
                                                    required="true"/>
                         </div>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2 ">
                         <div class="slds-p-top_medium">
-                        <!-- c:strike_lookup
-                                         object="Account"
-                                         searchField="Name"
-                                         placeholder="Select an option"
-                                         iconName="standard:account"
-                                         value="{!v.selectedTeacher}"
-                                         order="Name"
-                                         filter="{!'Recordtype.Name = \'' + v.RecType + '\''}"
-                                         aura:id="revenueval"
-                                         showRecentRecords = "true"
-                                         loadingMessage="Loading..."
-                                         errorMessage="Invalid input"
-                                         label="Teacher"
-                                         / -->
-                            </div>
-                        <div class="slds-p-top_medium">
-                        <!-- c:strike_lookup
-                                         object="Class__c"
-                                         searchField="Name"
-                                         placeholder="Select an option"
-                                         iconName="standard:account"
-                                         value="{!v.selectedClass}"
-                                         order="Name"
-                                         aura:id="revenueval"
-                                         showRecentRecords = "true"
-                                         loadingMessage="Loading..."
-                                         errorMessage="Invalid input"
-                                         label="Class"
-                                         / -->
-                            </div>
+                            <c:strike_lookup
+                                             object="Account"
+                                             searchField="Name"
+                                             placeholder="Select an option"
+                                             iconName="standard:account"
+                                             value="{!v.SelectedTeacher}"
+                                             order="Name"
+                                             filter="{!'Recordtype.Name = \'' + 'Teacher' + '\''}"
+                                             aura:id="teacher"
+                                             showRecentRecords = "true"
+                                             loadingMessage="Loading..."
+                                             errorMessage="Invalid input"
+                                             label="Teacher"
+                                             />
+                        </div>
                     </div>
                 </div> 				
                 
-                <div class="slds-grid slds-wrap slds-gutters slds-p-top_small">
+                <!--div class="slds-grid slds-wrap slds-gutters slds-p-top_small">
                     <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2 ">
                         Title : <lightning:input name="title input" label="" value="{!v.title}"/>
                     </div>
@@ -100,12 +91,12 @@
                      <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-1 ">
                         Description : <lightning:textarea name="description input" label="" value="{!v.description}"/>
                      </div>
-                </div>
+                </div -->
                 
                  <div class="slds-p-vertical_medium">
-                    <lightning:button aura:id="button" class = "slds-align_absolute-center" variant="brand" label="Save"  onclick="{!c.onCreateMobileNotifications}"  />
+                    <lightning:button aura:id="button" class = "slds-align_absolute-center" variant="brand" label="Search"  onclick="{!c.getEnrolmentSize}"  />
                 </div>
-               
+               Total Count: <lightning:input name="TotalEnrolment" label="" value="{!v.parentCount}"/>
             </div>
         </div>
     </div>

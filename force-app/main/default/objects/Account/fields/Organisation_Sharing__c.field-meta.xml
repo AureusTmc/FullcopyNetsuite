@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Organisation_Sharing__c</fullName>
+    <description>This backend field is using for sharing records to diff diff organisations</description>
+    <externalId>false</externalId>
+    <inlineHelpText>This backend field is using for sharing records to diff diff organisations</inlineHelpText>
+    <label>Organisation Sharing</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetName>Organisations_Name</valueSetName>
+    </valueSet>
+</CustomField>

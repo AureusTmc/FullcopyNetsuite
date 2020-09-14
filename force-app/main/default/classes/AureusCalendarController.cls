@@ -2531,7 +2531,7 @@ newBookingWrapperObj.studentList = sObjList;
         }
         return objResult;
     }
-    
+       
     private static Enrolment__c createEnrolmentForTrial(Booking__c objBooking,String parentId){
         
         List<Enrolment__c> listofEnrol = [SELECT Id, Previous_Experience_if_any__c,Cancellation_Policy_Agreed__c ,
@@ -5256,7 +5256,7 @@ countWithNewPackage +=1;
         return isSuccess;
     }
     
-    private static Integer getTimeStampBetween(Time startTime, Time endTime){
+    public  static Integer getTimeStampBetween(Time startTime, Time endTime){
         DateTime startDTime, endDTime;
         Integer difference = 0;
         if(startTime != Null){
@@ -5459,11 +5459,11 @@ countWithNewPackage +=1;
     public static Boolean saveNewClass(String centreId, String teacherId, String packageId, 
                                         String classDateStr, String classTimeStr, 
                                         String duration, Integer countOfStudent,
-                                        string classType,Integer minAge,Integer maxAge){
+                                        string classType,Integer minAge,Integer maxAge,Boolean isMakeupGroupclass,String classEndDateStr){
         Boolean isSuccess = false;
                                             
         string insertedClassid =  saveNewGroupClass(centreId,  teacherId,  packageId,  classDateStr, classTimeStr,  duration, countOfStudent,
-                                    classType, minAge, maxAge,false,'');
+                                    classType, minAge, maxAge,false,'',isMakeupGroupclass, classEndDateStr);
         if(string.isNotBlank(insertedClassid)){
             isSuccess = true;
         }         
@@ -5473,7 +5473,7 @@ countWithNewPackage +=1;
     public static string saveNewGroupClass(String centreId, String teacherId, String packageId, 
                                         String classDateStr, String classTimeStr, 
                                         String duration, Integer countOfStudent,
-                                        string classType,Integer minAge,Integer maxAge,Boolean isOssia,string grade){
+                                        string classType,Integer minAge,Integer maxAge,Boolean isOssia,string grade,Boolean isMakeupGroupclass,String classEndDateStr){
         Class__c currentClass = new Class__c();
         DateTime startDateTime, endDateTime;
         
@@ -5482,11 +5482,16 @@ countWithNewPackage +=1;
                                                                                               Integer.valueOf(classTimeStr.split(':')[1]), 
                                                                                               Integer.valueOf(classTimeStr.split(':')[2]), 0));
         }  
-        if(startDateTime != NULL){
-            endDateTime = startDateTime.addYears(ConstantsClass.periodOfClassesInMonths);
+        if(startDateTime != NULL && !isMakeupGroupclass){
+            classEndDateStr = '';
+           // endDateTime = startDateTime.addYears(ConstantsClass.periodOfClassesInMonths);
+        }else if(isMakeupGroupclass && String.isNotBlank(classEndDateStr) && String.isNotBlank(classTimeStr)){
+            endDateTime = DateTime.newInstance(Date.valueOf(classEndDateStr), Time.newInstance(Integer.valueOf(classTimeStr.split(':')[0]), 
+                            Integer.valueOf(classTimeStr.split(':')[1]), 
+                            Integer.valueOf(classTimeStr.split(':')[2]), 0));
         }
         
-        if(startDateTime != NULL && endDateTime != NULL && String.isNotBlank(centreId) && String.isNotBlank(teacherId) && 
+        if(startDateTime != NULL && String.isNotBlank(centreId) && String.isNotBlank(teacherId) && 
            String.isNotBlank(duration) && ((!isOssia && String.isNotBlank(packageId)) || (isOssia && String.isBlank(packageId)))){
                currentClass.Centre_Name__c = centreId;
                currentClass.Class_Date__c = startDateTime.date();
@@ -5494,6 +5499,10 @@ countWithNewPackage +=1;
                currentClass.Package__c = (!isOssia && String.isNotBlank(packageId)) ? packageId : null;
                currentClass.Class_Start_Date__c = startDateTime.date();
                currentClass.Start_Time__c = startDateTime.time();
+                if(isMakeupGroupclass && endDateTime != null){
+                    currentClass.Class_End_Date__c = endDateTime.date();
+                }
+                currentClass.Is_Makeup_Class__c = isMakeupGroupclass;
                currentClass.Minimum_age__c = minAge;
                currentClass.Maximum_age__c = maxAge;
                currentClass.Class_Type__c = classType;

@@ -443,7 +443,7 @@ public class EnrolmentProcessForClassCtrl {
            //start : 3-Sep-2020: added by nishi: if teacher Engagement_Type__c type is part-time then not calclulate 5th lesson booking
            // fm.prgFees = BillingUtility.calculateCurrentMonthPckFees(lessDate, tempUnitFee);
            if(string.isNotBlank(enr.Teacher__c) && string.isNotBlank(enr.Teacher__r.Engagement_Type__c) && 
-            enr.Teacher__r.Engagement_Type__c.equalsIgnoreCase('Part-Time')){
+            enr.Teacher__r.Engagement_Type__c.equalsIgnoreCase('Part-Time') && isOssia){
                 fm.prgFees = calculateCurrentMonthPckFees(lessDate, tempUnitFee,true);
             }else{
                 fm.prgFees = calculateCurrentMonthPckFees(lessDate, tempUnitFee,false);
@@ -820,7 +820,9 @@ public class EnrolmentProcessForClassCtrl {
                             String bookGrpClsRecId =  Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get('Group Class').getRecordTypeId();   
                             for(Class__c cls: [SELECT Id, Name, Package__c, Package__r.Name, Teacher__c, Class_Day__c, Start_Time__c,End_Time__c,
                                           (SELECT Id, Class__c, Booking_Date__c FROM Bookings__r WHERE RecordTypeId =: bookGrpClsRecId AND Booking_Date__c != null)
-                                   FROM Class__c WHERE Id IN:grpClsBookSet AND Active__c = True AND Available_Capacity__c > 0]){                                                               
+                                   FROM Class__c WHERE Id IN:grpClsBookSet AND Active__c = True AND Available_Capacity__c > 0
+                                   // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                   And Is_Makeup_Class__c = false]){                                                               
                               
                                 for(Booking__c book: cls.Bookings__r)
                                     grpClsBookMap.put(cls.Id+'#'+book.Booking_Date__c, book);                 
@@ -1273,7 +1275,7 @@ public class EnrolmentProcessForClassCtrl {
                                         }
                                        //3-Sep:2020:Start: added by nishi: if teacher Engagement_Type__c type is part-time then not creating fifth lesson booking 
                                         if(string.isNotBlank(enr.Teacher__c) && string.isNotBlank(enr.Teacher__r.Engagement_Type__c) && 
-                                        enr.Teacher__r.Engagement_Type__c.equalsIgnoreCase('Part-Time') && dt.day() > 28){
+                                        enr.Teacher__r.Engagement_Type__c.equalsIgnoreCase('Part-Time') && dt.day() > 28 && isOssia){
                                             isCreate5thCurrentMonthPartTimeTeacherBooking = true;
                                         }
                                         //3-Sep:2020:End  added by nishi: if teacher Engagement_Type__c type is part-time then not creating fifth  booking  we creating fifth_lesson booking
@@ -2286,7 +2288,9 @@ if(fm.refrelDiscount > 0){
                 String bookGrpClsRecId =  Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get('Group Class').getRecordTypeId();   
                 for(Class__c cls: [SELECT Id, Name, Package__c, Package__r.Name, Teacher__c, Class_Day__c, Start_Time__c,End_Time__c,
                                    (SELECT Id, Class__c, Booking_Date__c FROM Bookings__r WHERE RecordTypeId =: bookGrpClsRecId AND Booking_Date__c != null)
-                                   FROM Class__c WHERE Id IN:grpClsBookSet AND Active__c = True AND Available_Capacity__c > 0]){                                                               
+                                   FROM Class__c WHERE Id IN:grpClsBookSet AND Active__c = True AND Available_Capacity__c > 0
+                                   // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                   And Is_Makeup_Class__c = false]){                                                               
                                        
                  for(Booking__c book: cls.Bookings__r)
                     grpClsBookMap.put(cls.Id+'#'+book.Booking_Date__c, book);                                   

@@ -1,3 +1,5 @@
+//CH01 Karan Singh 8 Sep 2020 Bypass pandaDoc Validation in case PandaDoc goes offline for maintenance purposes
+
 public class SearchInstrumentRental_IpadCntrl {
     public String slcdCenter{get;set;}
     public String slcdEnrId{get;set;}
@@ -58,9 +60,24 @@ public class SearchInstrumentRental_IpadCntrl {
     PandaDocUtility.CreateDocument documentDetails;
     PandaDocUtility.SessionDocument sessionDetails;
     Integer pianoDelWind;
-    //public static
+    
+      //CH01 Karan Singh 
+     public Boolean isPandaDocUnderMaintance{get;set;} //for showing the bypass checkbox    
+     public Boolean isCustmrOptedOfflineSign{get;set;}  
+     //CH01 END 
+     
+    //public static 
     public SearchInstrumentRental_IpadCntrl(){
        
+         //CH01 Karan Singh  
+        isPandaDocUnderMaintance = false;   
+        isCustmrOptedOfflineSign = false;   
+        if( String.isNotBlank(Label.Allow_Offline_Signing)){    
+            isPandaDocUnderMaintance = Label.Allow_Offline_Signing.equalsIgnoreCase('true');    
+        }   
+        system.debug('isPandaDocUnderMaintance --> ' + isPandaDocUnderMaintance );
+        //CH01 END
+        
         //system.debug('slcdCenter'+slcdCenter);
         centerName= new List<Centre_Users__c>([select Id,Centre_Name__c,Centre_Name__r.Name, Centre_Name__r.Organisation__r.Sage_Company__c from Centre_Users__c where User_Name__c=:UserInfo.getUserId()]);
         slcdCenter=centerName[0].Centre_Name__c;
@@ -1094,7 +1111,12 @@ public class SearchInstrumentRental_IpadCntrl {
                             slcdEnrolment.put('Delivery_Option_Timeslot_'+count+'__c', deliverTime);
                             
                             count = count+1;
-                        }                        
+                        }
+						
+                        //CH01  Karan Singh25 March   
+                        slcdEnrolment.Offline_Signing_Selected__c = isCustmrOptedOfflineSign; 
+                        //CH01 END     
+                                           
                         update slcdEnrolment;
                         
                         //Mark as complete booking which created trail earlier

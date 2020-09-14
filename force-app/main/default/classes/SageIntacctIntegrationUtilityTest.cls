@@ -815,7 +815,270 @@ public class SageIntacctIntegrationUtilityTest {
                       
                       FROM Invoice__C 
                       WHERE ID =: objInv.Id  ];
+        
+        
         SageIntacctIntegrationUtility.createInvoice( sw, objInv );
+    }
+    
+     @isTest 
+    private static void TestcreateCreditMemoForVoidInvoice(){
+        
+        Sage_Intacct_Credentials__c sic = new Sage_Intacct_Credentials__c();
+        sic.Name='test';
+        sic.Endpoint__c='https://api.intacct.com/ia/xml/xmlgw.phtml';
+        insert sic;
+        
+        List<Sage_GL_Account__c> sgaList = new List<Sage_GL_Account__c>();
+        for(integer i=0;i<=4;i++){
+            Sage_GL_Account__c sga = new Sage_GL_Account__c();
+            if(i==0){
+                sga.Name='Merchandise Card Receivable';
+            }
+            else if(i==1){
+                sga.Name='Accounts Payable'; 
+                sga.GL_Account_No__c='qwerty';
+            }
+            else if(i==2){
+                sga.Name='AGP Cash at Bank - OCBC';
+                
+            }else if(i==3){
+                sga.Name='Merchant Account Fees';
+            }
+            else{
+                sga.Name='AGH Cash at Bank-OCBC WH (Main account)';
+            }
+            sgaList.add(sga) ;
+        }
+        insert sgaList;
+        
+        Country__c country = new Country__c();
+        country.Name = 'IN';
+        country.Country_Name__c = 'India';
+        country.Tax_Rate__c = 7.0;
+        country.Currency_Code__c = 'INR';
+        country.Student_Policies_Template_Id__c = 'test';
+        country.Stripe_Base_Url__c = 'www.test.com';
+        country.Stripe_Publishable_Key__c = 'ABC';
+        country.Stripe_Secret_Key__c = 'deede';
+        country.Currency_Code_PI__c='SGD';
+        insert country;
+        
+        Organisation__c org = new Organisation__c();
+        org.Country__c = country.id;
+        org.Sage_Company__c = 'AGP';
+        insert org;
+        
+        Stripe_Payout_Log__c spl = new Stripe_Payout_Log__c();
+        spl.Organisation__c = org.Id;
+        spl.Stripe_Payout_Date__c = Datetime.now();
+        insert spl;
+        
+        spl = [ SELECT Organisation__r.Sage_Company__c,Stripe_Payout_Date__c,Stripe_Payout_Id__c,Name,Organisation__r.Country__r.Currency_Code_PI__c 
+               FROM Stripe_Payout_Log__c
+               WHERE Id =: spl.id ];
+        
+        Account Centre = TestUtil.createAccount('Centre',TRUE,TRUE);
+        Centre.Country__c=country.id;
+        centre.Organisation__c=org.id;
+        update Centre;
+        
+        Account cust = TestUtil.createAccount('Customer',TRUE,TRUE);
+        
+        Invoice__c objInv = TestUtil.createInvoice(cust.id,TRUE);
+        objInv.Center__c = Centre.id;
+        objInv.SageInvoiceKey__c='xyz';
+        objInv.MovedToSage__c=false;
+        objInv.Admin_Fees__c=10;
+        update objInv;
+        
+        Program__C objProg=TestUtil.createProgram('Active','Piano',true);
+        Package__c objPack=TestUtil.createPackage(objProg.id,Centre.id,'60',true);
+        objPack.Type_of_package__c='Promo';
+        objPack.Type__c='Individual';
+        objPack.Sage_Revenue_Template__c='svt';
+        update objPack;
+        
+        Invoice_Line_Item__c ili = TestUtil.createInvLineItem(objInv.id, TRUE);
+        ili.Package__c=objPack.id;
+        ili.GST_Amount__c=10;
+        ili.Discount_Amount__c=5;
+         ili.Is_Deposit__c=false;
+        update ili;
+        Invoice_Line_Item__c ili2 = TestUtil.createInvLineItem(objInv.id, TRUE);
+        ili2.Remarks__c = 'azx';
+        ili2.Discount_Amount__c=10;
+        ili2.Is_Deposit__c=false;
+        ili2.Month__c=Date.today();
+        ili2.GST_Amount__c=10;
+        ili2.Package__c=objPack.id;
+        update ili2;
+        
+        Invoice_Line_Item__c ili3 = TestUtil.createInvLineItem(objInv.id, TRUE);
+        ili3.Remarks__c = 'azx';
+        ili3.Discount_Amount__c=10;
+        ili3.Is_Deposit__c=true;
+        ili3.Month__c=Date.today();
+        ili3.GST_Amount__c=0;
+        ili3.Package__c=objPack.id;
+        update ili3;
+        
+        Payment__c objPay = new Payment__c();
+        objPay.Parent_Account__c = cust.Id;
+        objPay.Transaction_ID__c = 'ch_1ElCr3Jja9IPifcSADDUXp23';
+        objPay.Payment_Amount__c = 10000;
+        objPay.Invoice__c = objInv.Id;
+        insert objPay;        
+        objPay = [ Select Id,Stripe_fees__c,Payment_Date__c,Name,Parent_Account__c,Parent_Account__r.Name,Parent_Account__r.AccountID_Customer__c,Payment_Amount__c,Invoice__c,Invoice__r.Name,Invoice__r.Total_Amount__c,
+                  Invoice__r.SageInvoiceKey__c,MovedToSage__c,Sage_Error_Message__c,SagePaymentKey__c,Method_of_Payment__c,Invoice__r.Center__r.Organisation__r.Sage_Company__c,
+                  recordType.Name,Invoice__r.Center__r.Organisation__r.Country__r.Currency_Code_PI__c,Parent_Payment__r.SagePaymentKey__c,Parent_Payment__c,Parent_Payment__r.Payment_Amount__c,
+                  Parent_Account__r.Centre_Name__r.Organisation__r.Country__r.Currency_Code_PI__c,Parent_Account__r.Centre_Name__r.Organisation__r.Sage_Company__c,Parent_Account__r.Centre_Name__r.Name,Remarks__c 
+                  FROM  Payment__C
+                  WHERE ID =: objPay.Id ];
+        
+        SageIntacctIntegrationUtility.sessionWrapper sw = SageIntacctIntegrationUtility.getuserSessionID('Test');
+        
+        objInv = [ SELECT ID,Invoice_Date__c,Name,Parent_Account__r.AccountID_Customer__c,Internal_Ref_No__c,Due_Date__c,center__r.Organisation__r.Country__r.Tax_Rate__c,Admin_Fees__c,Center__r.Name,
+                  New_GST_Amount_Admin_Fee__c,New_GST_Amount__c,Invoice_Void_Date__c,SageOrderEntryKey__c,
+                  
+                  ( SELECT ID,Remarks__c,Is_Deposit__c,Package__r.Type__c,Package__r.Type_of_package__c,Enrolment__c,Amount__c,Discount_Amount__c,Package__r.Location__r.Name,Package__r.Program__r.Name,Package__r.Duration__c,
+                   Gst_Amount__c,Month__c,Package__r.Sage_Revenue_Template__c
+                   FROM Invoice_Line_Items__r )
+                  
+                  FROM Invoice__C 
+                  WHERE ID =: objInv.Id  ];
+        objInv.Invoice_Void_Date__c = date.today();
+        SageIntacctIntegrationUtility.createCreditMemoForVoidInvoice( sw, objInv );
+    }
+    
+     @isTest 
+    private static void TestcreateapplyARPayment(){
+        
+        Sage_Intacct_Credentials__c sic = new Sage_Intacct_Credentials__c();
+        sic.Name='test';
+        sic.Endpoint__c='https://api.intacct.com/ia/xml/xmlgw.phtml';
+        insert sic;
+        
+        List<Sage_GL_Account__c> sgaList = new List<Sage_GL_Account__c>();
+        for(integer i=0;i<=4;i++){
+            Sage_GL_Account__c sga = new Sage_GL_Account__c();
+            if(i==0){
+                sga.Name='Merchandise Card Receivable';
+            }
+            else if(i==1){
+                sga.Name='Accounts Payable'; 
+                sga.GL_Account_No__c='qwerty';
+            }
+            else if(i==2){
+                sga.Name='AGP Cash at Bank - OCBC';
+                
+            }else if(i==3){
+                sga.Name='Merchant Account Fees';
+            }
+            else{
+                sga.Name='AGH Cash at Bank-OCBC WH (Main account)';
+            }
+            sgaList.add(sga) ;
+        }
+        insert sgaList;
+        
+        Country__c country = new Country__c();
+        country.Name = 'IN';
+        country.Country_Name__c = 'India';
+        country.Tax_Rate__c = 7.0;
+        country.Currency_Code__c = 'INR';
+        country.Student_Policies_Template_Id__c = 'test';
+        country.Stripe_Base_Url__c = 'www.test.com';
+        country.Stripe_Publishable_Key__c = 'ABC';
+        country.Stripe_Secret_Key__c = 'deede';
+        country.Currency_Code_PI__c='SGD';
+        insert country;
+        
+        Organisation__c org = new Organisation__c();
+        org.Country__c = country.id;
+        org.Sage_Company__c = 'AGP';
+        insert org;
+        
+        Stripe_Payout_Log__c spl = new Stripe_Payout_Log__c();
+        spl.Organisation__c = org.Id;
+        spl.Stripe_Payout_Date__c = Datetime.now();
+        insert spl;
+        
+        spl = [ SELECT Organisation__r.Sage_Company__c,Stripe_Payout_Date__c,Stripe_Payout_Id__c,Name,Organisation__r.Country__r.Currency_Code_PI__c 
+               FROM Stripe_Payout_Log__c
+               WHERE Id =: spl.id ];
+        
+        Account Centre = TestUtil.createAccount('Centre',TRUE,TRUE);
+        Centre.Country__c=country.id;
+        centre.Organisation__c=org.id;
+        update Centre;
+        
+        Account cust = TestUtil.createAccount('Customer',TRUE,TRUE);
+        
+        Invoice__c objInv = TestUtil.createInvoice(cust.id,TRUE);
+        objInv.Center__c = Centre.id;
+        objInv.SageInvoiceKey__c='xyz';
+        objInv.MovedToSage__c=false;
+        objInv.Admin_Fees__c=10;
+        update objInv;
+        
+        Program__C objProg=TestUtil.createProgram('Active','Piano',true);
+        Package__c objPack=TestUtil.createPackage(objProg.id,Centre.id,'60',true);
+        objPack.Type_of_package__c='Promo';
+        objPack.Type__c='Individual';
+        objPack.Sage_Revenue_Template__c='svt';
+        update objPack;
+        
+        Invoice_Line_Item__c ili = TestUtil.createInvLineItem(objInv.id, TRUE);
+        ili.Package__c=objPack.id;
+        ili.GST_Amount__c=10;
+        ili.Discount_Amount__c=5;
+         ili.Is_Deposit__c=false;
+        update ili;
+        Invoice_Line_Item__c ili2 = TestUtil.createInvLineItem(objInv.id, TRUE);
+        ili2.Remarks__c = 'azx';
+        ili2.Discount_Amount__c=10;
+        ili2.Is_Deposit__c=false;
+        ili2.Month__c=Date.today();
+        ili2.GST_Amount__c=10;
+        ili2.Package__c=objPack.id;
+        update ili2;
+        
+        Invoice_Line_Item__c ili3 = TestUtil.createInvLineItem(objInv.id, TRUE);
+        ili3.Remarks__c = 'azx';
+        ili3.Discount_Amount__c=10;
+        ili3.Is_Deposit__c=true;
+        ili3.Month__c=Date.today();
+        ili3.GST_Amount__c=0;
+        ili3.Package__c=objPack.id;
+        update ili3;
+        
+        Payment__c objPay = new Payment__c();
+        objPay.Parent_Account__c = cust.Id;
+        objPay.Transaction_ID__c = 'ch_1ElCr3Jja9IPifcSADDUXp23';
+        objPay.Payment_Amount__c = 10000;
+        objPay.Invoice__c = objInv.Id;
+        insert objPay;        
+        objPay = [ Select Id,Stripe_fees__c,Payment_Date__c,Name,Parent_Account__c,Parent_Account__r.Name,Parent_Account__r.AccountID_Customer__c,Payment_Amount__c,Invoice__c,Invoice__r.Name,Invoice__r.Total_Amount__c,
+                  Invoice__r.SageInvoiceKey__c,MovedToSage__c,Sage_Error_Message__c,SagePaymentKey__c,Method_of_Payment__c,Invoice__r.Center__r.Organisation__r.Sage_Company__c,
+                  recordType.Name,Invoice__r.Center__r.Organisation__r.Country__r.Currency_Code_PI__c,Parent_Payment__r.SagePaymentKey__c,Parent_Payment__c,Parent_Payment__r.Payment_Amount__c,
+                  Parent_Account__r.Centre_Name__r.Organisation__r.Country__r.Currency_Code_PI__c,Parent_Account__r.Centre_Name__r.Organisation__r.Sage_Company__c,Parent_Account__r.Centre_Name__r.Name,Remarks__c 
+                  FROM  Payment__C
+                  WHERE ID =: objPay.Id ];
+        
+        SageIntacctIntegrationUtility.sessionWrapper sw = SageIntacctIntegrationUtility.getuserSessionID('Test');
+        
+        objInv = [ SELECT ID,Invoice_Date__c,Name,Parent_Account__r.AccountID_Customer__c,Internal_Ref_No__c,Due_Date__c,center__r.Organisation__r.Country__r.Tax_Rate__c,Admin_Fees__c,Center__r.Name,
+                  New_GST_Amount_Admin_Fee__c,New_GST_Amount__c,Invoice_Void_Date__c,SageOrderEntryKey__c,Discount_Amount__c,SageInvoiceKey__c,
+                  
+                  ( SELECT ID,Remarks__c,Is_Deposit__c,Package__r.Type__c,Package__r.Type_of_package__c,Enrolment__c,Amount__c,Discount_Amount__c,Package__r.Location__r.Name,Package__r.Program__r.Name,Package__r.Duration__c,
+                   Gst_Amount__c,Month__c,Package__r.Sage_Revenue_Template__c
+                   FROM Invoice_Line_Items__r )
+                  
+                  FROM Invoice__C 
+                  WHERE ID =: objInv.Id  ];
+        objInv.Invoice_Void_Date__c = date.today();
+        
+        SageIntacctIntegrationUtility.applyARPayment( sw, objInv );
     }
     //CH01 END
 }

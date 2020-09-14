@@ -96,11 +96,6 @@
         <visible>true</visible>
     </applicationVisibilities>
     <applicationVisibilities>
-        <application>standard__PardotAppV1</application>
-        <default>false</default>
-        <visible>true</visible>
-    </applicationVisibilities>
-    <applicationVisibilities>
         <application>standard__Platform</application>
         <default>false</default>
         <visible>true</visible>
@@ -147,6 +142,10 @@
     </classAccesses>
     <classAccesses>
         <apexClass>AccountTypeApi</apexClass>
+        <enabled>false</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>AddCreditMemoController</apexClass>
         <enabled>false</enabled>
     </classAccesses>
     <classAccesses>
@@ -775,6 +774,10 @@
     </classAccesses>
     <classAccesses>
         <apexClass>EnrollmentProcessErrorLogsTest</apexClass>
+        <enabled>false</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>EnrolmentChangeCenterHandler</apexClass>
         <enabled>false</enabled>
     </classAccesses>
     <classAccesses>
@@ -1562,6 +1565,22 @@
         <enabled>false</enabled>
     </classAccesses>
     <classAccesses>
+        <apexClass>RAFMobileAccountApi</apexClass>
+        <enabled>false</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>RAFMobileBaseURLApi</apexClass>
+        <enabled>false</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>RAFMobileDiscountAmountApi</apexClass>
+        <enabled>false</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>RAFMobileEnrolmentApi</apexClass>
+        <enabled>false</enabled>
+    </classAccesses>
+    <classAccesses>
         <apexClass>ReCalculatePayoutActionController</apexClass>
         <enabled>false</enabled>
     </classAccesses>
@@ -1627,6 +1646,14 @@
     </classAccesses>
     <classAccesses>
         <apexClass>RescheduleForAllFutureBookingsTest</apexClass>
+        <enabled>false</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>RescheduleForAllFutureGrouoClassBookings</apexClass>
+        <enabled>false</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>RescheduleForAllFutureGroupClassBookings</apexClass>
         <enabled>false</enabled>
     </classAccesses>
     <classAccesses>
@@ -2207,6 +2234,22 @@
     </classAccesses>
     <classAccesses>
         <apexClass>specialReferralDiscountBatchSheduler</apexClass>
+        <enabled>false</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>strike_lookupController</apexClass>
+        <enabled>false</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>strike_lookupControllerTest</apexClass>
+        <enabled>false</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>strike_responseData</apexClass>
+        <enabled>false</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>strike_utilities</apexClass>
         <enabled>false</enabled>
     </classAccesses>
     <classAccesses>
@@ -2864,6 +2907,11 @@
     <fieldPermissions>
         <editable>false</editable>
         <field>Account.Onboarding_Stage__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Account.Organisation_Sharing__c</field>
         <readable>false</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -3743,6 +3791,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>Booking__c.Grade__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>Booking__c.Group_Class__c</field>
         <readable>false</readable>
     </fieldPermissions>
@@ -3839,6 +3892,11 @@
     <fieldPermissions>
         <editable>false</editable>
         <field>Booking__c.Opportunity__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Booking__c.Organisation_Sharing__c</field>
         <readable>false</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -4867,6 +4925,11 @@
         <readable>false</readable>
     </fieldPermissions>
     <fieldPermissions>
+        <editable>false</editable>
+        <field>Case.Organisation_Sharing__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
         <editable>true</editable>
         <field>Case.Origin</field>
         <readable>true</readable>
@@ -5314,6 +5377,11 @@
     <fieldPermissions>
         <editable>false</editable>
         <field>Class__c.Instrument__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Class__c.Is_Makeup_Class__c</field>
         <readable>false</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -6017,6 +6085,11 @@
         <readable>false</readable>
     </fieldPermissions>
     <fieldPermissions>
+        <editable>false</editable>
+        <field>Customer_Adhoc_Discount__c.Organisation_Sharing__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
         <editable>true</editable>
         <field>Customer_Adhoc_Discount__c.Parent__c</field>
         <readable>true</readable>
@@ -6698,6 +6771,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>Enrolment__c.Grade__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>Enrolment__c.House_type__c</field>
         <readable>false</readable>
     </fieldPermissions>
@@ -6860,6 +6938,11 @@
         <editable>true</editable>
         <field>Enrolment__c.Opportunity__c</field>
         <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Enrolment__c.Organisation_Sharing__c</field>
+        <readable>false</readable>
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
@@ -8653,6 +8736,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>Leave_Request__c.Organisation_Sharing__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>Leave_Request__c.Paid_Leaves__c</field>
         <readable>false</readable>
     </fieldPermissions>
@@ -9213,7 +9301,17 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
+        <field>Package__c.Facility_Fee__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>Package__c.Field_1__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Package__c.Grade_New__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -9255,6 +9353,11 @@
         <editable>true</editable>
         <field>Package__c.Offer_Start_Date__c</field>
         <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Package__c.Organisation_Sharing__c</field>
+        <readable>false</readable>
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
@@ -10985,6 +11088,11 @@
         <editable>true</editable>
         <field>Teacher_Working_Hour__c.Is_Booking_Booking_created__c</field>
         <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Teacher_Working_Hour__c.Organisation_Sharing__c</field>
+        <readable>false</readable>
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>

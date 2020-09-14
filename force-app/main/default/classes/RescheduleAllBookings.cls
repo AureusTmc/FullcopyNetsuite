@@ -284,7 +284,7 @@ public without sharing class RescheduleAllBookings {
                 // otherwise we added 120 days for other students
                 if(isOssia){
                     if(listOfOssia_Organisation_Settings != null && listOfOssia_Organisation_Settings.size() > 0){
-                        bookObj.Make_up_Expiry_Date__c=bookObj.Booking_Date__c.addDays(Integer.valueOf((listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days_Teacher__c)));
+                        bookObj.Make_up_Expiry_Date__c=bookObj.Booking_Date__c.addDays(Integer.valueOf((listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days__c)));
                     }
                 }else{
                     bookObj.Make_up_Expiry_Date__c = bookObj.Booking_date__c.addDays(120);

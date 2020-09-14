@@ -3,7 +3,7 @@
     <fullName>Grade__c</fullName>
     <description>Grade for the use of Ossia</description>
     <externalId>false</externalId>
-    <label>Grade</label>
+    <label>Grade old</label>
     <required>false</required>
     <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>

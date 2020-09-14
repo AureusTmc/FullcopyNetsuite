@@ -129,6 +129,29 @@
     <flexiPageRegions>
         <itemInstances>
             <componentInstance>
+                <componentName>addCreditMemo</componentName>
+                <visibilityRule>
+                    <booleanFilter>1 AND ( 2 OR 3 )</booleanFilter>
+                    <criteria>
+                        <leftValue>{!$Permission.CustomPermission.void_process}</leftValue>
+                        <operator>EQUAL</operator>
+                        <rightValue>true</rightValue>
+                    </criteria>
+                    <criteria>
+                        <leftValue>{!Record.Status__c}</leftValue>
+                        <operator>EQUAL</operator>
+                        <rightValue>Due</rightValue>
+                    </criteria>
+                    <criteria>
+                        <leftValue>{!Record.Status__c}</leftValue>
+                        <operator>EQUAL</operator>
+                        <rightValue>Paid</rightValue>
+                    </criteria>
+                </visibilityRule>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
                 <componentName>void_invoice</componentName>
                 <visibilityRule>
                     <booleanFilter>1 AND 2</booleanFilter>

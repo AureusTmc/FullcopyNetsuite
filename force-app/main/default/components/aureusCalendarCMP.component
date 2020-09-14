@@ -878,7 +878,7 @@
                                             <!-- Added By Ravi on 8 july 2020 online lesson Tab-->
                                         </ul>
                                         <div id="tab-default-1" class="slds-tabs--default__content slds-show" role="tabpanel" aria-labelledby="tab-default-1__item">
-                                            <div class="slds-grid slds-wrap slds-p-around_xx-small">
+                                            <div class="slds-grid slds-wrap slds-p-around_xxx-small">
                                                 
                                                 <div class="slds-col slds-size_1-of-1">
                                                     <div class="editBookingDetailBody">
@@ -1144,7 +1144,7 @@ Enrol now
                                         </div>
                                         <!-- Added By Ravi on 8 july 2020 .. for Online leesson Tab-->
                                         <div id="tab-default-6" class="slds-tabs--default__content slds-hide" role="tabpanel" aria-labelledby="tab-default-2__item">
-                                            <div class="slds-grid slds-wrap slds-p-around_xx-small">
+                                            <div class="slds-grid slds-wrap slds-p-around_xxx-small">
                                                 <div class="slds-col slds-size_1-of-1">
                                                         <div class="slds-grid slds-gutters">
                                                             <!-- div class="slds-col slds-size_5-of-12">
@@ -1538,7 +1538,7 @@ Enrol now
                                 </a>
                             </header>
                             <div class="slds-modal__content slds-p-around_medium" id="newBookingDetailsBody" style="overflow-y: auto;height:600px">
-                                <div class="slds-grid slds-wrap slds-p-around_xx-small">
+                                <div class="slds-grid slds-wrap slds-p-around_xxx-small">
                                     
                                     <div class="slds-col slds-size_1-of-1">
                                         <div class="slds-grid slds-gutters">
@@ -3727,19 +3727,19 @@ Enrol now
                             <div class="slds-grid slds-wrap">
                                 <!-- center or teacher-->
                                 <div class="slds-col slds-size_12-of-12 slds-grid  slds-wrap  slds-m-top_small">
-                                    <div class="slds-col slds-size_6-of-12 slds-grid  slds-wrap  slds-p-right_large slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span><b>Location:</b></span>
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_xxx-small slds-wrap  slds-m-top_small">
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <span><b>Location :</b></span>
                                         </div>
-                                        <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-col slds-size_7-of-12">
                                             <span><label id="LocationNameClass"></label></span>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-grid  slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span><b>Teacher:</b></span>
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_xxx-small slds-m-top_small">
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <span><b>Teacher :</b></span>
                                         </div>
-                                        <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-col slds-size_7-of-12">
                                             <span><label id="TeacherNameClass"></label></span>
                                         </div>
                                     </div>
@@ -3748,30 +3748,30 @@ Enrol now
 
                                 <!-- time or class type-->
                                
-                                    <div class="slds-col slds-size_6-of-12 slds-grid  slds-wrap  slds-p-right_large slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span><b>Time:</b></span>
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_xxx-small slds-wrap slds-m-top_small">
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <span><b>Time :</b></span>
                                         </div>
-                                        <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-col slds-size_7-of-12">
                                             <span><label id="ClassTimeLabel"></label></span>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-around_xxx-small slds-m-top_small">
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
-                                                <span><b>Class Type:</b></span>
+                                            <div class="slds-col slds-size_5-of-12">
+                                                <span><b>Class Type :</b></span>
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <select class="slds-select" id="ClassTypeSelect">
                                                 </select>
                                             </div>
                                         </div>
-                                        <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap ">
+                                        <div class="slds-col slds-size_12-of-12  slds-grid slds-wrap ">
                                             <div class="slds-col slds-size_12-of-12 slds-grid ">
-                                                <div class="slds-col slds-size_4-of-12">
+                                                <div class="slds-col slds-size_5-of-12">
                                                 
                                                 </div>
-                                                <div class="slds-col slds-size_8-of-12">
+                                                <div class="slds-col slds-size_7-of-12">
                                                     <p id="ClassTypeSelectError" class="slds-hide" style="color:red;">Please Select the Class Type...</p>
                                                 </div>
                                             </div>
@@ -3782,38 +3782,38 @@ Enrol now
 
                                 <!-- Minimum or Maximum Age-->
                               
-                                    <div class="slds-col slds-size_6-of-12 slds-grid  slds-wrap slds-p-right_large slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_xxx-small slds-wrap  slds-m-top_small">
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
-                                                <span><b>Minimum Age:</b></span>
+                                            <div class="slds-col slds-size_5-of-12">
+                                                <span><b>Minimum Age :</b></span>
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <input type="number" id="ClassMinimumAgeInput" class="slds-input" />
                                             </div>
                                         </div>
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
+                                            <div class="slds-col slds-size_5-of-12">
                                         
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <p id="ClassMinimumAgeInputError" class="slds-hide" style="color:red;">Please Enter Minimum Age...</p>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-grid  slds-wrap slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_xxx-small slds-wrap slds-m-top_small">
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
-                                                <span><b>Maximum Age:</b></span>
+                                            <div class="slds-col slds-size_5-of-12">
+                                                <span><b>Maximum Age :</b></span>
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <input type="number" id="ClassMaximumAgeInput" class="slds-input" />
                                             </div>
                                         </div>
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
+                                            <div class="slds-col slds-size_5-of-12">
                                         
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <p id="ClassMaximumAgeInputError" class="slds-hide" style="color:red;">Please Enter Maximum Age ...</p>
                                             </div>
                                         </div>
@@ -3823,30 +3823,30 @@ Enrol now
                                 
                                  <!-- Class Capacity or Package -->
                                
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-right_large slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-p-around_xxx-small slds-grid slds-wrap  slds-m-top_small">
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
-                                                <span><b>Class Capacity:</b></span>
+                                            <div class="slds-col slds-size_5-of-12">
+                                                <span><b>Class Capacity :</b></span>
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <input type="number" id="ClassCapacityInput" class="slds-input" />
                                             </div>
                                         </div>
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
+                                            <div class="slds-col slds-size_5-of-12">
                                         
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <p id="ClassCapacityInputError" class="slds-hide" style="color:red;">Please Enter Class Capacity...</p>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap aureusAddGroupClass slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-p-around_xxx-small slds-grid slds-wrap aureusAddGroupClass slds-m-top_small">
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
-                                                <span><b>Package:</b></span>
+                                            <div class="slds-col slds-size_5-of-12">
+                                                <span><b>Package :</b></span>
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <span>
                                                     <select class="slds-select" id="ClassPackageSelect" data-toggle="tooltip" data-placement="top" title="" onchange="groupPackageSelect();return false;">
                                                     </select>
@@ -3854,22 +3854,22 @@ Enrol now
                                             </div>
                                         </div>
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
+                                            <div class="slds-col slds-size_5-of-12">
                                         
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <p id="ClassPackageSelectError" class="slds-hide" style="color:red;">Please Enter Package...</p>
                                             </div>
                                         </div>
                                     </div>
                                     <!-- added by nishi: 1-Sep-2020: for manage new Ossia group  class requirement we not select one package we select multiple grade then 
                                         user can select package according to selected grades-->
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap  slds-hide ossiaAddGroupClass slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-p-around_xxx-small slds-grid slds-wrap  slds-hide ossiaAddGroupClass slds-m-top_small">
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
-                                                <span><b>Class Duration:</b></span>
+                                            <div class="slds-col slds-size_5-of-12">
+                                                <span><b>Class Duration :</b></span>
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <span>
                                                     <select class="slds-select" id="ClassDurationSelect"  data-toggle="tooltip" data-placement="top" title="">
                                                     </select>
@@ -3877,20 +3877,20 @@ Enrol now
                                             </div>
                                         </div>
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
+                                            <div class="slds-col slds-size_5-of-12">
                                         
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <p id="ClassDurationSelectError" class="slds-hide" style="color:red;">Please Select Duration...</p>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap  slds-hide ossiaAddGroupClass slds-m-top_small">
+                                    <div class="slds-col slds-size_6-of-12 slds-p-around_xxx-small slds-grid slds-wrap  slds-hide ossiaAddGroupClass slds-m-top_small">
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
-                                                <span><b>Grade:</b></span>
+                                            <div class="slds-col slds-size_5-of-12">
+                                                <span><b>Grade :</b></span>
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <span>
                                                     <select class="slds-select" id="ClassGradeSelect" size="3" multiple="multiple"  data-toggle="tooltip" data-placement="top" title="" onchange="groupGradeSelect();return false;">
                                                     </select>
@@ -3898,10 +3898,10 @@ Enrol now
                                             </div>
                                         </div>
                                         <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_4-of-12">
+                                            <div class="slds-col slds-size_5-of-12">
                                         
                                             </div>
-                                            <div class="slds-col slds-size_8-of-12">
+                                            <div class="slds-col slds-size_7-of-12">
                                                 <p id="ClassGradeSelectError" class="slds-hide" style="color:red;">Please Select Grade...</p>
                                             </div>
                                         </div>
@@ -3912,19 +3912,19 @@ Enrol now
                                 
                                 <!-- duration or instrument-->
                                 
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-right_large aureusAddGroupClass slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span><b>Duration:</b></span>
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_xxx-small aureusAddGroupClass slds-m-top_small">
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <span><b>Duration :</b></span>
                                         </div>
-                                        <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-col slds-size_7-of-12">
                                             <span><label id="ClassDurationLabel"></label></span>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-grid aureusAddGroupClass slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_xxx-small aureusAddGroupClass slds-m-top_small">
+                                        <div class="slds-col slds-size_5-of-12">
                                             <span><b>Class Instrument :</b></span>
                                         </div>
-                                        <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-col slds-size_7-of-12">
                                             <span><label id="ClassInstrumentLabel"></label></span>
                                         </div>
                                     </div>
@@ -3933,16 +3933,82 @@ Enrol now
 
                                 <!-- Price or Class Capacity-->
                                 
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-right_large aureusAddGroupClass slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span><b>Price:</b></span>
+                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_xxx-small aureusAddGroupClass slds-m-top_small">
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <span><b>Price :</b></span>
                                         </div>
-                                        <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-col slds-size_7-of-12">
                                             <span><label id="ClassPriceLabel"></label></span>
                                         </div>
                                     </div>
+                                    <div class="slds-col slds-size_6-of-12 slds-p-around_xxx-small slds-grid  slds-m-top_small">
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <span> <b>Is Makeup Class :</b></span>
+                                        </div>
+                                        <span class="slds-col slds-size_7-of-12 slds-p-left_medium">
+                                            <input name="onmakupAvailablegroup" type="checkbox" id="onmakupAvailablegroup" onchange="makupAvailablegroupFunc();return false;"/>
+                                        </span>
+                                    </div>
                                 </div>
-                                
+
+                                 <!--start: added by nishi: 9-sep-2020: for we added recurring group class -->
+                                <div class="slds-col slds-size_12-of-12 slds-grid  slds-wrap slds-hide slds-m-top_small" id="recurringgroupSection">
+                                    
+                                     <div class="slds-col slds-size_6-of-12 slds-grid slds-p-around_xxx-small  slds-wrap   slds-m-top_small">
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <span><b>Repeat:</b></span>
+                                        </div>
+                                        <div class="slds-col slds-size_7-of-12">
+                                            <select class="slds-select" id="repeatgroupSelect" onchange="repeatSelectGroupFunc($(this).val());return false;">
+                                                <option value="">None</option>
+                                                <option value="Weeks">Weekly</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                  
+                                    <div class="slds-col slds-size_6-of-12 slds-grid  slds-wrap slds-p-around_xxx-small  slds-m-top_small repeatgroupSelection slds-hide">
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <span><b>Repeat Every:</b></span>
+                                        </div>
+                                        <div class="slds-col slds-size_7-of-12 slds-grid  slds-wrap">
+                                            <select class="slds-select slds-col slds-size_8-of-12" id="repeatgroupWeek">
+                                            </select>
+                                            <span id="repeatgroupValue" class="slds-col slds-size_4-of-12 slds-p-left_medium">Week</span>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_8-of-12 slds-grid slds-p-around_xxx-small slds-wrap  slds-m-top_small repeatgroupSelection slds-hide">
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <span><b>Ends:</b></span>
+                                        </div>
+                                        <div class="slds-col slds-size_7-of-12 slds-grid  slds-wrap ">
+                                            <div class="slds-col slds-size_12-of-12 slds-grid  slds-wrap ">
+                                                <div class="slds-col slds-size_4-of-12  slds-grid  slds-wrap">
+                                                    <span class="slds-col slds-size_4-of-12">
+                                                        <input name="radio" type="radio" id="aftergroupRadio" checked="true"/>
+                                                    </span>
+                                                    <span class="slds-col slds-size_8-of-12 slds-p-left_medium">After</span>
+                                                </div>
+                                                <div class="slds-col slds-size_8-of-12  slds-grid  slds-wrap">
+                                                    <select class="slds-select slds-col slds-size_8-of-12 " id="recurrencegroupOccure">
+                                                    </select>
+                                                    <span  class="slds-col slds-size_4-of-12 slds-p-left_medium">Occurrencess</span>
+                                                </div>
+                                            </div>
+                                            <div class="slds-col slds-size_12-of-12 slds-grid  slds-wrap slds-m-top_small">
+                                                <div class="slds-col slds-size_4-of-12 slds-grid  slds-wrap">
+                                                    <span  class="slds-col slds-size_4-of-12">
+                                                        <input name="radio" type="radio" id="ongroupRadio"/>
+                                                    </span>
+                                                    <span class="slds-col slds-size_8-of-12 slds-p-left_medium">On</span>
+                                                </div>
+                                                <div class="slds-col slds-size_8-of-12">
+                                                    <input class="slds-input" type="text" placeholder="Pick a Date" label="Date Picker Label" id="onSelectedgroupDate"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--end: added by nishi: 9-sep-2020: for we added recurring group class -->
                             </div>    
                         </div>
                         <footer class="slds-modal__footer" style ="margin-bottom: -20px;">
@@ -4162,7 +4228,13 @@ Enrol now
                 $('#SelectedDate').html('Selected Date: <strong>'+moment(datepicker.selectedFullDate._d).format('YYYY-MM-DD')+'</strong>');
             }
         });
-        
+        $('#onSelectedgroupDate').datepicker({
+            initDate: moment(), //Today Date
+            format: 'YYYY-MM-DD', //Date Format Of Datepicker Input Field
+            onChange: function(datepicker) {
+                $('#SelectedDate').html('Selected Date: <strong>'+moment(datepicker.selectedFullDate._d).format('YYYY-MM-DD')+'</strong>');
+            }
+        });
         $('#onSelectedDateBusy').datepicker({
             initDate: moment(), //Today Date
             format: 'YYYY-MM-DD', //Date Format Of Datepicker Input Field
@@ -4274,7 +4346,29 @@ Enrol now
             $('.repeatSelection').removeClass('slds-hide');
         }
     }
-    
+   
+    //added by nishi: 9-Sep-2020: for user can select makup group class schaduling
+    function repeatSelectGroupFunc(val){
+        $('#recurrencegroupOccure').empty();
+        $('#repeatgroupWeek').empty();
+        if(val == 'None'){
+            $('.repeatgroupSelection').addClass('slds-hide');
+        }else{
+            var optionRecursion = '';
+            for(let i = 1;i <= {!$Label.Recurring_occurrence};i++){
+                optionRecursion += '<option value="'+i+'">'+i+'</option>';
+            }
+            $('#recurrencegroupOccure').append(optionRecursion);
+            optionRecursion = '';
+            
+            for(let j = 1; j<=1; j++){
+                optionRecursion += '<option value="'+j+'">'+j+'</option>';
+            }
+            $('#repeatgroupWeek').append(optionRecursion);
+            $('.repeatgroupSelection').removeClass('slds-hide');
+        }
+    }
+
     $('#packageSelect').focusin(function() {
         $('#getPackageId').addClass('slds-is-open');
     });
@@ -4953,7 +5047,48 @@ Enrol now
                 );
             }
             
-        }else if(origin == 'withdrawal'){
+        }//start:added by nishi: 10-sep-2020: for reschadule group class bookings
+        else if(origin =='updategroupClass'){
+            let bookingId = '';
+            let start = '';
+            let end = '';
+            let teacherId = '';
+            let isplaceholder = '';
+            let isFuture = '';
+            $('#statusOnPage').hide();
+            $('#newGroupClassCMP').addClass('slds-hide');
+            if($('#confirmModalYes').attr('data-id')){
+                bookingId = $('#confirmModalYes').attr('data-id');
+            }
+            if($('#confirmModalYes').attr('start')){
+                start = $('#confirmModalYes').attr('start');
+            }
+            if($('#confirmModalYes').attr('end')){
+                end = $('#confirmModalYes').attr('end')
+            }
+            if($('#confirmModalYes').attr('teacherId')){
+                teacherId = $('#confirmModalYes').attr('teacherId')
+            }
+            if($('#confirmModalYes').attr('isplaceholder')){
+                isplaceholder = $('#confirmModalYes').attr('isplaceholder')
+            }
+            if($('#confirmModalYes').attr('isFuture')){
+                isFuture = $('#confirmModalYes').attr('isFuture')
+            }
+            console.log('updategroupClass bookingId',bookingId);
+            console.log('updategroupClass start',start);
+            console.log('updategroupClass end',end);
+            console.log('updategroupClass teacherId',teacherId);
+            console.log('updategroupClass isplaceholder',isplaceholder);
+            console.log('updategroupClass isFuture',isFuture);
+            console.log('updategroupClass caseId',caseId);
+            // let isResourceId ='false';
+            // if(filter.resource && filter.resource != 'Select Resource'){
+            //     isResourceId = 'true';
+            // }
+            updategroupClass(bookingId, start, end, teacherId, isplaceholder, isFuture /*,'true', caseId, isResourceId*/);
+        }//end: added by nishi: 10-sep-2020: for reschadule group class bookings
+        else if(origin == 'withdrawal'){
             
             bookingId = $('#confirmModalYes').attr('data-id');
             var endDateStr = $('#confirmModalYes').attr('data-endDate');
@@ -5276,7 +5411,47 @@ Enrol now
         }// added by jatin: 19:dec:2019: for manage group booking
         else if(origin == 'createGroupBooking'){
             createGroupbooking('false');
-        }
+        }//start:added by nishi: 10-sep-2020: for reschadule group class bookings
+        else if(origin =='updategroupClass'){
+            let bookingId = '';
+            let start = '';
+            let end = '';
+            let teacherId = '';
+            let isplaceholder = '';
+            let isFuture = '';
+            $('#statusOnPage').hide();
+            $('#newGroupClassCMP').addClass('slds-hide');
+            if($('#confirmModalNo').attr('data-id')){
+                bookingId = $('#confirmModalNo').attr('data-id');
+            }
+            if($('#confirmModalNo').attr('start')){
+                start = $('#confirmModalNo').attr('start');
+            }
+            if($('#confirmModalNo').attr('end')){
+                end = $('#confirmModalNo').attr('end')
+            }
+            if($('#confirmModalNo').attr('teacherId')){
+                teacherId = $('#confirmModalNo').attr('teacherId')
+            }
+            if($('#confirmModalNo').attr('isplaceholder')){
+                isplaceholder = $('#confirmModalNo').attr('isplaceholder')
+            }
+            if($('#confirmModalNo').attr('isFuture')){
+                isFuture = $('#confirmModalNo').attr('isFuture')
+            }
+            console.log('updategroupClass bookingId',bookingId);
+            console.log('updategroupClass start',start);
+            console.log('updategroupClass end',end);
+            console.log('updategroupClass teacherId',teacherId);
+            console.log('updategroupClass isplaceholder',isplaceholder);
+            console.log('updategroupClass isFuture',isFuture);
+            console.log('updategroupClass caseId',caseId);
+            // let isResourceId ='false';
+            // if(filter.resource && filter.resource != 'Select Resource'){
+            //     isResourceId = 'true';
+            // }
+            updategroupClass(bookingId, start, end, teacherId, isplaceholder, isFuture/*, 'false', caseId, isResourceId*/);
+        }//end: added by nishi: 10-sep-2020: for reschadule group class bookings
         else if(origin == 'cancel'){
             $('.confirmModal').addClass('slds-hide');
             bookingId = $('#confirmModalNo').attr('data-id');
@@ -6439,7 +6614,7 @@ Enrol now
                                         },
                                         dayClick: function(date, jsEvent, view,resourceObj) {
                                             bookingReschedule.resource = resourceObj.id;
-                                            // console.log('bookingReschedule',bookingReschedule);
+                                            console.log('bookingReschedule',bookingReschedule);
                                             // console.log('filter',filter);
                                             bookingReschedule.date = date.format();
                                             //console.log(date);
@@ -6459,7 +6634,7 @@ Enrol now
                                                 } 
                                             // Start : 30-Jul:2020 -End:if Resource Id is exist then we hide this Future button
                                                 
-                                            
+                                            console.log('bookingReschedule.Type',bookingReschedule.Type);
                                             if(bookingReschedule.Id && bookingReschedule.Type == 'Regular' && bookingReschedule.Individual == 'false' && isEventInTeacherWorkingHour(teacherWorkingHours, startTime, milleseconds, bookingReschedule.resource)){
                                                 isReschedule = false;
                                                 //rescheduleThisOnly();
@@ -6616,23 +6791,26 @@ Enrol now
                                             
                                         },
                                         eventDragStart: function(event) {
-                                            
-                                            if(!event.isClass){
+                                            console.log('event',event);
+                                           // Commented by nishi: 9-Sep-2020: for new requiremnt we reschadule group lesson booking this and future
+                                           //if(!event.isClass){
                                                 var startTime = event.start.format();
                                                 originalTime = startTime;
-                                            }
+                                            //}
+
                                         },
                                         eventDrop: function(event, delta, revertFunc) {
-                                            
+                                            console.log('event',event);
                                            //console.log('event',event);
-                                            if(!event.isClass){
+                                            // Commented by nishi: 9-Sep-2020: for new requiremnt we reschadule group lesson booking this and future
+                                            //if(!event.isClass){
                                                 bookingReschedule.Id = event.id;
                                                 bookingReschedule.Type = event.Type;
                                                 bookingReschedule.resource = event.resourceId;
                                                 bookingReschedule.date = event.start.format();
                                                 bookingReschedule.Individual = event.Individual;
                                                 bookingReschedule.isRecurrence = 'false';
-                                            }else{
+                                            /*}else{
                                                 bookingReschedule.Id = '';
                                                 bookingReschedule.Type = '';
                                                 bookingReschedule.resource = '';
@@ -6640,7 +6818,7 @@ Enrol now
                                                 bookingReschedule.Individual = '';
                                                 bookingReschedule.isRecurrence = '';
                                                 revertFunc();
-                                            }
+                                            }*/
                                            //console.log('bookingReschedule',bookingReschedule);
                                             // Start : 30-Jul:2020 :if Resource Id is exist then we hide this Future button
                                             var isResource = false;
@@ -6678,7 +6856,74 @@ Enrol now
                                                         rescheduleThisOnly();
                                                         // end : 1-aug:2020 -Nishi: we remove this prompt as we only supported single event update here. 
                                                     }
-                                                }else if(bookingReschedule.Type == 'Busy' && bookingReschedule.Individual == 'false'){
+                                                } 
+                                                // Commented by nishi: 9-Sep-2020: for new requiremnt we reschadule group lesson booking this and future
+                                                else if(bookingReschedule.Type == 'Group Class' && bookingReschedule.Individual == 'false'){
+                                                    var startdate = new Date(event.start.format('YYYY-MM-DD'));
+                                                    console.log('bookingReschedule.date',startdate.getDate());
+                                                   // console.log('bookingReschedule.date.day()',event.start.format('DD/MM/YYYY'));
+                                                    if(startdate.getDate() > 28){
+                                                        $('#toastMsg').html("You cann't transfer this group class to the last month of the date(29,30,31)...");
+                                                        $('.toastclass').removeClass('slds-theme_success');
+                                                        $('.toastclass').addClass('slds-theme_error');
+                                                        toastLaunch();
+                                                        refreshCalendar();
+                                                    }else{
+                                                        if(!isResource){
+                                                            isReschedule = false;
+                                                            $('#confirmModalYes').addClass('slds-hide');
+                                                            $('#confirmModalNo').html('Cancel');
+                                                            $('#confirmModalNo').attr('data-origin', 'reschedulegrouplesson');
+                                                            $('#confirmModalNo').attr('onclick', "$('.confirmModal').addClass('slds-hide');closeRescheduleModal(); return false;");
+                                                            $('#confirmHeader').html('Recurring Class event');
+                                                            $('#confirmHeader').parent().addClass('slds-text-align_left');
+                                                            $('#confirmBody').addClass('slds-text-align_center');
+                                                            var confirmBody ='<p>Would you like to apply this change to this event only,<br/>or the current and future events in the series?</p>';
+                                                            confirmBody += '<div><button class="slds-button slds-m-around_small slds-p-horizontal_large" style="background: #00b3f0;color:#fff;" id="thisReschedule" onclick="rescheduleThisGroupLessonOnly();return false;">This only</button>';
+                                                            confirmBody += '<button class="slds-button slds-m-around_small slds-p-horizontal_large" style="background: #00b3f0;color:#fff;" id="thisAndFutureReschedule" onclick="rescheduleFutureGroupLessonAlso();return false;">This and future</button>';
+                                                            confirmBody += '</div>';
+                                                            $('#confirmBody').html(confirmBody);
+                                                            $('#confirmModal').removeClass('slds-hide');
+                                                        }else{
+                                                            // $('#confirmModalYes').addClass('slds-hide');
+                                                            // $('#confirmModalNo').html('Cancel');
+                                                            // $('#confirmModalNo').attr('data-origin', 'reschedule');
+                                                            // $('#confirmModalNo').attr('onclick', "$('.confirmModal').addClass('slds-hide');closeRescheduleModal(); return false;");
+                                                            // rescheduleThisGroupLessonOnly();
+                                                            revertFunc();
+                                                        }
+                                                   }
+                                                }// nishi: 10-Sep-2020: for busy type group class bookings currently we revert all the functionality
+                                                else if(bookingReschedule.Type == 'Busy' && bookingReschedule.Individual == 'false' && event.isClass){
+                                                    if(!isResource){
+                                                        $('#confirmModalYes').addClass('slds-hide');
+                                                        $('#confirmModalNo').html('Cancel');
+                                                        $('#confirmModalNo').attr('data-origin', 'reschedulegrouplesson');
+                                                        $('#confirmModalNo').attr('onclick', "$('.confirmModal').addClass('slds-hide');$('#confirmModalYes').removeClass('slds-hide');$('#confirmModalNo').html('No');refreshCalendar();return false;"); 
+                                                        $('#confirmHeader').html('Reschedule Busy Time');
+                                                        $('#confirmHeader').parent().addClass('slds-text-align_left');
+                                                        $('#confirmBody').addClass('slds-text-align_center');
+                                                        var confirmBody = '<p>Would you like to apply this change to this Busy Time only,<br/>or the current and future Busy Time in the series?</p><div>';
+                                                        confirmBody +='<button class="slds-button slds-m-around_small slds-p-horizontal_large" style="background: #00b3f0;color:#fff;" id="thisReschedule" onclick="rescheduleThisGroupLessonOnly();return false;">This only</button>';
+                                                        // Commented by jatin :19-Nov-2019 : for remove future reshadule  booking
+                                                            confirmBody += '<button class="slds-button slds-m-around_small slds-p-horizontal_large" style="background: #00b3f0;color:#fff;" id="thisAndFutureReschedule" onclick="rescheduleFutureGroupLessonAlso();return false;">This and future</button>';
+                                                        confirmBody +='</div>';
+                                                        $('#confirmBody').html(confirmBody);
+                                                        $('#confirmModal').removeClass('slds-hide');
+                                                    }else{
+                                                          // start : 1-aug:2020 -Nishi: we remove this prompt as we only supported single event update here. 
+                                                        // $('#confirmModalYes').addClass('slds-hide');
+                                                        // $('#confirmModalNo').html('Cancel');
+                                                        // $('#confirmModalNo').attr('data-origin', 'reschedule');
+                                                        // $('#confirmModalNo').attr('onclick', "$('.confirmModal').addClass('slds-hide');$('#confirmModalYes').removeClass('slds-hide');$('#confirmModalNo').html('No');refreshCalendar();return false;"); 
+                                                        // rescheduleThisOnly();
+                                                        //   // end : 1-aug:2020 -Nishi: we remove this prompt as we only supported single event update here. 
+                                                        revertFunc();
+                                                    }
+                                                     // Start : 30-Jul:2020 :if Resource Id is exist then we hide this Future button
+                                                }
+                                                //end: Commented by nishi: 9-Sep-2020: for new requiremnt we reschadule group lesson booking this and future
+                                                else if(bookingReschedule.Type == 'Busy' && bookingReschedule.Individual == 'false'){
                                                       // Start : 30-Jul:2020 :if Resource Id is exist then we hide this Future button
                                                       if(!isResource){
                                                         $('#confirmModalYes').addClass('slds-hide');
@@ -7884,6 +8129,7 @@ Enrol now
                     }
                     function cancelRescheduling(){
                         $('.editDetails').addClass('slds-hide');
+                        $('#newGroupClassCMP').addClass('slds-hide');
                         bookingReschedule.Id = '';
                         bookingReschedule.Type = '';
                         bookingReschedule.resource = '';
@@ -11306,7 +11552,15 @@ Enrol now
                             throw new Error("Something went badly wrong!");
                         }
                         
-                    }                        
+                    }       
+                    function makupAvailablegroupFunc(){
+                        if($('#onmakupAvailablegroup').prop('checked')){
+                            $('#recurringgroupSection').removeClass('slds-hide');
+                        }else{
+                            $('#recurringgroupSection').addClass('slds-hide');
+                        }
+                    }
+                                    
                     /*Method to create Class from Calendar UI.*/
                     function openAddClass(){
                         $('#newBookingModal').addClass('slds-hide');
@@ -11332,6 +11586,13 @@ Enrol now
                         $('#ClassDurationSelectError').addClass('slds-hide');
                         $('.ossiaAddGroupClass').addClass('slds-hide');
                         $('.aureusAddGroupClass').addClass('slds-hide');
+
+                        $('#recurrencegroupOccure').empty();
+                        $('#onSelectedgroupDate').val('');
+                        $('#aftergroupRadio').prop('checked', true);
+                        $('#repeatgroupSelect').val('None');
+                        $('#aftergroupRadio').prop('checked');
+                        $('#recurringgroupSection').addClass('slds-hide');
                         var centerId = $('#addClass').attr('data-centerid');
                         var centerName = $('.centerList option:selected').text();
                         var teacherId =  $('#addClass').attr('data-teacherid');
@@ -11406,7 +11667,7 @@ Enrol now
                                                 function(durationResult, event){
                                                     if(durationResult){
                                                         $(durationResult).each(function(index, value){
-                                                            if(value !='Trial' &&  value !='15'){
+                                                            if(value !='Trial' &&  parseInt(value) > 15 && parseInt(value) < 75){
                                                                 durationStr += '<option value="'+value+'">'+value+'</option>';
                                                             }
                                                         });
@@ -11470,6 +11731,7 @@ Enrol now
                         var centreId = $('#saveNewClass').attr('data-centre');
                         var teacherId = $('#saveNewClass').attr('data-teacher');
                         var dateTime = moment($('#saveNewClass').attr('data-date'));
+                        var classEndDate= moment($('#saveNewClass').attr('data-date'));
                         var packageId = $('#ClassPackageSelect').val();
                         var classType = $('#ClassTypeSelect').val();
                         var minAge = $('#ClassMinimumAgeInput').val();
@@ -11539,13 +11801,35 @@ Enrol now
                                 $('#statusOnPage').show();
                                 packageId = $('#ClassPackageSelect').val().split(':')[0];
                                 var duration = $('#ClassPackageSelect').val().split(':')[1];
-                            
+                                var isGroupclassEndDate = false;
+                                if($('#onmakupAvailablegroup').prop('checked')){
+                                    isGroupclassEndDate = true;
+                                    var repeatval = $('#repeatgroupSelect').val();
+                                    console.log('repeatval',repeatval);
+                                    if(repeatval == 'None'){
+                                        console.log('classEndDate',classEndDate);
+                                    }else{
+                                        
+                                        if($('#aftergroupRadio').prop('checked')){
+                                            var recurringdays = $('#recurrencegroupOccure').val();
+                                            classEndDate.add(parseInt(recurringdays), 'weeks');  
+                                        }else if($('#ongroupRadio').prop('checked')){
+                                            classEndDate = $('#onSelectedgroupDate').val();
+                                        }
+                                    }
+                                    console.log('isGroupclassEndDate',isGroupclassEndDate);
+                                    console.log('classEndDate',classEndDate);
+                                    console.log('classEndDate',classEndDate.format('YYYY-MM-DD'));
+                                }
+                                
+                             
+                                
                                 $('#newGroupClassModal').addClass('slds-hide');
                                 Visualforce.remoting.Manager.invokeAction(
                                         '{!$RemoteAction.AureusCalendarController.saveNewClass}',
                                         centreId, teacherId, packageId, dateTime.format('YYYY-MM-DD'), 
                                         dateTime.format('HH:mm:ss'), duration, capacity, 
-                                        classType,minAge,maxAge,
+                                        classType,minAge,maxAge,isGroupclassEndDate,classEndDate.format('YYYY-MM-DD'),
                                         function(result, event){
                                             if(result){
                                                 $('#statusOnPage').hide();

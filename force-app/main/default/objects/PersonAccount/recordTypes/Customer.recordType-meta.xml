@@ -2447,6 +2447,38 @@
             <fullName>Aureus at Home</fullName>
             <default>false</default>
         </values>
+        <values>
+            <fullName>Ossia Bukit Timah</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Ossia HomeTeam NS</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Ossia Junction 10</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Ossia Loyang Point</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Ossia Music</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Ossia Tampines CCC</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Ossia Woodlands CC</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Ossia at Home</fullName>
+            <default>false</default>
+        </values>
     </picklistValues>
     <picklistValues>
         <picklist>Location_of_Birth__c</picklist>
@@ -4490,6 +4522,21 @@
         </values>
         <values>
             <fullName>LO Signed</fullName>
+            <default>false</default>
+        </values>
+    </picklistValues>
+    <picklistValues>
+        <picklist>Organisation_Sharing__c</picklist>
+        <values>
+            <fullName>Aureus Academy Hong Kong</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Aureus Academy Singapore</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Ossia Music School Singapore</fullName>
             <default>false</default>
         </values>
     </picklistValues>

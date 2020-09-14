@@ -17,6 +17,7 @@ public class PackageProcessHandler{
         String downgradeType = ConstantsClass.enrollmentProcessDowngradeType;
         String cancelType = ConstantsClass.enrollmentProcessCancelType;
         String enromentChangeType = ConstantsClass.enrollmentProcessChanged; 
+        String enromentChangeCenterType = ConstantsClass.enrollmentProcessChangedCenter; 
         for(Subscription_Line_Item__c objSubLineItems : listOfSubLineItems){
             if(String.isNotBlank(objSubLineItems.Enrolment__c) && String.isNotBlank(objSubLineItems.Enrolment__r.Package_Process_type__c)
                 && String.isNotBlank(objSubLineItems.Enrolment__r.Package_Process_Status__c) && 
@@ -30,6 +31,8 @@ public class PackageProcessHandler{
                     listOfPackageProcess.add(new PackageCancellationController(objSubLineItems));
                 }else if(objSubLineItems.Enrolment__r.Package_Process_type__c == enromentChangeType){
                     listOfPackageProcess.add(new EnrolmentChangeHandler(objSubLineItems));
+                }else if(objSubLineItems.Enrolment__r.Package_Process_type__c == enromentChangeCenterType){
+                    listOfPackageProcess.add(new EnrolmentChangeCenterHandler(objSubLineItems));
                 }
             }else{
                 // this is for normal invoiceType

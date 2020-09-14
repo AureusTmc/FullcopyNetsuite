@@ -6,7 +6,9 @@ global class AttachmentBookingApi {
         RestRequest req = RestContext.request;
         String bookingId = req.params.get('id');
         Map<String, String> attachmentData = new Map<String, String>();
-        for (Attachment att : [Select Name,ContentType, Body from Attachment where ParentId=:bookingId ]) {
+         bookingId = '%'+bookingId+'%';
+        Booking__c  bookingObj = [SELECT Id FROM Booking__c Where Online_Lesson_URL__c like:bookingId limit 1];
+        for (Attachment att : [Select Name,ContentType, Body from Attachment where ParentId=:bookingObj.Id]) {
             attachmentData.put(att.Name,att.Id);
         }
         //RestResponse res = RestContext.response;

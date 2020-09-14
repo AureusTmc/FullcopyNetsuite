@@ -8,10 +8,10 @@
         });    
         $A.enqueueAction(action);
 	},
-    getCentre : function(component, event) {
+    getCentre : function(component, event,val) {
         var action = component.get("c.getCenter");
         action.setParams({
-            country:null 
+            country:val 
         });
         action.setCallback(this,function(response){
             

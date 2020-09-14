@@ -46,6 +46,62 @@
         <template>Aureus_New_Email_Template/Web_Enquiry_Received</template>
     </alerts>
     <alerts>
+        <fullName>Ossia_Book_a_Piano_alert</fullName>
+        <description>Ossia Piano Rental/Sales Web Enquiry</description>
+        <protected>false</protected>
+        <recipients>
+            <field>ContactEmail</field>
+            <type>email</type>
+        </recipients>
+        <senderType>DefaultWorkflowUser</senderType>
+        <template>Ossia_New_Email_Templates/Ossia_Book_Piano_Rental</template>
+    </alerts>
+    <alerts>
+        <fullName>Ossia_Refer_a_Friend_from_Portal_or_App</fullName>
+        <description>Ossia Refer a Friend from Portal or App</description>
+        <protected>false</protected>
+        <recipients>
+            <field>ContactEmail</field>
+            <type>email</type>
+        </recipients>
+        <senderAddress>noreply@aureusacademy.com</senderAddress>
+        <senderType>OrgWideEmailAddress</senderType>
+        <template>Ossia_New_Email_Templates/Ossia_Refer_a_Friend_from_Portal_or_App</template>
+    </alerts>
+    <alerts>
+        <fullName>Ossia_Trial_Reminder_Notification</fullName>
+        <description>Ossia Trial Reminder Notification</description>
+        <protected>false</protected>
+        <recipients>
+            <field>ContactEmail</field>
+            <type>email</type>
+        </recipients>
+        <senderType>DefaultWorkflowUser</senderType>
+        <template>Ossia_New_Email_Templates/Ossia_Trial_Reminder</template>
+    </alerts>
+    <alerts>
+        <fullName>Ossia_Trial_Request_Confirmed_Booked</fullName>
+        <description>Ossia Trial Request Confirmed/Booked</description>
+        <protected>false</protected>
+        <recipients>
+            <field>ContactEmail</field>
+            <type>email</type>
+        </recipients>
+        <senderType>DefaultWorkflowUser</senderType>
+        <template>Ossia_New_Email_Templates/Ossia_Trial_Request_Confirmed_Fixed</template>
+    </alerts>
+    <alerts>
+        <fullName>Ossia_Trial_Request_Received_Notification</fullName>
+        <description>Ossia Trial Request Received Notification</description>
+        <protected>false</protected>
+        <recipients>
+            <field>ContactEmail</field>
+            <type>email</type>
+        </recipients>
+        <senderType>DefaultWorkflowUser</senderType>
+        <template>Ossia_New_Email_Templates/Ossia_Trial_Request_Received_Fixed</template>
+    </alerts>
+    <alerts>
         <fullName>Refer_a_Friend_from_Portal_or_App</fullName>
         <description>Refer a Friend from Portal or App</description>
         <protected>false</protected>
@@ -325,7 +381,7 @@
             <name>Support_New_Bug_Defect_case_assignment_notification</name>
             <type>Alert</type>
         </actions>
-        <active>true</active>
+        <active>false</active>
         <criteriaItems>
             <field>Case.Type</field>
             <operation>equals</operation>
@@ -350,7 +406,7 @@
             <name>Thanks_for_contacting_Aureus_Academy</name>
             <type>Alert</type>
         </actions>
-        <active>true</active>
+        <active>false</active>
         <criteriaItems>
             <field>Case.Type</field>
             <operation>notEqual</operation>
@@ -372,6 +428,126 @@
             <value>Lesson Cancel within 24 hrs,Lesson Cancellation within 24 hrs</value>
         </criteriaItems>
         <description>When the Customer raise a Ticket from the Ticket Tab in Portal or App</description>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Ossia - Trial Reminder Notification</fullName>
+        <active>false</active>
+        <description>Ossia - Trial Reminder Notification</description>
+        <formula>AND( ISPICKVAL(Stage__c, &quot;Trial Booked&quot;),   NOT(ISNULL(Trial_Date__c )),   ISPICKVAL(Booking__r.Status__c , &quot;Scheduled&quot;),  ISPICKVAL( Organisation_Sharing__c, &quot;Ossia Music School Singapore&quot; ))</formula>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+        <workflowTimeTriggers>
+            <actions>
+                <name>Ossia_Trial_Reminder_Notification</name>
+                <type>Alert</type>
+            </actions>
+            <actions>
+                <name>Email_Trial_Reminder_Notification</name>
+                <type>Task</type>
+            </actions>
+            <offsetFromField>Case.Trial_Date__c</offsetFromField>
+            <timeLength>-12</timeLength>
+            <workflowTimeTriggerUnit>Hours</workflowTimeTriggerUnit>
+        </workflowTimeTriggers>
+    </rules>
+    <rules>
+        <fullName>Ossia - Trial Request Confirm Notification</fullName>
+        <actions>
+            <name>Ossia_Trial_Request_Confirmed_Booked</name>
+            <type>Alert</type>
+        </actions>
+        <actions>
+            <name>Update_Case_Status_as_Pending</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <actions>
+            <name>Email_Trial_Request_Confirm_Notification</name>
+            <type>Task</type>
+        </actions>
+        <active>false</active>
+        <description>Trial Request Confirm Notification
+When Sales Stage = Trial Booked</description>
+        <formula>NOT(  ISBLANK(Booking__c)) &amp;&amp;    ISPICKVAL( Stage__c , &quot;Trial Booked&quot;) &amp;&amp;  ISPICKVAL(Organisation_Sharing__c, &quot;  Ossia Music School Singapore&quot;)</formula>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Ossia - Trial Request Received Notification</fullName>
+        <actions>
+            <name>Ossia_Trial_Request_Received_Notification</name>
+            <type>Alert</type>
+        </actions>
+        <actions>
+            <name>Update_Case_Status_as_Open</name>
+            <type>FieldUpdate</type>
+        </actions>
+        <actions>
+            <name>Email_Trial_Request_Received_Notification</name>
+            <type>Task</type>
+        </actions>
+        <active>false</active>
+        <description>Trial Request Received Notification
+When Sales Stage = Trial Requested</description>
+        <formula>NOT(  ISBLANK(Booking__c)) &amp;&amp;    ISPICKVAL( Stage__c , &quot;Trial Requested&quot;) &amp;&amp; NOT(CONTAINS(OwnerId , &quot;00G&quot;)) &amp;&amp; ISPICKVAL( Organisation_Sharing__c , &quot;Ossia Music School Singapore&quot;)</formula>
+        <triggerType>onCreateOrTriggeringUpdate</triggerType>
+    </rules>
+    <rules>
+        <fullName>Ossia Web Enquiry %28Piano Sales %26 Rental%29</fullName>
+        <actions>
+            <name>Ossia_Book_a_Piano_alert</name>
+            <type>Alert</type>
+        </actions>
+        <active>false</active>
+        <criteriaItems>
+            <field>Case.RecordTypeId</field>
+            <operation>equals</operation>
+            <value>Sales Enquiry</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Case.Stage__c</field>
+            <operation>equals</operation>
+            <value>Enquiry</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Case.Interested_In__c</field>
+            <operation>notEqual</operation>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Case.Organisation_Sharing__c</field>
+            <operation>equals</operation>
+            <value>Ossia Music School Singapore</value>
+        </criteriaItems>
+        <description>Web Enquiry Received
+Web Enquiry (Piano Sales &amp; Rental)</description>
+        <triggerType>onCreateOnly</triggerType>
+    </rules>
+    <rules>
+        <fullName>Ossia XXX Refer a Friend From Portal</fullName>
+        <actions>
+            <name>Ossia_Refer_a_Friend_from_Portal_or_App</name>
+            <type>Alert</type>
+        </actions>
+        <active>false</active>
+        <criteriaItems>
+            <field>Case.Origin</field>
+            <operation>equals</operation>
+            <value>App</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Case.Type</field>
+            <operation>equals</operation>
+            <value>Refer a Friend</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Case.Status</field>
+            <operation>equals</operation>
+            <value>New</value>
+        </criteriaItems>
+        <criteriaItems>
+            <field>Case.Organisation_Sharing__c</field>
+            <operation>equals</operation>
+            <value>Ossia Music School Singapore</value>
+        </criteriaItems>
+        <description>When a Customer Refers a Friend from the Portal or App</description>
         <triggerType>onCreateOrTriggeringUpdate</triggerType>
     </rules>
     <rules>

@@ -59,7 +59,7 @@
         </rules>
     </decisions>
     <description>Package-Location update for sharing rule</description>
-    <interviewLabel>Package_Location_update_for_sharing_rule-4_InterviewLabel</interviewLabel>
+    <interviewLabel>Package_Location_update_for_sharing_rule-2_InterviewLabel</interviewLabel>
     <label>Package-Location update for sharing rule</label>
     <processMetadataValues>
         <name>ObjectType</name>
@@ -198,6 +198,42 @@
             <field>Location_Sharing__c</field>
             <value>
                 <elementReference>myVariable_current.Location__r.Name</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <processMetadataValues>
+                <name>dataType</name>
+                <value>
+                    <stringValue>Picklist</stringValue>
+                </value>
+            </processMetadataValues>
+            <processMetadataValues>
+                <name>isRequired</name>
+                <value>
+                    <booleanValue>false</booleanValue>
+                </value>
+            </processMetadataValues>
+            <processMetadataValues>
+                <name>leftHandSideLabel</name>
+                <value>
+                    <stringValue>Organisation Sharing</stringValue>
+                </value>
+            </processMetadataValues>
+            <processMetadataValues>
+                <name>leftHandSideReferenceTo</name>
+                <value>
+                    <stringValue/>
+                </value>
+            </processMetadataValues>
+            <processMetadataValues>
+                <name>rightHandSideType</name>
+                <value>
+                    <stringValue>Reference</stringValue>
+                </value>
+            </processMetadataValues>
+            <field>Organisation_Sharing__c</field>
+            <value>
+                <elementReference>myVariable_current.Location__r.Organisation__r.Name</elementReference>
             </value>
         </inputAssignments>
         <object>Package__c</object>

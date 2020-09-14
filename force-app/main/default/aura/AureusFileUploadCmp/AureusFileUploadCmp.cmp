@@ -27,15 +27,15 @@
                 <table  height="100px" class="slds-table slds-table_cell-buffer slds-table_striped" style=" table-layout:fixed;">
                     <aura:iteration items="{!v.recordMap}" var="record" indexVar="key">
                         <tr>
-                            <td style="padding-left:0px;overflow: hidden;width: 4%;font-size: 3.2vw;"><lightning:icon variant="" iconName="utility:stop" class="slds-icon slds-icon_small" size="xx-small" alternativeText="icon" style="display: inline;"/></td>
+                            <td style="padding-left:0px;overflow: hidden;width: 4%;font-size: 2.2vw;"><lightning:icon variant="" iconName="utility:stop" class="slds-icon slds-icon_small" size="xx-small" alternativeText="icon" style="display: inline;"/></td>
                             <aura:iteration items="{!record.value}" var="mapValue" indexVar="key2">
                                 <aura:if isTrue="{!key2==0}">
-                                <td scope="col" style="width: 92%;font-size: 3.2vw;padding: .2rem;overflow: hidden;">
+                                <td scope="col" style="width: 92%;font-size: 2.2vw;padding: .2rem;overflow: hidden;">
                                     <a href="{!'/servlet/servlet.FileDownload?file='+record.key}" target="_blank" download="{!record.key}" title="{!mapValue}" style="color: #3fa6fb;">{!mapValue}</a>
                                 </td>
                                     </aura:if>
                                 <aura:if isTrue="{!key2==1}">
-                                <td  style="width: 20%;font-size: 3.2vw">{!mapValue}</td>
+                                <td  style="width: 20%;font-size: 2.2vw">{!mapValue}</td>
                                 </aura:if>
                             </aura:iteration>
                             <td scope="col" style="padding-right:0px;overflow: hidden;text-align: center;width: 15%;">
@@ -58,7 +58,7 @@
             <img src="{!$Resource.DragDrop}" style="margin-left: 3% !important;width: 94% !important;height: 100% !important;"/><br/> 
         </div>
         <div class="col" style="width: 100%;display: block;position: fixed;margin-top: 12%;">
-            <p style="text-align: center;font-size: 2.5vw;" class="slds-text-body_small">{!v.fileName1}</p>
+            <p style="text-align: center;font-size: 2.2vw;" class="slds-text-body_small">{!v.fileName1}</p>
         </div>
     </div>
     <!--<div class="slds-grid" style="margin-top: -23px;">    

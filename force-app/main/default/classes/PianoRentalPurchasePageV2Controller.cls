@@ -11,6 +11,8 @@
 * Ver Date Author Modification
 *==============================================================================
 * 1.0 31 Aug 2020 Karan Singh Soni ( Inital version )
+
+//###########################################################################POS Email Is Pending 
 **/
 public class PianoRentalPurchasePageV2Controller {
     
@@ -22,6 +24,7 @@ public class PianoRentalPurchasePageV2Controller {
     public Decimal amountAfterDiscount{get;set;}
     Public Decimal totalRentalDepositAmount{get;set;}
     public Boolean isEmailSent {get;set;}
+    public String posUserName {get;set;}
     
     //_________________________________________________________  Constructor  ________________________________________________________________________________
     public PianoRentalPurchasePageV2Controller(ApexPages.StandardController st) {
@@ -32,7 +35,7 @@ public class PianoRentalPurchasePageV2Controller {
         amountAfterDiscount = 0;
         totalRentalDepositAmount = 0;
         isEmailSent = false;
-        
+        posUserName ='';
         
         if(string.isNotBlank(enrolment.Id)){
             List<Enrolment__c> listOfenrolment  = getRentalEnrolmentList(new Set<string> {enrolment.Id});
@@ -40,6 +43,9 @@ public class PianoRentalPurchasePageV2Controller {
                 enrolment = listOfenrolment[0];
             }
         }
+        if( String.isNotBlank( enrolment.Teacher__r.name ))
+        posUserName = enrolment.Teacher__r.name;
+        
         if(enrolment.Stage__c != ConstantsClass.enrollmentPianoSoldStage){
             isAlreadySold = false;
             listOfSummary = fillBillSummary(enrolment);
@@ -63,8 +69,8 @@ public class PianoRentalPurchasePageV2Controller {
     
     //_____________________________________________________________________________  fetch the current enrolment record ___________________________________________________________________________
     public static List<Enrolment__c> getRentalEnrolmentList(Set<String> enrolmentIds){
-        return [SELECT Id,Product_Id__c,Brand__c ,Name, center__r.country__r.Tax_Rate__c,center__r.country__r.Stripe_Base_Url__c,
-                Extra_Stairs__c,Actual_Delivery_Date_Time__c,Aggrement_Id__c,
+        return [SELECT Id,Teacher__r.name,Teacher__r.Personal_Email__c,Rental_Termination_Date__c,Product_Id__c,Brand__c ,Name, center__r.country__r.Tax_Rate__c,
+                center__r.country__r.Stripe_Base_Url__c,Extra_Stairs__c,Actual_Delivery_Date_Time__c,Aggrement_Id__c,
                 Package__c,teacher__c,center__c,Stage__c,Parent__r.PersonContactId,Center__r.Location__c,
                 Termination_Reason__c,Termination_Reason_others__c,Termination_request_date__c,Piano_Pickup_date__c,
                 center__r.country__r.Currency_Code__c,center__r.country__r.Stripe_Secret_Key__c,Teacher__r.OwnerId,
@@ -131,25 +137,38 @@ Note : 3 Sep 2020 This method was taken from another class -> PianoRentalPurchas
         return listOfBillSummary;
     }
     
-    //This will send the email message to the POS team.
+    //This will send the email message to the POS team -> enrolment's teachers email and update enrolment and subscriptions.
     public void sendEmailToPOS(){
         
+        Messaging.SendEmailResult[] sendEmailResults;
+        list< Subscription__c > listSubscriptions = new list< Subscription__c >();
+        set< Id > setSubsIds = new set< Id >();
+        Savepoint sp = Database.setSavepoint();
+        
         try{
-            if( String.isNotBlank( enrolment.Center__r.Name ) ){
+            if( String.isNotBlank( enrolment.Center__r.Name ) && String.isNotBlank( enrolment.Teacher__r.Personal_Email__c ) ){
                 
-                List< OrgWideEmailAddress > listOWA = [ select id, Address, DisplayName from OrgWideEmailAddress WHERE displayName =: enrolment.Center__r.Name Limit 1 ];
+                List< OrgWideEmailAddress > listOWA = [ SELECT Id, Address, DisplayName 
+                                                       FROM OrgWideEmailAddress 
+                                                       WHERE displayName =: enrolment.Center__r.Name LIMIT 1 ];
                 
-                if( listOWA.size() > 0 && String.isNotBlank( listOWA[0].Address ) ){
+                List< EmailTemplate > listEmailTemplate = [ SELECT Id,Subject,Description,HtmlValue,DeveloperName,Body 
+                                                           FROM EmailTemplate 
+                                                           WHERE DeveloperName = 'Piano_Rental_to_Purchase_Process' LIMIT 1 ];                
+                
+                if( listOWA.size() > 0  && listEmailTemplate.size() > 0 ){
                     
-                    string emailHtmlBody = 'Dear Karan <br/>' ;
-                    emailHtmlBody += 'Customer ' + enrolment.Parent__r.Name + '  has opted for the Rent-to-purchase option for their ongoing piano rental subscription. <br/>';
-                    emailHtmlBody += 'Please see the credit statement that needs to be applied at the time of purchase. <br/>';
-                    
-                    Messaging.SingleEmailMessage objOutGoingEmail = new Messaging.SingleEmailMessage();
-                    objOutGoingEmail.setToAddresses(new list< String >{'karan.singh@techmatrixconsulting.com'});
+                    //https://hub.appirio.com/cloud-powered-blog/simplify-sending-email-to-non-contacts-with-renderstoredemailtemplate
+                    Messaging.SingleEmailMessage objOutGoingEmail =  Messaging.renderStoredEmailTemplate(listEmailTemplate[0].Id, null, enrolment.Id);
+                    objOutGoingEmail.setToAddresses(new list< String >{enrolment.Teacher__r.Personal_Email__c});
                     objOutGoingEmail.setSubject('Process-to-rental');
-                    objOutGoingEmail.setHtmlBody(emailHtmlBody); 
                     objOutGoingEmail.setOrgWideEmailAddressId( listOWA[0].Id );
+                    
+                    /*10 SEP 2020 Karan : will use the email template instead
+						* string emailHtmlBody = 'Dear Karan <br/>' ;
+						emailHtmlBody += 'Customer ' + enrolment.Parent__r.Name + '  has opted for the Rent-to-purchase option for their ongoing piano rental subscription. <br/>';
+						emailHtmlBody += 'Please see the credit statement that needs to be applied at the time of purchase. <br/>';
+						objOutGoingEmail.setHtmlBody(emailHtmlBody); */
                     
                     //3 Sep 2020 Karan: will use OWA instead  objOutGoingEmail.setTargetObjectId( UserInfo.getUserId()); //need to to this as as validation rule written on Email message ->Check_if_From_Email_is_same_as_User
                     //3 Sep 2020 Karan: will use OWA instead  objOutGoingEmail.saveAsActivity = false;					//need to to this as as validation rule written on Email message ->Check_if_From_Email_is_same_as_User
@@ -160,24 +179,81 @@ Note : 3 Sep 2020 This method was taken from another class -> PianoRentalPurchas
                     objEmailAttchmt.setBody(new PageReference('/apex/PianoRentalPurchasePageV2?Id=' + enrolment.Id).getContentAsPDF()); 
                     objOutGoingEmail.setFileAttachments(new Messaging.EmailFileAttachment[] {objEmailAttchmt});
                     
-                    if(!Test.isRunningTest())
-                        Messaging.sendEmail(new Messaging.SingleEmailMessage[] {objOutGoingEmail});
-                    
-                }else{ //__________________________________________________  incase if any enrolment's centre doesnot have any address in OWA
+                    if(!Test.isRunningTest()){
+                        
+                        sendEmailResults =  Messaging.sendEmail(new Messaging.SingleEmailMessage[] {objOutGoingEmail});
+                        
+                    }
+                }else{ //__________________________________________________  incase if any enrolment's centre doesnot have any address in OWA or Email Template not found
                     
                     isErrorOnSave = true;
-                    errorMessage='We have encountered a problem while sending the email : Current enrolment Center does not have valid email address associated with it. Please check the address of associated centre in the OWA.'; 
+                    errorMessage='We have encountered a problem while sending the email : Current enrolment Center does not have valid email address associated with it or Email Template is not defined.Please check with System Admin for this.'; 
                 }
             }else{  //_______________________________________________  incase if any enrolment doesnot have any center assiociated to it as we need this for fetch center email address from OWA
-           
+                
                 isErrorOnSave = true;
-                errorMessage='We have encountered a problem while sending the email : Current enrolment is not associated to any centre.'; 
+                errorMessage='We have encountered a problem while sending the email : Current enrolment is not associated to any centre or Teacher email is not populated.Please check with System Admin for this.'; 
+            }
+            
+            system.debug('sendEmailResults -->  ' + sendEmailResults[0].isSuccess() );
+            
+            //only work if successfule email is send
+            if( Test.isRunningTest() || sendEmailResults[0].isSuccess() ){
+                
+                enrolment.Stage__c = ConstantsClass.enrollmentPianoSoldStage; 
+                enrolment.Rental_Termination_Date__c = Date.today();
+                update enrolment; 
+                
+                //currently marking the enrolement subs line item ( it will be only one ) to inactive.
+                if( enrolment.Subscription_Line_Items__r != null & enrolment.Subscription_Line_Items__r.size() > 0  ){
+                    
+                    for( Subscription_Line_Item__c objSubsLine : enrolment.Subscription_Line_Items__r ){
+                        
+                        objSubsLine.Subscription_Expiry_Date__c = Date.today();
+                        objSubsLine.Next_Bill_Date__c = null;
+                        objSubsLine.Status__c = 'In Active';
+                        
+                        setSubsIds.add( objSubsLine.Subscription__c );
+                    }//end of for loop
+                    
+                    update enrolment.Subscription_Line_Items__r;
+                    
+                    //incase if the subscription linked with above subs line item, does not have any other active line item, will also mark it as inactive etc
+                    if( setSubsIds.size() > 0 ){
+                        
+                        for( Subscription__c objSub : [ SELECT Id,Status__c,Next_Bill_Date__c,Subscription_End_Date__c,
+                                                       ( SELECT ID FROM Subscription_Line_Items__r WHERE Status__c = 'Active' LIMIT 1 ) 
+                                                       FROM Subscription__c  
+                                                       WHERE ID IN : setSubsIds ] ){
+                                                           
+                                                           system.debug(' objSub --> ' + objSub );
+                                                           
+                                                           if( objSub.Subscription_Line_Items__r != null && objSub.Subscription_Line_Items__r.size() == 0 ){
+                                                               
+                                                               objSub.Status__c = 'In Active';
+                                                               objSub.Next_Bill_Date__c = null;
+                                                               objSub.Subscription_End_Date__c = Date.today();
+                                                               listSubscriptions.add( objSub );
+                                                           }
+                                                       }
+                        
+                        if( listSubscriptions.size() > 0 ){
+                            system.debug(' listSubscriptions --> ' + listSubscriptions );
+                            update listSubscriptions;
+                        }
+                    }//end of update subscription
+                }//end of update subscription line items
+                
+            }else{ //_______________________________________________________ Incase email sent was not successfull
+                
+                isErrorOnSave = true;
+                errorMessage='We have encountered a problem while sending the email as it was unsuccessful.Please check with System Admin for this.';
             }
             
         }catch( Exception objExp ){
-            
+            Database.rollback( sp );
             isErrorOnSave = true;
-            errorMessage='We have encountered a problem while sending the email : ' + objExp.getMessage() + ' Line Number : '+ objExp.getLineNumber() ;
+            errorMessage='We have encountered a problem while sending the email : ' + objExp.getMessage() + ' Line Number : '+ objExp.getLineNumber() + '.Please check with System Admin for this.' ;
         }finally{
             isEmailSent = true;
         }

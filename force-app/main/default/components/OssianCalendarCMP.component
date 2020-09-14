@@ -1,6 +1,6 @@
 <apex:component controller="OssiaCenterCalendarController" allowDML="true">
     <script>  
-
+        //nishi
         function showGroupClassGradepackages(centreId,teacherId,grade,duration){
             $('#newOssiaClassBookingDetailsHeader').html('Select Grade Packages');
             $('#newGroupClassModal').addClass('slds-hide');
@@ -84,6 +84,7 @@
             var centreId = $('#saveNewClass').attr('data-centre');
             var teacherId = $('#saveNewClass').attr('data-teacher');
             var dateTime = moment($('#saveNewClass').attr('data-date'));
+            var classEndDate = moment($('#saveNewClass').attr('data-date'));
             var classType = $('#ClassTypeSelect').val();
             var minAge = $('#ClassMinimumAgeInput').val();
             var maxAge = $('#ClassMaximumAgeInput').val();
@@ -105,11 +106,32 @@
             if(!iserror){
                 $('#newossiaGroupClassModal').addClass('slds-hide');
                 $('#statusOnPage').show();
+                var isGroupclassEndDate = false;
+                if($('#onmakupAvailablegroup').prop('checked')){
+                    isGroupclassEndDate = true;
+                    var repeatval = $('#repeatgroupSelect').val();
+                    console.log('repeatval',repeatval);
+                    if(repeatval == 'None'){
+                        console.log('classEndDate',classEndDate);
+                    }else{
+                        if($('#aftergroupRadio').prop('checked')){
+                            var recurringdays = $('#recurrencegroupOccure').val();
+                            console.log('recurringdays',recurringdays);
+                            classEndDate.add(parseInt(recurringdays), 'weeks');  
+                        }else if($('#ongroupRadio').prop('checked')){
+                            classEndDate = $('#onSelectedgroupDate').val();
+                        }
+                    }
+                    console.log('isGroupclassEndDate',isGroupclassEndDate);
+                    console.log('classEndDate',classEndDate);
+                    console.log('classEndDate',classEndDate.format('YYYY-MM-DD'));
+                }              
+                
                 Visualforce.remoting.Manager.invokeAction(
                         '{!$RemoteAction.OssiaCenterCalendarController.saveNewOssiaClass}',
                         centreId, teacherId, gradevalues, dateTime.format('YYYY-MM-DD'), 
                         dateTime.format('HH:mm:ss'), duration, capacity, 
-                        classType,minAge,maxAge,grades,
+                        classType,minAge,maxAge,grades,isGroupclassEndDate,classEndDate.format('YYYY-MM-DD'),
                         function(result, event){
                             if(result){
                                 $('#statusOnPage').hide();
@@ -623,12 +645,12 @@
                     for (var startday = 1; startday <= 7; startday++) {
                         var day = new Date(effectiveDate.year(), parseInt(effectiveDate.month()) + 1, startday);
                         var startedDate = new moment(day);
-                        if (startedDate.format('ddd') == week) {
+                        //if (startedDate.format('ddd') == week) {
                             newEffectiveDayObj = {};
                             newEffectiveDayObj.value = startedDate.format('MM/DD/YYYY');
                             newEffectiveDayObj.label = startedDate.format('ddd, MMM DD YYYY');
                             weekDatesList.push(newEffectiveDayObj);
-                        }
+                       // }
                     }
                     console.log('weekDatesList', weekDatesList);
                     console.log('result.currentWeekDay' + result.currentWeekDay);
@@ -638,8 +660,9 @@
                             effectiveDateStr += '<option value="' + value.value + '">' + value.label + '</option>';
                         });
                         $('#selectEffectiveDateEnrolCenterUpdate').append(effectiveDateStr);
-                        $('#selectEffectiveDateEnrolCenterUpdate').val(weekDatesList[0].value);
-                        $('#selectEffectiveDateEnrolCenterUpdate').attr('disabled', 'true');
+                        // commented by nishi: 11-Sep-2020: for we show all 1 to 7 date list not first effective date
+                        // $('#selectEffectiveDateEnrolCenterUpdate').val(weekDatesList[0].value);
+                        //$('#selectEffectiveDateEnrolCenterUpdate').attr('disabled', 'true');
                         $('#availableTimeSlotsCenterUpdateEnrolment').val('');
                         $('#availableTimeSlotsCenterUpdateEnrolment').empty();
                         $('#availableTimeSlotsCenterUpdateEnrolment').attr('disabled', 'true');

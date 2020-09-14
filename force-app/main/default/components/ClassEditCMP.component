@@ -304,6 +304,10 @@
 
                     </div>
                 </div>
+                 <footer class="slds-modal__footer   slds-hide groupReschdule" >
+                    <button class="slds-button slds-button_neutral" aria-pressed="false" id="cancelGroupChanges" onclick="cancelRescheduling();return false;">Cancel</button>
+                    <button class="slds-button slds-button_brand" aria-pressed="false" id="ReschedulingGroupChanges" onclick="commitgrouplesson();return false;">Confirm Changes</button>
+                </footer>
             </div>
         </section>
         <div class="slds-backdrop slds-backdrop_open"></div>
@@ -1321,7 +1325,17 @@
         </section>
         <div class="slds-backdrop slds-backdrop_open"></div>
     </div>
+
+
+
+
+
+
+
+
+    
     <script>
+
         var selectedStudentData = {};
 
         //@@jatin: 18-dec-2019:refresh New makeup Booking Popup
@@ -1536,7 +1550,8 @@
             bookingData.centerId = selectedStudentData.centerId;
             bookingData.teacherId = selectedStudentData.teacherId;
             bookingData.isOssia =selectedStudentData.isOssia;
-            bookingData.isRecurring = 'false';
+            
+            //bookingData.isRecurring = 'false';
             // added by nishi: 3-Sep-2020: for manage Ossia group class makeup mins 
             if(selectedStudentData.isOssia == true){
                // $('.aureusGroupClassMakeupBooking').addClass('slds-hide');
@@ -1853,12 +1868,12 @@
         // @@jatin: 19-dec-2019: for create group lesson makeup booking
         function createGroupbooking(redirectCase) {
             var bookingDataStr = JSON.stringify(bookingData);
-           //console.log('bookingDataStr' + bookingDataStr);
+           console.log('bookingDataStr' + bookingDataStr);
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.ClassEditController.createGroupbooking}',
                 bookingDataStr, redirectCase, caseId,
                 function (result, event) {
-                   //console.log(result);
+                   console.log(result);
                     if (event.status) {
                         if (result.caseId) {
                             $('.confirmModal').addClass('slds-hide');
@@ -1953,6 +1968,8 @@
                     errorFlag = true;   
             } 
             if(!errorFlag){
+
+                console.log('bookingData',bookingData);
                 $('.confirmModal').removeClass('slds-hide');
                 $('#confirmBody').html('Do you want to send an email?');
                 $('#confirmHeader').html('Email Confirmation');
@@ -2549,6 +2566,10 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
             $('#SelectAllStudent').removeAttr('disabled');
             $('#NoShowClass').removeAttr('disabled');
             $('#completeClass').removeAttr('disabled');
+            $('.groupReschdule').addClass('slds-hide');
+            $('#ClassHistory').removeClass('slds-hide');
+            $('#showGroupClassGradeDetials').removeClass('slds-hide');
+            $('#ClassCustomers').removeClass('slds-hide');
             selectedStudentData = {};
             if (bookingId) {
                 Visualforce.remoting.Manager.invokeAction(
@@ -2624,6 +2645,7 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                                 $('.ossiaGroupClassBookingDetail').addClass('slds-hide');
                                 $('.aureusGroupClassBookingDetail').removeClass('slds-hide');
                             }
+                          
                             // added by nishi: 2-Sep-2020: for manage ossia group lesson details in ossia case we show grade other wise we show package realed details 
                             selectedStudentData.groupClassId = result.bookObj.Id;
                             selectedStudentData.ClassCapacity = result.bookObj.Class__r.Total_Capacity__c;
@@ -2976,6 +2998,208 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                     }
                 }
             );
+        }
+         
+        function rescheduleThisGroupLessonOnly(){
+            bookingReschedule.isRecurrence = 'false';
+            rescheduleGroupLesson();
+        }
+        function rescheduleFutureGroupLessonAlso(){
+            bookingReschedule.isRecurrence = 'true';
+            rescheduleGroupLesson();
+        }
+        function rescheduleGroupLesson(){
+            $('.groupReschdule').removeClass('slds-hide');
+            $('#newBookingDetailsHeader').html('');
+            $('#confirmModal').addClass('slds-hide');
+            $('#DetailsTab').removeClass('slds-hide');
+            $('#ClassDetails').addClass('slds-active');
+            $('#ClassHistory').addClass('slds-hide');
+            $('#ClassCustomers').addClass('slds-hide');
+            $('#CustomersTab').addClass('slds-hide');
+            $('#HistoryTab').addClass('slds-hide');
+            $('#ClassDurationEditLabel').html('');
+            $('#ClassCapacityEditInput').val('');
+            $('#ClassPriceEditLabel').html('');
+            $('#ClassMinimumAgeEditLabel').html('');
+            $('#ClassMaximumAgeEditLabel').html('');
+            $('#ClassInstrumentEditLabel').html('');
+            $('#ClassPackageEditSelect').html('');
+            $('#AvailableCapacityEditLabel').html('');
+            $('#ClassTypeEditLabel').html('');
+            $('#StartDateEditLabel').html(''); 
+            $('#ClassOssiaGradeEditLabel').html('');
+            $('.ossiaGroupClassBookingDetail').addClass('slds-hide');
+            $('.aureusGroupClassBookingDetail').removeClass('slds-hide');
+            $('#showGroupClassGradeDetials').addClass('slds-hide');
+            console.log('bookingReschedule'+bookingReschedule);
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.ClassEditController.showRescheduledGroupClassBookings}',
+                bookingReschedule, 
+                function(result, event){
+                    console.log(result);
+                    if (result.bookObj.Id) {
+                        $('#newGroupClassCMP').removeClass('slds-hide');
+                        console.log(result.bookObj);
+                           // added by nishi: 2-Sep-2020: for manage ossia group lesson details in ossia case we show grade other wise we show package realed details 
+                            if(result.isOssia){
+                                $('.aureusGroupClassBookingDetail').addClass('slds-hide');
+                                $('.ossiaGroupClassBookingDetail').removeClass('slds-hide');
+                                if(result.bookObj.Class__r.Grade__c != null && result.bookObj.Class__r.Grade__c != undefined){
+                                    $('#ClassOssiaGradeEditLabel').html(result.bookObj.Class__r.Grade__c.replace(/;/g, ", "));
+                                    $('#ClassDurationEditLabel').html(result.bookObj.Class__r.Duration__c + ' Mins');
+                                 }
+                            }else{
+                                $('#ClassPackageEditSelect').html(result.bookObj.Package__r.Name);
+                                $('#ClassDurationEditLabel').html(result.bookObj.Package__r.Duration__c + ' Mins');
+                                $('#ClassPriceEditLabel').html('$' + result.bookObj.Package__r.Package_Fee__c);
+                                $('.ossiaGroupClassBookingDetail').addClass('slds-hide');
+                                $('.aureusGroupClassBookingDetail').removeClass('slds-hide');
+                            }
+                          
+                            // added by nishi: 2-Sep-2020: for manage ossia group lesson details in ossia case we show grade other wise we show package realed details 
+                            $('#newBookingDetailsHeader').html('Rescheduled Class Appointment');
+                            $('#LocationNameEditClass').html(result.bookObj.Center__r.Name);
+                            $('#TeacherNameEditClass').html(result.staffMember);
+
+                            // added by jatin: 18-dec-2019: show class type ,age,Instrument
+                            $('#ClassTypeEditLabel').html(result.bookObj.Class__r.Class_Type__c);
+                            var minAge = result.bookObj.Class__r.Minimum_age__c != undefined ?  (result.bookObj.Class__r.Minimum_age__c == 1 ? result.bookObj.Class__r.Minimum_age__c + ' Year' :result.bookObj.Class__r.Minimum_age__c + ' Years'): '';
+                            var maxAge = result.bookObj.Class__r.Maximum_age__c != undefined ? (result.bookObj.Class__r.Maximum_age__c == 1 ? result.bookObj.Class__r.Maximum_age__c + ' Year' :result.bookObj.Class__r.Maximum_age__c + ' Years') : '';
+                            $('#ClassMinimumAgeEditLabel').html(minAge);
+                            $('#ClassMaximumAgeEditLabel').html(maxAge);
+                            $('#ClassInstrumentEditLabel').html(result.bookObj.Class__r.Instrument__c);
+                            $('#ClassCapacityEditInput').html(result.bookObj.Class__r.Total_Capacity__c);
+                            //$('#AvailableCustomersEditLabel').html(result.bookObj.Class__r.of_Units__c);
+                            $('#AvailableCapacityEditLabel').html(result.bookObj.Class__r.Available_Capacity__c);
+                            $('#StartDateEditLabel').html(moment(result.bookObj.Class__r.Class_Start_Date__c).format("D MMM YYYY"));
+                            //$('#ClassTimeEditLabel').html(moment(result.bookObj.Booking_Date__c + result.bookObj.Start_Time__c).utc().format('ddd, MMM DD YYYY LT'));
+                            var dateTime = result.dateAndTime;
+                            var res;
+                            if(dateTime){
+                                res =  dateTime.split("T"); 
+                                $('#ClassTimeEditLabel').text(convertDateToMoment(res[0]) +' '+ convertTimeToMoment(res[1].split(':')[0], res[1].split(':')[1]));
+                            }
+                            console.log('result.bookObj.isDayChange'+result.isDayChange);
+                            $('#ReschedulingGroupChanges').attr({'data-isDayChange':result.isDayChange});
+                    }
+                }
+            );
+        }
+        function commitgrouplesson(){
+            bookingReschedule.scheduleType = 'commit';
+            console.log('commitgrouplesson bookingReschedule',bookingReschedule);
+            if((bookingReschedule.Type == 'Group Class' || bookingReschedule.Type == 'Busy') && bookingReschedule.isRecurrence == 'false' && bookingReschedule.Individual == 'true'){
+                updateGroupClassBooking(bookingReschedule.Id, bookingReschedule.date, '', bookingReschedule.resource, 'false', 'false');
+            }else if((bookingReschedule.Type == 'Group Class' || bookingReschedule.Type == 'Busy') && bookingReschedule.Individual == 'false' && bookingReschedule.isRecurrence == 'false'){
+                if(bookingReschedule.Type == 'Group Class'){
+                    updateGroupClassBooking(bookingReschedule.Id, bookingReschedule.date, '', bookingReschedule.resource, 'true', 'false');
+                }else{
+                    updateGroupClassBooking(bookingReschedule.Id, bookingReschedule.date, '', bookingReschedule.resource, 'false', 'false');
+                }
+            }else if((bookingReschedule.Type == 'Group Class' || bookingReschedule.Type == 'Busy') &&  bookingReschedule.isRecurrence == 'true'){
+                    updateGroupClassBooking(bookingReschedule.Id, bookingReschedule.date, '', bookingReschedule.resource, 'false', 'true');
+            }else if(bookingReschedule.Type != 'Group Class'){
+                updateGroupClassBooking(bookingReschedule.Id, bookingReschedule.date, '', bookingReschedule.resource, 'false', 'false');
+            }
+            
+        }
+        function updateGroupClassBooking(id, start, end, teacherId, isplaceholder, isFuture){
+            console.log('updateGroupClassBooking id',id);
+            console.log('updateGroupClassBooking start',start);
+            console.log('updateGroupClassBooking end',end);
+            console.log('updateGroupClassBooking teacherId',teacherId);
+            console.log('updateGroupClassBooking isplaceholder',isplaceholder);
+            console.log('updateGroupClassBooking isFuture',isFuture);
+            if(id && start && bookingReschedule.Type){
+                // if(filter.resource && filter.resource != 'Select Resource'){
+                //     $('#confirmModalNo').attr({'data-id': id, 'start': start, 'end': end,'isResourceId':'true', 'teacherId': teacherId, 'isplaceholder': isplaceholder, 'isFuture': isFuture, 'data-origin': 'update'});
+                //     $('#confirmModalNo').trigger('click');
+                // }else{
+                    if(bookingReschedule.Type != 'Busy' ){
+                        if(isFuture =='true'){
+                            var isDayChange = $('#ReschedulingGroupChanges').attr('data-isDayChange');
+                            if(isDayChange == 'true'){
+                                $('#newGroupClassCMP').addClass('slds-hide');
+                                $('#confirmBody').html('Do you want Rescheduled all group class appointments?<br/> All Make-up bookings and Ad-hoc have been canceled and makeup credit will be added back to the parent record.');
+                                $('#confirmHeader').html('Rescheduled Class Appointment');
+                                $('#confirmModalYes').attr({'data-id': id, 'start': start, 'end': end,'isResourceId':'false', 'teacherId': teacherId, 'isplaceholder': isplaceholder, 'isFuture': isFuture, 'data-origin': 'updategroupClass'});
+                                $('#confirmModalYes').removeClass('slds-hide');
+                                $('#confirmModalNo').removeAttr('data-origin');
+                                $('.confirmModal').removeClass('slds-hide');
+                            }else{
+                                $('#confirmModalNo').attr({'data-id': id, 'start': start, 'end': end,'isResourceId':'false', 'teacherId': teacherId, 'isplaceholder': isplaceholder, 'isFuture': isFuture, 'data-origin': 'updategroupClass'});
+                                $('#confirmModalNo').trigger('click');
+                            }
+                        }else{
+                            $('#confirmModalNo').attr({'data-id': id, 'start': start, 'end': end,'isResourceId':'false', 'teacherId': teacherId, 'isplaceholder': isplaceholder, 'isFuture': isFuture, 'data-origin': 'updategroupClass'});
+                            $('#confirmModalNo').trigger('click');
+                        }
+                    }else{
+                        $('#statusOnPage').hide();
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.ClassEditController.updateGroupClassBooking}',
+                            id, start, end, teacherId, isplaceholder, isFuture, //'false', caseId, 'false',
+                            function(result, event){
+                                var msg = '';
+                                if (event.status) {
+                                    $('#newGroupClassCMP').addClass('slds-hide');
+                                    isReschedule = false;
+                                    $('#confirmModalNo').html('No');
+                                    $('#confirmHeader').parent().removeClass('slds-text-align_left');
+                                    $('#confirmBody').removeClass('slds-text-align_center');
+                                    $('#confirmModalYes').removeClass('slds-hide');
+                                    $("#rescheduleClose").trigger("click");
+                                    
+                                    bookingReschedule.Id = '';
+                                    bookingReschedule.Type = '';
+                                    bookingReschedule.resource = '';
+                                    bookingReschedule.date = '';
+                                    bookingReschedule.Individual = '';
+                                    bookingReschedule.isRecurrence = '';
+                                    bookingReschedule.scheduleType = '';
+                                }
+                                refreshCalendar();
+                            },
+                            {buffer: false, escape: true}
+                        );
+                    }
+               // }
+            }
+        }
+        function updategroupClass( bookingId, start, end, teacherId, isplaceholder, isFuture /*,redirectCase, caseId, isResourceId*/){
+            $('.confirmModal').addClass('slds-hide');
+            if(bookingId && start){
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.ClassEditController.updateGroupClassBooking}',
+                    bookingId, start, end, teacherId, isplaceholder, isFuture, //redirectCase, caseId, isResourceId,
+                    function(result, event){
+                    console.log('result',result);
+                        var msg = '';
+                        if (event.status) {
+                            isReschedule = false;
+                            $("#rescheduleClose").trigger("click");
+                            if(bookingReschedule.scheduleType == 'commit'){
+                                if(result.caseId){
+                                    redirectToCaseRecord(result.caseId); 
+                                }
+                            }
+                            bookingReschedule.Id = '';
+                            bookingReschedule.Type = '';
+                            bookingReschedule.resource = '';
+                            bookingReschedule.date = '';
+                            bookingReschedule.Individual = '';
+                            bookingReschedule.isRecurrence = '';
+                            bookingReschedule.scheduleType = '';
+                            
+                            $('#toastMsg').html('Appointment Reschedule successfully');
+                            toastLaunch();
+                            refreshCalendar();
+                        }
+                    },
+                    {buffer: false, escape: true}
+                );
+            }
         }
     </script>
 

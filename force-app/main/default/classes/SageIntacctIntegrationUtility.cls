@@ -1507,7 +1507,7 @@ Public without sharing class SageIntacctIntegrationUtility{
     }
     
     public static Stripe_Payout_Log__c createStripeJournalEntries(Stripe_Payout_Log__c stripePayLog,List<Payment__c> paymentList){//update GLCodes
-        /*-removed by KaranSinghSoni 7 Sep 2020 */
+        /*
         stripePayLog.Sage_Error_Message__c = '';
         Map<string,string> glCodeMap = new Map<string,string>();
         List<Sage_GL_Account__c> glList = [Select id,Name,GL_Account_No__c from Sage_GL_Account__c];
@@ -1703,7 +1703,7 @@ Public without sharing class SageIntacctIntegrationUtility{
             }
         }else{
             stripePayLog.Sage_Error_Message__c = 'GL code not found.';
-        }/*-removed by KaranSinghSoni 7 Sep 2020 */
+        }*/
         return stripePayLog;
     }
     
@@ -1899,7 +1899,7 @@ Public without sharing class SageIntacctIntegrationUtility{
         }/*-removed by KaranSinghSoni 7 Sep 2020 */   
         return payment;
     }
-    
+     
     public static Invoice__c createInvoice(SessionWrapper sw, Invoice__c invoice){
         /*-removed by KaranSinghSoni 7 Sep 2020 */
          string departmentId = 'Aureus Academy'; 

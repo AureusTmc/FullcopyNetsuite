@@ -4,6 +4,9 @@
     Author: JATIN
     Description :  this controller for termination piano rental completed 
 */
+
+//CH01 Karan Singh 10 Sep 2020 added update of rental termination date as these filed is created fo the Piano rental to purchase process and for consistency with this process need to update her.
+
 public with sharing class TerminationCompletedEnrolmentController {
     Public Enrolment__c objEnrolment{get;set;}
     Public string  errorString {get;set;}
@@ -19,11 +22,16 @@ public with sharing class TerminationCompletedEnrolmentController {
     }
 
     // after this complete termination then we update enrolment stage and  upate subscription end date
+    // CH01 Karan : now on enrolment, it will also update the Rental_Termination_Date__c as of today.
     public void updateEnrolment(){
         errorString = 'Some error Is found';
         if(objEnrolment.Stage__c.equalsIgnoreCase(ConstantsClass.enrollmentPianoTerminationInProgressStage) && objEnrolment.Termination_Inspection_Completed__c
         && objEnrolment.Piano_Pickup_date__c <= System.today() ){
-            Enrolment__c objEnrolment1 = new Enrolment__c(id= objEnrolment.id, Stage__c =ConstantsClass.enrollmentPianoRentalTerminatedStage);
+            Enrolment__c objEnrolment1 = new Enrolment__c(id= objEnrolment.id, Stage__c =ConstantsClass.enrollmentPianoRentalTerminatedStage
+                                                          								//CH01 Start
+                                                                                       ,Rental_Termination_Date__c = Date.today() 
+                                                                                       //CH01 END
+                                                         );
             update objEnrolment1;
              map<string,Subscription__c> mapOfSubs = new Map<string,Subscription__c>();
             List<Subscription_Line_Item__c>  listOfSubLineItem = objEnrolment.Subscription_Line_Items__r;

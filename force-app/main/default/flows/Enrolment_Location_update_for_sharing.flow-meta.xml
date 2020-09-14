@@ -59,7 +59,7 @@
         </rules>
     </decisions>
     <description>Enrolment- Location update for sharing</description>
-    <interviewLabel>Enrolment_Location_update_for_sharing-3_InterviewLabel</interviewLabel>
+    <interviewLabel>Enrolment_Location_update_for_sharing-2_InterviewLabel</interviewLabel>
     <label>Enrolment- Location update for sharing</label>
     <processMetadataValues>
         <name>ObjectType</name>
@@ -198,6 +198,42 @@
             <field>Location_Sharing__c</field>
             <value>
                 <elementReference>myVariable_current.Center__r.Name</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <processMetadataValues>
+                <name>dataType</name>
+                <value>
+                    <stringValue>Picklist</stringValue>
+                </value>
+            </processMetadataValues>
+            <processMetadataValues>
+                <name>isRequired</name>
+                <value>
+                    <booleanValue>false</booleanValue>
+                </value>
+            </processMetadataValues>
+            <processMetadataValues>
+                <name>leftHandSideLabel</name>
+                <value>
+                    <stringValue>Organisation Sharing</stringValue>
+                </value>
+            </processMetadataValues>
+            <processMetadataValues>
+                <name>leftHandSideReferenceTo</name>
+                <value>
+                    <stringValue/>
+                </value>
+            </processMetadataValues>
+            <processMetadataValues>
+                <name>rightHandSideType</name>
+                <value>
+                    <stringValue>Reference</stringValue>
+                </value>
+            </processMetadataValues>
+            <field>Organisation_Sharing__c</field>
+            <value>
+                <elementReference>myVariable_current.Center__r.Organisation__r.Name</elementReference>
             </value>
         </inputAssignments>
         <object>Enrolment__c</object>

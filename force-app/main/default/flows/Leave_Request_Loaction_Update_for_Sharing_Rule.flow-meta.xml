@@ -59,7 +59,7 @@
         </rules>
     </decisions>
     <description>Leave Request-Loaction Update for Sharing Rule</description>
-    <interviewLabel>Leave_Request_Loaction_Update_for_Sharing_Rule-4_InterviewLabel</interviewLabel>
+    <interviewLabel>Leave_Request_Loaction_Update_for_Sharing_Rule-5_InterviewLabel</interviewLabel>
     <label>Leave Request-Loaction Update for Sharing Rule</label>
     <processMetadataValues>
         <name>ObjectType</name>
@@ -200,10 +200,46 @@
                 <elementReference>myVariable_current.Employee__r.Location__c</elementReference>
             </value>
         </inputAssignments>
+        <inputAssignments>
+            <processMetadataValues>
+                <name>dataType</name>
+                <value>
+                    <stringValue>Picklist</stringValue>
+                </value>
+            </processMetadataValues>
+            <processMetadataValues>
+                <name>isRequired</name>
+                <value>
+                    <booleanValue>false</booleanValue>
+                </value>
+            </processMetadataValues>
+            <processMetadataValues>
+                <name>leftHandSideLabel</name>
+                <value>
+                    <stringValue>Organisation Sharing</stringValue>
+                </value>
+            </processMetadataValues>
+            <processMetadataValues>
+                <name>leftHandSideReferenceTo</name>
+                <value>
+                    <stringValue/>
+                </value>
+            </processMetadataValues>
+            <processMetadataValues>
+                <name>rightHandSideType</name>
+                <value>
+                    <stringValue>Reference</stringValue>
+                </value>
+            </processMetadataValues>
+            <field>Organisation_Sharing__c</field>
+            <value>
+                <elementReference>myVariable_current.Employee__r.Centre_Name__r.Organisation__r.Name</elementReference>
+            </value>
+        </inputAssignments>
         <object>Leave_Request__c</object>
     </recordUpdates>
     <startElementReference>myDecision</startElementReference>
-    <status>Active</status>
+    <status>Draft</status>
     <variables>
         <name>myVariable_current</name>
         <dataType>SObject</dataType>

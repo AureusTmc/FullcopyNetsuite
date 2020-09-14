@@ -12,7 +12,11 @@
     <filters>
         <field>RECORDTYPE</field>
         <operation>equals</operation>
-        <value>Payment__c.Payment_As_Credit,Payment__c.Payment_Transaction</value>
+        <value>Payment__c.Payment_As_Deposit</value>
+    </filters>
+    <filters>
+        <field>Method_of_Payment__c</field>
+        <operation>notEqual</operation>
     </filters>
     <label>All</label>
 </ListView>

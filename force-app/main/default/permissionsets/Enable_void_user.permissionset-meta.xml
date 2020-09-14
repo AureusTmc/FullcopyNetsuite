@@ -646,6 +646,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>Account.Organisation_Sharing__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>Account.Organisation__c</field>
         <readable>false</readable>
     </fieldPermissions>
@@ -1521,6 +1526,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>Booking__c.Grade__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>Booking__c.Group_Class__c</field>
         <readable>false</readable>
     </fieldPermissions>
@@ -1617,6 +1627,11 @@
     <fieldPermissions>
         <editable>false</editable>
         <field>Booking__c.Opportunity__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Booking__c.Organisation_Sharing__c</field>
         <readable>false</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -2646,6 +2661,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>Case.Organisation_Sharing__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>Case.Origin</field>
         <readable>false</readable>
     </fieldPermissions>
@@ -3092,6 +3112,11 @@
     <fieldPermissions>
         <editable>false</editable>
         <field>Class__c.Instrument__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Class__c.Is_Makeup_Class__c</field>
         <readable>false</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -3786,6 +3811,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>Customer_Adhoc_Discount__c.Organisation_Sharing__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>Customer_Adhoc_Discount__c.Parent__c</field>
         <readable>false</readable>
     </fieldPermissions>
@@ -4466,6 +4496,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>Enrolment__c.Grade__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>Enrolment__c.House_type__c</field>
         <readable>false</readable>
     </fieldPermissions>
@@ -4627,6 +4662,11 @@
     <fieldPermissions>
         <editable>false</editable>
         <field>Enrolment__c.Opportunity__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Enrolment__c.Organisation_Sharing__c</field>
         <readable>false</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -6421,6 +6461,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>Leave_Request__c.Organisation_Sharing__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>Leave_Request__c.Paid_Leaves__c</field>
         <readable>false</readable>
     </fieldPermissions>
@@ -6961,7 +7006,17 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>Package__c.Facility_Fee__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>Package__c.Field_1__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Package__c.Grade_New__c</field>
         <readable>false</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -7002,6 +7057,11 @@
     <fieldPermissions>
         <editable>false</editable>
         <field>Package__c.Offer_Start_Date__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Package__c.Organisation_Sharing__c</field>
         <readable>false</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -8697,6 +8757,11 @@
     <fieldPermissions>
         <editable>false</editable>
         <field>Teacher_Working_Hour__c.Is_Booking_Booking_created__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Teacher_Working_Hour__c.Organisation_Sharing__c</field>
         <readable>false</readable>
     </fieldPermissions>
     <fieldPermissions>

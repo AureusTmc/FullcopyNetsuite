@@ -1,0 +1,42 @@
+<template>
+  <lightning-card>
+
+    <lightning-button label="Add Credit Memo" variant="brand" slot="actions" onclick={showModalBox}></lightning-button>
+
+    <template if:true={showModal}>
+
+      <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+        aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+
+        <!--_________________________________________  MODAL BODY  _________________________________________________________-->
+        <div class="slds-modal__container">
+
+          <header class="slds-modal__header">
+            <h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">Credit Memo</h2>
+          </header>
+          <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+
+            <lightning-radio-group name="radioGroup" label="Please select the type of credit memo" options={options}
+              value={value} type="radio"></lightning-radio-group>
+
+            <lightning-input type="number" name="input8" required value="5" min="0" label="Amount" max="99">
+            </lightning-input>
+
+            <lightning-input type="text" label="Remarks" placeholder="Enter some Remarks..."></lightning-input>
+
+          </div>
+          <!-- _________________________________________  FOOTER  ________________________________________________________-->
+          <footer class="slds-modal__footer">
+            <lightning-button label="Yes" variant="brand" slot="actions"></lightning-button>
+            <lightning-button class="slds-p-left_medium" label="No" variant="destructive" slot="actions"
+              onclick={showModalBox}></lightning-button>
+          </footer>
+          <!-- _________________________________________  FOOTER END ________________________________________________________-->
+        </div>
+        <!--_________________________________________  MODAL BODY END_________________________________________________________-->
+      </section>
+
+      <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+  </lightning-card>
+</template>

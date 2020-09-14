@@ -967,6 +967,65 @@
         </values>
     </picklistValues>
     <picklistValues>
+        <picklist>Grade__c</picklist>
+        <values>
+            <fullName>Beginner</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>DipABRSM</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Grade 1</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Grade 2</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Grade 3</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Grade 4</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Grade 5</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Grade 6</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Grade 7</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Grade 8</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Introductory</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>LRSM</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>LTCL</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>PC%2FARSM</fullName>
+            <default>false</default>
+        </values>
+    </picklistValues>
+    <picklistValues>
         <picklist>House_type__c</picklist>
         <values>
             <fullName>Condo</fullName>
@@ -1121,7 +1180,35 @@
             <default>false</default>
         </values>
         <values>
+            <fullName>Ossia Bukit Timah</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Ossia HomeTeam NS</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Ossia Junction 10</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Ossia Loyang Point</fullName>
+            <default>false</default>
+        </values>
+        <values>
             <fullName>Ossia Music</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Ossia Tampines CCC</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Ossia Woodlands CC</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Ossia at Home</fullName>
             <default>false</default>
         </values>
         <values>
@@ -1200,6 +1287,21 @@
         </values>
     </picklistValues>
     <picklistValues>
+        <picklist>Organisation_Sharing__c</picklist>
+        <values>
+            <fullName>Aureus Academy Hong Kong</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Aureus Academy Singapore</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Ossia Music School Singapore</fullName>
+            <default>false</default>
+        </values>
+    </picklistValues>
+    <picklistValues>
         <picklist>Package_Process_Status__c</picklist>
         <values>
             <fullName>Completed</fullName>
@@ -1214,6 +1316,10 @@
         <picklist>Package_Process_Type__c</picklist>
         <values>
             <fullName>Cancellation</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Centre Change</fullName>
             <default>false</default>
         </values>
         <values>

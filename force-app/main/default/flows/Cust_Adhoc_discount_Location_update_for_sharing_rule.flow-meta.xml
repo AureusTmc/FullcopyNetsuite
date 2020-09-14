@@ -126,7 +126,7 @@
         </rules>
     </decisions>
     <description>Cust Adhoc discount-Location update for sharing rule</description>
-    <interviewLabel>Cust_Adhoc_discount_Location_update_for_sharing_rule-3_InterviewLabel</interviewLabel>
+    <interviewLabel>Cust_Adhoc_discount_Location_update_for_sharing_rule-4_InterviewLabel</interviewLabel>
     <label>Cust Adhoc discount-Location update for sharing rule</label>
     <processMetadataValues>
         <name>ObjectType</name>
@@ -265,6 +265,42 @@
             <field>Location_Sharing__c</field>
             <value>
                 <elementReference>myVariable_current.Parent__r.Location__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <processMetadataValues>
+                <name>dataType</name>
+                <value>
+                    <stringValue>Picklist</stringValue>
+                </value>
+            </processMetadataValues>
+            <processMetadataValues>
+                <name>isRequired</name>
+                <value>
+                    <booleanValue>false</booleanValue>
+                </value>
+            </processMetadataValues>
+            <processMetadataValues>
+                <name>leftHandSideLabel</name>
+                <value>
+                    <stringValue>Organisation Sharing</stringValue>
+                </value>
+            </processMetadataValues>
+            <processMetadataValues>
+                <name>leftHandSideReferenceTo</name>
+                <value>
+                    <stringValue/>
+                </value>
+            </processMetadataValues>
+            <processMetadataValues>
+                <name>rightHandSideType</name>
+                <value>
+                    <stringValue>Reference</stringValue>
+                </value>
+            </processMetadataValues>
+            <field>Organisation_Sharing__c</field>
+            <value>
+                <elementReference>myVariable_current.Parent__r.Organisation_Sharing__c</elementReference>
             </value>
         </inputAssignments>
         <object>Customer_Adhoc_Discount__c</object>

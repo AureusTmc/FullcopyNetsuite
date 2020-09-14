@@ -12,6 +12,50 @@
         <template>Aureus/Confirmation_of_Enrolment_enrolment</template>
     </alerts>
     <alerts>
+        <fullName>Ossia_Enrolment_Confirmation_Email</fullName>
+        <description>Ossia Enrolment Confirmation Email</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Parent_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus/Confirmation_of_Enrolment_enrolment</template>
+    </alerts>
+    <alerts>
+        <fullName>Ossia_Send_Enrollment_Request</fullName>
+        <description>Ossia Send Enrollment Request</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Parent_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus/Free_trail_booking_Confirmation</template>
+    </alerts>
+    <alerts>
+        <fullName>Ossia_Send_Enrolment_Trial_Booking_Confirmation</fullName>
+        <description>Ossia Send Enrolment Trial Booking Confirmation</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Parent_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus/Free_trail_booking_Confirmation</template>
+    </alerts>
+    <alerts>
+        <fullName>Ossia_Send_Free_Trial_Enrolment</fullName>
+        <description>Ossia Send Free Trial Enrolment</description>
+        <protected>false</protected>
+        <recipients>
+            <field>Parent_Email__c</field>
+            <type>email</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Aureus/Free_Trial_Submission_Enrolment</template>
+    </alerts>
+    <alerts>
         <fullName>Send_Enrollment_Request</fullName>
         <description>Send Enrollment Request</description>
         <protected>false</protected>

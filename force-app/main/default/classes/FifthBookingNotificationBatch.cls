@@ -7,7 +7,10 @@ Description   :    This batch class is used for sending reminder Mobile Notifica
 global class FifthBookingNotificationBatch implements Database.Batchable<sObject>,Database.AllowsCallouts{
     
     global Database.QueryLocator start(Database.BatchableContext BC){
-        return Database.getQueryLocator([SELECT Id,start_time__c,Booking_Date__c,Package__r.Instrument__c,Student__r.Name,Parent__r.FCM_Token__c,Parent__c FROM Fifth_Lesson__c 
+        return Database.getQueryLocator([SELECT Id,start_time__c,Booking_Date__c,Package__r.Instrument__c,Student__r.Name,Parent__r.FCM_Token__c,Parent__c,
+                                        // added by nishi: 7-Sep-2020:for check organisation is ossia then we get makeup mins on enrolment and teacher type is part-time then we not send reminder 
+                                        Enrolment__r.Available_Make_up_Mins__c,Enrolment__r.Center__r.Organisation__r.Name,Enrolment__r.teacher__r.Engagement_Type__c
+                                         FROM Fifth_Lesson__c 
                                          WHERE Booking_Date__c = THIS_MONTH and 
                                          Parent__r.FCM_Token__c != null and 
                                          IsActive__c = true]);
@@ -16,16 +19,28 @@ global class FifthBookingNotificationBatch implements Database.Batchable<sObject
     global void execute(Database.BatchableContext BC,List<Fifth_Lesson__c> listOfBooking){
         List<Mobile_Notification__c> listOfMobileNotification = new List<Mobile_Notification__c>();
         for(Fifth_Lesson__c bookingObj: listOfBooking){
-            Datetime StartTime = Datetime.newInstance(Date.today(), bookingObj.start_time__c);
-            DateTime BookingDate = DateTime.newInstance(bookingObj.Booking_Date__c.year(), bookingObj.Booking_Date__c.month(),bookingObj.Booking_Date__c.day());
-            String instrument = String.IsNotBlank(bookingObj.Package__r.Instrument__c) ? bookingObj.Package__r.Instrument__c :'Make-up';
-            String  title =  'Action Required  – '+instrument +' Lesson on '+BookingDate.format('EEEE') +' '+ StartTime.format('h:mm a');
-            String  bodymsg = 'You have an action required for the 5th lesson this month on ' + BookingDate.format('dd, MMM') +' '+ StartTime.format('h:mm a') 
-                + ' for ' + + bookingObj.Student__r.Name + '. Please go to the lesson page to select one of the options.';
-            String to = bookingObj.Parent__r.FCM_Token__c;
-            Mobile_Notification__c log = FirebaseNotificationHelper.sendNotificationBatch(bookingObj.Parent__c, to, title, bodymsg);
-            if(log != null)
-                listOfMobileNotification.add(log); 
+              //start: added by nishi: 7-Sep-2020:for check organisation is ossia then we get makeup mins on enrolment and teacher type is part-time then we not send reminder 
+            Boolean isSendNotification = true;
+            if(string.isNotBlank(bookingObj.Enrolment__c) && string.isNotBlank(bookingObj.Enrolment__r.Center__c) && string.isNotBlank(bookingObj.Enrolment__r.Center__r.Organisation__c)
+            && string.isNotBlank(bookingObj.Enrolment__r.Center__r.Organisation__r.Name) && bookingObj.Enrolment__r.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                if(string.isNotBlank(bookingObj.Enrolment__c) && string.isNotBlank(bookingObj.Enrolment__r.teacher__c) &&  string.isNotBlank(bookingObj.Enrolment__r.teacher__r.Engagement_Type__c) && 
+                    bookingObj.Enrolment__r.Teacher__r.Engagement_Type__c.equalsIgnoreCase('Part-Time') ){
+                        isSendNotification = false;        
+                }
+            }
+              //end: added by nishi: 7-Sep-2020:for check organisation is ossia then we get makeup mins on enrolment and teacher type is part-time then we not send reminder 
+            if(isSendNotification){
+                Datetime StartTime = Datetime.newInstance(Date.today(), bookingObj.start_time__c);
+                DateTime BookingDate = DateTime.newInstance(bookingObj.Booking_Date__c.year(), bookingObj.Booking_Date__c.month(),bookingObj.Booking_Date__c.day());
+                String instrument = String.IsNotBlank(bookingObj.Package__r.Instrument__c) ? bookingObj.Package__r.Instrument__c :'Make-up';
+                String  title =  'Action Required  – '+instrument +' Lesson on '+BookingDate.format('EEEE') +' '+ StartTime.format('h:mm a');
+                String  bodymsg = 'You have an action required for the 5th lesson this month on ' + BookingDate.format('dd, MMM') +' '+ StartTime.format('h:mm a') 
+                    + ' for ' + + bookingObj.Student__r.Name + '. Please go to the lesson page to select one of the options.';
+                String to = bookingObj.Parent__r.FCM_Token__c;
+                Mobile_Notification__c log = FirebaseNotificationHelper.sendNotificationBatch(bookingObj.Parent__c, to, title, bodymsg);
+                if(log != null)
+                    listOfMobileNotification.add(log); 
+            }
         }
         if(listOfMobileNotification.size() >0 ){
             insert listOfMobileNotification;

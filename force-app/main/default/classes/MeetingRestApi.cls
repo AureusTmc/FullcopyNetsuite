@@ -7,7 +7,7 @@ global class MeetingRestApi {
         String bookingId = req.params.get('id');
         Booking__c bookingObj = new Booking__c();
         bookingId = '%'+bookingId+'%';
-        bookingObj = [SELECT Online_Lesson_URL__c, Online_Lesson_Passcode__c FROM Booking__c Where Online_Lesson_URL__c like:bookingId limit 1];
+        bookingObj = [SELECT Online_Lesson_URL__c, Online_Lesson_Passcode__c, Id FROM Booking__c Where Online_Lesson_URL__c like:bookingId limit 1];
         return bookingObj;  
     }   
 }

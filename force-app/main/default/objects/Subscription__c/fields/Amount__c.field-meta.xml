@@ -4,6 +4,11 @@
     <externalId>false</externalId>
     <label>Amount</label>
     <summarizedField>Subscription_Line_Item__c.Amount__c</summarizedField>
+    <summaryFilterItems>
+        <field>Subscription_Line_Item__c.Status__c</field>
+        <operation>equals</operation>
+        <value>Active</value>
+    </summaryFilterItems>
     <summaryForeignKey>Subscription_Line_Item__c.Subscription__c</summaryForeignKey>
     <summaryOperation>sum</summaryOperation>
     <trackHistory>false</trackHistory>
