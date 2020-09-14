@@ -4,5 +4,8 @@
     "**/bower_components": true,
     "**/.sfdx": true
   },
-  "git.ignoreLimitWarning": true
+  "git.ignoreLimitWarning": true,
+  "editor.wordWrapColumn": 120,
+  "prettier.printWidth": 120,
+  "prettier.proseWrap": "never"
 }

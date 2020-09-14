@@ -24,8 +24,8 @@
     "eslint-config-prettier": "^6.11.0",
     "husky": "^4.2.1",
     "lint-staged": "^10.0.7",
-    "prettier": "^2.0.5",
-    "prettier-plugin-apex": "^1.6.0"
+    "prettier": "2.1.1",
+    "prettier-plugin-apex": "1.7.0"
   },
   "husky": {
     "hooks": {
@@ -36,6 +36,8 @@
     "**/*.{cls,cmp,component,css,html,js,json,md,page,trigger,xml,yaml,yml}": [
       "prettier --write"
     ],
-    "**/{aura|lwc}/**": ["eslint"]
+    "**/{aura|lwc}/**": [
+      "eslint"
+    ]
   }
 }

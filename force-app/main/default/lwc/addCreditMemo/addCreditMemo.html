@@ -16,18 +16,39 @@
           </header>
           <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
 
-            <lightning-radio-group name="radioGroup" label="Please select the type of credit memo" options={options}
-              value={value} type="radio"></lightning-radio-group>
+            <!--_________________________________________  CREDIT MEMO OPTIONS  ______________________________________________-->
+            <fieldset class="slds-form-element">
+              <legend class="slds-form-element__legend slds-form-element__label">Credit Memo Types</legend>
+              <div class="slds-form-element__control">
+                <div class="slds-radio_button-group">
+                  <template for:each={options} for:item="op" for:index="index">
+                    <span class="slds-button slds-radio_button" key={op.value}>
+                      <input disabled={op.disabled} onchange={handleChange} checked={op.checked} type="radio"
+                        name={op.label} id={op.label} value={op.label} data-value={op.value} />
+                      <label class="slds-radio_button__label" for={op.label}>
+                        <span class="slds-radio_faux">{op.label}</span>
+                      </label>
+                    </span>
+                  </template>
+                </div>
+              </div>
+            </fieldset>
 
-            <lightning-input type="number" name="input8" required value="5" min="0" label="Amount" max="99">
+            <!--_________________________________________  CREDIT MEMO OPTIONS END ______________________________________________-->
+            <lightning-input data-my-id="userAmnt" type="number" name="input8" required value={userEnteredAmount}
+              min="0" label="Amount" max={creditMemoWrap.invoiceAmount} placeholder={creditMemoWrap.invoiceAmount}
+              onchange={handleAmountChange}>
             </lightning-input>
 
-            <lightning-input type="text" label="Remarks" placeholder="Enter some Remarks..."></lightning-input>
+            <lightning-input type="text" onchange={handleRemarkChange} label="Reason" placeholder="Enter reason..."
+              value={remarks}>
+            </lightning-input>
 
           </div>
           <!-- _________________________________________  FOOTER  ________________________________________________________-->
           <footer class="slds-modal__footer">
-            <lightning-button label="Yes" variant="brand" slot="actions"></lightning-button>
+            <lightning-button label="Yes" variant="brand" slot="actions" onclick={showConfirmModalBox}>
+            </lightning-button>
             <lightning-button class="slds-p-left_medium" label="No" variant="destructive" slot="actions"
               onclick={showModalBox}></lightning-button>
           </footer>
@@ -36,7 +57,46 @@
         <!--_________________________________________  MODAL BODY END_________________________________________________________-->
       </section>
 
+      <template if:true={showConfirmBox}>
+        <!--____________________________________________  CONFIRMATION MODAL  __________________________________________________  -->
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+          aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+
+          <template if:true={isLoaded}>
+            <div class="exampleHolder">
+              <lightning-spinner alternative-text="Loading" size="large"></lightning-spinner>
+            </div>
+          </template>
+          <!--_________________________________________ CONFIRMATION MODAL BODY  _________________________________________________________-->
+          <div class="slds-modal__container">
+            <header class="slds-modal__header">
+              <h2 id="modal-heading-02" class="slds-modal__title slds-hyphenate">Are you sure?</h2>
+            </header>
+            <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-2">
+
+              <p>{confirmationMessage} </p>
+            </div>
+            <!-- _________________________________________  FOOTER  ________________________________________________________-->
+            <footer class="slds-modal__footer">
+              <lightning-button label="Yes" variant="brand" onclick={createCreditMemo} slot="actions">
+              </lightning-button>
+              <lightning-button class="slds-p-left_medium" label="No" onclick={showConfirmModalBox}
+                variant="destructive" slot="actions">
+              </lightning-button>
+
+            </footer>
+            <!-- _________________________________________  FOOTER END ________________________________________________________-->
+          </div>
+          <!--_________________________________________ CONFIRMATION MODAL BODY END_________________________________________________________-->
+        </section>
+        <!--____________________________________________  CONFIRMATION MODAL END __________________________________________________  -->
+      </template>
       <div class="slds-backdrop slds-backdrop_open"></div>
+
+      <template if:true={error}>
+        {error}
+      </template>
+
     </template>
   </lightning-card>
 </template>
