@@ -905,6 +905,7 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
                     listOfGradePackageClass.add(objGradePackage.Class_Name__c);
                 }
                 for(Class__c cls: [SELECT Id, Name, Package__c, Package__r.Name, Teacher__c, Teacher__r.FirstName, Teacher__r.Teacher_Bio__c, Class_Day__c, Start_Time__c,End_Time__c,
+                                    Available_Capacity__c,
                                     (SELECT Id, Booking_Date__c FROM Bookings__r WHERE RecordTypeId =: bookGrpClsRecId AND (Booking_Date__c >=: startDt AND Booking_Date__c <=: endDt))
                                     FROM Class__c WHERE 
                                     ID In: listOfGradePackageClass
@@ -931,6 +932,7 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
             }else{
                  //end: Added by nishi:3-Sep-2020: for show ossia group class time slot we get instrument to Ossia_Group_Grade_Package__c object
                 for(Class__c cls: [SELECT Id, Name, Package__c, Package__r.Name, Teacher__c, Teacher__r.FirstName, Teacher__r.Teacher_Bio__c, Class_Day__c, Start_Time__c,End_Time__c,
+                                    Available_Capacity__c,
                                     (SELECT Id, Booking_Date__c FROM Bookings__r WHERE RecordTypeId =: bookGrpClsRecId AND (Booking_Date__c >=: startDt AND Booking_Date__c <=: endDt))
                                     FROM Class__c WHERE Instrument__c =:trialEnrMod.slcdInstrument 
                                     AND Centre_Name__c =:  slcdCenter 
@@ -1005,9 +1007,10 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
                             List<String> tchrQual =  new List<String>();
                             if(tcrQualMap.get(clsSch.Teacher__c) != null)
                                 tchrQual = tcrQualMap.get(clsSch.Teacher__c);
-                            
+                            // 14-Sep-2020:nishi: If a user added two enrolment and both enrolment types were grouped then we allowed the user to select the same teacher, time slot
+                            // otherwise the enrolment type is individual then we showed an error message
                             TeacherModel tMod = new TeacherModel(clsSch.Teacher__c,clsSch.Teacher__r.FirstName,
-                                                                 clsSch.Teacher__r.Teacher_Bio__c,'',tchrQual);
+                                                                 clsSch.Teacher__r.Teacher_Bio__c,'',tchrQual,clsSch.Id,clsSch.Available_Capacity__c);
                             if(teachAttaImageMap.get(clsSch.Teacher__c) != null)
                                 tMod.attachmentId = teachAttaImageMap.get(clsSch.Teacher__c);
                             tchTempList.add(tMod);
@@ -1605,7 +1608,8 @@ teachModSlotMap = new Map<String, List<TeacherModel>>();
         public String teacBioDescribe{get;set;}
         public String highestQualification{get;set;}
         public List<String> highestQualificationLst{get;set;}
-        
+        public String classId{get;set;}
+        public Decimal classAvailableCapacity{get;set;}
         public String attachmentId{get;set;}
         
         public TeacherModel(String tecId,String tecName,String teacBioCon,String highestQualification, List<String> highestQualificationLst){
@@ -1615,6 +1619,21 @@ teachModSlotMap = new Map<String, List<TeacherModel>>();
             this.teacBioDescribe = teacBioCon;
             this.highestQualification = highestQualification;
             this.highestQualificationLst = highestQualificationLst;
+            this.classId ='';
+            this.classAvailableCapacity =0;
+        }
+        // 14-Sep-2020:nishi: If a user added two enrolment and both enrolment types were grouped then we allowed the user to select the same teacher, time slot
+        // otherwise the enrolment type is individual then we showed an error message 
+        // we get Class id and avaailable capacity with teacher
+        public TeacherModel(String tecId,String tecName,String teacBioCon,String highestQualification, List<String> highestQualificationLst,String classId, Decimal classAvailableCapacity){
+            this.tecId   = tecId;
+            this.tecName = tecName;
+            this.teacBio = teacBioCon;
+            this.teacBioDescribe = teacBioCon;
+            this.highestQualification = highestQualification;
+            this.highestQualificationLst = highestQualificationLst;
+            this.classId =classId;
+            this.classAvailableCapacity = classAvailableCapacity;
         }
     }
 }

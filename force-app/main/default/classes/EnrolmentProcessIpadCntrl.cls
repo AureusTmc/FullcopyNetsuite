@@ -916,7 +916,7 @@ public class EnrolmentProcessIpadCntrl {
     public pageReference saveEnrolment(){
         Savepoint sp;
         isError = false;
-        errorMsg = '';
+        errorMsg = 'success';
             
         try{
             sp = Database.setSavepoint();
@@ -1263,7 +1263,7 @@ public class EnrolmentProcessIpadCntrl {
     public pageReference saveAndNextProcess(){
         Savepoint sp;
         isError = false;
-        errorMsg = '';
+        errorMsg = 'success';
             
         try{
             sp = Database.setSavepoint();
@@ -1284,7 +1284,7 @@ public class EnrolmentProcessIpadCntrl {
                 if(defaultOrg=='ossia'){ 
                     // start :added by nishi: 1-sep-2020: for if class related to ossia organisation then we show package list into  
                   //new created object Ossia_Group_Grade_Packages__r other wise we get package list into package field 
-                     for(Class__c cls: [SELECT Id, Name, Centre_Name__c, Teacher__c, Package__c, Class_Day__c, Start_Time__c,End_Time__c, 
+                     for(Class__c cls: [SELECT Id, Name, Centre_Name__c, Teacher__c, Package__c, Class_Day__c, Start_Time__c,End_Time__c, Available_Capacity__c,
                                          (SELECT Class_Name__c, Package__c,Package__r.Name,  Name, Id ,
                                              Package__r.Type__c,Package__r.RecordtypeId,Package__r.Type_of_package__c
                                              FROM Ossia_Group_Grade_Packages__r 
@@ -1311,8 +1311,9 @@ public class EnrolmentProcessIpadCntrl {
                  // end :added by nishi: 1-sep-2020: for if class related to ossia organisation then we show package list into  
                   //new created object Ossia_Group_Grade_Packages__r other wise we get package list into package field 
                     
-                    for(Class__c cls: [SELECT Id, Name, Centre_Name__c, Teacher__c, Package__c, Class_Day__c, Start_Time__c,End_Time__c FROM Class__c WHERE Teacher__c IN:tchrSet AND Package__c IN:pkgSet 
-                    AND Centre_Name__c IN:centSet AND Teacher__c IN:tchrSet AND Package__c IN:pkgSet AND Active__c = True AND Available_Capacity__c > 0
+                    for(Class__c cls: [SELECT Id, Name, Centre_Name__c, Teacher__c, Package__c, Class_Day__c, Start_Time__c,End_Time__c,Available_Capacity__c 
+                                        FROM Class__c WHERE Teacher__c IN:tchrSet AND Package__c IN:pkgSet 
+                                        AND Centre_Name__c IN:centSet AND Teacher__c IN:tchrSet AND Package__c IN:pkgSet AND Active__c = True AND Available_Capacity__c > 0
                      // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
                      And Is_Makeup_Class__c = false]){                                                               
                         String key = cls.Centre_Name__c +'#'+ cls.Teacher__c +'#'+ cls.Package__c +'#'+ cls.Class_Day__c +'#'+ cls.Start_Time__c;
@@ -1322,7 +1323,8 @@ public class EnrolmentProcessIpadCntrl {
 
             }
             system.debug('@@clsSchMap'+clsSchMap);
-        
+            Set<string> setOfTeacherAndTime =new Set<string>();
+            
             List<Enrolment__c> enrList = new List<Enrolment__c>();            
             for(StudentWrapper stu : studentWrapList){
                 Date lessDt; 
@@ -1348,38 +1350,61 @@ public class EnrolmentProcessIpadCntrl {
                 //updated by Rajesh, 7th Aug 2019. to store enrolmentsource on enrolment/case object
                 if(String.isNotBlank(enrolmentSource))
                     stu.enrl.Enrolment_Source__c = enrolmentSource;
-                
+                String currDay =  DateTime.newInstance(lessDt, Time.newInstance(0, 0, 0, 0)).format('E');
                 if(stu.lesson.selectedLsnType.equalsIgnoreCase('Group')){
-                    String currDay =  DateTime.newInstance(lessDt, Time.newInstance(0, 0, 0, 0)).format('E');
                     String key = stu.enrl.Center__c +'#'+ stu.enrl.Teacher__c +'#'+stu.enrl.Package__c +'#'+ currDay +'#'+ startTime;
                     system.debug('@@clsSchMap'+clsSchMap);
 
                     if(clsSchMap.containsKey(key))
                         stu.enrl.Class__c = clsSchMap.get(key).Id;
                     stu.enrl.Type__c    = 'Group';
+                   //start: 14-Sep-2020:nishi: If a user added two enrolment and both enrolment types were grouped then we allowed the user to select the same teacher, time slot
+                  // otherwise the enrolment type is individual then we showed an error message
+                    if(!setOfTeacherAndTime.contains(currDay+'-'+startTime+'-'+stu.lesson.selectedTeacher+clsSchMap.get(key).Id)){
+                        setOfTeacherAndTime.add(currDay+'-'+startTime+'-'+stu.lesson.selectedTeacher+clsSchMap.get(key).Id);
+                    }else{
+                        if(clsSchMap.get(key).Available_Capacity__c > 2){
+                            errorMsg = 'Error: You can\'t book the same Teacher for \'the Same Time\'.';
+                            isError  = true;
+                            break; 
+                        }
+                    }
+                }else{
+                    if(!setOfTeacherAndTime.contains(currDay+'-'+startTime+'-'+stu.lesson.selectedTeacher)){
+                        setOfTeacherAndTime.add(currDay+'-'+startTime+'-'+stu.lesson.selectedTeacher);
+                    }else{
+                        errorMsg = 'Error: You can\'t book the same Teacher for \'the Same Time\'.';
+                        isError  = true;
+                        break; 
+                    }
                 }
+                //end: 14-Sep-2020:nishi: If a user added two enrolment and both enrolment types were grouped then we allowed the user to select the same teacher, time slot
+                  // otherwise the enrolment type is individual then we showed an error message
                 enrList.add(stu.enrl);
-            }      
-            upsert enrList;      
-             system.debug('@@enrList'+enrList);
-            List<Booking__c> bookLstForDel = [SELECT Id,Name FROM Booking__c WHERE Status__c = 'Blocked' AND Enrolment__c IN: enrList];
-            if(bookLstForDel.size() > 0)
-                delete bookLstForDel;
-            
-            PageReference pageRef = new PageReference('/apex/EnrolmentProcessForClass');
-            
-            Integer counter = 1;
-            for(Enrolment__c enr: enrList){
-                String enrlStr = 'enr'+counter;
-                pageRef.getParameters().put(enrlStr, enr.Id); 
-               
-                counter = counter+1;            
-            }        
-            
-            return pageRef;
+            }   
+            system.debug('setOfTeacherAndTime'+setOfTeacherAndTime);
+            system.debug('errorMsg'+errorMsg);
+            system.debug('isError'+isError);
+            if(!isError){   
+                upsert enrList;      
+                system.debug('@@enrList'+enrList);
+                List<Booking__c> bookLstForDel = [SELECT Id,Name FROM Booking__c WHERE Status__c = 'Blocked' AND Enrolment__c IN: enrList];
+                if(bookLstForDel.size() > 0)
+                    delete bookLstForDel;
+                
+                PageReference pageRef = new PageReference('/apex/EnrolmentProcessForClass');
+                
+                Integer counter = 1;
+                for(Enrolment__c enr: enrList){
+                    String enrlStr = 'enr'+counter;
+                    pageRef.getParameters().put(enrlStr, enr.Id); 
+                
+                    counter = counter+1;            
+                }        
+                return pageRef;
+            }
         }catch(Exception e){
              Database.rollback(sp);
-             
              System.debug('Error:  '+e.getMessage());
              errorMsg = e.getMessage();
              isError  = true;
