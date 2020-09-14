@@ -240,9 +240,12 @@ D. Change of Enrolment
                 upsert   bookingListForClass;    
                 system.debug('bookingListForClass'+bookingListForClass); 
                 for(Booking__c objBook: bookingListForClass){
-                    mapOfDateGroupLesson = mapOfClassDates.containsKey(objBook.Class__c) ?  mapOfClassDates.get(objBook.Class__c):New Map<Date,String>();
-                    mapOfDateGroupLesson.put(objBook.Booking_Date__c ,objBook.id);
-                    mapOfClassDates.put(objBook.Class__c,mapOfDateGroupLesson);
+                    // 14-Sep-2020: for get only group class not busy (fifth lesson bookings)
+                    if(objBook.Type__c == ConstantsClass.groupTypeBooking){
+                        mapOfDateGroupLesson = mapOfClassDates.containsKey(objBook.Class__c) ?  mapOfClassDates.get(objBook.Class__c):New Map<Date,String>();
+                        mapOfDateGroupLesson.put(objBook.Booking_Date__c ,objBook.id);
+                        mapOfClassDates.put(objBook.Class__c,mapOfDateGroupLesson);
+                    }
                 }
                 system.debug('mapOfClassDates'+mapOfClassDates); 
             }
@@ -1566,13 +1569,13 @@ D. Change of Enrolment
                             FROM Case WHERE Id IN:caseIds]){
                                 
                                 String templateId;
-                                if(CasObject.Booking__r.Cancellation_Reason__c.equalsIgnoreCase('Teacher Mc') && templateMap.containsKey('Teacher_Leave_Enrolment')){
-                                    templateId = templateMap.get('Teacher_Leave_Enrolment');
+                                if(CasObject.Booking__r.Cancellation_Reason__c.equalsIgnoreCase('Teacher Mc') && templateMap.containsKey('Ossia_Teacher_Leave_Enrolment')){
+                                    templateId = templateMap.get('Ossia_Teacher_Leave_Enrolment');
                                 }else if(CasObject.Booking__r.Cancellation_Reason__c.equalsIgnoreCase('Holidays') && String.isNotBlank(CasObject.Booking__r.Public_Holiday_Status__c)){
-                                    if(CasObject.Booking__r.Public_Holiday_Status__c.equalsIgnoreCase('Open') && templateMap.containsKey('Holiday_Enrolment_Open'))
-                                        templateId = templateMap.get('Holiday_Enrolment_Open');
-                                    else if(CasObject.Booking__r.Public_Holiday_Status__c.equalsIgnoreCase('Closed') && templateMap.containsKey('Holiday_Enrolment_Closed'))
-                                        templateId = templateMap.get('Holiday_Enrolment_Closed');
+                                    if(CasObject.Booking__r.Public_Holiday_Status__c.equalsIgnoreCase('Open') && templateMap.containsKey('Ossia_Holiday_Enrolment_Open'))
+                                        templateId = templateMap.get('Ossia_Holiday_Enrolment_Open');
+                                    else if(CasObject.Booking__r.Public_Holiday_Status__c.equalsIgnoreCase('Closed') && templateMap.containsKey('Ossia_Holiday_Enrolment_Closed'))
+                                        templateId = templateMap.get('Ossia_Holiday_Enrolment_Closed');
                                 }
                                 
                                 if(String.isNotBlank(templateId) && String.isNotBlank(CasObject.Booking__r.Parent__r.PersonEmail)){
