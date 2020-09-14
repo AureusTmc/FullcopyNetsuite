@@ -13,7 +13,7 @@ public class ProcessRefundController {
                              Parent_Account__r.Centre_Name__r.Country__r.Stripe_Base_Url__c, Parent_Account__r.Centre_Name__r.Country__r.Id, 
                              Parent_Account__r.Centre_Name__r.Country__r.Stripe_Secret_Key__c, Invoice__c ,
                              //commented by @nishi 10 sep 2020,Organisation wise charge as per new logic
-                             Parent_Account__r.Centre_Name__r.Organisation__r.name,Payment_Date__c,
+                             Parent_Account__r.Centre_Name__r.Organisation__r.name,Payment_Date__c,method_of_payment__c,
                              Parent_Account__r.Centre_Name__r.Organisation__r.Stripe_Base_Url__c, Parent_Account__r.Centre_Name__r.Organisation__r.Stripe_Secret_Key__c
                              FROM Payment__c 
                              WHERE Id=:recId LIMIT 1];
@@ -64,6 +64,7 @@ public class ProcessRefundController {
               //added by nishi: 10-Sep-2020:Payment date for Pending payments should be updated to the date of application in the subsequent invoice. Same should also be changed at the time of Refunds
               objPay.Payment_Date__c = System.today();
               objPay.Payment_Status__c = ConstantsClass.paymentSuccessStatus;
+              objPay.method_of_payment__c = ConstantsClass.cardModeType;  // added by @nishi 14 sep 2020,as per new requirement for netsuit we added payment method
               update objPay;
               system.debug('@@@objPay'+objPay);
              SageIntacctIntegrationUtility.refundPayment(objPay.id);	 
