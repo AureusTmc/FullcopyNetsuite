@@ -259,7 +259,7 @@ public class ClassEditController {
                         if(String.isNotBlank(classObj.Id)){
                             UPDATE classObj;
                             system.debug('classObj'+classObj);
-                            RescheduleForAllFutureGrouoClassBookings allReschedule = new RescheduleForAllFutureGrouoClassBookings(isDayChange, classObj, dateChange.date(), bookingObj.Booking_Date__c);
+                            RescheduleForAllFutureGroupClassBookings allReschedule = new RescheduleForAllFutureGroupClassBookings(isDayChange, classObj, dateChange.date(), bookingObj.Booking_Date__c);
                         }
                     }
                 }
