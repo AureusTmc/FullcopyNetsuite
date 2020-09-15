@@ -1465,15 +1465,31 @@ public class EnrolmentProcessForClassCtrl {
                                                 invLnItm.Enrolment__c = enr.Id;
                                                 invLnItm.Subscription_Line_Item__r = subLItm;
                                                 invLnItm.Month__c = currLesDt;
-                                                if(prgDisFeeForSingleLess > 0)
-                                                    invLnItm.Discount_Amount__c = BillingUtility.roundOffAmount((prgDisFeeForSingleLess*countDtforMonth)); 
+                                                // commented by nishi: 15-Sep-2020: for new reqirement In netsuit we added new invoice line itme for discount amount
+                                               // if(prgDisFeeForSingleLess > 0)
+                                                    //invLnItm.Discount_Amount__c = BillingUtility.roundOffAmount((prgDisFeeForSingleLess*countDtforMonth)); 
                                                 
                                                 //Added by Rajesh on 21st oct 2019. calcuate individual gst amount for the line items
                                                 Decimal tempTotAmt = invLnItm.Amount__c; 
-                                                tempTotAmt = invLnItm.Discount_Amount__c > 0 ? (tempTotAmt-invLnItm.Discount_Amount__c): tempTotAmt; 
+                                                //tempTotAmt = invLnItm.Discount_Amount__c > 0 ? (tempTotAmt-invLnItm.Discount_Amount__c): tempTotAmt; 
                                                 invLnItm.GST_Amount__c = BillingUtility.roundOffAmount((tempTotAmt > 0 && tempGstPrcntg > 0) ? ((tempTotAmt * tempGstPrcntg) / 100):0);
                                                 
-                                                invLineItmList.add(invLnItm);                                                
+                                                invLineItmList.add(invLnItm);
+                                                
+                                                  //start: commented by nishi: 15-Sep-2020: for new reqirement In netsuit we added new invoice line itme for discount amount
+                                                if(prgDisFeeForSingleLess >0){
+                                                    tempTotAmt = (prgDisFeeForSingleLess*countDtforMonth) * -1; 
+                                                    invLnItm = BillingUtility.fillInvLnItm(null, null, null, (BillingUtility.roundOffAmount(tempTotAmt)), remarksStr +' (Discount)', enr.Teacher__c);
+                                                    invLnItm.Is_Discount__c = true;
+                                                    invLnItm.Package__c   = enr.Package__c;
+                                                    invLnItm.Invoice__r   = inv;
+                                                    invLnItm.Enrolment__c = enr.Id;
+                                                    invLnItm.Subscription_Line_Item__r = subLItm;
+                                                    invLnItm.Month__c = currLesDt;
+                                                    invLnItm.GST_Amount__c = BillingUtility.roundOffAmount((tempGstPrcntg > 0) ? ((tempTotAmt * tempGstPrcntg) / 100):0);
+                                                    invLineItmList.add(invLnItm);
+                                                }
+                                                  //end: commented by nishi: 15-Sep-2020: for new reqirement In netsuit we added new invoice line itme for discount amount
                                                 currLesDt = stDt;
                                                 countDtforMonth = 1;
                                             }                                            
@@ -1488,15 +1504,31 @@ public class EnrolmentProcessForClassCtrl {
                                             invLnItm.Enrolment__c = enr.Id;
                                             invLnItm.Subscription_Line_Item__r = subLItm;
                                             invLnItm.Month__c = currLesDt;
-                                            if(prgDisFeeForSingleLess > 0)
-                                                invLnItm.Discount_Amount__c = BillingUtility.roundOffAmount(BillingUtility.roundOffAmount((prgDisFeeForSingleLess*countDtforMonth))); 
+                                              // commented by nishi: 15-Sep-2020: for new reqirement In netsuit we added new invoice line itme for discount amount
+                                            //if(prgDisFeeForSingleLess > 0)
+                                                //invLnItm.Discount_Amount__c = BillingUtility.roundOffAmount(BillingUtility.roundOffAmount((prgDisFeeForSingleLess*countDtforMonth))); 
                                             
                                             //Added by Rajesh on 21st oct 2019. calcuate individual gst amount for the line items
                                             Decimal tempTotAmt = invLnItm.Amount__c; 
-                                            tempTotAmt = invLnItm.Discount_Amount__c > 0 ? (tempTotAmt-invLnItm.Discount_Amount__c): tempTotAmt; 
+                                            //tempTotAmt = invLnItm.Discount_Amount__c > 0 ? (tempTotAmt-invLnItm.Discount_Amount__c): tempTotAmt; 
                                             invLnItm.GST_Amount__c = BillingUtility.roundOffAmount((tempTotAmt > 0 && tempGstPrcntg > 0) ? ((tempTotAmt * tempGstPrcntg) / 100):0);
                                             
                                             invLineItmList.add(invLnItm);
+                                              //start: commented by nishi: 15-Sep-2020: for new reqirement In netsuit we added new invoice line itme for discount amount
+                                            if(prgDisFeeForSingleLess > 0){
+                                                tempTotAmt = (prgDisFeeForSingleLess*countDtforMonth) * -1; 
+                                                invLnItm = BillingUtility.fillInvLnItm(null, null, null, (BillingUtility.roundOffAmount(tempTotAmt)), remarksStr+' (Discount)', enr.Teacher__c);
+                                                invLnItm.Package__c   = enr.Package__c;
+                                                invLnItm.Is_Discount__c = true;
+                                                invLnItm.Invoice__r   = inv;
+                                                invLnItm.Enrolment__c = enr.Id;
+                                                invLnItm.Subscription_Line_Item__r = subLItm;
+                                                invLnItm.Month__c = currLesDt;
+                                                invLnItm.GST_Amount__c = BillingUtility.roundOffAmount((tempGstPrcntg > 0) ? ((tempTotAmt * tempGstPrcntg) / 100):0);
+                                                
+                                                invLineItmList.add(invLnItm);
+                                            }
+                                              // end:commented by nishi: 15-Sep-2020: for new reqirement In netsuit we added new invoice line itme for discount amount
                                         }
                                     }else{
                                         Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.prgFees), remarksStr, enr.Teacher__c);
@@ -1505,15 +1537,30 @@ public class EnrolmentProcessForClassCtrl {
                                         invLnItm.Enrolment__c = enr.Id;
                                         invLnItm.Subscription_Line_Item__r = subLItm;
                                         invLnItm.Month__c     =  enr.Lessons_Start_Date__c;
-                                        if(fm.pkgFeesPromtnalDis > 0)
-                                            invLnItm.Discount_Amount__c = BillingUtility.roundOffAmount(fm.pkgFeesPromtnalDis); 
+                                          // commented by nishi: 15-Sep-2020: for new reqirement In netsuit we added new invoice line itme for discount amount
+                                        //if(fm.pkgFeesPromtnalDis > 0)
+                                            //invLnItm.Discount_Amount__c = BillingUtility.roundOffAmount(fm.pkgFeesPromtnalDis); 
                                         
                                         //Added by Rajesh on 21st oct 2019. calcuate individual gst amount for the line items
                                         Decimal tempTotAmt = invLnItm.Amount__c; 
-                                        tempTotAmt = invLnItm.Discount_Amount__c > 0 ? (tempTotAmt-invLnItm.Discount_Amount__c): tempTotAmt; 
+                                        //tempTotAmt = invLnItm.Discount_Amount__c > 0 ? (tempTotAmt-invLnItm.Discount_Amount__c): tempTotAmt; 
                                         invLnItm.GST_Amount__c = BillingUtility.roundOffAmount((tempTotAmt > 0 && tempGstPrcntg > 0) ? ((tempTotAmt * tempGstPrcntg) / 100):0);
                                         
                                         invLineItmList.add(invLnItm);
+                                        //start: commented by nishi: 15-Sep-2020: for new reqirement In netsuit we added new invoice line itme for discount amount
+                                        if(fm.pkgFeesPromtnalDis > 0){
+                                            tempTotAmt =fm.pkgFeesPromtnalDis * -1;
+                                            invLnItm = BillingUtility.fillInvLnItm(null, null, null, (BillingUtility.roundOffAmount(tempTotAmt)), remarksStr+' (Discount)', enr.Teacher__c);
+                                            invLnItm.Package__c   = enr.Package__c;
+                                            invLnItm.Invoice__r   = inv;
+                                            invLnItm.Enrolment__c = enr.Id;
+                                            invLnItm.Subscription_Line_Item__r = subLItm;
+                                            invLnItm.Month__c     =  enr.Lessons_Start_Date__c;
+                                            invLnItm.GST_Amount__c = BillingUtility.roundOffAmount(( tempGstPrcntg > 0) ? ((tempTotAmt * tempGstPrcntg) / 100):0);
+                                            invLnItm.Is_Discount__c = true;
+                                            invLineItmList.add(invLnItm);
+                                        }
+                                          //end: commented by nishi: 15-Sep-2020: for new reqirement In netsuit we added new invoice line itme for discount amount
                                     }
                                 }
                                 if(fm.regiFees> 0){
@@ -1528,8 +1575,9 @@ public class EnrolmentProcessForClassCtrl {
                                     //commented by Rajesh: 23rd Oct 2019. instead of lesson date we need to put invoice created date for the registration fees  
                                     //invLnItm.Month__c     =  enr.Lessons_Start_Date__c;
                                     invLnItm.Month__c     =  System.today();
-                                    if(fm.regiFeesDis > 0)
-                                        invLnItm.Discount_Amount__c = BillingUtility.roundOffAmount(fm.regiFeesDis); 
+                                      // commented by nishi: 15-Sep-2020: for new reqirement In netsuit we added new invoice line itme for discount amount
+                                   // if(fm.regiFeesDis > 0)
+                                        //invLnItm.Discount_Amount__c = BillingUtility.roundOffAmount(fm.regiFeesDis); 
                                     
                                     //Added by Rajesh on 21st oct 2019. calcuate individual gst amount for the line items
                                     Decimal tempTotAmt = invLnItm.Amount__c; 
@@ -1537,6 +1585,20 @@ public class EnrolmentProcessForClassCtrl {
                                     invLnItm.GST_Amount__c = BillingUtility.roundOffAmount((tempTotAmt > 0 && tempGstPrcntg > 0) ? ((tempTotAmt * tempGstPrcntg) / 100):0);
                                     
                                     invLineItmList.add(invLnItm);
+                                      //start: commented by nishi: 15-Sep-2020: for new reqirement In netsuit we added new invoice line itme for discount amount
+                                    if(fm.regiFeesDis > 0){
+                                        tempTotAmt = fm.regiFeesDis * -1; 
+                                        invLnItm = BillingUtility.fillInvLnItm(null, null, null, -(BillingUtility.roundOffAmount(tempTotAmt)), remarksStr+' (Discount)', enr.Teacher__c);
+                                        invLnItm.Package__c   = enr.Package__c;
+                                        invLnItm.Invoice__r   = inv;
+                                        invLnItm.Enrolment__c = enr.Id;
+                                        invLnItm.Subscription_Line_Item__r = subLItm;
+                                        invLnItm.Is_Discount__c = true;
+                                        invLnItm.Month__c     =  System.today();
+                                        invLnItm.GST_Amount__c = BillingUtility.roundOffAmount(( tempGstPrcntg > 0) ? ((tempTotAmt * tempGstPrcntg) / 100):0);
+                                        invLineItmList.add(invLnItm);
+                                    }
+                                      //end: commented by nishi: 15-Sep-2020: for new reqirement In netsuit we added new invoice line itme for discount amount
                                 }
                                 if(fm.depFees > 0){
                                     String remarksStr = ConstantsClass.pkgDepFeesDes;
@@ -1560,6 +1622,7 @@ if(fm.refrelDiscount > 0){
                                      Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, amount, refDiscRemark, enr.Teacher__c);
                                      invLnItm.Package__c   = enr.Package__c;
                                      invLnItm.Invoice__r   = inv;
+                                     invLnItm.Is_Discount__c = true;
                                      invLnItm.Discount_Amount__c = 0;
                                      invLnItm.Enrolment__c = enr.Id;
                                      invLnItm.Subscription_Line_Item__r = subLItm;

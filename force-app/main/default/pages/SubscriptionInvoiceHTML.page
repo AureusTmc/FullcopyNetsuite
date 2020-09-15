@@ -352,10 +352,38 @@
                            
                              
                         </tr>
+                        <!--nishi: 15-Sep-2020: for new requirement in netsuite we adjust discount as a line item -->
                         <tr>
-                            <td width="50%"><apex:outputPanel rendered="{!IF(AND(invoice.Center__r.country__r.Tax_Rate__c != NULL, invoice.Center__r.country__r.Tax_Rate__c > 0), TRUE,FALSE)}"><div class="taxbox lightgray">Tax GST({!invoice.Center__r.country__r.Tax_Rate__c}%)</div></apex:outputPanel></td>
+                           <td><apex:outputPanel rendered="{!IF(AND(subTotal != 0,subTotal != NULL), TRUE,FALSE)}" layout="block"><div class="taxbox border-none" ><b>Sub Total</b></div> </apex:outputPanel></td>
+                           <td>
+                               <apex:outputPanel rendered="{!IF(AND(subTotal != 0,subTotal != NULL), TRUE,FALSE)}" layout="block">
+                                   <div class="taxbox taxbox-right border-none">
+                                        <b><apex:outputText value="{0, number, $###,###,###.00}"><apex:param value="{!subTotal}" /></apex:outputText></b>
+                                    </div>
+                                 </apex:outputPanel>
+                            </td>
+                        </tr>
+                        <tr>
+                          
+                           <td><apex:outputPanel rendered="{!IF(AND(invoice.Discount_LineItem_Amount__c != 0,invoice.Discount_LineItem_Amount__c != NULL), TRUE,FALSE)}" layout="block">
+                               <div class="taxbox " style="color:red;">Discount</div> </apex:outputPanel></td>
+                           <td><apex:outputPanel rendered="{!IF(AND(invoice.Discount_LineItem_Amount__c != 0,invoice.Discount_LineItem_Amount__c != NULL), TRUE,FALSE)}" layout="block">
+                               <div class="taxbox taxbox-right " style="color:red;"><apex:outputField value="{!invoice.Discount_LineItem_Amount__c}"/></div> </apex:outputPanel></td>
+                        </tr>
+                        <tr>
+                           <td><apex:outputPanel rendered="{!IF(AND(totalAmount != 0,totalAmount!= NULL), TRUE,FALSE)}" layout="block"><div class="taxbox border-none" ><b> Total Amount</b></div> </apex:outputPanel></td>
+                           <td><apex:outputPanel rendered="{!IF(AND(totalAmount != 0,totalAmount != NULL), TRUE,FALSE)}" layout="block">
+                                <div class="taxbox taxbox-right border-none">
+                                <b> <apex:outputText value="{0, number, $###,###,###.00}"><apex:param value="{!totalAmount}" /></apex:outputText>    </b>
+                                    </div> 
+                                </apex:outputPanel>
+                            </td>
+                        </tr>
+                        <!--nishi: 15-Sep-2020: for new requirement in netsuite we adjust discount as a line item -->
+                        <tr>
+                            <td width="50%"><apex:outputPanel rendered="{!IF(AND(invoice.Center__r.country__r.Tax_Rate__c != NULL, invoice.Center__r.country__r.Tax_Rate__c > 0), TRUE,FALSE)}" layout="block"><div class="taxbox lightgray">Tax GST({!invoice.Center__r.country__r.Tax_Rate__c}%)</div></apex:outputPanel></td>
                             <td width="50%">
-                                <apex:outputPanel rendered="{!IF(AND(invoice.Center__r.country__r.Tax_Rate__c != NULL, invoice.Center__r.country__r.Tax_Rate__c > 0), TRUE,FALSE)}">
+                                <apex:outputPanel rendered="{!IF(AND(invoice.Center__r.country__r.Tax_Rate__c != NULL, invoice.Center__r.country__r.Tax_Rate__c > 0), TRUE,FALSE)}" layout="block">
                                     <div class="taxbox taxbox-right lightgray">
                                         <!--<apex:outputField value="{!invoice.New_GST_Amount__c}"/>-->
                                         <apex:outputField value="{!invoice.New_GST_Amount_Admin_Fee__c}"/>
@@ -364,10 +392,13 @@
                             </td>
                         </tr>
                         
-                        <tr>
+                        
+                        <!-- Commented by nishi: 15-Sep-2020 for new requirement in netsuite we adjust discount as a line item
+                            <tr>
                             <td><apex:outputPanel rendered="{!IF(AND(invoice.Discount_Amount__c != 0,invoice.Discount_Amount__c != NULL), TRUE,FALSE)}"><div class="taxbox" style="color:red;">Discount</div> </apex:outputPanel></td>
                             <td><apex:outputPanel rendered="{!IF(AND(invoice.Discount_Amount__c != 0,invoice.Discount_Amount__c != NULL), TRUE,FALSE)}"><div class="taxbox taxbox-right" style="color:red;"><apex:outputField value="{!invoice.Discount_Amount__c}"/></div> </apex:outputPanel></td>
-                        </tr>
+                           
+                        </tr>-->
                        <tr>
                             <td><div class="taxbox border-none"><b>Grand Total</b></div></td>
                             <td>
@@ -378,6 +409,24 @@
                                 </div>
                             </td>
                         </tr>
+                        <!--15-Sep-2020:start: Credit Memo  handling we show Previous_Adjustment__c amount after showing  payableAmount (grand total duction amount)-->
+                        <tr>
+                          
+                            <td><apex:outputPanel rendered="{!IF(AND(invoice.Previous_Adjustment__c != 0,invoice.Previous_Adjustment__c != NULL), TRUE,FALSE)}" layout="block">
+                                <div class="taxbox  " style="color:red;">Previous Adjustment</div> </apex:outputPanel></td>
+                            <td><apex:outputPanel rendered="{!IF(AND(invoice.Previous_Adjustment__c != 0,invoice.Previous_Adjustment__c != NULL), TRUE,FALSE)}" layout="block">
+                                <div class="taxbox taxbox-right" style="color:red;"><apex:outputField value="{!invoice.Previous_Adjustment__c}"/></div> </apex:outputPanel></td>
+                         </tr>
+                         <tr>
+                            <td><apex:outputPanel rendered="{!IF(AND(payableAmount != 0,payableAmount!= NULL), TRUE,FALSE)}" layout="block"><div class="taxbox  border-none" ><b>Total Payable</b></div> </apex:outputPanel></td>
+                            <td><apex:outputPanel rendered="{!IF(AND(payableAmount != 0,payableAmount != NULL), TRUE,FALSE)}" layout="block">
+                                 <div class="taxbox taxbox-right  border-none">
+                                 <b> <apex:outputText value="{0, number, $###,###,###.00}"><apex:param value="{!payableAmount}" /></apex:outputText>    </b>
+                                     </div> 
+                                 </apex:outputPanel>
+                             </td>
+                         </tr>
+                        <!--15-Sep-2020:start: Credit Memo  handling we show Previous_Adjustment__c amount after showing  payableAmount (grand total duction amount)-->
                         <tr>
                             <td><div class="taxbox border-none"><b>Total Paid</b></div></td>
                             <td>

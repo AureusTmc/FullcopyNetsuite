@@ -210,9 +210,10 @@
                                                     <th class="" scope="col">
                                                         <div class="slds-truncate" title="Amount">Amount</div>
                                                     </th>
-                                                    <th class="" scope="col">
+                                                   <!--commented by nishi: 15-Sep-2020: for change Netsuite requirement we add new line items for discount amount
+                                                        <th class="" scope="col">
                                                         <div class="slds-truncate" title="Discount">Discount</div>
-                                                    </th>
+                                                    </th>-->
                                                     <th class="" scope="col">
                                                         <div class="slds-truncate" title="Discount">Net Amount</div>
                                                     </th>
@@ -236,21 +237,71 @@
                                                         </td>
                                                         <td class="" scope="col">
                                                             <div class="slds-truncate" title="Amount">
-                                                                <apex:outputText value="${!ROUND(value.totalAmount,2)}"></apex:outputText>
+                                                                <apex:outputText value="{0, number, $###,###,###.00}"><apex:param value="{!value.totalAmount}" /></apex:outputText>  
+                                                                <!-- <apex:outputText value="${!ROUND(value.totalAmount,2)}"></apex:outputText> -->
                                                             </div>
                                                         </td>
-                                                        <td class="" scope="col">
+                                                        <!--<td class="" scope="col">
                                                             <div class="slds-truncate" title="Discount">
                                                                 <apex:outputText value="${!ROUND(value.discount,2)}"></apex:outputText>
                                                             </div>
-                                                        </td>
+                                                        </td>-->
                                                         <td class="" scope="col">
                                                             <div class="slds-truncate" title="Net Amount">
-                                                                <apex:outputText value="${!ROUND(value.netAmount,2)}"></apex:outputText>
+                                                                <apex:outputText value="{0, number, $###,###,###.00}"><apex:param value="{!value.netAmount}" /></apex:outputText>  
+                                                                <!-- <apex:outputText value="${!ROUND(value.netAmount,2)}"></apex:outputText> -->
                                                             </div>
                                                         </td>
                                                     </tr>
                                                 </apex:repeat>
+                                                <!--added by nishi: 15-Sep-2020:start for change Netsuite requirement we add new line items for discount amount-->
+                                                <tr>
+                                                    <apex:outputPanel rendered="{!IF(totalPackageAmount != 0, TRUE, FALSE)}">
+                                                        <td></td>
+                                                        <td></td>
+                                                        <!-- <td></td> -->
+                                                        <td>
+                                                            <b>Sub Total</b>
+                                                        </td>
+                                                        <td>
+                                                            <b>
+                                                                <apex:outputText value="{0, number, $###,###,###.00}"><apex:param value="{!totalPackageAmount}" /></apex:outputText>  
+                                                            </b>
+                                                        </td>
+                                                    </apex:outputPanel>
+                                                </tr>
+                                                <tr>
+                                                    <apex:outputPanel rendered="{!IF(discountAmount != 0, TRUE, FALSE)}">
+                                                        <td></td>
+                                                        <td></td>
+                                                        <!-- <td></td> -->
+                                                        <td>
+                                                            <b>Discount</b>
+                                                        </td>
+                                                        <td>
+                                                            <b>
+                                                                <apex:outputText value="{0, number, $###,###,###.00}"><apex:param value="{!discountAmount}" /></apex:outputText>  
+                                                            </b>
+                                                        </td>
+                                                    </apex:outputPanel>
+                                                </tr>
+                                                <!--added by nishi: 15-Sep-2020:start for change Netsuite requirement we add new line items for discount amount-->
+                                                <tr>
+                                                    <apex:outputPanel rendered="{!IF(amountAfterDiscount != 0, TRUE, FALSE)}">
+                                                        <td></td>
+                                                        <td></td>
+                                                        <!-- <td></td> -->
+                                                        <td>
+                                                            <b>Total Amount</b>
+                                                        </td>
+                                                        <td>
+                                                            <b>
+                                                                <apex:outputText value="{0, number, $###,###,###.00}"><apex:param value="{!amountAfterDiscount}" /></apex:outputText>  
+                                                            </b>
+                                                        </td>
+                                                    </apex:outputPanel>
+                                                </tr>
+                                                <!--Commented by nishi: 15-Sep-2020:start for change Netsuite requirement we add new line items for discount amount
                                                 <tr>
                                                     <td colspan="2" style="text-align:right;">
                                                         <b>Total</b>
@@ -260,7 +311,7 @@
                                                             <apex:outputText value="${!ROUND(totalPackageAmount,2)}"></apex:outputText>
                                                         </b>
                                                     </td>
-                                                    <td>
+                                                   <td>
                                                         <b>
                                                             <apex:outputText value="${!ROUND(prepayPackage.Promotion_Discount__c,2)}"></apex:outputText>
                                                         </b>
@@ -270,18 +321,18 @@
                                                             <apex:outputText value="${!ROUND(amountAfterDiscount,2)}"></apex:outputText>
                                                         </b>
                                                     </td>
-                                                </tr>
+                                                </tr> -->
                                                 <tr>
                                                     <apex:outputPanel rendered="{!IF(gstAmount > 0, TRUE, FALSE)}">
                                                         <td></td>
                                                         <td></td>
-                                                        <td></td>
+                                                        <!-- <td></td> -->
                                                         <td>
                                                             <b>GST</b>
                                                         </td>
                                                         <td>
                                                             <b>
-                                                                <apex:outputText value="${!ROUND(gstAmount,2)}"></apex:outputText>
+                                                                <apex:outputText value="{0, number, $###,###,###.00}"><apex:param value="{!gstAmount}" /></apex:outputText>  
                                                             </b>
                                                         </td>
                                                     </apex:outputPanel>
@@ -289,13 +340,14 @@
                                                 <tr>
                                                     <td></td>
                                                     <td></td>
-                                                    <td></td>
+                                                    <!-- <td></td> -->
                                                     <td>
                                                         <b>Final Amount</b>
                                                     </td>
                                                     <td>
                                                         <b>
-                                                            <apex:outputText value="${!ROUND(finalAmount,2)}"></apex:outputText>
+                                                            <apex:outputText value="{0, number,$###,###,###.00}"><apex:param value="{!finalAmount}" /></apex:outputText>  
+                                                            <!-- <apex:outputText value="${!ROUND(finalAmount,2)}"></apex:outputText> -->
                                                         </b>
                                                     </td>
                                                 </tr>

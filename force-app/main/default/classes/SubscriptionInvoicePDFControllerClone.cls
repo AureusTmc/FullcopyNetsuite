@@ -10,6 +10,9 @@ Public without sharing class SubscriptionInvoicePDFControllerClone{
     public boolean displayUpdate{get;set;}
     public boolean isOssia{get;set;}
     public string ParentAccId{get;set;}
+    public Decimal subTotal{get;set;}
+    public Decimal totalAmount{get;set;}
+    public Decimal payableAmount{get;set;}
     //By Ravi
     public SubscriptionInvoicePDFControllerClone(){
         String paymentAsDeposit = ConstantsClass.paymentAsDepositRecordType;
@@ -17,11 +20,15 @@ Public without sharing class SubscriptionInvoicePDFControllerClone{
         center = new centerInfo();
         paymentNo = '';
         isOssia = false;
+        subTotal=0;
+        totalAmount =0;
+        payableAmount=0;
         string invId = Apexpages.currentPage().getParameters().get('Id');
         system.debug('@@invId'+invId);
         List<Invoice__c> invList = [Select Id,Name,Due_Date__c,Parent_Account__r.Card_Number__c,GST_Tax__c,GST_Tax_Amount__c,Invoice_Date__c,Parent_Account__c, Admin_Fees__c, 
                                     New_GST_Amount_Admin_Fee__c,
-                                    Center__r.Organisation__r.Name ,//added by nishi :18_aug:2020  for show Ossia Logo
+                                    Center__r.Organisation__r.Name ,//added by nishi :18_aug:2020  for show Ossia Logo4
+                                    Discount_LineItem_Amount__c,Gross_Total__c,Deposit__c,Total_Discount__c,Previous_Adjustment__c, // added by nishi: 15-Sep-2020: for change Invoice Ui show subtotal,discount
                                     Card_Number__c,Card_Image__c,Parent_Account__r.Name, Parent_Account__r.Admin_Fees__c, 
                                     Parent_Account__r.Billingstreet,Parent_Account__r.BillingCity,Parent_Account__r.BillingState,Parent_Account__r.personEmail,
                                     Parent_Account__r.personMobilePhone,createdDate,Remarks__c ,
@@ -48,6 +55,45 @@ Public without sharing class SubscriptionInvoicePDFControllerClone{
                 isOssia= true;  
             }
             // added by nishi: 18-Aug-2020: for show Ossia Logo
+
+            //nishi: 15-Sep-2020: for new requirement in netsuite we adjust discount as a line item 
+            if(invoice.Gross_Total__c != null && invoice.Gross_Total__c !=0){
+                subTotal+=invoice.Gross_Total__c;
+                totalAmount+=invoice.Gross_Total__c;
+            }
+            if(invoice.Deposit__c != null && invoice.Deposit__c != 0){
+                subTotal+=invoice.Deposit__c;
+                totalAmount+=invoice.Deposit__c;
+            }
+            if(invoice.Total_Discount__c != null && invoice.Total_Discount__c != 0){
+                subTotal+=invoice.Total_Discount__c;
+            }
+            if(subTotal == totalAmount){
+                subTotal =0;
+            }
+            if(subTotal != 0){
+                subTotal = BillingUtility.roundOffAmount(subTotal);
+            }
+            if(totalAmount != 0){
+                totalAmount = BillingUtility.roundOffAmount(totalAmount);
+            }
+            //end:nishi: 15-Sep-2020: for new requirement in netsuite we adjust discount as a line item 
+
+            //15-Sep-2020:start: Credit Memo  handling we show Previous_Adjustment__c amount after showing  payableAmount (grand total duction amount)
+            if(invoice.Previous_Adjustment__c != null &&invoice.Previous_Adjustment__c != 0 ){
+                if(invoice.Total_Amount__c != null && invoice.Total_Amount__c  != 0){
+                    payableAmount=invoice.Total_Amount__c;
+                }
+                payableAmount-=invoice.Previous_Adjustment__c;
+                if(payableAmount != 0){
+                    payableAmount = BillingUtility.roundOffAmount(payableAmount);
+                }
+            }else{
+                payableAmount =0;
+            }
+            //15-Sep-2020:end: Credit Memo  handling we show Previous_Adjustment__c amount after showing  payableAmount (grand total duction amount)
+          
+
             system.debug('@@@pdf invoice'+invoice);
              system.debug('@@@pdf invoice amount'+invoice.Invoice_Line_Items__r);
             system.debug('@@@pdf invoice amount'+invoice.Total_Amount__c);
