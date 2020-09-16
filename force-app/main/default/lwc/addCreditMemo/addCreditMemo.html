@@ -35,13 +35,12 @@
             </fieldset>
 
             <!--_________________________________________  CREDIT MEMO OPTIONS END ______________________________________________-->
-            <lightning-input data-my-id="userAmnt" type="number" name="input8" required value={userEnteredAmount}
-              min="0" label="Amount" max={creditMemoWrap.invoiceAmount} placeholder={creditMemoWrap.invoiceAmount}
-              onchange={handleAmountChange}>
+            <lightning-input class="userAmount" type="number" name="input8" readonly
+              value={creditMemoWrap.invoiceAmount} label="Amount">
             </lightning-input>
 
-            <lightning-input type="text" onchange={handleRemarkChange} label="Reason" placeholder="Enter reason..."
-              value={remarks}>
+            <lightning-input class="userRemarks" type="text" onchange={handleRemarkChange} required label="Reason"
+              placeholder="Enter reason..." value={remarks}>
             </lightning-input>
 
           </div>
@@ -92,11 +91,6 @@
         <!--____________________________________________  CONFIRMATION MODAL END __________________________________________________  -->
       </template>
       <div class="slds-backdrop slds-backdrop_open"></div>
-
-      <template if:true={error}>
-        {error}
-      </template>
-
     </template>
   </lightning-card>
 </template>

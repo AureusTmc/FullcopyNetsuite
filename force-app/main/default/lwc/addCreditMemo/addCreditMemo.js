@@ -8,52 +8,66 @@ export default class AddCreditMemo extends LightningElement {
   @track creditMemoWrap;
   value = "";
   showModal = false;
-  error = "";
   remarks = "";
   confirmationMessage = "";
   showConfirmBox = false;
-  userEnteredAmount;
   isLoaded = false;
 
   // prettier-ignore
   @track options = [
-  { label: "Refund Memo", value: "Refund Memo", disabled: true, checked : false },
-  { label: "Credit Memo (Future Adj)", value: "Credit Memo (Future Adj)", disabled: true,checked : false },
-  { label: "Credit Memo (Invoice Cancellation)", value: "Credit Memo (Invoice Cancellation)", disabled: true,checked : false }
-  ];
+{ label: "Refund Memo", value: "Refund Memo", disabled: true, checked : false },
+{ label: "Credit Memo (Future Adj)", value: "Credit Memo (Future Adj)", disabled: true,checked : false },
+{ label: "Credit Memo (Invoice Cancellation)", value: "Credit Memo (Invoice Cancellation)", disabled: true,checked : false }
+];
 
   showModalBox(event) {
     if (this.showModal) {
       this.showModal = false;
     } else {
+      this.error = "";
+      this.remarks = "";
+      this.confirmationMessage = "";
       fetchCreditMemoDetails({ invId: this.recordId })
         .then((result) => {
+          console.log(JSON.stringify(result));
           this.creditMemoWrap = result;
-          this.userEnteredAmount = this.creditMemoWrap.invoiceAmount;
-          this.showModal = true;
-          this.options.forEach((opt) => {
-            if (
-              opt.value === "Credit Memo (Future Adj)" &&
-              this.creditMemoWrap.invoiceStatus === "Paid"
-            ) {
-              opt.checked = true;
-              opt.disabled = false;
-              this.value = opt.value;
-            } else if (
-              opt.value === "Refund Memo" &&
-              this.creditMemoWrap.invoiceStatus === "Paid"
-            ) {
-              opt.checked = false;
-              opt.disabled = false;
-            } else if (
-              opt.value === "Credit Memo (Invoice Cancellation)" &&
-              this.creditMemoWrap.invoiceStatus === "Due"
-            ) {
-              opt.checked = true;
-              opt.disabled = false;
-              this.value = opt.value;
-            }
-          });
+
+          if (this.creditMemoWrap.existCreditMemo) {
+            const event = new ShowToastEvent({
+              title: "Error",
+              message:
+                "Already Created Credit Memo for this Invoice : " +
+                this.creditMemoWrap.existCreditMemo,
+              variant: "error",
+              mode: "dismissable"
+            });
+            this.dispatchEvent(event);
+          } else {
+            this.showModal = true;
+            this.options.forEach((opt) => {
+              if (
+                opt.value === "Credit Memo (Future Adj)" &&
+                this.creditMemoWrap.invoiceStatus === "Paid"
+              ) {
+                opt.checked = true;
+                opt.disabled = false;
+                this.value = opt.value;
+              } else if (
+                opt.value === "Refund Memo" &&
+                this.creditMemoWrap.invoiceStatus === "Paid"
+              ) {
+                opt.checked = false;
+                opt.disabled = false;
+              } else if (
+                opt.value === "Credit Memo (Invoice Cancellation)" &&
+                this.creditMemoWrap.invoiceStatus === "Due"
+              ) {
+                opt.checked = true;
+                opt.disabled = false;
+                this.value = opt.value;
+              }
+            });
+          }
         })
         .catch((error) => {
           console.log(error);
@@ -64,6 +78,27 @@ export default class AddCreditMemo extends LightningElement {
   }
 
   showConfirmModalBox(event) {
+    /*instead of output , it will be read only field
+  if (isNaN(this.userEnteredAmount)) {
+    let userAmnt = this.template.querySelector(".userAmount");
+    userAmnt.setCustomValidity("Please input valid amount.");
+    userAmnt.reportValidity();
+    return;
+  } */
+    if (!this.remarks || !this.remarks.trim()) {
+      let userRemarks = this.template.querySelector(".userRemarks");
+      userRemarks.setCustomValidity("Enter a valid reason.");
+      userRemarks.reportValidity();
+
+      return;
+    }
+    /*instead of output , it will be read only field
+  if (Number(this.userEnteredAmount) > this.creditMemoWrap.invoiceAmount) {
+    return;
+  } else if (Number(this.userEnteredAmount) < 0) {
+    return;
+  }*/
+
     if (this.showConfirmBox) {
       this.showConfirmBox = false;
     } else {
@@ -72,43 +107,62 @@ export default class AddCreditMemo extends LightningElement {
 
     if (this.value === "Refund Memo") {
       //  prettier-ignore
-      this.confirmationMessage ="This will create a Credit memo ( " +this.value +" ) and also refund " +this.userEnteredAmount +
-      " amount via stripe. Do you want to continue?";
+      this.confirmationMessage ="This will create a Credit memo ( " +this.value +" ) and also refund "+ this.creditMemoWrap.invoiceCurrcyCode+" "+this.creditMemoWrap.invoiceAmount +
+    " amount via stripe. Do you want to continue?";
     } else {
       //  prettier-ignore
       this.confirmationMessage =
-        "This will create a " + this.value + " of amount "+ this.userEnteredAmount +". Do you want to continue?";
+      "This will create a " + this.value + " of amount "+ this.creditMemoWrap.invoiceCurrcyCode+" "+ this.creditMemoWrap.invoiceAmount +". Do you want to continue?";
     }
   }
 
   createCreditMemo(event) {
     this.isLoaded = true;
+    console.log(JSON.stringify(this.creditMemoWrap));
     createCreditMemoRec({
-      userAmount: this.userEnteredAmount,
-      creditWrap: this.creditMemoWrap,
+      creditWrapJson: JSON.stringify(this.creditMemoWrap),
       creditMode: this.value,
       remarks: this.remarks
     })
       .then((result) => {
-        alert(JSON.stringify(result));
         this.isLoaded = false;
-        const event = new ShowToastEvent({
-          title: "Success",
-          message: "Credit Memo Created",
-          variant: "success",
-          mode: "dismissable"
-        });
-        this.dispatchEvent(event);
+
+        if (result === "success") {
+          const event = new ShowToastEvent({
+            title: "Success",
+            message: "Credit Memo Created",
+            variant: "success",
+            mode: "dismissable"
+          });
+          this.dispatchEvent(event);
+        } else {
+          const event = new ShowToastEvent({
+            title: "Error",
+            message: "UnExpected Error : " + result,
+            variant: "error",
+            mode: "dismissable"
+          });
+          this.dispatchEvent(event);
+        }
         this.showModal = false;
         this.isLoaded = false;
         this.showConfirmBox = false;
       })
       .catch((error) => {
         console.log(error);
-        this.error = error;
+        const event = new ShowToastEvent({
+          title: "Error",
+          message: "UnExpected Error : " + error.body.message,
+          variant: "error",
+          mode: "dismissable"
+        });
+        this.dispatchEvent(event);
+        this.showModal = false;
         this.isLoaded = false;
+        this.showConfirmBox = false;
       });
   }
+  /*
   handleAmountChange(event) {
     try {
       this.userEnteredAmount = Number(event.target.value);
@@ -116,11 +170,9 @@ export default class AddCreditMemo extends LightningElement {
       console.log(err.message);
       this.error = err.message;
     }
-  }
+  }*/
   handleRemarkChange(event) {
     this.remarks = event.target.value;
-    console.log(this.remarks);
-    console.log(event.target.value);
   }
   handleChange(event) {
     this.value = event.target.dataset.value;

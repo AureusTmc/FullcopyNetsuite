@@ -6,6 +6,5 @@
   },
   "git.ignoreLimitWarning": true,
   "editor.wordWrapColumn": 120,
-  "prettier.printWidth": 120,
-  "prettier.proseWrap": "never"
+  "prettier.printWidth": 120
 }
