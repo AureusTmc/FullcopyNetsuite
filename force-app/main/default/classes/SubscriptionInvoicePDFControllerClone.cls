@@ -28,7 +28,7 @@ Public without sharing class SubscriptionInvoicePDFControllerClone{
         List<Invoice__c> invList = [Select Id,Name,Due_Date__c,Parent_Account__r.Card_Number__c,GST_Tax__c,GST_Tax_Amount__c,Invoice_Date__c,Parent_Account__c, Admin_Fees__c, 
                                     New_GST_Amount_Admin_Fee__c,
                                     Center__r.Organisation__r.Name ,//added by nishi :18_aug:2020  for show Ossia Logo4
-                                    Discount_LineItem_Amount__c,Gross_Total__c,Deposit__c,Total_Discount__c,Previous_Adjustment__c, // added by nishi: 15-Sep-2020: for change Invoice Ui show subtotal,discount
+                                    Discount_LineItem_Amount__c,Gross_Total__c,Deposit__c,Total_Discount__c,Credit_Memo_Amount__c, // added by nishi: 15-Sep-2020: for change Invoice Ui show subtotal,discount
                                     Card_Number__c,Card_Image__c,Parent_Account__r.Name, Parent_Account__r.Admin_Fees__c, 
                                     Parent_Account__r.Billingstreet,Parent_Account__r.BillingCity,Parent_Account__r.BillingState,Parent_Account__r.personEmail,
                                     Parent_Account__r.personMobilePhone,createdDate,Remarks__c ,
@@ -79,19 +79,19 @@ Public without sharing class SubscriptionInvoicePDFControllerClone{
             }
             //end:nishi: 15-Sep-2020: for new requirement in netsuite we adjust discount as a line item 
 
-            //15-Sep-2020:start: Credit Memo  handling we show Previous_Adjustment__c amount after showing  payableAmount (grand total duction amount)
-            if(invoice.Previous_Adjustment__c != null &&invoice.Previous_Adjustment__c != 0 ){
+            //15-Sep-2020:start: Credit Memo  handling we show Credit_Memo_Amount__c amount after showing  payableAmount (grand total duction amount)
+            if(invoice.Credit_Memo_Amount__c != null &&invoice.Credit_Memo_Amount__c != 0 ){
                 if(invoice.Total_Amount__c != null && invoice.Total_Amount__c  != 0){
                     payableAmount=invoice.Total_Amount__c;
                 }
-                payableAmount-=invoice.Previous_Adjustment__c;
+                payableAmount-=invoice.Credit_Memo_Amount__c;
                 if(payableAmount != 0){
                     payableAmount = BillingUtility.roundOffAmount(payableAmount);
                 }
             }else{
                 payableAmount =0;
             }
-            //15-Sep-2020:end: Credit Memo  handling we show Previous_Adjustment__c amount after showing  payableAmount (grand total duction amount)
+            //15-Sep-2020:end: Credit Memo  handling we show Credit_Memo_Amount__c amount after showing  payableAmount (grand total duction amount)
           
 
             system.debug('@@@pdf invoice'+invoice);
