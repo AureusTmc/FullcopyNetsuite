@@ -185,7 +185,11 @@ public class ConstantsClass {
     public static String paymentTransactionRecType = 'Payment Transaction';
     public static String paymentPendingStatus = 'Pending';
     public static String paymentSuccessStatus = 'Success';
-    
+
+    // Credit Memo Constants :nishi: 16-Sep-2020
+    public static String creditMemoPendingStatus = 'Pending';
+    public static String creditMemoSuccessStatus = 'Success';
+
     //Activated center Name
     //Enrolment mapping values with Case and Opportunity for the Sales process
     public static Set<String> activatedCenNames = new Set<String>{'Aureus 112 Katong','Aureus Suntec',
