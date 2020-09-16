@@ -152,7 +152,7 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
 
             updateSubscriptionNextDate(mapOfSubInvoice.keySet());
             adjustDiscounts(mapOfSubInvoice.values(),invIds,invDate);
-            //adjustDeposit(invoices, invIds, parentIds, firstDate, lastDate, mapOfParentEnrolmentLastDate); //commented by nishi: 18-Sep-2020 : for new requirement we adjust pending credit memo not payment
+            //adjustDeposit(invoices, invIds, parentIds, firstDate, lastDate, mapOfParentEnrolmentLastDate); //commented by nishi: 16-Sep-2020 : for new requirement we adjust pending credit memo not payment
             adjustCreditMemoDeposit(invoices, invIds, parentIds, firstDate, lastDate, mapOfParentEnrolmentLastDate);
         }
         return invIds;
@@ -507,6 +507,7 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
                                   
     }
 
+    // create credit memo  records
     public static Credit_Memo__c createCreditMemoRec(Invoice__c objInvoice,date creditMemoDate,string remarks) {
         Credit_Memo__c objCreditMemo = new Credit_Memo__c();
         objCreditMemo.Parent_Account__c = objInvoice.parent_account__c;
@@ -518,6 +519,7 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
         return objCreditMemo;
       }
     
+     // create credit memo line item records
       public static Credit_memo_line_item__c createCreditMemoLineRec(Decimal amount,Decimal taxAmount,Id packageId,Id enrolmentId, Id invoiceLineItemId,String reasons) {
         Credit_memo_line_item__c objCreditLineItem = new Credit_memo_line_item__c();
         objCreditLineItem.Amount__c = amount;
@@ -1699,6 +1701,7 @@ List<Task> listOftask = new List<Task>();
         return parentPayments;
     }
 
+    // get if there is any pending credit memo available with the customer account
     private static Map<String,List<Credit_Memo__c>> getParentCreditMemo(Set<String> setOfParentIds, Date lastDate){
         Map<String,List<Credit_Memo__c>>  parentCreditMemos = new Map<String,List<Credit_Memo__c>>();
         String query = generateCreditMemoQuery(setOfParentIds,lastDate);
@@ -1711,8 +1714,8 @@ List<Task> listOftask = new List<Task>();
         return parentCreditMemos;
     }
 
-
-    private static string generateCreditMemoQuery(Set<String> setOfParentIds, Date lastDate){
+// get  pending credit memo available with the customer account
+     private static string generateCreditMemoQuery(Set<String> setOfParentIds, Date lastDate){
         String pendingStatus = ConstantsClass.creditMemoPendingStatus;
         String query = 'SELECT From_Invoice__c, Parent_Account__c, Organisations_Name__c, Comments__c, Currency_Code__c, Total_Amount__c, Payment_Method__c, Invoice_Number__c, ';
         query+= ' Credit_Memo_Date__c, Status__c, Refund_ID__c, Stripe_Payout_Id__c, Stripe_Fee__c, Cheque_Date__c, Cheque_No__c, Bank_Name__c, NETS_Code__c, Amount_Exl_tax_Rollup__c, ';
@@ -1725,7 +1728,8 @@ List<Task> listOftask = new List<Task>();
         System.debug('Query '+query);
         return query;
     }
-     // this method is used for filling sum of payment of parent
+
+     // this method is used for filling sum of Credit memo of parent
      private static Map<String,Decimal> getParentCreditMemoMap(Map<String,List<Credit_Memo__c>> mapOfCreditMemos){
         Map<String,Decimal> parentWithCreditMemos = new Map<String,Decimal>();
         for(String parentId : mapOfCreditMemos.keySet()){
