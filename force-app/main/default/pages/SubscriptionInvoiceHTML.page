@@ -418,8 +418,8 @@
                                 <div class="taxbox taxbox-right" style="color:red;"><apex:outputField value="{!invoice.Credit_Memo_Amount__c}"/></div> </apex:outputPanel></td>
                          </tr>
                          <tr>
-                            <td><apex:outputPanel rendered="{!IF(AND(payableAmount != 0,payableAmount!= NULL), TRUE,FALSE)}" layout="block"><div class="taxbox  border-none" ><b>Total Payable</b></div> </apex:outputPanel></td>
-                            <td><apex:outputPanel rendered="{!IF(AND(payableAmount != 0,payableAmount != NULL), TRUE,FALSE)}" layout="block">
+                            <td><apex:outputPanel rendered="{!IF(AND(invoice.Credit_Memo_Amount__c != 0,invoice.Credit_Memo_Amount__c!= NULL), TRUE,FALSE)}" layout="block"><div class="taxbox  border-none" ><b>Total Payable</b></div> </apex:outputPanel></td>
+                            <td><apex:outputPanel rendered="{!IF(AND(invoice.Credit_Memo_Amount__c != 0,invoice.Credit_Memo_Amount__c != NULL), TRUE,FALSE)}" layout="block">
                                  <div class="taxbox taxbox-right  border-none">
                                  <b> <apex:outputText value="{0, number, $###,###,###.00}"><apex:param value="{!payableAmount}" /></apex:outputText>    </b>
                                      </div> 
