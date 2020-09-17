@@ -1,5 +1,6 @@
 <apex:page showHeader="false" id="pg" controller="SearchInstrumentRental_IpadCntrl" standardStylesheets="true" docType="html-5.0"
     applyBodyTag="False" applyHtmlTag="False">
+    <!-- CH02 Karan Singh As Netsuite integration is used of Sage integration so changing slcd piano details -->
     <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <!-- CH01 Karan Singh 8 Sep 2020 Bypass pandaDoc Validation in case PandaDoc goes offline for maintenance purposes -->
     <head>
@@ -271,7 +272,7 @@
                             <strong>Model</strong>
                         </p>
                         <div class="box-info">
-                            {!slcdPiano.modelNo}
+                           <!--CH02  {!slcdPiano.modelNo} --> {!slcdPiano.model}
                         </div>
                     </div>
                     <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
@@ -279,7 +280,7 @@
                             <strong>Serial No.</strong>
                         </p>
                         <div class="box-info m-lg-right">
-                            {!slcdPiano.serNo}
+                            <!--CH02  {!slcdPiano.serNo} --> {!slcdPiano.serialNumber}
                         </div>
                     </div>
 
@@ -288,7 +289,7 @@
                             <strong>Rental/Sale Price(GST Inc.)</strong>
                         </p>
                         <div class="box-info">
-                            ${!slcdPiano.rentalPrice}/{!slcdPiano.salesPrice}
+                           <!--CH02   ${!slcdPiano.rentalPrice}/{!slcdPiano.salesPrice} -->${!slcdPiano.monthlyRental}/{!slcdPiano.listPrice}
                         </div>
                     </div>
                 </div>

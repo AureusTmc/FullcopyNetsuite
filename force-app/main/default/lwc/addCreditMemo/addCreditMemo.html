@@ -46,10 +46,11 @@
           </div>
           <!-- _________________________________________  FOOTER  ________________________________________________________-->
           <footer class="slds-modal__footer">
-            <lightning-button label="Yes" variant="brand" slot="actions" onclick={showConfirmModalBox}>
+
+            <lightning-button label="No" variant="destructive" slot="actions" onclick={showModalBox}></lightning-button>
+            <lightning-button class="slds-p-left_small" label="Yes" variant="brand" slot="actions"
+              onclick={showConfirmModalBox}>
             </lightning-button>
-            <lightning-button class="slds-p-left_medium" label="No" variant="destructive" slot="actions"
-              onclick={showModalBox}></lightning-button>
           </footer>
           <!-- _________________________________________  FOOTER END ________________________________________________________-->
         </div>
@@ -77,10 +78,11 @@
             </div>
             <!-- _________________________________________  FOOTER  ________________________________________________________-->
             <footer class="slds-modal__footer">
-              <lightning-button label="Yes" variant="brand" onclick={createCreditMemo} slot="actions">
+
+              <lightning-button label="No" onclick={showConfirmModalBox} variant="destructive" slot="actions">
               </lightning-button>
-              <lightning-button class="slds-p-left_medium" label="No" onclick={showConfirmModalBox}
-                variant="destructive" slot="actions">
+              <lightning-button class="slds-p-left_small" label="Yes" variant="brand" onclick={createCreditMemo}
+                slot="actions">
               </lightning-button>
 
             </footer>
