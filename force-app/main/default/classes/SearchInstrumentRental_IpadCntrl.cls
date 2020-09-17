@@ -1,5 +1,6 @@
 //CH01 Karan Singh 8 Sep 2020 Bypass pandaDoc Validation in case PandaDoc goes offline for maintenance purposes
 //CH02 Karan Singh 16 Sep 2020 Replacing Sage Integration with Net Suite Integration for fetching inventory Details and changing the getProducts()method for this
+//			and checking the enrolment is active type or not.
 
 public class SearchInstrumentRental_IpadCntrl {
     public String slcdCenter{get;set;}
@@ -70,6 +71,7 @@ public class SearchInstrumentRental_IpadCntrl {
     //CH02 
     public List<NetSuiteProducts> netSuiteProducts{get;set;}
     public NetSuiteProducts slcdPiano{get;set;}
+    public Boolean isExistingLessonEnrolment{get;set;} //17 sep 2020 as if slcd enrolment is an active lesson type enrolment then we will charge only one time rental amount not twice.
     //CH02 END
     
     //public static 
@@ -78,6 +80,7 @@ public class SearchInstrumentRental_IpadCntrl {
         //CH02
         netSuiteProducts = new List<NetSuiteProducts>();
         slcdPiano = new NetSuiteProducts();
+        isExistingLessonEnrolment = false;
         //CH02
         //CH01 Karan Singh  
         isPandaDocUnderMaintance = false;   
@@ -238,9 +241,19 @@ options.add(new SelectOption(str,str));*/
                                           Parent__r.Phone, Parent__r.BillingStreet, Parent__r.BillingCity,  Parent__r.BillingPostalCode,  Parent__r.BillingCountryCode, House_type__c, Block__c,Additional_Delivery_comments__c,
                                           Teacher__c, Teacher__r.Name, Package__c, Package__r.Name, Trial_Date__c, Trial_Start_Time__c, Center__c, Center__r.Name, Standard_Accessories__c,
                                           Parent__r.Stripe_Customer_Id__c, Parent__r.Card_Number__c, Parent__r.Card_Type__c, Parent__r.Card_Image__c, Center__r.Country__c, Center__r.Organisation__c
+                                          
+                                          //CH02 17 sep 2020 will work later on this
+                                          //   ,recordtype.name,Parent__r.Enroled__c
+                                          //CH02 END
                                           FROM Enrolment__c 
                                           WHERE Id =: slcdEnrId];
             if(enrList.size() > 0){
+                
+                // 17 sep 2020 will work later on thisCH02 17 Sep 2020 checking if it is existing  active/enrolled Lesson Enrolment
+                //if(  enrList.get(0).recordtype.name != Null && enrList.get(0).recordtype.name == 'Lesson' && enrList.get(0).Parent__r.Enroled__c != Null && enrList.get(0).Parent__r.Enroled__c ){
+                //     isExistingLessonEnrolment = true;
+                // }
+                //CH02
                 parentAcc.id          = enrList.get(0).Parent__c;
                 parentAcc.firstName   = enrList.get(0).Parent__r.FirstName;
                 parentAcc.LastName    = enrList.get(0).Parent__r.LastName;
@@ -302,14 +315,24 @@ options.add(new SelectOption(str,str));*/
         fm.deliCharges = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Delivery_Charges));
         fm.tuningFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Tuning_Fee));
         fm.heatingRodInsFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Heating_Rod_Installation_Fee));
-         //Start: nishi: 27-Jul-2020: Existing Student – one month (with any active enrolment) ; others – two months
-        if(isAlreadyStripCstmr != null && isAlreadyStripCstmr){
-            fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Piano_Rental_Deposit_Fee));
+        
+        //Start: nishi: 27-Jul-2020: Existing Student – one month (with any active enrolment) ; others – two months
+        if(isAlreadyStripCstmr != null && isAlreadyStripCstmr){ 
+            //if(isExistingLessonEnrolment != null && isExistingLessonEnrolment){// 17 sep 2020 will work later on this CH02 Karan :as 17 sep 2020 , now checking if the selected enrolment is existing active/enrolled enrolment of type lesson.
+            //CH02 
+            //fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Piano_Rental_Deposit_Fee)); CH02 Karan 17 Sep 2020 :use piano Deposit fee only instead Label as now we are getting rental amount of piano from netSuite
+            if( slcdPiano.monthlyRental != Null )
+                fm.depFee = BillingUtility.roundOffAmount(slcdPiano.monthlyRental);
+            //CH02 END
         }else{
-            fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Piano_Rental_Deposit_Fee) *2 );
+            //CH02
+            //fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Piano_Rental_Deposit_Fee) *2 ); CH02 Karan 17 Sep 2020: use piano Deposit fee only instead Label as now we are getting rental amount of piano from netSuite
+            if( slcdPiano.monthlyRental != Null )
+                fm.depFee = BillingUtility.roundOffAmount(slcdPiano.monthlyRental *2 );
+            //CH02 END 
         }
         //End:nishi: 27-Jul-2020:Existing Student – one month (with any active enrolment) ; others – two months
-        fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Piano_Rental_Deposit_Fee) *2 );
+        //fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Piano_Rental_Deposit_Fee) *2 ); commented by CH02 17 sep 2020 Karan as now will use above if else only 
         fm.perStairCharges  = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Per_Stair_Charges));
         
         Integer isTwiceCharge = isRentalOrSellType.equalsIgnoreCase('Rent') ? 2 : 1;
@@ -328,6 +351,7 @@ options.add(new SelectOption(str,str));*/
             fm.depFee = fm.deliCharges = fm.tuningFee = fm.heatingRodInsFee = fm.stairDelCharges = fm.perStairCharges = 0;
             //CH02 
             //fm.instrumentChrg = BillingUtility.roundOffAmount(slcdPiano.salesPrice);
+            system.debug(' --> ' + BillingUtility.roundOffAmount(slcdPiano.listPrice ));
             fm.instrumentChrg = BillingUtility.roundOffAmount(slcdPiano.listPrice );
             //CH02 END
             fm.totFee = fm.instrumentChrg;
@@ -462,276 +486,276 @@ dtimeslot.add(dateMap.get(slcdDt));
         
         //CH02
         /*
-        sageProducts = new List<SageProductItems>(); 
-        
-        SageIntacctIntegrationUtility.resultWrapper rw = new SageIntacctIntegrationUtility.resultWrapper();
-        
-        SageIntacctIntegrationUtility.sessionWrapper sw = SageIntacctIntegrationUtility.getuserSessionID(sageCmp);        
-        if(sw.sessionId!=null && sw.sessionId.trim().length()>0){
-            System.debug('@@@'+sw.sessionId);
-            HttpRequest req = new HttpRequest();
-            req.setMethod('POST');
-            req.setEndpoint(sw.endPointUrl);
-            req.setHeader('Content-Type','application/xml');
-            
-            string timestamp = String.valueof(DateTime.now().getTime());
-            
-            //Fetch Wharehouse details
-            String wareHouseName = 'AGP-WH';//'ACP-WH';
-            
-            String wareHouseLocationId= '';
-            //fetching warehouse details
-            String body = '<?xml version="1.0" encoding="UTF-8"?>'+
-                '<request>'+
-                '<control>'+
-                '<senderid>'+sw.senderId+'</senderid>'+
-                '<password>'+sw.senderPassword+'</password>'+
-                '<controlid>'+timestamp+'</controlid>'+
-                '<uniqueid>false</uniqueid>'+
-                '<dtdversion>3.0</dtdversion>'+
-                '<includewhitespace>false</includewhitespace>'+
-                '</control>'+
-                '<operation>'+
-                '<authentication>'+
-                '<sessionid>'+sw.sessionId+'</sessionid>'+
-                '</authentication>'+
-                '<content>'+
-                '<function controlid="'+timestamp+'">'+
-                '<readByQuery>'+
-                '<object>ITEMWAREHOUSEINFO</object>'+
-                '<fields>*</fields>'+
-                '<query>WAREHOUSEID=\''+wareHouseName+'\'</query>'+
-                '<pagesize>100</pagesize>'+
-                '</readByQuery>'+
-                '</function>'+
-                '</content>'+
-                '</operation>'+
-                '</request>';   
-            req.setBody(body);
-            req.setTimeout(120000);
-            
-            String response;
-            If(!Test.isRunningTest()){
-                Http http = new Http();
-                HTTPResponse res = http.send(req);                    
-                response = res.getBody();
-            }else{
-                //   response = '<?xml version="1.0" encoding="UTF-8"?><response><control><status>success</status><senderid>Aureus Group</senderid><controlid>1561088787741</controlid><uniqueid>false</uniqueid><dtdversion>3.0</dtdversion></control><operation><authentication><status>success</status><userid>ws_tek</userid><companyid>Aureus Group-imp</companyid><locationid /><sessiontimestamp>2019-06-20T20:46:28-07:00</sessiontimestamp><sessiontimeout>2019-06-21T02:46:28-07:00</sessiontimeout></authentication><result><status>success</status><function>create_arpayment</function><controlid>1561088787741</controlid><key>9</key></result></operation></response>';
-                response ='<?xml version="1.0" encoding="UTF-8"?><response><control><status>success</status><senderid>Aureus Group</senderid><controlid>1561088787741</controlid><uniqueid>false</uniqueid><dtdversion>3.0</dtdversion></control><operation><authentication><status>success</status><userid>ws_tek</userid><companyid>Aureus Group-imp</companyid><locationid /><sessiontimestamp>2019-06-20T20:46:28-07:00</sessiontimestamp><sessiontimeout>2019-06-21T02:46:28-07:00</sessiontimeout><data><itemwarehouseinfo><RECORDNO>1</RECORDNO><ITEMID>1</ITEMID><WAREHOUSEID>001</WAREHOUSEID><WONHAND>0</WONHAND><STANDARD_COST>10</STANDARD_COST></itemwarehouseinfo></data></authentication><result><status>success</status><function>create_arpayment</function><controlid>1561088787741</controlid><key>9</key></result></operation></response>';
-                
-            }
-            
-            system.debug('body==='+body);
-            System.debug('response==='+response);
-            
-            Set<String> whereHouseItems = new Set<String>();
-            
-            DOM.Document doc = new DOM.Document();
-            doc.load(response);
-            DOM.XMLNode root = doc.getRootElement();
-            for(DOM.XMLNode child : root.getChildElements()){
-                if(child.getName()=='operation'){
-                    for(DOM.XMLNode child1 : child.getChildElements()){                        
-                        Boolean isSuccess = false;
-                        for(DOM.XMLNode child2 : child1.getChildElements()){
-                            if(child2.getName()=='status'){
-                                if(child2.getText()=='success'){
-                                    isSuccess = true;
-                                }
-                            }else if(child2.getName()=='locationid'){
-                                wareHouseLocationId = child2.getText();
-                            }
-                            
-                            if(isSuccess && child2.getName()=='data'){
-                                for(DOM.XMLNode child3 : child2.getChildElements()){
-                                    if(child3.getName()=='itemwarehouseinfo'){
-                                        
-                                        for(DOM.XMLNode child4 : child3.getChildElements()){
-                                            if(child4.getName()=='RECORDNO'){
-                                                //System.debug('@@@@-->'+child4.getText());
-                                                //sgPr.recNo = child4.getText();
-                                            }
-                                            else if(child4.getName()=='ITEMID'){
-                                                whereHouseItems.add(child4.getText());
-                                            }else if(child4.getName()=='WONHOLD'){
-                                                // sgPr.category = child4.getText();
-                                            }
-                                        }
-                                    }                                       
-                                }
-                            }
-                            
-                            if(child2.getName()=='errormessage'){
-                                for(DOM.XMLNode child3 : child2.getChildElements()){
-                                    if(child3.getName()=='error'){
-                                        for(DOM.XMLNode child4 : child3.getChildElements()){
-                                            if(child4.getName()=='description2'){
-                                                rw.errorMsg = child4.getText();
-                                                break;
-                                            }
-                                        }
-                                        if(rw.errorMsg!=null && rw.errorMsg.trim().length()>0){
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                if(child.getName()=='errormessage'){
-                    for(DOM.XMLNode child1 : child.getChildElements()){
-                        if(child1.getName()=='error'){
-                            for(DOM.XMLNode child2 : child1.getChildElements()){
-                                if(child2.getName()=='description2'){
-                                    rw.isSuccess = false;
-                                    rw.errorMsg = child2.getText();
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }   
-            
-            System.debug('whereHouseItems==='+whereHouseItems);     
-            
-            
-            //Fetch item details
-            body = '<?xml version="1.0" encoding="UTF-8"?>'+
-                '<request>'+
-                '<control>'+
-                '<senderid>'+sw.senderId+'</senderid>'+
-                '<password>'+sw.senderPassword+'</password>'+
-                '<controlid>'+timestamp+'</controlid>'+
-                '<uniqueid>false</uniqueid>'+
-                '<dtdversion>3.0</dtdversion>'+
-                '<includewhitespace>false</includewhitespace>'+
-                '</control>'+
-                '<operation>'+
-                '<authentication>'+
-                '<sessionid>'+sw.sessionId+'</sessionid>'+
-                '</authentication>'+
-                '<content>'+
-                '<function controlid="'+timestamp+'">'+
-                '<readByQuery>'+
-                '<object>ITEM</object>'+
-                '<fields>*</fields>'+
-                '<query>ITEMTYPE=\'I\' and STATUS=\'T\' and PRODUCTLINEID=\'Piano\'</query>'+
-                '<pagesize>100</pagesize>'+
-                '</readByQuery>'+
-                '</function>'+
-                '</content>'+
-                '</operation>'+
-                '</request>';
-            
-            req.setBody(body);
-            req.setTimeout(120000);
-            
-            response = '';
-            If(!Test.isRunningTest()){
-                Http http = new Http();
-                HTTPResponse res = http.send(req);                    
-                response = res.getBody();
-            }else{
-                //  response = '<?xml version="1.0" encoding="UTF-8"?><response><control><status>success</status><senderid>Aureus Group</senderid><controlid>1561088787741</controlid><uniqueid>false</uniqueid><dtdversion>3.0</dtdversion></control><operation><authentication><status>success</status><userid>ws_tek</userid><companyid>Aureus Group-imp</companyid><locationid /><sessiontimestamp>2019-06-20T20:46:28-07:00</sessiontimestamp><sessiontimeout>2019-06-21T02:46:28-07:00</sessiontimeout></authentication><result><status>success</status><function>create_arpayment</function><controlid>1561088787741</controlid><key>9</key></result></operation></response>';
-                response ='<?xml version="1.0" encoding="UTF-8"?><response><control><status>success</status><senderid>Aureus Group</senderid><controlid>1561088787741</controlid><uniqueid>false</uniqueid><dtdversion>3.0</dtdversion></control><operation><authentication><status>success</status><userid>ws_tek</userid><companyid>Aureus Group-imp</companyid><locationid /><sessiontimestamp>2019-06-20T20:46:28-07:00</sessiontimestamp><sessiontimeout>2019-06-21T02:46:28-07:00</sessiontimeout><data><item><NAME>test</NAME><ITEM_MAKE>test</ITEM_MAKE><ITEM_MODEL_NUMBER>001</ITEM_MODEL_NUMBER><ITEM_SERIAL_NUMBER>001</ITEM_SERIAL_NUMBER><RENTAL_RATE>10</RENTAL_RATE><SALE_PRICE>10</SALE_PRICE><ITEM_STATUS>True</ITEM_STATUS></item></data></authentication><result><status>success</status><function>create_arpayment</function><controlid>1561088787741</controlid><key>9</key></result></operation></response>';
-            }
-            
-            system.debug('body==='+body);
-            System.debug('response==='+response);
-            
-            doc = new DOM.Document();
-            doc.load(response);
-            root = doc.getRootElement();
-            
-            for(DOM.XMLNode child : root.getChildElements()){
-                if(child.getName()=='operation'){
-                    for(DOM.XMLNode child1 : child.getChildElements()){                        
-                        Boolean isSuccess = false;
-                        for(DOM.XMLNode child2 : child1.getChildElements()){
-                            if(child2.getName()=='status'){
-                                if(child2.getText()=='success'){
-                                    isSuccess = true;
-                                }
-                            }
-                            
-                            if(isSuccess && child2.getName()=='data'){
-                                Integer count = 1;
-                                for(DOM.XMLNode child3 : child2.getChildElements()){
-                                    if(child3.getName()=='item'){
-                                        SageProductItems sgPr = new SageProductItems();
-                                        
-                                        Boolean isWareHouseProduct = false;
-                                        for(DOM.XMLNode child4 : child3.getChildElements()){
-                                            if(child4.getName()=='NAME'){
-                                                if(whereHouseItems.contains(child4.getText()))
-                                                    isWareHouseProduct = true;
-                                            }else if(child4.getName()=='ITEM_MAKE'){
-                                                sgPr.brand = child4.getText();
-                                            }else if(child4.getName()=='ITEM_MODEL_NUMBER'){
-                                                sgPr.modelNo = child4.getText();
-                                            }else if(child4.getName()=='ITEM_SERIAL_NUMBER'){
-                                                sgPr.serNo = child4.getText();
-                                            }else if(child4.getName()=='RENTAL_RATE' && String.isNotBlank(child4.getText())){
-                                                sgPr.rentalPrice = Decimal.valueOf(child4.getText());
-                                            }else if(child4.getName()=='SALE_PRICE' && String.isNotBlank(child4.getText())){
-                                                sgPr.salesPrice =  Decimal.valueOf(child4.getText());
-                                            }else if(child4.getName()=='ITEM_STATUS'){
-                                                sgPr.condi = child4.getText();
-                                            }
-                                        }
-                                        sgPr.location = wareHouseLocationId;
-                                        if(isWareHouseProduct){
-                                            sgPr.srNo = count;
-                                            count = count+1;
-                                            sageProducts.add(sgPr);
-                                        }
-                                    }                                       
-                                }
-                            }
-                            
-                            if(child2.getName()=='errormessage'){
-                                for(DOM.XMLNode child3 : child2.getChildElements()){
-                                    if(child3.getName()=='error'){
-                                        for(DOM.XMLNode child4 : child3.getChildElements()){
-                                            if(child4.getName()=='description2'){
-                                                rw.errorMsg = child4.getText();
-                                                break;
-                                            }
-                                        }
-                                        if(rw.errorMsg!=null && rw.errorMsg.trim().length()>0){
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                if(child.getName()=='errormessage'){
-                    for(DOM.XMLNode child1 : child.getChildElements()){
-                        if(child1.getName()=='error'){
-                            for(DOM.XMLNode child2 : child1.getChildElements()){
-                                if(child2.getName()=='description2'){
-                                    rw.isSuccess = false;
-                                    rw.errorMsg = child2.getText();
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-        }else If(sw.errorMsg!=null && sw.errorMsg.trim().length()>0){
-            rw.isSuccess = false;
-            rw.errorMsg = sw.errorMsg;
-        }else{
-            rw.isSuccess = false;
-            rw.errorMsg = 'Unknown error occured. Please contact your admin.';
-        }
-        */
+sageProducts = new List<SageProductItems>(); 
+
+SageIntacctIntegrationUtility.resultWrapper rw = new SageIntacctIntegrationUtility.resultWrapper();
+
+SageIntacctIntegrationUtility.sessionWrapper sw = SageIntacctIntegrationUtility.getuserSessionID(sageCmp);        
+if(sw.sessionId!=null && sw.sessionId.trim().length()>0){
+System.debug('@@@'+sw.sessionId);
+HttpRequest req = new HttpRequest();
+req.setMethod('POST');
+req.setEndpoint(sw.endPointUrl);
+req.setHeader('Content-Type','application/xml');
+
+string timestamp = String.valueof(DateTime.now().getTime());
+
+//Fetch Wharehouse details
+String wareHouseName = 'AGP-WH';//'ACP-WH';
+
+String wareHouseLocationId= '';
+//fetching warehouse details
+String body = '<?xml version="1.0" encoding="UTF-8"?>'+
+'<request>'+
+'<control>'+
+'<senderid>'+sw.senderId+'</senderid>'+
+'<password>'+sw.senderPassword+'</password>'+
+'<controlid>'+timestamp+'</controlid>'+
+'<uniqueid>false</uniqueid>'+
+'<dtdversion>3.0</dtdversion>'+
+'<includewhitespace>false</includewhitespace>'+
+'</control>'+
+'<operation>'+
+'<authentication>'+
+'<sessionid>'+sw.sessionId+'</sessionid>'+
+'</authentication>'+
+'<content>'+
+'<function controlid="'+timestamp+'">'+
+'<readByQuery>'+
+'<object>ITEMWAREHOUSEINFO</object>'+
+'<fields>*</fields>'+
+'<query>WAREHOUSEID=\''+wareHouseName+'\'</query>'+
+'<pagesize>100</pagesize>'+
+'</readByQuery>'+
+'</function>'+
+'</content>'+
+'</operation>'+
+'</request>';   
+req.setBody(body);
+req.setTimeout(120000);
+
+String response;
+If(!Test.isRunningTest()){
+Http http = new Http();
+HTTPResponse res = http.send(req);                    
+response = res.getBody();
+}else{
+//   response = '<?xml version="1.0" encoding="UTF-8"?><response><control><status>success</status><senderid>Aureus Group</senderid><controlid>1561088787741</controlid><uniqueid>false</uniqueid><dtdversion>3.0</dtdversion></control><operation><authentication><status>success</status><userid>ws_tek</userid><companyid>Aureus Group-imp</companyid><locationid /><sessiontimestamp>2019-06-20T20:46:28-07:00</sessiontimestamp><sessiontimeout>2019-06-21T02:46:28-07:00</sessiontimeout></authentication><result><status>success</status><function>create_arpayment</function><controlid>1561088787741</controlid><key>9</key></result></operation></response>';
+response ='<?xml version="1.0" encoding="UTF-8"?><response><control><status>success</status><senderid>Aureus Group</senderid><controlid>1561088787741</controlid><uniqueid>false</uniqueid><dtdversion>3.0</dtdversion></control><operation><authentication><status>success</status><userid>ws_tek</userid><companyid>Aureus Group-imp</companyid><locationid /><sessiontimestamp>2019-06-20T20:46:28-07:00</sessiontimestamp><sessiontimeout>2019-06-21T02:46:28-07:00</sessiontimeout><data><itemwarehouseinfo><RECORDNO>1</RECORDNO><ITEMID>1</ITEMID><WAREHOUSEID>001</WAREHOUSEID><WONHAND>0</WONHAND><STANDARD_COST>10</STANDARD_COST></itemwarehouseinfo></data></authentication><result><status>success</status><function>create_arpayment</function><controlid>1561088787741</controlid><key>9</key></result></operation></response>';
+
+}
+
+system.debug('body==='+body);
+System.debug('response==='+response);
+
+Set<String> whereHouseItems = new Set<String>();
+
+DOM.Document doc = new DOM.Document();
+doc.load(response);
+DOM.XMLNode root = doc.getRootElement();
+for(DOM.XMLNode child : root.getChildElements()){
+if(child.getName()=='operation'){
+for(DOM.XMLNode child1 : child.getChildElements()){                        
+Boolean isSuccess = false;
+for(DOM.XMLNode child2 : child1.getChildElements()){
+if(child2.getName()=='status'){
+if(child2.getText()=='success'){
+isSuccess = true;
+}
+}else if(child2.getName()=='locationid'){
+wareHouseLocationId = child2.getText();
+}
+
+if(isSuccess && child2.getName()=='data'){
+for(DOM.XMLNode child3 : child2.getChildElements()){
+if(child3.getName()=='itemwarehouseinfo'){
+
+for(DOM.XMLNode child4 : child3.getChildElements()){
+if(child4.getName()=='RECORDNO'){
+//System.debug('@@@@-->'+child4.getText());
+//sgPr.recNo = child4.getText();
+}
+else if(child4.getName()=='ITEMID'){
+whereHouseItems.add(child4.getText());
+}else if(child4.getName()=='WONHOLD'){
+// sgPr.category = child4.getText();
+}
+}
+}                                       
+}
+}
+
+if(child2.getName()=='errormessage'){
+for(DOM.XMLNode child3 : child2.getChildElements()){
+if(child3.getName()=='error'){
+for(DOM.XMLNode child4 : child3.getChildElements()){
+if(child4.getName()=='description2'){
+rw.errorMsg = child4.getText();
+break;
+}
+}
+if(rw.errorMsg!=null && rw.errorMsg.trim().length()>0){
+break;
+}
+}
+}
+}
+}
+}
+}
+if(child.getName()=='errormessage'){
+for(DOM.XMLNode child1 : child.getChildElements()){
+if(child1.getName()=='error'){
+for(DOM.XMLNode child2 : child1.getChildElements()){
+if(child2.getName()=='description2'){
+rw.isSuccess = false;
+rw.errorMsg = child2.getText();
+break;
+}
+}
+}
+}
+}
+}   
+
+System.debug('whereHouseItems==='+whereHouseItems);     
+
+
+//Fetch item details
+body = '<?xml version="1.0" encoding="UTF-8"?>'+
+'<request>'+
+'<control>'+
+'<senderid>'+sw.senderId+'</senderid>'+
+'<password>'+sw.senderPassword+'</password>'+
+'<controlid>'+timestamp+'</controlid>'+
+'<uniqueid>false</uniqueid>'+
+'<dtdversion>3.0</dtdversion>'+
+'<includewhitespace>false</includewhitespace>'+
+'</control>'+
+'<operation>'+
+'<authentication>'+
+'<sessionid>'+sw.sessionId+'</sessionid>'+
+'</authentication>'+
+'<content>'+
+'<function controlid="'+timestamp+'">'+
+'<readByQuery>'+
+'<object>ITEM</object>'+
+'<fields>*</fields>'+
+'<query>ITEMTYPE=\'I\' and STATUS=\'T\' and PRODUCTLINEID=\'Piano\'</query>'+
+'<pagesize>100</pagesize>'+
+'</readByQuery>'+
+'</function>'+
+'</content>'+
+'</operation>'+
+'</request>';
+
+req.setBody(body);
+req.setTimeout(120000);
+
+response = '';
+If(!Test.isRunningTest()){
+Http http = new Http();
+HTTPResponse res = http.send(req);                    
+response = res.getBody();
+}else{
+//  response = '<?xml version="1.0" encoding="UTF-8"?><response><control><status>success</status><senderid>Aureus Group</senderid><controlid>1561088787741</controlid><uniqueid>false</uniqueid><dtdversion>3.0</dtdversion></control><operation><authentication><status>success</status><userid>ws_tek</userid><companyid>Aureus Group-imp</companyid><locationid /><sessiontimestamp>2019-06-20T20:46:28-07:00</sessiontimestamp><sessiontimeout>2019-06-21T02:46:28-07:00</sessiontimeout></authentication><result><status>success</status><function>create_arpayment</function><controlid>1561088787741</controlid><key>9</key></result></operation></response>';
+response ='<?xml version="1.0" encoding="UTF-8"?><response><control><status>success</status><senderid>Aureus Group</senderid><controlid>1561088787741</controlid><uniqueid>false</uniqueid><dtdversion>3.0</dtdversion></control><operation><authentication><status>success</status><userid>ws_tek</userid><companyid>Aureus Group-imp</companyid><locationid /><sessiontimestamp>2019-06-20T20:46:28-07:00</sessiontimestamp><sessiontimeout>2019-06-21T02:46:28-07:00</sessiontimeout><data><item><NAME>test</NAME><ITEM_MAKE>test</ITEM_MAKE><ITEM_MODEL_NUMBER>001</ITEM_MODEL_NUMBER><ITEM_SERIAL_NUMBER>001</ITEM_SERIAL_NUMBER><RENTAL_RATE>10</RENTAL_RATE><SALE_PRICE>10</SALE_PRICE><ITEM_STATUS>True</ITEM_STATUS></item></data></authentication><result><status>success</status><function>create_arpayment</function><controlid>1561088787741</controlid><key>9</key></result></operation></response>';
+}
+
+system.debug('body==='+body);
+System.debug('response==='+response);
+
+doc = new DOM.Document();
+doc.load(response);
+root = doc.getRootElement();
+
+for(DOM.XMLNode child : root.getChildElements()){
+if(child.getName()=='operation'){
+for(DOM.XMLNode child1 : child.getChildElements()){                        
+Boolean isSuccess = false;
+for(DOM.XMLNode child2 : child1.getChildElements()){
+if(child2.getName()=='status'){
+if(child2.getText()=='success'){
+isSuccess = true;
+}
+}
+
+if(isSuccess && child2.getName()=='data'){
+Integer count = 1;
+for(DOM.XMLNode child3 : child2.getChildElements()){
+if(child3.getName()=='item'){
+SageProductItems sgPr = new SageProductItems();
+
+Boolean isWareHouseProduct = false;
+for(DOM.XMLNode child4 : child3.getChildElements()){
+if(child4.getName()=='NAME'){
+if(whereHouseItems.contains(child4.getText()))
+isWareHouseProduct = true;
+}else if(child4.getName()=='ITEM_MAKE'){
+sgPr.brand = child4.getText();
+}else if(child4.getName()=='ITEM_MODEL_NUMBER'){
+sgPr.modelNo = child4.getText();
+}else if(child4.getName()=='ITEM_SERIAL_NUMBER'){
+sgPr.serNo = child4.getText();
+}else if(child4.getName()=='RENTAL_RATE' && String.isNotBlank(child4.getText())){
+sgPr.rentalPrice = Decimal.valueOf(child4.getText());
+}else if(child4.getName()=='SALE_PRICE' && String.isNotBlank(child4.getText())){
+sgPr.salesPrice =  Decimal.valueOf(child4.getText());
+}else if(child4.getName()=='ITEM_STATUS'){
+sgPr.condi = child4.getText();
+}
+}
+sgPr.location = wareHouseLocationId;
+if(isWareHouseProduct){
+sgPr.srNo = count;
+count = count+1;
+sageProducts.add(sgPr);
+}
+}                                       
+}
+}
+
+if(child2.getName()=='errormessage'){
+for(DOM.XMLNode child3 : child2.getChildElements()){
+if(child3.getName()=='error'){
+for(DOM.XMLNode child4 : child3.getChildElements()){
+if(child4.getName()=='description2'){
+rw.errorMsg = child4.getText();
+break;
+}
+}
+if(rw.errorMsg!=null && rw.errorMsg.trim().length()>0){
+break;
+}
+}
+}
+}
+}
+}
+}
+if(child.getName()=='errormessage'){
+for(DOM.XMLNode child1 : child.getChildElements()){
+if(child1.getName()=='error'){
+for(DOM.XMLNode child2 : child1.getChildElements()){
+if(child2.getName()=='description2'){
+rw.isSuccess = false;
+rw.errorMsg = child2.getText();
+break;
+}
+}
+}
+}
+}
+}
+
+}else If(sw.errorMsg!=null && sw.errorMsg.trim().length()>0){
+rw.isSuccess = false;
+rw.errorMsg = sw.errorMsg;
+}else{
+rw.isSuccess = false;
+rw.errorMsg = 'Unknown error occured. Please contact your admin.';
+}
+*/
     }
     
     public pageReference prcToRental(){
@@ -908,15 +932,15 @@ createDocWrapper.recipients.add(recipientTransporter);  */
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Parent_Last_Name__c', enrolmentObj.Parent__r.LastName));
             
             //CH02 Changes after NetSuite Integration
-           
-            /*tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Model__c', slcdPiano.modelNo));
-            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Serial_Number__c', slcdPiano.serNo)); 
-            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Rental_price_per_month__c', ''+(slcdPiano.rentalPrice !=null ? slcdPiano.rentalPrice : 0)));
-            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Deposit__c', ''+(fm.depFee!=null ? fm.depFee : 0)));
-            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Delivery__c', ''+(fm.deliCharges!=null ? fm.deliCharges : 0)));
-            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Selling__c', ''+(slcdPiano.salesPrice!=null ? slcdPiano.salesPrice : 0)));*/
             
-             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Model__c', slcdPiano.model ));
+            /*tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Model__c', slcdPiano.modelNo));
+tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Serial_Number__c', slcdPiano.serNo)); 
+tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Rental_price_per_month__c', ''+(slcdPiano.rentalPrice !=null ? slcdPiano.rentalPrice : 0)));
+tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Deposit__c', ''+(fm.depFee!=null ? fm.depFee : 0)));
+tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Delivery__c', ''+(fm.deliCharges!=null ? fm.deliCharges : 0)));
+tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Selling__c', ''+(slcdPiano.salesPrice!=null ? slcdPiano.salesPrice : 0)));*/
+            
+            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Model__c', slcdPiano.model ));
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Serial_Number__c', slcdPiano.serialNumber )); 
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Rental_price_per_month__c', ''+(slcdPiano.monthlyRental  !=null ? slcdPiano.monthlyRental  : 0)));
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Deposit__c', ''+(fm.depFee!=null ? fm.depFee : 0)));
@@ -1037,6 +1061,33 @@ System.debug('@@@jsonBody'+jsonBody);
         Savepoint sp;
         isError = false;
         errorMsg = '';
+        system.debug('in this process');
+        //CH02 Karan Singh 17 sep 2020 : Before doing any process, checking that if the selected piano is still avaiable
+        NetSuite_Integration_Creds__c objNetSuiteCred = NetSuite_Integration_Creds__c.getValues('Aureus Inventory Search');
+        
+        if( objNetSuiteCred == null ){
+            
+            errorMsg = 'NetSuite credentails(Aureus Inventory Search) not available. Please contact System Admin for this.';
+            isError = true;
+            return null;
+        }
+        HTTPResponse resp = sendNetSuiteRequest( objNetSuiteCred,'{"serialNumber": "'+slcdPiano.serialNumber  + '","productId": "'+slcdPiano.productId+'"}' );
+        //when the selected piano is not avaiable in the inventory
+        if(resp.getBody().contains('[]')){
+            
+            errorMsg = 'Requested piano not available.';
+            isError = true;
+            return null;
+            
+        }
+        //Incase when the authentication failed due to encrypted request
+        else if( resp.getStatusCode() != 200 ){
+            
+            errorMsg = 'An error occurred while processing the request. Please try again. StatusCode : ' +resp.getStatusCode();
+            isError = true;
+            return null;
+        }
+        //CH02 END
         
         EnrollmentProcessErrorLogs.errorLogObj errorObj = new EnrollmentProcessErrorLogs.errorLogObj();
         
@@ -1116,17 +1167,17 @@ System.debug('@@@jsonBody'+jsonBody);
                         //CH02 Changes after Net Suite Integration
                         
                         /*slcdEnrolment.Model__c = slcdPiano.modelNo;
-                        slcdEnrolment.Serial_Number__c = slcdPiano.serNo;
-                        slcdEnrolment.Brand__c = slcdPiano.brand;
-                        slcdEnrolment.Rental_price_per_month__c = slcdPiano.rentalPrice;
-                        slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
+slcdEnrolment.Serial_Number__c = slcdPiano.serNo;
+slcdEnrolment.Brand__c = slcdPiano.brand;
+slcdEnrolment.Rental_price_per_month__c = slcdPiano.rentalPrice;
+slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                         
                         slcdEnrolment.Model__c = slcdPiano.model ;
                         slcdEnrolment.Serial_Number__c = slcdPiano.serialNumber ;
                         slcdEnrolment.Brand__c = slcdPiano.brand ;
                         slcdEnrolment.Rental_price_per_month__c = slcdPiano.monthlyRental ;
                         slcdEnrolment.Selling_price__c = slcdPiano.listPrice ;
-                        
+                        slcdEnrolment.Product_Id__c =  slcdPiano.productId; //newly added
                         //CH02 END
                         slcdEnrolment.Delivery_Charges__c= fm.deliCharges > 0 ? fm.deliCharges : 0;
                         slcdEnrolment.Stair_Charges__c = fm.stairDelCharges > 0 ? fm.stairDelCharges : 0;
@@ -1319,6 +1370,10 @@ System.debug('@@@jsonBody'+jsonBody);
                             SageIntacctIntegrationUtility.newEnrolment(String.valueOf(parentAcc.Id), new Set<String>{inv.Id});
                         }
                         pageRef.getParameters().put('scId', sc.id);
+                        
+                        //CH02 Karan 17 sep 2020 updating the NetSuite Inventory
+                        SearchInstrumentRental_IpadCntrl.pushDataToNetsuite( slcdEnrolment.Name,slcdPiano.serialNumber, slcdPiano.productId);
+                        //CH02 END
                         return pageRef.setRedirect(true);
                     }else{
                         errorMsg = sc.error.message;
@@ -1369,10 +1424,10 @@ System.debug('@@@jsonBody'+jsonBody);
         
         //CH02 
         /*slcdEnrolment.Model__c = slcdPiano.modelNo;
-        slcdEnrolment.Serial_Number__c = slcdPiano.serNo;
-        slcdEnrolment.Brand__c = slcdPiano.brand;
-        slcdEnrolment.Rental_price_per_month__c = slcdPiano.rentalPrice;
-        slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
+slcdEnrolment.Serial_Number__c = slcdPiano.serNo;
+slcdEnrolment.Brand__c = slcdPiano.brand;
+slcdEnrolment.Rental_price_per_month__c = slcdPiano.rentalPrice;
+slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
         
         slcdEnrolment.Model__c = slcdPiano.model;
         slcdEnrolment.Serial_Number__c = slcdPiano.serialNumber;
@@ -1566,13 +1621,9 @@ System.debug('@@@jsonBody'+jsonBody);
     
     //CH02
     //For reference -> https://gist.github.com/smaeda-ks/dc5cdd50956e63bdae11314612389a07,https://stackoverflow.com/questions/15271508/netsuite-oauth-implemenation,https://github.com/metadaddy/sfdc-oauth-playground/blob/master/OAuth/src/classes/OAuth.cls
-    public void getProducts1(){
+    
+    public static HTTPResponse sendNetSuiteRequest( NetSuite_Integration_Creds__c objNetSuiteCred, String jsonRequestBody ){
         
-        NetSuite_Integration_Creds__c objNetSuiteCred = NetSuite_Integration_Creds__c.getValues('NetSuiteCreds');
-        
-        if( objNetSuiteCred == null ){
-            return;
-        }
         Integer noOfApiCallout = 1;
         HttpRequest req;
         HTTPResponse resp;
@@ -1611,7 +1662,7 @@ System.debug('@@@jsonBody'+jsonBody);
             req.setMethod( objNetSuiteCred.Method__c );
             req.setHeader('Content-Type', objNetSuiteCred.Content_Type__c );
             req.setHeader('Authorization', authHeader);
-            req.setBody('{"location": "test location","model" : "123"}');
+            req.setBody( jsonRequestBody );
             Http h = new Http();
             system.debug(' --> ' + req.getHeader('Authorization'));
             
@@ -1622,7 +1673,7 @@ System.debug('@@@jsonBody'+jsonBody);
             }
             else{
                 resp.setStatusCode( 200 );
-                resp.setBody( '[{"serialNumber": "123","item": "1234","location": "Test Location","status": "New","inventoryType": "Piano","monthlyRental": "62","listPrice": "66.66","model": "123","productId": "Serialized Item001","brand": "xyz"},' );
+                resp.setBody( '[{"serialNumber": "123","item": "1234","location": "Test Location","status": "New","inventoryType": "Piano","monthlyRental": "62","listPrice": "66.66","model": "123","productId": "Serialized Item001","brand": "xyz"}]' );
             }
             
             noOfApiCallout++;
@@ -1631,6 +1682,18 @@ System.debug('@@@jsonBody'+jsonBody);
         system.debug('noOfApiCallout --> '+ noOfApiCallout);
         system.debug('resp->> ' + resp);
         system.debug('resp->> ' + resp.getBody());  //resp->> {"error" : {"code" : "INVALID_LOGIN_ATTEMPT", "message" : "Invalid login attempt."}}
+        return resp;
+    }
+    
+    //this will call the netsuite inventorty products
+    public void getProducts1(){
+        
+        NetSuite_Integration_Creds__c objNetSuiteCred = NetSuite_Integration_Creds__c.getValues('Aureus Inventory Search');
+        
+        if( objNetSuiteCred == null ){
+            return;
+        }
+        HTTPResponse resp = sendNetSuiteRequest( objNetSuiteCred,'{"location": "test location","model" : "123"}' );
         
         //checking some params so that it is ensure it doesnot contains any error json
         if( resp.getBody().contains( 'serialNumber' ) && resp.getBody().contains( 'item' ) && resp.getBody().contains( 'location' ) && resp.getBody().contains( 'inventoryType' )){
@@ -1639,11 +1702,38 @@ System.debug('@@@jsonBody'+jsonBody);
             
             for( Integer index = 0; index < netSuiteProducts.size(); index++ ){
                 
-				netSuiteProducts[ index ].srNo = index + 1;
-               // system.debug(' -->  ' + netSuiteProducts[ index ]);
+                netSuiteProducts[ index ].srNo = index + 1;
+                system.debug(' -->  ' + netSuiteProducts[ index ] );
             }
         }
-        system.debug('netSuiteProducts --> ' + netSuiteProducts);
+    }
+    
+    @future(callout=true)
+    public static void pushDataToNetsuite( String enrolName, string serialNo, string productId ){
+        
+        NetSuite_Integration_Creds__c objNetSuiteCred = NetSuite_Integration_Creds__c.getValues('Convert Item to Fixed Asset');
+        HTTPResponse resp = sendNetSuiteRequest( objNetSuiteCred,'{"serialNumber": "'+serialNo+'","productId" : "'+productId+'"}' );
+        //String s1 = '{"error": {"code": "USER_ERROR","message": "serialNumber is required.","request_datetime": "11/09/2020 11:43:48 am"}}';
+        
+        //send email in case of error only
+        if( resp.getBody().contains('"error"') ){
+            
+            SearchInstrumentRental_IpadCntrl.NetSuiteError error = ( SearchInstrumentRental_IpadCntrl.NetSuiteError )JSON.deserialize( resp.getBody() ,SearchInstrumentRental_IpadCntrl.NetSuiteError.class);
+            
+            Messaging.SingleEmailMessage objOutGoingEmail =  new Messaging.SingleEmailMessage();
+            objOutGoingEmail.setToAddresses(new list< String >{ 'aureus@techmatrixconsulting.com'});
+            objOutGoingEmail.setSubject('Piano rental Process.');
+            string emailHtmlBody = 'Dear USer <br/>' ;
+            emailHtmlBody += ' Cannot update the Enrolment : '+enrolName+'  with Piano Serial Number : '+serialNo+' and Product Id : '+serialNo+'<br/>';
+            emailHtmlBody += ' Error Reason :'+ error.error.message +' <br/>';
+            objOutGoingEmail.setHtmlBody(emailHtmlBody); 
+            
+            objOutGoingEmail.setTargetObjectId( UserInfo.getUserId());
+            objOutGoingEmail.saveAsActivity = false;
+            if(!Test.isRunningTest()){
+               Messaging.SendEmailResult[]  sendEmailResults =  Messaging.sendEmail(new Messaging.SingleEmailMessage[] {objOutGoingEmail});
+            }
+        }
     }
     //CH02 END
     
@@ -1737,6 +1827,15 @@ System.debug('@@@jsonBody'+jsonBody);
             brand = '';
             
         }
+    }
+    public class NetSuiteError{
+        
+        public NetSuiteErrorCode error {get;set;}
+    }
+    public class NetSuiteErrorCode{
+        public String code{get;set;}
+        public String message{get;set;}
+        public String request_datetime{get;set;}
     }
     //CH02 END
 }
