@@ -9,7 +9,7 @@ public with Sharing class AureusCalendarController{
     private String recordTypeTeacher;
     public List<Account> accListForCenter{get;set;}
     public List<Account> accListForTeacher{get;set;}
-   // public List<Account> accListForEmployee{get;set;}
+    public List<Account> accListForEmployee{get;set;}
     public String calView{get;set;}
     public static string caseId;
     //public String bookingStatus{get;set;}
@@ -17,7 +17,7 @@ public with Sharing class AureusCalendarController{
     public String employeeId{get;set;}
     public AureusCalendarController(){
         accListForTeacher = new List<Account>();
-        //accListForEmployee = new List<Account>();
+        accListForEmployee = new List<Account>();
         recordTypeTeacher = Schema.SObjectType.Account.getRecordTypeInfosByName().get('Teacher').getRecordTypeId();
         caseId = ApexPages.currentPage().getParameters().get('caseId');
         calView = 'agendaDay';
@@ -121,39 +121,37 @@ public with Sharing class AureusCalendarController{
         return selectListForResource;
     }
      /*Commented by jatin: 11-mar-2020: for employee Calendar not Deploye*/
-     //Start: uncomment by Nishi: 27-Jul-2020: for employee Calendar new Changes get all Employee list according to cenre
-   /* public void getEmployeeByCenter(){
+    public void getEmployeeByCenter(){
         if(String.isBlank(centerName) && accListForCenter.size() > 0){
             centerName = accListForCenter[0].Id;
         }
         accListForEmployee  = PianoRentalEditCalendarController.getListOfEmployee(centerName,new set<string>());
          
-    }*/
+    }
    
     //20-Jan-2020:get select list of Employees
-    // public List<SelectOption> getEmployeeList(){
-    //     getEmployeeByCenter();
-    //     List<SelectOption> selectListForEmployees = new List<SelectOption>();
-    //     selectListForEmployees.add(new SelectOption('','Select Employee'));
-    //     if(accListForEmployee != null && accListForEmployee.size() > 0){
-    //         selectListForEmployees.add(new SelectOption('AllRosteredStaff' , 'All rostered staff'));
-    //         selectListForEmployees.add(new SelectOption('AllStaff' , 'All staff'));
-    //         for(Account objEmployee :accListForEmployee){
-    //             selectListForEmployees.add(new SelectOption(objEmployee.Id,objEmployee.Name));    
-    //         }
-    //         if(accListForEmployee.size() > 0 && calView == 'agendaTwoDay'){
-    //             employeeId = accListForEmployee[0].id;
-    //         }else if(calView == 'agendaDay'){
-    //             employeeId = 'All Employees';
-    //         }else{      
-    //             employeeId = '';       
-    //         }
-    //     }
+    public List<SelectOption> getEmployeeList(){
+        getEmployeeByCenter();
+        List<SelectOption> selectListForEmployees = new List<SelectOption>();
+        selectListForEmployees.add(new SelectOption('','Select Employee'));
+        if(accListForEmployee != null && accListForEmployee.size() > 0){
+            selectListForEmployees.add(new SelectOption('AllRosteredStaff' , 'All rostered staff'));
+            selectListForEmployees.add(new SelectOption('AllStaff' , 'All staff'));
+            for(Account objEmployee :accListForEmployee){
+                selectListForEmployees.add(new SelectOption(objEmployee.Id,objEmployee.Name));    
+            }
+            if(accListForEmployee.size() > 0 && calView == 'agendaTwoDay'){
+                employeeId = accListForEmployee[0].id;
+            }else if(calView == 'agendaDay'){
+                employeeId = 'All Employees';
+            }else{      
+                employeeId = '';       
+            }
+        }
         
-    //     return selectListForEmployees;
-    // }
-      //End: uncomment by Nishi: 27-Jul-2020: for employee Calendar new Changes get all Employee list according to cenre
-
+        return selectListForEmployees;
+    }
+    
     /*
 getCalendarData Method is Use for returning the JSON for FullCalendar data on any action perform on full calendar UI.
 
@@ -1498,11 +1496,7 @@ ed.teacherAttachmentId = attachList[0].Id;
     }
     
     @RemoteAction
-    // //Start: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
-    //public static Boolean completedOrNoShow(String bookingId, String type, String status/*,Boolean isPianoBooking*/){
-      //End: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes   
-        //public static Boolean completedOrNoShow(String bookingId, String type, String status,Boolean isPianoBooking){
-        public static Boolean completedOrNoShow(String bookingId, String type, String status/*,Boolean isPianoBooking*/){
+    public static Boolean completedOrNoShow(String bookingId, String type, String status,Boolean isPianoBooking){
         Boolean isSuccess = false;
         Booking__c bookingObj = new Booking__c();
         if(String.isNotBlank(bookingId) && String.isNotBlank(status) && String.isNotBlank(type)){
@@ -1511,9 +1505,7 @@ ed.teacherAttachmentId = attachList[0].Id;
                 bookingObj.Status__c = status;
                 //System.debug('@@@@bookingObj'+bookingObj);
                 //Commenter byCommented by jatin: 11-mar-2020: for employee Calendar not Deploye  if(!isPianoBooking){
-                 //Start: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
-                //if(!isPianoBooking){
-                //End: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
+                if(!isPianoBooking){
                     if(ConstantsClass.typeTrial == type && (status == ConstantsClass.statusCompleted || status ==ConstantsClass.statusNoshow) && String.isNotBlank(bookingId)){
                         List<Booking__c> bookingList = new List<Booking__c>();
                         bookingList = [SELECT Id, Name, Enrolment__c FROM Booking__c WHERE Id =: bookingId];
@@ -1530,7 +1522,7 @@ ed.teacherAttachmentId = attachList[0].Id;
                             }
                         }
                     }
-               // }
+                }
             }    
         }
         if(bookingObj != NULL){

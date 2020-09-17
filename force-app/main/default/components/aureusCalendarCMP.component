@@ -662,12 +662,11 @@
                     </div>
                 </apex:facet>
             </apex:actionStatus>
-            <apex:actionFunction name="centerName" reRender="teachersName,resourceName,employeeName" action="{!getTeacherByCenter}" status="status" oncomplete="initChange();teacherChange();"/><!--getEmployeeByCenter();-->
+            <apex:actionFunction name="centerName" reRender="teachersName,resourceName,employeeName" action="{!getTeacherByCenter}" status="status" oncomplete="initChange();teacherChange();getEmployeeByCenter();"/><!--getEmployeeByCenter();-->
             <!-- Jatin:21-jan-2020: for get employee list according to changed Center Id-->
-            <!--Jatin:Commented by Jatin : 11-Mar-2020:for deployement:
-            <!--Start:unCommented by Nishi : 27-Jul-2020:for new Changes:                                       
+            <!--Jatin:Commented by Jatin : 11-Mar-2020:for deployement:-->
+                                              
               <apex:actionFunction name="getEmployeeByCenter" reRender="employeeName" action="{!getEmployeeByCenter}" status="status" oncomplete="employeeChange();"/>
-            <!--End:unCommented by Nishi : 27-Jul-2020:for new Changes:-->     
             <div class="slds-scope slds-calender-page">
                 <!-- Toast -->
                 <div class="demo-only slds-hide" style="height: 4rem;" id='ToastMessage'>
@@ -758,9 +757,7 @@
                                         </div>
                                         <!-- Jatin: 20-jan- 2020:START: show employee List -->
                                        <!--Commented By jatin: 11-Mar-2020: For we not deploye employee picklist in calender-->
-                                       <!-- Start:uncomment By Nishi: 27-Jul-2020: For we not deploye employee picklist in calender
-                                          -->
-                                         <!-- <div class="slds-col slds-size_2-of-12">
+                                          <div class="slds-col slds-size_2-of-12">
                                             <div class="slds-form-element">
                                                 <apex:outputPanel id="employeeName">
                                                     <label class="slds-form-element__label">Employee</label>
@@ -772,9 +769,8 @@
                                                 </apex:outputPanel>    
                                                 
                                             </div> 
-                                        </div> -->
-                                         <!--END:uncomment By Nishi: 27-Jul-2020: For we not deploye employee picklist in calender
-                                          -->
+                                        </div> 
+                                       
                                         <!-- Jatin: 20-jan- 2020:END: show employee List -->
                                         
                                         <div class="slds-col slds-size_4-of-12" style="padding-top: 24px;">
@@ -869,12 +865,11 @@
                                                 </a>
                                             </li>
                                             <!-- Added By Ravi on 8 july 2020 online lesson Tab-->
-                                            <!--Commented By nishi: 31-Jul-2020: for hide Online lesson tab
                                                  <li class="slds-tabs--default__item slds-text-heading--label" title="Online Lesson" role="presentation">
                                                 <a class="slds-tabs--default__link" href="javascript:void(0);" role="tab" tabindex="-1" aria-selected="true" aria-controls="tab-default-6" id="tab-default-6__item">
                                                     Online Lesson
                                                 </a>
-                                            </li> -->
+                                            </li> 
                                             <!-- Added By Ravi on 8 july 2020 online lesson Tab-->
                                         </ul>
                                         <div id="tab-default-1" class="slds-tabs--default__content slds-show" role="tabpanel" aria-labelledby="tab-default-1__item">
@@ -1163,7 +1158,7 @@ Enrol now
                                                                     </div>
                                                                 </div> 
                                                                 <div class="input-group mb-3" style="padding-top: 1%;">
-                                                                <span class="slds-form-element__label slds-text-align_right" style="font-size: 16px;font-weight: bold;"><b>Lesson PassCode:</b></span>
+                                                                <span class="slds-form-element__label slds-text-align_right" style="font-size: 16px;font-weight: bold;"><b>Meeting PassCode:</b></span>
                                                                 <span id="lessonPassCode" style="font-size: 16px;font-weight: bold;"></span>
                                                                 </div>
                                                                 
@@ -4422,22 +4417,21 @@ Enrol now
             // jatin: 22-jan-2020 : manage If booking cancel and booking type is 'Piano Viewing' then 
             //show confirm modal otherwise normal cancel booking worked 
             /*Commenter byCommented by jatin: 11-mar-2020: for employee Calendar not Deploye*/
-           //Start: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
-        //     var employeeId = $('[id$=employee]').val();
-        //    //console.log('employeeId',employeeId);
-        //     if(employeeId || employeeId== undefined){
-        //         $('.confirmModal').removeClass('slds-hide');
-        //         $('.confirmModalYes').removeClass('slds-hide');
-        //         $('#confirmBody').html('Do you want to send an email?');
-        //         $('#confirmHeader').html('Email Confirmation');
-        //         $('#confirmModalYes').attr('data-origin','cancel');
-        //         $('#confirmModalNo').attr('data-origin','cancel');
-        //         $('#confirmModalYes').attr('data-id', bookingId);
-        //         $('#confirmModalNo').attr('data-id', bookingId);
-        //         $('#confirmModalYes').attr('cancelReason', '');
-        //         $('#confirmModalNo').attr('cancelReason', '');
-        //     }else{
-            //End: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
+          
+            var employeeId = $('[id$=employee]').val();
+           //console.log('employeeId',employeeId);
+            if(employeeId || employeeId== undefined){
+                $('.confirmModal').removeClass('slds-hide');
+                $('.confirmModalYes').removeClass('slds-hide');
+                $('#confirmBody').html('Do you want to send an email?');
+                $('#confirmHeader').html('Email Confirmation');
+                $('#confirmModalYes').attr('data-origin','cancel');
+                $('#confirmModalNo').attr('data-origin','cancel');
+                $('#confirmModalYes').attr('data-id', bookingId);
+                $('#confirmModalNo').attr('data-id', bookingId);
+                $('#confirmModalYes').attr('cancelReason', '');
+                $('#confirmModalNo').attr('cancelReason', '');
+            }else{
                 // cancel booking then if booking is less then 24 hours then open makup reason 
                 if(bookingId && bookingDateTime && bookingType && bookingType != 'Busy'){
                     //Commenting this code for temporary basis need to uncomment it later.
@@ -4467,7 +4461,7 @@ Enrol now
                     $('#confirmModalNo').removeAttr('data-origin');
                     $('.confirmModal').removeClass('slds-hide');
                 }
-            //}
+            }
          }
     });
      function cancelStudentBookingWithMakupReason(bookingId){
@@ -5983,15 +5977,14 @@ Enrol now
                                 $('.editBooking').attr('disabled','true');*/
                             }
                            /*Commenter byCommented by jatin: 11-mar-2020: for employee Calendar not Deploye*/
-                           //End: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
-                        //     var employeeId = $('[id$=employee]').val();
-                        //    //console.log('employeeId',employeeId);
-                        //     if(employeeId || employeeId== undefined){
-                        //         $('#detailPopupTitle').text('Instrument Viewing Booking '+eventResult.name);
-                        //     }else{
+                          var employeeId = $('[id$=employee]').val();
+                        console.log('employeeId',employeeId);
+                             if(employeeId || employeeId== undefined){
+                                 $('#detailPopupTitle').text('Instrument Viewing Booking '+eventResult.name);
+                             }else{
                                    $('#detailPopupTitle').text('Appointment Details '+eventResult.name);
-                        //    }
-                           //End: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
+                            }
+                           
                             $('#statusIconOnEdit').empty();
                             $('#statusLabelOnEdit').text(eventResult.status);
 
@@ -6054,9 +6047,14 @@ Enrol now
                             if(eventResult.type == 'Trial' || eventResult.type == 'Regular'|| eventResult.type == 'Make-up'|| eventResult.type == 'Ad-hoc'){
                                 $('#lessonTypeName').text(eventResult.lessonType);  
                                 // added By Ravi on 8 july 2020..lessonTypeName
-                                $('#lessonURL').val(eventResult.lessonURL);        
-                                //$('#lessonURL').attr('href',eventResult.lessonURL);
-                                $('#lessonPassCode').text(eventResult.lessonPassCode);
+                                if(eventResult.lessonURL != null && eventResult.lessonURL !=''){	
+                                    $('#onlineLesson').removeClass('slds-hide');	
+                                    $('#lessonURL').val(eventResult.lessonURL);        	
+                                    //$('#lessonURL').attr('href',eventResult.lessonURL);	
+                                    $('#lessonPassCode').text(eventResult.lessonPassCode); 	
+                                }else{	
+                                    $('#onlineLesson').addClass('slds-hide');	
+                                }
                                 // added By Ravi on 8 july 2020..lessonTypeName
                             }
                             
@@ -6352,7 +6350,8 @@ Enrol now
                                     // Create an auxiliary hidden input
                                     var aux = document.createElement("input");
                                     // Get the text from the element passed into the input
-                                    aux.setAttribute("value", document.getElementById('lessonURL').value);
+                                    var msgLesson='To join this video Meeting Click this link:'+document.getElementById('lessonURL').value +',\n Meeting PassCode:'+ document.getElementById('lessonPassCode').textContent;	
+                                    aux.setAttribute("value",msgLesson);
                                     // Append the aux input to the body
                                     document.body.appendChild(aux);
                                     // Highlight the content
@@ -6448,32 +6447,31 @@ Enrol now
                                               //console.log('data-resource-id',$(this).attr('data-resource-id'))
                                                 // Jatin: 21-jan-2020: for get employee records according to selected employee othew wise show teahcers
                                                /*Commented by jatin: 11-mar-2020: for employee Calendar not Deploye*/
-                                                //Start: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
-                                            //     var employeeId = $('[id$=employee]').val();
-                                            //    //console.log('employeeId',employeeId);
-                                            //     if(employeeId || employeeId== undefined){
-                                            //        //console.log('employeeId',employeeId);
-                                            //         var isemployee = false;
-                                            //         var resourceId = $(this).attr('data-resource-id');
+                                              
+                                                var employeeId = $('[id$=employee]').val();
+                                               //console.log('employeeId',employeeId);
+                                                if(employeeId || employeeId== undefined){
+                                                   //console.log('employeeId',employeeId);
+                                                    var isemployee = false;
+                                                    var resourceId = $(this).attr('data-resource-id');
                                                     
-                                            //        //console.log('resourceId',resourceId);
-                                            //         var calView = $('#calendar').fullCalendar('getView').name;
-                                            //        //console.log('calView',calView);
-                                            //         if(calView != 'agendaTwoDay'){
-                                            //             $('.employee').children().each(function(index, value){
-                                            //                 if($(this).val() == resourceId){
-                                            //                     isemployee = true;
-                                            //                 }
-                                            //             });
-                                            //            //console.log('isemployee',isemployee);
-                                            //             if(isemployee){
-                                            //                 filter.employee = resourceId;
-                                            //                 $('.employee').val(resourceId);
-                                            //                 $('.fc-agendaTwoDay-button').trigger('click');
-                                            //             }   
-                                            //         }
-                                            //     }else{
-                                                //End: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
+                                                   //console.log('resourceId',resourceId);
+                                                    var calView = $('#calendar').fullCalendar('getView').name;
+                                                   //console.log('calView',calView);
+                                                    if(calView != 'agendaTwoDay'){
+                                                        $('.employee').children().each(function(index, value){
+                                                            if($(this).val() == resourceId){
+                                                                isemployee = true;
+                                                            }
+                                                        });
+                                                       //console.log('isemployee',isemployee);
+                                                        if(isemployee){
+                                                            filter.employee = resourceId;
+                                                            $('.employee').val(resourceId);
+                                                            $('.fc-agendaTwoDay-button').trigger('click');
+                                                        }   
+                                                    }
+                                                }else{
                                                     var isTeacher = false;
                                                     var isResource = false;
                                                     var resourceId = $(this).attr('data-resource-id');
@@ -6507,7 +6505,7 @@ Enrol now
                                                             $('.fc-agendaTwoDay-button').trigger('click');
                                                         }   
                                                     }  
-                                                //}
+                                                }
                                             });
                                             
                                             $('.fc-day-header').click(function(){
@@ -6517,29 +6515,28 @@ Enrol now
                                                 
                                                 var employeeId = $('[id$=employee]').val();
                                                //console.log('employeeId',employeeId);
-                                                //Start: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
-                                                // if(employeeId || employeeId== undefined){
-                                                //    //console.log('employeeId',employeeId);
-                                                //     var isemployee = false;
+                                                
+                                                if(employeeId || employeeId== undefined){
+                                                   //console.log('employeeId',employeeId);
+                                                    var isemployee = false;
                                                     
-                                                //     if(filter.employee && filter.employee != ''){
-                                                //         isemployee = true;
-                                                //     } 
-                                                //    //console.log('isemployee',isemployee);
-                                                //     $('[id$=employee]').children().each(function(index, value){
-                                                //         if($(this).val() == 'AllRosteredStaff' || $(this).val() == 'AllStaff'){
-                                                //             $(this).remove();
-                                                //         }
-                                                //     });
-                                                //     $('[id$=employee]').children().first().after('<option value="AllRosteredStaff">All rostered staff</option><option value="AllStaff">All staff</option>');
+                                                    if(filter.employee && filter.employee != ''){
+                                                        isemployee = true;
+                                                    } 
+                                                   //console.log('isemployee',isemployee);
+                                                    $('[id$=employee]').children().each(function(index, value){
+                                                        if($(this).val() == 'AllRosteredStaff' || $(this).val() == 'AllStaff'){
+                                                            $(this).remove();
+                                                        }
+                                                    });
+                                                    $('[id$=employee]').children().first().after('<option value="AllRosteredStaff">All rostered staff</option><option value="AllStaff">All staff</option>');
                                                     
-                                                //     if(isemployee){
-                                                //         filter.employee = 'AllRosteredStaff';
-                                                //         initEmployeeResources(center, employeeId, [dateHeader], 'agendaDay');
-                                                //         $('.employee').val(filter.employee);
-                                                //     }
-                                                // }else{
-                                                //End: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
+                                                    if(isemployee){
+                                                        filter.employee = 'AllRosteredStaff';
+                                                        initEmployeeResources(center, employeeId, [dateHeader], 'agendaDay');
+                                                        $('.employee').val(filter.employee);
+                                                    }
+                                                }else{
                                                     var isTeacher = false;
                                                     var isResource = false;
                                                     
@@ -6586,7 +6583,7 @@ Enrol now
                                                         initResources(center, teacher, filter.resource, [dateHeader], 'agendaDay', filter.instrument);
                                                         $('[id$=resources]').val(filter.resource);
                                                     }
-                                                //}
+                                                }
                                             });
                                         },
                                         viewRender: function( view, element ){
@@ -6727,15 +6724,13 @@ Enrol now
                                             }
                                             // Jatin: 21-jan-2020: for show busy booking tab only
                                            /*Commented by jatin: 11-mar-2020: for employee Calendar not Deploye*/
-                                           //Start: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
-                                        //     var employeeId = $('[id$=employee]').val();
-                                        //    //console.log('employeeId',employeeId);
-                                        //     if(employeeId || employeeId == undefined){
-                                        //         $('#addNewBooking').addClass('slds-hide');
-                                        //         $('#addClass').addClass('slds-hide');
-                                        //         $('#addBusyTime').removeClass('slds-hide');
-                                        //     }
-                                            //End: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
+                                             var employeeId = $('[id$=employee]').val();
+                                           //console.log('employeeId',employeeId);
+                                            if(employeeId || employeeId == undefined){
+                                                $('#addNewBooking').addClass('slds-hide');
+                                                $('#addClass').addClass('slds-hide');
+                                                $('#addBusyTime').removeClass('slds-hide');
+                                            }
                                         },
                                         eventRender: function(event, element, view) {
                                             if(event.className.includes('bookingNotAvailable')){
@@ -7131,36 +7126,35 @@ Enrol now
                                     reRenderHidden();
                                      // added by jatin: 20-jan-2020 for show employee calandar according to selected button 
                                    /*Commented by jatin: 11-mar-2020: for employee Calendar not Deploye*/
-                                   //Start: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
-                                //     var employeeId = $('[id$=employee]').val();
-                                //    //console.log('employeeId',employeeId);
-                                //     if(employeeId || employeeId== undefined){
-                                //         $('[id$=employee]').children().each(function(index, value){
-                                //            //console.log('!!!employeeId',$(this).val());
-                                //             if($(this).val() == 'AllRosteredStaff' || $(this).val() == 'AllStaff'){
-                                //                 $(this).remove();
-                                //             }
-                                //         });
-                                //         $('[id$=employee]').children().first().after('<option value="AllRosteredStaff">All rostered staff</option><option value="AllStaff">All staff</option>');
+                                   
+                                    var employeeId = $('[id$=employee]').val();
+                                   //console.log('employeeId',employeeId);
+                                    if(employeeId || employeeId== undefined){
+                                        $('[id$=employee]').children().each(function(index, value){
+                                           //console.log('!!!employeeId',$(this).val());
+                                            if($(this).val() == 'AllRosteredStaff' || $(this).val() == 'AllStaff'){
+                                                $(this).remove();
+                                            }
+                                        });
+                                        $('[id$=employee]').children().first().after('<option value="AllRosteredStaff">All rostered staff</option><option value="AllStaff">All staff</option>');
                                         
-                                //         var b = $('#calendar').fullCalendar('getDate');
-                                //         var bookDate = [b.format('YYYY-MM-DD')];
-                                //         var calView = $('#calendar').fullCalendar('getView').name;
-                                //         var calendarDates = isWeekDay();
-                                //         if(!$("[id$=employee]").val()){
-                                //             employeeId = $("[id$=employee]").val();
-                                //            //console.log('employeeId'+employeeId);
-                                //         }
-                                //         if(!employeeId){
-                                //             $("[id$=employee]").val('');
-                                //         }
-                                //        //console.log('employeeId'+employeeId);
-                                //        //console.log('center'+center);
-                                //         initEmployeeResources(center, employeeId, bookDate, calView);
-                                //         $(this).addClass('fc-state-disabled');
+                                        var b = $('#calendar').fullCalendar('getDate');
+                                        var bookDate = [b.format('YYYY-MM-DD')];
+                                        var calView = $('#calendar').fullCalendar('getView').name;
+                                        var calendarDates = isWeekDay();
+                                        if(!$("[id$=employee]").val()){
+                                            employeeId = $("[id$=employee]").val();
+                                           //console.log('employeeId'+employeeId);
+                                        }
+                                        if(!employeeId){
+                                            $("[id$=employee]").val('');
+                                        }
+                                       //console.log('employeeId'+employeeId);
+                                       //console.log('center'+center);
+                                        initEmployeeResources(center, employeeId, bookDate, calView);
+                                        $(this).addClass('fc-state-disabled');
                                         
-                                //     }else{
-                                    //End: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
+                                    }else{
                                         
                                        //console.log('employeeId',employeeId);
                                         $('[id$=teachers]').children().each(function(index, value){
@@ -7196,7 +7190,7 @@ Enrol now
                                         var calendarDates = isWeekDay();
                                         initResources(center, teacher, filter.resource, bookDate, calView, filter.instrument);
                                         $(this).addClass('fc-state-disabled');
-                                    //}
+                                    }
                                 });
                                 
                                 $('.fc-agendaTwoDay-button').click(function(e){
@@ -7204,35 +7198,33 @@ Enrol now
                                     reRenderHidden();
                                      // added by jatin: 20-jan-2020 for show employee calandar according to selected button 
                                    /*Commented by jatin: 11-mar-2020: for employee Calendar not Deploye*/
-                                   //Start: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
-                                //     var employeeId = $('[id$=employee]').val();
-                                //    //console.log('employeeId',employeeId);
-                                //     if(employeeId || employeeId== undefined){
-                                //        //console.log('employeeId',employeeId);
-                                //         $('[id$=employee]').children().each(function(index, value){
-                                //             if($(this).val() == 'AllRosteredStaff' || $(this).val() == 'AllStaff'){
-                                //                 $(this).remove();
-                                //             }
-                                //         });
+                                    var employeeId = $('[id$=employee]').val();
+                                   //console.log('employeeId',employeeId);
+                                    if(employeeId || employeeId== undefined){
+                                       //console.log('employeeId',employeeId);
+                                        $('[id$=employee]').children().each(function(index, value){
+                                            if($(this).val() == 'AllRosteredStaff' || $(this).val() == 'AllStaff'){
+                                                $(this).remove();
+                                            }
+                                        });
                                         
-                                //         var b = $('#calendar').fullCalendar('getDate');
-                                //         var bookDate = [b.format('YYYY-MM-DD')];
-                                //        //console.log('employeeId'+employeeId);
-                                //         if((! $('[id$=employee]').val() || employeeId == 'AllRosteredStaff' || employeeId == 'AllStaff') && !filter.employee){
-                                //             $("[id$=employee]").val( $('[id$=employee]').children().eq(1).val());
-                                //             employeeId =  $('[id$=employee]').val();
-                                //            //console.log('employeeId'+employeeId);
-                                //         }
-                                //         if(!employeeId){
-                                //             $('[id$=employee]').val('');
-                                //         }
-                                //         var calView = $('#calendar').fullCalendar('getView').name;
-                                //         var calendarDates = isWeekDay();
-                                //        //console.log('employeeId'+employeeId);
-                                //        //console.log('center'+center);
-                                //         initEmployeeResources(center, employeeId, calendarDates, calView);
-                                //     }else{
-                                    //end: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
+                                        var b = $('#calendar').fullCalendar('getDate');
+                                        var bookDate = [b.format('YYYY-MM-DD')];
+                                       //console.log('employeeId'+employeeId);
+                                        if((! $('[id$=employee]').val() || employeeId == 'AllRosteredStaff' || employeeId == 'AllStaff') && !filter.employee){
+                                            $("[id$=employee]").val( $('[id$=employee]').children().eq(1).val());
+                                            employeeId =  $('[id$=employee]').val();
+                                           //console.log('employeeId'+employeeId);
+                                        }
+                                        if(!employeeId){
+                                            $('[id$=employee]').val('');
+                                        }
+                                        var calView = $('#calendar').fullCalendar('getView').name;
+                                        var calendarDates = isWeekDay();
+                                       //console.log('employeeId'+employeeId);
+                                       //console.log('center'+center);
+                                        initEmployeeResources(center, employeeId, calendarDates, calView);
+                                    }else{
                                        //console.log('employeeId',employeeId);
                                         $('[id$=teachers]').children().each(function(index, value){
                                             if($(this).val() == 'AllRosteredStaff' || $(this).val() == 'AllStaff'){
@@ -7268,7 +7260,7 @@ Enrol now
                                         var calendarDates = isWeekDay();
                                     ////console.log(center, teacher, filter.resource, calendarDates, calView, filter.instrument);
                                         initResources(center, teacher, filter.resource, calendarDates, calView, filter.instrument);
-                                    //}
+                                    }
                                 });
                                 
                                 $('.fc-myCustomButton-button').after('<span class="fc-button fc-button-title fc-state-default fc-state-hover"><input class="slds-input" type="text" id="fullCalendarDate" style="padding: 0px;border: 0px;cursor: pointer;text-align: center;" onchange="getDirectDate();return false;" readonly/></span>');
@@ -7309,24 +7301,22 @@ Enrol now
                                 
                                 var calendarDates = datesArray;
                                /*Commented by jatin: 11-mar-2020: for employee Calendar not Deploye*/
-                               //Start: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
                                 // added by jatin: 21-jan-2020 for show employee calandar according to selected date
-                            //     var employeeId = $('[id$=employee]').val();
-                            //    //console.log('employeeId',employeeId);
-                            //     if(employeeId || employeeId== undefined){
-                            //         if(calView == 'agendaTwoDay'){
-                            //             initEmployeeResources(center, employeeId, calendarDates, calView);
-                            //         }else{
-                            //             initEmployeeResources(center, employeeId, bookDates, calView);
-                            //         } 
-                            //     }else{
-                                //End: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
+                                var employeeId = $('[id$=employee]').val();
+                               //console.log('employeeId',employeeId);
+                                if(employeeId || employeeId== undefined){
+                                    if(calView == 'agendaTwoDay'){
+                                        initEmployeeResources(center, employeeId, calendarDates, calView);
+                                    }else{
+                                        initEmployeeResources(center, employeeId, bookDates, calView);
+                                    } 
+                                }else{
                                     if(calView == 'agendaTwoDay'){
                                         initResources(center, teacher, filter.resource, calendarDates, calView, filter.instrument);
                                     }else{
                                         initResources(center, teacher, filter.resource, bookDates , calView, filter.instrument);
                                     }
-                               // }
+                                }
                             }
                             
                             function getPackage(package){
@@ -7337,6 +7327,8 @@ Enrol now
                                 }
                                 $(createBookingResult.packages).each(function(index6, value6){
                                     if(bookingData.packageId == value6.id){
+                                        console.log('value6.id'+value6.id);
+                                        console.log('value6.type'+value6.type);
                                         $('#packageSelect').val(value6.name);
                                          // Nishi: 18-Aug-2020 : start : if center is ossia then we manage teacher and enrolment	
                                          var isossia = $('#saveNewBooking').attr('data-isossia');	
@@ -8190,12 +8182,10 @@ Enrol now
                         });
                         // jatin: 21jan2020 for referesh employee list
                        /* Commented By jatin: 11-mar-2020 */
-                        //Start: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
-                        //     $(".employee").change(function(){
-                        //     getEmployeeList($('[id$=employee]').val());
-                        //     refreshCalendar();
-                        // });
-                        //End: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
+                            $(".employee").change(function(){
+                            getEmployeeList($('[id$=employee]').val());
+                            refreshCalendar();
+                        });
                         $('[id$=resources]').change(function(){
                             var calView = $('#calendar').fullCalendar('getView').name;
                             if(calView == 'agendaTwoDay'){
@@ -8515,10 +8505,8 @@ Enrol now
                         var isTeacher = false;
                         // jatin: 21-jan-2020: for remove employee Id if teacher is selected
                         /*Commenter byCommented by jatin: 11-mar-2020: for employee Calendar not Deploye*/
-                        //Start: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
-                        //  $('[id$=employee]').val('');
-                        // filter.employee = $('[id$=employee]').val();
-                        //End: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
+                         $('[id$=employee]').val('');
+                        filter.employee = $('[id$=employee]').val();
                         window.setTimeout(function(){
                             var calView = $('#calendar').fullCalendar('getView').name;
                             $("[id$=teachers]").children().each(function(index, value){
@@ -8561,10 +8549,8 @@ Enrol now
                         filter.teacher = teacherVal;
                         // jatin: 21-jan-2020: for remove employee Id if teacher is selected
                        /*Commenter byCommented by jatin: 11-mar-2020: for employee Calendar not Deploye*/
-                       //Start: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
-                        //  $('[id$=employee]').val('');
-                        // filter.employee = $('[id$=employee]').val();
-                        //End: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
+                         $('[id$=employee]').val('');
+                        filter.employee = $('[id$=employee]').val();
                         if(filter.teacher){
                             teacherResourceToggler('teacher');
                         }
@@ -8573,10 +8559,8 @@ Enrol now
                         filter.resource = resourceVal;
                         // jatin: 21-jan-2020: for remove employee Id if resourse is selected
                         /*Commenter byCommented by jatin: 11-mar-2020: for employee Calendar not Deploye*/
-                        //Start: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
-                        // $('[id$=employee]').val('');
-                        // filter.employee = $('[id$=employee]').val();
-                        //End: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
+                        $('[id$=employee]').val('');
+                        filter.employee = $('[id$=employee]').val();
                        //console.log('filter.resource',filter.resource);
                         if(filter.resource){
                             teacherResourceToggler('resource');
@@ -8589,10 +8573,8 @@ Enrol now
                         filter.instrument = ins;
                         // jatin: 21-jan-2020: for remove employee Id if instrument is selected
                         /*Commenter byCommented by jatin: 11-mar-2020: for employee Calendar not Deploye*/
-                        //Start: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
-                        // $('[id$=employee]').val('');
-                        // filter.employee = $('[id$=employee]').val();
-                        //End: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
+                        $('[id$=employee]').val('');
+                        filter.employee = $('[id$=employee]').val();
                         instruments = ins;
                         $('.confirmModal').addClass('slds-hide');
                         refreshCalendar();
@@ -8606,10 +8588,8 @@ Enrol now
                         } else{
                             // jatin: 21-jan-2020: for remove employee Id if teacher is selected
                             /*Commenter byCommented by jatin: 11-mar-2020: for employee Calendar not Deploye*/
-                            //Start: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
-                            // $('[id$=employee]').val('');
-                            // filter.employee = $('[id$=employee]').val();
-                            //End: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
+                            $('[id$=employee]').val('');
+                            filter.employee = $('[id$=employee]').val();
                         }
                         filter.teacher = $('[id$=teachers]').val(); 
                         filter.resource = $('[id$=resources]').val();
@@ -8634,20 +8614,16 @@ Enrol now
                     function completedOrNoShow(bookingId, type, status){
                         if(status && bookingId && type){
                            /*Commented by jatin: 11-mar-2020: for employee Calendar not Deploye*/
-                           //Start: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
-                        //     var employeeId = $('[id$=employee]').val();
-                        //    //console.log('employeeId',employeeId);
-                        //     var isPianoBooking = false;
-                        //     if(employeeId || employeeId== undefined){
-                        //         isPianoBooking = true;
-                        //     }
-                            //End: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
+                            var employeeId = $('[id$=employee]').val();
+                           //console.log('employeeId',employeeId);
+                            var isPianoBooking = false;
+                            if(employeeId || employeeId== undefined){
+                                isPianoBooking = true;
+                            }
                             Visualforce.remoting.Manager.invokeAction(
                                 '{!$RemoteAction.AureusCalendarController.completedOrNoShow}',
-                                bookingId, type, status, /*isPianoBooking,*/
-                                //Start: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
-                                //bookingId, type, status, isPianoBooking,
-                                //End: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
+                                bookingId, type, status, isPianoBooking,
+                            
                                 function(result, event){
                                     if (event.status) {
                                         if(result){
@@ -8755,6 +8731,7 @@ Enrol now
                                 }
                             }
                             if(!isError){
+                                console.log('Adhoc bookingData'+bookingData);
                                 if(bookingData.type == 'home-trial'){
                                     
                                     validationOnCreationOfHomeTrialBookings(bookingData);
@@ -8824,6 +8801,7 @@ Enrol now
                                     var selectedTeacherInstrument = $('#saveNewBooking').attr('data-teacherinstrument');	
                                     var selectedInstrument = $('#saveNewBooking').attr('data-instrument');	
                                     var enrolInstrument = $('#OssiaInstrumentSelect').val(); 	
+                                    console.log('Adhoc bookingData',bookingData);
                                     $('#OssiaStudentErrorMsg').text('');	
                                     $('#OssiaInstrumentErrorMsg').text('');	
                                     if(isossia && isossia === 'true'){	
@@ -8854,7 +8832,12 @@ Enrol now
                                             }
                                         }
                                     }else{
-                                        createBookingProceed();
+                                        $('#newBookingDetails').addClass('slds-hide');
+                                        if(bookingData.isRecurring == 'false'){
+                                            showAdhocBookings(bookingData.studentId, bookingData.packageId, bookingData.date.split('T')[0], bookingData.date.split('T')[1], 1);
+                                        }else if(bookingData.isRecurring == 'true'){
+                                            countOfBookings(bookingData);
+                                        }
                                     } 
                                 }else{
                                     createBookingProceed();
@@ -9783,17 +9766,15 @@ Enrol now
                     //Refresh the calendar with existing dates
                     function refreshCalendar(){
                         /*Commenter byCommented by jatin: 11-mar-2020: for employee Calendar not Deploye*/
-                        //Start: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
-                    //     var employeeId = $('[id$=employee]').val();
-                    //    //console.log('employeeId',employeeId);
-                    //      // jatin: 22-jan-2020 : manage If booking cancel and booking type is 'Piano Viewing' then 
-                    //      //referesh emplyee calendar otherwise normal calendar is referesh 
-                    //     if(employeeId || employeeId == undefined){
-                    //         refreshCalendarAccordingToEmployee();
-                    //     }else{
-                        //End: unComment by Nishi: 27-Jul-2020: for employee Calendar new changes
+                        var employeeId = $('[id$=employee]').val();
+                       //console.log('employeeId',employeeId);
+                         // jatin: 22-jan-2020 : manage If booking cancel and booking type is 'Piano Viewing' then 
+                         //referesh emplyee calendar otherwise normal calendar is referesh 
+                        if(employeeId || employeeId == undefined){
+                            refreshCalendarAccordingToEmployee();
+                        }else{
                             refreshCalendarAccordingToTeacher();
-                        //}
+                        }
                         
                        
                     }
