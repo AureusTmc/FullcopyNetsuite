@@ -10,9 +10,9 @@ public with sharing class AddCreditMemoController {
           return objCreditMemoWrap;
           
       } else {
-          
+          //we will include inv line item having negative amount as well
           for (Invoice__c objInv : [ SELECT Id, Status__c,Currency_Code__c,Name,                                    
-                                    (SELECT ID, Amount__c, GST_Amount__c,Package__c,Enrolment__c FROM Invoice_Line_Items__r WHERE Amount__c > 0)
+                                    (SELECT ID, Amount__c, GST_Amount__c,Package__c,Enrolment__c FROM Invoice_Line_Items__r)
                                     FROM Invoice__c 
                                     WHERE ID = :invId ]) {
                                         
@@ -36,6 +36,11 @@ public with sharing class AddCreditMemoController {
                                             
                                         }
                                     }
+          //to scale it till two decimal points
+          if(  objCreditMemoWrap.invoiceAmount > 0 ){
+             objCreditMemoWrap.invoiceAmount = BillingUtility.roundOffAmount( objCreditMemoWrap.invoiceAmount );
+              system.debug(' --> ' + objCreditMemoWrap.invoiceAmount);
+          }
           
           for( Credit_Memo__c objCreditMem : [ SELECT ID,Name FROM Credit_Memo__c WHERE From_Invoice__c =: objCreditMemoWrap.invoiceId ] ){
               objCreditMemoWrap.existCreditMemo = objCreditMem.Name;
