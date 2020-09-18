@@ -1,7 +1,7 @@
 //CH01 Karan Singh 8 Sep 2020 Bypass pandaDoc Validation in case PandaDoc goes offline for maintenance purposes
 //CH02 Karan Singh 16 Sep 2020 Replacing Sage Integration with Net Suite Integration for fetching inventory Details and changing the getProducts()method for this
 //			and checking the enrolment is active type or not.
- 
+//CH03 Karan Singh 18 Sep 2020 : Deposit should be inclusive of GST  
 public class SearchInstrumentRental_IpadCntrl {
     public String slcdCenter{get;set;}
     public String slcdEnrId{get;set;}
@@ -73,10 +73,16 @@ public class SearchInstrumentRental_IpadCntrl {
     public NetSuiteProducts slcdPiano{get;set;}
     public Boolean isExistingLessonEnrolment{get;set;} //17 sep 2020 as if slcd enrolment is an active lesson type enrolment then we will charge only one time rental amount not twice.
     //CH02 END
+    //CH03
+    Decimal gstAmount {get;set;}
+    //CH03
     
     //public static 
     public SearchInstrumentRental_IpadCntrl(){
         
+        //CH03
+        gstAmount = 0;
+        //CH03
         //CH02
         netSuiteProducts = new List<NetSuiteProducts>();
         slcdPiano = new NetSuiteProducts();
@@ -245,9 +251,17 @@ options.add(new SelectOption(str,str));*/
                                           //CH02 17 sep 2020 will work later on this
                                           //   ,recordtype.name,Parent__r.Enroled__c
                                           //CH02 END
+                                          //CH03 Karan for Calc GST Price as well
+                                          ,Center__r.Country__r.Tax_Rate__c
+                                          //CH03
                                           FROM Enrolment__c 
                                           WHERE Id =: slcdEnrId];
             if(enrList.size() > 0){
+                
+                //CH03 Karan 18 Sep 2020
+                if( enrList.get(0).Center__r.Country__r.Tax_Rate__c != null )
+                gstAmount = BillingUtility.roundOffAmount(enrList.get(0).Center__r.Country__r.Tax_Rate__c);
+                //CH03 
                 
                 // 17 sep 2020 will work later on thisCH02 17 Sep 2020 checking if it is existing  active/enrolled Lesson Enrolment
                 //if(  enrList.get(0).recordtype.name != Null && enrList.get(0).recordtype.name == 'Lesson' && enrList.get(0).Parent__r.Enroled__c != Null && enrList.get(0).Parent__r.Enroled__c ){
@@ -321,14 +335,29 @@ options.add(new SelectOption(str,str));*/
             //if(isExistingLessonEnrolment != null && isExistingLessonEnrolment){// 17 sep 2020 will work later on this CH02 Karan :as 17 sep 2020 , now checking if the selected enrolment is existing active/enrolled enrolment of type lesson.
             //CH02 
             //fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Piano_Rental_Deposit_Fee)); CH02 Karan 17 Sep 2020 :use piano Deposit fee only instead Label as now we are getting rental amount of piano from netSuite
-            if( slcdPiano.monthlyRental != Null )
+            system.debug('gstAmount-->  ' + gstAmount);
+            if( slcdPiano.monthlyRental != Null ){
+                
                 fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.monthlyRental));
+                //CH03 Will add Gst amount as well
+                fm.depFee += (BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.monthlyRental)) * gstAmount) /100;
+                fm.depFee = BillingUtility.roundOffAmount(fm.depFee);
+                //CH03 END
+            }
+                
             //CH02 END
         }else{
             //CH02
             //fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Piano_Rental_Deposit_Fee) *2 ); CH02 Karan 17 Sep 2020: use piano Deposit fee only instead Label as now we are getting rental amount of piano from netSuite
-            if( slcdPiano.monthlyRental != Null )
+            if( slcdPiano.monthlyRental != Null ){
+                
                 fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.monthlyRental) *2 );
+                //CH03 Will add Gst amount as well
+                fm.depFee += (BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.monthlyRental) *2 ) * gstAmount) /100;
+                fm.depFee = BillingUtility.roundOffAmount(fm.depFee);
+                //CH03 END
+            }
+                
             //CH02 END 
         }
         //End:nishi: 27-Jul-2020:Existing Student – one month (with any active enrolment) ; others – two months

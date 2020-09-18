@@ -128,6 +128,10 @@ public with sharing class AddCreditMemoController {
                     remarks,
                     true
                 );
+                
+                //Karan 18 Sep 2020 : Change the status of the invoice to Void after creating the credit memo. This is applicable only for Due invoices
+                objInvoice.Status__c = 'Void';
+                update objInvoice;
             }
             
             if (String.isNotBlank(objCreditMemo.Id)) {
