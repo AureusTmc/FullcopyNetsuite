@@ -1,7 +1,7 @@
 //CH01 Karan Singh 8 Sep 2020 Bypass pandaDoc Validation in case PandaDoc goes offline for maintenance purposes
 //CH02 Karan Singh 16 Sep 2020 Replacing Sage Integration with Net Suite Integration for fetching inventory Details and changing the getProducts()method for this
 //			and checking the enrolment is active type or not.
-
+ 
 public class SearchInstrumentRental_IpadCntrl {
     public String slcdCenter{get;set;}
     public String slcdEnrId{get;set;}
@@ -164,7 +164,7 @@ options.add(new SelectOption(str,str));*/
         options.addAll(fillPicklistValues('Enrolment__c', 'House_type__c'));
         return options;
     }
-    
+     
     public list <EnrolmentModel> getEnrolments() {
         List<EnrolmentModel> enrList = new List<EnrolmentModel>(); 
         // String type = ConstantsClass.typeTrial;
@@ -322,13 +322,13 @@ options.add(new SelectOption(str,str));*/
             //CH02 
             //fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Piano_Rental_Deposit_Fee)); CH02 Karan 17 Sep 2020 :use piano Deposit fee only instead Label as now we are getting rental amount of piano from netSuite
             if( slcdPiano.monthlyRental != Null )
-                fm.depFee = BillingUtility.roundOffAmount(slcdPiano.monthlyRental);
+                fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.monthlyRental));
             //CH02 END
         }else{
             //CH02
             //fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Piano_Rental_Deposit_Fee) *2 ); CH02 Karan 17 Sep 2020: use piano Deposit fee only instead Label as now we are getting rental amount of piano from netSuite
             if( slcdPiano.monthlyRental != Null )
-                fm.depFee = BillingUtility.roundOffAmount(slcdPiano.monthlyRental *2 );
+                fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.monthlyRental) *2 );
             //CH02 END 
         }
         //End:nishi: 27-Jul-2020:Existing Student – one month (with any active enrolment) ; others – two months
@@ -351,8 +351,8 @@ options.add(new SelectOption(str,str));*/
             fm.depFee = fm.deliCharges = fm.tuningFee = fm.heatingRodInsFee = fm.stairDelCharges = fm.perStairCharges = 0;
             //CH02 
             //fm.instrumentChrg = BillingUtility.roundOffAmount(slcdPiano.salesPrice);
-            system.debug(' --> ' + BillingUtility.roundOffAmount(slcdPiano.listPrice ));
-            fm.instrumentChrg = BillingUtility.roundOffAmount(slcdPiano.listPrice );
+            system.debug(' --> ' + BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.listPrice )));
+            fm.instrumentChrg = BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.listPrice) );
             //CH02 END
             fm.totFee = fm.instrumentChrg;
         }
@@ -942,10 +942,10 @@ tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Selling__c', ''+(slcdPia
             
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Model__c', slcdPiano.model ));
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Serial_Number__c', slcdPiano.serialNumber )); 
-            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Rental_price_per_month__c', ''+(slcdPiano.monthlyRental  !=null ? slcdPiano.monthlyRental  : 0)));
+            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Rental_price_per_month__c', ''+(slcdPiano.monthlyRental  !=null ? Decimal.valueOf(slcdPiano.monthlyRental)  : 0)));
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Deposit__c', ''+(fm.depFee!=null ? fm.depFee : 0)));
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Delivery__c', ''+(fm.deliCharges!=null ? fm.deliCharges : 0)));
-            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Selling__c', ''+(slcdPiano.listPrice !=null ? slcdPiano.listPrice  : 0)));
+            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Selling__c', ''+(slcdPiano.listPrice !=null ? Decimal.valueOf(slcdPiano.listPrice)  : 0)));
             
             //CH02 END
             
@@ -1175,9 +1175,9 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                         slcdEnrolment.Model__c = slcdPiano.model ;
                         slcdEnrolment.Serial_Number__c = slcdPiano.serialNumber ;
                         slcdEnrolment.Brand__c = slcdPiano.brand ;
-                        slcdEnrolment.Rental_price_per_month__c = slcdPiano.monthlyRental ;
-                        slcdEnrolment.Selling_price__c = slcdPiano.listPrice ;
-                        slcdEnrolment.Product_Id__c =  slcdPiano.productId; //newly added
+                        slcdEnrolment.Rental_price_per_month__c = Decimal.valueOf(slcdPiano.monthlyRental );
+                        slcdEnrolment.Selling_price__c = Decimal.valueOf(slcdPiano.listPrice );
+                        slcdEnrolment.Product_Id__c =  'R-' + slcdPiano.productId; //newly added
                         //CH02 END
                         slcdEnrolment.Delivery_Charges__c= fm.deliCharges > 0 ? fm.deliCharges : 0;
                         slcdEnrolment.Stair_Charges__c = fm.stairDelCharges > 0 ? fm.stairDelCharges : 0;
@@ -1245,7 +1245,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                             
                             //CH02 Changes after NetSuite Integration
                             //subLItm.Amount__c = slcdPiano.rentalPrice;
-                            subLItm.Amount__c = slcdPiano.monthlyRental ;
+                            subLItm.Amount__c = Decimal.valueOf(slcdPiano.monthlyRental) ;
                             //CH02 END
                             //subLItm.Subscription_Start_Date__c = enr.Lessons_Start_Date__c;
                             //subLItm.Next_Bill_Date__c   = subsNextBillingDate;
@@ -1432,8 +1432,8 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
         slcdEnrolment.Model__c = slcdPiano.model;
         slcdEnrolment.Serial_Number__c = slcdPiano.serialNumber;
         slcdEnrolment.Brand__c = slcdPiano.brand;
-        slcdEnrolment.Rental_price_per_month__c = slcdPiano.monthlyRental;
-        slcdEnrolment.Selling_price__c = slcdPiano.listPrice ;
+        slcdEnrolment.Rental_price_per_month__c = Decimal.valueOf(slcdPiano.monthlyRental);
+        slcdEnrolment.Selling_price__c = Decimal.valueOf(slcdPiano.listPrice );
         
         //CH02 END
         slcdEnrolment.Delivery_Charges__c= fm.deliCharges > 0 ? fm.deliCharges : 0;
@@ -1493,7 +1493,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
             
             //CH02 
             //subLItm.Amount__c = slcdPiano.rentalPrice;
-            subLItm.Amount__c = slcdPiano.monthlyRental ;
+            subLItm.Amount__c = Decimal.valueOf(slcdPiano.monthlyRental) ;
             //CH02 END
             //subLItm.Subscription_Start_Date__c = enr.Lessons_Start_Date__c;
             //subLItm.Next_Bill_Date__c   = subsNextBillingDate;
@@ -1663,6 +1663,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
             req.setHeader('Content-Type', objNetSuiteCred.Content_Type__c );
             req.setHeader('Authorization', authHeader);
             req.setBody( jsonRequestBody );
+            req.setTimeout(60000);
             Http h = new Http();
             system.debug(' --> ' + req.getHeader('Authorization'));
             
@@ -1693,7 +1694,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
         if( objNetSuiteCred == null ){
             return;
         }
-        HTTPResponse resp = sendNetSuiteRequest( objNetSuiteCred,'{"location": "test location","model" : "123"}' );
+        HTTPResponse resp = sendNetSuiteRequest( objNetSuiteCred,'{"type": "Piano"}' );
         
         //checking some params so that it is ensure it doesnot contains any error json
         if( resp.getBody().contains( 'serialNumber' ) && resp.getBody().contains( 'item' ) && resp.getBody().contains( 'location' ) && resp.getBody().contains( 'inventoryType' )){
@@ -1704,9 +1705,16 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                 
                 netSuiteProducts[ index ].srNo = index + 1;
                 system.debug(' -->  ' + netSuiteProducts[ index ] );
-            }
-        }
-    }
+                
+                if( String.isBlank(netSuiteProducts[ index ].listPrice) ){
+                    netSuiteProducts[ index ].listPrice = '0';
+                }
+                if( String.isBlank(netSuiteProducts[ index ].monthlyRental) ){
+                    netSuiteProducts[ index ].monthlyRental = '0';
+                }
+            }//end of for Loop
+        }//end of response check
+    }//end of getProducts1
     
     @future(callout=true)
     public static void pushDataToNetsuite( String enrolName, string serialNo, string productId ){
@@ -1723,8 +1731,8 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
             Messaging.SingleEmailMessage objOutGoingEmail =  new Messaging.SingleEmailMessage();
             objOutGoingEmail.setToAddresses(new list< String >{ 'aureus@techmatrixconsulting.com'});
             objOutGoingEmail.setSubject('Piano rental Process.');
-            string emailHtmlBody = 'Dear USer <br/>' ;
-            emailHtmlBody += ' Cannot update the Enrolment : '+enrolName+'  with Piano Serial Number : '+serialNo+' and Product Id : '+serialNo+'<br/>';
+            string emailHtmlBody = 'Dear User <br/>' ;
+            emailHtmlBody += ' Cannot update NetSuite Inventory with Piano Serial Number : '+serialNo+' and Product Id : '+serialNo+' of the Enrolment : '+enrolName+'<br/>';
             emailHtmlBody += ' Error Reason :'+ error.error.message +' <br/>';
             objOutGoingEmail.setHtmlBody(emailHtmlBody); 
             
@@ -1804,24 +1812,24 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
         
         public Integer srNo{get;set;}
         public String serialNumber {get;set;}
-        public Integer item {get;set;}
+        public String item {get;set;}
         public String location {get;set;}
         public String status {get;set;}
         public String inventoryType {get;set;}
-        public Decimal monthlyRental {get;set;}
-        public Decimal listPrice {get;set;}
+        public String monthlyRental {get;set;}
+        public String listPrice {get;set;}
         public String model {get;set;}
         public String productId {get;set;}
         public String brand {get;set;}
         
         public NetSuiteProducts(){
             serialNumber = '';
-            item = 0;
+            item = '';
             location = '';
             status = '';
             inventoryType = '';
-            monthlyRental = 0;
-            listPrice = 0;
+            monthlyRental = '';
+            listPrice = '';
             model = '';
             productId = '';
             brand = '';
