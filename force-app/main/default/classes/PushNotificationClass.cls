@@ -16,7 +16,7 @@ public class PushNotificationClass {
         }
 		return Database.query(query);       
     }
-    
+    system.debug('----');
      @AuraEnabled
     public static List<Package__c> getInstrument(){
         List<Package__c> packageList = new List<Package__c>();
