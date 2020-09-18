@@ -14,9 +14,11 @@ public class PushNotificationClass {
        }else{
            query += ' and Organisation__r.Country__c !=:country';         
         }
-		return Database.query(query);       
+        system.debug('----');
+        return Database.query(query);  
+             
     }
-    system.debug('----');
+    
      @AuraEnabled
     public static List<Package__c> getInstrument(){
         List<Package__c> packageList = new List<Package__c>();
