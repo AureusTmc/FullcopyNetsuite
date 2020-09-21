@@ -1,8 +1,10 @@
 <apex:page showHeader="false" id="pg" controller="SearchInstrumentRental_IpadCntrl" standardStylesheets="true" docType="html-5.0"
     applyBodyTag="False" applyHtmlTag="False">
+    <!-- CH01 Karan Singh 8 Sep 2020 Bypass pandaDoc Validation in case PandaDoc goes offline for maintenance purposes -->
     <!-- CH02 Karan Singh As Netsuite integration is used of Sage integration so changing slcd piano details -->
+    <!-- CH03 Karan Singh 18 Sep 2020 : Deposit should be inclusive of GST in the rental summary and Pandadoc as well and also showing (T) in vf in the rental summary for indicating amount is inclusive of GST -->
     <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-<!-- CH01 Karan Singh 8 Sep 2020 Bypass pandaDoc Validation in case PandaDoc goes offline for maintenance purposes -->
+
     <head>
         <title>Final Confirmation</title>
         <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}" />
@@ -510,10 +512,13 @@
                 <apex:outputPanel rendered="{!isRentalOrSellType=='Rent'}">
                     <div class="slds-grid slds-wrap">
                         <div class="slds-size_6-of-12 slds-large-size_1-of-2 slds-p-bottom_small">
-                            <p class="">Deposit (1-month)</p>
+                             <!-- //Start: nishi: 17-Sep-2020: Existing Student – one month (with any active enrolment) ; 	others – two months<p class="">Deposit (1-month)</p>-->	
+                            <p class="">Deposit (<apex:outputText value="{!IF(isAlreadyStripCstmr,'1',' 2')}" />-month)</p>	
+                            <!-- //End: nishi: 17-Sep-2020: Existing Student – one month (with any active enrolment) ; others – two months -->
                         </div>
                         <div class="slds-size_6-of-12 slds-large-size_1-of-2 slds-p-bottom_small slds-text-align_right">
-                            <p class="">${!fm.depFee}</p>
+                            <!-- CH03 Adding (T)  -->
+                            <p class="">${!fm.depFee}(T)</p>
                         </div>
                     </div>
                     <div class="slds-grid slds-wrap">
@@ -522,7 +527,8 @@
                                 <apex:outputText value="{!IF(isRentalOrSellType=='Rent',' 2-way',' 1-way')}" />)</p>
                         </div>
                         <div class="slds-size_6-of-12 slds-large-size_1-of-2 slds-p-bottom_small slds-text-align_right">
-                            <p class="">${!fm.deliCharges}</p>
+                            <!-- CH03 Adding (T)  -->
+                            <p class="">${!fm.deliCharges}(T)</p>
                         </div>
                     </div>
                     <div class="slds-grid slds-wrap">
@@ -530,7 +536,8 @@
                             <p class="">Tuning Fee</p>
                         </div>
                         <div class="slds-size_6-of-12 slds-large-size_1-of-2 slds-p-bottom_small slds-text-align_right">
-                            <p class="">${!fm.tuningFee}</p>
+                            <!-- CH03 Adding (T)  -->
+                            <p class="">${!fm.tuningFee}(T)</p>
                         </div>
                     </div>
                     <div class="slds-grid slds-wrap">
@@ -539,7 +546,8 @@
                                 <apex:outputText value="{!IF(isRentalOrSellType=='Rent',' 2-way',' 1-way')}" />, {!nostairs} Steps-${!fm.perStairCharges}/step)</p>
                         </div>
                         <div class="slds-size_6-of-12 slds-large-size_1-of-2 slds-p-bottom_small slds-text-align_right">
-                            <p class="">${!fm.stairDelCharges}</p>
+                                <!-- CH03 Adding (T)  -->
+                            <p class="">${!fm.stairDelCharges}(T)</p>
                         </div>
                     </div>
                     <div class="slds-grid slds-wrap">
@@ -547,7 +555,8 @@
                             <p class="">Heating Rod Installation (Free)</p>
                         </div>
                         <div class="slds-size_6-of-12 slds-large-size_1-of-2 slds-p-bottom_small slds-text-align_right">
-                            <p class="">${!fm.heatingRodInsFee}</p>
+                             <!-- CH03 Adding (T)  -->
+                            <p class="">${!fm.heatingRodInsFee}(T)</p>
                         </div>
                     </div>
                 </apex:outputPanel>
@@ -998,7 +1007,7 @@
                 }, false);
 
                 var stripe = Stripe('{!apiKey}');
-
+				console.log('stripe'+stripe);
                 var elements = stripe.elements();
                 var style = {
                     base: {
@@ -1028,7 +1037,7 @@
                 });
 
                 // Handle form submission.
-                var form = document.getElementById('payment-form');
+        var form = document.getElementById('pg:payment');// commented by nishi: 17_Sep-2020:document.getElementById('payment-form');
                 form.addEventListener('submit', function (event) {
                     event.preventDefault();
 
@@ -1055,7 +1064,7 @@
                 
                 
                 function stripeTokenHandler(token) {
-                    var form = document.getElementById('payment-form');
+                    var form = document.getElementById('pg:payment');// commented by nishi: 17_Sep-2020:document.getElementById('payment-form');
                     var hiddenInput = document.createElement('input');
                     hiddenInput.setAttribute('type', 'hidden');
                     hiddenInput.setAttribute('name', 'stripeToken');
@@ -1073,7 +1082,13 @@
                         // var concatePhoneNo = '+' + $('[class$=btn-cc]').html().match(/\d+/);
                         //concatePhoneNo += $('[id$=phoneNumber]').val();
                         //alert(token.id);
-                        prcEnrolment(token.id);
+                        //added by nishi: 17-Sep-2020:  for create only one time Enrolment, payment invoices
+                        console.log('getStripeId',getStripeId);	
+                        if(getStripeId == false){	
+                            getStripeId = true;	
+                            prcEnrolment(token.id);	
+                        }
+                        //added by nishi: 17-Sep-2020:  for create only one time Enrolment, payment invoices
                     } else {
                         $('#payBtn').before('<div class="slds-form-element__help errortxt" style="color:#F44336">Please fill all mandatory fields.</div>');
                         //Added by Rajesh 26th June 2019, for enable pay button if any error 
@@ -1193,7 +1208,10 @@
 
                     //var checkErr = false;
                     if (!checkErr) {
-                        prcEnrolment('');
+                     	if(getStripeId == false){	
+                            getStripeId = true;	
+                            prcEnrolment('');	
+                        }
                     } else {
                         $('#payNowAlrdyCstmr').before('<div class="slds-form-element__help errortxt" style="color:#F44336">Please fill all mandatory fields.</div>');
                         $('#payNowAlrdyCstmr').css('pointer-events', '');
@@ -1278,6 +1296,7 @@
             </script>
         </apex:outputPanel>
         <script>
+        var getStripeId = false;
             /* 20-Feb-2020:jatin:start: show model for payment via online and offline card */
             function selectedPaymentMethodNowAlrdyCstmr() {
                 $.each($("input[name='paymentMethod']:checked"), function () {

@@ -1,7 +1,8 @@
 //CH01 Karan Singh 8 Sep 2020 Bypass pandaDoc Validation in case PandaDoc goes offline for maintenance purposes
 //CH02 Karan Singh 16 Sep 2020 Replacing Sage Integration with Net Suite Integration for fetching inventory Details and changing the getProducts()method for this
 //			and checking the enrolment is active type or not.
-//CH03 Karan Singh 18 Sep 2020 : Deposit should be inclusive of GST  
+//CH03 Karan Singh 17/18 Sep 2020 : Deposit should be inclusive of GST in the rental summary and Pandadoc as well and also showing (T) in vf in the rental summary for indicating amount is inclusive of GST.
+//									Updating the Instrument_Type__c for the selected enrolment
 public class SearchInstrumentRental_IpadCntrl {
     public String slcdCenter{get;set;}
     public String slcdEnrId{get;set;}
@@ -75,6 +76,7 @@ public class SearchInstrumentRental_IpadCntrl {
     //CH02 END
     //CH03
     Decimal gstAmount {get;set;}
+    String instrumentType {get;set;} //currently we are using for piano, but later it will used to show ohter instrument like drum,violin etc
     //CH03
     
     //public static 
@@ -82,6 +84,7 @@ public class SearchInstrumentRental_IpadCntrl {
         
         //CH03
         gstAmount = 0;
+        instrumentType = 'Piano';
         //CH03
         //CH02
         netSuiteProducts = new List<NetSuiteProducts>();
@@ -971,7 +974,11 @@ tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Selling__c', ''+(slcdPia
             
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Model__c', slcdPiano.model ));
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Serial_Number__c', slcdPiano.serialNumber )); 
-            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Rental_price_per_month__c', ''+(slcdPiano.monthlyRental  !=null ? Decimal.valueOf(slcdPiano.monthlyRental)  : 0)));
+            //CH03 Start
+            //tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Rental_price_per_month__c', ''+(slcdPiano.monthlyRental  !=null ? Decimal.valueOf(slcdPiano.monthlyRental)  : 0)));
+            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Rental_price_per_month__c', ''+(slcdPiano.monthlyRental  !=null ? BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.monthlyRental)
+                                                                                                   + (Decimal.valueOf(slcdPiano.monthlyRental)) * gstAmount /100) : 0)));
+            //CH03 END
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Deposit__c', ''+(fm.depFee!=null ? fm.depFee : 0)));
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Delivery__c', ''+(fm.deliCharges!=null ? fm.deliCharges : 0)));
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Selling__c', ''+(slcdPiano.listPrice !=null ? Decimal.valueOf(slcdPiano.listPrice)  : 0)));
@@ -1153,7 +1160,7 @@ System.debug('@@@jsonBody'+jsonBody);
                         errorMsg = sCstmr.error.message;
                         isError = true;
                         return null;
-                    }
+                    } 
                 }
                 
                 if(String.isNotBlank(stripeCstmrId)){ 
@@ -1241,7 +1248,9 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                         //CH01  Karan Singh25 March   
                         slcdEnrolment.Offline_Signing_Selected__c = isCustmrOptedOfflineSign; 
                         //CH01 END     
-                        
+                        //CH03 updating the Instrument type
+                        slcdEnrolment.Instrument_Type__c = instrumentType;
+                        //CH03
                         update slcdEnrolment;
                         
                         //Mark as complete booking which created trail earlier
@@ -1723,7 +1732,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
         if( objNetSuiteCred == null ){
             return;
         }
-        HTTPResponse resp = sendNetSuiteRequest( objNetSuiteCred,'{"type": "Piano"}' );
+        HTTPResponse resp = sendNetSuiteRequest( objNetSuiteCred,'{"type": "'+ instrumentType +'"}' );
         
         //checking some params so that it is ensure it doesnot contains any error json
         if( resp.getBody().contains( 'serialNumber' ) && resp.getBody().contains( 'item' ) && resp.getBody().contains( 'location' ) && resp.getBody().contains( 'inventoryType' )){

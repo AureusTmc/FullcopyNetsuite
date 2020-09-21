@@ -1,3 +1,7 @@
+//CH01 21 Sep 2020 : Karan SIngh add credit memo line item amount in the linked invoice line item Credit_Memo_Amount__c
+//						Also add remarks in the Invoice in case of voiding it and also link the from and to Invoice of credit memo to same invoice itself.
+//						Also  only populate Credit Memo : Credit_Memo_Date__c in case of success status only.
+//						Also Addng new field mapping for the Credit memo/line item as per fields req in  credit memo reports 
 public with sharing class AddCreditMemoController {
     @AuraEnabled
     public static creditMemoWrap getCreditMemoDetails(Id invId) {
@@ -64,6 +68,9 @@ public with sharing class AddCreditMemoController {
         Credit_Memo__c objCreditMemo = new Credit_Memo__c();
         list<Credit_memo_line_item__c> listCreditLineItem;
         
+        //CH01 Start
+        list< Invoice_Line_Item__c > listInvoiceLineItem = new list< Invoice_Line_Item__c >();
+        //CH01 end
         try {
             creditMemoWrap creditWrap = (creditMemoWrap) JSON.deserialize(
                 creditWrapJson,
@@ -72,7 +79,7 @@ public with sharing class AddCreditMemoController {
             //need to do this in wrapper from lwc to apex, it cannot desrialize nested query results (FATAL_ERROR System.JSONException: QueryResult must start with '{')
             // prettier-ignore
             Invoice__c objInvoice = [ SELECT Id, Status__c,Currency_Code__c,Name,Parent_Account__c,Center__c,                                   
-                                     (SELECT ID, Amount__c, GST_Amount__c,Package__c,Enrolment__c,Is_Deposit__c,Is_Discount__c FROM Invoice_Line_Items__r),
+                                     (SELECT ID, Amount__c, GST_Amount__c,Package__c,Enrolment__c,Is_Deposit__c,Is_Discount__c,Month__c FROM Invoice_Line_Items__r),
                                      (SELECT Id, Payment_Amount__c, Transaction_Id__c, remarks__c, Invoice__c, Parent_Account__c, 
                                       Invoice__r.Center__r.Organisation__r.name,Payment_Date__c,method_of_payment__c,
                                       Invoice__r.Center__r.Organisation__r.Stripe_Base_Url__c, Invoice__r.Center__r.Organisation__r.Stripe_Secret_Key__c
@@ -104,11 +111,15 @@ public with sharing class AddCreditMemoController {
                    }else{
                        message = 'Something went wrong.';
                    }
-            }
+            }  
             objSavePoint = Database.setSavepoint();
             if (creditMode == 'Refund Memo' && objCreditMemo.Status__c == 'Success') {
+                
+                //CH01 21 Sep 2020 : Karan incase of refund, also add the payment method
+                objCreditMemo.Payment_Method__c =  objInvoice.Payments__r[0].Method_of_Payment__c;
+                //CH01 end
                 insert objCreditMemo;
-            }
+            } 
             
             if (creditMode == 'Credit Memo (Future Adj)') {
                 objCreditMemo = createCreditMemoRec(
@@ -126,11 +137,19 @@ public with sharing class AddCreditMemoController {
                     objInvoice.Id,
                     'Success',
                     remarks,
-                    true
+                    false
                 );
                 
+                //CH01 21 Sep 2020: Linking it with same invoice
+                objCreditMemo.Invoice_Number__c = objInvoice.Id;
+                insert objCreditMemo;
+                //CH01 ENd
                 //Karan 18 Sep 2020 : Change the status of the invoice to Void after creating the credit memo. This is applicable only for Due invoices
                 objInvoice.Status__c = 'Void';
+                
+                //CH01 21 Sep 2020: Adding voiding reason as well
+                objInvoice.Remarks__c = remarks;
+                //CH01 END
                 update objInvoice;
             }
             
@@ -143,21 +162,25 @@ public with sharing class AddCreditMemoController {
                     listCreditLineItem.add(
                         createCreditMemoLineRec(
                             objCreditMemo.Id,
-                            objInvLine.Amount__c,
-                            objInvLine.GST_Amount__c,
-                            objInvLine.Package__c,
-                            objInvLine.Enrolment__c,
-                            objInvLine.Id,
                             remarks,
-                            objInvLine.Is_Deposit__c,
-                            objInvLine.Is_Discount__c,
-                            false
+                             false,
+                            objInvLine                       
                         )
                     );
+                    
+                    //CH01 Start
+                    objInvLine.Credit_Memo_Amount__c = objInvLine.Amount__c;
+                    listInvoiceLineItem.add(objInvLine);
+                    //CH01 END
                 }
                 
                 if (listCreditLineItem.size() > 0)
                     insert listCreditLineItem;
+                
+                //CH01 Start
+                if( listInvoiceLineItem.size() > 0 )
+                    update listInvoiceLineItem;
+                //CH01 END
             }
         } catch (Exception objExcp) {
             Database.rollback(objSavePoint);
@@ -179,7 +202,12 @@ public with sharing class AddCreditMemoController {
         objCreditMemo.Parent_Account__c = parentAccntId;
         objCreditMemo.Center__c = centerId;
         objCreditMemo.From_Invoice__c = invId;
-        objCreditMemo.Credit_Memo_Date__c = date.today();
+        
+        //CH01 : only populate date in case of success status only.
+        if( Status == 'Success' ){
+            objCreditMemo.Credit_Memo_Date__c = date.today(); //only for successful    
+        }
+        //CH01
         objCreditMemo.Status__c = Status;
         objCreditMemo.Comments__c = reason;
         
@@ -192,25 +220,25 @@ public with sharing class AddCreditMemoController {
     
     public static Credit_memo_line_item__c createCreditMemoLineRec(
         Id creditMemoId,
-        Decimal amount,
-        Decimal taxAmount,
-        Id packageId,
-        Id enrolmentId,
-        Id invoiceLineItemId,
         String reasons,
-        Boolean isDeposit,
-        Boolean isDiscount,
-        Boolean isDMl
+         Boolean isDMl,
+        Invoice_Line_Item__c objInvLine
+        
     ) {
         Credit_memo_line_item__c objCreditLineItem = new Credit_memo_line_item__c();
         objCreditLineItem.Credit_Memo_Number__c = creditMemoId;
-        objCreditLineItem.Amount__c = amount;
-        objCreditLineItem.Tax_Amount__c = taxAmount;
-        objCreditLineItem.Package__c = packageId;
-        objCreditLineItem.Enrolment__c = enrolmentId;
-        objCreditLineItem.Invoice_Line_Item__c = invoiceLineItemId;
-        objCreditLineItem.Is_Deposit__c = isDeposit;
-        objCreditLineItem.Is_Discount__c = isDiscount;
+        objCreditLineItem.Amount__c = objInvLine.Amount__c;
+        objCreditLineItem.Tax_Amount__c = objInvLine.GST_Amount__c;
+        objCreditLineItem.Package__c = objInvLine.Package__c;
+        objCreditLineItem.Enrolment__c = objInvLine.Enrolment__c;
+        objCreditLineItem.Invoice_Line_Item__c = objInvLine.Id;
+        objCreditLineItem.Is_Deposit__c = objInvLine.Is_Deposit__c;
+        objCreditLineItem.Is_Discount__c = objInvLine.Is_Discount__c;
+        
+        //CH01 Start
+        objCreditLineItem.Month__c = objInvLine.Month__c;
+        //CH01 ENd
+        
         //objCreditLineItem.Remarks__c = reasons;
         if (isDml)
             insert objCreditLineItem;
