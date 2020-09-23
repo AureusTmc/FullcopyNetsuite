@@ -3,6 +3,8 @@
 //			and checking the enrolment is active type or not.
 //CH03 Karan Singh 17/18 Sep 2020 : Deposit should be inclusive of GST in the rental summary and Pandadoc as well and also showing (T) in vf in the rental summary for indicating amount is inclusive of GST.
 //									Updating the Instrument_Type__c for the selected enrolment
+//CH04 Karan Singh 22 Sep 2020 : Adding NetSuite API logger.
+
 public class SearchInstrumentRental_IpadCntrl {
     public String slcdCenter{get;set;}
     public String slcdEnrId{get;set;}
@@ -173,7 +175,7 @@ options.add(new SelectOption(str,str));*/
         options.addAll(fillPicklistValues('Enrolment__c', 'House_type__c'));
         return options;
     }
-     
+    
     public list <EnrolmentModel> getEnrolments() {
         List<EnrolmentModel> enrList = new List<EnrolmentModel>(); 
         // String type = ConstantsClass.typeTrial;
@@ -263,7 +265,7 @@ options.add(new SelectOption(str,str));*/
                 
                 //CH03 Karan 18 Sep 2020
                 if( enrList.get(0).Center__r.Country__r.Tax_Rate__c != null )
-                gstAmount = BillingUtility.roundOffAmount(enrList.get(0).Center__r.Country__r.Tax_Rate__c);
+                    gstAmount = BillingUtility.roundOffAmount(enrList.get(0).Center__r.Country__r.Tax_Rate__c);
                 //CH03 
                 
                 // 17 sep 2020 will work later on thisCH02 17 Sep 2020 checking if it is existing  active/enrolled Lesson Enrolment
@@ -347,7 +349,7 @@ options.add(new SelectOption(str,str));*/
                 fm.depFee = BillingUtility.roundOffAmount(fm.depFee);
                 //CH03 END
             }
-                
+            
             //CH02 END
         }else{
             //CH02
@@ -360,7 +362,7 @@ options.add(new SelectOption(str,str));*/
                 fm.depFee = BillingUtility.roundOffAmount(fm.depFee);
                 //CH03 END
             }
-                
+            
             //CH02 END 
         }
         //End:nishi: 27-Jul-2020:Existing Student – one month (with any active enrolment) ; others – two months
@@ -977,7 +979,7 @@ tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Selling__c', ''+(slcdPia
             //CH03 Start
             //tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Rental_price_per_month__c', ''+(slcdPiano.monthlyRental  !=null ? Decimal.valueOf(slcdPiano.monthlyRental)  : 0)));
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Rental_price_per_month__c', ''+(slcdPiano.monthlyRental  !=null ? BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.monthlyRental)
-                                                                                                   + (Decimal.valueOf(slcdPiano.monthlyRental)) * gstAmount /100) : 0)));
+                                                                                                                                                                    + (Decimal.valueOf(slcdPiano.monthlyRental)) * gstAmount /100) : 0)));
             //CH03 END
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Deposit__c', ''+(fm.depFee!=null ? fm.depFee : 0)));
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Delivery__c', ''+(fm.deliCharges!=null ? fm.deliCharges : 0)));
@@ -1107,7 +1109,7 @@ System.debug('@@@jsonBody'+jsonBody);
             isError = true;
             return null;
         }
-        HTTPResponse resp = sendNetSuiteRequest( objNetSuiteCred,'{"serialNumber": "'+slcdPiano.serialNumber  + '","productId": "'+slcdPiano.productId+'"}' );
+        HTTPResponse resp = sendNetSuiteRequest( objNetSuiteCred,'{"serialNumber": "'+slcdPiano.serialNumber  + '","productId": "'+slcdPiano.productId+'"}' ,'saveAndCompleteProcess() :Inventory Search');
         //when the selected piano is not avaiable in the inventory
         if(resp.getBody().contains('[]')){
             
@@ -1659,15 +1661,21 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
     
     //CH02
     //For reference -> https://gist.github.com/smaeda-ks/dc5cdd50956e63bdae11314612389a07,https://stackoverflow.com/questions/15271508/netsuite-oauth-implemenation,https://github.com/metadaddy/sfdc-oauth-playground/blob/master/OAuth/src/classes/OAuth.cls
-    
-    public static HTTPResponse sendNetSuiteRequest( NetSuite_Integration_Creds__c objNetSuiteCred, String jsonRequestBody ){
+    //CH04 22 Sep 2020 : Adding method name in the paramater
+    public static HTTPResponse sendNetSuiteRequest( NetSuite_Integration_Creds__c objNetSuiteCred, String jsonRequestBody, String methodName ){
         
         Integer noOfApiCallout = 1;
         HttpRequest req;
         HTTPResponse resp;
         
+        //CH04 Start
+        Datetime requestDatetime;
+        Datetime responseDatetime;
+        //CH04 END
         //doing this as there are cases where at first attmpt we get 403 error
         do{
+            requestDatetime = DateTime.now();//CH04 
+            
             String nonce = String.valueOf(Crypto.getRandomLong());
             String timestamp = String.valueOf(DateTime.now().getTime() / 1000);
             
@@ -1714,13 +1722,41 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                 resp.setStatusCode( 200 );
                 resp.setBody( '[{"serialNumber": "123","item": "1234","location": "Test Location","status": "New","inventoryType": "Piano","monthlyRental": "62","listPrice": "66.66","model": "123","productId": "Serialized Item001","brand": "xyz"}]' );
             }
+            /*system.debug('resp->> ' + resp);system.debug('resp->> ' + resp.getBody());system.debug('resp->> ' + req);system.debug('req.getBody->> ' + req.getBody());system.debug('req.getEndpoint->> ' + req.getEndpoint());system.debug('req.getHeader->> ' + req.getHeader('Authorization'));system.debug('req.getHeader->> ' + req.getHeader('Content-Type'));system.debug('req.getMethod->> ' + req.getMethod());*/
             
             noOfApiCallout++;
-        }while( resp.getStatusCode() != 200 && noOfApiCallout <= 10 );
+        }while( resp.getStatusCode() != 200 && noOfApiCallout <= objNetSuiteCred.Maximum_API_Retry_Count__c );
         
         system.debug('noOfApiCallout --> '+ noOfApiCallout);
         system.debug('resp->> ' + resp);
         system.debug('resp->> ' + resp.getBody());  //resp->> {"error" : {"code" : "INVALID_LOGIN_ATTEMPT", "message" : "Invalid login attempt."}}
+        
+        //CH04 Start
+        responseDatetime = DateTime.now();
+        
+        if( objNetSuiteCred.Enable_Logging__c){
+            
+            try{
+                NetSuite_API_Logger__c objNetSUiteLogger = new NetSuite_API_Logger__c();
+                objNetSUiteLogger.Class_and_Method_Name__c = ' SearchInstrumentRental_IpadCntrl : '+ methodName;
+                objNetSUiteLogger.Request__c =  req.getBody().length() > 131070 ? req.getBody().left(131070) : req.getBody();
+                objNetSUiteLogger.Request_Header__c = req.getHeader( 'Authorization' ).length() > 131070 ? req.getHeader( 'Authorization' ).left(131070) : req.getHeader( 'Authorization' );
+                objNetSUiteLogger.Request_Time__c = requestDatetime;
+                objNetSUiteLogger.Response__c = resp.getBody().length() > 131070 ? resp.getBody().left(131070) : resp.getBody();
+                objNetSUiteLogger.Response_Time__c = responseDatetime;
+                objNetSUiteLogger.Status_Code__c = resp.getStatusCode();
+                objNetSUiteLogger.Request_URL__c = req.getEndpoint().length() > 131070 ? req.getEndpoint().left(131070) : req.getEndpoint();
+                
+                //since we need to call NetSUite API, w/o future dml, it will give You have uncommitted work pending. Please commit or rollback before calling out error 
+                if( !Test.isRunningTest() && methodName != 'saveAndCompleteProcess() :Inventory Search')
+                    insert objNetSUiteLogger; 
+                  system.debug('objNetSUiteLogger Id -> ' + objNetSUiteLogger.id);
+                
+            }Catch ( Exception objExp ){
+                system.debug(' Error -> ' + objExp.getMessage() + ' -> Line Number -> ' + objExp.getLineNumber());
+            }
+        }
+        //Ch04 ENd
         return resp;
     }
     
@@ -1732,7 +1768,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
         if( objNetSuiteCred == null ){
             return;
         }
-        HTTPResponse resp = sendNetSuiteRequest( objNetSuiteCred,'{"type": "'+ instrumentType +'"}' );
+        HTTPResponse resp = sendNetSuiteRequest( objNetSuiteCred,'{"type": "'+ instrumentType +'"}', 'getProducts1() : Inventory Search' );
         
         //checking some params so that it is ensure it doesnot contains any error json
         if( resp.getBody().contains( 'serialNumber' ) && resp.getBody().contains( 'item' ) && resp.getBody().contains( 'location' ) && resp.getBody().contains( 'inventoryType' )){
@@ -1758,7 +1794,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
     public static void pushDataToNetsuite( String enrolName, string serialNo, string productId ){
         
         NetSuite_Integration_Creds__c objNetSuiteCred = NetSuite_Integration_Creds__c.getValues('Convert Item to Fixed Asset');
-        HTTPResponse resp = sendNetSuiteRequest( objNetSuiteCred,'{"serialNumber": "'+serialNo+'","productId" : "'+productId+'"}' );
+        HTTPResponse resp = sendNetSuiteRequest( objNetSuiteCred,'{"serialNumber": "'+serialNo+'","productId" : "'+productId+'"}' ,'pushDataToNetsuite() :  Convert Item to Fixed Asset');
         //String s1 = '{"error": {"code": "USER_ERROR","message": "serialNumber is required.","request_datetime": "11/09/2020 11:43:48 am"}}';
         
         //send email in case of error only
@@ -1777,7 +1813,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
             objOutGoingEmail.setTargetObjectId( UserInfo.getUserId());
             objOutGoingEmail.saveAsActivity = false;
             if(!Test.isRunningTest()){
-               Messaging.SendEmailResult[]  sendEmailResults =  Messaging.sendEmail(new Messaging.SingleEmailMessage[] {objOutGoingEmail});
+                Messaging.SendEmailResult[]  sendEmailResults =  Messaging.sendEmail(new Messaging.SingleEmailMessage[] {objOutGoingEmail});
             }
         }
     }
