@@ -1,5 +1,6 @@
-<apex:page id="pg" showHeader="false" controller="SearchInstrumentRental_IpadCntrl"  standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False"  action="{!getProducts}">
-    <head>
+<apex:page id="pg" showHeader="false" controller="SearchInstrumentRental_IpadCntrl"  standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False"  action="{!getProducts1}"><!-- CH02 action="{!getProducts1}" -->
+   <!-- CH02 Karan Singh As Netsuite integration is used of Sage integration so changing the fetch piano list and slcd piano details -->
+    <head> 
         <title>Aureus Academy</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0"/>
         <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}"/>      
@@ -148,7 +149,7 @@
             j$ = jQuery.noConflict();
             j$(document).ready( function () {
                 var accTable = j$('[id$="accTable"]').DataTable({
-                "pageLength": 30,
+                    "pageLength": 10, //"pageLength": 30, CH02 showing only 10 results  
                 "bInfo" : false,
                  "lengthChange": false,
                 "language": {
@@ -310,18 +311,21 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <apex:repeat value="{!sageProducts}" var="sag">
+                         <apex:repeat value="{!netSuiteProducts}" var="net"><!--   <apex:repeat value="{!sageProducts}" var="sag"> -->
                             <tr class="slds-hint-parent">
                                 <td>
                                     <span class="slds-radio">
-                                        <input type="radio" id="radio-{!sag.srNo}" value="{!sag.srNo}" onchange="setSlcdPianoIndx('{!sag.srNo}'); return false;" name="slcdPianoOptions" checked="" />
-                                        <label class="slds-radio__label" for="radio-{!sag.srNo}">
+                                    <!-- CH02 <input type="radio" id="radio-{!sag.srNo}" value="{!sag.srNo}" onchange="setSlcdPianoIndx('{!sag.srNo}'); return false;" name="slcdPianoOptions" checked="" /> -->
+                                        <input type="radio" id="radio-{!net.srNo}" value="{!net.srNo}" onchange="setSlcdPianoIndx('{!net.srNo}'); return false;" name="slcdPianoOptions" checked="" />
+                                        <!--CH02  <label class="slds-radio__label" for="radio-{!sag.srNo}">-->
+                                        <label class="slds-radio__label" for="radio-{!net.srNo}">
                                             <span class="slds-radio_faux"></span>
                                             <span class="slds-form-element__label"></span>
                                         </label>
                                     </span>
                                 </td>
-                                <td>{!sag.srNo}</td>
+                                <!--CH02 changes , see controller
+                                 <td>{!sag.srNo}</td>
                                 <td>{!sag.brand}</td>
                                 <td>{!sag.modelNo}</td>
                                 <td>{!sag.serNo}</td>
@@ -329,10 +333,20 @@
                                 <td>{!sag.rentalPrice}</td>
                                 <td>{!sag.salesPrice}</td>
                                 <td>{!sag.condi}</td>
+                                
+                                -->
+                                <td>{!net.srNo}</td>
+                                <td>{!net.brand}</td>
+                                <td>{!net.model}</td>
+                                <td>{!net.serialNumber}</td>
+                                <td>{!net.location}</td>
+                                <td>{!net.monthlyRental}</td>
+                                <td>{!net.listPrice}</td>
+                                <td>{!net.status}</td>
                             </tr>
                         </apex:repeat>
                     </tbody>
-                </table>
+                </table> 
                 
                  <div class="slds-grid slds-wrap slds-text-align_center slds-p-top_x-large">
                      

@@ -1,3 +1,10 @@
+//CH01 Karan Singh 8 Sep 2020 Bypass pandaDoc Validation in case PandaDoc goes offline for maintenance purposes
+//CH02 Karan Singh 16 Sep 2020 Replacing Sage Integration with Net Suite Integration for fetching inventory Details and changing the getProducts()method for this
+//			and checking the enrolment is active type or not.
+//CH03 Karan Singh 17/18 Sep 2020 : Deposit should be inclusive of GST in the rental summary and Pandadoc as well and also showing (T) in vf in the rental summary for indicating amount is inclusive of GST.
+//									Updating the Instrument_Type__c for the selected enrolment
+//CH04 Karan Singh 22 Sep 2020 : Adding NetSuite API logger.
+
 public class SearchInstrumentRental_IpadCntrl {
     public String slcdCenter{get;set;}
     public String slcdEnrId{get;set;}
@@ -12,14 +19,14 @@ public class SearchInstrumentRental_IpadCntrl {
     public Enrolment__c slcdEnrolment{get;set;}
     public Account parentAcc{get;set;}
     public String PersonMobilePhoneCustom{get;set;}  
-    public List<SageProductItems> sageProducts{get;set;}
-    public SageProductItems slcdPiano{get;set;}
+    //CH02 public List<SageProductItems> sageProducts{get;set;} using Net Suite integration wrapper
+    //CH02 public SageProductItems slcdPiano{get;set;}			using Net Suite integration 
     
     //3rd page variables
     public String residenttype{get;set;}
     public Integer nostairs{get;set;}
-   // public Decimal charge{get;set;}
-   // public Decimal chargerate{get;set;}
+    // public Decimal charge{get;set;}
+    // public Decimal chargerate{get;set;}
     public Date calStartDate{get;set;}
     public Date calEndDate{get;set;}
     public map<Date,list<string>> dateslotmap{get;set;}
@@ -33,7 +40,7 @@ public class SearchInstrumentRental_IpadCntrl {
     
     //Fee Model for summary page
     public FeeModel fm{get;set;}
-
+    
     public String apiKey {get;set;}
     public string stripeToken{get;set;}
     public String sessionId{get;set;}
@@ -58,9 +65,43 @@ public class SearchInstrumentRental_IpadCntrl {
     PandaDocUtility.CreateDocument documentDetails;
     PandaDocUtility.SessionDocument sessionDetails;
     Integer pianoDelWind;
-    //public static
+    
+    //CH01 Karan Singh 
+    public Boolean isPandaDocUnderMaintance{get;set;} //for showing the bypass checkbox    
+    public Boolean isCustmrOptedOfflineSign{get;set;}  
+    //CH01 END 
+    
+    //CH02 
+    public List<NetSuiteProducts> netSuiteProducts{get;set;}
+    public NetSuiteProducts slcdPiano{get;set;}
+    public Boolean isExistingLessonEnrolment{get;set;} //17 sep 2020 as if slcd enrolment is an active lesson type enrolment then we will charge only one time rental amount not twice.
+    //CH02 END
+    //CH03
+    Decimal gstAmount {get;set;}
+    String instrumentType {get;set;} //currently we are using for piano, but later it will used to show ohter instrument like drum,violin etc
+    //CH03
+    
+    //public static 
     public SearchInstrumentRental_IpadCntrl(){
-       
+        
+        //CH03
+        gstAmount = 0;
+        instrumentType = 'Piano';
+        //CH03
+        //CH02
+        netSuiteProducts = new List<NetSuiteProducts>();
+        slcdPiano = new NetSuiteProducts();
+        isExistingLessonEnrolment = false;
+        //CH02
+        //CH01 Karan Singh  
+        isPandaDocUnderMaintance = false;   
+        isCustmrOptedOfflineSign = false;   
+        if( String.isNotBlank(Label.Allow_Offline_Signing)){    
+            isPandaDocUnderMaintance = Label.Allow_Offline_Signing.equalsIgnoreCase('true');    
+        }   
+        system.debug('isPandaDocUnderMaintance --> ' + isPandaDocUnderMaintance );
+        //CH01 END
+        
         //system.debug('slcdCenter'+slcdCenter);
         centerName= new List<Centre_Users__c>([select Id,Centre_Name__c,Centre_Name__r.Name, Centre_Name__r.Organisation__r.Sage_Company__c from Centre_Users__c where User_Name__c=:UserInfo.getUserId()]);
         slcdCenter=centerName[0].Centre_Name__c;
@@ -73,13 +114,13 @@ public class SearchInstrumentRental_IpadCntrl {
         
         parentAcc    = new Account();
         slcdEnrolment= new Enrolment__c();
-        sageProducts = new List<SageProductItems>();
-        slcdPiano = new SageProductItems();
+        //CH02 sageProducts = new List<SageProductItems>();
+        //CH02 slcdPiano = new SageProductItems();
         agreementCheckbox = false;
         
         //by uzair
         nostairs = 0;
-       // charge = 0;
+        // charge = 0;
         //chargerate  = ConstantsClass.chargerate;
         pianoDelWind = Integer.valueOf(Label.Piano_Delivery_Window);
         this.calStartDate   = System.today().addDays(pianoDelWind);
@@ -93,22 +134,22 @@ public class SearchInstrumentRental_IpadCntrl {
     
     public list<SelectOption> getCenters(){
         list<SelectOption> options = new list<SelectOption>();
-                
+        
         String cenRecId  =  Schema.SObjectType.Account.getRecordTypeInfosByName().get(ConstantsClass.centerRecTypeName).getRecordTypeId();
         options.add(new SelectOption('','Please select')); 
         
         for(Account acc: [SELECT Id,Name,CentreName_Cust__c FROM Account 
                           WHERE RecordtypeId =: cenRecId AND CentreName_Cust__c != null AND Country__r.Name =:countryCode ORDER BY CentreName_Cust__c]){
                               system.debug('----'+acc);
-            options.add(new SelectOption(acc.Id,acc.CentreName_Cust__c)); 
-        }
+                              options.add(new SelectOption(acc.Id,acc.CentreName_Cust__c)); 
+                          }
         
         return options;
     }
     //20-Feb-2020:jatin:start: get Payment Type picklist for show Payment mode for Offline cards
-     public List<SelectOption> getPaymentTypePicklist(){     
+    public List<SelectOption> getPaymentTypePicklist(){     
         set<string> paymentTypes = new Set<string>{'Card','NETS'};
-        List<SelectOption> lstPickvals = new List<SelectOption>();        
+            List<SelectOption> lstPickvals = new List<SelectOption>();        
         lstPickvals.add(new SelectOption('', '--None--'));
         Map<String, Schema.SObjectField> field_map = Schema.getGlobalDescribe().get('Payment__c').newSObject().getSObjectType().getDescribe().fields.getMap(); //From the Object Api name retrieving the SObject and grab the sobject that was passed
         List<Schema.PicklistEntry> pick_list_values   = field_map.get('Method_of_Payment__c').getDescribe().getPickListValues(); //grab the list of picklist values for the passed field on the sobject
@@ -121,15 +162,15 @@ public class SearchInstrumentRental_IpadCntrl {
         return lstPickvals;
     }
     //20-Feb-2020:jatin:end: get Payment Type picklist for show Payment mode for Offline cards
-
+    
     public List<Account> getSampleController(){
         return [SELECT Name, AccountNumber, Phone FROM Account LIMIT 999];
     }
     public list<SelectOption> getType(){        
         list<SelectOption> options = new list<SelectOption>();
         /*options.add(new SelectOption('','Please select')); 
-        for(string str : Label.Type.split(','))
-            options.add(new SelectOption(str,str));*/
+for(string str : Label.Type.split(','))
+options.add(new SelectOption(str,str));*/
         options.add(new SelectOption('', '--Please select--'));
         options.addAll(fillPicklistValues('Enrolment__c', 'House_type__c'));
         return options;
@@ -137,21 +178,21 @@ public class SearchInstrumentRental_IpadCntrl {
     
     public list <EnrolmentModel> getEnrolments() {
         List<EnrolmentModel> enrList = new List<EnrolmentModel>(); 
-       // String type = ConstantsClass.typeTrial;
+        // String type = ConstantsClass.typeTrial;
         //Set<String> stgList = new Set<String>{ConstantsClass.enrollStageAttended,ConstantsClass.PendingEnrolment};
         Set<String> stgList = new Set<String>{'Piano Viewing Booked','Piano Viewing Completed'};
-        if(String.isNotBlank(slcdCenter)){
-            for(Enrolment__c enr: [SELECT Id, Name, Parent__c, Parent__r.Name, Parent__r.Personemail, Parent_Email__c, Student__c, Student__r.Name,
-                                             Teacher__c, Teacher__r.Name, Package__c, Package__r.Name, Trial_Date__c, Trial_Start_Time__c,
-                                             Center__c, Center__r.Name 
-                                      FROM Enrolment__c 
-                                      WHERE Parent__r.Personemail != null AND Type__c ='Instrument'  AND Stage__c IN:stgList AND Type__c = 'Instrument' 
-                                      AND Center__c=:slcdCenter and Trial_Date__c=:GetToday]){
-                                        system.debug('----'+enr);  
-                String tempTSlot = DateTime.newInstance(enr.Trial_Date__c, enr.Trial_Start_Time__c).format('hh:mm a');                          
-                enrList.add(new EnrolmentModel(enr, tempTSlot));
-             }
-        }
+            if(String.isNotBlank(slcdCenter)){
+                for(Enrolment__c enr: [SELECT Id, Name, Parent__c, Parent__r.Name, Parent__r.Personemail, Parent_Email__c, Student__c, Student__r.Name,
+                                       Teacher__c, Teacher__r.Name, Package__c, Package__r.Name, Trial_Date__c, Trial_Start_Time__c,
+                                       Center__c, Center__r.Name 
+                                       FROM Enrolment__c 
+                                       WHERE Parent__r.Personemail != null AND Type__c ='Instrument'  AND Stage__c IN:stgList AND Type__c = 'Instrument' 
+                                       AND Center__c=:slcdCenter and Trial_Date__c=:GetToday]){
+                                           system.debug('----'+enr);  
+                                           String tempTSlot = DateTime.newInstance(enr.Trial_Date__c, enr.Trial_Start_Time__c).format('hh:mm a');                          
+                                           enrList.add(new EnrolmentModel(enr, tempTSlot));
+                                       }
+            }
         
         return enrList;
     }
@@ -161,17 +202,17 @@ public class SearchInstrumentRental_IpadCntrl {
         
         List<EnrolmentModel> enrList = new List<EnrolmentModel>(); 
         String type = ConstantsClass.typeTrial;
-       // Set<String> stgList = new Set<String>{ConstantsClass.enrollStageAttended,ConstantsClass.PendingEnrolment};
+        // Set<String> stgList = new Set<String>{ConstantsClass.enrollStageAttended,ConstantsClass.PendingEnrolment};
         Set<String> stgList = new Set<String>{'Piano Viewing Booked','Piano Viewing Completed'};
-        system.debug('======------>'+srchKey);
+            system.debug('======------>'+srchKey);
         if(String.isNotBlank(srchKey)){
             String tempSerch = srchKey + '%';
             system.debug('=====>'+tempSerch);
             String str = 'SELECT Id, Name, Parent__c, Parent__r.Name, Parent__r.Personemail, Parent_Email__c, Student__c, Student__r.Name,Teacher__c, '+
-                                 'Teacher__r.Name, Package__c, Package__r.Name, Trial_Date__c, Trial_Start_Time__c,Center__c, Center__r.Name  '+
-                         'FROM Enrolment__c WHERE Center__r.Country__r.Name =:cntryCode AND Parent__r.Personemail != null AND Parent__c != null AND '+
-                              'Parent__r.Name != null AND Stage__c IN:stgList AND Type__c = \'Instrument\' AND (Name like: tempSerch OR Parent__r.Name like: tempSerch OR '+
-                              'Parent__r.PersonEmail like: tempSerch OR Parent__r.Phone like: tempSerch ) LIMIT 5'; 
+                'Teacher__r.Name, Package__c, Package__r.Name, Trial_Date__c, Trial_Start_Time__c,Center__c, Center__r.Name  '+
+                'FROM Enrolment__c WHERE Center__r.Country__r.Name =:cntryCode AND Parent__r.Personemail != null AND Parent__c != null AND '+
+                'Parent__r.Name != null AND Stage__c IN:stgList AND Type__c = \'Instrument\' AND (Name like: tempSerch OR Parent__r.Name like: tempSerch OR '+
+                'Parent__r.PersonEmail like: tempSerch OR Parent__r.Phone like: tempSerch ) LIMIT 5'; 
             System.debug('@str@@@'+str);
             List<Enrolment__c> enrListing= database.query(str);
             
@@ -180,7 +221,7 @@ public class SearchInstrumentRental_IpadCntrl {
                 String tempTSlot;
                 system.debug('---->'+enr);
                 if(enr.Trial_Date__c != null){
-                   tempTSlot = DateTime.newInstance(enr.Trial_Date__c, enr.Trial_Start_Time__c).format('hh:mm a');   
+                    tempTSlot = DateTime.newInstance(enr.Trial_Date__c, enr.Trial_Start_Time__c).format('hh:mm a');   
                 } 
                 enr.Parent_Email__c = enr.Parent__r.Personemail;
                 enrList.add(new EnrolmentModel(enr, tempTSlot));  
@@ -208,12 +249,30 @@ public class SearchInstrumentRental_IpadCntrl {
             }
             
             List<Enrolment__c> enrList = [SELECT Id, Name, Parent__c, Parent__r.Name, Parent__r.Personemail, Parent_Email__c, Student__c, Parent__r.FirstName, Parent__r.LastName,
-                                                 Parent__r.Phone, Parent__r.BillingStreet, Parent__r.BillingCity,  Parent__r.BillingPostalCode,  Parent__r.BillingCountryCode, House_type__c, Block__c,Additional_Delivery_comments__c,
-                                                 Teacher__c, Teacher__r.Name, Package__c, Package__r.Name, Trial_Date__c, Trial_Start_Time__c, Center__c, Center__r.Name, Standard_Accessories__c,
-                                          		 Parent__r.Stripe_Customer_Id__c, Parent__r.Card_Number__c, Parent__r.Card_Type__c, Parent__r.Card_Image__c, Center__r.Country__c, Center__r.Organisation__c
+                                          Parent__r.Phone, Parent__r.BillingStreet, Parent__r.BillingCity,  Parent__r.BillingPostalCode,  Parent__r.BillingCountryCode, House_type__c, Block__c,Additional_Delivery_comments__c,
+                                          Teacher__c, Teacher__r.Name, Package__c, Package__r.Name, Trial_Date__c, Trial_Start_Time__c, Center__c, Center__r.Name, Standard_Accessories__c,
+                                          Parent__r.Stripe_Customer_Id__c, Parent__r.Card_Number__c, Parent__r.Card_Type__c, Parent__r.Card_Image__c, Center__r.Country__c, Center__r.Organisation__c
+                                          
+                                          //CH02 17 sep 2020 will work later on this
+                                          //   ,recordtype.name,Parent__r.Enroled__c
+                                          //CH02 END
+                                          //CH03 Karan for Calc GST Price as well
+                                          ,Center__r.Country__r.Tax_Rate__c
+                                          //CH03
                                           FROM Enrolment__c 
                                           WHERE Id =: slcdEnrId];
             if(enrList.size() > 0){
+                
+                //CH03 Karan 18 Sep 2020
+                if( enrList.get(0).Center__r.Country__r.Tax_Rate__c != null )
+                    gstAmount = BillingUtility.roundOffAmount(enrList.get(0).Center__r.Country__r.Tax_Rate__c);
+                //CH03 
+                
+                // 17 sep 2020 will work later on thisCH02 17 Sep 2020 checking if it is existing  active/enrolled Lesson Enrolment
+                //if(  enrList.get(0).recordtype.name != Null && enrList.get(0).recordtype.name == 'Lesson' && enrList.get(0).Parent__r.Enroled__c != Null && enrList.get(0).Parent__r.Enroled__c ){
+                //     isExistingLessonEnrolment = true;
+                // }
+                //CH02
                 parentAcc.id          = enrList.get(0).Parent__c;
                 parentAcc.firstName   = enrList.get(0).Parent__r.FirstName;
                 parentAcc.LastName    = enrList.get(0).Parent__r.LastName;
@@ -231,7 +290,7 @@ public class SearchInstrumentRental_IpadCntrl {
                 slcdEnrolment.Standard_Accessories__c = defStnAss;
                 
                 if(String.isBlank(parentAcc.BillingCountryCode))
-                	parentAcc.BillingCountryCode = countryCode;
+                    parentAcc.BillingCountryCode = countryCode;
                 
                 if(enrList.get(0).Parent__r.Stripe_Customer_Id__c != null && enrList.get(0).Parent__r.Card_Number__c != null && enrList.get(0).Parent__r.Card_Type__c != null){
                     stripeCstmrId = enrList.get(0).Parent__r.Stripe_Customer_Id__c;
@@ -240,7 +299,20 @@ public class SearchInstrumentRental_IpadCntrl {
                     cardImage     = enrList.get(0).Parent__r.Card_Image__c;
                     isAlreadyStripCstmr = true;
                 }
-                
+                //added by nishi: 23-Sep-2020: According to new requirement we get stripe details according to organisation not country fields
+                String organisationId          = enrList.get(0).Center__r.Organisation__c;
+                Map<String,Organisation__c> organisationMap = BillingUtility.getOrganisationMap(organisationId);
+                if(organisationMap.containsKey(organisationId)){
+                    stripeBaseUrl       = organisationMap.get(organisationId).Stripe_Base_Url__c;
+                    apiKey              = organisationMap.get(organisationId).Stripe_Publishable_Key__c;
+                    stripeApiSecKey     = organisationMap.get(organisationId).Stripe_Secret_Key__c;
+                    countryCurrencyCode = organisationMap.get(organisationId).country__r.Currency_Code__c;
+                    fm.gstTaxPer        =  Integer.valueOf(organisationMap.get(organisationId).Tax_Rate__c);
+                    templateId          = organisationMap.get(organisationId).Student_Policies_Template_Id__c;
+                    folderId            = organisationMap.get(organisationId).Folder__c;
+                }
+               
+                /*commented by nishi: 23-Sep-2020: According to new requirement we get stripe details according to organisation not country fields
                 String countryId          = enrList.get(0).Center__r.Country__c;
                 Map<String,Country__c> countryMap = BillingUtility.getCountryMap(countryId);
                 if(countryMap.containsKey(countryId)){
@@ -252,9 +324,11 @@ public class SearchInstrumentRental_IpadCntrl {
                     templateId          = countryMap.get(countryId).Student_Policies_Template_Id__c;
                     folderId            = countryMap.get(countryId).Folder__c;
                 }
-                
+                end:commented by nishi: 23-Sep-2020: According to new requirement we get stripe details according to organisation not country fields
+                */
                 if(String.isBlank(countryCurrencyCode)) 
-                    countryCurrencyCode = ConstantsClass.currencyCode;
+                countryCurrencyCode = ConstantsClass.currencyCode;
+            
             }
         }
     }
@@ -275,16 +349,41 @@ public class SearchInstrumentRental_IpadCntrl {
         fm.deliCharges = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Delivery_Charges));
         fm.tuningFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Tuning_Fee));
         fm.heatingRodInsFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Heating_Rod_Installation_Fee));
+        
         //Start: nishi: 27-Jul-2020: Existing Student – one month (with any active enrolment) ; others – two months
-        if(isAlreadyStripCstmr){
-            fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Piano_Rental_Deposit_Fee));
+        if(isAlreadyStripCstmr != null && isAlreadyStripCstmr){ 
+            //if(isExistingLessonEnrolment != null && isExistingLessonEnrolment){// 17 sep 2020 will work later on this CH02 Karan :as 17 sep 2020 , now checking if the selected enrolment is existing active/enrolled enrolment of type lesson.
+            //CH02 
+            //fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Piano_Rental_Deposit_Fee)); CH02 Karan 17 Sep 2020 :use piano Deposit fee only instead Label as now we are getting rental amount of piano from netSuite
+            system.debug('gstAmount-->  ' + gstAmount);
+            if( slcdPiano.monthlyRental != Null ){
+                
+                fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.monthlyRental));
+                //CH03 Will add Gst amount as well
+                fm.depFee += (BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.monthlyRental)) * gstAmount) /100;
+                fm.depFee = BillingUtility.roundOffAmount(fm.depFee);
+                //CH03 END
+            }
+            
+            //CH02 END
         }else{
-            fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Piano_Rental_Deposit_Fee) *2 );
+            //CH02
+            //fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Piano_Rental_Deposit_Fee) *2 ); CH02 Karan 17 Sep 2020: use piano Deposit fee only instead Label as now we are getting rental amount of piano from netSuite
+            if( slcdPiano.monthlyRental != Null ){
+                
+                fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.monthlyRental) *2 );
+                //CH03 Will add Gst amount as well
+                fm.depFee += (BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.monthlyRental) *2 ) * gstAmount) /100;
+                fm.depFee = BillingUtility.roundOffAmount(fm.depFee);
+                //CH03 END
+            }
+            
+            //CH02 END 
         }
         //End:nishi: 27-Jul-2020:Existing Student – one month (with any active enrolment) ; others – two months
-        fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Piano_Rental_Deposit_Fee) *2 );
+        //fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Piano_Rental_Deposit_Fee) *2 ); commented by CH02 17 sep 2020 Karan as now will use above if else only 
         fm.perStairCharges  = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Per_Stair_Charges));
-            
+        
         Integer isTwiceCharge = isRentalOrSellType.equalsIgnoreCase('Rent') ? 2 : 1;
         //Stair charge with twice for the Rental
         if(nostairs > 0)
@@ -296,10 +395,14 @@ public class SearchInstrumentRental_IpadCntrl {
         //Instrument charge will be zero During rent. it will be taken on the time of Delivery
         fm.instrumentChrg = 0;//BillingUtility.roundOffAmount(slcdPiano.rentalPrice);
         if(isRentalOrSellType.equalsIgnoreCase('Rent')){
-        	fm.totFee = fm.deliCharges + fm.tuningFee + fm.heatingRodInsFee + fm.stairDelCharges;
+            fm.totFee = fm.deliCharges + fm.tuningFee + fm.heatingRodInsFee + fm.stairDelCharges;
         }else{
             fm.depFee = fm.deliCharges = fm.tuningFee = fm.heatingRodInsFee = fm.stairDelCharges = fm.perStairCharges = 0;
-            fm.instrumentChrg = BillingUtility.roundOffAmount(slcdPiano.salesPrice);
+            //CH02 
+            //fm.instrumentChrg = BillingUtility.roundOffAmount(slcdPiano.salesPrice);
+            system.debug(' --> ' + BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.listPrice )));
+            fm.instrumentChrg = BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.listPrice) );
+            //CH02 END
             fm.totFee = fm.instrumentChrg;
         }
         
@@ -329,27 +432,27 @@ public class SearchInstrumentRental_IpadCntrl {
         Integer i = getIndex(dtslt.appid);
         if(dtimeslot!=null && i>=0 && i<dtimeslot.size())
             dtimeslot.remove(i);
-       
+        
         dtimeslot.add(dtslt);
         
         
-     /*   System.debug('dtimeslot---->>>'+dtimeslot.size());
-        Map<DateTime, DateTimeSlot> dateMap = new Map<DateTime, DateTimeSlot>();
-        List<DateTime> dateSet = new List<DateTime>();
-        for(DateTimeSlot dtSlot:dtimeslot ){
-            dateMap.put(dtSlot.dt, dtSlot);
-            dateSet.add(dtSlot.dt);
-        }
-        
-        dtimeslot = new List<DateTimeSlot>();
-        dateSet.sort();
-        for(DateTime slcdDt: dateSet){
-            dtimeslot.add(dateMap.get(slcdDt));
-        }*/
-            //dtimeslot = new List<DateTimeSlot>();
+        /*   System.debug('dtimeslot---->>>'+dtimeslot.size());
+Map<DateTime, DateTimeSlot> dateMap = new Map<DateTime, DateTimeSlot>();
+List<DateTime> dateSet = new List<DateTime>();
+for(DateTimeSlot dtSlot:dtimeslot ){
+dateMap.put(dtSlot.dt, dtSlot);
+dateSet.add(dtSlot.dt);
+}
+
+dtimeslot = new List<DateTimeSlot>();
+dateSet.sort();
+for(DateTime slcdDt: dateSet){
+dtimeslot.add(dateMap.get(slcdDt));
+}*/
+        //dtimeslot = new List<DateTimeSlot>();
     }
     public void detSlots(){
-       
+        
         Integer index = getIndex(slcdSlotDate);
         if(dtimeslot!=null && index>=0 && index<dtimeslot.size())
             dtimeslot.remove(index);
@@ -365,7 +468,7 @@ public class SearchInstrumentRental_IpadCntrl {
             }
             i++;
         }
-       
+        
         if(isIn==false)
             return -1;
         else
@@ -392,14 +495,14 @@ public class SearchInstrumentRental_IpadCntrl {
         return (Time.newInstance(srthour, 0, 0, 0));
     }
     public void addDate(){
-       GetToday= GetToday.addDays(1);
+        GetToday= GetToday.addDays(1);
         getEnrolments();
-       // return GetToday;
+        // return GetToday;
     }
     public void subDate(){
-       GetToday= GetToday.addDays(-1);
+        GetToday= GetToday.addDays(-1);
         getEnrolments();
-       // return GetToday;
+        // return GetToday;
     }
     
     public void fetchFullAddress(){
@@ -414,304 +517,355 @@ public class SearchInstrumentRental_IpadCntrl {
             for(Postal_code__c code : [SELECT Id, Name, BuildingNo__c, Country__r.Name, Country__r.Country_Name__c, Street_Name__c, Building_Name__c 
                                        FROM Postal_code__c 
                                        WHERE Country__r.Name =: parentAcc.BillingCountryCode AND Name =: tempPostalCode LIMIT 1]){
-                if(String.isNotBlank(parentAcc.id)){
-                    parentAcc.BillingStreet = (String.isNotBlank(code.BuildingNo__c)) ? code.BuildingNo__c + ' ': '';
-                    parentAcc.BillingStreet += (String.isNotBlank(code.Building_Name__c)) ? code.Building_Name__c + ', ': '';
-                    parentAcc.BillingStreet += (String.isNotBlank(code.Street_Name__c)) ? code.Street_Name__c: '';
-                   // enrolDetails.parent.country = code.Country__c;
-                    parentAcc.BillingCity = code.Building_Name__c;
-                    parentAcc.BillingPostalCode = code.Name;
-                }
-            }
+                                           if(String.isNotBlank(parentAcc.id)){
+                                               parentAcc.BillingStreet = (String.isNotBlank(code.BuildingNo__c)) ? code.BuildingNo__c + ' ': '';
+                                               parentAcc.BillingStreet += (String.isNotBlank(code.Building_Name__c)) ? code.Building_Name__c + ', ': '';
+                                               parentAcc.BillingStreet += (String.isNotBlank(code.Street_Name__c)) ? code.Street_Name__c: '';
+                                               // enrolDetails.parent.country = code.Country__c;
+                                               parentAcc.BillingCity = code.Building_Name__c;
+                                               parentAcc.BillingPostalCode = code.Name;
+                                           }
+                                       }
         }    
     }
     
     //Page to functionality
+    //CH02 Deprecated this method, will use the getProducts1 method for this
     public void getProducts(){
-        sageProducts = new List<SageProductItems>(); 
         
-        SageIntacctIntegrationUtility.resultWrapper rw = new SageIntacctIntegrationUtility.resultWrapper();
-        
-        SageIntacctIntegrationUtility.sessionWrapper sw = SageIntacctIntegrationUtility.getuserSessionID(sageCmp);        
-        if(sw.sessionId!=null && sw.sessionId.trim().length()>0){
-            System.debug('@@@'+sw.sessionId);
-                HttpRequest req = new HttpRequest();
-                req.setMethod('POST');
-                req.setEndpoint(sw.endPointUrl);
-                req.setHeader('Content-Type','application/xml');
-            
-                string timestamp = String.valueof(DateTime.now().getTime());
-                
-                //Fetch Wharehouse details
-                String wareHouseName = 'AGP-WH';//'ACP-WH';
-                
-                String wareHouseLocationId= '';
-                //fetching warehouse details
-                String body = '<?xml version="1.0" encoding="UTF-8"?>'+
-                                  '<request>'+
-                                    '<control>'+
-                                        '<senderid>'+sw.senderId+'</senderid>'+
-                                        '<password>'+sw.senderPassword+'</password>'+
-                                        '<controlid>'+timestamp+'</controlid>'+
-                                        '<uniqueid>false</uniqueid>'+
-                                        '<dtdversion>3.0</dtdversion>'+
-                                        '<includewhitespace>false</includewhitespace>'+
-                                     '</control>'+
-                                     '<operation>'+
-                                        '<authentication>'+
-                                          '<sessionid>'+sw.sessionId+'</sessionid>'+
-                                        '</authentication>'+
-                                        '<content>'+
-                                          '<function controlid="'+timestamp+'">'+
-                                            '<readByQuery>'+
-                                              '<object>ITEMWAREHOUSEINFO</object>'+
-                                              '<fields>*</fields>'+
-                                              '<query>WAREHOUSEID=\''+wareHouseName+'\'</query>'+
-                                              '<pagesize>100</pagesize>'+
-                                            '</readByQuery>'+
-                                          '</function>'+
-                                        '</content>'+
-                                      '</operation>'+
-                                '</request>';   
-                req.setBody(body);
-                req.setTimeout(120000);
-                
-                String response;
-                If(!Test.isRunningTest()){
-                    Http http = new Http();
-                    HTTPResponse res = http.send(req);                    
-                    response = res.getBody();
-                }else{
-                 //   response = '<?xml version="1.0" encoding="UTF-8"?><response><control><status>success</status><senderid>Aureus Group</senderid><controlid>1561088787741</controlid><uniqueid>false</uniqueid><dtdversion>3.0</dtdversion></control><operation><authentication><status>success</status><userid>ws_tek</userid><companyid>Aureus Group-imp</companyid><locationid /><sessiontimestamp>2019-06-20T20:46:28-07:00</sessiontimestamp><sessiontimeout>2019-06-21T02:46:28-07:00</sessiontimeout></authentication><result><status>success</status><function>create_arpayment</function><controlid>1561088787741</controlid><key>9</key></result></operation></response>';
-                	response ='<?xml version="1.0" encoding="UTF-8"?><response><control><status>success</status><senderid>Aureus Group</senderid><controlid>1561088787741</controlid><uniqueid>false</uniqueid><dtdversion>3.0</dtdversion></control><operation><authentication><status>success</status><userid>ws_tek</userid><companyid>Aureus Group-imp</companyid><locationid /><sessiontimestamp>2019-06-20T20:46:28-07:00</sessiontimestamp><sessiontimeout>2019-06-21T02:46:28-07:00</sessiontimeout><data><itemwarehouseinfo><RECORDNO>1</RECORDNO><ITEMID>1</ITEMID><WAREHOUSEID>001</WAREHOUSEID><WONHAND>0</WONHAND><STANDARD_COST>10</STANDARD_COST></itemwarehouseinfo></data></authentication><result><status>success</status><function>create_arpayment</function><controlid>1561088787741</controlid><key>9</key></result></operation></response>';
-               
-                }
-                
-                system.debug('body==='+body);
-                System.debug('response==='+response);
-                
-                Set<String> whereHouseItems = new Set<String>();
-                
-                DOM.Document doc = new DOM.Document();
-                doc.load(response);
-                DOM.XMLNode root = doc.getRootElement();
-                for(DOM.XMLNode child : root.getChildElements()){
-                    if(child.getName()=='operation'){
-                        for(DOM.XMLNode child1 : child.getChildElements()){                        
-                            Boolean isSuccess = false;
-                            for(DOM.XMLNode child2 : child1.getChildElements()){
-                                if(child2.getName()=='status'){
-                                    if(child2.getText()=='success'){
-                                        isSuccess = true;
-                                    }
-                                }else if(child2.getName()=='locationid'){
-                                    wareHouseLocationId = child2.getText();
-                                }
-                                
-                                if(isSuccess && child2.getName()=='data'){
-                                    for(DOM.XMLNode child3 : child2.getChildElements()){
-                                        if(child3.getName()=='itemwarehouseinfo'){
-                                            
-                                            for(DOM.XMLNode child4 : child3.getChildElements()){
-                                                if(child4.getName()=='RECORDNO'){
-                                                    //System.debug('@@@@-->'+child4.getText());
-                                                    //sgPr.recNo = child4.getText();
-                                                }
-                                                else if(child4.getName()=='ITEMID'){
-                                                    whereHouseItems.add(child4.getText());
-                                                }else if(child4.getName()=='WONHOLD'){
-                                                    // sgPr.category = child4.getText();
-                                                }
-                                            }
-                                        }                                       
-                                    }
-                                }
-                                
-                                if(child2.getName()=='errormessage'){
-                                    for(DOM.XMLNode child3 : child2.getChildElements()){
-                                        if(child3.getName()=='error'){
-                                            for(DOM.XMLNode child4 : child3.getChildElements()){
-                                                if(child4.getName()=='description2'){
-                                                    rw.errorMsg = child4.getText();
-                                                    break;
-                                                }
-                                            }
-                                            if(rw.errorMsg!=null && rw.errorMsg.trim().length()>0){
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if(child.getName()=='errormessage'){
-                        for(DOM.XMLNode child1 : child.getChildElements()){
-                            if(child1.getName()=='error'){
-                                for(DOM.XMLNode child2 : child1.getChildElements()){
-                                    if(child2.getName()=='description2'){
-                                        rw.isSuccess = false;
-                                        rw.errorMsg = child2.getText();
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }   
-                
-                System.debug('whereHouseItems==='+whereHouseItems);     
-                    
-            
-                //Fetch item details
-                body = '<?xml version="1.0" encoding="UTF-8"?>'+
-                              '<request>'+
-                                '<control>'+
-                                    '<senderid>'+sw.senderId+'</senderid>'+
-                                    '<password>'+sw.senderPassword+'</password>'+
-                                    '<controlid>'+timestamp+'</controlid>'+
-                                    '<uniqueid>false</uniqueid>'+
-                                    '<dtdversion>3.0</dtdversion>'+
-                                    '<includewhitespace>false</includewhitespace>'+
-                                 '</control>'+
-                                 '<operation>'+
-                                    '<authentication>'+
-                                      '<sessionid>'+sw.sessionId+'</sessionid>'+
-                                    '</authentication>'+
-                                    '<content>'+
-                                      '<function controlid="'+timestamp+'">'+
-                                        '<readByQuery>'+
-                                          '<object>ITEM</object>'+
-                                          '<fields>*</fields>'+
-                                          '<query>ITEMTYPE=\'I\' and STATUS=\'T\' and PRODUCTLINEID=\'Piano\'</query>'+
-                                          '<pagesize>100</pagesize>'+
-                                        '</readByQuery>'+
-                                      '</function>'+
-                                    '</content>'+
-                                  '</operation>'+
-                            '</request>';
-            
-            req.setBody(body);
-            req.setTimeout(120000);
-            
-            response = '';
-            If(!Test.isRunningTest()){
-                Http http = new Http();
-                HTTPResponse res = http.send(req);                    
-                response = res.getBody();
-            }else{
-              //  response = '<?xml version="1.0" encoding="UTF-8"?><response><control><status>success</status><senderid>Aureus Group</senderid><controlid>1561088787741</controlid><uniqueid>false</uniqueid><dtdversion>3.0</dtdversion></control><operation><authentication><status>success</status><userid>ws_tek</userid><companyid>Aureus Group-imp</companyid><locationid /><sessiontimestamp>2019-06-20T20:46:28-07:00</sessiontimestamp><sessiontimeout>2019-06-21T02:46:28-07:00</sessiontimeout></authentication><result><status>success</status><function>create_arpayment</function><controlid>1561088787741</controlid><key>9</key></result></operation></response>';
-            response ='<?xml version="1.0" encoding="UTF-8"?><response><control><status>success</status><senderid>Aureus Group</senderid><controlid>1561088787741</controlid><uniqueid>false</uniqueid><dtdversion>3.0</dtdversion></control><operation><authentication><status>success</status><userid>ws_tek</userid><companyid>Aureus Group-imp</companyid><locationid /><sessiontimestamp>2019-06-20T20:46:28-07:00</sessiontimestamp><sessiontimeout>2019-06-21T02:46:28-07:00</sessiontimeout><data><item><NAME>test</NAME><ITEM_MAKE>test</ITEM_MAKE><ITEM_MODEL_NUMBER>001</ITEM_MODEL_NUMBER><ITEM_SERIAL_NUMBER>001</ITEM_SERIAL_NUMBER><RENTAL_RATE>10</RENTAL_RATE><SALE_PRICE>10</SALE_PRICE><ITEM_STATUS>True</ITEM_STATUS></item></data></authentication><result><status>success</status><function>create_arpayment</function><controlid>1561088787741</controlid><key>9</key></result></operation></response>';
-            }
-            
-            system.debug('body==='+body);
-            System.debug('response==='+response);
-            
-            doc = new DOM.Document();
-            doc.load(response);
-            root = doc.getRootElement();
-            
-            for(DOM.XMLNode child : root.getChildElements()){
-                if(child.getName()=='operation'){
-                    for(DOM.XMLNode child1 : child.getChildElements()){                        
-                        Boolean isSuccess = false;
-                        for(DOM.XMLNode child2 : child1.getChildElements()){
-                            if(child2.getName()=='status'){
-                                if(child2.getText()=='success'){
-                                    isSuccess = true;
-                                }
-                            }
-                            
-                            if(isSuccess && child2.getName()=='data'){
-                                Integer count = 1;
-                                for(DOM.XMLNode child3 : child2.getChildElements()){
-                                    if(child3.getName()=='item'){
-                                        SageProductItems sgPr = new SageProductItems();
-                                        
-                                        Boolean isWareHouseProduct = false;
-                                        for(DOM.XMLNode child4 : child3.getChildElements()){
-                                            if(child4.getName()=='NAME'){
-                                               if(whereHouseItems.contains(child4.getText()))
-                                                    isWareHouseProduct = true;
-                                            }else if(child4.getName()=='ITEM_MAKE'){
-                                                sgPr.brand = child4.getText();
-                                            }else if(child4.getName()=='ITEM_MODEL_NUMBER'){
-                                               sgPr.modelNo = child4.getText();
-                                            }else if(child4.getName()=='ITEM_SERIAL_NUMBER'){
-                                               sgPr.serNo = child4.getText();
-                                            }else if(child4.getName()=='RENTAL_RATE' && String.isNotBlank(child4.getText())){
-                                               sgPr.rentalPrice = Decimal.valueOf(child4.getText());
-                                            }else if(child4.getName()=='SALE_PRICE' && String.isNotBlank(child4.getText())){
-                                               sgPr.salesPrice =  Decimal.valueOf(child4.getText());
-                                            }else if(child4.getName()=='ITEM_STATUS'){
-                                                sgPr.condi = child4.getText();
-                                            }
-                                        }
-                                        sgPr.location = wareHouseLocationId;
-                                        if(isWareHouseProduct){
-                                            sgPr.srNo = count;
-                                            count = count+1;
-                                            sageProducts.add(sgPr);
-                                        }
-                                    }                                       
-                                }
-                            }
-                            
-                            if(child2.getName()=='errormessage'){
-                                for(DOM.XMLNode child3 : child2.getChildElements()){
-                                    if(child3.getName()=='error'){
-                                        for(DOM.XMLNode child4 : child3.getChildElements()){
-                                            if(child4.getName()=='description2'){
-                                                rw.errorMsg = child4.getText();
-                                                break;
-                                            }
-                                        }
-                                        if(rw.errorMsg!=null && rw.errorMsg.trim().length()>0){
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                if(child.getName()=='errormessage'){
-                    for(DOM.XMLNode child1 : child.getChildElements()){
-                        if(child1.getName()=='error'){
-                            for(DOM.XMLNode child2 : child1.getChildElements()){
-                                if(child2.getName()=='description2'){
-                                    rw.isSuccess = false;
-                                    rw.errorMsg = child2.getText();
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-        }else If(sw.errorMsg!=null && sw.errorMsg.trim().length()>0){
-            rw.isSuccess = false;
-            rw.errorMsg = sw.errorMsg;
-        }else{
-            rw.isSuccess = false;
-            rw.errorMsg = 'Unknown error occured. Please contact your admin.';
-        }
+        //CH02
+        /*
+sageProducts = new List<SageProductItems>(); 
+
+SageIntacctIntegrationUtility.resultWrapper rw = new SageIntacctIntegrationUtility.resultWrapper();
+
+SageIntacctIntegrationUtility.sessionWrapper sw = SageIntacctIntegrationUtility.getuserSessionID(sageCmp);        
+if(sw.sessionId!=null && sw.sessionId.trim().length()>0){
+System.debug('@@@'+sw.sessionId);
+HttpRequest req = new HttpRequest();
+req.setMethod('POST');
+req.setEndpoint(sw.endPointUrl);
+req.setHeader('Content-Type','application/xml');
+
+string timestamp = String.valueof(DateTime.now().getTime());
+
+//Fetch Wharehouse details
+String wareHouseName = 'AGP-WH';//'ACP-WH';
+
+String wareHouseLocationId= '';
+//fetching warehouse details
+String body = '<?xml version="1.0" encoding="UTF-8"?>'+
+'<request>'+
+'<control>'+
+'<senderid>'+sw.senderId+'</senderid>'+
+'<password>'+sw.senderPassword+'</password>'+
+'<controlid>'+timestamp+'</controlid>'+
+'<uniqueid>false</uniqueid>'+
+'<dtdversion>3.0</dtdversion>'+
+'<includewhitespace>false</includewhitespace>'+
+'</control>'+
+'<operation>'+
+'<authentication>'+
+'<sessionid>'+sw.sessionId+'</sessionid>'+
+'</authentication>'+
+'<content>'+
+'<function controlid="'+timestamp+'">'+
+'<readByQuery>'+
+'<object>ITEMWAREHOUSEINFO</object>'+
+'<fields>*</fields>'+
+'<query>WAREHOUSEID=\''+wareHouseName+'\'</query>'+
+'<pagesize>100</pagesize>'+
+'</readByQuery>'+
+'</function>'+
+'</content>'+
+'</operation>'+
+'</request>';   
+req.setBody(body);
+req.setTimeout(120000);
+
+String response;
+If(!Test.isRunningTest()){
+Http http = new Http();
+HTTPResponse res = http.send(req);                    
+response = res.getBody();
+}else{
+//   response = '<?xml version="1.0" encoding="UTF-8"?><response><control><status>success</status><senderid>Aureus Group</senderid><controlid>1561088787741</controlid><uniqueid>false</uniqueid><dtdversion>3.0</dtdversion></control><operation><authentication><status>success</status><userid>ws_tek</userid><companyid>Aureus Group-imp</companyid><locationid /><sessiontimestamp>2019-06-20T20:46:28-07:00</sessiontimestamp><sessiontimeout>2019-06-21T02:46:28-07:00</sessiontimeout></authentication><result><status>success</status><function>create_arpayment</function><controlid>1561088787741</controlid><key>9</key></result></operation></response>';
+response ='<?xml version="1.0" encoding="UTF-8"?><response><control><status>success</status><senderid>Aureus Group</senderid><controlid>1561088787741</controlid><uniqueid>false</uniqueid><dtdversion>3.0</dtdversion></control><operation><authentication><status>success</status><userid>ws_tek</userid><companyid>Aureus Group-imp</companyid><locationid /><sessiontimestamp>2019-06-20T20:46:28-07:00</sessiontimestamp><sessiontimeout>2019-06-21T02:46:28-07:00</sessiontimeout><data><itemwarehouseinfo><RECORDNO>1</RECORDNO><ITEMID>1</ITEMID><WAREHOUSEID>001</WAREHOUSEID><WONHAND>0</WONHAND><STANDARD_COST>10</STANDARD_COST></itemwarehouseinfo></data></authentication><result><status>success</status><function>create_arpayment</function><controlid>1561088787741</controlid><key>9</key></result></operation></response>';
+
+}
+
+system.debug('body==='+body);
+System.debug('response==='+response);
+
+Set<String> whereHouseItems = new Set<String>();
+
+DOM.Document doc = new DOM.Document();
+doc.load(response);
+DOM.XMLNode root = doc.getRootElement();
+for(DOM.XMLNode child : root.getChildElements()){
+if(child.getName()=='operation'){
+for(DOM.XMLNode child1 : child.getChildElements()){                        
+Boolean isSuccess = false;
+for(DOM.XMLNode child2 : child1.getChildElements()){
+if(child2.getName()=='status'){
+if(child2.getText()=='success'){
+isSuccess = true;
+}
+}else if(child2.getName()=='locationid'){
+wareHouseLocationId = child2.getText();
+}
+
+if(isSuccess && child2.getName()=='data'){
+for(DOM.XMLNode child3 : child2.getChildElements()){
+if(child3.getName()=='itemwarehouseinfo'){
+
+for(DOM.XMLNode child4 : child3.getChildElements()){
+if(child4.getName()=='RECORDNO'){
+//System.debug('@@@@-->'+child4.getText());
+//sgPr.recNo = child4.getText();
+}
+else if(child4.getName()=='ITEMID'){
+whereHouseItems.add(child4.getText());
+}else if(child4.getName()=='WONHOLD'){
+// sgPr.category = child4.getText();
+}
+}
+}                                       
+}
+}
+
+if(child2.getName()=='errormessage'){
+for(DOM.XMLNode child3 : child2.getChildElements()){
+if(child3.getName()=='error'){
+for(DOM.XMLNode child4 : child3.getChildElements()){
+if(child4.getName()=='description2'){
+rw.errorMsg = child4.getText();
+break;
+}
+}
+if(rw.errorMsg!=null && rw.errorMsg.trim().length()>0){
+break;
+}
+}
+}
+}
+}
+}
+}
+if(child.getName()=='errormessage'){
+for(DOM.XMLNode child1 : child.getChildElements()){
+if(child1.getName()=='error'){
+for(DOM.XMLNode child2 : child1.getChildElements()){
+if(child2.getName()=='description2'){
+rw.isSuccess = false;
+rw.errorMsg = child2.getText();
+break;
+}
+}
+}
+}
+}
+}   
+
+System.debug('whereHouseItems==='+whereHouseItems);     
+
+
+//Fetch item details
+body = '<?xml version="1.0" encoding="UTF-8"?>'+
+'<request>'+
+'<control>'+
+'<senderid>'+sw.senderId+'</senderid>'+
+'<password>'+sw.senderPassword+'</password>'+
+'<controlid>'+timestamp+'</controlid>'+
+'<uniqueid>false</uniqueid>'+
+'<dtdversion>3.0</dtdversion>'+
+'<includewhitespace>false</includewhitespace>'+
+'</control>'+
+'<operation>'+
+'<authentication>'+
+'<sessionid>'+sw.sessionId+'</sessionid>'+
+'</authentication>'+
+'<content>'+
+'<function controlid="'+timestamp+'">'+
+'<readByQuery>'+
+'<object>ITEM</object>'+
+'<fields>*</fields>'+
+'<query>ITEMTYPE=\'I\' and STATUS=\'T\' and PRODUCTLINEID=\'Piano\'</query>'+
+'<pagesize>100</pagesize>'+
+'</readByQuery>'+
+'</function>'+
+'</content>'+
+'</operation>'+
+'</request>';
+
+req.setBody(body);
+req.setTimeout(120000);
+
+response = '';
+If(!Test.isRunningTest()){
+Http http = new Http();
+HTTPResponse res = http.send(req);                    
+response = res.getBody();
+}else{
+//  response = '<?xml version="1.0" encoding="UTF-8"?><response><control><status>success</status><senderid>Aureus Group</senderid><controlid>1561088787741</controlid><uniqueid>false</uniqueid><dtdversion>3.0</dtdversion></control><operation><authentication><status>success</status><userid>ws_tek</userid><companyid>Aureus Group-imp</companyid><locationid /><sessiontimestamp>2019-06-20T20:46:28-07:00</sessiontimestamp><sessiontimeout>2019-06-21T02:46:28-07:00</sessiontimeout></authentication><result><status>success</status><function>create_arpayment</function><controlid>1561088787741</controlid><key>9</key></result></operation></response>';
+response ='<?xml version="1.0" encoding="UTF-8"?><response><control><status>success</status><senderid>Aureus Group</senderid><controlid>1561088787741</controlid><uniqueid>false</uniqueid><dtdversion>3.0</dtdversion></control><operation><authentication><status>success</status><userid>ws_tek</userid><companyid>Aureus Group-imp</companyid><locationid /><sessiontimestamp>2019-06-20T20:46:28-07:00</sessiontimestamp><sessiontimeout>2019-06-21T02:46:28-07:00</sessiontimeout><data><item><NAME>test</NAME><ITEM_MAKE>test</ITEM_MAKE><ITEM_MODEL_NUMBER>001</ITEM_MODEL_NUMBER><ITEM_SERIAL_NUMBER>001</ITEM_SERIAL_NUMBER><RENTAL_RATE>10</RENTAL_RATE><SALE_PRICE>10</SALE_PRICE><ITEM_STATUS>True</ITEM_STATUS></item></data></authentication><result><status>success</status><function>create_arpayment</function><controlid>1561088787741</controlid><key>9</key></result></operation></response>';
+}
+
+system.debug('body==='+body);
+System.debug('response==='+response);
+
+doc = new DOM.Document();
+doc.load(response);
+root = doc.getRootElement();
+
+for(DOM.XMLNode child : root.getChildElements()){
+if(child.getName()=='operation'){
+for(DOM.XMLNode child1 : child.getChildElements()){                        
+Boolean isSuccess = false;
+for(DOM.XMLNode child2 : child1.getChildElements()){
+if(child2.getName()=='status'){
+if(child2.getText()=='success'){
+isSuccess = true;
+}
+}
+
+if(isSuccess && child2.getName()=='data'){
+Integer count = 1;
+for(DOM.XMLNode child3 : child2.getChildElements()){
+if(child3.getName()=='item'){
+SageProductItems sgPr = new SageProductItems();
+
+Boolean isWareHouseProduct = false;
+for(DOM.XMLNode child4 : child3.getChildElements()){
+if(child4.getName()=='NAME'){
+if(whereHouseItems.contains(child4.getText()))
+isWareHouseProduct = true;
+}else if(child4.getName()=='ITEM_MAKE'){
+sgPr.brand = child4.getText();
+}else if(child4.getName()=='ITEM_MODEL_NUMBER'){
+sgPr.modelNo = child4.getText();
+}else if(child4.getName()=='ITEM_SERIAL_NUMBER'){
+sgPr.serNo = child4.getText();
+}else if(child4.getName()=='RENTAL_RATE' && String.isNotBlank(child4.getText())){
+sgPr.rentalPrice = Decimal.valueOf(child4.getText());
+}else if(child4.getName()=='SALE_PRICE' && String.isNotBlank(child4.getText())){
+sgPr.salesPrice =  Decimal.valueOf(child4.getText());
+}else if(child4.getName()=='ITEM_STATUS'){
+sgPr.condi = child4.getText();
+}
+}
+sgPr.location = wareHouseLocationId;
+if(isWareHouseProduct){
+sgPr.srNo = count;
+count = count+1;
+sageProducts.add(sgPr);
+}
+}                                       
+}
+}
+
+if(child2.getName()=='errormessage'){
+for(DOM.XMLNode child3 : child2.getChildElements()){
+if(child3.getName()=='error'){
+for(DOM.XMLNode child4 : child3.getChildElements()){
+if(child4.getName()=='description2'){
+rw.errorMsg = child4.getText();
+break;
+}
+}
+if(rw.errorMsg!=null && rw.errorMsg.trim().length()>0){
+break;
+}
+}
+}
+}
+}
+}
+}
+if(child.getName()=='errormessage'){
+for(DOM.XMLNode child1 : child.getChildElements()){
+if(child1.getName()=='error'){
+for(DOM.XMLNode child2 : child1.getChildElements()){
+if(child2.getName()=='description2'){
+rw.isSuccess = false;
+rw.errorMsg = child2.getText();
+break;
+}
+}
+}
+}
+}
+}
+
+}else If(sw.errorMsg!=null && sw.errorMsg.trim().length()>0){
+rw.isSuccess = false;
+rw.errorMsg = sw.errorMsg;
+}else{
+rw.isSuccess = false;
+rw.errorMsg = 'Unknown error occured. Please contact your admin.';
+}
+*/
     }
     
     public pageReference prcToRental(){
         isRentalOrSellType = 'Rent';
         return page.SearchInstrumentRentalDeliveryPage_Ipad3;
     }
-		
+    
     public pageReference prcToSell(){
-    	isRentalOrSellType = 'Sell';       
+        isRentalOrSellType = 'Sell';       
         return page.SearchInstrumentRentalDeliveryPage_Ipad3;
     }
     
     public void setSlcdPiano(){
         System.debug('@@@@@-->'+slctdPianoOpt);
-        slcdPiano = sageProducts.get(slctdPianoOpt-1);
+        //CH02
+        //slcdPiano = sageProducts.get(slctdPianoOpt-1); old
+        slcdPiano = netSuiteProducts.get(slctdPianoOpt-1);
+        system.debug('slcdPiano -> '+ slcdPiano);
+        getStripeDetails();
+        //CH02
+    }
+    // added by nishi: 23-Sep-2020: for stripe id and other country details the enrollment's center was inserted according to the home page selected center. So we get stripe details according to this center   
+    public void getStripeDetails(){
+        system.debug('slcdPiano -> '+ slcdPiano.location);
+        system.debug('slcdEnrolment -> '+ slcdEnrolment);
+        if( string.isBlank(slcdEnrolment.id)){
+            isAlreadyStripCstmr = false;
+            parentAcc.Centre_Name__c = slcdCenter;
+            parentAcc.Phone =  PersonMobilePhoneCustom;
+           if(parentAcc.PersonEmail != null){
+               List<Account> accList = [SELECT Id,Name FROM Account WHERE PersonEmail =: parentAcc.PersonEmail]; 
+               if(accList.size() > 0)
+                   parentAcc.Id = accList.get(0).Id;
+           }
+            List<Account> centerlist =  [Select id,Name,Organisation__c from account where id=:slcdCenter and recordtype.Name=:ConstantsClass.centerRecTypeName];
+            
+            system.debug('centerlist -> '+ centerlist);
+            if(centerlist != null && centerlist.size() > 0){
+                String organisationId          = centerlist[0].Organisation__c;
+                system.debug('organisationId -> '+ organisationId);
+                if((!isAlreadyStripCstmr) && string.isBlank(stripeBaseUrl)&& string.isBlank(apiKey) && string.isBlank(stripeApiSecKey) && 
+                string.isBlank(templateId) && string.isBlank(folderId)){
+                    Map<String,Organisation__c> organisationMap = BillingUtility.getOrganisationMap(organisationId);
+                    if(organisationMap.containsKey(organisationId)){
+                        stripeBaseUrl       = organisationMap.get(organisationId).Stripe_Base_Url__c;
+                        apiKey              = organisationMap.get(organisationId).Stripe_Publishable_Key__c;
+                        stripeApiSecKey     = organisationMap.get(organisationId).Stripe_Secret_Key__c;
+                        countryCurrencyCode = organisationMap.get(organisationId).country__r.Currency_Code__c;
+                        fm.gstTaxPer        =  Integer.valueOf(organisationMap.get(organisationId).Tax_Rate__c);
+                        templateId          = organisationMap.get(organisationId).Student_Policies_Template_Id__c;
+                        folderId            = organisationMap.get(organisationId).Folder__c;
+                    
+                    }
+
+                    system.debug('apiKey -> '+ apiKey);
+                    system.debug('folderId -> '+ folderId);
+                    if(String.isBlank(countryCurrencyCode)) 
+                        countryCurrencyCode = ConstantsClass.currencyCode;
+                }
+            }
+        }
     }
     
     Public void nextWeek(){
@@ -742,13 +896,13 @@ public class SearchInstrumentRental_IpadCntrl {
         dateslotmap = new map<date,list<string>>();
         Datetime dt;
         list<string> timeslotlst = new list<string>{'9am - 12pm','12pm - 3pm','3pm - 6pm'};
-        
-        Set<Date> publicHolidayDate = new Set<Date>();
+            
+            Set<Date> publicHolidayDate = new Set<Date>();
         for(Public_Holiday__c pubHoliday: [SELECT Id, Name, Public_Holiday_Date__c,Organisation_Status__c FROM Public_Holiday__c 
                                            WHERE Organisation__c =: cenOrgId AND Public_Holiday_Date__c >=:calStartDate AND Public_Holiday_Date__c <=: calEndDate AND Status__c IN('Draft') ]){
-        	publicHolidayDate.add(pubHoliday.Public_Holiday_Date__c);                               
-        }
-            
+                                               publicHolidayDate.add(pubHoliday.Public_Holiday_Date__c);                               
+                                           }
+        
         while(startDt<=endDt){
             if(!publicHolidayDate.contains(startDt)){
                 dt = (DateTime)startDt;
@@ -762,7 +916,7 @@ public class SearchInstrumentRental_IpadCntrl {
                     startDt = startDt.addDays(2);
                 }
             }else{
-               // dateslotmap.put(startDt,new list<string>());
+                // dateslotmap.put(startDt,new list<string>());
                 startDt = startDt.addDays(1);
                 endDt = endDt.addDays(1);
             }
@@ -773,7 +927,8 @@ public class SearchInstrumentRental_IpadCntrl {
     
     //Added by Rajesh: 19th Sept 2019. To populate updated information in panda doc
     public void  updateCstmrDetail(){        
-        update parentAcc;
+        //update parentAcc;//;// commented by nishi:23-Sep-2020: according to  new requirement we update or insert customer details
+        upsert parentAcc;
     }
     Public void signAgreement(){
         documentDetails = new PandaDocUtility.CreateDocument();
@@ -781,9 +936,9 @@ public class SearchInstrumentRental_IpadCntrl {
             String body = fillCreateDocumentWrapper(slcdEnrolment);  
             documentDetails = PandaDocUtility.createDocument(body);   
         }  
-         
+        
     }
-
+    
     Public Void waitAgreement(){
         PandaDocUtility.Document document = new PandaDocUtility.Document();
         if(String.isNotBlank(documentDetails.id)){
@@ -794,7 +949,7 @@ public class SearchInstrumentRental_IpadCntrl {
     Public void sendAgreement(){
         DocumentWrapper.SendDocument sendDocument;
         String body = '';
-       
+        
         if(String.isNotBlank(documentDetails.id)){
             sendDocument = new DocumentWrapper.SendDocument('Hello! This document was sent from the PandaDoc API.', true);      
             body = JSON.serialize(sendDocument);
@@ -832,16 +987,16 @@ public class SearchInstrumentRental_IpadCntrl {
         String jsonBody = '';   
         
         List<Enrolment__c> enrList = [SELECT Id, Name, Parent__c, Parent__r.FirstName, Parent__r.LastName, Parent__r.PersonEmail, Model__c, Serial_Number__c, Rental_price_per_month__c 
-                                           FROM Enrolment__c WHERE Id =: enrolDetail.Id];
+                                      FROM Enrolment__c WHERE Id =: enrolDetail.Id];
         List<User> userList = [SELECT Id,FirstName,LastName,Email FROM User WHERE Id=: Userinfo.getUserId()];
         if(enrList.size() > 0 && userList.size() > 0){
             String pandaFolderId   =  'Hk2younc4gRoh696TvY6yn';
             String pandaTemplateId =  '9LbUZRRrAofSkQ3ECrYfEB';
             if(isRentalOrSellType.equalsIgnoreCase('Sell')){
-            	pandaFolderId   = 'LQ66xcYvjjSZebir2cCUW8';
+                pandaFolderId   = 'LQ66xcYvjjSZebir2cCUW8';
                 pandaTemplateId = 'q6ScM9GBwi7UAzutYCfS8m';
             }
-                
+            
             Enrolment__c enrolmentObj = enrList.get(0);
             User curntUsr = userList.get(0);
             
@@ -856,23 +1011,39 @@ public class SearchInstrumentRental_IpadCntrl {
             createDocWrapper.template_uuid =  pandaTemplateId;   
             createDocWrapper.folder_uuid = pandaFolderId;
             /*
-            recipientTransporter.first_name = curntUsr.FirstName;        
-            recipientTransporter.last_name = curntUsr.LastName;     
-            recipientTransporter.email = curntUsr.Email;
-            recipientTransporter.role = 'AureusGrp';      
-            recipientTransporter.recipient_type = 'signer';  
-            recipientTransporter.has_completed = true;  
-            createDocWrapper.recipients.add(recipientTransporter);  */
+recipientTransporter.first_name = curntUsr.FirstName;        
+recipientTransporter.last_name = curntUsr.LastName;     
+recipientTransporter.email = curntUsr.Email;
+recipientTransporter.role = 'AureusGrp';      
+recipientTransporter.recipient_type = 'signer';  
+recipientTransporter.has_completed = true;  
+createDocWrapper.recipients.add(recipientTransporter);  */
             
-             // pass a list of tokens/values to pre-fill tokens used in a template
+            // pass a list of tokens/values to pre-fill tokens used in a template
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Parent_First_Name__c', enrolmentObj.Parent__r.FirstName));
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Parent_Last_Name__c', enrolmentObj.Parent__r.LastName));
-            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Model__c', slcdPiano.modelNo));
-            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Serial_Number__c', slcdPiano.serNo)); 
-            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Rental_price_per_month__c', ''+(slcdPiano.rentalPrice !=null ? slcdPiano.rentalPrice : 0)));
+            
+            //CH02 Changes after NetSuite Integration
+            
+            /*tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Model__c', slcdPiano.modelNo));
+tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Serial_Number__c', slcdPiano.serNo)); 
+tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Rental_price_per_month__c', ''+(slcdPiano.rentalPrice !=null ? slcdPiano.rentalPrice : 0)));
+tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Deposit__c', ''+(fm.depFee!=null ? fm.depFee : 0)));
+tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Delivery__c', ''+(fm.deliCharges!=null ? fm.deliCharges : 0)));
+tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Selling__c', ''+(slcdPiano.salesPrice!=null ? slcdPiano.salesPrice : 0)));*/
+            
+            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Model__c', slcdPiano.model ));
+            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Serial_Number__c', slcdPiano.serialNumber )); 
+            //CH03 Start
+            //tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Rental_price_per_month__c', ''+(slcdPiano.monthlyRental  !=null ? Decimal.valueOf(slcdPiano.monthlyRental)  : 0)));
+            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Rental_price_per_month__c', ''+(slcdPiano.monthlyRental  !=null ? BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.monthlyRental)
+                                                                                                                                                                    + (Decimal.valueOf(slcdPiano.monthlyRental)) * gstAmount /100) : 0)));
+            //CH03 END
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Deposit__c', ''+(fm.depFee!=null ? fm.depFee : 0)));
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Delivery__c', ''+(fm.deliCharges!=null ? fm.deliCharges : 0)));
-            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Selling__c', ''+(slcdPiano.salesPrice!=null ? slcdPiano.salesPrice : 0)));
+            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Selling__c', ''+(slcdPiano.listPrice !=null ? Decimal.valueOf(slcdPiano.listPrice)  : 0)));
+            
+            //CH02 END
             
             if(enrolmentObj.Parent__c != null){       
                 createDocWrapper.metadata.salesforceAccount_id = enrolmentObj.Parent__c;     
@@ -900,59 +1071,59 @@ public class SearchInstrumentRental_IpadCntrl {
             }
         }
         /*DocumentWrapper.Fields field;       
-        DocumentWrapper.recipients recipient = new DocumentWrapper.recipients();        
-        List<DocumentWrapper.Rows> rows = new List<DocumentWrapper.Rows>();     
-        List<DocumentWrapper.Sections> sections = new List<DocumentWrapper.Sections>();     
-        List<DocumentWrapper.PricingTable> pricingTables = new List<DocumentWrapper.PricingTable>();        
-        DocumentWrapper.CreateDocument createDocWrapper = new DocumentWrapper.CreateDocument();     
-                
-        createDocWrapper.template_uuid = templateId;   
-        createDocWrapper.folder_uuid = folderId;
-        if(String.isNotBlank(ParentAcc.Id)){       
-            createDocWrapper.metadata.salesforceAccount_id = ParentAcc.Id;     
-            recipient.first_name = ParentAcc.firstName;        
-            recipient.last_name = ParentAcc.lastName;      
-            recipient.email = ParentAcc.personemail;     
-            field = new DocumentWrapper.Fields(ParentAcc.firstName +' '+ParentAcc.lastName, 'Parent Name');       
-            createDocWrapper.fields = new DocumentWrapper.CustomField(field);       
-            recipient.role = 'Client';      
-            createDocWrapper.recipients = new List<DocumentWrapper.Recipients>();       
-            createDocWrapper.recipients.add(recipient);     
-        }       
-        if(enrolDetail.Id != null){      
-            DateTime enrolmentDateTime;     
-            createDocWrapper.name = '';     
-            DocumentWrapper.Rows row;  
-            
-            for(Enrolment__c enrolmentObj:[SELECT Id, Name, Lessons_Start_Date__c, Lesson_Start_time__c, Student__r.FirstName, Student__r.LastName, Package__r.Name 
-                                           FROM Enrolment__c WHERE Id =: enrolDetail.Id]){
-              //  enrolmentDateTime = DateTime.newInstance(enrolmentObj.Lessons_Start_Date__c, enrolmentObj.Lesson_Start_time__c);  
-                //createDocWrapper.name += enrolmentObj.name + '-';       
-                row = new DocumentWrapper.Rows(new DocumentWrapper.Data(enrolmentObj.Student__r.FirstName + ' ' + enrolmentObj.Student__r.LastName), new DocumentWrapper.CustomFields('', '',''));      
-                rows.add(row);   
-            }   
-                
-            sections.add(new DocumentWrapper.Sections('Sample Title', rows));       
-            pricingTables.add(new DocumentWrapper.PricingTable('PricingTable1', sections));     
-            createDocWrapper.pricing_tables = new List<DocumentWrapper.PricingTable>();     
-            createDocWrapper.pricing_tables = pricingTables;        
-            createDocWrapper.name += 'StudentPolicy';       
-                    
-        }       
-                
-        if(String.isNotBlank(createDocWrapper.name)){       
-            jsonBody = JSON.Serialize(createDocWrapper).replaceAll('pandadoc_Default_Section_XYZ','default');   
-            jsonBody = jsonBody.replaceAll('pandadoc_Currency_Code_XYZ','currency');     
-            System.debug('createDocWrapper '+createDocWrapper);     
-            System.debug('createDocWrapper '+createDocWrapper.metadata);        
-            jsonBody = jsonBody.replaceAll('salesforceAccount_id','salesforce.account_id');     
-            JSONBody = jsonBody;        
-        }       
-                
-        System.debug('@@@jsonBody'+jsonBody);       
-           */     
-            
-                
+DocumentWrapper.recipients recipient = new DocumentWrapper.recipients();        
+List<DocumentWrapper.Rows> rows = new List<DocumentWrapper.Rows>();     
+List<DocumentWrapper.Sections> sections = new List<DocumentWrapper.Sections>();     
+List<DocumentWrapper.PricingTable> pricingTables = new List<DocumentWrapper.PricingTable>();        
+DocumentWrapper.CreateDocument createDocWrapper = new DocumentWrapper.CreateDocument();     
+
+createDocWrapper.template_uuid = templateId;   
+createDocWrapper.folder_uuid = folderId;
+if(String.isNotBlank(ParentAcc.Id)){       
+createDocWrapper.metadata.salesforceAccount_id = ParentAcc.Id;     
+recipient.first_name = ParentAcc.firstName;        
+recipient.last_name = ParentAcc.lastName;      
+recipient.email = ParentAcc.personemail;     
+field = new DocumentWrapper.Fields(ParentAcc.firstName +' '+ParentAcc.lastName, 'Parent Name');       
+createDocWrapper.fields = new DocumentWrapper.CustomField(field);       
+recipient.role = 'Client';      
+createDocWrapper.recipients = new List<DocumentWrapper.Recipients>();       
+createDocWrapper.recipients.add(recipient);     
+}       
+if(enrolDetail.Id != null){      
+DateTime enrolmentDateTime;     
+createDocWrapper.name = '';     
+DocumentWrapper.Rows row;  
+
+for(Enrolment__c enrolmentObj:[SELECT Id, Name, Lessons_Start_Date__c, Lesson_Start_time__c, Student__r.FirstName, Student__r.LastName, Package__r.Name 
+FROM Enrolment__c WHERE Id =: enrolDetail.Id]){
+//  enrolmentDateTime = DateTime.newInstance(enrolmentObj.Lessons_Start_Date__c, enrolmentObj.Lesson_Start_time__c);  
+//createDocWrapper.name += enrolmentObj.name + '-';       
+row = new DocumentWrapper.Rows(new DocumentWrapper.Data(enrolmentObj.Student__r.FirstName + ' ' + enrolmentObj.Student__r.LastName), new DocumentWrapper.CustomFields('', '',''));      
+rows.add(row);   
+}   
+
+sections.add(new DocumentWrapper.Sections('Sample Title', rows));       
+pricingTables.add(new DocumentWrapper.PricingTable('PricingTable1', sections));     
+createDocWrapper.pricing_tables = new List<DocumentWrapper.PricingTable>();     
+createDocWrapper.pricing_tables = pricingTables;        
+createDocWrapper.name += 'StudentPolicy';       
+
+}       
+
+if(String.isNotBlank(createDocWrapper.name)){       
+jsonBody = JSON.Serialize(createDocWrapper).replaceAll('pandadoc_Default_Section_XYZ','default');   
+jsonBody = jsonBody.replaceAll('pandadoc_Currency_Code_XYZ','currency');     
+System.debug('createDocWrapper '+createDocWrapper);     
+System.debug('createDocWrapper '+createDocWrapper.metadata);        
+jsonBody = jsonBody.replaceAll('salesforceAccount_id','salesforce.account_id');     
+JSONBody = jsonBody;        
+}       
+
+System.debug('@@@jsonBody'+jsonBody);       
+*/     
+        
+        
         return jsonBody;        
     }
     
@@ -977,18 +1148,46 @@ public class SearchInstrumentRental_IpadCntrl {
         for(Schema.PicklistEntry a : pick_list_values){ //for all values in the picklist list
             selectOptionList.add(new SelectOption(a.getValue(), a.getLabel()));
         }
-
+        
         return selectOptionList;
     }
     
-
+    
     Public PageReference saveAndCompleteProcess(){
         Savepoint sp;
         isError = false;
-         errorMsg = '';
-    
+        errorMsg = '';
+        system.debug('in this process');
+        //CH02 Karan Singh 17 sep 2020 : Before doing any process, checking that if the selected piano is still avaiable
+        NetSuite_Integration_Creds__c objNetSuiteCred = NetSuite_Integration_Creds__c.getValues('Aureus Inventory Search');
+        
+        if( objNetSuiteCred == null ){
+            
+            errorMsg = 'NetSuite credentails(Aureus Inventory Search) not available. Please contact System Admin for this.';
+            isError = true;
+            return null;
+        }
+        HTTPResponse resp = sendNetSuiteRequest( objNetSuiteCred,'{"serialNumber": "'+slcdPiano.serialNumber  + '","productId": "'+slcdPiano.productId+'"}' ,'saveAndCompleteProcess() :Inventory Search');
+        //when the selected piano is not avaiable in the inventory
+        if(resp.getBody().contains('[]')){
+            
+            errorMsg = 'Requested piano not available.';
+            isError = true;
+            return null;
+            
+        }
+        //Incase when the authentication failed due to encrypted request
+        else if( resp.getStatusCode() != 200 ){
+            
+            errorMsg = 'An error occurred while processing the request. Please try again. StatusCode : ' +resp.getStatusCode();
+            isError = true;
+            return null;
+        }
+        //CH02 END
+        
         EnrollmentProcessErrorLogs.errorLogObj errorObj = new EnrollmentProcessErrorLogs.errorLogObj();
-
+        system.debug('in this process'+stripeToken);
+        system.debug('in this process'+isAlreadyStripCstmr);
         if(isAlreadyStripCstmr || (stripeToken!=null && stripeToken.trim().length()>0)){
             try{     
                 String last4CardNumber;
@@ -999,14 +1198,14 @@ public class SearchInstrumentRental_IpadCntrl {
                 //Updated by Rajesh, 30th June 2019, for American club member
                 ////commented by jatin: 20-feb:2020: for manage offline card reference id is also balnk then we create stripe orther wise not
                 //if(!isAlreadyStripCstmr || (String.isBlank(stripeCstmrId) && (string.isBlank(customerRefId) && string.isBlank(paymentType))){  
-
-                if(!isAlreadyStripCstmr || (String.isBlank(stripeCstmrId) && (string.isBlank(customerRefId) && string.isBlank(paymentType)))){  
                 
+                if(!isAlreadyStripCstmr || (String.isBlank(stripeCstmrId) && (string.isBlank(customerRefId) && string.isBlank(paymentType)))){  
+                    
                     String cusName = String.isNotBlank(parentAcc.FirstName) ? parentAcc.FirstName : ' ';
                     cusName += parentAcc.LastName;
                     
                     BillingUtility.StripeCustomer sCstmr = BillingUtility.createStripeCustomer(stripeToken, cusName, parentAcc.PersonEmail, 'Parent customer', stripeBaseUrl, stripeApiSecKey); 
-                        
+                    
                     if(sCstmr.statusCode == 200 && String.isNotBlank(sCstmr.id)){ 
                         stripeCstmrId = sCstmr.id;
                         
@@ -1022,7 +1221,7 @@ public class SearchInstrumentRental_IpadCntrl {
                         errorMsg = sCstmr.error.message;
                         isError = true;
                         return null;
-                    }
+                    } 
                 }
                 
                 if(String.isNotBlank(stripeCstmrId)){ 
@@ -1031,7 +1230,8 @@ public class SearchInstrumentRental_IpadCntrl {
                     
                     if(sc.statusCode == 200 && sc.paid){
                         sp = Database.setSavepoint();
-                        
+                        String csmrRecId =  Schema.SObjectType.Account.getRecordTypeInfosByName().get('Customer').getRecordTypeId(); 
+                        parentAcc.RecordTypeId   = csmrRecId;
                         parentAcc.Stripe_Customer_Id__c = stripeCstmrId;
                         if(String.isNotBlank(last4CardNumber))
                             parentAcc.Card_Number__c = last4CardNumber;
@@ -1041,9 +1241,9 @@ public class SearchInstrumentRental_IpadCntrl {
                         parentAcc.Expiry_Month__c = exp_month;
                         parentAcc.Expiry_Year__c = exp_year;
                         
-                        parentAcc.Centre_Name__c = slcdCenter;
-                       // parentAcc.Enroled__c     = true;
-                       // parentAcc.Enroled_Date__c= System.today();
+                      
+                        // parentAcc.Enroled__c     = true;
+                        // parentAcc.Enroled_Date__c= System.today();
                         List<Account> centrList = [SELECT Id, Name, Location__c, Country__r.Country_Name__c FROM Account WHERE Id =: slcdCenter];
                         if(centrList.size() > 0){
                             parentAcc.Location__c = centrList.get(0).Location__c;
@@ -1051,30 +1251,51 @@ public class SearchInstrumentRental_IpadCntrl {
                             if(centrList.get(0).Country__r.Country_Name__c != null)
                                 parentAcc.Country_PI__pc = centrList.get(0).Country__r.Country_Name__c;
                         }
-                        update parentAcc;
-                    	
+                        //update parentAcc;// commented by nishi:23-Sep-2020: according to  new requirement we update or insert customer details 
+                        upsert parentAcc;  
                         //Filling enrolment
                         if(isRentalOrSellType.equalsIgnoreCase('Rent'))
-                        	slcdEnrolment.Stage__c = 'Piano Rental Active';
+                            slcdEnrolment.Stage__c = 'Piano Rental Active';
                         else
                             slcdEnrolment.Stage__c = 'Piano Sold';
+                        /*start: added by nishi:23-Sep-2020 for insert parent and student id */  
+                        if(string.isBlank(slcdEnrolment.id)){  
+                            String enrInsRenRecId =  Schema.SObjectType.Enrolment__c.getRecordTypeInfosByName().get('Instrument Rental').getRecordTypeId();  
+                            slcdEnrolment.Parent__c     = parentAcc.Id;
+                            slcdEnrolment.Student__c    = parentAcc.Id;
+                            slcdEnrolment.RecordTypeId  = enrInsRenRecId;
+                            slcdEnrolment.Type__c       = 'Instrument';
+                        }
+                        /*end: added by nishi:23-Sep-2020 for insert parent and student id */    
+                        
                         slcdEnrolment.Cancellation_Policy_Agreed__c = true;
                         slcdEnrolment.No_of_Stairs__c = nostairs;
                         slcdEnrolment.Center__c = slcdCenter;
-                        slcdEnrolment.Model__c = slcdPiano.modelNo;
-                        slcdEnrolment.Serial_Number__c = slcdPiano.serNo;
-                        slcdEnrolment.Brand__c = slcdPiano.brand;
-                        slcdEnrolment.Rental_price_per_month__c = slcdPiano.rentalPrice;
-                        slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;
+                        
+                        //CH02 Changes after Net Suite Integration
+                        
+                        /*slcdEnrolment.Model__c = slcdPiano.modelNo;
+slcdEnrolment.Serial_Number__c = slcdPiano.serNo;
+slcdEnrolment.Brand__c = slcdPiano.brand;
+slcdEnrolment.Rental_price_per_month__c = slcdPiano.rentalPrice;
+slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
+                        
+                        slcdEnrolment.Model__c = slcdPiano.model ;
+                        slcdEnrolment.Serial_Number__c = slcdPiano.serialNumber ;
+                        slcdEnrolment.Brand__c = slcdPiano.brand ;
+                        slcdEnrolment.Rental_price_per_month__c = Decimal.valueOf(slcdPiano.monthlyRental );
+                        slcdEnrolment.Selling_price__c = Decimal.valueOf(slcdPiano.listPrice );
+                        slcdEnrolment.Product_Id__c =  'R-' + slcdPiano.productId; //newly added
+                        //CH02 END
                         slcdEnrolment.Delivery_Charges__c= fm.deliCharges > 0 ? fm.deliCharges : 0;
                         slcdEnrolment.Stair_Charges__c = fm.stairDelCharges > 0 ? fm.stairDelCharges : 0;
                         Integer count = 1;
-                         system.debug('!!dtimeslot'+dtimeslot);
+                        system.debug('!!dtimeslot'+dtimeslot);
                         for(DateTimeSlot dSlot: dtimeslot){  
-                             system.debug('!!dSlot'+dSlot);
+                            system.debug('!!dSlot'+dSlot);
                             List<string> tList = dSlot.dtTime.split(' \\(');
                             system.debug('!!tList'+tList);
-                           
+                            
                             tList = tList.get(1).split('-');
                             String stTime = tList.get(0);
                             String endTime = tList.get(1);
@@ -1087,16 +1308,23 @@ public class SearchInstrumentRental_IpadCntrl {
                                 if(lsStartTime != 12)
                                     lsStartTime = lsStartTime + 12;
                             }
-                             system.debug('!!lsStartTime'+lsStartTime);
+                            system.debug('!!lsStartTime'+lsStartTime);
                             Time deliverTime = Time.newInstance(lsStartTime, 0, 0, 0);
                             
                             slcdEnrolment.put('Delivery_Option_Date_'+count+'__c', dSlot.dt.date());
                             slcdEnrolment.put('Delivery_Option_Timeslot_'+count+'__c', deliverTime);
                             
                             count = count+1;
-                        }                        
-                        update slcdEnrolment;
+                        }
                         
+                        //CH01  Karan Singh25 March   
+                        slcdEnrolment.Offline_Signing_Selected__c = isCustmrOptedOfflineSign; 
+                        //CH01 END     
+                        //CH03 updating the Instrument type
+                        slcdEnrolment.Instrument_Type__c = instrumentType;
+                        //CH03
+                        //update slcdEnrolment;// commented by nishi:23-Sep-2020: according to  new requirement we update or insert customer details
+                        upsert slcdEnrolment;
                         //Mark as complete booking which created trail earlier
                         List<Booking__c> bookList = [SELECT Id, Status__c FROM Booking__c where Enrolment__c=: slcdEnrolment.Id AND Type__c IN ('Trial','Piano Viewing') AND Status__c != 'Completed'];
                         if(bookList.size() > 0){
@@ -1109,7 +1337,7 @@ public class SearchInstrumentRental_IpadCntrl {
                         Subscription__c subs = new Subscription__c();
                         Subscription_Line_Item__c subLItm = new Subscription_Line_Item__c();
                         if(isRentalOrSellType.equalsIgnoreCase('Rent')){ 
-                             //Filling subscription
+                            //Filling subscription
                             List<Subscription__c> subsList = [SELECT Id, Parent__c, Center__c FROM Subscription__c  
                                                               WHERE Parent__c =: parentAcc.Id AND Center__c =: slcdEnrolment.Center__c 
                                                               AND Status__c =: ConstantsClass.activeStatus LIMIT 1];                       
@@ -1124,7 +1352,11 @@ public class SearchInstrumentRental_IpadCntrl {
                             
                             subLItm = BillingUtility.fillSubscriptionLineItem(null, null, null, slcdEnrolment.Id, null, ConstantsClass.activeStatus);
                             subLItm.Subscription__c = subs.Id;
-                            subLItm.Amount__c = slcdPiano.rentalPrice;
+                            
+                            //CH02 Changes after NetSuite Integration
+                            //subLItm.Amount__c = slcdPiano.rentalPrice;
+                            subLItm.Amount__c = Decimal.valueOf(slcdPiano.monthlyRental) ;
+                            //CH02 END
                             //subLItm.Subscription_Start_Date__c = enr.Lessons_Start_Date__c;
                             //subLItm.Next_Bill_Date__c   = subsNextBillingDate;
                             insert subLItm;
@@ -1149,14 +1381,18 @@ public class SearchInstrumentRental_IpadCntrl {
                         List<Invoice_Line_Item__c> invLineItmList     = new List<Invoice_Line_Item__c>();
                         String remarksStr = '';
                         if(fm.instrumentChrg> 0){
+                            
+                            //CH02 
+                            //remarksStr = slcdPiano.brand;
                             remarksStr = slcdPiano.brand;
-                                    
+                            //CH02 END
+                            //
                             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.instrumentChrg), remarksStr, slcdEnrolment.Teacher__c);
                             invLnItm.Teacher_Id__c = null;
                             invLnItm.Invoice__c   = inv.Id;
                             invLnItm.Enrolment__c = slcdEnrolment.Id; 
                             invLnItm.Month__c     =  System.today();
-                           
+                            
                             //Added by Rajesh on 21st oct 2019. calcuate individual gst amount for the line items
                             Decimal tempTotAmt = invLnItm.Amount__c; 
                             invLnItm.GST_Amount__c = BillingUtility.roundOffAmount((tempTotAmt > 0 && fm.gstTaxPer > 0) ? ((tempTotAmt * fm.gstTaxPer) / 100):0);
@@ -1177,7 +1413,7 @@ public class SearchInstrumentRental_IpadCntrl {
                         if(fm.deliCharges> 0){
                             remarksStr = 'Delivery Charges ';
                             if(isRentalOrSellType.equalsIgnoreCase('Rent'))
-                            	remarksStr += '(2-way)';
+                                remarksStr += '(2-way)';
                             else    
                                 remarksStr += '(1-way)';
                             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.deliCharges), remarksStr, slcdEnrolment.Teacher__c);
@@ -1191,7 +1427,7 @@ public class SearchInstrumentRental_IpadCntrl {
                         }                        
                         if(fm.tuningFee> 0){
                             remarksStr = 'Tuning Fee';
-                                    
+                            
                             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.tuningFee), remarksStr, slcdEnrolment.Teacher__c);
                             invLnItm.Teacher_Id__c = null;
                             invLnItm.Invoice__c   = inv.Id;
@@ -1204,7 +1440,7 @@ public class SearchInstrumentRental_IpadCntrl {
                         if(fm.stairDelCharges> 0){
                             remarksStr = 'Staircase moving charges for '+ nostairs +' steps ';
                             if(isRentalOrSellType.equalsIgnoreCase('Rent'))
-                            	remarksStr += '(2-way)';
+                                remarksStr += '(2-way)';
                             else    
                                 remarksStr += '(1-way)';        
                             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.stairDelCharges), remarksStr, slcdEnrolment.Teacher__c);
@@ -1218,7 +1454,7 @@ public class SearchInstrumentRental_IpadCntrl {
                         }
                         if(fm.heatingRodInsFee> 0){
                             remarksStr = 'Heating Rod Installation';
-                                    
+                            
                             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.heatingRodInsFee), remarksStr, slcdEnrolment.Teacher__c);
                             invLnItm.Teacher_Id__c = null;
                             invLnItm.Invoice__c   = inv.Id;
@@ -1230,20 +1466,24 @@ public class SearchInstrumentRental_IpadCntrl {
                         }
                         
                         if(invLineItmList.size() > 0)
-                        	insert invLineItmList;
+                            insert invLineItmList;
                         
-                       
+                        
                         
                         PageReference pageRef = new PageReference('/apex/thankyoupage_ipad');
-
+                        
                         String invStr = 'inv1';
                         pageRef.getParameters().put(invStr, inv.Id);    
                         
                         //Added by Sanjay/Rajesh, 26th June 2019.  For push invoice on sageIntaccount describe by Sanjay
                         if(!test.isRunningTest()){
-                      	  SageIntacctIntegrationUtility.newEnrolment(String.valueOf(parentAcc.Id), new Set<String>{inv.Id});
+                            SageIntacctIntegrationUtility.newEnrolment(String.valueOf(parentAcc.Id), new Set<String>{inv.Id});
                         }
                         pageRef.getParameters().put('scId', sc.id);
+                        
+                        //CH02 Karan 17 sep 2020 updating the NetSuite Inventory
+                        //SearchInstrumentRental_IpadCntrl.pushDataToNetsuite( slcdEnrolment.Name,slcdPiano.serialNumber, slcdPiano.productId);
+                        //CH02 END
                         return pageRef.setRedirect(true);
                     }else{
                         errorMsg = sc.error.message;
@@ -1259,7 +1499,7 @@ public class SearchInstrumentRental_IpadCntrl {
                 
             }catch(Exception e){
                 if(sp != null)
-                	Database.rollback(sp);
+                    Database.rollback(sp);
                 
                 System.debug('Error:  '+e.getMessage()+e.getLineNumber());
                 errorMsg = e.getMessage();
@@ -1268,8 +1508,8 @@ public class SearchInstrumentRental_IpadCntrl {
         }
         return null;
     } 
-
-     // 20-Feb-2020: Jatin: if user pay amount with offline card then we create paid status invoice then 
+    
+    // 20-Feb-2020: Jatin: if user pay amount with offline card then we create paid status invoice then 
     //we create payment with reference charge id 
     public PageReference SaveAndCompleteProcessViaReferenceId(){
         Decimal amountInSmallUnit      = fm.grandTot;
@@ -1281,27 +1521,46 @@ public class SearchInstrumentRental_IpadCntrl {
             if(centrList.get(0).Country__r.Country_Name__c != null)
                 parentAcc.Country_PI__pc = centrList.get(0).Country__r.Country_Name__c;
         }
-        update parentAcc;
-        
+        //update parentAcc;// commented by nishi:23-Sep-2020: according to  new requirement we update or insert customer details
+        upsert parentAcc;
         //Filling enrolment
         if(isRentalOrSellType.equalsIgnoreCase('Rent'))
             slcdEnrolment.Stage__c = 'Piano Rental Active';
         else
             slcdEnrolment.Stage__c = 'Piano Sold';
+         /*start: added by nishi:23-Sep-2020 for insert parent and student id */    
+         if(string.isBlank(slcdEnrolment.id)){  
+            String enrInsRenRecId =  Schema.SObjectType.Enrolment__c.getRecordTypeInfosByName().get('Instrument Rental').getRecordTypeId();  
+            slcdEnrolment.Parent__c     = parentAcc.Id;
+            slcdEnrolment.Student__c    = parentAcc.Id;
+            slcdEnrolment.RecordTypeId  = enrInsRenRecId;
+            slcdEnrolment.Type__c       = 'Instrument';
+         }
+         /*end: added by nishi:23-Sep-2020 for insert parent and student id */  
         slcdEnrolment.Cancellation_Policy_Agreed__c = true;
         slcdEnrolment.No_of_Stairs__c = nostairs;
         slcdEnrolment.Center__c = slcdCenter;
-        slcdEnrolment.Model__c = slcdPiano.modelNo;
-        slcdEnrolment.Serial_Number__c = slcdPiano.serNo;
+        
+        //CH02 
+        /*slcdEnrolment.Model__c = slcdPiano.modelNo;
+slcdEnrolment.Serial_Number__c = slcdPiano.serNo;
+slcdEnrolment.Brand__c = slcdPiano.brand;
+slcdEnrolment.Rental_price_per_month__c = slcdPiano.rentalPrice;
+slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
+        
+        slcdEnrolment.Model__c = slcdPiano.model;
+        slcdEnrolment.Serial_Number__c = slcdPiano.serialNumber;
         slcdEnrolment.Brand__c = slcdPiano.brand;
-        slcdEnrolment.Rental_price_per_month__c = slcdPiano.rentalPrice;
-        slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;
+        slcdEnrolment.Rental_price_per_month__c = Decimal.valueOf(slcdPiano.monthlyRental);
+        slcdEnrolment.Selling_price__c = Decimal.valueOf(slcdPiano.listPrice );
+        
+        //CH02 END
         slcdEnrolment.Delivery_Charges__c= fm.deliCharges > 0 ? fm.deliCharges : 0;
         slcdEnrolment.Stair_Charges__c = fm.stairDelCharges > 0 ? fm.stairDelCharges : 0;
         Integer count = 1;
         for(DateTimeSlot dSlot: dtimeslot){  
             List<string> tList = dSlot.dtTime.split(' \\(');
-
+            
             tList = tList.get(1).split('-');
             String stTime = tList.get(0);
             String endTime = tList.get(1);
@@ -1321,8 +1580,8 @@ public class SearchInstrumentRental_IpadCntrl {
             
             count = count+1;
         }                        
-        update slcdEnrolment;
-        
+       // update slcdEnrolment;// commented by nishi:23-Sep-2020: according to  new requirement we update or insert customer details
+        upsert slcdEnrolment;
         //Mark as complete booking which created trail earlier
         List<Booking__c> bookList = [SELECT Id, Status__c FROM Booking__c where Enrolment__c=: slcdEnrolment.Id AND Type__c IN ('Trial','Piano Viewing') AND Status__c != 'Completed'];
         if(bookList.size() > 0){
@@ -1335,10 +1594,10 @@ public class SearchInstrumentRental_IpadCntrl {
         Subscription__c subs = new Subscription__c();
         Subscription_Line_Item__c subLItm = new Subscription_Line_Item__c();
         if(isRentalOrSellType.equalsIgnoreCase('Rent')){ 
-                //Filling subscription
+            //Filling subscription
             List<Subscription__c> subsList = [SELECT Id, Parent__c, Center__c FROM Subscription__c  
-                                                WHERE Parent__c =: parentAcc.Id AND Center__c =: slcdEnrolment.Center__c 
-                                                AND Status__c =: ConstantsClass.activeStatus LIMIT 1];                       
+                                              WHERE Parent__c =: parentAcc.Id AND Center__c =: slcdEnrolment.Center__c 
+                                              AND Status__c =: ConstantsClass.activeStatus LIMIT 1];                       
             
             if(subsList.size() > 0){
                 subs = subsList.get(0);
@@ -1350,7 +1609,11 @@ public class SearchInstrumentRental_IpadCntrl {
             
             subLItm = BillingUtility.fillSubscriptionLineItem(null, null, null, slcdEnrolment.Id, null, ConstantsClass.activeStatus);
             subLItm.Subscription__c = subs.Id;
-            subLItm.Amount__c = slcdPiano.rentalPrice;
+            
+            //CH02 
+            //subLItm.Amount__c = slcdPiano.rentalPrice;
+            subLItm.Amount__c = Decimal.valueOf(slcdPiano.monthlyRental) ;
+            //CH02 END
             //subLItm.Subscription_Start_Date__c = enr.Lessons_Start_Date__c;
             //subLItm.Next_Bill_Date__c   = subsNextBillingDate;
             insert subLItm;
@@ -1376,8 +1639,10 @@ public class SearchInstrumentRental_IpadCntrl {
         List<Invoice_Line_Item__c> invLineItmList     = new List<Invoice_Line_Item__c>();
         String remarksStr = '';
         if(fm.instrumentChrg> 0){
+            //CH02
+            //remarksStr = slcdPiano.brand;
             remarksStr = slcdPiano.brand;
-                    
+            //CH02 END
             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.instrumentChrg), remarksStr, slcdEnrolment.Teacher__c);
             invLnItm.Teacher_Id__c = null;
             invLnItm.Invoice__c   = inv.Id;
@@ -1418,7 +1683,7 @@ public class SearchInstrumentRental_IpadCntrl {
         }                        
         if(fm.tuningFee> 0){
             remarksStr = 'Tuning Fee';
-                    
+            
             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.tuningFee), remarksStr, slcdEnrolment.Teacher__c);
             invLnItm.Teacher_Id__c = null;
             invLnItm.Invoice__c   = inv.Id;
@@ -1445,7 +1710,7 @@ public class SearchInstrumentRental_IpadCntrl {
         }
         if(fm.heatingRodInsFee> 0){
             remarksStr = 'Heating Rod Installation';
-                    
+            
             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.heatingRodInsFee), remarksStr, slcdEnrolment.Teacher__c);
             invLnItm.Teacher_Id__c = null;
             invLnItm.Invoice__c   = inv.Id;
@@ -1462,7 +1727,7 @@ public class SearchInstrumentRental_IpadCntrl {
         
         
         PageReference pageRef = new PageReference('/apex/thankyoupage_ipad');
-
+        
         String invStr = 'inv1';
         pageRef.getParameters().put(invStr, inv.Id);    
         
@@ -1472,6 +1737,166 @@ public class SearchInstrumentRental_IpadCntrl {
         pageRef.getParameters().put('scId', '');
         return pageRef.setRedirect(true);
     }
+    
+    //CH02
+    //For reference -> https://gist.github.com/smaeda-ks/dc5cdd50956e63bdae11314612389a07,https://stackoverflow.com/questions/15271508/netsuite-oauth-implemenation,https://github.com/metadaddy/sfdc-oauth-playground/blob/master/OAuth/src/classes/OAuth.cls
+    //CH04 22 Sep 2020 : Adding method name in the paramater
+    public static HTTPResponse sendNetSuiteRequest( NetSuite_Integration_Creds__c objNetSuiteCred, String jsonRequestBody, String methodName ){
+        
+        Integer noOfApiCallout = 1;
+        HttpRequest req;
+        HTTPResponse resp;
+        
+        //CH04 Start
+        Datetime requestDatetime;
+        Datetime responseDatetime;
+        //CH04 END
+        //doing this as there are cases where at first attmpt we get 403 error
+        do{
+            requestDatetime = DateTime.now();//CH04 
+            
+            String nonce = String.valueOf(Crypto.getRandomLong());
+            String timestamp = String.valueOf(DateTime.now().getTime() / 1000);
+            
+            String url ='deploy=' +objNetSuiteCred.deploy__c+ '&';
+            url += 'oauth_consumer_key='+ objNetSuiteCred.Consumer_Key__c +'&';
+            url += 'oauth_nonce=' + nonce + '&';
+            url += 'oauth_signature_method=' + objNetSuiteCred.Signature_Method__c + '&';
+            url += 'oauth_timestamp=' + timestamp + '&';
+            url += 'oauth_token='+ objNetSuiteCred.Access_Token__c +'&';
+            url += 'oauth_version='+objNetSuiteCred.Version__c+'&';
+            url += 'script=' + objNetSuiteCred.script__c;
+            
+            String encodeUrl = EncodingUtil.urlEncode( url, 'UTF-8');
+            string encodeUrl2 = objNetSuiteCred.Method__c +'&'+EncodingUtil.urlEncode( objNetSuiteCred.Endpoint__c, 'UTF-8') + '&' + encodeUrl;
+            Blob blobSignature = Crypto.generateMac(objNetSuiteCred.Crypto_Class_Encrypt_Method__c, Blob.valueOf(encodeUrl2), Blob.valueOf(objNetSuiteCred.Consumer_Secret__c +'&'+ objNetSuiteCred.Token_Secret__c ));
+            
+            String signature = EncodingUtil.Base64Encode( blobSignature );
+            
+            String authHeader = 'OAuth realm="' + objNetSuiteCred.Realm__c + '",';
+            authHeader += 'oauth_consumer_key="' + objNetSuiteCred.Consumer_Key__c + '",';
+            authHeader += 'oauth_token="' + objNetSuiteCred.Access_Token__c + '",';
+            authHeader += 'oauth_signature_method="'+ objNetSuiteCred.Signature_Method__c +'",';
+            authHeader += 'oauth_timestamp="' + timestamp + '",';
+            authHeader += 'oauth_nonce="' + nonce + '",';
+            authHeader += 'oauth_version="'+ objNetSuiteCred.Version__c +'",';
+            authHeader += 'oauth_signature="' + signature + '"';
+            
+            req = new HttpRequest();
+            req.setEndpoint( objNetSuiteCred.Endpoint__c + '?script='+ objNetSuiteCred.script__c +'&deploy='+objNetSuiteCred.deploy__c );
+            req.setMethod( objNetSuiteCred.Method__c );
+            req.setHeader('Content-Type', objNetSuiteCred.Content_Type__c );
+            req.setHeader('Authorization', authHeader);
+            req.setBody( jsonRequestBody );
+            req.setTimeout(60000);
+            Http h = new Http();
+            system.debug(' --> ' + req.getHeader('Authorization'));
+            
+            resp = new HTTPResponse();
+            
+            if( !Test.isRunningTest() ){
+                resp = h.send(req);
+            }
+            else{
+                resp.setStatusCode( 200 );
+                resp.setBody( '[{"serialNumber": "123","item": "1234","location": "Test Location","status": "New","inventoryType": "Piano","monthlyRental": "62","listPrice": "66.66","model": "123","productId": "Serialized Item001","brand": "xyz"}]' );
+            }
+            /*system.debug('resp->> ' + resp);system.debug('resp->> ' + resp.getBody());system.debug('resp->> ' + req);system.debug('req.getBody->> ' + req.getBody());system.debug('req.getEndpoint->> ' + req.getEndpoint());system.debug('req.getHeader->> ' + req.getHeader('Authorization'));system.debug('req.getHeader->> ' + req.getHeader('Content-Type'));system.debug('req.getMethod->> ' + req.getMethod());*/
+            
+            noOfApiCallout++;
+        }while( resp.getStatusCode() != 200 && noOfApiCallout <= objNetSuiteCred.Maximum_API_Retry_Count__c );
+        
+        system.debug('noOfApiCallout --> '+ noOfApiCallout);
+        system.debug('resp->> ' + resp);
+        system.debug('resp->> ' + resp.getBody());  //resp->> {"error" : {"code" : "INVALID_LOGIN_ATTEMPT", "message" : "Invalid login attempt."}}
+        
+        //CH04 Start
+        responseDatetime = DateTime.now();
+        
+        if( objNetSuiteCred.Enable_Logging__c){
+            
+            try{
+                NetSuite_API_Logger__c objNetSUiteLogger = new NetSuite_API_Logger__c();
+                objNetSUiteLogger.Class_and_Method_Name__c = ' SearchInstrumentRental_IpadCntrl : '+ methodName;
+                objNetSUiteLogger.Request__c =  req.getBody().length() > 131070 ? req.getBody().left(131070) : req.getBody();
+                objNetSUiteLogger.Request_Header__c = req.getHeader( 'Authorization' ).length() > 131070 ? req.getHeader( 'Authorization' ).left(131070) : req.getHeader( 'Authorization' );
+                objNetSUiteLogger.Request_Time__c = requestDatetime;
+                objNetSUiteLogger.Response__c = resp.getBody().length() > 131070 ? resp.getBody().left(131070) : resp.getBody();
+                objNetSUiteLogger.Response_Time__c = responseDatetime;
+                objNetSUiteLogger.Status_Code__c = resp.getStatusCode();
+                objNetSUiteLogger.Request_URL__c = req.getEndpoint().length() > 131070 ? req.getEndpoint().left(131070) : req.getEndpoint();
+                
+                //since we need to call NetSUite API, w/o future dml, it will give You have uncommitted work pending. Please commit or rollback before calling out error 
+                if( !Test.isRunningTest() && methodName != 'saveAndCompleteProcess() :Inventory Search')
+                    insert objNetSUiteLogger; 
+                  system.debug('objNetSUiteLogger Id -> ' + objNetSUiteLogger.id);
+                
+            }Catch ( Exception objExp ){
+                system.debug(' Error -> ' + objExp.getMessage() + ' -> Line Number -> ' + objExp.getLineNumber());
+            }
+        }
+        //Ch04 ENd
+        return resp;
+    }
+    
+    //this will call the netsuite inventorty products
+    public void getProducts1(){
+        
+        NetSuite_Integration_Creds__c objNetSuiteCred = NetSuite_Integration_Creds__c.getValues('Aureus Inventory Search');
+        
+        if( objNetSuiteCred == null ){
+            return;
+        }
+        HTTPResponse resp = sendNetSuiteRequest( objNetSuiteCred,'{"type": "'+ instrumentType +'"}', 'getProducts1() : Inventory Search' );
+        
+        //checking some params so that it is ensure it doesnot contains any error json
+        if( resp.getBody().contains( 'serialNumber' ) && resp.getBody().contains( 'item' ) && resp.getBody().contains( 'location' ) && resp.getBody().contains( 'inventoryType' )){
+            
+            netSuiteProducts = ( List<NetSuiteProducts>  )JSON.deserialize(resp.getBody(), List<NetSuiteProducts>.class);
+            
+            for( Integer index = 0; index < netSuiteProducts.size(); index++ ){
+                
+                netSuiteProducts[ index ].srNo = index + 1;
+                system.debug(' -->  ' + netSuiteProducts[ index ] );
+                
+                if( String.isBlank(netSuiteProducts[ index ].listPrice) ){
+                    netSuiteProducts[ index ].listPrice = '0';
+                }
+                if( String.isBlank(netSuiteProducts[ index ].monthlyRental) ){
+                    netSuiteProducts[ index ].monthlyRental = '0';
+                }
+            }//end of for Loop
+        }//end of response check
+    }//end of getProducts1
+    
+    @future(callout=true)
+    public static void pushDataToNetsuite( String enrolName, string serialNo, string productId ){
+        
+        NetSuite_Integration_Creds__c objNetSuiteCred = NetSuite_Integration_Creds__c.getValues('Convert Item to Fixed Asset');
+        HTTPResponse resp = sendNetSuiteRequest( objNetSuiteCred,'{"serialNumber": "'+serialNo+'","productId" : "'+productId+'"}' ,'pushDataToNetsuite() :  Convert Item to Fixed Asset');
+        //String s1 = '{"error": {"code": "USER_ERROR","message": "serialNumber is required.","request_datetime": "11/09/2020 11:43:48 am"}}';
+        
+        //send email in case of error only
+        if( resp.getBody().contains('"error"') ){
+            
+            SearchInstrumentRental_IpadCntrl.NetSuiteError error = ( SearchInstrumentRental_IpadCntrl.NetSuiteError )JSON.deserialize( resp.getBody() ,SearchInstrumentRental_IpadCntrl.NetSuiteError.class);
+            
+            Messaging.SingleEmailMessage objOutGoingEmail =  new Messaging.SingleEmailMessage();
+            objOutGoingEmail.setToAddresses(new list< String >{ 'aureus@techmatrixconsulting.com'});
+            objOutGoingEmail.setSubject('Piano rental Process.');
+            string emailHtmlBody = 'Dear User <br/>' ;
+            emailHtmlBody += ' Cannot update NetSuite Inventory with Piano Serial Number : '+serialNo+' and Product Id : '+serialNo+' of the Enrolment : '+enrolName+'<br/>';
+            emailHtmlBody += ' Error Reason :'+ error.error.message +' <br/>';
+            objOutGoingEmail.setHtmlBody(emailHtmlBody); 
+            
+            objOutGoingEmail.setTargetObjectId( UserInfo.getUserId());
+            objOutGoingEmail.saveAsActivity = false;
+            if(!Test.isRunningTest()){
+                Messaging.SendEmailResult[]  sendEmailResults =  Messaging.sendEmail(new Messaging.SingleEmailMessage[] {objOutGoingEmail});
+            }
+        }
+    }
+    //CH02 END
     
     public class SageProductItems{
         public Integer srNo{get;set;}
@@ -1488,7 +1913,6 @@ public class SearchInstrumentRental_IpadCntrl {
             this.salesPrice = 0;
         }
     }
-    
     public class EnrolmentModel{
         public Enrolment__c enr{get;set;}
         public String enrTrialSlot{get;set;}
@@ -1535,4 +1959,44 @@ public class SearchInstrumentRental_IpadCntrl {
             grandTot         = 0;
         }
     }
+    
+    //CH02
+    public class NetSuiteProducts{
+        
+        public Integer srNo{get;set;}
+        public String serialNumber {get;set;}
+        public String item {get;set;}
+        public String location {get;set;}
+        public String status {get;set;}
+        public String inventoryType {get;set;}
+        public String monthlyRental {get;set;}
+        public String listPrice {get;set;}
+        public String model {get;set;}
+        public String productId {get;set;}
+        public String brand {get;set;}
+        
+        public NetSuiteProducts(){
+            serialNumber = '';
+            item = '';
+            location = '';
+            status = '';
+            inventoryType = '';
+            monthlyRental = '';
+            listPrice = '';
+            model = '';
+            productId = '';
+            brand = '';
+            
+        }
+    }
+    public class NetSuiteError{
+        
+        public NetSuiteErrorCode error {get;set;}
+    }
+    public class NetSuiteErrorCode{
+        public String code{get;set;}
+        public String message{get;set;}
+        public String request_datetime{get;set;}
+    }
+    //CH02 END
 }
