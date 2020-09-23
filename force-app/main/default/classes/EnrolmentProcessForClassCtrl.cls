@@ -443,7 +443,7 @@ public class EnrolmentProcessForClassCtrl {
            //start : 3-Sep-2020: added by nishi: if teacher Engagement_Type__c type is part-time then not calclulate 5th lesson booking
            // fm.prgFees = BillingUtility.calculateCurrentMonthPckFees(lessDate, tempUnitFee);
            if(string.isNotBlank(enr.Teacher__c) && string.isNotBlank(enr.Teacher__r.Engagement_Type__c) && 
-            enr.Teacher__r.Engagement_Type__c.equalsIgnoreCase('Part-Time') && isOssia){
+           ConstantsClass.teacherPartTimeEngagementStatus.contains(enr.Teacher__r.Engagement_Type__c) && isOssia){
                 fm.prgFees = calculateCurrentMonthPckFees(lessDate, tempUnitFee,true);
             }else{
                 fm.prgFees = calculateCurrentMonthPckFees(lessDate, tempUnitFee,false);
@@ -541,13 +541,21 @@ public class EnrolmentProcessForClassCtrl {
                     }
                 }else{
                     Decimal tempPrgFee = prgFeeForSingleLess*countDtforMonth;
-                    totPrgFee += BillingUtility.roundOffAmount(tempPrgFee);
-                    totDiscount += BillingUtility.roundOffAmount((prgDisFeeForSingleLess*countDtforMonth)); 
+                    Decimal tempPrgFeegstTax=0;
+                    Decimal discountgstTax=0;
+                    decimal discount =prgDisFeeForSingleLess*countDtforMonth;
+                    totPrgFee += (tempPrgFee);
+                    totDiscount += (prgDisFeeForSingleLess*countDtforMonth); 
                     
                     //Added by Rajesh on 21st oct 2019. calcuate individual gst amount for the line items
                     //Update by Rajesh on 25th nov 2019. add rounding due to solve 2decimal problem with this 'tempPrgFee'
-                    tempTotAmt = (BillingUtility.roundOffAmount(tempPrgFee)-BillingUtility.roundOffAmount((prgDisFeeForSingleLess*countDtforMonth))); 
-                    fm.gstAmount += BillingUtility.roundOffAmount((tempTotAmt > 0 && gstTaxPer> 0) ? ((tempTotAmt * gstTaxPer) / 100):0);
+                    tempTotAmt = (tempPrgFee-((prgDisFeeForSingleLess*countDtforMonth))); 
+                    tempPrgFeegstTax = BillingUtility.roundOffAmount((tempPrgFee > 0 && gstTaxPer> 0) ? ((tempPrgFee * gstTaxPer) / 100):0);
+                    if(discount != 0){
+                        discountgstTax= BillingUtility.roundOffAmount((discount != 0 && gstTaxPer> 0) ? ((discount * gstTaxPer) / 100):0);
+                    }
+                    fm.gstAmount += tempPrgFeegstTax-discountgstTax;
+                    //fm.gstAmount += BillingUtility.roundOffAmount((tempTotAmt > 0 && gstTaxPer> 0) ? ((tempTotAmt * gstTaxPer) / 100):0);
                     
                     currLesDt = stDt;
                     countDtforMonth = 1;
@@ -557,17 +565,25 @@ public class EnrolmentProcessForClassCtrl {
             system.debug('countDtforMonth'+countDtforMonth);
             if(countDtforMonth > 0){
                 Decimal tempPrgFee = prgFeeForSingleLess*countDtforMonth;
-                totPrgFee += BillingUtility.roundOffAmount(tempPrgFee);
-                totDiscount += BillingUtility.roundOffAmount((prgDisFeeForSingleLess*countDtforMonth)); 
+                Decimal tempPrgFeegstTax=0;
+                tempPrgFeegstTax = BillingUtility.roundOffAmount((tempPrgFee > 0 && gstTaxPer > 0) ? ((tempPrgFee * gstTaxPer) / 100):0);
+                totPrgFee += (tempPrgFee);
+                totDiscount += ((prgDisFeeForSingleLess*countDtforMonth)); 
                 
                 //Added by Rajesh on 21st oct 2019. calcuate individual gst amount for the line items
                 //Update by Rajesh on 25th nov 2019. add rounding due to solve 2decimal problem with this 'tempPrgFee'
-                tempTotAmt = (BillingUtility.roundOffAmount(tempPrgFee)-BillingUtility.roundOffAmount((prgDisFeeForSingleLess*countDtforMonth))); 
-                fm.gstAmount += BillingUtility.roundOffAmount((tempTotAmt > 0 && gstTaxPer > 0) ? ((tempTotAmt * gstTaxPer) / 100):0);
+                tempTotAmt = (tempPrgFee-(prgDisFeeForSingleLess*countDtforMonth)); 
+                decimal discount = prgDisFeeForSingleLess*countDtforMonth;
+                decimal discountgstTax = 0;
+                if(discount != 0){
+                        discountgstTax = BillingUtility.roundOffAmount((discount != 0 && gstTaxPer != 0) ? ((discount * gstTaxPer) / 100):0);
+                }
+                fm.gstAmount += tempPrgFeegstTax-discountgstTax;
+                //fm.gstAmount += BillingUtility.roundOffAmount((tempTotAmt > 0 && gstTaxPer > 0) ? ((tempTotAmt * gstTaxPer) / 100):0);
             }
             
             fm.prgFees = totPrgFee;
-            fm.pkgFeesPromtnalDis = totDiscount;
+            fm.pkgFeesPromtnalDis = BillingUtility.roundOffAmount(totDiscount);
         }else{//Added by Rajesh on 21st oct 2019. calcuate individual gst amount for the line items
             fm.gstAmount += BillingUtility.roundOffAmount((fm.prgFees > 0 && gstTaxPer > 0) ? ((fm.prgFees * gstTaxPer) / 100):0);
              // Decimal amount = fm.facilityFee > 0 ? BillingUtility.roundOffAmount(fm.facilityFee) : 0;
@@ -598,24 +614,35 @@ public class EnrolmentProcessForClassCtrl {
         //Decimal gstAmt = (tempTot > 0 ? ((tempTot * gstTaxPer) / 100):0);        
         //fm.totAmt = totTemp + gstAmt;
         fm.totAmt = totTemp + fm.gstAmount;
-        
         /*
         fm.depFees = BillingUtility.roundOffAmount(fm.depFees);
         fm.prgFees = BillingUtility.roundOffAmount(fm.prgFees);
         fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
         //@Juneid 06 Aug 2020, Applying Refferel Discount 
-        if((String.isNotBlank(enr.Referral_code_used__c) && checkOsiaForRefrel(enr.Center__r.Organisation__r.name) ==true) && enr.Package__r.Type_of_package__c =='Normal'){
+        if((String.isNotBlank(enr.Referral_code_used__c) && checkOsiaForRefrel(enr.Center__r.Organisation__r.name) ==true)){ ///&& enr.Package__r.Type_of_package__c =='Normal'
             //@Juneid 05 Aug 2020 ,Give Reffrel Discount
             if(enrolCount == 1){
                 //@Juneid, 05 Aug 2020 Refrel Discount Calculation country wise
                 if(countryWiseRfrelDiscount.size() > 0){
+                    if(enr.Package__r.Type_of_package__c =='Normal'){
                     fm.refrelDiscount = countryWiseRfrelDiscount[0].Discount_Amount_Referee__c;
                     fm.refrelDiscountName = countryWiseRfrelDiscount[0].Name;
                     enr.Referee_discount_amount__c = countryWiseRfrelDiscount[0].Discount_Amount_Referee__c;
                     enr.Referrer_discount_amount__c = countryWiseRfrelDiscount[0].Discount_Amount_Referrer__c;
+                    }
+                    /*start: nishi: 23-Sep-2020: we create credit memo  if student selected package is promo then we are not give discout to student but we give discount to refreer customer */
+                    else{
+                        fm.refreeDiscount = countryWiseRfrelDiscount[0].Discount_Amount_Referee__c;
+                        enr.Referrer_discount_amount__c = countryWiseRfrelDiscount[0].Discount_Amount_Referrer__c;
+                    }
+                     /*end:nishi: 23-Sep-2020: we create credit memo  if student selected package is promo then we are not give discout to student but we give discount to refreer customer */
                 }
             }
         }
+                                
+       
+        
+                                
         
         return fm;
     }
@@ -629,11 +656,11 @@ public class EnrolmentProcessForClassCtrl {
            Decimal totTemp = ((fm.regiFees + fm.prgFees) /*+  (fm.facilityFee > 0 ? fm.facilityFee : 0)*/ - (fm.refrelDiscount !=null ? fm.refrelDiscount : 0));
          
             
-            billDetails.feesTot += totTemp;
+            billDetails.feesTot += (totTemp);
             billDetails.disTot  +=  (fm.regiFeesDis + fm.pkgFeesPromtnalDis );
-            billDetails.depositTot += fm.depFees != null ? fm.depFees : 0;
+            billDetails.depositTot +=(fm.depFees != null ? fm.depFees : 0);
             //Added by Rajesh on 21st oct 2019. calcuate individual gst amount for the line items
-            billDetails.gstTot += fm.gstAmount;
+            billDetails.gstTot += (fm.gstAmount);
             //@Juneid 26 Aug 2020, facility Fees GSt
             
             //billDetails.gstTot +=fm.facilityGst;
@@ -650,13 +677,13 @@ public class EnrolmentProcessForClassCtrl {
        // billDetails.gstTot = tempTot > 0 ? ((tempTot * gstTaxPer) / 100):0;        
         
         billDetails.disTot   = BillingUtility.roundOffAmount(billDetails.disTot);
-        billDetails.feesTot  = billDetails.feesTot;
+        billDetails.feesTot  =BillingUtility.roundOffAmount(billDetails.feesTot);
         //Commented by Rajesh on 21st oct 2019. calcuate individual gst amount for the line items
        // billDetails.gstTot   = BillingUtility.roundOffAmount(billDetails.gstTot);
-        billDetails.depositTot = billDetails.depositTot;
-        billDetails.subsTot  = (billDetails.feesTot + billDetails.gstTot -(billDetails.disTot));
-        billDetails.grandTot = BillingUtility.roundOffAmount((billDetails.subsTot + billDetails.depositTot));
-        
+        billDetails.depositTot =BillingUtility.roundOffAmount( billDetails.depositTot);
+        billDetails.subsTot  = BillingUtility.roundOffAmount(billDetails.feesTot + billDetails.depositTot - (billDetails.disTot));
+        billDetails.grandTot = BillingUtility.roundOffAmount((billDetails.subsTot +billDetails.gstTot));
+        billDetails.totalAmt = BillingUtility.roundOffAmount(( billDetails.feesTot +  billDetails.depositTot));
         /*billDetails.total = 0;
         Double packageTotal = 0;
         for(Enrolment__c enrolObj : enrolList){
@@ -849,6 +876,8 @@ public class EnrolmentProcessForClassCtrl {
                         
                         Map<Id, Subscription__c> centSubMap = new Map<Id, Subscription__c>();
                         Map<Id, Invoice__c> cntrInvMap      = new Map<Id, Invoice__c>();
+                        Map<Id, Credit_Memo__c> cntrCreditMap      = new Map<Id, Credit_Memo__c>();
+                        List<Credit_memo_line_item__c> listOfCreditmemolineitem     = new List<Credit_memo_line_item__c>();
                         Map<Id, Payment__c> cntrPayMap      = new Map<Id, Payment__c>();
                         List<Account> studentList           = new List<Account>(); 
                         List<Enrolment__c> enrolmentList    = new List<Enrolment__c>();
@@ -990,7 +1019,6 @@ public class EnrolmentProcessForClassCtrl {
                                 inv.Status__c   = ConstantsClass.dueStatus; 
                             }
                             cntrInvMap.put(enr.Center__c, inv);
-                            
                             //Filling Payment
                             String payTrnRecId =  Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get(ConstantsClass.paymentTransactionRecType).getRecordTypeId();
                             Payment__c pay     = new Payment__c(RecordtypeId      = payTrnRecId);
@@ -1275,7 +1303,7 @@ public class EnrolmentProcessForClassCtrl {
                                         }
                                        //3-Sep:2020:Start: added by nishi: if teacher Engagement_Type__c type is part-time then not creating fifth lesson booking 
                                         if(string.isNotBlank(enr.Teacher__c) && string.isNotBlank(enr.Teacher__r.Engagement_Type__c) && 
-                                        enr.Teacher__r.Engagement_Type__c.equalsIgnoreCase('Part-Time') && dt.day() > 28 && isOssia){
+                                        ConstantsClass.teacherPartTimeEngagementStatus.contains(enr.Teacher__r.Engagement_Type__c) && dt.day() > 28 && isOssia){
                                             isCreate5thCurrentMonthPartTimeTeacherBooking = true;
                                         }
                                         //3-Sep:2020:End  added by nishi: if teacher Engagement_Type__c type is part-time then not creating fifth  booking  we creating fifth_lesson booking
@@ -1459,7 +1487,7 @@ public class EnrolmentProcessForClassCtrl {
                                                 }
                                             }else{
                                                 Decimal tempPrgFee = prgFeeForSingleLess*countDtforMonth;
-                                                Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(tempPrgFee), remarksStr, enr.Teacher__c);
+                                                Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (tempPrgFee), remarksStr, enr.Teacher__c);
                                                 invLnItm.Package__c   = enr.Package__c;
                                                 invLnItm.Invoice__r   = inv;
                                                 invLnItm.Enrolment__c = enr.Id;
@@ -1479,7 +1507,7 @@ public class EnrolmentProcessForClassCtrl {
                                                   //start: commented by nishi: 15-Sep-2020: for new reqirement In netsuit we added new invoice line itme for discount amount
                                                 if(prgDisFeeForSingleLess >0){
                                                     tempTotAmt = (prgDisFeeForSingleLess*countDtforMonth) * -1; 
-                                                    invLnItm = BillingUtility.fillInvLnItm(null, null, null, (BillingUtility.roundOffAmount(tempTotAmt)), remarksStr +' (Discount)', enr.Teacher__c);
+                                                    invLnItm = BillingUtility.fillInvLnItm(null, null, null, tempTotAmt, remarksStr +' (Discount)', enr.Teacher__c);
                                                     invLnItm.Is_Discount__c = true;
                                                     invLnItm.Package__c   = enr.Package__c;
                                                     invLnItm.Invoice__r   = inv;
@@ -1498,7 +1526,7 @@ public class EnrolmentProcessForClassCtrl {
                                         
                                         if(countDtforMonth > 0){
                                             Decimal tempPrgFee = prgFeeForSingleLess*countDtforMonth;
-                                            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(tempPrgFee), remarksStr, enr.Teacher__c);
+                                            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (tempPrgFee), remarksStr, enr.Teacher__c);
                                             invLnItm.Package__c   = enr.Package__c;
                                             invLnItm.Invoice__r   = inv;
                                             invLnItm.Enrolment__c = enr.Id;
@@ -1517,7 +1545,7 @@ public class EnrolmentProcessForClassCtrl {
                                               //start: commented by nishi: 15-Sep-2020: for new reqirement In netsuit we added new invoice line itme for discount amount
                                             if(prgDisFeeForSingleLess > 0){
                                                 tempTotAmt = (prgDisFeeForSingleLess*countDtforMonth) * -1; 
-                                                invLnItm = BillingUtility.fillInvLnItm(null, null, null, (BillingUtility.roundOffAmount(tempTotAmt)), remarksStr+' (Discount)', enr.Teacher__c);
+                                                invLnItm = BillingUtility.fillInvLnItm(null, null, null, (tempTotAmt), remarksStr+' (Discount)', enr.Teacher__c);
                                                 invLnItm.Package__c   = enr.Package__c;
                                                 invLnItm.Is_Discount__c = true;
                                                 invLnItm.Invoice__r   = inv;
@@ -1531,7 +1559,7 @@ public class EnrolmentProcessForClassCtrl {
                                               // end:commented by nishi: 15-Sep-2020: for new reqirement In netsuit we added new invoice line itme for discount amount
                                         }
                                     }else{
-                                        Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.prgFees), remarksStr, enr.Teacher__c);
+                                        Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (fm.prgFees), remarksStr, enr.Teacher__c);
                                         invLnItm.Package__c   = enr.Package__c;
                                         invLnItm.Invoice__r   = inv;
                                         invLnItm.Enrolment__c = enr.Id;
@@ -1550,7 +1578,7 @@ public class EnrolmentProcessForClassCtrl {
                                         //start: commented by nishi: 15-Sep-2020: for new reqirement In netsuit we added new invoice line itme for discount amount
                                         if(fm.pkgFeesPromtnalDis > 0){
                                             tempTotAmt =fm.pkgFeesPromtnalDis * -1;
-                                            invLnItm = BillingUtility.fillInvLnItm(null, null, null, (BillingUtility.roundOffAmount(tempTotAmt)), remarksStr+' (Discount)', enr.Teacher__c);
+                                            invLnItm = BillingUtility.fillInvLnItm(null, null, null,(tempTotAmt), remarksStr+' (Discount)', enr.Teacher__c);
                                             invLnItm.Package__c   = enr.Package__c;
                                             invLnItm.Invoice__r   = inv;
                                             invLnItm.Enrolment__c = enr.Id;
@@ -1566,7 +1594,7 @@ public class EnrolmentProcessForClassCtrl {
                                 if(fm.regiFees> 0){
                                     String remarksStr = ConstantsClass.pkgRegFeesDes;
                                     
-                                    Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.regiFees), remarksStr, enr.Teacher__c);
+                                    Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (fm.regiFees), remarksStr, enr.Teacher__c);
                                     invLnItm.Package__c   = enr.Package__c;
                                     invLnItm.Invoice__r   = inv;
                                     invLnItm.Enrolment__c = enr.Id;
@@ -1588,7 +1616,7 @@ public class EnrolmentProcessForClassCtrl {
                                       //start: commented by nishi: 15-Sep-2020: for new reqirement In netsuit we added new invoice line itme for discount amount
                                     if(fm.regiFeesDis > 0){
                                         tempTotAmt = fm.regiFeesDis * -1; 
-                                        invLnItm = BillingUtility.fillInvLnItm(null, null, null, -(BillingUtility.roundOffAmount(tempTotAmt)), remarksStr+' (Discount)', enr.Teacher__c);
+                                        invLnItm = BillingUtility.fillInvLnItm(null, null, null, (tempTotAmt), remarksStr+' (Discount)', enr.Teacher__c);
                                         invLnItm.Package__c   = enr.Package__c;
                                         invLnItm.Invoice__r   = inv;
                                         invLnItm.Enrolment__c = enr.Id;
@@ -1602,7 +1630,7 @@ public class EnrolmentProcessForClassCtrl {
                                 }
                                 if(fm.depFees > 0){
                                     String remarksStr = ConstantsClass.pkgDepFeesDes;
-                                    Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.depFees), remarksStr, enr.Teacher__c);
+                                    Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (fm.depFees), remarksStr, enr.Teacher__c);
                                     invLnItm.Package__c   = enr.Package__c;
                                     invLnItm.Invoice__r   = inv;
                                     invLnItm.Enrolment__c = enr.Id;
@@ -1613,11 +1641,11 @@ public class EnrolmentProcessForClassCtrl {
                                     invLineItmList.add(invLnItm);
                                 }
                                        
-if(fm.refrelDiscount > 0){
+                                if(fm.refrelDiscount > 0){
                                      //@Juneid 06 Aug 2020, Filling invoice line Item for Reffrel Discount
                                      //String refDisc = ConstantsClass.refrelDiscount;
                                      String refDiscRemark = fm.refrelDiscountName;  
-                                     Decimal amount = fm.refrelDiscount !=0 ? BillingUtility.roundOffAmount(fm.refrelDiscount) : 0;
+                                     Decimal amount = fm.refrelDiscount !=0 ? (fm.refrelDiscount) : 0;
                                      amount =  (amount * -1);
                                      Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, amount, refDiscRemark, enr.Teacher__c);
                                      invLnItm.Package__c   = enr.Package__c;
@@ -1631,9 +1659,10 @@ if(fm.refrelDiscount > 0){
                                       refreldiscountGst = BillingUtility.roundOffAmount(Double.valueOf(amount) * (enr.Center__r.Country__r.Tax_Rate__c / 100));
                                       invLnItm.GST_Amount__c = refreldiscountGst;
                                      invLineItmList.add(invLnItm);
-                                     
+                                     //commented by nishi: 21-Sep-2020: for new netsuite requirement we not create pending payment records now we create credit memo and realted line item
                                      //Juneid 07 Aug 2020, Creating Payment Record for Refferal
-                                     Id paymentAsCreditRecId = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get(ConstantsClass.paymentAsCredit).getRecordTypeId();
+                                    /* 
+                                    Id paymentAsCreditRecId = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get(ConstantsClass.paymentAsCredit).getRecordTypeId();
                                      Payment__c cutomerPayment = new Payment__c();
                                      cutomerPayment.RecordTypeId =paymentAsCreditRecId;  // Record Type
                                      cutomerPayment.Payment_Date__c = system.today();  // Payment Date
@@ -1641,8 +1670,71 @@ if(fm.refrelDiscount > 0){
                                      cutomerPayment.Payment_Status__c = 'Pending';// Payment Status
                                      cutomerPayment.Remarks__c = 'Referral Discount (Customer: '+ enr.parent__r.name +'-'+ enr.Name +')';//Filling Remark
                                      cutomerPayment.Payment_Amount__c = fm.refrelDiscount;// Payment Amount
-                                     customerPaymentList.add(cutomerPayment);
+                                     customerPaymentList.add(cutomerPayment);*/
+
+                                     //Filling credit memo
+                                    Credit_Memo__c objCreditMemo        = new Credit_Memo__c();
+                                    if(cntrCreditMap.containsKey(enr.Center__c)){
+                                        objCreditMemo = cntrCreditMap.get(enr.Center__c);
+                                    }else{
+                                        objCreditMemo.Parent_Account__c = enr.Referred_by__c;
+                                        objCreditMemo.Center__c = enr.Center__c;
+                                        //objCreditMemo.From_Invoice__r = inv;
+                                        objCreditMemo.Credit_Memo_Date__c = System.today();
+                                        objCreditMemo.Status__c = ConstantsClass.creditMemoPendingStatus;
+                                        objCreditMemo.Comments__c = 'Referral Discount (Customer: '+ enr.parent__r.name +'-'+ enr.Name +')';
+                                        objCreditMemo.Payment_Method__c = 'Card';
+                                    }
+                                    
+                                    cntrCreditMap.put(enr.Center__c, objCreditMemo);
+                                    Credit_memo_line_item__c objCreditLineItem = new Credit_memo_line_item__c();
+                                    objCreditLineItem.Amount__c = fm.refrelDiscount;
+                                    decimal taxAmount = BillingUtility.roundOffAmount(Double.valueOf(fm.refrelDiscount) * (enr.Center__r.Country__r.Tax_Rate__c / 100));
+                                    if(taxAmount > 0){
+                                        objCreditLineItem.Tax_Amount__c = taxAmount;
+                                    }
+                                    objCreditLineItem.Package__c =  enr.Package__c;
+                                    objCreditLineItem.Enrolment__c =  enr.Id;
+                                   // objCreditLineItem.Invoice_Line_Item__r = invLnItm;
+                                    objCreditLineItem.Is_Discount__c = false;
+                                    objCreditLineItem.Month__c =  enr.Lessons_Start_Date__c;
+                                    objCreditLineItem.Remarks__c = 'Referral Discount (Customer: '+ enr.parent__r.name +'-'+ enr.Name +')';
+                                    listOfCreditmemolineitem.add(objCreditLineItem);
+                                    // end:commented by nishi: 21-Sep-2020: for new netsuite requirement we not create pending payment records now we create credit memo and realted line item
                                  }
+                                 /*nishi: 23-Sep-2020: we create credit memo  if student selected package is promo then we are not give discout to student but we give discount to reffei customer */
+                                 else if(fm.refreeDiscount > 0){
+                                    
+                                    //Filling credit memo
+                                   Credit_Memo__c objCreditMemo        = new Credit_Memo__c();
+                                   if(cntrCreditMap.containsKey(enr.Center__c)){
+                                       objCreditMemo = cntrCreditMap.get(enr.Center__c);
+                                   }else{
+                                       objCreditMemo.Parent_Account__c = enr.Referred_by__c;
+                                       objCreditMemo.Center__c = enr.Center__c;
+                                      // objCreditMemo.From_Invoice__r = inv;
+                                       objCreditMemo.Credit_Memo_Date__c = System.today();
+                                       objCreditMemo.Status__c = ConstantsClass.creditMemoPendingStatus;
+                                       objCreditMemo.Comments__c = 'Referral Discount (Customer: '+ enr.parent__r.name +' - '+ enr.Name +')';
+                                       objCreditMemo.Payment_Method__c = 'Card';
+                                   }
+                                   
+                                   cntrCreditMap.put(enr.Center__c, objCreditMemo);
+                                   Credit_memo_line_item__c objCreditLineItem = new Credit_memo_line_item__c();
+                                   objCreditLineItem.Amount__c = fm.refreeDiscount;
+                                   decimal taxAmount = BillingUtility.roundOffAmount(Double.valueOf(fm.refreeDiscount) * (enr.Center__r.Country__r.Tax_Rate__c / 100));
+                                   if(taxAmount > 0){
+                                       objCreditLineItem.Tax_Amount__c = taxAmount;
+                                   }
+                                   objCreditLineItem.Package__c =  enr.Package__c;
+                                   objCreditLineItem.Enrolment__c =  enr.Id;
+                                   //objCreditLineItem.Invoice_Line_Item__r = invLnItm;
+                                   objCreditLineItem.Is_Discount__c = false;
+                                   objCreditLineItem.Month__c =  enr.Lessons_Start_Date__c;
+                                   objCreditLineItem.Remarks__c = 'Referral Discount';
+                                   listOfCreditmemolineitem.add(objCreditLineItem);
+                                   // end:commented by nishi: 21-Sep-2020: for new netsuite requirement we not create pending payment records now we create credit memo and realted line item
+                                }
                                  //@Juneid 18 Aug,2020,Invoice line Item for Facililty Fee
                                  /*if(fm.facilityFee > 0){
                                      String facilityFeeRemark = ConstantsClass.facilityFee;
@@ -1733,6 +1825,23 @@ if(fm.refrelDiscount > 0){
                                     insert customerPaymentList;
                                 }
                             }
+                            // start:commented by nishi: 21-Sep-2020: for new netsuite requirement we not create pending payment records now we create credit memo and realted line item
+
+                            if(listOfCreditmemolineitem.size() > 0){
+                                // for(Credit_Memo__c objCreditMemo : cntrCreditMap.values()){
+                                //     objCreditMemo.From_Invoice__c = objCreditMemo.From_Invoice__r.Id;
+                                // }
+                                insert cntrCreditMap.values();
+                                for(Credit_Memo__c objCreditMemo : cntrCreditMap.values()){
+                                    for(Credit_memo_line_item__c creditLnItm: listOfCreditmemolineitem){
+                                        creditLnItm.Credit_Memo_Number__c = objCreditMemo.Id;
+                                       // creditLnItm.Invoice_Line_Item__c = creditLnItm.Invoice_Line_Item__r.Id;
+                                    }
+                                }
+                                
+                                insert listOfCreditmemolineitem;
+                            }
+                            //end:commented by nishi: 21-Sep-2020: for new netsuite requirement we not create pending payment records now we create credit memo and realted line item
                             
                             //Added by rajesh,17th sept 2019: cancelled booking process if teacher on leave
                             Map<String,List<Booking__c>> bookingMap = new Map<String,List<Booking__c>>();
@@ -1757,6 +1866,11 @@ if(fm.refrelDiscount > 0){
                                                                            Student__r.Parent__r.PersonContactId, End_Time__c, Enrolment__c, Center__r.Location__c
                                                                       FROM Fifth_Lesson__c 
                                                                       WHERE Id IN: fifthLsnList];
+                           
+                            List<Ossia_Organisation_Settings__mdt>   listOfOssia_Organisation_Settings = [SELECT Id, DeveloperName, MasterLabel, 
+                                                                      Language, NamespacePrefix,Makeup_Expiry_Days_For_Public_Holiday__c, Label, QualifiedApiName, Makeup_Expiry_Days__c,
+                                                                      Makeup_Expiry_Days_Teacher__c FROM Ossia_Organisation_Settings__mdt
+                                                                      WHERE Label =:System.Label.Ossia_Organisation_Name];
                             for(Booking__c b: bookingList){
                                 if(b.Booking_Date__c >= b.Enrolment__r.Lessons_Start_Date__c){
                                     List<Booking__c> bList = new List<Booking__c>();
@@ -1814,7 +1928,17 @@ if(fm.refrelDiscount > 0){
                                             if(!canBookIds.contains(b.Id)){
                                                 b.Status__c = ConstantsClass.statusCanceled;
                                                 b.Available_Make_up_Units__c = b.Duration__c; 
-                                                b.Make_up_Expiry_Date__c  = b.Booking_Date__c.addDays(120);
+                                                // added by nishi: 22-Sep-2020: for manage ossia organization student we added differnent days in expiry dates
+        
+                                                if(isOssia){
+                                                    if(listOfOssia_Organisation_Settings != null && listOfOssia_Organisation_Settings.size() > 0){
+                                                        b.Make_up_Expiry_Date__c   = b.Booking_Date__c.addDays(Integer.valueOf(listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days_Teacher__c));
+                                                    }
+                                                }else{
+                                                    b.Make_up_Expiry_Date__c  = b.Booking_Date__c.addDays(120);
+                                                }
+                                                // added by nishi: 22-sep-2020: for manage ossia organization student we added differnent days in expiry dates
+        
                                                 b.Makeup_Reason__c = 'Teacher Mc';
                                                 b.Cancellation_Reason__c = 'Teacher Mc';
                                                 bCancellationList.add(b);
@@ -1851,7 +1975,16 @@ if(fm.refrelDiscount > 0){
                                         if(isCancelBook && !canBookIds.contains(b.Id)){
                                             b.Status__c = ConstantsClass.statusCanceled;
                                             b.Available_Make_up_Units__c = b.Duration__c; 
-                                            b.Make_up_Expiry_Date__c   = b.Booking_Date__c.addDays(120);
+                                            // added by nishi: 22-Aug-2020: for manage ossia organization student we added 180 days in expiry dates
+                                            if(isOssia){
+                                                if(listOfOssia_Organisation_Settings != null && listOfOssia_Organisation_Settings.size() > 0){
+                                                    b.Make_up_Expiry_Date__c   = b.Booking_Date__c.addDays(Integer.valueOf(listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days_For_Public_Holiday__c));
+                                                }
+                                            }else{
+                                                b.Make_up_Expiry_Date__c   = b.Booking_Date__c.addDays(120);
+                                            }
+                                            // added by nishi: 22-Aug-2020: for manage ossia organization student we added 180 days in expiry dates
+        
                                             b.Cancellation_Reason__c   = 'Holidays';
                                             b.Public_Holiday_Status__c = pubHoliday.Organisation_Status__c;
                                             bCancellationList.add(b);
@@ -1877,7 +2010,7 @@ if(fm.refrelDiscount > 0){
                             }
 
                             //Jatin: 6-Mar-2020: Start: For  not to Filter out the Camp Placeholder in enrolment Process 
-                            campBookingCancelProcess(enrolmentTeacherIds,enrolmentCenterIds,bookingMap,fifthLessMap,canBookIds);
+                            campBookingCancelProcess(enrolmentTeacherIds,enrolmentCenterIds,bookingMap,fifthLessMap,canBookIds,isOssia);
                             //Jatin: 6-Mar-2020: End: For  not to Filter out the Camp Placeholder in enrolment Process 
                             //@Juneid 22 Aug 20202 , Passing organization to next page as per page filter
                             PageReference pageRef = new PageReference('/apex/thankyoupage_ipad?&isOssia='+isOssia);
@@ -2006,8 +2139,12 @@ if(fm.refrelDiscount > 0){
     
     // jatin: 6-Mar-2020: for find camp booking then we canceled for teacher is busy in camp 
     public static void campBookingCancelProcess(set<string> tchrSet,Set<string> centSet,Map<String,List<Booking__c>> bookingMap,Map<String,List<Fifth_Lesson__c>> fifthLessMap,
-                                                set<id> canBookIds){
+                                                set<id> canBookIds,boolean isOssia){
         List<Booking__c> campCancellationList = new List<Booking__c>();
+        List<Ossia_Organisation_Settings__mdt>   listOfOssia_Organisation_Settings = [SELECT Id, DeveloperName, MasterLabel, 
+        Language, NamespacePrefix,Makeup_Expiry_Days_For_Public_Holiday__c, Label, QualifiedApiName, Makeup_Expiry_Days__c,
+        Makeup_Expiry_Days_Teacher__c FROM Ossia_Organisation_Settings__mdt
+        WHERE Label =:System.Label.Ossia_Organisation_Name];
         List<Fifth_Lesson__c> campFifthLsnCanList = new List<Fifth_Lesson__c>();
         
                                             for(Camp_Day_Teachers__c campTeacher : [SELECT Id, Camp_Teacher__c, Start_time__c, End_Time__c, Status__c, Camp_Day__c,
@@ -2027,7 +2164,15 @@ if(fm.refrelDiscount > 0){
                                                             if(!canBookIds.contains(b.Id)){
                                                                 b.Status__c = ConstantsClass.statusCanceled;
                                                                 b.Available_Make_up_Units__c = b.Duration__c; 
-                                                                b.Make_up_Expiry_Date__c   = b.Booking_Date__c.addDays(120);
+                                                                 // added by nishi: 22-Aug-2020: for manage ossia organization student we added 180 days in expiry dates
+                                                                if(isOssia){
+                                                                    if(listOfOssia_Organisation_Settings != null && listOfOssia_Organisation_Settings.size() > 0){
+                                                                        b.Make_up_Expiry_Date__c   = b.Booking_Date__c.addDays(Integer.valueOf(listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days_For_Public_Holiday__c));
+                                                                    }
+                                                                }else{
+                                                                    b.Make_up_Expiry_Date__c   = b.Booking_Date__c.addDays(120);
+                                                                }
+                                                                // added by nishi: 22-Aug-2020: for manage ossia organization student we added 180 days in expiry dates
                                                                 b.Cancellation_Reason__c   = 'Holidays';
                                                                 campCancellationList.add(b);
                                                                 canBookIds.add(b.Id);
@@ -2896,6 +3041,7 @@ if(fm.refrelDiscount > 0){
         public Decimal regiFeesDis{get;set;}      
  //@Juneid 05 Aug 2020,Use For Refrel Discount
         public Decimal refrelDiscount{get;set;}
+        public Decimal refreeDiscount{get;set;}
       //  public Decimal facilityFee{get;set;}//@Juneid 18 Aug 2020, Facility fee
         //public Decimal facilityGst{get;set;}//@Juneid 18 Aug, 2020, For facility GSt 
         
@@ -2921,6 +3067,7 @@ if(fm.refrelDiscount > 0){
             refrelDiscount=0;
            // facilityGst = 0;
             refrelDiscountName ='';
+            refreeDiscount =0;
         }
     }
     
@@ -2928,12 +3075,13 @@ if(fm.refrelDiscount > 0){
         public Decimal disTot{get;set;}
         public Decimal feesTot{get;set;}
         public Decimal gstTot{get;set;}
+        public Decimal totalAmt{get;set;}
         public Decimal subsTot{get;set;}
         public Decimal depositTot{get;set;}
         public Decimal grandTot{get;set;}
         
         public BillingDetails(){
-            disTot = feesTot = gstTot = subsTot =depositTot = grandTot = 0;
+            disTot = feesTot = gstTot = totalAmt=subsTot =depositTot = grandTot = 0;
         }
     }
 }

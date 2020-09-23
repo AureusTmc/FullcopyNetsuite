@@ -394,6 +394,7 @@ stuWrap.lesson = lsn;
         }
         
         if(isParAlsoAStudent && enrModelList.size()>0){
+            enrModelList.get(0).isParAlsoAStudent =isParAlsoAStudent;
             enrModelList.get(0).studentAcc.FirstName = parentAcc.FirstName;
             enrModelList.get(0).studentAcc.LastName  = parentAcc.LastName;            
         }
@@ -706,7 +707,7 @@ Set<Time> afternoonTimesTemp    = new Set<Time>();*/
                        // start:nishi: 4-Sep-2020: for check teacher engagement type is part-time and is day is greater then 28 mean (5th lesson booking) so we not consider this teacher
                        //remove any timeslot for 5th days for part-time teachers.
                         Boolean isPartTimeTeacher = false; 
-                        if(teachWorkSch.Teacher_Name__r.Engagement_Type__c =='Part-Time' && st.day() > 28 && org == 'osia'){
+                        if(ConstantsClass.teacherPartTimeEngagementStatus.contains(teachWorkSch.Teacher_Name__r.Engagement_Type__c) && st.day() > 28 && org == 'osia'){
                             isPartTimeTeacher = true;
                         }
                         system.debug('%%%%isPartTimeTeacher'+isPartTimeTeacher +'  '+st); 
@@ -1128,12 +1129,12 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                     scldDate.add(trMd.slcdDateDt);
                 }
             }
-            
+            system.debug('slcdCenter'+slcdCenter);
             List<Package__c> packLst = [SELECT Id,Name,Program__r.Instrument__c,Program__c,Program__r.Name, Location__r.Name 
                                         FROM Package__c 
                                         WHERE Location__c =: slcdCenter  AND Program__r.Status__c = 'Active' AND Active__c = True AND
                                         Program__r.Instrument__c IN: scldInst AND Type__c = 'Trial' AND Duration__c = '30'];
-            
+                                        system.debug('packLst'+packLst);
             if(packLst.size() == 0){
                 errorMsg = 'Trial Package is not configured for this '+slcdInstrument+', Please contact to center admin.';
                 isError = true;
@@ -1224,36 +1225,41 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
             //parentAcc.Phone = PersonMobilePhoneCustom;
             system.debug('parentAcc'+parentAcc);
             upsert parentAcc;
-            
+            system.debug('parentAcc'+parentAcc);
             List<Account> stuList = new List<Account>();
             List<Enrolment__c> enrList = new List<Enrolment__c>();
             List<Booking__c> bookList = new List<Booking__c>();
             
             String bookLessRecId =  Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get('Lesson').getRecordTypeId();    
+
             for(TrialEnrModel trMd : enrModelList){
                 //Fill Student Details
                 Account studentAcc = trMd.studentAcc;  
+                system.debug('studentAcc'+studentAcc);
                 studentAcc.RecordTypeId   = csmrRecId;
-                if(!isParAlsoAStudent){
-                    //To find existing student for the sepecific parent
-                    if(String.isNotBlank(trMd.slcdExistingStu) && !trMd.slcdExistingStu.equalsIgnoreCase('new'))
-                        studentAcc.Id = trMd.slcdExistingStu;                        
-                    studentAcc.Parent__c = parentAcc.Id;
-                    studentAcc.Current_Engagement_Status__c = ConstantsClass.activeStatus;                    
-                    studentAcc.Centre_Name__c = slcdCenter;
-                    if(centrList.size() > 0){
-                        studentAcc.Location__c = centrList.get(0).Location__c;
-                        if(centrList.get(0).Country__r.Country_Name__c != null)
-                            studentAcc.Country_PI__pc = centrList.get(0).Country__r.Country_Name__c;
-                    }     
-                }else{
-                    studentAcc = parentAcc;
-                }   
+                system.debug('trMd.isParAlsoAStudent'+trMd.isParAlsoAStudent);  
                 If(trMd.stuSameAsChild1){
                     studentAcc = stuList.get(0);
                 }else{
-                    stuList.add(studentAcc);
-                }
+                    if(!trMd.isParAlsoAStudent){
+                        //To find existing student for the sepecific parent
+                        if(String.isNotBlank(trMd.slcdExistingStu) && !trMd.slcdExistingStu.equalsIgnoreCase('new'))
+                            studentAcc.Id = trMd.slcdExistingStu;                        
+                            studentAcc.Parent__c = parentAcc.Id;
+                            studentAcc.Current_Engagement_Status__c = ConstantsClass.activeStatus;                    
+                            studentAcc.Centre_Name__c = slcdCenter;
+                            if(centrList.size() > 0){
+                                studentAcc.Location__c = centrList.get(0).Location__c;
+                                if(centrList.get(0).Country__r.Country_Name__c != null)
+                                    studentAcc.Country_PI__pc = centrList.get(0).Country__r.Country_Name__c;
+                            }   
+                        stuList.add(studentAcc);  
+                    }else{
+                        studentAcc = parentAcc;
+                    }   
+                } 
+                system.debug('trMd.stuSameAsChild1'+trMd.stuSameAsChild1);  
+                system.debug('trMd.studentAcc'+trMd.stuSameAsChild1); 
                 
                 //Fill Enrolment details
                 Enrolment__c enrl  = new Enrolment__c();
@@ -1314,7 +1320,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                     }
                 }
                 enrList.add(enrl);
-                
+                system.debug('enrl'+enrl);
                 //Fill Bookings
                 Booking__c book = new Booking__c(Student__r = studentAcc, Teacher_Account__c = trMd.slcdTchrId, Enrolment__r = enrl);
                 book.Center__c =  slcdCenter;
@@ -1340,7 +1346,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                     }
                 }
                 bookList.add(book);
-                
+                system.debug('book'+book);
                 if(isAureusAtHome){
                     Booking__c befBook = new Booking__c(Student__r = studentAcc, Teacher_Account__c = trMd.slcdTchrId, Enrolment__r = enrl);
                     befBook.RecordTypeId  = bookLessRecId;
@@ -1373,6 +1379,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
             if(stuList.size() > 0){
                 system.debug('stuList'+stuList);
                 upsert stuList;
+            }
                 system.debug('enrList'+enrList);
                 for(Enrolment__c enrl: enrList)
                     enrl.Student__c = enrl.Student__r.Id;
@@ -1397,7 +1404,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                         book.Status__c = ConstantsClass.scheduledStatus;
                     update bookList;
                 }                
-            }
+            
             if(isSiteGuestUser){
                 if(org=='osia')
                     return new Pagereference(Label.Trial_booking_confirmation_url_for_Ossia);  
@@ -1560,6 +1567,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
         public List<TeacherModel> slcdSlotTchrs{get;set;}
         public Map<String,String> existingStuOpt{get;set;}
         public Boolean stuSameAsChild1{get;set;}
+        public Boolean isParAlsoAStudent{get;set;}
         public List<String> instrumentList{get;set;}
         public Map<String,String> disabledInstrument{get;set;}
         public Integer classMinAge{get;set;}
@@ -1582,6 +1590,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
             this.teachModSlotMap= new Map<String,Map<String, List<TeacherModel>>>();
             this.studentAcc     = new Account();
             this.stuSameAsChild1= false;
+            this.isParAlsoAStudent= false;
             this.instrumentList = new List<String>();
             this.disabledInstrument = new Map<String,String>();
             this.slcdLsnType    = 'Individual';
