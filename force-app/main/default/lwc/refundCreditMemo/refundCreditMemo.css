@@ -1,0 +1,10 @@
+.slds-modal__container {
+    max-width: 80rem !important;
+    width: 44% !important;
+  }
+  
+  .slds-p-around_medium,
+  .slds-p-around--medium {
+    height: 40% !important;
+  }
+  

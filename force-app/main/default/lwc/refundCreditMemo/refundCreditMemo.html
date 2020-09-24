@@ -1,0 +1,87 @@
+<template>
+    <lightning-card>
+        <lightning-button label="Refund Credit Memo" variant="brand" slot="actions" onclick={showModalBox}>
+        </lightning-button>
+
+        <template if:true={showModal}>
+
+            <!--_________________________________________  MODAL Section Start  _________________________________________________________-->
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+
+                <!--_________________________________________  MODAL BODY  _________________________________________________________-->
+                <div class="slds-modal__container">
+
+                    <header class="slds-modal__header">
+                        <h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">Refund Credit Memo</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+
+                        <!--_________________________________________  CREDIT MEMO OPTIONS END ______________________________________________-->
+                        <lightning-input class="userAmount" type="number" name="input8" required
+                            value={creditMemoWrap.userEnterAMount} placeholder={creditMemoWrap.creditMemoAmnt}
+                            step="any" onchange={handleAmountChange} label="Amount">
+                        </lightning-input>
+
+                        <lightning-input class="userRemarks" type="text" onchange={handleRemarkChange} required
+                            label="Reason" placeholder="Enter reason..." value={creditMemoWrap.userRemarks}>
+                        </lightning-input>
+
+                    </div>
+                    <!-- _________________________________________  FOOTER  ________________________________________________________-->
+                    <footer class="slds-modal__footer">
+
+                        <lightning-button label="No" variant="destructive" slot="actions" onclick={showModalBox}>
+                        </lightning-button>
+                        <lightning-button class="slds-p-left_small" label="Yes" variant="brand" slot="actions"
+                            onclick={showConfirmBoxfun}>
+                        </lightning-button>
+                    </footer>
+                    <!-- _________________________________________  FOOTER END ________________________________________________________-->
+                </div>
+
+                </div>
+                <!--_________________________________________  MODAL BODY END_________________________________________________________-->
+            </section>
+
+            <template if:true={showConfirmBox}>
+                <!--____________________________________________  CONFIRMATION MODAL  __________________________________________________  -->
+                <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                  aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+        
+                  <template if:true={isLoaded}>
+                    <div class="exampleHolder">
+                      <lightning-spinner alternative-text="Loading" size="large"></lightning-spinner>
+                    </div>
+                  </template>
+                  <!--_________________________________________ CONFIRMATION MODAL BODY  _________________________________________________________-->
+                  <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                      <h2 id="modal-heading-02" class="slds-modal__title slds-hyphenate">Are you sure?</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-2">
+        
+                      <p>{confirmationMessage} </p>
+                    </div>
+                    <!-- _________________________________________  FOOTER  ________________________________________________________-->
+                    <footer class="slds-modal__footer">
+        
+                      <lightning-button label="No" onclick={showConfirmBoxfun} variant="destructive" slot="actions">
+                      </lightning-button>
+                      <lightning-button class="slds-p-left_small" label="Yes" variant="brand" onclick={callRefundProcess}
+                        slot="actions">
+                      </lightning-button>
+        
+                    </footer>
+                    <!-- _________________________________________  FOOTER END ________________________________________________________-->
+                  </div>
+                  <!--_________________________________________ CONFIRMATION MODAL BODY END_________________________________________________________-->
+                </section>
+                <!--____________________________________________  CONFIRMATION MODAL END __________________________________________________  -->
+              </template>
+
+            <!--_________________________________________  MODAL Section END  _________________________________________________________-->
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template> <!-- Main modal template-->
+    </lightning-card>
+</template>
