@@ -2,6 +2,7 @@
 //						Also add remarks in the Invoice in case of voiding it and also link the from and to Invoice of credit memo to same invoice itself.
 //						Also  only populate Credit Memo : Credit_Memo_Date__c in case of success status only.
 //						Also Addng new field mapping for the Credit memo/line item as per fields req in  credit memo reports 
+//CH02 24 Sep 2020 : Karan Singh Adding the Gst AMount + Amount in the invoice line item credit amount so that it can balance out the invoice line item total amount
 public with sharing class AddCreditMemoController {
     @AuraEnabled
     public static creditMemoWrap getCreditMemoDetails(Id invId) {
@@ -89,8 +90,8 @@ public with sharing class AddCreditMemoController {
             if (creditMode == 'Refund Memo') {
                 // prettier-ignore
                 Decimal amountToRefund =  BillingUtility.roundOffAmount( creditWrap.invoiceAmount );
-                System.debug(creditWrap.invoiceAmount);
-                system.debug(amountToRefund);
+                System.debug(creditWrap.invoiceAmount); 
+                system.debug(amountToRefund); 
                 // prettier-ignore
                 if( String.isNotBlank(objInvoice.Payments__r[0].Invoice__r.Center__r.Organisation__r.Id) && String.isNotBlank(objInvoice.Payments__r[0].Invoice__r.Center__r.Organisation__r.Stripe_Base_Url__c) && 
                    String.isNotBlank(objInvoice.Payments__r[0].Invoice__r.Center__r.Organisation__r.Stripe_Secret_Key__c) &&
@@ -170,6 +171,11 @@ public with sharing class AddCreditMemoController {
                     
                     //CH01 Start
                     objInvLine.Credit_Memo_Amount__c = objInvLine.Amount__c;
+                    //CH02
+                    if( objInvLine.GST_Amount__c != Null ){
+                    objInvLine.Credit_Memo_Amount__c = objInvLine.Credit_Memo_Amount__c  + objInvLine.GST_Amount__c;
+                    }
+                    //CH02 END
                     listInvoiceLineItem.add(objInvLine);
                     //CH01 END
                 }

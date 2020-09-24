@@ -1,5 +1,6 @@
 <apex:page id="pg" showHeader="false" controller="SearchInstrumentRental_IpadCntrl"  standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False"  action="{!getProducts1}"><!-- CH02 action="{!getProducts1}" -->
    <!-- CH02 Karan Singh As Netsuite integration is used of Sage integration so changing the fetch piano list and slcd piano details -->
+    <!-- CH05 Karan Singh 24 Sep 2020 : showing the type of the instrument in the page and storing the type of the instrument in the enrolment which can be piano,keyboard etc -->
     <head> 
         <title>Aureus Academy</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0"/>
@@ -185,7 +186,20 @@
                         isErr = true;
                     }
                 });
+                var emailVal = $('[id$=emailtxt]').val();                   
+                var reg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;                    
+                if (reg.test(emailVal) == false){
+                    $('[id$=emailtxt]').after('<div class="slds-form-element__help errortxt" style="color:#F44336">Invalid email address.</div>');
+                    isErr = true;  
+                }
                 
+                if(!isErr){
+                    var concatePhoneNo = '+' + $('[class$=btn-cc]').html().match(/\d+/);
+                    concatePhoneNo += $('[id$=phoneNumber]').val();
+                    console.log(concatePhoneNo);
+                     $('[id$=phoneCstmId]').val(concatePhoneNo);
+                }   
+
                 if(isErr){
                     $('.cmpErrDiv').removeClass('slds-hide');
                     $('.contentErrorDiv').html('Please fill all mandatory fields.');
@@ -303,6 +317,7 @@
                             <th scope="col">No.</th>
                             <th scope="col">Brand</th>
                             <th scope="col">Model</th>
+                            <th scope="col">Type</th> <!-- CH05 added new column -->
                             <th scope="col">Serial No.</th>
                             <th scope="col">Location</th>
                             <th scope="col">Rental</th>
@@ -338,6 +353,7 @@
                                 <td>{!net.srNo}</td>
                                 <td>{!net.brand}</td>
                                 <td>{!net.model}</td>
+                                <td>{!net.inventoryType}</td><!-- CH05 added new column -->
                                 <td>{!net.serialNumber}</td>
                                 <td>{!net.location}</td>
                                 <td>{!net.monthlyRental}</td>

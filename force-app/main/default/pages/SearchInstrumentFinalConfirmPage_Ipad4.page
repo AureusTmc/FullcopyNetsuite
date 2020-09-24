@@ -3,8 +3,9 @@
     <!-- CH01 Karan Singh 8 Sep 2020 Bypass pandaDoc Validation in case PandaDoc goes offline for maintenance purposes -->
     <!-- CH02 Karan Singh As Netsuite integration is used of Sage integration so changing slcd piano details -->
     <!-- CH03 Karan Singh 18 Sep 2020 : Deposit should be inclusive of GST in the rental summary and Pandadoc as well and also showing (T) in vf in the rental summary for indicating amount is inclusive of GST -->
+    <!-- CH05 Karan Singh 24 Sep 2020 : showing the type of the instrument in the page and storing the type of the instrument in the enrolment which can be piano,keyboard etc -->
     <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-
+ 
     <head>
         <title>Final Confirmation</title>
         <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}" />
@@ -285,7 +286,17 @@
                             <!--CH02  {!slcdPiano.serNo} --> {!slcdPiano.serialNumber}
                         </div>
                     </div>
-
+                     
+                            <!-- CH05 added new column -->
+                    <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                        <p class="">
+                            <strong>Type</strong>
+                        </p>
+                        <div class="box-info m-lg-right">
+                            {!slcdPiano.inventoryType}
+                        </div>
+                    </div>        
+					<!-- CH05 END -->
                     <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
                         <p class="">
                             <strong>Rental/Sale Price(GST Inc.)</strong>

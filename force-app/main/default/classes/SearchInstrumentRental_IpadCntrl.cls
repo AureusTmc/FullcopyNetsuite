@@ -2,8 +2,9 @@
 //CH02 Karan Singh 16 Sep 2020 Replacing Sage Integration with Net Suite Integration for fetching inventory Details and changing the getProducts()method for this
 //			and checking the enrolment is active type or not.
 //CH03 Karan Singh 17/18 Sep 2020 : Deposit should be inclusive of GST in the rental summary and Pandadoc as well and also showing (T) in vf in the rental summary for indicating amount is inclusive of GST.
-//									Updating the Instrument_Type__c for the selected enrolment
+//									Updating the Instrument_Type__c for the selected enrolment ideally piano
 //CH04 Karan Singh 22 Sep 2020 : Adding NetSuite API logger.
+//CH05 Karan Singh 24 Sep 2020 : showing the type of the instrument in the page and storing the type of the instrument in the enrolment which can be piano,keyboard etc
 
 public class SearchInstrumentRental_IpadCntrl {
     public String slcdCenter{get;set;}
@@ -282,7 +283,6 @@ options.add(new SelectOption(str,str));*/
                 parentAcc.BillingCity        = enrList.get(0).Parent__r.BillingCity;
                 parentAcc.BillingPostalCode  = enrList.get(0).Parent__r.BillingPostalCode;
                 parentAcc.BillingCountryCode = enrList.get(0).Parent__r.BillingCountryCode;
-                PersonMobilePhoneCustom = parentAcc.Phone;
                 cenOrgId = enrList.get(0).Center__r.Organisation__c;
                 
                 slcdEnrolment = enrList.get(0);
@@ -299,7 +299,20 @@ options.add(new SelectOption(str,str));*/
                     cardImage     = enrList.get(0).Parent__r.Card_Image__c;
                     isAlreadyStripCstmr = true;
                 }
-                
+                //added by nishi: 23-Sep-2020: According to new requirement we get stripe details according to organisation not country fields
+                String organisationId          = enrList.get(0).Center__r.Organisation__c;
+                Map<String,Organisation__c> organisationMap = BillingUtility.getOrganisationMap(organisationId);
+                if(organisationMap.containsKey(organisationId)){
+                    stripeBaseUrl       = organisationMap.get(organisationId).Stripe_Base_Url__c;
+                    apiKey              = organisationMap.get(organisationId).Stripe_Publishable_Key__c;
+                    stripeApiSecKey     = organisationMap.get(organisationId).Stripe_Secret_Key__c;
+                    countryCurrencyCode = organisationMap.get(organisationId).country__r.Currency_Code__c;
+                    fm.gstTaxPer        =  Integer.valueOf(organisationMap.get(organisationId).Tax_Rate__c);
+                    templateId          = organisationMap.get(organisationId).Student_Policies_Template_Id__c;
+                    folderId            = organisationMap.get(organisationId).Folder__c;
+                }
+               
+                /*commented by nishi: 23-Sep-2020: According to new requirement we get stripe details according to organisation not country fields
                 String countryId          = enrList.get(0).Center__r.Country__c;
                 Map<String,Country__c> countryMap = BillingUtility.getCountryMap(countryId);
                 if(countryMap.containsKey(countryId)){
@@ -311,9 +324,11 @@ options.add(new SelectOption(str,str));*/
                     templateId          = countryMap.get(countryId).Student_Policies_Template_Id__c;
                     folderId            = countryMap.get(countryId).Folder__c;
                 }
-                
+                end:commented by nishi: 23-Sep-2020: According to new requirement we get stripe details according to organisation not country fields
+                */
                 if(String.isBlank(countryCurrencyCode)) 
-                    countryCurrencyCode = ConstantsClass.currencyCode;
+                countryCurrencyCode = ConstantsClass.currencyCode;
+            
             }
         }
     }
@@ -794,11 +809,13 @@ rw.errorMsg = 'Unknown error occured. Please contact your admin.';
     
     public pageReference prcToRental(){
         isRentalOrSellType = 'Rent';
+        getStripeDetails();
         return page.SearchInstrumentRentalDeliveryPage_Ipad3;
     }
     
     public pageReference prcToSell(){
         isRentalOrSellType = 'Sell';       
+        getStripeDetails();
         return page.SearchInstrumentRentalDeliveryPage_Ipad3;
     }
     
@@ -808,7 +825,59 @@ rw.errorMsg = 'Unknown error occured. Please contact your admin.';
         //slcdPiano = sageProducts.get(slctdPianoOpt-1); old
         slcdPiano = netSuiteProducts.get(slctdPianoOpt-1);
         system.debug('slcdPiano -> '+ slcdPiano);
+        
         //CH02
+    }
+    // added by nishi: 23-Sep-2020: for stripe id and other country details the enrollment's center was inserted according to the home page selected center. So we get stripe details according to this center   
+    public void getStripeDetails(){
+        system.debug('slcdPiano -> '+ slcdPiano.location);
+        system.debug('slcdEnrolment -> '+ slcdEnrolment);
+        if( string.isBlank(slcdEnrolment.id)){
+           isAlreadyStripCstmr = false;
+            parentAcc.Centre_Name__c = slcdCenter;
+            parentAcc.Phone =  PersonMobilePhoneCustom;
+            system.debug('PersonMobilePhoneCustom -> '+ PersonMobilePhoneCustom);
+           if(parentAcc.PersonEmail != null){
+               List<Account> accList = [SELECT Id,Name,Stripe_Customer_Id__c,Card_Number__c,Card_Type__c,Card_Image__c  FROM Account WHERE PersonEmail =: parentAcc.PersonEmail]; 
+               if(accList.size() > 0){
+                   parentAcc.Id = accList.get(0).Id;
+               
+                    if(accList.get(0).Stripe_Customer_Id__c != null && accList.get(0).Card_Number__c != null && accList.get(0).Card_Type__c != null){
+                        stripeCstmrId = accList.get(0).Stripe_Customer_Id__c;
+                        cardNumber    = accList.get(0).Card_Number__c;
+                        cardType      = accList.get(0).Card_Type__c;            
+                        cardImage     = accList.get(0).Card_Image__c;
+                        isAlreadyStripCstmr = true;
+                    }
+                }
+           }
+            List<Account> centerlist =  [Select id,Name,Organisation__c from account where id=:slcdCenter and recordtype.Name=:ConstantsClass.centerRecTypeName];
+            
+            system.debug('centerlist -> '+ centerlist);
+            if(centerlist != null && centerlist.size() > 0){
+                String organisationId          = centerlist[0].Organisation__c;
+                system.debug('organisationId -> '+ organisationId);
+                if(string.isBlank(stripeBaseUrl) && string.isBlank(apiKey) && string.isBlank(stripeApiSecKey) && 
+                string.isBlank(templateId) && string.isBlank(folderId)){
+                    Map<String,Organisation__c> organisationMap = BillingUtility.getOrganisationMap(organisationId);
+                    if(organisationMap.containsKey(organisationId)){
+                        stripeBaseUrl       = organisationMap.get(organisationId).Stripe_Base_Url__c;
+                        apiKey              = organisationMap.get(organisationId).Stripe_Publishable_Key__c;
+                        stripeApiSecKey     = organisationMap.get(organisationId).Stripe_Secret_Key__c;
+                        countryCurrencyCode = organisationMap.get(organisationId).country__r.Currency_Code__c;
+                        fm.gstTaxPer        =  Integer.valueOf(organisationMap.get(organisationId).Tax_Rate__c);
+                        templateId          = organisationMap.get(organisationId).Student_Policies_Template_Id__c;
+                        folderId            = organisationMap.get(organisationId).Folder__c;
+                    
+                    }
+
+                    system.debug('apiKey -> '+ apiKey);
+                    system.debug('folderId -> '+ folderId);
+                    if(String.isBlank(countryCurrencyCode)) 
+                        countryCurrencyCode = ConstantsClass.currencyCode;
+                }
+            }
+        }
     }
     
     Public void nextWeek(){
@@ -870,7 +939,8 @@ rw.errorMsg = 'Unknown error occured. Please contact your admin.';
     
     //Added by Rajesh: 19th Sept 2019. To populate updated information in panda doc
     public void  updateCstmrDetail(){        
-        update parentAcc;
+        //update parentAcc;//;// commented by nishi:23-Sep-2020: according to  new requirement we update or insert customer details
+        upsert parentAcc;
     }
     Public void signAgreement(){
         documentDetails = new PandaDocUtility.CreateDocument();
@@ -1128,7 +1198,8 @@ System.debug('@@@jsonBody'+jsonBody);
         //CH02 END
         
         EnrollmentProcessErrorLogs.errorLogObj errorObj = new EnrollmentProcessErrorLogs.errorLogObj();
-        
+        system.debug('in this process'+stripeToken);
+        system.debug('in this process'+isAlreadyStripCstmr);
         if(isAlreadyStripCstmr || (stripeToken!=null && stripeToken.trim().length()>0)){
             try{     
                 String last4CardNumber;
@@ -1171,7 +1242,8 @@ System.debug('@@@jsonBody'+jsonBody);
                     
                     if(sc.statusCode == 200 && sc.paid){
                         sp = Database.setSavepoint();
-                        
+                        String csmrRecId =  Schema.SObjectType.Account.getRecordTypeInfosByName().get('Customer').getRecordTypeId(); 
+                        parentAcc.RecordTypeId   = csmrRecId;
                         parentAcc.Stripe_Customer_Id__c = stripeCstmrId;
                         if(String.isNotBlank(last4CardNumber))
                             parentAcc.Card_Number__c = last4CardNumber;
@@ -1191,13 +1263,23 @@ System.debug('@@@jsonBody'+jsonBody);
                             if(centrList.get(0).Country__r.Country_Name__c != null)
                                 parentAcc.Country_PI__pc = centrList.get(0).Country__r.Country_Name__c;
                         }
-                        update parentAcc;
-                        
+                        //update parentAcc;// commented by nishi:23-Sep-2020: according to  new requirement we update or insert customer details 
+                        upsert parentAcc;  
                         //Filling enrolment
                         if(isRentalOrSellType.equalsIgnoreCase('Rent'))
                             slcdEnrolment.Stage__c = 'Piano Rental Active';
                         else
                             slcdEnrolment.Stage__c = 'Piano Sold';
+                        /*start: added by nishi:23-Sep-2020 for insert parent and student id */  
+                        if(string.isBlank(slcdEnrolment.id)){  
+                            String enrInsRenRecId =  Schema.SObjectType.Enrolment__c.getRecordTypeInfosByName().get('Instrument Rental').getRecordTypeId();  
+                            slcdEnrolment.Parent__c     = parentAcc.Id;
+                            slcdEnrolment.Student__c    = parentAcc.Id;
+                            slcdEnrolment.RecordTypeId  = enrInsRenRecId;
+                            slcdEnrolment.Type__c       = 'Instrument';
+                        }
+                        /*end: added by nishi:23-Sep-2020 for insert parent and student id */    
+                        
                         slcdEnrolment.Cancellation_Policy_Agreed__c = true;
                         slcdEnrolment.No_of_Stairs__c = nostairs;
                         slcdEnrolment.Center__c = slcdCenter;
@@ -1250,11 +1332,13 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                         //CH01  Karan Singh25 March   
                         slcdEnrolment.Offline_Signing_Selected__c = isCustmrOptedOfflineSign; 
                         //CH01 END     
-                        //CH03 updating the Instrument type
-                        slcdEnrolment.Instrument_Type__c = instrumentType;
+                        //CH03 updating the Instrument type -piano only
+                        //CH05 any instrunemnt which can be piano,violin etc
+                        slcdEnrolment.Instrument_Type__c = slcdPiano.inventoryType;
+                        //CH05 END
                         //CH03
-                        update slcdEnrolment;
-                        
+                        //update slcdEnrolment;// commented by nishi:23-Sep-2020: according to  new requirement we update or insert customer details
+                        upsert slcdEnrolment;
                         //Mark as complete booking which created trail earlier
                         List<Booking__c> bookList = [SELECT Id, Status__c FROM Booking__c where Enrolment__c=: slcdEnrolment.Id AND Type__c IN ('Trial','Piano Viewing') AND Status__c != 'Completed'];
                         if(bookList.size() > 0){
@@ -1451,13 +1535,22 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
             if(centrList.get(0).Country__r.Country_Name__c != null)
                 parentAcc.Country_PI__pc = centrList.get(0).Country__r.Country_Name__c;
         }
-        update parentAcc;
-        
+        //update parentAcc;// commented by nishi:23-Sep-2020: according to  new requirement we update or insert customer details
+        upsert parentAcc;
         //Filling enrolment
         if(isRentalOrSellType.equalsIgnoreCase('Rent'))
             slcdEnrolment.Stage__c = 'Piano Rental Active';
         else
             slcdEnrolment.Stage__c = 'Piano Sold';
+         /*start: added by nishi:23-Sep-2020 for insert parent and student id */    
+         if(string.isBlank(slcdEnrolment.id)){  
+            String enrInsRenRecId =  Schema.SObjectType.Enrolment__c.getRecordTypeInfosByName().get('Instrument Rental').getRecordTypeId();  
+            slcdEnrolment.Parent__c     = parentAcc.Id;
+            slcdEnrolment.Student__c    = parentAcc.Id;
+            slcdEnrolment.RecordTypeId  = enrInsRenRecId;
+            slcdEnrolment.Type__c       = 'Instrument';
+         }
+         /*end: added by nishi:23-Sep-2020 for insert parent and student id */  
         slcdEnrolment.Cancellation_Policy_Agreed__c = true;
         slcdEnrolment.No_of_Stairs__c = nostairs;
         slcdEnrolment.Center__c = slcdCenter;
@@ -1501,8 +1594,8 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
             
             count = count+1;
         }                        
-        update slcdEnrolment;
-        
+       // update slcdEnrolment;// commented by nishi:23-Sep-2020: according to  new requirement we update or insert customer details
+        upsert slcdEnrolment;
         //Mark as complete booking which created trail earlier
         List<Booking__c> bookList = [SELECT Id, Status__c FROM Booking__c where Enrolment__c=: slcdEnrolment.Id AND Type__c IN ('Trial','Piano Viewing') AND Status__c != 'Completed'];
         if(bookList.size() > 0){
