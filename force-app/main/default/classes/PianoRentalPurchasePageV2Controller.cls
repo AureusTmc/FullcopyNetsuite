@@ -1,7 +1,7 @@
 /**
 * @File Name : PianoRentalPurchasePageV2Controller.cls
 * @Vf Page : PianoRentalPurchasePageV2.vfp
-* @Test Class Name : - 
+* @Test Class Name : - PianoRentalPurchasePageV2ControllerTest
 * @Description : This page is modified version of the page PianoRentalPurchasePage for the netsuite integeration.
 * @Author : TMC
 * @Last Modified By : Karan Singh Soni 
@@ -11,8 +11,6 @@
 * Ver Date Author Modification
 *==============================================================================
 * 1.0 31 Aug 2020 Karan Singh Soni ( Inital version )
-
-//###########################################################################POS Email Is Pending 
 **/
 public class PianoRentalPurchasePageV2Controller {
     
@@ -104,7 +102,7 @@ Note : 3 Sep 2020 This method was taken from another class -> PianoRentalPurchas
 */
     private List<BillingSummary> fillBillSummary(Enrolment__c objEnrolment){
         List<BillingSummary> listOfBillSummary = new List<BillingSummary>();
-        
+        //SELECT Id,Name,parent__r.NAme, ( SELECT Id FROM Invoice_Line_Items__r )  FROM Enrolment__c WHERE RecordType.Name ='Instrument Rental'
         Map<String,List<Invoice__c>> mapOfEnrolmentInvoice = PianoRentalHelperController.get4MonthPaidInvoiceAmountWithDate(new Set<String>{objEnrolment.id});
         
         Map<string,Decimal> mapOfTotalcurrentMonthPaidInvoiceAmount =PianoRentalHelperController.getCurrentMonthInvoiceAmount(new Set<String>{objEnrolment.id},ConstantsClass.paidStatus);
@@ -176,7 +174,10 @@ Note : 3 Sep 2020 This method was taken from another class -> PianoRentalPurchas
                     //_________________________________________________________________  Attaching pdf to the email  ________________________________________________-
                     Messaging.EmailFileAttachment objEmailAttchmt = new Messaging.EmailFileAttachment();
                     objEmailAttchmt.setFileName('Reciept.pdf');
-                    objEmailAttchmt.setBody(new PageReference('/apex/PianoRentalPurchasePageV2?Id=' + enrolment.Id).getContentAsPDF()); 
+                    
+                    If(!Test.isRunningTest()){ //28 Sep 2020 Methods defined as TestMethod do not support getContent 
+                    objEmailAttchmt.setBody(new PageReference('/apex/PianoRentalPurchasePageV2?Id=' + enrolment.Id).getContentAsPDF());     
+                    }
                     objOutGoingEmail.setFileAttachments(new Messaging.EmailFileAttachment[] {objEmailAttchmt});
                     
                     if(!Test.isRunningTest()){
@@ -194,8 +195,9 @@ Note : 3 Sep 2020 This method was taken from another class -> PianoRentalPurchas
                 isErrorOnSave = true;
                 errorMessage='We have encountered a problem while sending the email : Current enrolment is not associated to any centre or Teacher email is not populated.Please check with System Admin for this.'; 
             }
-            
-            system.debug('sendEmailResults -->  ' + sendEmailResults[0].isSuccess() );
+            if( sendEmailResults != Null && sendEmailResults.size() > 0){
+                system.debug('sendEmailResults -->  ' + sendEmailResults[0].isSuccess() );
+            } 
             
             //only work if successfule email is send
             if( Test.isRunningTest() || sendEmailResults[0].isSuccess() ){
@@ -253,6 +255,7 @@ Note : 3 Sep 2020 This method was taken from another class -> PianoRentalPurchas
         }catch( Exception objExp ){
             Database.rollback( sp );
             isErrorOnSave = true;
+            system.debug(' ---> '+ objExp.getMessage() + '  ---> ' + objExp.getLineNumber());
             errorMessage='We have encountered a problem while sending the email : ' + objExp.getMessage() + ' Line Number : '+ objExp.getLineNumber() + '.Please check with System Admin for this.' ;
         }finally{
             isEmailSent = true;

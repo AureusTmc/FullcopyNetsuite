@@ -1,3 +1,9 @@
+/*
+Name        :        RefundCreditMemoControllerTest
+Date        :        24 Sep 2020
+Author      :        Karan Singh Soni
+Apex Class :        RefundCreditMemoController
+*/
 //CH01 25 Sep 2020 : Karan Singh : Ashish Bansal -> on the status as success credit memo date will also populate.
 public with sharing class RefundCreditMemoController {
     
@@ -127,7 +133,7 @@ public with sharing class RefundCreditMemoController {
                     
                     objSavePoint = Database.setSavepoint();
                     system.debug(objCreditMemoWrap.creditMemoAmnt == objCreditMemoWrap.userEnterAMount);
-                    //incase of full amount refund
+                    //incase of full amount refund simply update the existing credit memo
                     if( objCreditMemoWrap.creditMemoAmnt == objCreditMemoWrap.userEnterAMount ){
                         
                         objCreditMemo.Refund_ID__c = refundId;
@@ -137,13 +143,17 @@ public with sharing class RefundCreditMemoController {
                         objCreditMemo.Comments__c = objCreditMemoWrap.userRemarks;
                         update objCreditMemo;
                     }
-                    //incase of partial refund
+                    //incase of partial refund- we will adjust the credit memo line item amount with the user enter amount, the remaining balnce will be used in new 
+                    //credit memo and it's line item + also calculating taxes while adjusting the amount 
                     else{
                         
                         Decimal adjustmentAmnt = objCreditMemoWrap.userEnterAMount;
-                        Boolean isAdjustmentDOne = false;
-                        objCreditMemo.Refund_ID__c = refundId;
                         
+                        //this is notify that the adjustment amount is fully done, then we will clone the existing the creditmemo line item to the new credit memo and delete the existing
+                        Boolean isAdjustmentDOne = false;								
+                        
+                        //___________________________________________  Cloning the existing credit memo and updating it _______________________________________________
+                        objCreditMemo.Refund_ID__c = refundId;
                         cloneCreditMemo.Status__c = 'Pending';
                         objCreditMemo.Status__c = 'Success';
                         
@@ -164,19 +174,24 @@ public with sharing class RefundCreditMemoController {
                         cloneCreditMemo.From_Invoice__c = objCreditMemo.From_Invoice__c;
                         upsert new list<Credit_Memo__c>{ cloneCreditMemo,objCreditMemo};
                             
-                            system.debug('cloneCreditMemo --> ' + cloneCreditMemo );
+                        system.debug('cloneCreditMemo --> ' + cloneCreditMemo );
                         system.debug('objCreditMemo --> ' + objCreditMemo );
                         
+                        //_____________________________________________________ Adjusting the existing credit memo line items  _______________________________________________
                         for( Credit_memo_line_item__c objExistingCreditMemoLine : objCreditMemo.Credit_memo_line_items__r ){
                             
                             system.debug('isAdjustmentDOne --> ' + isAdjustmentDOne );
                             system.debug('adjustmentAmnt --> ' + adjustmentAmnt );
+                            
                             Decimal existingTaxAmount = 0;
                             if( objExistingCreditMemoLine.Tax_Amount__c != Null ){ //as tax amount can be zero
                                 existingTaxAmount = objExistingCreditMemoLine.Tax_Amount__c;
                             }
                             system.debug('existingTaxAmount --> ' + existingTaxAmount );
-                            if( isAdjustmentDOne ){
+                            
+                            //incase the amount is already adjusted ( adjustmentAmnt = 0 ), 
+                            //then we will clone the exisitng line item to new credit memo. and later deleting the main line item
+                            if( isAdjustmentDOne ){ 
                                 
                                 Credit_memo_line_item__c newCreditMemoLineItem = new Credit_memo_line_item__c();
                                 newCreditMemoLineItem.Amount__c = objExistingCreditMemoLine.Amount__c;
@@ -191,8 +206,10 @@ public with sharing class RefundCreditMemoController {
                                 listCreditMemoLineItem.add( newCreditMemoLineItem );
                                 listDeleteCreditMemoLineItem.add(objExistingCreditMemoLine);
                                 
-                            }else{
+                            }else{ //if not then we will try to adjust the amount from the line item. adjustmentAmnt > 0
                                 
+                                //if the adjustmentAmnt is greater, then we will reduce the credit line item amount from the adjustmentAmnt.
+                                //				300 >= 100 + 7 
                                 if( adjustmentAmnt >= ( objExistingCreditMemoLine.Amount__c + existingTaxAmount )){
                                     
                                     system.debug('adjustmentAmnt --> ' + adjustmentAmnt );
@@ -201,8 +218,12 @@ public with sharing class RefundCreditMemoController {
                                     system.debug('adjustmentAmnt --> ' + adjustmentAmnt );
                                     
                                 }
+                                //if the adjustmentAmnt is greater, then we will break that credit memo line item amount as per the remaining adjustmentAmnt and the balnce amount of
+                                //credit line item will be used to create the new line item for the new cloned credit memo
+                                //adjustmentAmnt = 200, credit memo line item amount = 300 
                                 else{
                                     
+                                    //incase the adjustmentAmnt = 0 then just clone the credit memo line item
                                     if( adjustmentAmnt == 0 ){
                                         isAdjustmentDOne = true;
                                         Credit_memo_line_item__c newCreditMemoLineItem = new Credit_memo_line_item__c();
@@ -217,16 +238,23 @@ public with sharing class RefundCreditMemoController {
                                         newCreditMemoLineItem.Invoice_Line_Item__c = objExistingCreditMemoLine.Invoice_Line_Item__c;
                                         listCreditMemoLineItem.add( newCreditMemoLineItem );
                                         listDeleteCreditMemoLineItem.add(objExistingCreditMemoLine);
+                                        
                                     }else{
                                         
-                                        Decimal newCreditLineItemAmount = (objExistingCreditMemoLine.Amount__c + existingTaxAmount);
+                                        //#################################################  Existning Line Item amount Adjustment  #########################################################
+                                        //incase the adjustmentAmnt != 0 we will break the amount , ex -> adjustmentAmnt = 200 and credit memo amount = 300 including tax
+                                        //then we will update the existing the credit memo line item total amount as 200 and calculate the tax accordinly so that the total amount is 200.
+                                        //And create the new line item of total amount 100 and then calculate the tax accoringly so that the total amount is 100. 
+                                        
+                                        Decimal newCreditLineItemAmount = (objExistingCreditMemoLine.Amount__c + existingTaxAmount); //calculating the new line item amount
                                         system.debug('newCreditLineItemAmount --> ' + newCreditLineItemAmount );
-                                        newCreditLineItemAmount = newCreditLineItemAmount - adjustmentAmnt;
+                                        newCreditLineItemAmount = newCreditLineItemAmount - adjustmentAmnt;							//removing the user enter amount ex- 200 - 100 = 100 ( new credit memo line item amount )
                                         
                                         system.debug('newCreditLineItemAmount --> ' + newCreditLineItemAmount );
-                                        newCreditLineItemAmount = BillingUtility.roundOffAmount( newCreditLineItemAmount );
+                                        newCreditLineItemAmount = BillingUtility.roundOffAmount( newCreditLineItemAmount );			//rounding it to two decimal places
                                         system.debug('newCreditLineItemAmount --> ' + newCreditLineItemAmount );
                                         
+                                        //now calculating the new tax amount for the exisitng line item aount ex user entered 100, tax = 7%, so the amount = 93 & tax amount = 7
                                         if( objInvoice.Parent_Account__r.Centre_Name__r.Country__r.Tax_Rate__c != Null && objInvoice.Parent_Account__r.Centre_Name__r.Country__r.Tax_Rate__c != 0 ){
                                             
                                             objExistingCreditMemoLine.Tax_Amount__c = (objInvoice.Parent_Account__r.Centre_Name__r.Country__r.Tax_Rate__c/100)*adjustmentAmnt;
@@ -243,8 +271,12 @@ public with sharing class RefundCreditMemoController {
                                         listCreditMemoLineItem.add( objExistingCreditMemoLine );
                                         System.debug('listCreditMemoLineItem --> ' + listCreditMemoLineItem );
                                         adjustmentAmnt = 0;
+                                        
+                                        
+                                        //#################################################  Existning Line Item amount Adjustment  #########################################################
                                         Credit_memo_line_item__c newCreditMemoLineItem = new Credit_memo_line_item__c();
                                         
+                                        //now calculating the new tax amount for the exisitng line item remaining amount was 100, tax = 7%, so the amount = 93 & tax amount = 7
                                         if( objInvoice.Parent_Account__r.Centre_Name__r.Country__r.Tax_Rate__c != Null && objInvoice.Parent_Account__r.Centre_Name__r.Country__r.Tax_Rate__c != 0 ){
                                             
                                             newCreditMemoLineItem.Tax_Amount__c = (objInvoice.Parent_Account__r.Centre_Name__r.Country__r.Tax_Rate__c/100)*newCreditLineItemAmount;
@@ -268,8 +300,9 @@ public with sharing class RefundCreditMemoController {
                                         listCreditMemoLineItem.add( newCreditMemoLineItem );
                                         System.debug('listCreditMemoLineItem --> ' + listCreditMemoLineItem );
                                         System.debug('listCreditMemoLineItem.size() --> ' + listCreditMemoLineItem.size() );
-                                }
-                            }
+                                        
+                                }//end of adjustmentAmnt == 0 else part 
+                            }//end of if adjustment amount <= credit memo line item amount
                             
                         }//end of credit memo line item loop
                     }//end of partial refund case
@@ -288,7 +321,10 @@ public with sharing class RefundCreditMemoController {
             }
         }
             Catch( Exception objExcp ){
-                Database.rollback(objSavePoint);
+                if( objSavePoint != Null ){
+                    Database.rollback(objSavePoint);
+                }
+                
                 message = objExcp.getMessage();
             }
         }//end of objCreditMemoJSON Null check

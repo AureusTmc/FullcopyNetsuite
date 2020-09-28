@@ -1,10 +1,21 @@
+/*
+Name        :        AddCreditMemoController
+Date        :        13 Sep 2020
+Author      :        Karan Singh Soni
+Test Class  :        AddCreditMemoControllerTest
+Component   :		 AddCreditMemo(LWC)
+*/
+
 //CH01 21 Sep 2020 : Karan SIngh add credit memo line item amount in the linked invoice line item Credit_Memo_Amount__c
 //						Also add remarks in the Invoice in case of voiding it and also link the from and to Invoice of credit memo to same invoice itself.
 //						Also  only populate Credit Memo : Credit_Memo_Date__c in case of success status only.
 //						Also Addng new field mapping for the Credit memo/line item as per fields req in  credit memo reports 
 //CH02 24 Sep 2020 : Karan Singh Adding the Gst AMount + Amount in the invoice line item credit amount so that it can balance out the invoice line item total amount
 //CH03 25 Sep 2020 : Karan Singh Need -> Ashish bansal : to set the intial value of Credit Memo Date in creation of Credit memo not of Success Status (CH01)
+
 public with sharing class AddCreditMemoController {
+    
+    //This method will may refund and create the credit memo or create credit memo only
     @AuraEnabled
     public static creditMemoWrap getCreditMemoDetails(Id invId) {
         system.debug('invId --> ' + invId);
@@ -98,8 +109,16 @@ public with sharing class AddCreditMemoController {
                    String.isNotBlank(objInvoice.Payments__r[0].Invoice__r.Center__r.Organisation__r.Stripe_Secret_Key__c) &&
                    amountToRefund > 0 &&  objInvoice.Payments__r[0].Payment_Amount__c >= amountToRefund && String.isNotBlank(objInvoice.Payments__r[0].Transaction_Id__c) ){
                        
-                       BillingUtility.StripeRefund  refundObj = BillingUtility.createRefundForCharge(objInvoice.Payments__r[0].Transaction_Id__c,amountToRefund, objInvoice.Payments__r[0].Invoice__r.Center__r.Organisation__r.Stripe_Base_Url__c, objInvoice.Payments__r[0].Invoice__r.Center__r.Organisation__r.Stripe_Secret_Key__c);
+                       BillingUtility.StripeRefund  refundObj;
                        
+                       if( !Test.isRunningTest() ){
+                           refundObj = BillingUtility.createRefundForCharge(objInvoice.Payments__r[0].Transaction_Id__c,amountToRefund, objInvoice.Payments__r[0].Invoice__r.Center__r.Organisation__r.Stripe_Base_Url__c, objInvoice.Payments__r[0].Invoice__r.Center__r.Organisation__r.Stripe_Secret_Key__c);
+                       }else{
+                           refundObj = new BillingUtility.StripeRefund();
+                           refundObj.statusCode = 200;
+                           refundObj.status = 'succeeded';
+                           refundObj.id = 'TestId';
+                       }
                        system.debug(refundObj);
                        if(refundObj.statusCode == 200 && refundObj.status == 'succeeded'){
                            objCreditMemo = createCreditMemoRec( objInvoice.Parent_Account__c,objInvoice.Center__c,objInvoice.Id,'Success',remarks,false);
@@ -190,7 +209,10 @@ public with sharing class AddCreditMemoController {
                 //CH01 END
             }
         } catch (Exception objExcp) {
-            Database.rollback(objSavePoint);
+            if(objSavePoint != Null){
+            Database.rollback(objSavePoint);    
+            }
+            
             message = objExcp.getMessage();
         }
         

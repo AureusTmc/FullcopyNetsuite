@@ -1832,7 +1832,13 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
             }
             else{
                 resp.setStatusCode( 200 );
-                resp.setBody( '[{"serialNumber": "123","item": "1234","location": "Test Location","status": "New","inventoryType": "Piano","monthlyRental": "62","listPrice": "66.66","model": "123","productId": "Serialized Item001","brand": "xyz"}]' );
+                if( methodName == 'pushDataToNetsuite() :  Convert Item to Fixed Asset' ){
+                    
+                    resp.setBody( '{"error" : {"code" : "INVALID_LOGIN_ATTEMPT", "message" : "Invalid login attempt."}}' );
+                }else{
+                    resp.setBody( '[{"serialNumber": "123","item": "1234","location": "Test Location","status": "New","inventoryType": "Piano","monthlyRental": "62","listPrice": "66.66","model": "123","productId": "Serialized Item001","brand": "xyz"}]' );
+                }
+                
             }
             /*system.debug('resp->> ' + resp);system.debug('resp->> ' + resp.getBody());system.debug('resp->> ' + req);system.debug('req.getBody->> ' + req.getBody());system.debug('req.getEndpoint->> ' + req.getEndpoint());system.debug('req.getHeader->> ' + req.getHeader('Authorization'));system.debug('req.getHeader->> ' + req.getHeader('Content-Type'));system.debug('req.getMethod->> ' + req.getMethod());*/
             
