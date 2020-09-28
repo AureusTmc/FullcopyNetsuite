@@ -9,11 +9,24 @@ public class RescheduleForAllFutureBookingsTest {
         
         
         Country__c country = AureusCalendarControllerTestHelper.createCountryRecord ('Singapore','SGD',true);
-        Organisation__c org = new Organisation__c(Country__c = country.Id);
-        INSERT org;
+       // Organisation__c org = new Organisation__c(Country__c = country.Id);
+        //INSERT org;
+        //updated by @nishi 15 sep 2020
+       
+      	Organisation__c organisationRecord = new Organisation__c();
+        organisationRecord.Name = 'Aureus Academy Singapore';
+        organisationRecord.Bank_Account_Number__c = '1123456789';
+        organisationRecord.Branch_Code__c = 'test';
+        organisationRecord.Country__c = country.id;
+        organisationRecord.Stripe_Base_Url__c = 'www.test.com';
+        organisationRecord.Stripe_Publishable_Key__c = 'ABC';
+        organisationRecord.Stripe_Secret_Key__c = 'test_key';
+        organisationRecord.Sage_Company__c = 'AGP';
+        Insert organisationRecord;
         
         Account objCentr = AureusCalendarControllerTestHelper.createCentre('Aureus Northpoint', country.Id,FALSE);
-        objCentr.Organisation__c = org.Id;
+        objCentr.Organisation__c = organisationRecord.Id;
+        //objCentr.Organisation_Sharing__c ='Aureus Academy Singapore';
         insert objCentr;
         
         Account objTeachr=testUtil.createAccount('Teacher',false,False);
@@ -34,10 +47,10 @@ public class RescheduleForAllFutureBookingsTest {
         
         List<Public_Holiday__c> holidayList = new List<Public_Holiday__c>();
         Public_Holiday__c holiday = new Public_Holiday__c(Country__c = country.Id, Execution_Date__c = System.today(), Organisation_Status__c = 'Closed',
-                                                          Public_Holiday_Date__c = System.today().addDays(21), Status__c = 'Execution completed', Organisation__c = org.Id);
+                                                          Public_Holiday_Date__c = System.today().addDays(21), Status__c = 'Execution completed', Organisation__c = organisationRecord.Id);
         holidayList.add( holiday);
         Public_Holiday__c holiday2 = new Public_Holiday__c(Country__c = country.Id, Execution_Date__c = date.newInstance(System.today().year(), System.today().month(),date.daysInMonth(System.today().year(), System.today().month())), Organisation_Status__c = 'Closed',
-                                                           Public_Holiday_Date__c = date.newInstance(System.today().year(), System.today().month(),date.daysInMonth(System.today().year(), System.today().month())), Status__c = 'Execution completed', Organisation__c = org.Id);
+                                                           Public_Holiday_Date__c = date.newInstance(System.today().year(), System.today().month(),date.daysInMonth(System.today().year(), System.today().month())), Status__c = 'Execution completed', Organisation__c = organisationRecord.Id);
         holidayList.add( holiday2);
         insert holidayList;
         
@@ -129,7 +142,7 @@ public class RescheduleForAllFutureBookingsTest {
                      Next_Lesson_Start_time__c,new_package_Id__c,New_Teacher__c,new_package_Id__r.Duration__c,
                      New_Teacher__r.id,New_Teacher__r.Employee_Duty_Type__c,Package__c, Package__r.Duration__c,Parent__c, Center__r.Country__r.Tax_Rate__c, Center__r.Country__r.Currency_Code__c, 
                      Center__r.Country__r.Stripe_Secret_Key__c, Center__r.Country__r.Stripe_Base_Url__c,Center__r.Country__r.Id, 
-                     Center__r.Organisation__c, (Select Id, Next_Bill_Date__c, Subscription__r.Parent__r.Stripe_Customer_Id__c,
+                     Center__r.Organisation__r.Name, (Select Id, Next_Bill_Date__c, Subscription__r.Parent__r.Stripe_Customer_Id__c,
                                                  Subscription__c, Subscription__r.Center__c, Enrolment__c, Enrolment__r.Center__r.Country__r.Tax_Rate__c FROM Subscription_Line_Items__r) 
                      FROM Enrolment__c WHERE Id =: objENrol.id];
         RescheduleForAllFutureBookings obj = new RescheduleForAllFutureBookings(FALSE, objENrol, System.today(), System.today());
@@ -145,11 +158,24 @@ public class RescheduleForAllFutureBookingsTest {
         
         
         Country__c country = AureusCalendarControllerTestHelper.createCountryRecord ('Singapore','SGD',true);
-        Organisation__c org = new Organisation__c(Country__c = country.Id);
-        INSERT org;
+       /* Organisation__c org = new Organisation__c(Country__c = country.Id);
+        INSERT org;*/
+        
+         //updated by @nishi 15 sep 2020
+      	Organisation__c organisationRecord = new Organisation__c();
+        organisationRecord.Name = 'Aureus Academy Singapore';
+        organisationRecord.Bank_Account_Number__c = '1123456789';
+        organisationRecord.Branch_Code__c = 'test';
+        organisationRecord.Country__c = country.id;
+        organisationRecord.Stripe_Base_Url__c = 'www.test.com';
+        organisationRecord.Stripe_Publishable_Key__c = 'ABC';
+        organisationRecord.Stripe_Secret_Key__c = 'test_key';
+        organisationRecord.Sage_Company__c = 'AGP';
+        Insert organisationRecord;
+        
         
         Account objCentr = AureusCalendarControllerTestHelper.createCentre('Aureus Northpoint', country.Id,FALSE);
-        objCentr.Organisation__c = org.Id;
+        objCentr.Organisation__c = organisationRecord.Id;
         insert objCentr;
         
         Account objTeachr=testUtil.createAccount('Teacher',false,False);
@@ -170,10 +196,10 @@ public class RescheduleForAllFutureBookingsTest {
         
         List<Public_Holiday__c> holidayList = new List<Public_Holiday__c>();
         Public_Holiday__c holiday = new Public_Holiday__c(Country__c = country.Id, Execution_Date__c = System.today(), Organisation_Status__c = 'Closed',
-                                                          Public_Holiday_Date__c = System.today().addDays(21), Status__c = 'Execution completed', Organisation__c = org.Id);
+                                                          Public_Holiday_Date__c = System.today().addDays(21), Status__c = 'Execution completed', Organisation__c = organisationRecord.Id);
         holidayList.add( holiday);
         Public_Holiday__c holiday2 = new Public_Holiday__c(Country__c = country.Id, Execution_Date__c = date.newInstance(System.today().year(), System.today().month(),date.daysInMonth(System.today().year(), System.today().month())), Organisation_Status__c = 'Closed',
-                                                           Public_Holiday_Date__c = date.newInstance(System.today().year(), System.today().month(),date.daysInMonth(System.today().year(), System.today().month())), Status__c = 'Execution completed', Organisation__c = org.Id);
+                                                           Public_Holiday_Date__c = date.newInstance(System.today().year(), System.today().month(),date.daysInMonth(System.today().year(), System.today().month())), Status__c = 'Execution completed', Organisation__c = organisationRecord.Id);
         holidayList.add( holiday2);
         insert holidayList;
         
@@ -265,7 +291,7 @@ public class RescheduleForAllFutureBookingsTest {
                      Next_Lesson_Start_time__c,new_package_Id__c,New_Teacher__c,new_package_Id__r.Duration__c,
                      New_Teacher__r.id,New_Teacher__r.Employee_Duty_Type__c,Package__c, Package__r.Duration__c,Parent__c, Center__r.Country__r.Tax_Rate__c, Center__r.Country__r.Currency_Code__c, 
                      Center__r.Country__r.Stripe_Secret_Key__c, Center__r.Country__r.Stripe_Base_Url__c,Center__r.Country__r.Id, 
-                     Center__r.Organisation__c, (Select Id, Next_Bill_Date__c, Subscription__r.Parent__r.Stripe_Customer_Id__c,
+                     Center__r.Organisation__r.Name, (Select Id, Next_Bill_Date__c, Subscription__r.Parent__r.Stripe_Customer_Id__c,
                                                  Subscription__c, Subscription__r.Center__c, Enrolment__c, Enrolment__r.Center__r.Country__r.Tax_Rate__c FROM Subscription_Line_Items__r) 
                      FROM Enrolment__c WHERE Id =: objENrol.id];
         RescheduleForAllFutureBookings objw = new RescheduleForAllFutureBookings(TRUE, objENrol, System.today(), System.today());

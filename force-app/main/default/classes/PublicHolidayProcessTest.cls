@@ -22,18 +22,31 @@ public class PublicHolidayProcessTest {
         cntry.Stripe_Secret_Key__c ='sk_test_M3pk8qvbMs03SWjDuf6m1bss';
         insert cntry;
         
-        Organisation__c org = new Organisation__c(Name='Test',Country__c=cntry.Id);
-        insert org;
+       /* Organisation__c org = new Organisation__c(Name='Test',Country__c=cntry.Id);
+        insert org;*/
+         // update 21 09 2020 @nishi jain 
+        
+        Organisation__c organisationRecord = new Organisation__c();
+        organisationRecord.Name = 'Aureus Academy Singapore';
+        organisationRecord.Bank_Account_Number__c = '1123456789';
+        organisationRecord.Branch_Code__c = 'test';
+        organisationRecord.Country__c = cntry.id;
+        organisationRecord.Stripe_Base_Url__c = 'www.test.com';
+        organisationRecord.Stripe_Publishable_Key__c = 'ABC';
+        organisationRecord.Stripe_Secret_Key__c = 'test_key';
+        organisationRecord.Sage_Company__c = 'AGP';
+        Insert organisationRecord;
+
         
         Public_Holiday__c pubholObj= new Public_Holiday__c(Name='Test',Organisation_Status__c='Closed',Public_Holiday_Date__c=system.today().addDays(7),
-                                                  Execution_Date__c=system.today(),Status__c='Pending for execution',Country__c=cntry.Id,Organisation__c=org.Id);
+                                                  Execution_Date__c=system.today(),Status__c='Pending for execution',Country__c=cntry.Id,Organisation__c=organisationRecord.Id);
         insert pubholObj;
         
         Account objCustmr=TestUtil.createAccount('Customer',True,True);
         Account objCentr=TestUtil.createAccount('Centre',False,false);
          objCentr.name='Aureus Forum';
         objCentr.Country__c =cntry.Id;
-        objCentr.Organisation__c=org.Id;
+        objCentr.Organisation__c=organisationRecord.Id;
         objCentr.Location__c='Aureus Forum';
         insert objCentr;
         
@@ -95,18 +108,31 @@ public class PublicHolidayProcessTest {
         cntry.Stripe_Secret_Key__c ='sk_test_M3pk8qvbMs03SWjDuf6m1bss';
         insert cntry;
         
-        Organisation__c org = new Organisation__c(Name='Test',Country__c=cntry.Id);
-        insert org;
+       /* Organisation__c org = new Organisation__c(Name='Test',Country__c=cntry.Id);
+        insert org;*/
+        
+        // update 21 09 2020 @nishi jain 
+        // 
+        Organisation__c organisationRecord = new Organisation__c();
+        organisationRecord.Name = 'Aureus Academy Singapore';
+        organisationRecord.Bank_Account_Number__c = '1123456789';
+        organisationRecord.Branch_Code__c = 'test';
+        organisationRecord.Country__c = cntry.id;
+        organisationRecord.Stripe_Base_Url__c = 'www.test.com';
+        organisationRecord.Stripe_Publishable_Key__c = 'ABC';
+        organisationRecord.Stripe_Secret_Key__c = 'test_key';
+        organisationRecord.Sage_Company__c = 'AGP';
+        Insert organisationRecord;
         
         Public_Holiday__c pubholObj= new Public_Holiday__c(Name='Test',Organisation_Status__c='Open',Public_Holiday_Date__c=system.today().addDays(7),
-                                                  Execution_Date__c=system.today(),Status__c='Pending for execution',Country__c=cntry.Id,Organisation__c=org.Id);
+                                                  Execution_Date__c=system.today(),Status__c='Pending for execution',Country__c=cntry.Id,Organisation__c=organisationRecord.Id);
         insert pubholObj;
         
         Account objCustmr=TestUtil.createAccount('Customer',True,True);
         Account objCentr=TestUtil.createAccount('Centre',False,false);
         objCentr.name='Aureus Forum';
         objCentr.Country__c =cntry.Id;
-        objCentr.Organisation__c=org.Id;
+        objCentr.Organisation__c=organisationRecord.Id;
         objCentr.Location__c='Aureus Forum';
         insert objCentr;
         

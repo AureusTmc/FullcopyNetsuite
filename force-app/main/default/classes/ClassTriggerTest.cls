@@ -8,7 +8,7 @@ Description :        It is the test class of ClassTrigger and ClassTriggerHelper
 public class ClassTriggerTest {
     @testSetup 
     Private static void createData(){
-        ClassEditControllerTestHelper.createGroupClassData();
+        ClassEditControllerTestHelper.createGroupClassData1();
     }  
     Private Static TestMethod void test_fetchGroupLessonBookingDetails(){
         LIst<Package__c> listOfPackage =  [select id,Program__c from package__C ];

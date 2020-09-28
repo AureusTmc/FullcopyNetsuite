@@ -171,7 +171,7 @@ public class CampStudentEnrolSummaryCtrlTest {
         CampStudentEnrolSummaryCtrl objCampStudentEnrolSummaryCtrl = new CampStudentEnrolSummaryCtrl();
         objCampStudentEnrolSummaryCtrl.accountModalDetails =objController.accountModalDetails;
         objCampStudentEnrolSummaryCtrl.getEnrolStudentDetails();
-        objCampStudentEnrolSummaryCtrl.createParentDetails();
+        //objCampStudentEnrolSummaryCtrl.createParentDetails();
         
         test.startTest();
         objCampStudentEnrolSummaryCtrl.stripeToken='sk_test_BQokikJOvBiI2HlWgH4olfQ2';

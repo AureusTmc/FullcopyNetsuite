@@ -1,8 +1,9 @@
 @isTest
-public class RescheduleAllBookingsTest {
+private class RescheduleAllCenterBookingsTest {
     @isTest
-    public static void invokeAureusCalendarController(){
-        Firebase_Settings__c objSetting = new Firebase_Settings__c();
+    private static void UnitTest(){
+        
+         Firebase_Settings__c objSetting = new Firebase_Settings__c();
         objSetting.Name = 'setting';
         objSetting.Enable_Notifications__c = false;
         insert objSetting;
@@ -46,7 +47,7 @@ public class RescheduleAllBookingsTest {
         objTeachr.Employee_Duty_Type__c = 'Duty';
         insert objTeachr;
         
-        Leave_Request__c request = new Leave_Request__c(Employee__c = objTeachr.Id, Leave_End_Date__c = System.today().addDays(14), 
+          Leave_Request__c request = new Leave_Request__c(Employee__c = objTeachr.Id, Leave_End_Date__c = System.today().addDays(14), 
                                                         Leave_Start_Date__c = System.today().addDays(14), Leave_Type__c = 'Teacher MC',
                                                         Status__c = 'Approved');
         INSERT request;
@@ -58,10 +59,7 @@ public class RescheduleAllBookingsTest {
         objCustmr.personEmail = 'test@tmc.com';
         objCustmr.Stripe_Customer_Id__c='ch_1AxWbTFytruJp2FXW6iuRd1X';
         INSERT objCustmr; 
-        
-        //Account objCustmr1=TestUtil.createAccount('Customer',True,True);
-        
-        
+         
         Program__C objProg=TestUtil.createProgram('Active','Piano',true);
         Package__c objPack=testUtil.createPackage(objProg.id,objCentr.id,'45',true); 
         Enrolment__c objENrol=TestUtil.createEnrolment(objCentr.Id,objTeachr.Id,objCustmr.Id,objPack.id,true);
@@ -162,24 +160,20 @@ public class RescheduleAllBookingsTest {
         objENrol.New_Teacher__c = objTeachr.Id;
         objENrol.new_package_Id__c = objPack.id;
         update objENrol;
-        objENrol =  [SELECT Id,name, Effective_Date__c, Lesson_Day__c, Teacher__c, Teacher__r.Employee_Duty_Type__c, 
+        
+         objENrol =  [SELECT Id,name, Effective_Date__c, Lesson_Day__c, Teacher__c, Teacher__r.Employee_Duty_Type__c, 
                      Center__c, Student__c, Student__r.Name, Lesson_Start_time__c, package__r.unit_fee__c,
                      Next_Lesson_Start_time__c,new_package_Id__c,New_Teacher__c,new_package_Id__r.Duration__c,
                      New_Teacher__r.id,New_Teacher__r.Employee_Duty_Type__c,Package__c, Package__r.Duration__c,Parent__c, Center__r.Country__r.Tax_Rate__c, Center__r.Country__r.Currency_Code__c, 
                      Center__r.Country__r.Stripe_Secret_Key__c, Center__r.Country__r.Stripe_Base_Url__c,Center__r.Country__r.Id, 
-                     Center__r.Organisation__r.name, (Select Id, Next_Bill_Date__c, Subscription__r.Parent__r.Stripe_Customer_Id__c,
+                     Center__r.Organisation__r.name,New_Centre__r.Name, (Select Id, Next_Bill_Date__c, Subscription__r.Parent__r.Stripe_Customer_Id__c,
                                                       Subscription__c, Subscription__r.Center__c, Enrolment__c, Enrolment__r.Center__r.Country__r.Tax_Rate__c FROM Subscription_Line_Items__r) 
                      FROM Enrolment__c WHERE Id =: objENrol.id];
-        RescheduleAllBookings obj = new RescheduleAllBookings(FALSE, objENrol, System.today(), System.today().addMonths(12));
-        objENrol =  [SELECT Id,name, Effective_Date__c, Lesson_Day__c, Teacher__c, Teacher__r.Employee_Duty_Type__c, 
-                     Center__c, Student__c, Student__r.Name, Lesson_Start_time__c, package__r.unit_fee__c,
-                     Next_Lesson_Start_time__c,new_package_Id__c,New_Teacher__c,new_package_Id__r.Duration__c,
-                     New_Teacher__r.id,New_Teacher__r.Employee_Duty_Type__c,Package__c, Package__r.Duration__c,Parent__c, Center__r.Country__r.Tax_Rate__c, Center__r.Country__r.Currency_Code__c, 
-                     Center__r.Country__r.Stripe_Secret_Key__c, Center__r.Country__r.Stripe_Base_Url__c,Center__r.Country__r.Id, 
-                     Center__r.Organisation__r.Name, (Select Id, Next_Bill_Date__c, Subscription__r.Parent__r.Stripe_Customer_Id__c,
-                                                      Subscription__c, Subscription__r.Center__c, Enrolment__c, Enrolment__r.Center__r.Country__r.Tax_Rate__c FROM Subscription_Line_Items__r) 
-                     FROM Enrolment__c WHERE Id =: objENrol.id];
-        RescheduleAllBookings objw = new RescheduleAllBookings(TRUE, objENrol, System.today(), System.today().addMonths(12));
-        objw.createPlaceholderBookingFromFifthLesson(Fifth_LessonList);
+       	 RescheduleAllCenterBookings obj = new RescheduleAllCenterBookings( objENrol, System.today());
+          obj.createPlaceholderBookingFromFifthLesson(Fifth_LessonList);
+        
+        
+        
     }
+
 }

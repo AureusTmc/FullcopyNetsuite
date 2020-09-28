@@ -18,6 +18,18 @@ public class MonthlyPaymentBatchTest{
         country.Stripe_Publishable_Key__c = 'ABC';
         country.Stripe_Secret_Key__c = 'deede';
         insert country;
+         /**added by nishi: 25-Sep-2020: for added organisation*/
+        // create organisation
+        Organisation__c organisationRecord = new Organisation__c();
+        organisationRecord.Name = 'Aureus Academy Singapore';
+        organisationRecord.Bank_Account_Number__c = '1123456789';
+        organisationRecord.Branch_Code__c = 'test';
+        organisationRecord.Country__c = country.id;
+        organisationRecord.Stripe_Base_Url__c = 'www.test.com';
+        organisationRecord.Stripe_Publishable_Key__c = 'ABC';
+        organisationRecord.Stripe_Secret_Key__c = 'test_key';
+        organisationRecord.Sage_Company__c = 'AGP';
+        Insert organisationRecord;  
         
         String CRON_EXP = '0 0 0 15 3 ? *';
         Account objCustmr=TestUtil.createAccount('Customer',True,False);
@@ -26,6 +38,10 @@ public class MonthlyPaymentBatchTest{
         
         Account objCentr=TestUtil.createAccount('Centre',false,FALSE);
         objCentr.Country__c = country.Id;
+          //added by @nishi 25 sep 2020
+        objCentr.Organisation__c = organisationRecord.id;
+        objCentr.Organisation_Sharing__c ='Aureus Academy Singapore';
+        //added by @nishi 25 sep 2020
         INSERT objCentr;
         
         Account objTchr=TestUtil.createAccount('Teacher',false,true);
@@ -77,7 +93,18 @@ public class MonthlyPaymentBatchTest{
         country.Stripe_Publishable_Key__c = 'ABC';
         country.Stripe_Secret_Key__c = 'deede';
         insert country;
-        
+            /**added by nishi: 25-Sep-2020: for added organisation*/
+        // create organisation
+        Organisation__c organisationRecord = new Organisation__c();
+        organisationRecord.Name = 'Aureus Academy Singapore';
+        organisationRecord.Bank_Account_Number__c = '1123456789';
+        organisationRecord.Branch_Code__c = 'test';
+        organisationRecord.Country__c = country.id;
+        organisationRecord.Stripe_Base_Url__c = 'www.test.com';
+        organisationRecord.Stripe_Publishable_Key__c = 'ABC';
+        organisationRecord.Stripe_Secret_Key__c = 'test_key';
+        organisationRecord.Sage_Company__c = 'AGP';
+        Insert organisationRecord;  
         String CRON_EXP = '0 0 0 15 3 ? *';
         Account objCustmr=TestUtil.createAccount('Customer',True,False);
         objCustmr.Stripe_Customer_Id__c='ch_1AxWbTFytruJp2FXW6iuRd1X';
@@ -85,6 +112,11 @@ public class MonthlyPaymentBatchTest{
         
         Account objCentr=TestUtil.createAccount('Centre',false,FALSE);
         objCentr.Country__c = country.Id;
+          //added by @nishi 25 sep 2020
+        objCentr.Organisation__c = organisationRecord.id;
+        objCentr.Organisation_Sharing__c ='Aureus Academy Singapore';
+        //added by @nishi 25 sep 2020
+
         INSERT objCentr;
         
         Account objTchr=TestUtil.createAccount('Teacher',false,true);
@@ -152,7 +184,18 @@ public class MonthlyPaymentBatchTest{
         country.Stripe_Publishable_Key__c = 'ABC';
         country.Stripe_Secret_Key__c = 'deede';
         insert country;
-        
+            /**added by nishi: 25-Sep-2020: for added organisation*/
+        // create organisation
+        Organisation__c organisationRecord = new Organisation__c();
+        organisationRecord.Name = 'Aureus Academy Singapore';
+        organisationRecord.Bank_Account_Number__c = '1123456789';
+        organisationRecord.Branch_Code__c = 'test';
+        organisationRecord.Country__c = country.id;
+        organisationRecord.Stripe_Base_Url__c = 'www.test.com';
+        organisationRecord.Stripe_Publishable_Key__c = 'ABC';
+        organisationRecord.Stripe_Secret_Key__c = 'test_key';
+        organisationRecord.Sage_Company__c = 'AGP';
+        Insert organisationRecord;  
         String CRON_EXP = '0 0 0 15 3 ? *';
         Account objCustmr=TestUtil.createAccount('Customer',True,False);
         objCustmr.Stripe_Customer_Id__c='ch_1AxWbTFytruJp2FXW6iuRd';
@@ -160,6 +203,11 @@ public class MonthlyPaymentBatchTest{
         
         Account objCentr=TestUtil.createAccount('Centre',false,FALSE);
         objCentr.Country__c = country.Id;
+           //added by @nishi 25 sep 2020
+        objCentr.Organisation__c = organisationRecord.id;
+        objCentr.Organisation_Sharing__c ='Aureus Academy Singapore';
+        //added by @nishi 25 sep 2020
+
         INSERT objCentr;
         
         Account objTchr=TestUtil.createAccount('Teacher',false,true);

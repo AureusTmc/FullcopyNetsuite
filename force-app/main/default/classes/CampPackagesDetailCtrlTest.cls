@@ -14,7 +14,7 @@ public class CampPackagesDetailCtrlTest {
     }
     private static testMethod  void testCampPackage(){
         CampPackagesDetailCtrl objController = new CampPackagesDetailCtrl();
-        list<Camp__c> lstCamps = [SELECT Id, Maximum_Age__c, Minimum_Age__c, Name FROM Camp__c limit 2];
+        list<Camp__c> lstCamps = [SELECT Id, Maximum_Age__c, Minimum_Age__c, Name FROM Camp__c where Status__c='Active' limit 2];
         objController.campId = lstCamps[0].id;
         objController.stuPreExperience = '';
         objController.birthDate = '';
