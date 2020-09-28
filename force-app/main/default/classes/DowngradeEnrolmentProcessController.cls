@@ -239,13 +239,13 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                     if(string.isBlank(newTeacherId)){
                         newTeacherId = objEnrol.Teacher__c;
                     }
-       system.debug('nextMonthAmount'+nextMonthAmount);
-       system.debug('positiveNextMonthInvoiceAmount'+positiveNextMonthInvoiceAmount);
-       system.debug('negativeNextMonthInvoiceAmount'+negativeNextMonthInvoiceAmount);
-       system.debug('negativeInvoiceAmount'+negativeInvoiceAmount);
-       system.debug('positiveInvoiceAmount'+positiveInvoiceAmount);
-       system.debug('lessonsAmt'+lessonsAmt);
-       system.debug('depositAmount'+depositAmount);
+      //System.debug('nextMonthAmount'+nextMonthAmount);
+      //System.debug('positiveNextMonthInvoiceAmount'+positiveNextMonthInvoiceAmount);
+      //System.debug('negativeNextMonthInvoiceAmount'+negativeNextMonthInvoiceAmount);
+      //System.debug('negativeInvoiceAmount'+negativeInvoiceAmount);
+      //System.debug('positiveInvoiceAmount'+positiveInvoiceAmount);
+      //System.debug('lessonsAmt'+lessonsAmt);
+      //System.debug('depositAmount'+depositAmount);
         if(depositAmount > 0){
             depositAmount = BillingUtility.roundOffAmount(depositAmount);
         }
@@ -397,8 +397,8 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                      negativeNextMonthInvoiceAmountGST  = (BillingUtility.roundOffAmount(negativeNextMonthInvoiceAmount) * gstAmount) /100;
                    }
                     //Line Item for positive amount
-                   system.debug('@positiveFacilityInvoiceAmountGST'+positiveFacilityInvoiceAmountGST);
-                   system.debug('@negativeFacilityInvoiceAmountGST'+negativeFacilityInvoiceAmountGST);
+                  //System.debug('@positiveFacilityInvoiceAmountGST'+positiveFacilityInvoiceAmountGST);
+                  //System.debug('@negativeFacilityInvoiceAmountGST'+negativeFacilityInvoiceAmountGST);
                     invoiceLineItems.add(new Invoice_Line_Item__c(Invoice__c = objInvoice.id,Amount__c = BillingUtility.roundOffAmount(positiveNextMonthInvoiceAmount), 
                                         GST_Amount__c = positiveNextMonthInvoiceAmountGST,
                                         Teacher_Id__c = newTeacherId,Package__c=newPackId,Month__c= nextMonthDate.addMonths(-1), 
@@ -432,7 +432,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                 if(nextMonthAmount  != null && nextMonthAmount != 0){
                     lessonsAmt+=nextMonthAmount;
                 }
-                system.debug('lessonsAmt'+lessonsAmt);
+               //System.debug('lessonsAmt'+lessonsAmt);
                  //end: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
                 listOfPayments.add(new Payment__c(RecordTypeId = payAsCredit, Payment_Amount__c = BillingUtility.roundOffAmount(lessonsAmt), Payment_Status__c = ConstantsClass.paymentPendingStatus,
                                                   
@@ -446,7 +446,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                 }if( math.abs(BillingUtility.roundOffAmount(negativeInvoiceAmount)) > BillingUtility.roundOffAmount(positiveInvoiceAmount)){
                     balancedInvoice =  math.abs(BillingUtility.roundOffAmount(negativeInvoiceAmount)) - BillingUtility.roundOffAmount(positiveInvoiceAmount);
                 }
-               system.debug('@@@balancedInvoice'+balancedInvoice);
+              //System.debug('@@@balancedInvoice'+balancedInvoice);
                // start:added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
                 if(positiveNextMonthInvoiceAmount != NULL && positiveNextMonthInvoiceAmount != 0 && negativeNextMonthInvoiceAmount != NULL && negativeNextMonthInvoiceAmount != 0){
                         if(BillingUtility.roundOffAmount(positiveNextMonthInvoiceAmount) > math.abs(BillingUtility.roundOffAmount(negativeNextMonthInvoiceAmount))){
@@ -465,7 +465,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
             //         }
             //     }
                  //end: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
-               system.debug('@@@balancedInvoice'+balancedInvoice);
+              //System.debug('@@@balancedInvoice'+balancedInvoice);
                 if(balancedInvoice != NULL && balancedInvoice != 0){
                     if(balancedInvoice != NULL  && balancedInvoice != 0 && gstAmount > 0){
                         balancedInvoiceGST  = (BillingUtility.roundOffAmount(balancedInvoice) * gstAmount) /100;
@@ -487,13 +487,13 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
         if(invoiceLineItems.size() > 0){
             insert invoiceLineItems;
         }
-       system.debug('@@@invoiceLineItems'+invoiceLineItems);
+      //System.debug('@@@invoiceLineItems'+invoiceLineItems);
        
         if(String.isNotBlank(objInvoice.id) && isTransaction){
             SageIntacctIntegrationUtility.changeEnrolment(objInvoice.Id);
             BillingUtility.createAttachment(new Set<String> {objInvoice.id});
         }  
-        system.debug('@@@listOfPayments'+listOfPayments);
+       //System.debug('@@@listOfPayments'+listOfPayments);
         if(listOfPayments.size() > 0){
             insert listOfPayments;
         }

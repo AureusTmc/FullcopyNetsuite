@@ -97,7 +97,7 @@ public without sharing class UpgradeEnrolmentProcessController implements IAdvan
                 
                 if(String.isNotBlank(enrolmentObj.Id)){
                     Database.SaveResult saveResult = Database.Update(enrolmentObj, false);
-                    system.debug('saveResult'+saveResult);
+                   //System.debug('saveResult'+saveResult);
                     if(!saveResult.isSuccess()){
                         isSuccess = false;
                     }
@@ -109,11 +109,11 @@ public without sharing class UpgradeEnrolmentProcessController implements IAdvan
         if(String.isNotBlank(enrolmentObj.Id) && upgradeDetails.isSuccess){
             AdvanceActionsHelper.processFutureBookings(enrolmentObj, 'upgrade');
             setOfBookings = AdvanceActionsHelper.processFutureFifthLessons(enrolmentObj, 'upgrade');
-            system.debug('setOfBookings'+setOfBookings);
+           //System.debug('setOfBookings'+setOfBookings);
             for(Booking__c bookingObj : AdvanceActionsHelper.fetchAllBooking(setOfBookings)){
                 mapOfMakeupBooking.put(bookingObj.Id, bookingObj);
             }
-            system.debug('mapOfMakeupBooking'+mapOfMakeupBooking);
+           //System.debug('mapOfMakeupBooking'+mapOfMakeupBooking);
         }
         
         Integer timeDiff = 0;
@@ -121,7 +121,7 @@ public without sharing class UpgradeEnrolmentProcessController implements IAdvan
             if(String.isNotBlank(oldPackage) && String.isNotBlank(newPackage)){
                 AdvanceActionsHelper.UpgradeDowngradePackageSummary summary = AdvanceActionsHelper.getPackageDetailsUpgradeDowngrade(oldPackage, newPackage);
                 timeDiff = Integer.valueOf(summary.newDuration) - Integer.valueOf(summary.oldDuration);   
-                system.debug('enrolmentObj.Center__r.Organisation__r.Name'+enrolmentObj.Center__r.Organisation__r.Name);
+               //System.debug('enrolmentObj.Center__r.Organisation__r.Name'+enrolmentObj.Center__r.Organisation__r.Name);
                 //Start-added by nishi: 12-aug-2020: for if enrolment center is ossia then we get makeup mins  to enolment other wise parent makeup min we get
                 if(String.isNotBlank(enrolmentObj.Center__c) && String.isNotBlank(enrolmentObj.Center__r.Organisation__c) && String.isNotBlank(enrolmentObj.Center__r.Organisation__r.Name) && 
                 enrolmentObj.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
@@ -173,7 +173,7 @@ public without sharing class UpgradeEnrolmentProcessController implements IAdvan
             upsert objCase;
             caseIdToReturn = objCase.Id;
         }
-        system.debug('upgradeDetails'+upgradeDetails);
+       //System.debug('upgradeDetails'+upgradeDetails);
         if(!upgradeDetails.isSuccess)
             caseIdToReturn = 'error';
         return caseIdToReturn;
@@ -215,7 +215,7 @@ public without sharing class UpgradeEnrolmentProcessController implements IAdvan
         oldPackage = summary.oldPackage; 
         
         if(String.isNotBlank(enrolmentObj.Id)){
-            system.debug('##currentPackageDeposit'+currentPackageDeposit);
+           //System.debug('##currentPackageDeposit'+currentPackageDeposit);
             currentPackageDeposit = AdvanceActionsHelper.getDepositFromFile(enrolmentObj.Id);
         }
         
@@ -240,7 +240,7 @@ public without sharing class UpgradeEnrolmentProcessController implements IAdvan
            BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId, depositeFee, organisationObj.country__r.Currency_Code__c, 
                                                             organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c); 
             
-            System.debug('@@@chargeResponse'+chargeResponse);
+           //System.debug('@@@chargeResponse'+chargeResponse);
             if(chargeResponse.statusCode == 200 && chargeResponse.paid){                
                 isSuccess = true;
                 Invoice__c objInvoice = BillingUtility.fillInvoice(enrolmentObj.Subscription_Line_Items__r[0].Subscription__c, parentId, constantsClass.paidStatus);

@@ -184,7 +184,7 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
                                                     And Subscription__c =:subs.id]){
                     activeSubLineItemMap.put(sublineItem.Subscription__c, sublineItem);
         }
-        system.debug('subs'+subs);
+       //System.debug('subs'+subs);
         if(!activeSubLineItemMap.containsKey(subs.id)){
          
             //Filling subscription line item billing date for the enrolment
@@ -202,7 +202,7 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
             existingsubLItm.Subscription_Expiry_Date__c = lastdateofCurrentMonth.addDays(-1);
             existingsubLItm.Status__c = ConstantsClass.statusInActive;
             subLinItmList.add(existingsubLItm);
-            system.debug('subLinItmList'+subLinItmList);
+           //System.debug('subLinItmList'+subLinItmList);
             upsert subLinItmList;
             //return fetchEnrolment(enrolmentObj.id);
         }
@@ -234,15 +234,15 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
         AdvanceActionsHelper.UpgradeDowngradePackageSummary summary = AdvanceActionsHelper.getPackageDetailsUpgradeDowngrade(oldPackageId, newPackageId);
         newPackage = summary.newPackage;
         oldPackage = summary.oldPackage; 
-        system.debug('##summary'+summary);
-        system.debug('##enrolmentObj'+enrolmentObj);
+       //System.debug('##summary'+summary);
+       //System.debug('##enrolmentObj'+enrolmentObj);
         if(String.isNotBlank(enrolmentObj.Id)){
           
             currentPackageDeposit = AdvanceActionsHelper.getDepositFromFile(enrolmentObj.Id);
         }
-        system.debug('##currentPackageDeposit'+currentPackageDeposit);
+       //System.debug('##currentPackageDeposit'+currentPackageDeposit);
         List<Invoice_Line_Item__c> listOfInvoiceLineItems = new List<Invoice_Line_Item__c>();
-        system.debug('##newPackage.Deposit_Fee__c '+newPackage );
+       //System.debug('##newPackage.Deposit_Fee__c '+newPackage );
         Decimal depositeFee = 0;
         if(newPackage.Deposit_Fee__c != null && newPackage.Deposit_Fee__c> 0)
             depositeFee = BillingUtility.roundOffAmount((newPackage.Deposit_Fee__c - currentPackageDeposit)); 
@@ -250,9 +250,9 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
             stripeId = sublineItemList[0].Subscription__r.Parent__r.Stripe_Customer_Id__c;// enrolmentObj.Subscription_Line_Items__r[0].Subscription__r.Parent__r.Stripe_Customer_Id__c;
             parentId =sublineItemList[0].Subscription__r.Parent__c;//enrolmentObj.Subscription_Line_Items__r[0].Subscription__r.Parent__c;
         }
-        system.debug('##stripeId'+stripeId);
-        system.debug('##parentId'+parentId);
-        system.debug('##depositeFee'+depositeFee);
+       //System.debug('##stripeId'+stripeId);
+       //System.debug('##parentId'+parentId);
+       //System.debug('##depositeFee'+depositeFee);
         //Summary details on upgrade package...
         upgradePackageCaseDetails.depositAmount = depositeFee;
        upgradePackageCaseDetails.total = depositeFee;
@@ -265,7 +265,7 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
             BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId, depositeFee, organisationObj.country__r.Currency_Code__c, 
                                                             organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c); 
             
-            System.debug('@@@chargeResponse'+chargeResponse);
+           //System.debug('@@@chargeResponse'+chargeResponse);
             if(chargeResponse.statusCode == 200 && chargeResponse.paid){                
                 isSuccess = true;
                 //Invoice__c objInvoice = BillingUtility.fillInvoice(enrolmentObj.Subscription_Line_Items__r[0].Subscription__c, parentId, constantsClass.paidStatus);
@@ -273,7 +273,7 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
                 Invoice__c objInvoice = BillingUtility.fillInvoice(sublineItemList[0].Subscription__c, parentId, constantsClass.paidStatus);
                 objInvoice.Center__c =sublineItemList[0].Subscription__r.center__c;
                 insert objInvoice;
-                System.debug('@@@objInvoice'+objInvoice);
+               //System.debug('@@@objInvoice'+objInvoice);
                 if(String.isNotBlank(objInvoice.Id)){
                     upgradePackageCaseDetails.invoiceId = objInvoice.Id;
                 }
@@ -287,7 +287,7 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
                 if(listOfInvoiceLineItems.size() > 0){
                     INSERT listOfInvoiceLineItems;
                 } 
-                System.debug('@@@listOfInvoiceLineItems'+listOfInvoiceLineItems);
+               //System.debug('@@@listOfInvoiceLineItems'+listOfInvoiceLineItems);
                 objInvoice = [SELECT Id,Name,Total_Amount__c,Parent_Account__c, status__c FROM Invoice__c WHERE Id =:objInvoice.Id];
                 if(!Test.isRunningTest() && String.isNotBlank(organisationObj.Id)){
                     BillingUtility.updateCharge(chargeResponse.Id,objInvoice.Name, organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c);
@@ -297,7 +297,7 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
                 objPayment.Transaction_ID__c = chargeResponse.Id;
                 objPayment.Method_of_Payment__c = ConstantsClass.cardModeType;
                 INSERT objPayment; 
-                System.debug('@@@objPayment'+objPayment);
+               //System.debug('@@@objPayment'+objPayment);
                 if(String.isNotBlank(objPayment.id) && String.isNotBlank(objInvoice.id)){
                     SageIntacctIntegrationUtility.packageUpgrade(objInvoice.Id, objPayment.Id);
                 }

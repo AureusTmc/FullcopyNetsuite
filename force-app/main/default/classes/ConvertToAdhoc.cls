@@ -51,10 +51,10 @@ public without Sharing class ConvertToAdhoc implements IConvertFifthLesson{
                 adhocPackageMap = fetchAdhocLessons(enrolmentList);
 
                 adhocList = AureusCalendarControllerHelper.createBookingFromFifthLesson(fifthLessons, 'adhoc'); 
-				// System.debug('@@adhocList'+adhocList);
-                // System.debug('@@adhocPackageMapValues'+fifthLessons[0].Enrolment__r.Center__c);
-                // System.debug('@@adhocPackageMapValues'+fifthLessons[0].Enrolment__r.Center__c);
-                // System.debug('@@adhocPackageMap'+adhocPackageMap.containsKey(fifthLessons[0].Enrolment__r.Center__c + '-'+ fifthLessons[0].Enrolment__r.Package__r.Duration__c));
+				////System.debug('@@adhocList'+adhocList);
+                ////System.debug('@@adhocPackageMapValues'+fifthLessons[0].Enrolment__r.Center__c);
+                ////System.debug('@@adhocPackageMapValues'+fifthLessons[0].Enrolment__r.Center__c);
+                ////System.debug('@@adhocPackageMap'+adhocPackageMap.containsKey(fifthLessons[0].Enrolment__r.Center__c + '-'+ fifthLessons[0].Enrolment__r.Package__r.Duration__c));
                 if(adhocList.size() > 0 && adhocPackageMap.containsKey(fifthLessons[0].Enrolment__r.Center__c + '-'+ fifthLessons[0].Enrolment__r.Package__r.Duration__c)){
 
                     packageObj = adhocPackageMap.get(fifthLessons[0].Enrolment__r.Center__c + '-'+ fifthLessons[0].Enrolment__r.Package__r.Duration__c);
@@ -86,11 +86,11 @@ public without Sharing class ConvertToAdhoc implements IConvertFifthLesson{
                     //     gst +=facilitygst;
                     // }
                      //end:added by nishi: 17-aug-2020: for is ossia center Adhoc type booking created then we added facility Fee
-					// System.debug('@@@objectOfInvoice'+objectOfInvoice);
-                    // System.debug('@@@stripeId'+stripeId);
-                    // System.debug('@@@total'+total);
-                    // System.debug('@@@countryObj.Currency_Code__c'+countryObj.Currency_Code__c);
-                    // System.debug('@@@countryObj.Id'+countryObj.Id);
+					////System.debug('@@@objectOfInvoice'+objectOfInvoice);
+                    ////System.debug('@@@stripeId'+stripeId);
+                    ////System.debug('@@@total'+total);
+                    ////System.debug('@@@countryObj.Currency_Code__c'+countryObj.Currency_Code__c);
+                    ////System.debug('@@@countryObj.Id'+countryObj.Id);
                     if(objectOfInvoice != NULL && total > 0 && String.isNotBlank(stripeId) &&  String.isNotBlank(organisationObj.Id)){ // Start:comment by nishi:24-aug-2020:Organisation wise charge as per new logic String.isNotBlank(countryObj.Id)){
                         BillingUtility.StripeCharge objStripeCharge = new BillingUtility.StripeCharge();
 				        // Start:comment by nishi:24-aug-2020:Organisation wise charge as per new logic    
@@ -138,8 +138,8 @@ public without Sharing class ConvertToAdhoc implements IConvertFifthLesson{
                                 // }
                                  //End:added by nishi: 17-aug-2020: for is ossia center Adhoc type booking created then we added facility Fee
                             }
-                            // system.debug('@@@ BillingUtility.roundOffAmount(packageObj.unit_Fee__c)'+ BillingUtility.roundOffAmount(packageObj.unit_Fee__c));
-                            // system.debug('@@GST_Amount__c'+BillingUtility.roundOffAmount(packageObj.unit_Fee__c) *(BillingUtility.roundOffAmount(countryObj.Tax_Rate__c) / 100));
+                            ////System.debug('@@@ BillingUtility.roundOffAmount(packageObj.unit_Fee__c)'+ BillingUtility.roundOffAmount(packageObj.unit_Fee__c));
+                            ////System.debug('@@GST_Amount__c'+BillingUtility.roundOffAmount(packageObj.unit_Fee__c) *(BillingUtility.roundOffAmount(countryObj.Tax_Rate__c) / 100));
                         }
 
 
@@ -148,12 +148,12 @@ public without Sharing class ConvertToAdhoc implements IConvertFifthLesson{
                         }
 
                         objectOfInvoice = [SELECT Id,Name,Total_Amount__c,Parent_Account__c,Parent_Account__r.personContactId, status__c FROM Invoice__c WHERE Id =: objectOfInvoice.Id];
-                        // system.debug('@@objectOfInvoice'+objectOfInvoice);
+                        ////System.debug('@@objectOfInvoice'+objectOfInvoice);
                         if(String.isNotBlank(objectOfInvoice.Id)){
                             BillingUtility.createAttachment(new set<string>{objectOfInvoice.id});
                             //BillingUtility.createInvoiceAttachment(new List<Invoice__c>{objectOfInvoice});
                         }
-                        // system.debug('@@@listOfInvoiceLineItem'+listOfInvoiceLineItem);
+                        ////System.debug('@@@listOfInvoiceLineItem'+listOfInvoiceLineItem);
                         if(objStripeCharge.statusCode == 200 && objStripeCharge.paid && adhocList.size() > 0){
                             Payment__c objPayment = BillingUtility.fillPayment(objectOfInvoice.Parent_Account__c, objectOfInvoice.Id, total, ConstantsClass.successStatus); 
                             objPayment.Transaction_ID__c = objStripeCharge.Id;
@@ -194,14 +194,14 @@ public without Sharing class ConvertToAdhoc implements IConvertFifthLesson{
                 }  
 
             }
-            // system.debug('@@@adhocList[0].Id'+adhocList[0].Id);
+            ////System.debug('@@@adhocList[0].Id'+adhocList[0].Id);
             if(string.isNotBlank(adhocList[0].Id)){
                 Fifth_Lesson__c lessonObj = new Fifth_Lesson__c();
                 lessonObj.Id = lessonId;
                 lessonObj.isActive__c = FALSE;
                 lessonObj.Booking__c = adhocList[0].Id;
                 update lessonObj;
-                // system.debug('@@lessonObj'+lessonObj);
+                ////System.debug('@@lessonObj'+lessonObj);
                 if(caseFlag){
                     Case caseObj = AureusCalendarControllerHelper.createCase(caseId, adhocList[0].Id, 'Ad-hoc');
                     if(caseObj != NULL && String.isNotBlank(caseObj.id)){
@@ -212,7 +212,7 @@ public without Sharing class ConvertToAdhoc implements IConvertFifthLesson{
                 }
             }
         }
-        // system.debug('@@caseIdToReturn'+caseIdToReturn);
+        ////System.debug('@@caseIdToReturn'+caseIdToReturn);
         return caseIdToReturn;
     }
 

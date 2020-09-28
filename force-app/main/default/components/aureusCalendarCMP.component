@@ -5069,13 +5069,13 @@ Enrol now
             if($('#confirmModalYes').attr('isFuture')){
                 isFuture = $('#confirmModalYes').attr('isFuture')
             }
-            console.log('updategroupClass bookingId',bookingId);
-            console.log('updategroupClass start',start);
-            console.log('updategroupClass end',end);
-            console.log('updategroupClass teacherId',teacherId);
-            console.log('updategroupClass isplaceholder',isplaceholder);
-            console.log('updategroupClass isFuture',isFuture);
-            console.log('updategroupClass caseId',caseId);
+           //console.log('updategroupClass bookingId',bookingId);
+           //console.log('updategroupClass start',start);
+           //console.log('updategroupClass end',end);
+           //console.log('updategroupClass teacherId',teacherId);
+           //console.log('updategroupClass isplaceholder',isplaceholder);
+           //console.log('updategroupClass isFuture',isFuture);
+           //console.log('updategroupClass caseId',caseId);
             // let isResourceId ='false';
             // if(filter.resource && filter.resource != 'Select Resource'){
             //     isResourceId = 'true';
@@ -5433,13 +5433,13 @@ Enrol now
             if($('#confirmModalNo').attr('isFuture')){
                 isFuture = $('#confirmModalNo').attr('isFuture')
             }
-            console.log('updategroupClass bookingId',bookingId);
-            console.log('updategroupClass start',start);
-            console.log('updategroupClass end',end);
-            console.log('updategroupClass teacherId',teacherId);
-            console.log('updategroupClass isplaceholder',isplaceholder);
-            console.log('updategroupClass isFuture',isFuture);
-            console.log('updategroupClass caseId',caseId);
+           //console.log('updategroupClass bookingId',bookingId);
+           //console.log('updategroupClass start',start);
+           //console.log('updategroupClass end',end);
+           //console.log('updategroupClass teacherId',teacherId);
+           //console.log('updategroupClass isplaceholder',isplaceholder);
+           //console.log('updategroupClass isFuture',isFuture);
+           //console.log('updategroupClass caseId',caseId);
             // let isResourceId ='false';
             // if(filter.resource && filter.resource != 'Select Resource'){
             //     isResourceId = 'true';
@@ -5978,7 +5978,7 @@ Enrol now
                             }
                            /*Commenter byCommented by jatin: 11-mar-2020: for employee Calendar not Deploye*/
                           var employeeId = $('[id$=employee]').val();
-                        console.log('employeeId',employeeId);
+                       //console.log('employeeId',employeeId);
                              if(employeeId || employeeId== undefined){
                                  $('#detailPopupTitle').text('Instrument Viewing Booking '+eventResult.name);
                              }else{
@@ -6611,8 +6611,8 @@ Enrol now
                                         },
                                         dayClick: function(date, jsEvent, view,resourceObj) {
                                             bookingReschedule.resource = resourceObj.id;
-                                            console.log('bookingReschedule',bookingReschedule);
-                                            // console.log('filter',filter);
+                                           //console.log('bookingReschedule',bookingReschedule);
+                                            ////console.log('filter',filter);
                                             bookingReschedule.date = date.format();
                                             //console.log(date);
                                             var startTime = date.format();
@@ -6631,7 +6631,7 @@ Enrol now
                                                 } 
                                             // Start : 30-Jul:2020 -End:if Resource Id is exist then we hide this Future button
                                                 
-                                            console.log('bookingReschedule.Type',bookingReschedule.Type);
+                                           //console.log('bookingReschedule.Type',bookingReschedule.Type);
                                             if(bookingReschedule.Id && bookingReschedule.Type == 'Regular' && bookingReschedule.Individual == 'false' && isEventInTeacherWorkingHour(teacherWorkingHours, startTime, milleseconds, bookingReschedule.resource)){
                                                 isReschedule = false;
                                                 //rescheduleThisOnly();
@@ -6786,7 +6786,7 @@ Enrol now
                                             
                                         },
                                         eventDragStart: function(event) {
-                                            console.log('event',event);
+                                           //console.log('event',event);
                                            // Commented by nishi: 9-Sep-2020: for new requiremnt we reschadule group lesson booking this and future
                                            //if(!event.isClass){
                                                 var startTime = event.start.format();
@@ -6795,7 +6795,7 @@ Enrol now
 
                                         },
                                         eventDrop: function(event, delta, revertFunc) {
-                                            console.log('event',event);
+                                           //console.log('event',event);
                                            //console.log('event',event);
                                             // Commented by nishi: 9-Sep-2020: for new requiremnt we reschadule group lesson booking this and future
                                             //if(!event.isClass){
@@ -6855,8 +6855,8 @@ Enrol now
                                                 // Commented by nishi: 9-Sep-2020: for new requiremnt we reschadule group lesson booking this and future
                                                 else if(bookingReschedule.Type == 'Group Class' && bookingReschedule.Individual == 'false'){
                                                     var startdate = new Date(event.start.format('YYYY-MM-DD'));
-                                                    console.log('bookingReschedule.date',startdate.getDate());
-                                                   // console.log('bookingReschedule.date.day()',event.start.format('DD/MM/YYYY'));
+                                                   //console.log('bookingReschedule.date',startdate.getDate());
+                                                   ////console.log('bookingReschedule.date.day()',event.start.format('DD/MM/YYYY'));
                                                     if(startdate.getDate() > 28){
                                                         $('#toastMsg').html("You cann't transfer this group class to the last month of the date(29,30,31)...");
                                                         $('.toastclass').removeClass('slds-theme_success');
@@ -7327,8 +7327,8 @@ Enrol now
                                 }
                                 $(createBookingResult.packages).each(function(index6, value6){
                                     if(bookingData.packageId == value6.id){
-                                        console.log('value6.id'+value6.id);
-                                        console.log('value6.type'+value6.type);
+                                       //console.log('value6.id'+value6.id);
+                                       //console.log('value6.type'+value6.type);
                                         $('#packageSelect').val(value6.name);
                                          // Nishi: 18-Aug-2020 : start : if center is ossia then we manage teacher and enrolment	
                                          var isossia = $('#saveNewBooking').attr('data-isossia');	
@@ -8241,7 +8241,7 @@ Enrol now
                             function(result, event){
                                 if (event.status) {
                                     if(result){
-                                       console.log(result);
+                                      //console.log(result);
                                         $('#packageNameAdvance').html(result.packageName);
                                         if(result.startDate){
                                             var arr = result.startDate.split('-');
@@ -8731,7 +8731,7 @@ Enrol now
                                 }
                             }
                             if(!isError){
-                                console.log('Adhoc bookingData'+bookingData);
+                               //console.log('Adhoc bookingData'+bookingData);
                                 if(bookingData.type == 'home-trial'){
                                     
                                     validationOnCreationOfHomeTrialBookings(bookingData);
@@ -8801,7 +8801,7 @@ Enrol now
                                     var selectedTeacherInstrument = $('#saveNewBooking').attr('data-teacherinstrument');	
                                     var selectedInstrument = $('#saveNewBooking').attr('data-instrument');	
                                     var enrolInstrument = $('#OssiaInstrumentSelect').val(); 	
-                                    console.log('Adhoc bookingData',bookingData);
+                                   //console.log('Adhoc bookingData',bookingData);
                                     $('#OssiaStudentErrorMsg').text('');	
                                     $('#OssiaInstrumentErrorMsg').text('');	
                                     if(isossia && isossia === 'true'){	
@@ -10376,7 +10376,7 @@ Enrol now
                                 $('#availableTimeSlotsDowngrade').attr('disabled', 'true');
                             }
                             if(selectedPackage != 'Select Package' && selectedPackage && selectedPackage != null && selectedPackage != undefined ){
-                                console.log('selectedPackage',selectedPackage);
+                               //console.log('selectedPackage',selectedPackage);
                                 //20-Aug-2020:nishi:start manage ossia change enrolment get package id 
                                 var isOssia =$('#confirmModalYes').attr('data-isOssia');
                                 if(isOssia =='true'){
@@ -10501,7 +10501,7 @@ Enrol now
                                 $('#availableTimeSlotsDowngrade').attr('disabled', 'true');
                             }
                             if(selectedPackage != 'Select Package' && selectedPackage && selectedPackage != null && selectedPackage != undefined ){
-                                console.log('selectedPackage',selectedPackage);
+                               //console.log('selectedPackage',selectedPackage);
                                 //20-Aug-2020:nishi:start manage ossia change enrolment get package id 
                                 var isOssia =$('#confirmModalYes').attr('data-isOssia');
                                 if(isOssia =='true'){
@@ -11601,10 +11601,10 @@ Enrol now
                                     if(GroupPackagesresult){
                                         $('#ClassPackageSelect').empty();
                                         var packages = GroupPackagesresult;
-                                        console.log('result',GroupPackagesresult);
+                                       //console.log('result',GroupPackagesresult);
                                         var packagesSelect = '<option value="">Select Package</option>';
                                         $(packages).each(function(index, value){
-                                            console.log('packages.value',value);
+                                           //console.log('packages.value',value);
                                             isOssia = value.isOssia;
                                             if(value.isOssia == false){
                                                 packagesSelect += '<option value="'+value.id+':'+value.duration+':'+value.studentCapacity+':'+value.price+':'+value.instrument+'">'+value.name+'</option>';
@@ -11617,7 +11617,7 @@ Enrol now
                                             $('.ossiaAddGroupClass').addClass('slds-hide');
                                             $('.aureusAddGroupClass').removeClass('slds-hide');
                                         }
-                                        console.log('isOssia',isOssia);
+                                       //console.log('isOssia',isOssia);
                                         // start: nishi: 1-sep-2020:if create group class in ossia org then we showing grade other wise we show package list
                                         if(isOssia == true){
                                             $('#ClassGradeSelect').empty();
@@ -11673,7 +11673,7 @@ Enrol now
                                                             categoryStr += '<option value="'+classTypevalue+'">'+classTypevalue+'</option>';
                                                         }
                                                     });
-                                                    console.log('categoryStr',categoryStr);
+                                                   //console.log('categoryStr',categoryStr);
                                                     $('#ClassTypeSelect').append(categoryStr);
                                                 }
                                             }, 
@@ -11687,7 +11687,7 @@ Enrol now
                     }    
                     function groupGradeSelect(){
                         var gradeVal = $('#ClassGradeSelect').val();
-                        console.log('gradeVal',gradeVal);
+                       //console.log('gradeVal',gradeVal);
                     }
                     function groupPackageSelect(){
                         $('#ClassPackageSelectError').addClass('slds-hide');
@@ -11786,9 +11786,9 @@ Enrol now
                                 if($('#onmakupAvailablegroup').prop('checked')){
                                     isGroupclassEndDate = true;
                                     var repeatval = $('#repeatgroupSelect').val();
-                                    console.log('repeatval',repeatval);
+                                   //console.log('repeatval',repeatval);
                                     if(repeatval == 'None'){
-                                        console.log('classEndDate',classEndDate);
+                                       //console.log('classEndDate',classEndDate);
                                     }else{
                                         
                                         if($('#aftergroupRadio').prop('checked')){
@@ -11798,9 +11798,9 @@ Enrol now
                                             classEndDate = $('#onSelectedgroupDate').val();
                                         }
                                     }
-                                    console.log('isGroupclassEndDate',isGroupclassEndDate);
-                                    console.log('classEndDate',classEndDate);
-                                    console.log('classEndDate',classEndDate.format('YYYY-MM-DD'));
+                                   //console.log('isGroupclassEndDate',isGroupclassEndDate);
+                                   //console.log('classEndDate',classEndDate);
+                                   //console.log('classEndDate',classEndDate.format('YYYY-MM-DD'));
                                 }
                                 
                              

@@ -1170,8 +1170,8 @@ system.debug('@@About to sendBookingCancelMail');
         if(availableUnits >= timeDiff && String.isNotBlank(enrol.Parent__c)){
             cancelBookings = fetchCancelBookings(fetchChildrens(enrol.Parent__c));
         }
-        system.debug('cancelBookings'+cancelBookings);
-        system.debug('availableUnits'+availableUnits);
+       //System.debug('cancelBookings'+cancelBookings);
+       //System.debug('availableUnits'+availableUnits);
         for(String bookingId : mapOfFifthBookings.keySet()){
             Booking__c bookObj = mapOfFifthBookings.get(bookingId);
             Booking__c newBook = new Booking__c();
@@ -1231,7 +1231,7 @@ system.debug('@@About to sendBookingCancelMail');
         if(bookingsList.size() > 0){
             upsert bookingsList; 
         }
-        system.debug('bookingsList'+bookingsList);
+       //System.debug('bookingsList'+bookingsList);
         
     }
     public  static Set<String> fetchChildrens(String setOfParentIds){

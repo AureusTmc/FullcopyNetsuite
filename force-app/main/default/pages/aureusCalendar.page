@@ -21,7 +21,7 @@
     <apex:includeScript value="{!$Resource.datepicker}"/>
     <apex:slds />
      <!-- Added by Nishi:start: 17-Jul-2020: for manage Ossian Organization students -->
-     <c:OssianCalendarCMP />
+     <c:OssiaCenterCalendarCMP />
      <!-- Added by Nishi:end: 17-Jul-2020: for manage Ossian Organization students -->
     
     <c:ClassEditCMP />

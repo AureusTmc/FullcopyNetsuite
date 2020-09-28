@@ -56,7 +56,7 @@ public without sharing class RescheduleForAllFutureBookings {
         } 
         if(this.dayChange && String.isNotBlank(enrolObj.Id) && effectiveDate != NULL && startDate != NULL){
             //Day Change
-            System.debug('@@@effectiveDate'+effectiveDate);
+           //System.debug('@@@effectiveDate'+effectiveDate);
             centreOrgId = enrolObj.Center__r.Organisation__c;
             dayIsChanged(enrolObj, effectiveDate, startDate);
         }else{
@@ -308,11 +308,11 @@ public without sharing class RescheduleForAllFutureBookings {
     private void reCreateRegularBookingsAndFifthLesson(Enrolment__c  enrolmentObj, Date effectiveDate, Date maxDate){
         List<Booking__c> bookingsToInsert = new List<Booking__c>();
         List<Fifth_Lesson__c> fifthLessonToInsert = new List<Fifth_Lesson__c>();
-        System.debug('@@@@maxDate'+maxDate);
+       //System.debug('@@@@maxDate'+maxDate);
         if(String.isNotBlank(enrolmentObj.Id)){
             Booking__c bookingObj = new Booking__c();
             Fifth_Lesson__c fifthLesson = new Fifth_Lesson__c();
-            System.debug('@@@@effectiveDate'+effectiveDate);
+           //System.debug('@@@@effectiveDate'+effectiveDate);
             while(effectiveDate <= maxdate){
                 if(effectiveDate.day() > 28){
                     fifthLesson = new Fifth_Lesson__c();
@@ -376,14 +376,14 @@ public without sharing class RescheduleForAllFutureBookings {
                 mapOfBooking.put(bookingObj.Booking_Date__c + '-' + bookingObj.Teacher_Account__c, bookingObj);
             }
         }
-        System.debug('@@@@bookingsToInsert'+bookingsToInsert);
+       //System.debug('@@@@bookingsToInsert'+bookingsToInsert);
         if(fifthLessonToInsert.size() > 0){
             INSERT fifthLessonToInsert;
             for(Fifth_Lesson__c lessonFifth : fifthLessonToInsert){
                 mapOfFifthLesson.put(lessonFifth.Booking_Date__c + '-' + lessonFifth.Teacher_Account__c, lessonFifth);
             }
         }
-        System.debug('@@@@fifthLessonToInsert'+fifthLessonToInsert);
+       //System.debug('@@@@fifthLessonToInsert'+fifthLessonToInsert);
     }
 
     private void updateExistingBookingsAndLesson(List<Booking__c> bookingList, List<Fifth_Lesson__c> fifthLessons, Enrolment__c enrolObj){
@@ -572,8 +572,8 @@ public without sharing class RescheduleForAllFutureBookings {
     }
 
     private Set<String> fetchTeacherLeavesRequestDateSet(String teacherId, Date startDate, Date maxDate){
-        System.debug('@@@@@startDate'+startDate);
-        System.debug('@@@@@maxDate'+maxDate);
+       //System.debug('@@@@@startDate'+startDate);
+       //System.debug('@@@@@maxDate'+maxDate);
         Set<String> setOfTeachersLeave = new Set<String>();
         for(Leave_Request__c leaveRequest : [SELECT Id, Name, Leave_Type__c, Employee__c, Leave_Start_Date__c, Leave_End_Date__c 
                                              FROM Leave_Request__c WHERE Employee__c = :teacherId AND Leave_Start_Date__c >= :startDate AND 
@@ -584,7 +584,7 @@ public without sharing class RescheduleForAllFutureBookings {
                 startDateLeave = startDateLeave.addDays(1);
             }
         }
-         System.debug('@@@@@setOfTeachersLeave'+setOfTeachersLeave);
+        //System.debug('@@@@@setOfTeachersLeave'+setOfTeachersLeave);
         return setOfTeachersLeave;
     }
 

@@ -20,7 +20,7 @@ public with sharing class PianoRentalEditCalendarController{
            if(employeeIds != null && employeeIds.size() > 0){
                query +=' AND Teacher_Name__c in: employeeIds ';
            }
-           system.debug('@@@getListOfEmployee'+query);
+          //System.debug('@@@getListOfEmployee'+query);
             teacherWorkingHourList = Database.query(query);
             if(teacherWorkingHourList != null && teacherWorkingHourList.size() > 0)
                for(Teacher_Working_Hour__c twh : teacherWorkingHourList){

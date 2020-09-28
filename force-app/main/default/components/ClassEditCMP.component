@@ -292,9 +292,13 @@
                             <!-- @jatin: 13-dec- 2019: add Makeup button for added new customer -->
                             <footer class="slds-modal__footer" style="margin-bottom: -20px;">
                                 <button class="slds-button button-shadow slds-button_brand" aria-pressed="false" id="MakeupCustomer" title="Add Make-up Customer"
-                                    onclick="newGroupAppointmentPopup();return false;">Add Make-Up Booking
+                                    onclick="newGroupAppointmentPopup('MakeUp');return false;">Add Make-Up Booking
                                 </button>
-
+                                <!-- added by nishi:start: for manage makeup and adhoc bookings -->
+                                <!-- <button class="slds-button button-shadow slds-button_brand" aria-pressed="false" id="AddhocCustomer" title="Add Ad-Hoc Customer"
+                                    onclick="newGroupAppointmentPopup('AdHoc');return false;">Add Ad-Hoc Booking
+                                </button> -->
+                                <!-- added by nishi:end: for manage makeup and adhoc bookings -->
                             </footer>
                         </div>
                         <div id="HistoryTab" class="slds-tabs--default__content slds-hide" role="tabpanel" aria-labelledby="HistoryTabitem"
@@ -1326,7 +1330,108 @@
         <div class="slds-backdrop slds-backdrop_open"></div>
     </div>
 
-
+    <!--added by nishi: 15-Sep-2020: adhoc group class bookings-->
+    <div class="slds-hide" id="newAdhocGroupClassDetailPopup">
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open slds-modal_medium">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header" style="background: #303a42; color: white;">
+                    <h2 id="newAdhocGroupClassDetailHeader" class="slds-text-heading_medium slds-hyphenate">New Appointment Detail</h2>
+                    <a href="javascript:void(0);" class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick="$('#newAdhocGroupClassDetailPopup').addClass('slds-hide');refreshNewBookingPopup(); return false;">
+                        <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                            <use xlink:href="{!URLFOR($Asset.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Close</span>
+                    </a>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="newAdhocGroupClassDetailBody">
+                    <div class="slds-form__row">
+                        <div class="slds-form__item" role="listitem">
+                            <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
+                                <label class="slds-form-element__label" for="studentNameAdhocGroupClass"><b>Student Name:</b></label>  
+                                <div class="slds-form-element__control">
+                                    <label class="slds-form- element__label" id="studentNameAdhocGroupClass"></label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-form__item" role="listitem">
+                            <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
+                                <label class="slds-form-element__label" for="centerNameAdhocGroupClass"><b>Center Name:</b></label> 
+                                <div class="slds-form-element__control">
+                                    <label class="slds-form- element__label" id="centerNameAdhocGroupClass"></label>                                                   
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="slds-form__row">
+                        <div class="slds-form__item" role="listitem">
+                            <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
+                                <label class="slds-form-element__label" for="teacherNameAdhocGroupClass"><b>Teacher Name:</b></label>  
+                                <div class="slds-form-element__control">
+                                    <label class="slds-form- element__label" id="teacherNameAdhocGroupClass"></label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-form__item" role="listitem">
+                            <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
+                                <label class="slds-form-element__label" for="packageDurationAdhocGroupClass"><b>Package Duration:</b></label> 
+                                <div class="slds-form-element__control">
+                                    <label class="slds-form- element__label" id="packageDurationAdhocGroupClass"></label>                                                   
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Added By Ravi on 14 july 2020 -->
+                    <div class="slds-form__row">
+                        <div class="slds-form__item" role="listitem">
+                            <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
+                                <label class="slds-form-element__label" for="classLessonAdhocGroupClass"><b>Class Name:</b></label>  
+                                <div class="slds-form-element__control"><!-- style="padding-left: 138px !important;"-->
+                                    <label class="slds-form- element__label" id="classLessonAdhocGroupClass"></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Added By Ravi on 14 july 2020 -->
+                    <div class="slds-p-around_medium">
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate" title="Sr.No">Sr No</div>
+                                    </th>
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate" title="Package Name">Package Name</div>
+                                    </th>
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate" title="Package Time">Booking Time</div>
+                                    </th>
+                                    <th class="" scope="col">
+                                        <div class="slds-truncate" title="Package Unit Price">Package Unit Price</div>
+                                    </th>
+                                    
+                                </tr>
+                            </thead>
+                            <tbody id="countOfClassBookingTableBody">
+                                
+                                
+                            </tbody>
+                        </table>
+                        
+                        
+                    </div>
+                    
+                    
+                </div>   
+                <footer class="slds-modal__footer">
+                    <a href="javascript:void(0);" class="slds-button slds-button_brand" id="createAdhocGroupClassBookingBtn" onclick="createAdhocGroupClassBookings();return false;">Create booking and generate invoice</a>
+                </footer>  
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </div>
+    <!--added by nishi: 15-Sep-2020: adhoc group class bookings-->
 
 
 
@@ -1537,8 +1642,9 @@
         var createGroupBookingResult = {};
        
          // @@jatin:19-dec-2019: for show add new makeup customers popup
-         function newGroupAppointmentPopup() {
+         function newGroupAppointmentPopup(groupAppointmentType) {
             $('#newGroupClassCMP').addClass('slds-hide');
+            
             var centerid = selectedStudentData.centerId;
             var teacherid = selectedStudentData.teacherId;
             var dateOfAppointment = selectedStudentData.date;
@@ -1571,6 +1677,14 @@
             $('#GroupMakupTimeLabel').html(convertTimeToMoment(dateOfAppointment.split('T')[1].split(':')[0], dateOfAppointment.split('T')[1].split(':')[1]));
             $('#saveNewGroupMakupBooking').attr('disabled', '');
             $('#newGroupMakupBookingDetails').removeClass('slds-hide');
+            // added by nishi:start: for manage makeup and adhoc bookings
+            if(groupAppointmentType == 'MakeUp'){
+                $('#newGroupMakupBookingDetailsHeader').html('Add Make-Up Booking');
+            }else{
+                $('#newGroupMakupBookingDetailsHeader').html('Add Ad-hoc Booking');
+            }
+            // added by nishi:end: for manage makeup and adhoc bookings
+            $('#saveNewGroupMakupBooking').attr('data-groupAppointmentType', groupAppointmentType);
             $('#GroupMakupDurationLabel').html(selectedStudentData.duration);  
         }
            
@@ -1640,12 +1754,15 @@
                                 }else{
                                     $('#GroupMakupHoursLabel').html(value4.makeupHours + ' min');
                                     bookingData.availableHours = value4.makeupHours;
-                                    if (bookingData.availableHours < bookingData.duration) {
-                                        $('#saveNewGroupMakupBooking').attr('disabled', '');
-                                        $('#GroupMakupHoursErrorMsg').text('Insufficient Makup minutes');
-                                    } else {
-                                        $('#saveNewGroupMakupBooking').removeAttr('disabled');
-                                        $('#GroupMakupHoursErrorMsg').text('');
+                                    var groupAppointmentType = $('#saveNewGroupMakupBooking').attr('data-groupAppointmentType');
+                                    if(groupAppointmentType === 'MakeUp'){
+                                        if (bookingData.availableHours < bookingData.duration) {
+                                            $('#saveNewGroupMakupBooking').attr('disabled', '');
+                                            $('#GroupMakupHoursErrorMsg').text('Insufficient Makup minutes');
+                                        } else {
+                                            $('#saveNewGroupMakupBooking').removeAttr('disabled');
+                                            $('#GroupMakupHoursErrorMsg').text('');
+                                        }
                                     }
                                 }
                                 $('#GroupMakupParentInput').attr('disabled', '');
@@ -1868,12 +1985,12 @@
         // @@jatin: 19-dec-2019: for create group lesson makeup booking
         function createGroupbooking(redirectCase) {
             var bookingDataStr = JSON.stringify(bookingData);
-           console.log('bookingDataStr' + bookingDataStr);
+          //console.log('bookingDataStr' + bookingDataStr);
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.ClassEditController.createGroupbooking}',
                 bookingDataStr, redirectCase, caseId,
                 function (result, event) {
-                   console.log(result);
+                  //console.log(result);
                     if (event.status) {
                         if (result.caseId) {
                             $('.confirmModal').addClass('slds-hide');
@@ -1941,6 +2058,7 @@
             $('#GroupMakupHoursErrorMsg').text('');
         }
         function createGroupMakupBooking() {
+            var groupAppointmentType = $('#saveNewGroupMakupBooking').attr('data-groupAppointmentType');
             var errorFlag = false;
             if(bookingData.isOssia){
                 var enrolInstrument = $('#ossiaGroupClassInstrment').val(); 	
@@ -1951,8 +2069,8 @@
                 }	
                 var selectedInstrument = $('#saveNewGroupMakupBooking').attr('data-enrolInstrument');
                 var selectedTeacherInstrument = bookingData.classInstrument;
-                console.log('selectedInstrument',selectedInstrument);
-                console.log('selectedTeacherInstrument',selectedTeacherInstrument);
+               //console.log('selectedInstrument',selectedInstrument);
+               //console.log('selectedTeacherInstrument',selectedTeacherInstrument);
                 if(!(selectedInstrument && selectedInstrument != null && selectedInstrument != undefined && selectedInstrument.length > 0 &&	
                     selectedTeacherInstrument && selectedTeacherInstrument != null && selectedTeacherInstrument != undefined && selectedTeacherInstrument.length > 0	
                     && selectedTeacherInstrument.includes(selectedInstrument))){	
@@ -1961,22 +2079,81 @@
                     errorFlag = true;   	
                 }
             }
-
-            if (bookingData.availableHours < bookingData.duration) {
-                    $('#saveNewGroupMakupBooking').attr('disabled', '');
-                    $('#GroupMakupHoursErrorMsg').text('Insufficient Makup minutes');
-                    errorFlag = true;   
-            } 
-            if(!errorFlag){
-
-                console.log('bookingData',bookingData);
-                $('.confirmModal').removeClass('slds-hide');
-                $('#confirmBody').html('Do you want to send an email?');
-                $('#confirmHeader').html('Email Confirmation');
-                $('#confirmModalYes').attr('data-origin', 'createGroupBooking');
-                $('#confirmModalNo').attr('data-origin', 'createGroupBooking');
-                $('#newGroupMakupBookingDetails').addClass('slds-hide');
+            if(groupAppointmentType === 'MakeUp'){
+                if (bookingData.availableHours < bookingData.duration) {
+                        $('#saveNewGroupMakupBooking').attr('disabled', '');
+                        $('#GroupMakupHoursErrorMsg').text('Insufficient Makup minutes');
+                        errorFlag = true;   
+                } 
             }
+            if(!errorFlag){
+                if(groupAppointmentType === 'MakeUp'){
+                   //console.log('bookingData',bookingData);
+                    $('.confirmModal').removeClass('slds-hide');
+                    $('#confirmBody').html('Do you want to send an email?');
+                    $('#confirmHeader').html('Email Confirmation');
+                    $('#confirmModalYes').attr('data-origin', 'createGroupBooking');
+                    $('#confirmModalNo').attr('data-origin', 'createGroupBooking');
+                    $('#newGroupMakupBookingDetails').addClass('slds-hide');
+                }else{
+                   //open adhoc payment summary model
+                   showAdhocBookings(bookingData.studentId,bookingData.packageId,bookingData.date,bookingData.dateTime,false);
+                }
+            }
+        }
+
+        function showAdhocBookings(student, package, dateOfAppointment, timeOfAppointment, recurring){
+            $('#countOfClassBookingTableBody').empty();
+            var teacherId = $('#saveNewBooking').attr('data-teacher');
+            $('#newAdhocGroupClassDetailPopup').removeClass('slds-hide');
+          /*  Visualforce.remoting.Manager.invokeAction(
+                '{$RemoteAction.AureusCalendarController.getPackageDetail}',
+                student, package, teacherId, 
+                function(result, event){
+                    if (event.status) {
+                        var trRow = '';
+                        var total = 0;
+                        var gstTotal = 0;  
+                        //console.log('getPackageDetail -result',result);     
+                        if(timeOfAppointment){      
+                            var formmatedTime = convertTimeToMoment(timeOfAppointment.split(':')[0], timeOfAppointment.split(':')[1]);      
+                        }
+                        $('#studentNameadhoc').html(result.studentFirstName + ' ' + result.studentLastName);
+                        $('#teacherNameAdhoc').html(result.teacherName);
+                        $('#centerNameadhoc').html(result.centerName);
+                        $('#packageDurationadhoc').html(result.duration + ' min');
+                        $('#createAdhocBookingBtn').attr({'data-package': result.packageId, 'data-centerId': filter.center, 'data-teacherId': result.teacherId, 'data-studentId': result.studentId, 'data-count': recurring, 'data-date': dateOfAppointment+'T'+timeOfAppointment});
+                        var gstRate =0;
+                        for(var i=1; i<=recurring; i++){
+                            var unitfee = result.unitFee.toFixed(2);
+                            ////console.log('unitfee',unitfee);
+                            total += parseFloat(unitfee);
+
+                            trRow += '<tr class="slds-hint-parent"><td data-label="Sr.No"><div class="slds-truncate" title="Sr.No">'+i+'</div></td><td data-label="Package Name"><div class="slds-truncate" title="Package Name">'+result.packageName+'</div></td><td data-label="Package Time"><div class="slds-truncate" title="Package Time">'+formmatedTime+'</div></td><td data-label="Package Price"><div class="slds-truncate" title="Package Price">$'+result.unitFee.toFixed(2)+'</div></td></tr>';
+                            if(result.gstRate > 0){
+                                gstRate += parseFloat((parseFloat(result.unitFee.toFixed(2)) * parseFloat(result.gstRate.toFixed(2)) / 100).toFixed(2));
+                                //console.log('GSTrate'+gstRate);
+                                
+                            }
+                            //console.log('@@gstRate'+gstRate);
+                        }
+                        if(gstRate > 0){
+                            ////console.log('total',total);
+                            // //console.log('result.gstRate',gstRate);
+                            gstTotal = gstRate+total;
+                            trRow += '<tr class="slds-hint-parent"><td  colspan="2"></td><td data-label="GST"><b>GST('+(result.gstRate.toFixed(2))+'%)</b></td><td>$'+(gstRate.toFixed(2))+'</td>';
+                        }else{
+                            gstTotal = 0;
+                        }     
+                        //console.log('gstTotal',gstTotal);
+                        trRow += '</tr><tr class="slds-hint-parent"><td colspan="2"></td><td data-label="total"><b>Total</b></td><td>$'+(parseFloat(gstTotal).toFixed(2))+'</td></tr>';
+                        
+                        $('#countOfClassBookingTableBody').append(trRow);
+                        $('#newAdhocDetailPopup').removeClass('slds-hide');
+                    }
+                }, 
+                {escape: true}
+            );*/
         }
         // jatin:19-dec-2019 :show group package list
         $('#GroupMakupPackageSelect').focusin(function () {
@@ -2576,7 +2753,7 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                     '{!$RemoteAction.ClassEditController.fetchBookDetailsForScreen}',
                     bookingId,
                     function (result, event) {
-                        console.log('result', result);
+                       //console.log('result', result);
                         $('#ClassPackageEditSelect').empty();
                         $('#attendiesTableBody').empty();
                         var packages = result.groupPackages;
@@ -2620,7 +2797,7 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                         $('.aureusGroupClassBookingDetail').removeClass('slds-hide');
                         
                         if (result.bookObj.Id) {
-                           console.log(result.bookObj);
+                          //console.log(result.bookObj);
                            // added by nishi: 2-Sep-2020: for manage ossia group lesson details in ossia case we show grade other wise we show package realed details 
                            selectedStudentData.isOssia =result.isOssia;
                             if(result.isOssia){
@@ -2864,6 +3041,8 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                     }
                 }else{
                     if(packageId && packageId != 'Select Package'){
+                       //console.log('packageId',packageId);
+                       //console.log('teacherId',teacherId);
                         $('#selectNewEffectiveDateEnrolGroupUpdate').removeAttr('disabled'); 
                         var geteffectiveDay = effectiveDate.split('/')[1];
                         var newEffectiveDayList = [];
@@ -2875,7 +3054,7 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                                 '{!$RemoteAction.ClassEditController.getNewEffectiveGroupDateSlots}',
                                 packageId, teacherId,
                                 function(result, event){
-                                    //console.log('result',result);
+                                   //console.log('result',result);
                                     for (i = 0; i < result.length; i++) {
                                         weekdays.push(result[i]);
                                     }
@@ -2883,7 +3062,7 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                                     if(weekdays.length > 0 ){
                                         newEffectiveDayList = getNewEffectiveDaysWeekdays(effectiveDate,weekdays);
                                     }
-                                    //console.log('newEffectiveDayList'+newEffectiveDayList);
+                                   //console.log('newEffectiveDayList'+newEffectiveDayList);
                                     $(newEffectiveDayList).each(function(inex, value){
                                         selectDate += '<option value="'+value.value+'">'+value.label+'</option>';
                                     });
@@ -2987,7 +3166,7 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                 '{!$RemoteAction.ClassEditController.getTimeSlotsGroupClassAccordingly}',
                 centerId, teacherId, selectedPackage, dtObj.format('YYYY-MM-DD'), 
                 function(result, event){
-                   //console.log('result',result);
+                  //console.log('result',result);
                     var availSlots = '';
                     $(result).each(function(index, value){
                         availSlots += '<option value="'+value+'">'+value.split('-')[1]+'</option>';   
@@ -3032,15 +3211,15 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
             $('.ossiaGroupClassBookingDetail').addClass('slds-hide');
             $('.aureusGroupClassBookingDetail').removeClass('slds-hide');
             $('#showGroupClassGradeDetials').addClass('slds-hide');
-            console.log('bookingReschedule'+bookingReschedule);
+           //console.log('bookingReschedule'+bookingReschedule);
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.ClassEditController.showRescheduledGroupClassBookings}',
                 bookingReschedule, 
                 function(result, event){
-                    console.log(result);
+                   //console.log(result);
                     if (result.bookObj.Id) {
                         $('#newGroupClassCMP').removeClass('slds-hide');
-                        console.log(result.bookObj);
+                       //console.log(result.bookObj);
                            // added by nishi: 2-Sep-2020: for manage ossia group lesson details in ossia case we show grade other wise we show package realed details 
                             if(result.isOssia){
                                 $('.aureusGroupClassBookingDetail').addClass('slds-hide');
@@ -3080,7 +3259,7 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                                 res =  dateTime.split("T"); 
                                 $('#ClassTimeEditLabel').text(convertDateToMoment(res[0]) +' '+ convertTimeToMoment(res[1].split(':')[0], res[1].split(':')[1]));
                             }
-                            console.log('result.bookObj.isDayChange'+result.isDayChange);
+                           //console.log('result.bookObj.isDayChange'+result.isDayChange);
                             $('#ReschedulingGroupChanges').attr({'data-isDayChange':result.isDayChange});
                     }
                 }
@@ -3088,7 +3267,7 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
         }
         function commitgrouplesson(){
             bookingReschedule.scheduleType = 'commit';
-            console.log('commitgrouplesson bookingReschedule',bookingReschedule);
+           //console.log('commitgrouplesson bookingReschedule',bookingReschedule);
             if((bookingReschedule.Type == 'Group Class' || bookingReschedule.Type == 'Busy') && bookingReschedule.isRecurrence == 'false' && bookingReschedule.Individual == 'true'){
                 updateGroupClassBooking(bookingReschedule.Id, bookingReschedule.date, '', bookingReschedule.resource, 'false', 'false');
             }else if((bookingReschedule.Type == 'Group Class' || bookingReschedule.Type == 'Busy') && bookingReschedule.Individual == 'false' && bookingReschedule.isRecurrence == 'false'){
@@ -3105,12 +3284,12 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
             
         }
         function updateGroupClassBooking(id, start, end, teacherId, isplaceholder, isFuture){
-            console.log('updateGroupClassBooking id',id);
-            console.log('updateGroupClassBooking start',start);
-            console.log('updateGroupClassBooking end',end);
-            console.log('updateGroupClassBooking teacherId',teacherId);
-            console.log('updateGroupClassBooking isplaceholder',isplaceholder);
-            console.log('updateGroupClassBooking isFuture',isFuture);
+           //console.log('updateGroupClassBooking id',id);
+           //console.log('updateGroupClassBooking start',start);
+           //console.log('updateGroupClassBooking end',end);
+           //console.log('updateGroupClassBooking teacherId',teacherId);
+           //console.log('updateGroupClassBooking isplaceholder',isplaceholder);
+           //console.log('updateGroupClassBooking isFuture',isFuture);
             if(id && start && bookingReschedule.Type){
                 // if(filter.resource && filter.resource != 'Select Resource'){
                 //     $('#confirmModalNo').attr({'data-id': id, 'start': start, 'end': end,'isResourceId':'true', 'teacherId': teacherId, 'isplaceholder': isplaceholder, 'isFuture': isFuture, 'data-origin': 'update'});
@@ -3174,7 +3353,7 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                     '{!$RemoteAction.ClassEditController.updateGroupClassBooking}',
                     bookingId, start, end, teacherId, isplaceholder, isFuture, //redirectCase, caseId, isResourceId,
                     function(result, event){
-                    console.log('result',result);
+                   //console.log('result',result);
                         var msg = '';
                         if (event.status) {
                             isReschedule = false;

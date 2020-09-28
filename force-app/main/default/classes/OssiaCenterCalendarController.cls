@@ -177,15 +177,15 @@ public with sharing class OssiaCenterCalendarController {
                             || bookingList[0].Type__c == ConstantsClass.groupLessonTypeBooking){
                             if(bookingList[0].Booking_Date__c != null){
                                 expiryDate = bookingList[0].Booking_Date__c.addDays(Integer.valueOf(listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days__c));
-                                system.debug('listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days__c'+listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days__c);
-                                system.debug('listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days_Teacher__c'+listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days_Teacher__c);
+                               //System.debug('listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days__c'+listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days__c);
+                               //System.debug('listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days_Teacher__c'+listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days_Teacher__c);
                                 if(string.isNotBlank(cancelReason) &&(cancelReason.equalsIgnoreCase('Teacher MC') || cancelReason.equalsIgnoreCase('Teacher Leave'))){
                                     expiryDate = bookingList[0].Booking_Date__c.addDays(Integer.valueOf(listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days_Teacher__c));
                                 }else if(string.isNotBlank(makeUpReason) && (makeUpReason.equalsIgnoreCase('Teacher MC') || makeUpReason.equalsIgnoreCase('Teacher leaves'))){
                                     expiryDate = bookingList[0].Booking_Date__c.addDays(Integer.valueOf(listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days_Teacher__c));
                                 }
-                                system.debug('bookingList[0].Booking_Date__c'+bookingList[0].Booking_Date__c);
-                                system.debug('expiryDate'+expiryDate);
+                               //System.debug('bookingList[0].Booking_Date__c'+bookingList[0].Booking_Date__c);
+                               //System.debug('expiryDate'+expiryDate);
                                 
                                 
                             }
@@ -630,7 +630,7 @@ public with sharing class OssiaCenterCalendarController {
      //it should consider those makeup minutes which are related to the booking with the cancellation reason – Teacher MC/Leave first.
               
      public static void deductOssiaMakeupHours(List<Booking__c> bookingList, String bookingParentId,Set<string> enrolmentIds){
-        System.debug('deductOssiaMakeupHours Deduct Makeup hours called');
+       //System.debug('deductOssiaMakeupHours Deduct Makeup hours called');
         String statusCanceled = ConstantsClass.statusCanceled;
         Boolean isError = false;
         String studentId;
@@ -733,7 +733,7 @@ public with sharing class OssiaCenterCalendarController {
                         Available_Make_up_Units__c = (Decimal)mapOfHours.get(keysetValue)));
                     }
                 }
-                System.debug('bookingUpdatedList '+bookingUpdatedList);
+               //System.debug('bookingUpdatedList '+bookingUpdatedList);
                 if(bookingUpdatedList.size() > 0){
                     Database.SaveResult[] saveResults = Database.update(bookingUpdatedList, false);
                     for(Database.SaveResult saveResult : saveResults){
@@ -787,7 +787,7 @@ public with sharing class OssiaCenterCalendarController {
                 }
             }
         }
-        system.debug('EnrolmentList'+EnrolmentList);
+       //System.debug('EnrolmentList'+EnrolmentList);
         if(EnrolmentList.size() > 0){
             update EnrolmentList;
         }
@@ -1169,9 +1169,9 @@ public with sharing class OssiaCenterCalendarController {
             List<Booking__c> cancelBookings = new List<Booking__c>();
             List<Booking__c> cancelTeacherCancellationBookings = new List<Booking__c>();
             Decimal availableUnits = 0;
-            system.debug('enrol'+enrol);
-            system.debug('timeDiff'+timeDiff);
-            system.debug('mapOfFifthBookings'+mapOfFifthBookings);
+           //System.debug('enrol'+enrol);
+           //System.debug('timeDiff'+timeDiff);
+           //System.debug('mapOfFifthBookings'+mapOfFifthBookings);
             //Set<String> setOfParentStudent = AureusCalendarControllerHelper.fetchChildrens(enrol.Parent__c);
             Package__c makeupPackage = AureusCalendarControllerHelper.fetchDesiredPackage(enrol.Center__c , String.valueOf(timeDiff));
             String utilizedBookings = '';
@@ -1184,9 +1184,9 @@ public with sharing class OssiaCenterCalendarController {
                 cancelBookings = teacherLeaveWithOutReasonCancelBooking(new Set<string>{enrol.id});
            
             }
-            system.debug('availableUnits'+availableUnits);
-            system.debug('cancelTeacherCancellationBookings'+cancelTeacherCancellationBookings);
-            system.debug('cancelBookings'+cancelBookings);
+           //System.debug('availableUnits'+availableUnits);
+           //System.debug('cancelTeacherCancellationBookings'+cancelTeacherCancellationBookings);
+           //System.debug('cancelBookings'+cancelBookings);
             for(String bookingId : mapOfFifthBookings.keySet()){
                 Booking__c bookObj = mapOfFifthBookings.get(bookingId);
                 Booking__c newBook = new Booking__c();
@@ -1198,8 +1198,8 @@ public with sharing class OssiaCenterCalendarController {
                 
                 newBook.Booking_Date__c = bookObj.Booking_Date__c;
                 if(bookObj.Type__c == ConstantsClass.typeMakeup){
-                    system.debug('availableUnits'+availableUnits);
-                    system.debug('timeDiff'+timeDiff);
+                   //System.debug('availableUnits'+availableUnits);
+                   //System.debug('timeDiff'+timeDiff);
                     if(availableUnits >= timeDiff){
                         newBook.Type__c = ConstantsClass.typeMakeup;
                         newBook.Status__c = ConstantsClass.statusScheduled;
@@ -1207,7 +1207,7 @@ public with sharing class OssiaCenterCalendarController {
                         newBook.Student__c = bookObj.Student__c;
                         newBook.Enrolment__c =enrol.id;
                         Integer hoursToDeduct = timeDiff;
-                        system.debug('cancelTeacherCancellationBookings'+cancelTeacherCancellationBookings);
+                       //System.debug('cancelTeacherCancellationBookings'+cancelTeacherCancellationBookings);
                         if(hoursToDeduct > 0 && cancelTeacherCancellationBookings != null && cancelTeacherCancellationBookings.size() > 0){
                             for(Booking__c bookingObj : cancelTeacherCancellationBookings){
                                 // hoursToDeduct = timeDiff;
@@ -1228,14 +1228,14 @@ public with sharing class OssiaCenterCalendarController {
                                 }
                             }   
                         } 
-                        system.debug('hoursToDeduct'+hoursToDeduct);
-                        system.debug('cancelBookings'+cancelBookings);
+                       //System.debug('hoursToDeduct'+hoursToDeduct);
+                       //System.debug('cancelBookings'+cancelBookings);
                         if(hoursToDeduct > 0 && cancelBookings != null && cancelBookings.size() > 0){
                             for(Booking__c bookingObj : cancelBookings){
                                // hoursToDeduct = timeDiff; 15<30
-                               system.debug('hoursToDeduct = '+hoursToDeduct);
-                               system.debug('bookObj.Available_Make_up_Units__c= '+bookingObj.Available_Make_up_Units__c);
-                               system.debug('if-'+(hoursToDeduct <= bookingObj.Available_Make_up_Units__c));
+                              //System.debug('hoursToDeduct = '+hoursToDeduct);
+                              //System.debug('bookObj.Available_Make_up_Units__c= '+bookingObj.Available_Make_up_Units__c);
+                              //System.debug('if-'+(hoursToDeduct <= bookingObj.Available_Make_up_Units__c));
                                 if(hoursToDeduct <= bookingObj.Available_Make_up_Units__c){
                                     bookingObj.Available_Make_up_Units__c = bookingObj.Available_Make_up_Units__c - hoursToDeduct;
                                     utilizedBookings += bookingObj.Id+'-'+hoursToDeduct+';'; 
@@ -1246,13 +1246,13 @@ public with sharing class OssiaCenterCalendarController {
                                     bookingObj.Available_Make_up_Units__c = 0;
                                 }
                                 bookingsList.add(bookingObj);
-                                system.debug('bookingObj-'+bookingObj);
+                               //System.debug('bookingObj-'+bookingObj);
                                 if(hoursToDeduct == 0){
                                     break;
                                 }
                             }
                         }   
-                        system.debug('hoursToDeduct = '+hoursToDeduct);
+                       //System.debug('hoursToDeduct = '+hoursToDeduct);
                         newBook.Make_up_Utilize_Bookings__c=utilizedBookings;
                     }else{
                         newBook.Type__c = ConstantsClass.typeBusy;
@@ -1273,14 +1273,14 @@ public with sharing class OssiaCenterCalendarController {
                 
                 bookingsList.add(bookObj);
                 bookingsList.add(newBook);
-                system.debug('bookObj'+bookObj);
-                system.debug('newBook'+newBook);
+               //System.debug('bookObj'+bookObj);
+               //System.debug('newBook'+newBook);
             }
-            system.debug('bookingsList'+bookingsList);
+           //System.debug('bookingsList'+bookingsList);
             if(bookingsList.size() > 0){
                 upsert bookingsList; 
             }
-            system.debug('bookingsList'+bookingsList);
+           //System.debug('bookingsList'+bookingsList);
     }
     public static List<Booking__c> teacherLeaveReasonCancelBooking(Set<String> setOfEnrolmentId){
         List<string> teacherCancellation = new List<string>{'Teacher MC','Teacher Leave'};
@@ -1357,12 +1357,12 @@ public with sharing class OssiaCenterCalendarController {
                 parentMakeupHours = Integer.valueOf(enrol.Available_Make_up_mins__c);
                 parentAvailableMinutes.put(enrol.Id, Integer.valueOf(enrol.Available_Make_up_mins__c));
             }
-            // System.debug('@@@enrol.Center__c'+enrol.Center__c);
-			// System.debug('@@+enrol.Teacher__c..'+enrol.Teacher__c);
-            // system.debug('@@+enrol.Lesson_Day__c'+enrol.Lesson_Day__c);
-            // system.debug('@@enrol.Lesson_Start_time__c'+enrol.Lesson_Start_time__c);
-            // system.debug('@@enrol.Package__r.Duration__c'+enrol.Package__r.Duration__c);
-            // system.debug('@@bookingDate'+bookingDate);
+            ////System.debug('@@@enrol.Center__c'+enrol.Center__c);
+			////System.debug('@@+enrol.Teacher__c..'+enrol.Teacher__c);
+            ////System.debug('@@+enrol.Lesson_Day__c'+enrol.Lesson_Day__c);
+            ////System.debug('@@enrol.Lesson_Start_time__c'+enrol.Lesson_Start_time__c);
+            ////System.debug('@@enrol.Package__r.Duration__c'+enrol.Package__r.Duration__c);
+            ////System.debug('@@bookingDate'+bookingDate);
             if(mapOfFifthLesson.containsKey(enrol.Center__c+'-'+enrol.Teacher__c+'-'+enrol.Id+'-'+bookingDate+'-'+enrol.Lesson_Start_time__c+'-'+enrol.Package__r.Duration__c)){
                 
                 
