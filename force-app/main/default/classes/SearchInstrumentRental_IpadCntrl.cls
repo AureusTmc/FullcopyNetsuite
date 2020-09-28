@@ -5,7 +5,7 @@
 //									Updating the Instrument_Type__c for the selected enrolment ideally piano
 //CH04 Karan Singh 22 Sep 2020 : Adding NetSuite API logger.
 //CH05 Karan Singh 24 Sep 2020 : showing the type of the instrument in the page and storing the type of the instrument in the enrolment which can be piano,keyboard etc
-
+//CH06 Karan Singh 25 Sep 2020 : Now will calculate the GST amount from selected piano location , as these location will be stored in our center(Account) record, center -> country(parent) -> taxrate will be applicable.
 public class SearchInstrumentRental_IpadCntrl {
     public String slcdCenter{get;set;}
     public String slcdEnrId{get;set;}
@@ -265,8 +265,8 @@ options.add(new SelectOption(str,str));*/
             if(enrList.size() > 0){
                 
                 //CH03 Karan 18 Sep 2020
-                if( enrList.get(0).Center__r.Country__r.Tax_Rate__c != null )
-                    gstAmount = BillingUtility.roundOffAmount(enrList.get(0).Center__r.Country__r.Tax_Rate__c);
+                //CH06  if( enrList.get(0).Center__r.Country__r.Tax_Rate__c != null )
+                    //CH06  gstAmount = BillingUtility.roundOffAmount(enrList.get(0).Center__r.Country__r.Tax_Rate__c);
                 //CH03 
                 
                 // 17 sep 2020 will work later on thisCH02 17 Sep 2020 checking if it is existing  active/enrolled Lesson Enrolment
@@ -825,7 +825,26 @@ rw.errorMsg = 'Unknown error occured. Please contact your admin.';
         //slcdPiano = sageProducts.get(slctdPianoOpt-1); old
         slcdPiano = netSuiteProducts.get(slctdPianoOpt-1);
         system.debug('slcdPiano -> '+ slcdPiano);
-        
+
+        //CH06 will fetch the tax rate from the selected piano center
+        if( String.isNotBlank( slcdPiano.location ) ){
+            List< Account > listCenterAccnt = [ SELECT ID, Country__r.Tax_Rate__c  FROM Account 
+                                                WHERE Country__r.Tax_Rate__c  <> NULL 
+                                                AND Recordtype.Name=:ConstantsClass.centerRecTypeName
+                                                AND NAME =: slcdPiano.location
+                                                LIMIT 1 ];
+
+            if( listCenterAccnt.size() > 0 ){
+                gstAmount = BillingUtility.roundOffAmount(listCenterAccnt[0].Country__r.Tax_Rate__c); 
+            }else{ //incase no center is found
+                gstAmount = 0;
+            }
+            
+        }else{ //incase piano center is blank make it 0
+            gstAmount = 0;
+        }
+        System.debug( 'gstAmount --> ' + gstAmount );
+        //CH06 END
         //CH02
     }
     // added by nishi: 23-Sep-2020: for stripe id and other country details the enrollment's center was inserted according to the home page selected center. So we get stripe details according to this center   

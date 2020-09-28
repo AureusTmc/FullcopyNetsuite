@@ -1,3 +1,4 @@
+//CH01 25 Sep 2020 : Karan Singh : Ashish Bansal -> on the status as success credit memo date will also populate.
 public with sharing class RefundCreditMemoController {
     
     //____________________________________________  INITIALIZATION  _____________________________________________________________
@@ -95,18 +96,18 @@ public with sharing class RefundCreditMemoController {
                    String.isNotBlank(objInvoice.Payments__r[0].Invoice__r.Center__r.Organisation__r.Stripe_Secret_Key__c) &&
                    amountToRefund > 0 &&  objInvoice.Payments__r[0].Payment_Amount__c >= amountToRefund && String.isNotBlank(objInvoice.Payments__r[0].Transaction_Id__c) ){
                        
-                    BillingUtility.StripeRefund  refundObj;
-                    if(Test.isRunningTest()){
-                        refundObj = BillingUtility.createRefundForCharge(objInvoice.Payments__r[0].Transaction_Id__c,amountToRefund, objInvoice.Payments__r[0].Invoice__r.Center__r.Organisation__r.Stripe_Base_Url__c, objInvoice.Payments__r[0].Invoice__r.Center__r.Organisation__r.Stripe_Secret_Key__c);
-                    }
-                    
-                       else{
-                        refundObj =  new BillingUtility.StripeRefund();
-                        refundObj.statusCode = 200;
-                        refundObj.status = 'succeeded';
-                        refundObj.id = 'test';
+                       BillingUtility.StripeRefund  refundObj;
+                       if(!Test.isRunningTest()){
+                           refundObj = BillingUtility.createRefundForCharge(objInvoice.Payments__r[0].Transaction_Id__c,amountToRefund, objInvoice.Payments__r[0].Invoice__r.Center__r.Organisation__r.Stripe_Base_Url__c, objInvoice.Payments__r[0].Invoice__r.Center__r.Organisation__r.Stripe_Secret_Key__c);
                        }
-
+                       
+                       else{
+                           refundObj =  new BillingUtility.StripeRefund();
+                           refundObj.statusCode = 200;
+                           refundObj.status = 'succeeded';
+                           refundObj.id = 'test';
+                       }
+                       
                        system.debug(refundObj);
                        if(refundObj.statusCode == 200 && refundObj.status == 'succeeded'){
                            isPaymentSuccess = true;
@@ -141,96 +142,152 @@ public with sharing class RefundCreditMemoController {
                         
                         Decimal adjustmentAmnt = objCreditMemoWrap.userEnterAMount;
                         Boolean isAdjustmentDOne = false;
+                        objCreditMemo.Refund_ID__c = refundId;
                         
                         cloneCreditMemo.Status__c = 'Pending';
                         objCreditMemo.Status__c = 'Success';
+                        
+                        //CH02
+                        objCreditMemo.Credit_Memo_Date__c = Date.today();
+                        cloneCreditMemo.Credit_Memo_Date__c = Date.today();
+                        //CH02
+                        objCreditMemo.Payment_Method__c =  objInvoice.Payments__r[0].Method_of_Payment__c;
                         cloneCreditMemo.Parent_Account__c = objCreditMemo.Parent_Account__c;
-                        cloneCreditMemo.Center__c = objCreditMemo.Parent_Account__c;
+                        cloneCreditMemo.Center__c = objCreditMemo.Center__c;
                         cloneCreditMemo.Bank_Name__c = objCreditMemo.Bank_Name__c;
                         cloneCreditMemo.Cheque_Date__c = objCreditMemo.Cheque_Date__c;
                         cloneCreditMemo.Cheque_No__c = objCreditMemo.Cheque_No__c;
                         cloneCreditMemo.Field_1__c = objCreditMemo.Field_1__c;
                         cloneCreditMemo.NETS_Code__c = objCreditMemo.NETS_Code__c;
-                        cloneCreditMemo.Payment_Method__c = objCreditMemo.Parent_Account__c;
+                        cloneCreditMemo.Payment_Method__c = objCreditMemo.Payment_Method__c;
                         cloneCreditMemo.Comments__c = objCreditMemoWrap.userRemarks;
-                        
+                        cloneCreditMemo.From_Invoice__c = objCreditMemo.From_Invoice__c;
                         upsert new list<Credit_Memo__c>{ cloneCreditMemo,objCreditMemo};
                             
-                            for( Credit_memo_line_item__c objExistingCreditMemoLine : objCreditMemo.Credit_memo_line_items__r ){
+                            system.debug('cloneCreditMemo --> ' + cloneCreditMemo );
+                        system.debug('objCreditMemo --> ' + objCreditMemo );
+                        
+                        for( Credit_memo_line_item__c objExistingCreditMemoLine : objCreditMemo.Credit_memo_line_items__r ){
+                            
+                            system.debug('isAdjustmentDOne --> ' + isAdjustmentDOne );
+                            system.debug('adjustmentAmnt --> ' + adjustmentAmnt );
+                            Decimal existingTaxAmount = 0;
+                            if( objExistingCreditMemoLine.Tax_Amount__c != Null ){ //as tax amount can be zero
+                                existingTaxAmount = objExistingCreditMemoLine.Tax_Amount__c;
+                            }
+                            system.debug('existingTaxAmount --> ' + existingTaxAmount );
+                            if( isAdjustmentDOne ){
                                 
-                                if( isAdjustmentDOne ){
+                                Credit_memo_line_item__c newCreditMemoLineItem = new Credit_memo_line_item__c();
+                                newCreditMemoLineItem.Amount__c = objExistingCreditMemoLine.Amount__c;
+                                newCreditMemoLineItem.Tax_Amount__c = objExistingCreditMemoLine.Tax_Amount__c;
+                                newCreditMemoLineItem.Credit_Memo_Number__c = cloneCreditMemo.Id;
+                                newCreditMemoLineItem.Enrolment__c = objExistingCreditMemoLine.Enrolment__c;
+                                newCreditMemoLineItem.Month__c = objExistingCreditMemoLine.Month__c;
+                                newCreditMemoLineItem.Package__c = objExistingCreditMemoLine.Package__c;
+                                newCreditMemoLineItem.Is_Deposit__c = objExistingCreditMemoLine.Is_Deposit__c;
+                                newCreditMemoLineItem.Is_Discount__c = objExistingCreditMemoLine.Is_Discount__c; 
+                                newCreditMemoLineItem.Invoice_Line_Item__c = objExistingCreditMemoLine.Invoice_Line_Item__c;
+                                listCreditMemoLineItem.add( newCreditMemoLineItem );
+                                listDeleteCreditMemoLineItem.add(objExistingCreditMemoLine);
+                                
+                            }else{
+                                
+                                if( adjustmentAmnt >= ( objExistingCreditMemoLine.Amount__c + existingTaxAmount )){
                                     
-                                    Credit_memo_line_item__c newCreditMemoLineItem = new Credit_memo_line_item__c();
-                                    newCreditMemoLineItem.Amount__c = objExistingCreditMemoLine.Amount__c;
-                                    newCreditMemoLineItem.Tax_Amount__c = objExistingCreditMemoLine.Tax_Amount__c;
-                                    newCreditMemoLineItem.Credit_Memo_Number__c = cloneCreditMemo.Id;
-                                    newCreditMemoLineItem.Enrolment__c = objExistingCreditMemoLine.Enrolment__c;
-                                    newCreditMemoLineItem.Month__c = objExistingCreditMemoLine.Month__c;
-                                    newCreditMemoLineItem.Package__c = objExistingCreditMemoLine.Package__c;
-                                    newCreditMemoLineItem.Is_Deposit__c = objExistingCreditMemoLine.Is_Deposit__c;
-                                    newCreditMemoLineItem.Is_Discount__c = objExistingCreditMemoLine.Is_Discount__c; 
-                                    newCreditMemoLineItem.Invoice_Line_Item__c = objExistingCreditMemoLine.Invoice_Line_Item__c;
-                                    listCreditMemoLineItem.add( newCreditMemoLineItem );
-                                    listDeleteCreditMemoLineItem.add(objExistingCreditMemoLine);
+                                    system.debug('adjustmentAmnt --> ' + adjustmentAmnt );
+                                    system.debug('amount to be deduct --> ' + (objExistingCreditMemoLine.Amount__c + existingTaxAmount) );
+                                    adjustmentAmnt = adjustmentAmnt - (objExistingCreditMemoLine.Amount__c + existingTaxAmount);
+                                    system.debug('adjustmentAmnt --> ' + adjustmentAmnt );
                                     
-                                }else{
-                                    
-                                    if( adjustmentAmnt >= ( objExistingCreditMemoLine.Amount__c + objExistingCreditMemoLine.Tax_Amount__c )){
-                                        
-                                        adjustmentAmnt = adjustmentAmnt - (objExistingCreditMemoLine.Amount__c + objExistingCreditMemoLine.Tax_Amount__c);
-                                    }
-                                    else{
-                                        
-                                        if( adjustmentAmnt == 0 ){
-                                            isAdjustmentDOne = true;
-                                        }else{
-                                            
-                                            Decimal newCreditLineItemAmount = (objExistingCreditMemoLine.Amount__c + objExistingCreditMemoLine.Tax_Amount__c);
-                                            
-                                            newCreditLineItemAmount = newCreditLineItemAmount - adjustmentAmnt;
-                                            
-                                            if( objInvoice.Parent_Account__r.Centre_Name__r.Country__r.Tax_Rate__c != Null && objInvoice.Parent_Account__r.Centre_Name__r.Country__r.Tax_Rate__c != 0 ){
-                                                
-                                                objExistingCreditMemoLine.Tax_Amount__c = (objInvoice.Parent_Account__r.Centre_Name__r.Country__r.Tax_Rate__c/100)*newCreditLineItemAmount;
-                                            }else{
-                                                objExistingCreditMemoLine.Tax_Amount__c = 0;
-                                            }
-                                            objExistingCreditMemoLine.Amount__c = newCreditLineItemAmount - objExistingCreditMemoLine.Tax_Amount__c;
-                                            
-                                            listCreditMemoLineItem.add( objExistingCreditMemoLine );
-                                            
-                                            Credit_memo_line_item__c newCreditMemoLineItem = new Credit_memo_line_item__c();
-                                            
-                                            if( objInvoice.Parent_Account__r.Centre_Name__r.Country__r.Tax_Rate__c != Null && objInvoice.Parent_Account__r.Centre_Name__r.Country__r.Tax_Rate__c != 0 ){
-                                                
-                                                newCreditMemoLineItem.Tax_Amount__c = (objInvoice.Parent_Account__r.Centre_Name__r.Country__r.Tax_Rate__c/100)*adjustmentAmnt;
-                                            }else{
-                                                newCreditMemoLineItem.Tax_Amount__c = 0;
-                                            }
-                                            newCreditMemoLineItem.Amount__c = adjustmentAmnt - newCreditMemoLineItem.Tax_Amount__c;
-                                            newCreditMemoLineItem.Credit_Memo_Number__c = cloneCreditMemo.Id;
-                                            newCreditMemoLineItem.Enrolment__c = objExistingCreditMemoLine.Enrolment__c;
-                                            newCreditMemoLineItem.Month__c = objExistingCreditMemoLine.Month__c;
-                                            newCreditMemoLineItem.Package__c = objExistingCreditMemoLine.Package__c;
-                                            newCreditMemoLineItem.Is_Deposit__c = objExistingCreditMemoLine.Is_Deposit__c;
-                                            newCreditMemoLineItem.Is_Discount__c = objExistingCreditMemoLine.Is_Discount__c; 
-                                            newCreditMemoLineItem.Invoice_Line_Item__c = objExistingCreditMemoLine.Invoice_Line_Item__c;
-                                            listCreditMemoLineItem.add( newCreditMemoLineItem );
-                                        }
-                                    }
                                 }
-                                
-                            }//end of credit memo line item loop
+                                else{
+                                    
+                                    if( adjustmentAmnt == 0 ){
+                                        isAdjustmentDOne = true;
+                                        Credit_memo_line_item__c newCreditMemoLineItem = new Credit_memo_line_item__c();
+                                        newCreditMemoLineItem.Amount__c = objExistingCreditMemoLine.Amount__c;
+                                        newCreditMemoLineItem.Tax_Amount__c = objExistingCreditMemoLine.Tax_Amount__c;
+                                        newCreditMemoLineItem.Credit_Memo_Number__c = cloneCreditMemo.Id;
+                                        newCreditMemoLineItem.Enrolment__c = objExistingCreditMemoLine.Enrolment__c;
+                                        newCreditMemoLineItem.Month__c = objExistingCreditMemoLine.Month__c;
+                                        newCreditMemoLineItem.Package__c = objExistingCreditMemoLine.Package__c;
+                                        newCreditMemoLineItem.Is_Deposit__c = objExistingCreditMemoLine.Is_Deposit__c;
+                                        newCreditMemoLineItem.Is_Discount__c = objExistingCreditMemoLine.Is_Discount__c; 
+                                        newCreditMemoLineItem.Invoice_Line_Item__c = objExistingCreditMemoLine.Invoice_Line_Item__c;
+                                        listCreditMemoLineItem.add( newCreditMemoLineItem );
+                                        listDeleteCreditMemoLineItem.add(objExistingCreditMemoLine);
+                                    }else{
+                                        
+                                        Decimal newCreditLineItemAmount = (objExistingCreditMemoLine.Amount__c + existingTaxAmount);
+                                        system.debug('newCreditLineItemAmount --> ' + newCreditLineItemAmount );
+                                        newCreditLineItemAmount = newCreditLineItemAmount - adjustmentAmnt;
+                                        
+                                        system.debug('newCreditLineItemAmount --> ' + newCreditLineItemAmount );
+                                        newCreditLineItemAmount = BillingUtility.roundOffAmount( newCreditLineItemAmount );
+                                        system.debug('newCreditLineItemAmount --> ' + newCreditLineItemAmount );
+                                        
+                                        if( objInvoice.Parent_Account__r.Centre_Name__r.Country__r.Tax_Rate__c != Null && objInvoice.Parent_Account__r.Centre_Name__r.Country__r.Tax_Rate__c != 0 ){
+                                            
+                                            objExistingCreditMemoLine.Tax_Amount__c = (objInvoice.Parent_Account__r.Centre_Name__r.Country__r.Tax_Rate__c/100)*adjustmentAmnt;
+                                            objExistingCreditMemoLine.Tax_Amount__c = BillingUtility.roundOffAmount( objExistingCreditMemoLine.Tax_Amount__c );
+                                        }else{
+                                            objExistingCreditMemoLine.Tax_Amount__c = 0;
+                                        }
+                                        system.debug('objExistingCreditMemoLine.Tax_Amount__c --> ' + objExistingCreditMemoLine.Tax_Amount__c );
+                                        
+                                        objExistingCreditMemoLine.Amount__c = adjustmentAmnt - objExistingCreditMemoLine.Tax_Amount__c;
+                                        objExistingCreditMemoLine.Amount__c = BillingUtility.roundOffAmount( objExistingCreditMemoLine.Amount__c );
+                                        system.debug('objExistingCreditMemoLine.Amount__c --> ' + objExistingCreditMemoLine.Amount__c );
+                                        
+                                        listCreditMemoLineItem.add( objExistingCreditMemoLine );
+                                        System.debug('listCreditMemoLineItem --> ' + listCreditMemoLineItem );
+                                        adjustmentAmnt = 0;
+                                        Credit_memo_line_item__c newCreditMemoLineItem = new Credit_memo_line_item__c();
+                                        
+                                        if( objInvoice.Parent_Account__r.Centre_Name__r.Country__r.Tax_Rate__c != Null && objInvoice.Parent_Account__r.Centre_Name__r.Country__r.Tax_Rate__c != 0 ){
+                                            
+                                            newCreditMemoLineItem.Tax_Amount__c = (objInvoice.Parent_Account__r.Centre_Name__r.Country__r.Tax_Rate__c/100)*newCreditLineItemAmount;
+                                            newCreditMemoLineItem.Tax_Amount__c = BillingUtility.roundOffAmount( newCreditMemoLineItem.Tax_Amount__c );
+                                        }else{
+                                            newCreditMemoLineItem.Tax_Amount__c = 0;
+                                        }
+                                        system.debug('newCreditMemoLineItem.Tax_Amount__c --> ' + newCreditMemoLineItem.Tax_Amount__c );
+                                        
+                                        newCreditMemoLineItem.Amount__c = newCreditLineItemAmount - newCreditMemoLineItem.Tax_Amount__c;
+                                        newCreditMemoLineItem.Amount__c = BillingUtility.roundOffAmount( newCreditMemoLineItem.Amount__c );
+                                        system.debug('newCreditMemoLineItem.Amount__c --> ' + newCreditMemoLineItem.Amount__c );    
+                                        newCreditMemoLineItem.Credit_Memo_Number__c = cloneCreditMemo.Id;
+                                        newCreditMemoLineItem.Enrolment__c = objExistingCreditMemoLine.Enrolment__c;
+                                        newCreditMemoLineItem.Month__c = objExistingCreditMemoLine.Month__c;
+                                        newCreditMemoLineItem.Package__c = objExistingCreditMemoLine.Package__c;
+                                        newCreditMemoLineItem.Is_Deposit__c = objExistingCreditMemoLine.Is_Deposit__c;
+                                        newCreditMemoLineItem.Is_Discount__c = objExistingCreditMemoLine.Is_Discount__c; 
+                                        newCreditMemoLineItem.Invoice_Line_Item__c = objExistingCreditMemoLine.Invoice_Line_Item__c;
+                                        system.debug('newCreditMemoLineItem --> ' + newCreditMemoLineItem );
+                                        listCreditMemoLineItem.add( newCreditMemoLineItem );
+                                        System.debug('listCreditMemoLineItem --> ' + listCreditMemoLineItem );
+                                        System.debug('listCreditMemoLineItem.size() --> ' + listCreditMemoLineItem.size() );
+                                }
+                            }
+                            
+                        }//end of credit memo line item loop
                     }//end of partial refund case
                     
                 }//end of successfule payment check
-
-
+                
+                
                 if(listCreditMemoLineItem.size() > 0 )
-                upsert listCreditMemoLineItem;
+                    upsert listCreditMemoLineItem;
                 if(listDeleteCreditMemoLineItem.size() > 0 )
-                delete listDeleteCreditMemoLineItem;
-            }Catch( Exception objExcp ){
+                    delete listDeleteCreditMemoLineItem;
+                
+                system.debug('listDeleteCreditMemoLineItem --> ' + listDeleteCreditMemoLineItem );
+                system.debug('listCreditMemoLineItem --> ' + listCreditMemoLineItem );
+                
+            }
+        }
+            Catch( Exception objExcp ){
                 Database.rollback(objSavePoint);
                 message = objExcp.getMessage();
             }

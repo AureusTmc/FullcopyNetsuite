@@ -1,0 +1,48 @@
+<aura:component implements="force:hasRecordId,flexipage:availableForAllPageTypes">
+   
+<aura:attribute name="recordError" type="String" />
+    <aura:attribute name="recordInfo" type="Object" />
+    <aura:attribute name="simpleRecord" type="Object" />
+    <aura:attribute name="recordId" type="String" />
+    <aura:attribute name="showMODAL" type="Boolean" default="false" />
+
+    <force:recordData aura:id="recordHandler" recordId="{!v.recordId}" layoutType="FULL" targetRecord="{!v.recordInfo}"
+        targetFields="{!v.simpleRecord}" targetError="{!v.recordError}" recordUpdated="{!c.handleRecordUpdated}"
+        mode="EDIT" />
+    <!-- aura:handler name="init" value="{!this}" action="{!c.doInit}"/ -->
+
+    <lightning:card>
+        <aura:set attribute="actions">
+            <lightning:button label="Customer No Response" variant="brand" onclick="{!c.showMODAL}"/>
+        </aura:set>
+    </lightning:card>
+    <aura:if isTrue="{!v.showMODAL}">
+
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+            aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">Customer No Response</h2>
+                </header>
+
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                    <div class="slds-form-element">
+                        <lightning:input type="text" label="Reasons" value="{!v.simpleRecord.Comments__c}" />
+                    </div>
+            </div>
+                <footer class="slds-modal__footer">
+
+                    <div class="slds-clearfix">
+                        <div class="slds-float_right">
+                            <lightning:button variant="brand" label="Save" onclick="{!c.saveRecordCntrlr}" />
+                            <lightning:button  label="Cancel" onclick="{!c.cancelModal}" />
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+
+    </aura:if>
+
+</aura:component>

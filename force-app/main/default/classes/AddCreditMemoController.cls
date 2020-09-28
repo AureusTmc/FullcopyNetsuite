@@ -3,6 +3,7 @@
 //						Also  only populate Credit Memo : Credit_Memo_Date__c in case of success status only.
 //						Also Addng new field mapping for the Credit memo/line item as per fields req in  credit memo reports 
 //CH02 24 Sep 2020 : Karan Singh Adding the Gst AMount + Amount in the invoice line item credit amount so that it can balance out the invoice line item total amount
+//CH03 25 Sep 2020 : Karan Singh Need -> Ashish bansal : to set the intial value of Credit Memo Date in creation of Credit memo not of Success Status (CH01)
 public with sharing class AddCreditMemoController {
     @AuraEnabled
     public static creditMemoWrap getCreditMemoDetails(Id invId) {
@@ -210,9 +211,9 @@ public with sharing class AddCreditMemoController {
         objCreditMemo.From_Invoice__c = invId;
         
         //CH01 : only populate date in case of success status only.
-        if( Status == 'Success' ){
-            objCreditMemo.Credit_Memo_Date__c = date.today(); //only for successful    
-        }
+        //CH03 commneting and canclling CH01 point if( Status == 'Success' ){
+            objCreditMemo.Credit_Memo_Date__c = date.today(); 
+        //CH03 }
         //CH01
         objCreditMemo.Status__c = Status;
         objCreditMemo.Comments__c = reason;
