@@ -41,7 +41,7 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
              enrollmentId = enrolObj.Id;
         }
         date nextBillDate =   AdvanceActionsHelper.fetchNextBillDateFromEnrolment(enrolObj);
-        system.debug('@@@enrolmentObj.id'+enrolObj.id);
+       //system.debug('@@@enrolmentObj.id'+enrolObj.id);
         Enrolment__c enroll = new Enrolment__c();
          if(String.isNotBlank(enrollmentId) && endDate != NULL && lastLessonDate  != NULL){
             enroll.Id = enrollmentId;
@@ -61,7 +61,7 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
 
          }
          if(enroll != NULL){
-            System.debug('enroll '+enroll);
+           //system.debug('enroll '+enroll);
             Database.SaveResult saveResult = Database.Update(enroll, false);
             if(saveResult.isSuccess()){
                 isSuccess = true;
@@ -70,12 +70,12 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
             }
         }
 
-        system.debug('@@@isSuccess'+isSuccess);
+       //system.debug('@@@isSuccess'+isSuccess);
        if(String.isNotBlank(enroll.id)){
             enroll = AdvanceActionsHelper.fetchEnrolment(enroll.id);                
         }
         
-            system.debug('@@@enrolmentObj'+enroll);
+           //system.debug('@@@enrolmentObj'+enroll);
         if(isSuccess && String.isNotBlank(enrollmentId)){
             createPaymentRecordForWithdrawalProcess(enrolObj, lastLessonDate,nextBillDate);
             
@@ -91,14 +91,14 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
                 markMakeupExpiryDateAsLastLessonDate(enrolObj.Parent__c);
             }
         }
-        system.debug('@@isSuccess'+isSuccess);
+       //system.debug('@@isSuccess'+isSuccess);
         if(!isSuccess){
             caseIdToReturn = 'error';
         }
         
         if(isSuccess && redirectCase == 'true'){
             Case objCase =  AureusCalendarControllerHelper.createCaseForEnrolment(myCase, enroll.Id, 'withdrawal', true);
-            System.debug('@@caseObj'+objCase);
+           //system.debug('@@caseObj'+objCase);
             caseIdToReturn = objCase.Id;
         }else if(isSuccess){
             caseIdToReturn = '';
@@ -177,7 +177,7 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
         if(needToMakeupChange && String.isNotBlank(parentId)){
             Date maxDate = findMaxDate(enrolListForMaxDate);
             if(String.isNotBlank(parentId) && maxDate != NULL){
-                system.debug('parentId'+parentId);
+               //system.debug('parentId'+parentId);
                 updateAllBookingForParent(parentId, maxDate);
             }
         }
@@ -195,7 +195,7 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
     
     private static void updateAllBookingForParent(String parentId, Date maxDate){
         List<Booking__c> bookingList = new List<Booking__c>();
-        system.debug('maxDate'+maxDate);
+       //system.debug('maxDate'+maxDate);
         for(Booking__c bookingObj : [SELECT Id, Make_up_Expiry_Date__c 
                                     FROM Booking__c
                                      WHERE RecordType.Name =: ConstantsClass.groupLessonBookingRecordType
@@ -251,7 +251,7 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
                                                 }
             
             if(invoiceIds.size() > 0){
-                for(Payment__c payment : [SELECT Id, Transaction_ID__c, Invoice__c  
+                for(Payment__c payment : [SELECT Id, Transaction_ID__c, Invoice__c ,Method_of_Payment__c 
                                             FROM Payment__c 
                                             WHERE Invoice__c IN: invoiceIds AND 
                                             RecordType.Name =:ConstantsClass.paymentTransactionRecType]){
@@ -270,12 +270,14 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
                 for( string invoiceId : mapOfInvoicePayments.keyset()){
                     if(mapOfInvoicePayments.containsKey(invoiceId)){
                         paymentObj.Transaction_ID__c = mapOfInvoicePayments.get(invoiceId).Transaction_ID__c;    
+                        // added by nishi: 10-Sep-2020: if the deposit was paid by card then we can set it to Card and vice-versa
+                        paymentObj.Method_of_Payment__c =   mapOfInvoicePayments.get(invoiceId).Method_of_Payment__c; 
                     }
                 }
                 paymentObj.RecordTypeId =  paymentRecordTypeId;
                 paymentObj.Enrolment__c = objEnrol.id;
                 paymentObj.last_lesson_date__c = lastLessonDateObj;
-                system.debug('paymentObj'+paymentObj);
+               //system.debug('paymentObj'+paymentObj);
                 paymentList.add(paymentObj);
             }/*/*Commented by jatin: 13-jan-2020: for now change requirement only multiple enrollment exist then we create payment record
             otherwise not
@@ -288,7 +290,7 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
         }
         
         if(!hasMoreEnrolment){
-            system.debug('paymentObj'+paymentList);
+           //system.debug('paymentObj'+paymentList);
             /*for(Payment__c objPay : paymentList){
                 Payment__c refund = objPay.clone(false,false,false,false);
                 refund.Payment_amount__c = -1*refund.Payment_amount__c;
@@ -306,7 +308,7 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
             refund.Enrolment__c = objEnrol.Id;
             for( string invoiceId : mapOfInvoicePayments.keyset()){
                 if(mapOfInvoicePayments.containsKey(invoiceId)){
-                    paymentObj.Transaction_ID__c = mapOfInvoicePayments.get(invoiceId).Transaction_ID__c;    
+                    paymentObj.Transaction_ID__c = mapOfInvoicePayments.get(invoiceId).Transaction_ID__c;  
                 }
             }
             refundPayments.add(refund);   
@@ -315,8 +317,42 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
          // we need to refund current month amount if applicable
         if(isRefund){
             String chargeId =  AureusCalendarController.fetchCurrentMonthPaymentEntry(objEnrol,lastLessonDateObj);
-            
             Decimal refundAmount = classEditController.getLessonRefundAmount(objEnrol,lastLessonDateObj);
+            // added by nishi: 21-Sep-2020: for if next month invoice already generated then we create next month payment records
+            date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1); // 1-10-2020
+            Boolean isNextMonthInvoicCreated = false;
+            // 1-10-2020 >= 1-10-2020 && 8<9
+           //system.debug('nextBillDate'+nextBillDate);
+           //system.debug('nextMonthDate'+nextMonthDate);
+           //system.debug('lastLessonDateObj'+lastLessonDateObj);
+           //system.debug('nextMonthDate.addMonths(-1).Month()'+nextMonthDate.addMonths(-1).Month());
+            if(nextBillDate >= nextMonthDate && lastLessonDateObj.Month() < nextMonthDate.addMonths(-1).Month()){ 
+                Decimal refundNextMonthAmount = classEditController.getLessonRefundAmount(objEnrol,nextMonthDate.addMonths(-1)); // 1-9-2020
+                if(refundNextMonthAmount > 0){
+                    Payment__c objPay = new Payment__c();
+                    if(hasMoreEnrolment){
+                            objPay = BillingUtility.fillPayment(objEnrol.Parent__c,null, refundNextMonthAmount, ConstantsClass.paymentPendingStatus);
+                    }else{
+                            objPay = BillingUtility.fillPayment(objEnrol.Parent__c,null, refundNextMonthAmount, ConstantsClass.paymentSuccessStatus);
+                    }
+                    objPay.RecordTypeId =  payAsCredit ;
+                    objPay.Payment_Date__c = lastLessonDateObj;
+                    if(String.isNotBlank(chargeId)){
+                            objPay.Transaction_ID__c = chargeId;
+                    }//14-Jan:2020 If current month payment is not get then we send error .
+                    else{
+                        throw new RefundException('Refund Failed. Charge Id Not found');
+                    }
+                    objPay.Remarks__c ='Refund  (Next month invoice amount)';
+                    objPay.last_lesson_date__c = lastLessonDateObj;
+                   //system.debug('objPay'+objPay);
+                    paymentList.add(objPay);
+                    isNextMonthInvoicCreated = true;
+                }
+               //system.debug('refundNextMonthAmount'+refundNextMonthAmount);
+               //system.debug('paymentList'+paymentList);
+            }
+             //end: added by nishi: 21-Sep-2020: for if next month invoice already generated then we create next month payment records
             if(refundAmount > 0){
                     Payment__c objPay = new Payment__c();
                 if(hasMoreEnrolment){
@@ -333,7 +369,9 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
                     throw new RefundException('Refund Failed. Charge Id Not found');
                 }
                 objPay.last_lesson_date__c = lastLessonDateObj;
-
+                if(isNextMonthInvoicCreated){
+                    objPay.Remarks__c ='Refund  (Effective month invoice amount)';
+                }
                 paymentList.add(objPay);
             }
                                                                      
@@ -346,7 +384,7 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
         if(paymentList.size() > 0){
             insert paymentList;
         }
-        system.debug('paymentList'+paymentList);
+       //system.debug('paymentList'+paymentList);
     }
 
     

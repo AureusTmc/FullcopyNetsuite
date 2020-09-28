@@ -44,7 +44,7 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
              enrollmentId = enrolObj.Id;
         }
         date nextBillDate =   AdvanceActionsHelper.fetchNextBillDateFromEnrolment(enrolObj);
-        system.debug('@@@enrolmentObj.id'+enrolObj.id);
+       //system.debug('@@@enrolmentObj.id'+enrolObj.id);
         Enrolment__c enroll = new Enrolment__c();
          if(String.isNotBlank(enrollmentId) && endDate != NULL && lastLessonDate  != NULL){
             enroll.Id = enrollmentId;
@@ -64,7 +64,7 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
 
          }
          if(enroll != NULL){
-            System.debug('enroll '+enroll);
+           //system.debug('enroll '+enroll);
             Database.SaveResult saveResult = Database.Update(enroll, false);
             if(saveResult.isSuccess()){
                 isSuccess = true;
@@ -74,16 +74,16 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
             }
         }
 
-        system.debug('@@@isSuccess'+isSuccess);
+       //system.debug('@@@isSuccess'+isSuccess);
        if(String.isNotBlank(enroll.id)){
             enroll = AdvanceActionsHelper.fetchEnrolment(enroll.id);                
         }
         
-        system.debug('@@@enrolmentObj'+enroll);
+       //system.debug('@@@enrolmentObj'+enroll);
         if(isSuccess && String.isNotBlank(enrollmentId)){
             Set<String> setOfMakeupBookings = new Set<String>();
-            system.debug('@@@lastLessonDate'+lastLessonDate);
-            system.debug('@@@nextBillDate'+nextBillDate);
+           //system.debug('@@@lastLessonDate'+lastLessonDate);
+           //system.debug('@@@nextBillDate'+nextBillDate);
             createPaymentRecordForWithdrawalProcess(enrolObj, lastLessonDate,nextBillDate);
             
             bookingListToDelete.addAll([SELECT ID FROM Booking__c WHERE Booking_Date__c > :enroll.Effective_Date__c AND 
@@ -95,14 +95,14 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
                 markMakeupExpiryDateAsLastLessonDate(enrolObj.Parent__c);
             }
         }
-        system.debug('@@isSuccess'+isSuccess);
+       //system.debug('@@isSuccess'+isSuccess);
         if(!isSuccess){
             caseIdToReturn = 'error';
         }
         
         if(isSuccess && redirectCase == 'true'){
             Case objCase =  AureusCalendarControllerHelper.createCaseForEnrolment(myCase, enroll.Id, 'withdrawal', true);
-            System.debug('@@caseObj'+objCase);
+           //system.debug('@@caseObj'+objCase);
             caseIdToReturn = objCase.Id;
         }else if(isSuccess){
             caseIdToReturn = '';
@@ -120,7 +120,7 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
         String cancelStatus = ConstantsClass.enrollmentStageCancelled;
         List<Enrolment__c> enrolList = [SELECT Id, Package_Process_Type__c, Package_Process_Status__c, Effective_Date__c  FROM Enrolment__c 
         WHERE Parent__c =: parentId AND Stage__c = :ConstantsClass.enroledStatus AND Type__c = :ConstantsClass.enrolRegularStatus];
-        system.debug('enrolList'+enrolList);
+       //system.debug('enrolList'+enrolList);
         if(enrolList.size() == 1){
             needToMakeupChange = true;
             enrolListForMaxDate.add(enrolList[0]);
@@ -143,11 +143,11 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
                 needToMakeupChange = true;
             }
         }
-        system.debug('needToMakeupChange'+needToMakeupChange);
+       //system.debug('needToMakeupChange'+needToMakeupChange);
         if(needToMakeupChange && String.isNotBlank(parentId)){
             Date maxDate = findMaxDate(enrolListForMaxDate);
             if(String.isNotBlank(parentId) && maxDate != NULL){
-                system.debug('parentId'+parentId);
+               //system.debug('parentId'+parentId);
                 updateAllBookingForParent(parentId, maxDate);
             }
         }
@@ -165,7 +165,7 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
     
     private static void updateAllBookingForParent(String parentId, Date maxDate){
         List<Booking__c> bookingList = new List<Booking__c>();
-        system.debug('maxDate'+maxDate);
+       //system.debug('maxDate'+maxDate);
         for(Booking__c bookingObj : [SELECT Id, Make_up_Expiry_Date__c, RecordType.Name,Parent__c,Available_Make_up_Units__c,Type__c,Status__c FROM Booking__c WHERE Parent__c =: parentId]){
         	system.debug('[SELECT Id, Make_up_Expiry_Date__c FROM Booking__c]'+bookingObj);
         }
@@ -181,13 +181,13 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
         if(bookingList.size() > 0){
             update bookingList;
         }
-        system.debug('bookingList'+bookingList);
+       //system.debug('bookingList'+bookingList);
     }
 
     //To Create Payment Record After the Enrolment Withdrawal Request
     private static void createPaymentRecordForWithdrawalProcess(Enrolment__c objEnrol, Date lastLessonDateObj,Date nextBillDate){
         Boolean isRefund = nextBillDate > lastLessonDateObj;
-        system.debug('isRefund'+isRefund);
+       //system.debug('isRefund'+isRefund);
         String paymentRecordTypeId =  Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get(ConstantsClass.paymentAsDepositRecordType).getRecordTypeId();
         String payAsCredit = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get('Payment As Credit').getRecordTypeId();
         String refundRecType = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get('Refund').getRecordTypeId();
@@ -196,7 +196,7 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
         Boolean hasMoreEnrolment = checkParentHasMultipleEnrolments(objEnrol.parent__c);
         List<Payment__c> paymentList = new List<Payment__c>();
         List<Payment__c> refundPayments = new List<Payment__c>();
-         system.debug('hasMoreEnrolment'+hasMoreEnrolment);
+        //system.debug('hasMoreEnrolment'+hasMoreEnrolment);
         Payment__c paymentObj  = new Payment__c();
         
         //@JAtin Commented on 15th Nov Due to Fetch Deposit Amount from current Deposit
@@ -253,7 +253,7 @@ system.debug('depositAmount'+depositAmount);
             }
             if(hasMoreEnrolment){
                 paymentObj = BillingUtility.fillPayment(objEnrol.Parent__c,null, depositAmount, ConstantsClass.paymentPendingStatus);
-                System.debug('isRefund'+isRefund);
+               //system.debug('isRefund'+isRefund);
                 if(isRefund){
                      paymentObj.Payment_Date__c = System.today();
                 }else{
@@ -275,7 +275,7 @@ system.debug('depositAmount'+depositAmount);
                 paymentObj.RecordTypeId =  paymentRecordTypeId;
                 paymentObj.Enrolment__c = objEnrol.id;
                 paymentObj.last_lesson_date__c = lastLessonDateObj;
-                system.debug('paymentObj'+paymentObj);
+               //system.debug('paymentObj'+paymentObj);
                 paymentList.add(paymentObj);
             }/*Commented by jatin: 13-jan-2020: for now change requirement only multiple enrollment exist then we create payment record
             otherwise not
@@ -301,7 +301,7 @@ system.debug('depositAmount'+depositAmount);
             paymentObj.RecordTypeId =  paymentRecordTypeId;
             paymentObj.Enrolment__c = objEnrol.id;
             paymentObj.last_lesson_date__c = lastLessonDateObj;
-            system.debug('paymentObj'+paymentObj);
+           //system.debug('paymentObj'+paymentObj);
             paymentList.add(paymentObj);*/
             
         }
@@ -344,7 +344,7 @@ system.debug('depositAmount'+depositAmount);
 
        
         if(!hasMoreEnrolment){
-            system.debug('paymentObj'+paymentList);
+           //system.debug('paymentObj'+paymentList);
            /* for(Payment__c objPay : paymentList){
                 Payment__c refund = objPay.clone(false,false,false,false);
                 refund.Payment_amount__c = -1*refund.Payment_amount__c;
@@ -364,23 +364,25 @@ system.debug('depositAmount'+depositAmount);
             // 12-mar-2020: added transaction Id in refund payment records.
             for( string invoiceId : mapOfInvoicePayments.keyset()){
                 if(mapOfInvoicePayments.containsKey(invoiceId)){
-                    refund.Transaction_ID__c = mapOfInvoicePayments.get(invoiceId).Transaction_ID__c;    
+                    refund.Transaction_ID__c = mapOfInvoicePayments.get(invoiceId).Transaction_ID__c;   
+                 
                 }
             }
             refundPayments.add(refund);  
         }
-        System.debug('isRefund'+isRefund);
+       //system.debug('isRefund'+isRefund);
          // we need to refund current month amount if applicable
         if(isRefund){
             String chargeId =  fetchCurrentMonthPaymentEntry(objEnrol,lastLessonDateObj); // 21-8-2020
             Decimal refundAmount = getLessonRefundAmount(objEnrol,lastLessonDateObj);//8
+             // added by nishi: 21-aug-2020: for if next month invoice already generated then we create next month payment records
             date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1); // 1-10-2020
             Boolean isNextMonthInvoicCreated = false;
             // 1-10-2020 >= 1-10-2020 && 8<9
-            system.debug('nextBillDate'+nextBillDate);
-            system.debug('nextMonthDate'+nextMonthDate);
-            system.debug('lastLessonDateObj'+lastLessonDateObj);
-            system.debug('nextMonthDate.addMonths(-1).Month()'+nextMonthDate.addMonths(-1).Month());
+           //system.debug('nextBillDate'+nextBillDate);
+           //system.debug('nextMonthDate'+nextMonthDate);
+           //system.debug('lastLessonDateObj'+lastLessonDateObj);
+           //system.debug('nextMonthDate.addMonths(-1).Month()'+nextMonthDate.addMonths(-1).Month());
             if(nextBillDate >= nextMonthDate && lastLessonDateObj.Month() < nextMonthDate.addMonths(-1).Month()){ 
                 Decimal refundNextMonthAmount = getLessonRefundAmount(objEnrol,nextMonthDate.addMonths(-1)); // 1-9-2020
                 if(refundNextMonthAmount > 0){
@@ -400,15 +402,15 @@ system.debug('depositAmount'+depositAmount);
                     }
                     objPay.Remarks__c ='Refund  (Next month invoice amount)';
                     objPay.last_lesson_date__c = lastLessonDateObj;
-                    system.debug('objPay'+objPay);
+                   //system.debug('objPay'+objPay);
                     paymentList.add(objPay);
                     isNextMonthInvoicCreated = true;
                 }
-                system.debug('refundNextMonthAmount'+refundNextMonthAmount);
-                system.debug('paymentList'+paymentList);
+               //system.debug('refundNextMonthAmount'+refundNextMonthAmount);
+               //system.debug('paymentList'+paymentList);
             }
-            
-            system.debug(refundAmount);
+             //end: added by nishi: 21-aug-2020: for if next month invoice already generated then we create next month payment records
+           //system.debug(refundAmount);
             if(refundAmount > 0){
                 Payment__c objPay = new Payment__c();
                 if(hasMoreEnrolment){
@@ -440,7 +442,7 @@ system.debug('depositAmount'+depositAmount);
                 objPay.Parent_Account__c = objEnrol.Parent__c;
                 objPay.Transaction_ID__c = chargeId;
                 objPay.last_lesson_date__c = lastLessonDateObj;*/
-                system.debug('objPay'+objPay);
+               //system.debug('objPay'+objPay);
                 paymentList.add(objPay);
             }
             
@@ -453,7 +455,7 @@ system.debug('depositAmount'+depositAmount);
         if(paymentList.size() > 0){
             insert paymentList;
         }
-        system.debug('paymentList'+paymentList);
+       //system.debug('paymentList'+paymentList);
     }
 
     // get current month invoice payment entry
@@ -471,8 +473,8 @@ system.debug('depositAmount'+depositAmount);
         if(listOfInvoice.size()>0){
             chargeId = listOfInvoice[0].Stripe_charge_id__c;
         }
-        system.debug('listOfInvoice'+listOfInvoice);
-        system.debug('chargeId'+chargeId);
+       //system.debug('listOfInvoice'+listOfInvoice);
+       //system.debug('chargeId'+chargeId);
         return chargeId;   
                                        
     }
@@ -522,7 +524,7 @@ system.debug('depositAmount'+depositAmount);
             enroll = AdvanceActionsHelper.getUpdatedEnrollmentFields(enrollmentObj.id,ConstantsClass.enrollmentProcessCancelType,
                     endDateObj.addDays(-30),effectiveDate,null,null);
         }
-        system.debug('@@@enroll'+enroll);
+       //system.debug('@@@enroll'+enroll);
         if(enroll != NULL){
             Database.SaveResult saveResult = Database.Update(enroll, false);
             if(saveResult.isSuccess()){

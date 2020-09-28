@@ -20,7 +20,8 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
     //Data Members for Additional Work
     Private Enrolment__c enrolmentObj;
     Private Date nextBillDate;
-    Private Country__c countryObj;
+   // Private Country__c countryObj;commented by @nishi 21 Sep 2020,Organisation wise charge as per new logic*/
+   Private Organisation__c organisationObj;
     Public Map<String, Booking__c> mapOfBooking = new Map<String, Booking__c>();
     Public Map<String, Fifth_Lesson__c> mapOfFifthLesson = new Map<String, Fifth_Lesson__c>();
     Private UpgradeEnrolmentClassProcessController.UpgradeCaseCreation upgradeDetails;
@@ -43,22 +44,23 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
 
         enrolmentObj = new Enrolment__c();
         
-        countryObj = new Country__c();
+        //countryObj = new Country__c();commented by @nishi 21 Sep 2020,Organisation wise charge as per new logic*/
+        organisationObj = new Organisation__c();
         upgradeDetails = new UpgradeEnrolmentClassProcessController.UpgradeCaseCreation();
 	system.debug('booking'+booking);
-                                                     system.debug('effectiveDate'+effectiveDate);
-                                                     system.debug('newPackage'+newPackage);
-                                                     system.debug('oldPackage'+oldPackage);
-                                                     system.debug('timeslot'+timeslot);
-                                                     system.debug('caseId'+caseId);
-                                                     system.debug('caseRedirect'+caseRedirect);
-                                                     system.debug('caseValuesOfMap'+caseValuesOfMap);
-                                                     system.debug('newTeacherId'+newTeacherId);
+                                                    //system.debug('effectiveDate'+effectiveDate);
+                                                    //system.debug('newPackage'+newPackage);
+                                                    //system.debug('oldPackage'+oldPackage);
+                                                    //system.debug('timeslot'+timeslot);
+                                                    //system.debug('caseId'+caseId);
+                                                    //system.debug('caseRedirect'+caseRedirect);
+                                                    //system.debug('caseValuesOfMap'+caseValuesOfMap);
+                                                    //system.debug('newTeacherId'+newTeacherId);
     }
     //Init Method where all the process gets Start...
    Public String initProcess(){
         enrolmentObj = AdvanceActionsHelper.fetchEnrolmentDetailsFromBooking(this.booking);
-        system.debug('enrolmentObj'+enrolmentObj);
+       //system.debug('enrolmentObj'+enrolmentObj);
         String caseIdToReturn;
         Boolean isSuccess = FALSE;
         string oldTeacher;
@@ -68,21 +70,35 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
             nextBillDate = AdvanceActionsHelper.fetchNextBillDateFromEnrolment(enrolmentObj);
             oldTeacher = enrolmentObj.Teacher__c;
             //Fetch the Country Object From Enrolment
-            countryObj = AdvanceActionsHelper.fetchCountryFromEnrolment(enrolmentObj);
-            system.debug('upgradeDetails.nextBillDate = '+nextBillDate);
-            system.debug('upgradeDetails.effectiveDate = '+effectiveDate);
-            system.debug('upgradeDetails.countryObj = '+countryObj);
-            if(effectiveDate <= nextBillDate && String.isNotBlank(enrolmentObj.Id) && String.isNotBlank(countryObj.Id)){
+           // countryObj = AdvanceActionsHelper.fetchCountryFromEnrolment(enrolmentObj);
+             if(String.isNotBlank(enrolmentObj.Id) && String.isNotBlank(enrolmentObj.center__r.Organisation__c)){
+                organisationObj = enrolmentObj.center__r.Organisation__r;
+            } 
+           //system.debug('upgradeDetails.nextBillDate = '+nextBillDate);
+           //system.debug('upgradeDetails.effectiveDate = '+effectiveDate);
+            //system.debug('upgradeDetails.countryObj = '+countryObj);
+            /*if(effectiveDate <= nextBillDate && String.isNotBlank(enrolmentObj.Id) && String.isNotBlank(countryObj.Id)){
                //Hit API and create Invoice and Line Items and Payment Record if the Next Bill Date is Greater than Effective Date
                 upgradeDetails = updatePackageNextDateIsGreater(enrolmentObj.Id, effectiveDate, nextBillDate, newPackage, oldPackage, timeslot,
                                 countryObj,newTeacherId );
                 enrolmentObj = upgradeDetails.enrolObj;
-                system.debug('@@@upgradeDetails.enrolObj'+enrolmentObj);
-                system.debug('@@@upgradeDetails.enrolObj'+upgradeDetails.isSuccess);
+               //system.debug('@@@upgradeDetails.enrolObj'+enrolmentObj);
+               //system.debug('@@@upgradeDetails.enrolObj'+upgradeDetails.isSuccess);
             }else if(String.isNotBlank(enrolmentObj.Id) && String.isNotBlank(countryObj.Id)){
                 //Hit API and create Invoice and Line Items and Payment Record if the Effective Date is Greater than Next Bill Date
                 upgradeDetails = updatePackageEffectiveDateIsGreater(enrolmentObj, oldPackage, newPackage, countryObj, effectiveDate);
-                system.debug('@@@upgradeDetails.enrolObj'+upgradeDetails.isSuccess);
+               //system.debug('@@@upgradeDetails.enrolObj'+upgradeDetails.isSuccess);*/
+            if(effectiveDate <= nextBillDate && String.isNotBlank(enrolmentObj.Id) && String.isNotBlank(organisationObj.Id)){
+                //Hit API and create Invoice and Line Items and Payment Record if the Next Bill Date is Greater than Effective Date
+                upgradeDetails = updatePackageNextDateIsGreater(enrolmentObj.Id, effectiveDate, nextBillDate, newPackage, oldPackage, timeslot,
+                                                                organisationObj,newTeacherId ); 
+                enrolmentObj = upgradeDetails.enrolObj;
+                //system.debug('@@@upgradeDetails.enrolObj'+enrolmentObj);
+                //system.debug('@@@upgradeDetails.enrolObj'+upgradeDetails.isSuccess);
+            }else if(String.isNotBlank(enrolmentObj.Id) && String.isNotBlank(organisationObj.Id)){
+                //Hit API and create Invoice and Line Items and Payment Record if the Effective Date is Greater than Next Bill Date
+                upgradeDetails = updatePackageEffectiveDateIsGreater(enrolmentObj, oldPackage, newPackage, organisationObj, effectiveDate);
+                //system.debug('@@@upgradeDetails.enrolObj'+upgradeDetails.isSuccess);    
                 if(upgradeDetails.isSuccess){
                     enrolmentObj.New_Package_Id__c = newPackage;
                     enrolmentObj.New_Teacher__c = newTeacherId;
@@ -103,13 +119,13 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
                         
                     }
                 }
-                system.debug('@@@upgradeDetails.enrolObj'+enrolmentObj);
+               //system.debug('@@@upgradeDetails.enrolObj'+enrolmentObj);
             }
         }
-        system.debug('@@@upgradeDetails.isSuccess'+upgradeDetails.isSuccess);
+       //system.debug('@@@upgradeDetails.isSuccess'+upgradeDetails.isSuccess);
         if(String.isNotBlank(enrolmentObj.Id) && upgradeDetails.isSuccess){
             enrolmentObj = AdvanceActionsHelper.fetchEnrolment(enrolmentObj.id);
-            system.debug('@@@enrolmentObj'+enrolmentObj);
+           //system.debug('@@@enrolmentObj'+enrolmentObj);
             if(enrolmentObj.Center__r != null && string.isNotBlank(enrolmentObj.Center__r.Organisation__c)){
                 centreOrgId = enrolmentObj.Center__r.Organisation__c;
             }
@@ -156,7 +172,7 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
             objCase.Previous_teacher__c = oldTeacher; 
 
             upsert objCase;
-            system.debug('@@objCase.Id'+objCase.Id);
+           //system.debug('@@objCase.Id'+objCase.Id);
             caseIdToReturn = objCase.Id;
         }
         if(!upgradeDetails.isSuccess)
@@ -166,15 +182,19 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
 
      //Hit API and create Invoice and Line Items and Payment Record if the Next Bill Date is Greater than Effective Date
     Private UpgradeEnrolmentClassProcessController.UpgradeCaseCreation updatePackageNextDateIsGreater(String enrolmentId, Date effectiveDate, Date nextBillDate, String newPackageId, String oldPackageId, 
-                                Time newTimeSlot, Country__c countryObj,string newTeacherId){
+                                Time newTimeSlot, /*Country__c countryObj*/Organisation__c  organisationObj,string newTeacherId){
         UpgradeEnrolmentClassProcessController.UpgradeCaseCreation upgradeCaseDetails = new UpgradeEnrolmentClassProcessController.UpgradeCaseCreation();
         Boolean isSuccess = false;
         String invoiceId;
         if(String.isNotBlank(enrolmentId) && nextBillDate != Null && effectiveDate != Null &&
-           String.isNotBlank(newPackageId) && String.isNotBlank(oldPackageId) && newTimeSlot != Null && String.isNotBlank(countryObj.Id)){
-               upgradeCaseDetails = upgradeGroupPackage(enrolmentId, effectiveDate, newPackageId, oldPackageId, newTimeSlot, 
-                                    countryObj.Currency_Code__c, countryObj.Stripe_Base_Url__c, countryObj.Stripe_Secret_Key__c,
-                                     countryObj.Tax_Rate__c,newTeacherId);
+           String.isNotBlank(newPackageId) && String.isNotBlank(oldPackageId) && newTimeSlot != Null &&String.isNotBlank(organisationObj.Id)){ //String.isNotBlank(countryObj.Id)){
+            /*commented by nishi: 21-Sep-2020:Organisation wise charge as per new logic
+            upgradeCaseDetails = upgradeGroupPackage(enrolmentId, effectiveDate, newPackageId, oldPackageId, newTimeSlot, 
+            organisationObj.Currency_Code__c, countryObj.Stripe_Base_Url__c, countryObj.Stripe_Secret_Key__c,
+                                  countryObj.Tax_Rate__c,newTeacherId);*/
+                upgradeCaseDetails = upgradeGroupPackage(enrolmentId, effectiveDate, newPackageId, oldPackageId, newTimeSlot, 
+               organisationObj.country__r.Currency_Code__c, organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c,
+               organisationObj.Tax_Rate__c,newTeacherId);
            }
         return upgradeCaseDetails;
     }
@@ -187,21 +207,23 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
         Map<String,Package__c> mapOfPackageFee = UpgradeDowngradeController.getPackage(oldPackage,PackageId);
         Package__c oldPackg = mapOfPackageFee.get(OldPackage);
         Package__c newPackg = mapOfPackageFee.get(PackageId);
-        system.debug('@@@oldPackg'+oldPackg);
-        system.debug('@@@newPackg'+newPackg);
+       //system.debug('@@@oldPackg'+oldPackg);
+       //system.debug('@@@newPackg'+newPackg);
         Subscription_Line_Item__c objSubLineItem = UpgradeDowngradeController.fetchSubsLineItem(enrollmentId);
         
         Integer countWithOldPackage = 0;
         Integer countWithNewPackage = 0;
         Integer minutesOfFifthBooking = 0;
         Decimal currentPackageDeposit = 0;
+        Decimal newPackageNextMonthPrice = 0;
+        Decimal gstNextMonthAmount = 0;
         
         //Create MAp for Create fifthBookings
         Map<String, Booking__c> mapOfFifthBookings = new Map<String, Booking__c>();
         Date effectiveDate = effectDate; //objSubLineItem.Enrolment__r.Effective_Date__c;
         List<Booking__c> listOfBookings = UpgradeDowngradeController.fetchListOfBookings(enrollmentId);
-        system.debug('@@listOfBookings'+listOfBookings);
-        system.debug('@@@effectDate'+effectDate);
+       //system.debug('@@listOfBookings'+listOfBookings);
+       //system.debug('@@@effectDate'+effectDate);
         Decimal newPackageUnitPrice = 0;
         Decimal depositeFee = 0;
         Decimal totalAmount = 0; Decimal gstAmount = 0; Decimal totalWithNoGST = 0;
@@ -218,9 +240,28 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
                     } 
             }
         }
-        System.debug('@@@@@newPackageUnitPrice'+newPackageUnitPrice);
-        System.debug('@@@@@gstAmount'+gstAmount);
-        system.debug('@@enrollMentId'+enrollMentId);
+          // // added by Nishi: 21-Sep-2020: if next billing date is greater then next month then we create new invoice for adjuct new upgraded package unitfee 
+       //  // ex: 12-Aug-2020 effective date and next Billing date 01-Oct-2020 
+       date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1);
+       date nextBillDate = objSubLineItem.Next_Bill_Date__c;
+       if(nextBillDate >= nextMonthDate && effectiveDate.month() < nextMonthDate.addMonths(-1).month()){
+           List<Booking__c> listOfNextMonthBookings = UpgradeDowngradeController.fetchListOfNextMonthBookings(enrollmentId);
+           for(Booking__c objBooking : listOfNextMonthBookings){
+               if(objBooking.Booking_Date__c >= effectiveDate){
+                   if(objBooking.Type__c == ConstantsClass.bookTypeRegular ){//||objBooking.Type__c == ConstantsClass.groupLessonTypeBooking
+                       newPackageNextMonthPrice += (newPackg.Unit_Fee__c - oldPackg.Unit_Fee__c);
+                       if(taxRate > 0){
+                           gstNextMonthAmount += (newPackg.Unit_Fee__c - oldPackg.Unit_Fee__c) * taxRate/100;
+                       }
+                   }      
+               }
+           }
+       }
+          // // added by Nishi: 21-Sep-2020: if next billing date is greater then next month then we create new invoice for adjuct new upgraded package unitfee 
+      //  // ex: 12-Aug-2020 effective date and next Billing date 01-Oct-2020 
+       //system.debug('@@@@@newPackageUnitPrice'+newPackageUnitPrice);
+       //system.debug('@@@@@gstAmount'+gstAmount);
+       //system.debug('@@enrollMentId'+enrollMentId);
 
          //return sum of all deposit amount for enrolment
         if(String.isNotBlank(enrollMentId)){
@@ -234,20 +275,31 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
         totalAmount = BillingUtility.roundOffAmount(newPackageUnitPrice + gstAmount + depositeFee);
         totalWithNoGST = BillingUtility.roundOffAmount(newPackageUnitPrice + depositeFee);
         String stripeId = objSubLineItem.Subscription__r.Parent__r.Stripe_Customer_Id__c;
-        System.debug('@@@@@newPackageUnitPrice'+newPackageUnitPrice);
-        System.debug('@@@@@gstAmount'+gstAmount);
-        System.debug('@@@@@totalAmount'+totalAmount);
-        System.debug('@@@@@depositeFee'+depositeFee);
-        System.debug('@@@@@totalWithNoGST'+totalWithNoGST);
-        System.debug('@@@@@stripeId'+stripeId);
+       //system.debug('@@@@@newPackageUnitPrice'+newPackageUnitPrice);
+       //system.debug('@@@@@gstAmount'+gstAmount);
+       //system.debug('@@@@@totalAmount'+totalAmount);
+       //system.debug('@@@@@depositeFee'+depositeFee);
+       //system.debug('@@@@@totalWithNoGST'+totalWithNoGST);
+       //system.debug('@@@@@stripeId'+stripeId);
         //Summary Details for case for upgrade package.....
         upgradePackageCaseDetails.depositAmount = depositeFee;
-        upgradePackageCaseDetails.lessonCharge = BillingUtility.roundOffAmount(newPackageUnitPrice + gstAmount);
-        
+        //upgradePackageCaseDetails.lessonCharge = BillingUtility.roundOffAmount(newPackageUnitPrice + gstAmount);
+        Decimal lessonCharge = newPackageUnitPrice + gstAmount;
+        if(newPackageNextMonthPrice != 0){
+            totalAmount += (newPackageNextMonthPrice + gstNextMonthAmount);
+            totalWithNoGST += newPackageNextMonthPrice;
+            lessonCharge += (newPackageNextMonthPrice + gstNextMonthAmount);
+            gstNextMonthAmount = BillingUtility.roundOffAmount(gstNextMonthAmount);
+        }
+        upgradePackageCaseDetails.lessonCharge = BillingUtility.roundOffAmount(lessonCharge);
+        totalAmount = BillingUtility.roundOffAmount(totalAmount);
+        totalWithNoGST = BillingUtility.roundOffAmount(totalWithNoGST);
+        totalAmount = BillingUtility.roundOffAmount(totalAmount);
+        gstAmount = BillingUtility.roundOffAmount(gstAmount);
             
         if(String.isNotBlank(stripeId) && totalAmount > 0){
             BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId,totalAmount, currencyCode, baseUrl, apiKey); 
-            System.debug('@@chargeResponse'+chargeResponse);
+           //system.debug('@@chargeResponse'+chargeResponse);
             if(chargeResponse.statusCode == 200 && chargeResponse.paid){
                 flag = true;
                 upgradePackageCaseDetails.isSuccess = true;
@@ -256,7 +308,7 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
                 Invoice_Line_Item__c inlineItemForChange = new Invoice_Line_Item__c();
                 List<Invoice_Line_Item__c> listOfInvoiceLineItems = new List<Invoice_Line_Item__c>();
                 insert objInvoice;
-                system.debug('@@objInvoice'+objInvoice);
+               //system.debug('@@objInvoice'+objInvoice);
                 if(String.isNotBlank(objInvoice.Id)){
                     upgradePackageCaseDetails.invoiceId = objInvoice.Id;
                 }
@@ -271,7 +323,13 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
                     inlineItemForChange = PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,BillingUtility.roundOffAmount(newPackageUnitPrice), newPackg.Id,FALSE, objSubLineItem.Enrolment__r.teacher__c);
                     inlineItemForChange.month__c = effectiveDate;
                     listOfInvoiceLineItems.add(inlineItemForChange);
-                    
+                      // 21-Sep=-2020: nishi: for added new line item for next month invoice already generated
+                      if(newPackageNextMonthPrice != 0){
+                        inlineItemForChange = PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,BillingUtility.roundOffAmount(newPackageNextMonthPrice), newPackg.Id,FALSE, objSubLineItem.Enrolment__r.teacher__c);
+                        inlineItemForChange.month__c = nextMonthDate.addMonths(-1);
+                        listOfInvoiceLineItems.add(inlineItemForChange);
+                    }
+                    // 21-Sep=-2020: nishi: for added new line item for next month invoice already generated
                 }
                 if(totalWithNoGST > 0){
                     upgradePackageCaseDetails.total = totalWithNoGST;
@@ -284,7 +342,7 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
                 if(listOfInvoiceLineItems.size() > 0){
                     INSERT listOfInvoiceLineItems;
                 } 
-                system.debug('@@listOfInvoiceLineItems'+listOfInvoiceLineItems);
+               //system.debug('@@listOfInvoiceLineItems'+listOfInvoiceLineItems);
                 objInvoice = [SELECT Id,Name,Total_Amount__c,Parent_Account__c FROM Invoice__c WHERE Id =:objInvoice.Id];
                 
                 if(String.isNotBlank(baseUrl) && String.isNotBlank(apiKey) && !test.isRunningTest()){
@@ -297,13 +355,13 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
 				objPayment.Method_of_Payment__c = ConstantsClass.cardModeType;
                 INSERT objPayment; 
                  
-                system.debug('@@objPayment'+objPayment);
+               //system.debug('@@objPayment'+objPayment);
                 if(objInvoice != NULL){
                     BillingUtility.createAttachment(new Set<String>{objInvoice.Id});
                 }
                 upgradePackageCaseDetails.enrolObj = updateEnrollment(enrollMentId,PackageId, timeslot, effectDate,newTeacherId);
                 upgradePackageCaseDetails.enrolObj = UpgradeDowngradeController.fetchEnrolment(enrollMentId);
-                system.debug('@@@upgradePackageCaseDetails.enrolObj '+upgradePackageCaseDetails.enrolObj );
+               //system.debug('@@@upgradePackageCaseDetails.enrolObj '+upgradePackageCaseDetails.enrolObj );
                 if(String.isNotBlank(objPayment.id) && String.isNotBlank(objInvoice.id)){
                     SageIntacctIntegrationUtility.packageUpgrade(objInvoice.Id, objPayment.Id);
                 }
@@ -316,7 +374,7 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
             flag = false;
             upgradePackageCaseDetails.isSuccess = false;
         }
-        system.debug('@@upgradePackageCaseDetails'+upgradePackageCaseDetails);
+       //system.debug('@@upgradePackageCaseDetails'+upgradePackageCaseDetails);
         return upgradePackageCaseDetails ;
     }
 
@@ -348,7 +406,8 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
     }
 
   //Hit API and create Invoice and Line Items and Payment Record if the Effective Date is Greater than Next Bill Date
-    Private UpgradeEnrolmentClassProcessController.UpgradeCaseCreation updatePackageEffectiveDateIsGreater(Enrolment__c enrolmentObj, String oldPackageId, String newPackageId, Country__c centreCountry, Date effectiveDate){
+    Private UpgradeEnrolmentClassProcessController.UpgradeCaseCreation updatePackageEffectiveDateIsGreater(Enrolment__c enrolmentObj, String oldPackageId, String newPackageId,
+    /* Country__c centreCountry*/Organisation__c  organisationObj, Date effectiveDate){
         Boolean isSuccess = false;
         UpgradeEnrolmentClassProcessController.UpgradeCaseCreation upgradePackageCaseDetails = new UpgradeEnrolmentClassProcessController.UpgradeCaseCreation();
         String invoiceId = '';
@@ -361,7 +420,7 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
         oldPackage = summary.oldPackage; 
         
         if(String.isNotBlank(enrolmentObj.Id)){
-            system.debug('##currentPackageDeposit'+currentPackageDeposit);
+           //system.debug('##currentPackageDeposit'+currentPackageDeposit);
             currentPackageDeposit = AdvanceActionsHelper.getDepositFromFile(enrolmentObj.Id);
         }
         
@@ -377,12 +436,14 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
         upgradePackageCaseDetails.total = depositeFee;
         upgradePackageCaseDetails.isSuccess = true;
         
-        if(String.isNotBlank(stripeId) && depositeFee > 0 && String.isNotBlank(centreCountry.Id)){
+        if(String.isNotBlank(stripeId) && depositeFee > 0 && String.isNotBlank(organisationObj.Id)){// commented by @nishi 21 Sep 2020,Organisation wise charge as per new logicString.isNotBlank(centreCountry.Id)){
            
             Invoice_Line_Item__c inlineItemforChange = new Invoice_Line_Item__c();
-            BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId, depositeFee, centreCountry.Currency_Code__c, centreCountry.Stripe_Base_Url__c, centreCountry.Stripe_Secret_Key__c); 
+            //commented by @nishi 21 Sep 2020,Organisation wise charge as per new logic
+            //BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId, depositeFee, centreCountry.Currency_Code__c, centreCountry.Stripe_Base_Url__c, centreCountry.Stripe_Secret_Key__c); 
+            BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId, depositeFee, organisationObj.country__r.Currency_Code__c, organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c); 
             
-            System.debug('@@@chargeResponse'+chargeResponse);
+           //system.debug('@@@chargeResponse'+chargeResponse);
             if(chargeResponse.statusCode == 200 && chargeResponse.paid){                
                 isSuccess = true;
                 Invoice__c objInvoice = BillingUtility.fillInvoice(enrolmentObj.Subscription_Line_Items__r[0].Subscription__c, parentId, constantsClass.paidStatus);
@@ -405,8 +466,10 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
                 } 
                 
                 objInvoice = [SELECT Id,Name,Total_Amount__c,Parent_Account__c, status__c FROM Invoice__c WHERE Id =:objInvoice.Id];
-                if(!Test.isRunningTest() && String.isNotBlank(centreCountry.Id)){
-                    BillingUtility.updateCharge(chargeResponse.Id,objInvoice.Name, centreCountry.Stripe_Base_Url__c, centreCountry.Stripe_Secret_Key__c);
+                if(!Test.isRunningTest() && String.isNotBlank(organisationObj.Id)){//commented by @nishi 21 Sep 2020,Organisation wise charge as per new logicString.isNotBlank(centreCountry.Id)){
+                     //commented by @nishi 21 Sep 2020,Organisation wise charge as per new logic
+                    //BillingUtility.updateCharge(chargeResponse.Id,objInvoice.Name, centreCountry.Stripe_Base_Url__c, centreCountry.Stripe_Secret_Key__c);
+                    BillingUtility.updateCharge(chargeResponse.Id,objInvoice.Name, organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c);
                 }
                 
                 
@@ -430,7 +493,7 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
         }else{
             isSuccess = false;
         }
-        system.debug('@@@updatePackageEffectiveDateIsGreater upgradePackageCaseDetails'+upgradePackageCaseDetails);
+       //system.debug('@@@updatePackageEffectiveDateIsGreater upgradePackageCaseDetails'+upgradePackageCaseDetails);
         return upgradePackageCaseDetails;
     }
     
@@ -444,7 +507,7 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
             // cancel all future bookings 
             processOldGroupLessonBookings(enrolmentObj.Id, effectiveDate);
         }
-        system.debug('@@maxDate'+maxDate);
+       //system.debug('@@maxDate'+maxDate);
          if(String.isNotBlank(enrolmentObj.Id)){
             if(maxDate != NULL && effectiveDate != NULL){
                 reCreateRegularBookingsAndFifthLesson(enrolmentObj, effectiveDate, maxDate);
@@ -453,11 +516,11 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
          if(maxDate != NULL && String.isNotBlank(enrolmentObj.Id) && String.isNotBlank(enrolmentObj.New_Teacher__c) && effectiveDate != NULL){
             processTeacherLeaves(enrolmentObj.New_Teacher__c, effectiveDate,  maxDate);
         }
-        system.debug('!!maxDate'+maxDate);
-        system.debug('enrolmentObj.New_Teacher__c'+enrolmentObj.New_Teacher__c);
-        system.debug('!!enrolmentObj.Id'+enrolmentObj.Id);
-        system.debug('!!effectiveDate'+effectiveDate);
-        system.debug('!!centreOrgId'+centreOrgId);
+       //system.debug('!!maxDate'+maxDate);
+       //system.debug('enrolmentObj.New_Teacher__c'+enrolmentObj.New_Teacher__c);
+       //system.debug('!!enrolmentObj.Id'+enrolmentObj.Id);
+       //system.debug('!!effectiveDate'+effectiveDate);
+       //system.debug('!!centreOrgId'+centreOrgId);
         if(maxDate != NULL && String.isNotBlank(enrolmentObj.Id) && String.isNotBlank(enrolmentObj.New_Teacher__c) && effectiveDate != NULL && String.isNotBlank(centreOrgId)){
             List<Account> teacherlist = [select id,Employee_Duty_Type__c from Account where Id =: enrolmentObj.New_Teacher__c]; 
             if(teacherlist != null && teacherlist.size() > 0)
@@ -471,9 +534,9 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
     private void reCreateRegularBookingsAndFifthLesson(Enrolment__c  enrolmentObj, Date effectiveDate, Date maxDate){
         List<Booking__c> bookingsToInsert = new List<Booking__c>();
         List<Fifth_Lesson__c> fifthLessonToInsert = new List<Fifth_Lesson__c>();
-        System.debug('@@@@reCreateRegularBookingsAndFifthLesson maxDate'+maxDate);
-        System.debug('@@@@reCreateRegularBookingsAndFifthLesson enrolmentObj'+enrolmentObj);
-        System.debug('@@@@reCreateRegularBookingsAndFifthLesson effectiveDate'+effectiveDate);
+       //system.debug('@@@@reCreateRegularBookingsAndFifthLesson maxDate'+maxDate);
+       //system.debug('@@@@reCreateRegularBookingsAndFifthLesson enrolmentObj'+enrolmentObj);
+       //system.debug('@@@@reCreateRegularBookingsAndFifthLesson effectiveDate'+effectiveDate);
         if(String.isNotBlank(enrolmentObj.Id)){
             Booking__c bookingObj = new Booking__c();
             Fifth_Lesson__c fifthLesson = new Fifth_Lesson__c();
@@ -515,7 +578,7 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
                     }
 
                     fifthLessonToInsert.add(fifthLesson);
-                    system.debug('@@@new effectiveDate'+fifthLesson);
+                   //system.debug('@@@new effectiveDate'+fifthLesson);
                 }else{
                     bookingObj = new Booking__c();
                     if(effectiveDate != null )
@@ -561,31 +624,31 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
                         bookingObj.Status__c = ConstantsClass.scheduledStatus;
                     }
                     bookingsToInsert.add(bookingObj);
-                    system.debug('@@@new effectiveDate'+bookingObj);
+                   //system.debug('@@@new effectiveDate'+bookingObj);
                 }
                 
                 effectiveDate = effectiveDate.addDays(7);
-                system.debug('@@@new effectiveDate'+effectiveDate);
+               //system.debug('@@@new effectiveDate'+effectiveDate);
             }       
         }
 
         if(bookingsToInsert.size() > 0){
             INSERT bookingsToInsert;
-            system.debug('@@@New Bookings are Inserted '+bookingsToInsert);
+           //system.debug('@@@New Bookings are Inserted '+bookingsToInsert);
 
             for(Booking__c bookingObj : bookingsToInsert){
                 mapOfBooking.put(bookingObj.Booking_Date__c + '-' + bookingObj.Teacher_Account__c, bookingObj);
             }
         }
-        System.debug('@@@@mapOfBooking --'+mapOfBooking);
+       //system.debug('@@@@mapOfBooking --'+mapOfBooking);
         if(fifthLessonToInsert.size() > 0){
             INSERT fifthLessonToInsert;
-            system.debug('@@@New fifthLesson are Inserted '+fifthLessonToInsert);
+           //system.debug('@@@New fifthLesson are Inserted '+fifthLessonToInsert);
             for(Fifth_Lesson__c lessonFifth : fifthLessonToInsert){
                 mapOfFifthLesson.put(lessonFifth.Booking_Date__c + '-' + lessonFifth.Teacher_Account__c, lessonFifth);
             }
         }
-        System.debug('@@@@mapOfFifthLesson --'+mapOfFifthLesson);
+       //system.debug('@@@@mapOfFifthLesson --'+mapOfFifthLesson);
     }
  private Date getMaxDateOfEnrolmentBookings(String enrolId){
         Date maxDate;
@@ -597,14 +660,14 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
                 maxDate = (Date)agg.get('maxDate');
             }
         }
-        system.debug('@@regular booking maxDate =='+maxDate);
+       //system.debug('@@regular booking maxDate =='+maxDate);
         return maxDate;
     }
      private void processOldGroupLessonBookings(String enrolId, Date effectiveDate){
          if(String.isNotBlank(enrolId) && effectiveDate != NULL){
             List<Booking__c> bookingListToDelete = new List<Booking__c>();
             List<Booking__c> bookingsToUpsert = new List<Booking__c>();
-            system.debug('@@@processOldRegularBookings effectiveDate'+effectiveDate);
+           //system.debug('@@@processOldRegularBookings effectiveDate'+effectiveDate);
             for(Booking__c bookObj : [SELECT Id, Type__c, Status__c, Booking_Date__c, Available_Make_up_Units__c, Duration__c, Make_up_Utilize_Bookings__c, 
                                         Teacher_Account__r.Employee_Duty_Type__c 
                                         FROM Booking__c 
@@ -626,7 +689,7 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
             if(bookingsToUpsert.size() > 0){
                 UPDATE bookingsToUpsert;
             }*/
-            system.debug('@@processOldRegularBookings bookingListToDelete'+bookingListToDelete);
+           //system.debug('@@processOldRegularBookings bookingListToDelete'+bookingListToDelete);
             if(bookingListToDelete.size() > 0){
                 DELETE bookingListToDelete;
             }
@@ -643,9 +706,9 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
 
         Map<String, Booking__c> updatedBookingMap = new Map<String, Booking__c>(); 
         Map<String, Fifth_Lesson__c> updatedLessonMap = new Map<String, Fifth_Lesson__c>();
-        system.debug('@@@processTeacherLeaves teacherId -'+teacherId);
-        system.debug('@@@processTeacherLeaves effectiveDate -'+effectiveDate);
-        system.debug('@@@processTeacherLeaves maxDate -'+maxDate);
+       //system.debug('@@@processTeacherLeaves teacherId -'+teacherId);
+       //system.debug('@@@processTeacherLeaves effectiveDate -'+effectiveDate);
+       //system.debug('@@@processTeacherLeaves maxDate -'+maxDate);
         if(String.isNotBlank(teacherId) && effectiveDate != NULL && maxDate != NULL){
             setOfTeachersLeaves = fetchTeacherLeavesRequestDateSet(teacherId, effectiveDate, maxDate);
         }
@@ -662,7 +725,7 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
                 updatedBookingMap.put(keySetValue, bookObj);
             }
         }
-        system.debug('@@@@ teacher leave then cancel booking and updated booking are =='+bookingtoUpdate);
+       //system.debug('@@@@ teacher leave then cancel booking and updated booking are =='+bookingtoUpdate);
         for(String keySetValue : mapOfFifthLesson.keySet()){
             if(setOfTeachersLeaves.contains(keySetValue)){
                 Fifth_Lesson__c lesson = mapOfFifthLesson.get(keySetValue);
@@ -679,21 +742,21 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
         }
         if(fifthLessonToUpdate.size() > 0){
             fifthLessonToUpdate = createPlaceholderBookingFromFifthLesson(fifthLessonToUpdate);
-            system.debug('@@ create Placeholder booking for fifth lesson  '+fifthLessonToUpdate);
+           //system.debug('@@ create Placeholder booking for fifth lesson  '+fifthLessonToUpdate);
             for(Fifth_Lesson__c fifthLesson : fifthLessonToUpdate){
                 fifthLesson.Booking__c = fifthLesson.Booking__r.Id;
             }
             UPDATE fifthLessonToUpdate;
         }
-        system.debug('@@@upated fifth bookings are  fifthLessonToUpdate'+fifthLessonToUpdate);
+       //system.debug('@@@upated fifth bookings are  fifthLessonToUpdate'+fifthLessonToUpdate);
         if(bookingtoUpdate.size() > 0){
             
             List<Case> caseList = AureusUtility.createCase(bookingtoUpdate);
             insert caseList;
-            system.debug('@@ inserted case for bookings are =='+caseList);
+           //system.debug('@@ inserted case for bookings are =='+caseList);
             bookingtoUpdate.addAll(createPlaceholderFromBooking(bookingtoUpdate));
             UPSERT bookingtoUpdate;
-            system.debug('@@ inserted bookingtoUpdate for bookings are =='+bookingtoUpdate);
+           //system.debug('@@ inserted bookingtoUpdate for bookings are =='+bookingtoUpdate);
             Set<Id> csIds = new Set<Id>();
             for(Case c : caseList)
                 csIds.add(c.Id);
@@ -722,7 +785,7 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
             placeholderObj.Package__c  = bookingCurrentObj.Package__c;
             placeholderList.add(placeholderObj);
         }
-        system.debug('@@@ create new Placeholder for bookings =='+placeholderList);
+       //system.debug('@@@ create new Placeholder for bookings =='+placeholderList);
         return placeholderList;
     }
     private List<Fifth_Lesson__c> createPlaceholderBookingFromFifthLesson(List<Fifth_Lesson__c> fifthLessons){
@@ -752,7 +815,7 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
         if(bookList.size() > 0){
             INSERT bookList;
         }
-        system.debug('@@@ inserted placeholder bookings are  ='+bookList);
+       //system.debug('@@@ inserted placeholder bookings are  ='+bookList);
 
         return fifthLessons;
     }
@@ -778,7 +841,7 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
                 startDateLeave = startDateLeave.addDays(1);
             }
         }
-         System.debug('@@@@@setOfTeachersLeave'+setOfTeachersLeave);
+        //system.debug('@@@@@setOfTeachersLeave'+setOfTeachersLeave);
         return setOfTeachersLeave;
     }
 
@@ -789,12 +852,12 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
 
         Map<String, Booking__c> updatedBookingMap = new Map<String, Booking__c>(); 
         Map<String, Fifth_Lesson__c> updatedLessonMap = new Map<String, Fifth_Lesson__c>();
-        system.debug('@@processPublicHolidays effectiveDate'+effectiveDate);
-        system.debug('@@processPublicHolidays teacherObj'+teacherObj);
-        system.debug('@@processPublicHolidays centreOrgId'+centreOrgId);
-        system.debug('@@processPublicHolidays maxDate'+maxDate);
-        system.debug('@@processPublicHolidays teacherObj.id'+teacherObj.Id);
-        if(startDate != NULL && maxDate != NULL && teacherObj != NULL && String.isNotBlank(centreOrgId) && String.isNotBlank(teacherObj.Id)){
+       //system.debug('@@processPublicHolidays effectiveDate'+effectiveDate);
+       //system.debug('@@processPublicHolidays teacherObj'+teacherObj);
+       //system.debug('@@processPublicHolidays centreOrgId'+centreOrgId);
+       //system.debug('@@processPublicHolidays maxDate'+maxDate);
+       //system.debug('@@processPublicHolidays teacherObj.id'+teacherObj.Id);
+        if(effectiveDate != NULL && maxDate != NULL && teacherObj != NULL && String.isNotBlank(centreOrgId) && String.isNotBlank(teacherObj.Id)){
             mapOfPublicLeaves = fetchPublicHolidaysDateMap(effectiveDate, maxDate, centreOrgId, teacherObj);
         }
 
@@ -812,7 +875,7 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
                 updatedBookingMap.put(keySetValue, bookObj);
             }
         }
-        system.debug('@@@cancel booking for public holiday to Update'+bookingtoUpdate);
+       //system.debug('@@@cancel booking for public holiday to Update'+bookingtoUpdate);
 
         for(String keySetValue : mapOfFifthLesson.keySet()){
             if(mapOfPublicLeaves.containsKey(keySetValue)){
@@ -822,7 +885,7 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
                 updatedLessonMap.put(keySetValue, lesson);
             }
         }
-        system.debug('@@@deActivate Fifth bookings '+fifthLessonToUpdate);
+       //system.debug('@@@deActivate Fifth bookings '+fifthLessonToUpdate);
         if(updatedBookingMap.size() > 0){
             mapOfBooking.putAll(updatedBookingMap);
         }
@@ -837,15 +900,15 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
             }
             UPDATE fifthLessonToUpdate;
         }
-        system.debug('@@@updated  fifthLessonToUpdate '+fifthLessonToUpdate);
+       //system.debug('@@@updated  fifthLessonToUpdate '+fifthLessonToUpdate);
         if(bookingtoUpdate.size() > 0){
             
             List<Case> caseList = AureusUtility.createCase(bookingtoUpdate);
             insert caseList;
-            system.debug('@@ create case for bookings '+caseList);
+           //system.debug('@@ create case for bookings '+caseList);
             bookingtoUpdate.addAll(createPlaceholderFromBooking(bookingtoUpdate));
             UPSERT bookingtoUpdate;
-            system.debug('@@@processPublicHolidays bookingtoUpdate '+bookingtoUpdate);
+           //system.debug('@@@processPublicHolidays bookingtoUpdate '+bookingtoUpdate);
             Set<Id> csIds = new Set<Id>();
             for(Case c : caseList)
                 csIds.add(c.Id);
@@ -862,7 +925,7 @@ public without sharing class UpgradeToIndividualProcessController implements IAd
                     mapOfHolidaysLeave.put(holiday.Public_Holiday_Date__c + '-' + teacherObj.Id, holiday);
                 }
         }
-        system.debug('@@@ mapOfHolidaysLeave dates are ='+mapOfHolidaysLeave);
+       //system.debug('@@@ mapOfHolidaysLeave dates are ='+mapOfHolidaysLeave);
         return mapOfHolidaysLeave;
     }
 }

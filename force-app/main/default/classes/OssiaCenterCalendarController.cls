@@ -418,7 +418,142 @@ public with sharing class OssiaCenterCalendarController {
         
             return objEnrolmentWrapper;
         }
+
+        // 21-Sep-2020: nsihi: for get time slots according to selected teacher,package, effective dates 
+        public static List<Booking__c> getGroupClassOssiaBookingsOnSelectedDates(String centerId, String teacherId,string selectedPackage, Set<Date> dates){
+            String groupBookingRecordType = ConstantsClass.groupBookingRecordType;
+            Set<string> bookingStatus = new Set<String>{ConstantsClass.statusPending, ConstantsClass.statusScheduled, ConstantsClass.statusReScheduled, ConstantsClass.statusCompleted, ConstantsClass.blockStatus};
+            Set<String> bookTypeSet = new Set<String>{ConstantsClass.groupTypeBooking};
+            Set<String> busyStatusSet  = new Set<String>{ConstantsClass.leaveCategory, ConstantsClass.holidayCategory};     
+            Date dt, endDt;
+            String busyType = ConstantsClass.typeBusy;
+            Set<string> classIds = new Set<string>();
+            String weekDay;
+            for(Ossia_Group_Grade_Package__c objclass :  [SELECT Class_Name__c, Package__c,Package__r.name,  Name, Id ,Package__r.Program__r.Instrument__c
+                                                            FROM Ossia_Group_Grade_Package__c
+                                                            Where Class_Name__r.Centre_Name__c =: centerId
+                                                            AND  Class_Name__r.Teacher__c =: teacherId
+                                                            And Package__c=:selectedPackage]){
+                                                                classIds.add(objclass.Class_Name__c);
+            }
+            if(classIds != null && classIds.size() > 0){
+                String queryStr = 'SELECT Id, Name,Class__C, start_Time__c, End_Time__c, status__c, type__c, RecordType.Name, Center__c, Teacher_Account__c, Booking_Date__c FROM Booking__c';
+                queryStr += ' WHERE RecordType.Name =: groupBookingRecordType AND Start_Time__c != NULL AND End_Time__c != NULL AND Class__C != null';
+                if(String.isNotBlank(centerId)){
+                    queryStr += ' AND Center__c =: centerId';
+                }
+                if(String.isNotBlank(teacherId)){
+                    queryStr += ' AND Teacher_Account__c =: teacherId';
+                }
+                    queryStr += ' and Class__C In: classIds';
+                
+                if(dates.size() > 0){
+                    DateTime dTime = DateTime.now();
+                    for(Date d : dates){
+                        dt = d;
+                        break;
+                    }
+                    if(dt != null){
+                        endDt = dt.addMonths(1);
+                        dTime = DateTime.newInstance(dt, dTime.time());
+                    }
+                    weekDay = dTime.format('EEEE');
+                    
+                    queryStr += ' AND Booking_Date__c >=: dt AND Booking_Date__c <= :endDt';
+                    if(String.isNotBlank(weekDay)){
+                        queryStr += ' AND Appointment_Day__c =: weekDay';
+                    }
+                    queryStr += ' AND status__c IN: bookingStatus AND ((Type__c IN: bookTypeSet) OR (Type__c =: busyType AND Category__c NOT IN: busyStatusSet))';
+                    
+                }
+                return Database.query(queryStr);
+            }
+
+            //System.debug('@@@@queryStr'+queryStr);
+            return new List<Booking__c>();
+            
+        }    
      
+    //21-Sep-2020:nishi: show ossia group class teachers list according to selected Advance action button if click GroupToSameClass then show same package fee reocrds
+    // and GroupToHigherPackage show higher package fee records
+    public static List<Account> getListOfOssiaClassTeacher(string centerId,string packageId,string changeEnrolType){
+        string teacherWorkingStatus = ConstantsClass.teacherWorkingStatus;
+        String teacherRecType = ConstantsClass.teacherRecordType;
+        Set<String> teachersIdSet = new Set<String>();
+         Map<Id,Account> mapOfGroupClassTeachers = New  Map<Id,Account>();
+        if(String.isNotBlank(centerId)){
+            List<Teacher_Working_Hour__c> teacherWorkingHourList = new List<Teacher_Working_Hour__c>();
+            teacherWorkingHourList = [SELECT id, Center_Name__c, Teacher_Name__c, Start_Time__c, End_Time__c FROM Teacher_Working_Hour__c WHERE Center_Name__c =: centerId ];
+            for(Teacher_Working_Hour__c twh : teacherWorkingHourList){
+                teachersIdSet.add(twh.Teacher_Name__c);
+            }
+        }
+        
+        String query = '';             
+        if(teachersIdSet.size() > 0){
+            query = 'SELECT Id, Name,Major_Instruments_Disciplines__c,Minor_Instruments_Disciplines__c FROM Account WHERE RecordType.Name =: teacherRecType AND Status__c =: teacherWorkingStatus';
+            query+= ' AND id IN : teachersIdSet';
+            query+= ' ORDER BY Name';
+        }
+        if(String.isNotBlank(query) && String.isNotBlank(centerId) && String.isNotBlank(packageId)){
+            Map<Id,Account> mapOfTeachers = New  Map<Id,Account>();
+            set<string>instruments = new set<string>();
+            map<string,set<string>> mapOfInstruments = new map<string,set<string>> ();
+            for(account objTeacher : Database.query(query)){
+                mapOfTeachers.put(objTeacher.id,objTeacher);
+                instruments = new set<string>();
+                if(mapOfInstruments.containsKey(objTeacher.id)){
+                    instruments.addAll(mapOfInstruments.get(objTeacher.id));
+                }
+                if(objTeacher.Major_Instruments_Disciplines__c != null){       
+                        for(String strIns : objTeacher.Major_Instruments_Disciplines__c.split(';'))        
+                            instruments.add(strIns);        
+                    }       
+                    if(objTeacher.Minor_Instruments_Disciplines__c != null){       
+                        for(String strIns : objTeacher.Minor_Instruments_Disciplines__c.split(';'))        
+                            instruments.add(strIns);        
+                    }
+                mapOfInstruments.put(objTeacher.id,instruments);     
+            }
+            // 7-jan:2020: show teacher according to active classes
+            if(mapOfTeachers != null && mapOfTeachers.size() >0){
+                Package__c objpackage = [SELECT id,Package_Fee__c 
+                                        From Package__c
+                                        WHERE Id=: packageId];
+                string queryClass= 'SELECT Class_Name__c, Package__c,Package__r.name, Class_Name__r.Teacher__c, Name, Id ,Package__r.Program__r.Instrument__c FROM Ossia_Group_Grade_Package__c';
+                queryClass += ' Where Class_Name__r.Available_Capacity__c > 0 ';
+                If(string.isNotBlank(centerId)){
+                    queryClass += ' And Class_Name__r.Centre_Name__c =:centerId ';
+                }
+                If(mapOfTeachers != null && mapOfTeachers.size() > 0){
+                    set<Id> teacherIds = mapOfTeachers.keySet();
+                    queryClass += ' AND Class_Name__r.Teacher__c In:teacherIds ';
+                }
+                If(string.isNotBlank(objpackage.Id) && objpackage.Package_Fee__c != null && objpackage.Package_Fee__c > 0 ){
+                    decimal packageFee = objpackage.Package_Fee__c;
+                    if(changeEnrolType.equalsIgnoreCase('GroupToSameClass') ){
+                        queryClass += ' AND package__r.Package_Fee__c =: packageFee ';
+                    }else if(changeEnrolType.equalsIgnoreCase('GroupToHigherPackage')){
+                        queryClass += ' AND package__r.Package_Fee__c >: packageFee ';
+                    }
+                }
+                List<Ossia_Group_Grade_Package__c> listOfCLass = DataBase.Query(queryClass);
+                if(listOfCLass != null && listOfCLass.size() > 0){
+                    for(Ossia_Group_Grade_Package__c objClass :listOfCLass){
+                        if(mapOfTeachers.containsKey(objClass.Class_Name__r.Teacher__c) && mapOfInstruments.containsKey(objClass.Class_Name__r.Teacher__c)){
+                            if(mapOfInstruments.get(objClass.Class_Name__r.Teacher__c).contains(objClass.Package__r.Program__r.Instrument__c)){
+                                mapOfGroupClassTeachers.put(objClass.Class_Name__r.Teacher__c,mapOfTeachers.get(objClass.Class_Name__r.Teacher__c));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if(mapOfGroupClassTeachers != null && mapOfGroupClassTeachers.size() > 0){
+            return mapOfGroupClassTeachers.values();
+        }
+        return new List<Account>();
+    }
 
     @RemoteAction
     public static List<Account> getListOfTeacher(String centerId){
@@ -1028,7 +1163,8 @@ public with sharing class OssiaCenterCalendarController {
     //  according to new requiremnt While utilizing Make up credit, 
      //it should consider those makeup minutes which are related to the booking with the cancellation reason – Teacher MC/Leave first. 
      //If user  upgrade enrolement then we get fifth lesson makeup bookings 
-        public static void createOssiaFifthBookingOnUpgrade(Enrolment__c enrol, Map<String, Booking__c> mapOfFifthBookings, Integer timeDiff, Time startTime, Integer duration){
+        public static void createOssiaFifthBookingOnUpgrade(Enrolment__c enrol, Map<String, Booking__c> mapOfFifthBookings, Integer timeDiff, Time startTime, 
+                                                            Integer duration){
             List<Booking__c> bookingsList = new List<Booking__c>();
             List<Booking__c> cancelBookings = new List<Booking__c>();
             List<Booking__c> cancelTeacherCancellationBookings = new List<Booking__c>();

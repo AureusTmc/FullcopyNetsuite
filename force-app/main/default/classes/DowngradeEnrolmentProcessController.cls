@@ -217,6 +217,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
     private static Boolean createPaymentsForDowngradeProcess(Enrolment__c objEnrol, Date lastLessonDateObj, Date nextBillDate, Decimal depositAmount,
      Decimal lessonsAmt, Decimal positiveInvoiceAmount, Decimal negativeInvoiceAmount, String oldPackId,String newPackId,String newTeacherId, Date effectiveDate, 
      Organisation__c  organisationObj/*Country__c centreCountry*/,Map<String, String> mapOfCase ){
+         
         // added by nishi: 19_aug-2020: for added facility fee is exist
         // Decimal facilityFee =  mapOfCase.containsKey('facilityFee') ? Decimal.valueOf(mapOfCase.get('facilityFee')) : 0;
         // Decimal negativeFacilityInvoiceAmount =  mapOfCase.containsKey('negativeFacilityInvoiceAmount') ? Decimal.valueOf(mapOfCase.get('negativeFacilityInvoiceAmount')) : 0;
@@ -234,6 +235,10 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
         String payAsCredit = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get('Payment As Credit').getRecordTypeId();
         String paymentRecordTypeId =  Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get(ConstantsClass.paymentAsDepositRecordType).getRecordTypeId();
         String paymentTransaction = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get(ConstantsClass.paymentTransactionRecType).getRecordTypeId();
+         
+                    if(string.isBlank(newTeacherId)){
+                        newTeacherId = objEnrol.Teacher__c;
+                    }
        system.debug('nextMonthAmount'+nextMonthAmount);
        system.debug('positiveNextMonthInvoiceAmount'+positiveNextMonthInvoiceAmount);
        system.debug('negativeNextMonthInvoiceAmount'+negativeNextMonthInvoiceAmount);
@@ -409,11 +414,10 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                  // added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
 
                 //Line Item for positive amount
-                
-                invoiceLineItems.add(new Invoice_Line_Item__c(Invoice__c = objInvoice.id,Amount__c = BillingUtility.roundOffAmount(positiveInvoiceAmount), 
+               
+                	invoiceLineItems.add(new Invoice_Line_Item__c(Invoice__c = objInvoice.id,Amount__c = BillingUtility.roundOffAmount(positiveInvoiceAmount), 
                                                              GST_Amount__c = positiveInvoiceAmountGST,
-                                                             Teacher_Id__c = newTeacherId,Package__c=newPackId,Month__c= effectiveDate, Subscription_Line_Item__c = objEnrol.Subscription_Line_Items__r[0].Id));
-                
+                                                             Teacher_Id__c = objEnrol.Teacher__c,Package__c=newPackId,Month__c= effectiveDate, Subscription_Line_Item__c = objEnrol.Subscription_Line_Items__r[0].Id));
                 //Line Item for negative amount.
                 
                 invoiceLineItems.add(new Invoice_Line_Item__c(invoice__c = objInvoice.id,Amount__c = BillingUtility.roundOffAmount(negativeInvoiceAmount), 

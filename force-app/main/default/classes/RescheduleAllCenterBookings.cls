@@ -221,7 +221,7 @@ public without sharing class RescheduleAllCenterBookings {
             bookObj.Available_Make_up_Units__c = bookObj.Duration__c;
             if(isOssia){
                 if(listOfOssia_Organisation_Settings != null && listOfOssia_Organisation_Settings.size() > 0){
-                    bookObj.Make_up_Expiry_Date__c=bookObj.Booking_Date__c.addDays(Integer.valueOf((listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days_Teacher__c)));
+                    bookObj.Make_up_Expiry_Date__c=bookObj.Booking_Date__c.addDays(Integer.valueOf((listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days__c)));
                 }
             }else{
                 bookObj.Make_up_Expiry_Date__c  = bookObj.Booking_Date__c.addDays(120);
@@ -574,7 +574,8 @@ public without sharing class RescheduleAllCenterBookings {
         system.debug('@@@ mapOfHolidaysLeave dates are ='+mapOfHolidaysLeave);
         return mapOfHolidaysLeave;
     }
-
+    // update 21 09 2020 @nishi jain 
+	@TestVisible
     private List<Fifth_Lesson__c> createPlaceholderBookingFromFifthLesson(List<Fifth_Lesson__c> fifthLessons){
         List<Booking__c> bookList = new List<Booking__c>();  
         Booking__c bookObj;

@@ -21,7 +21,8 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
     //Data Members for Additional Work
     Private Enrolment__c enrolmentObj;
     Private Date nextBillDate;
-    Private Country__c countryObj;
+    /*Private Country__c countryObj;commented by @nishi 21 Sep 2020,Organisation wise charge as per new logic*/
+    Private Organisation__c organisationObj;
     Private UpgradeCaseCreation upgradeDetails;
     
     //Constructor to Initialize all the data members
@@ -41,7 +42,8 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
                                                       mapOfCase = new Map<String, String>();
                                                       mapOfCase = caseValuesOfMap;
                                                       enrolmentObj = new Enrolment__c();
-                                                      countryObj = new Country__c();
+                                                      //countryObj = new Country__c();commented by @nishi 21 sep 2020,Organisation wise charge as per new logic
+                                                      organisationObj = new Organisation__c();
                                                       upgradeDetails = new UpgradeCaseCreation();
                                                       
                                                   }
@@ -49,7 +51,7 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
     //Init Method where all the process gets Start...
     Public String initProcess(){
         enrolmentObj = AdvanceActionsHelper.fetchEnrolmentDetailsFromBooking(this.booking);
-        System.debug('@@enrolmentObj'+enrolmentObj);
+       //system.debug('@@enrolmentObj'+enrolmentObj);
         String caseIdToReturn;
         string oldTeacher;
         Boolean isSuccess = FALSE;
@@ -64,18 +66,29 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
             nextBillDate = AdvanceActionsHelper.fetchNextBillDateFromEnrolment(enrolmentObj);
             
             //Fetch the Country Object From Enrolment
-            countryObj = AdvanceActionsHelper.fetchCountryFromEnrolment(enrolmentObj);
-            oldTeacher = enrolmentObj.Teacher__c;
+           // countryObj = AdvanceActionsHelper.fetchCountryFromEnrolment(enrolmentObj);
+           if(String.isNotBlank(enrolmentObj.Id) && String.isNotBlank(enrolmentObj.center__r.Organisation__c)){
+                organisationObj = enrolmentObj.center__r.Organisation__r;
+            } 
+           oldTeacher = enrolmentObj.Teacher__c;
         }
-        if(effectiveDate <= nextBillDate && String.isNotBlank(enrolmentObj.Id) && String.isNotBlank(countryObj.Id)){
+            //Start:commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic*/
+        /*if(effectiveDate <= nextBillDate && String.isNotBlank(enrolmentObj.Id) && String.isNotBlank(countryObj.Id)){
+            upgradeDetails = updatePackageNextDateIsGreater(enrolmentObj.Id, effectiveDate, nextBillDate, newPackage, oldPackage, timeslot, countryObj,newTeacherId);
+            enrolmentObj = upgradeDetails.enrolObj;
+        }*/
+        //end:commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic*/
+        if(effectiveDate <= nextBillDate && String.isNotBlank(enrolmentObj.Id) && String.isNotBlank(organisationObj.Id)){
             upgradeDetails = updatePackageNextDateIsGreater(enrolmentObj.Id, effectiveDate, nextBillDate, newPackage, 
                                                             oldPackage, timeslot,
-                                                            countryObj,newClassId ,newTeacherId);
+                                                            organisationObj,newClassId ,newTeacherId);
             enrolmentObj = upgradeDetails.enrolObj;
-            System.debug('@@enrolmentObj1'+enrolmentObj);
-        }else if(String.isNotBlank(enrolmentObj.Id) && String.isNotBlank(countryObj.Id)){
+           //system.debug('@@enrolmentObj1'+enrolmentObj);
+        }else if(String.isNotBlank(enrolmentObj.Id) && String.isNotBlank(organisationObj.Id)){
+            upgradeDetails = updatePackageEffectiveDateIsGreater(enrolmentObj, oldPackage, newPackage, organisationObj, effectiveDate);
+        /*else if(String.isNotBlank(enrolmentObj.Id) && String.isNotBlank(countryObj.Id)){
             upgradeDetails = updatePackageEffectiveDateIsGreater(enrolmentObj, oldPackage, newPackage, countryObj, effectiveDate);
-            if(upgradeDetails.isSuccess){
+           */ if(upgradeDetails.isSuccess){
                 enrolmentObj.New_Package_Id__c = newPackage;
                 enrolmentObj.Package_Process_Status__c = ConstantsClass.enrollmentProcessPendingStatus;
                 enrolmentObj.Package_Process_Type__c = ConstantsClass.enrollmentProcessUpgradeType;
@@ -99,7 +112,7 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
             }
         }
         
-        System.debug('@@@@enrolmentObj.id'+enrolmentObj);
+       //system.debug('@@@@enrolmentObj.id'+enrolmentObj);
         enrolmentObj = AdvanceActionsHelper.fetchEnrolment(enrolmentObj.id);
         if(String.isNotBlank(enrolmentObj.Id) && upgradeDetails.isSuccess){
             // Manage future makeup booking  and if duration is differ then create new 
@@ -152,7 +165,7 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
             }
             
             upsert objCase;
-            system.debug('@@objCase.Id'+objCase.Id);
+           //system.debug('@@objCase.Id'+objCase.Id);
             caseIdToReturn = objCase.Id;
         }
         if(!upgradeDetails.isSuccess)
@@ -206,12 +219,12 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
             if(mapOfUpdateMakeUpBooking != null && mapOfUpdateMakeUpBooking.size () > 0){
                 update mapOfUpdateMakeUpBooking.values();
                 string parentId = String.isNotBlank(enrolmentObj.Parent__c) ? enrolmentObj.Parent__c : enrolmentObj.Student__c;
-                deductMakeupHours(mapOfUpdateMakeUpBooking.keySet(),parentId);
+                deductMakeupHours(mapOfUpdateMakeUpBooking.keySet(),parentId,enrolmentObj.id);
             }
         }
     }
     // 28-dec-2019: deduct makeup hours and minus available mins and calculate utilize min then update parent 
-    public static void deductMakeupHours(set<id> bookingIds, String bookingParentId){
+    public static void deductMakeupHours(set<id> bookingIds, String bookingParentId,string enrolmentObjId){
         //System.debug('Deduct Makeup hours called');
         String statusCanceled = ConstantsClass.statusCanceled;
         Boolean isError = false;
@@ -225,12 +238,39 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
         if(String.isNotBlank(bookingParentId)){
             setOfParentStudent = getParentsChild(bookingParentId);
         }
-        List<Booking__C> bookingObjList =  [SELECT Id,Start_time__c,End_time__c, Booking_Date__c, Available_Make_up_Units__c, 
+        List<Booking__C> bookingObjList = new List<Booking__C>();
+        List<Booking__C> ossiaBookingList = new List<Booking__C>();
+         /* List<Booking__C> bookingObjList =[SELECT Id,Start_time__c,End_time__c, Booking_Date__c, Available_Make_up_Units__c, 
                                             Student__r.Name, Center__c, Teacher_Account__c, Make_up_Utilize_Bookings__c,
                                             Duration__c, Type__c, Category__c 
                                             FROM Booking__c 
                                             WHERE id IN: bookingIds
-                                           ];
+                                           ];*/
+           //start:added By nishi: 21-sep-2020:deduct makeup hours and minus available mins and calculate utilize min then update parent 
+        //  according to new requiremnt While utilizing Make up credit, 
+        //it should consider those makeup minutes which are related to the booking with the cancellation reason – Teacher MC/Leave first.
+        for(Booking__c objBook:[SELECT Id,Start_time__c,End_time__c, Booking_Date__c, Available_Make_up_Units__c, 
+                                            Student__r.Name, Center__c, Teacher_Account__c, Make_up_Utilize_Bookings__c,
+                                            Duration__c, Type__c, Category__c ,Center__r.Organisation__r.Name
+                                            FROM Booking__c 
+                                            WHERE id IN: bookingIds
+                                           ]){
+            if(String.isNotBlank(objBook.Center__c) && 
+            String.isNotBlank(objBook.Center__r.Organisation__c) && 
+            String.isNotBlank(objBook.Center__r.Organisation__r.Name) && 
+            objBook.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                ossiaBookingList.add(objBook);  
+            }else{
+                bookingObjList.add(objBook);
+            }
+        }
+        if(ossiaBookingList != null && ossiaBookingList.size() > 0){
+            OssiaCenterCalendarController.deductOssiaMakeupHours(ossiaBookingList,bookingParentId,new Set<String>{enrolmentObjId});
+        }
+        // end:added By nishi: 21-sep-2020:deduct makeup hours and minus available mins and calculate utilize min then update parent 
+     //  according to new requiremnt While utilizing Make up credit, 
+     //it should consider those makeup minutes which are related to the booking with the cancellation reason – Teacher MC/Leave first.
+                                                        
         if(bookingObjList.size() > 0){
             
             if(setOfParentStudent.size() > 0){
@@ -256,10 +296,10 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
                         bookObj = new Booking__c();
                         bookObj.Id = bookingObj.Id;
                         mapOfUtilizeBookings = new  map<string,Integer>();
-                        system.debug(bookingObj.Make_up_Utilize_Bookings__c);
+                       //system.debug(bookingObj.Make_up_Utilize_Bookings__c);
                         // if makeup Utilize mins is exist then get old utilize mins for updation
                         if(string.isNotBlank(bookingObj.Make_up_Utilize_Bookings__c)){
-                            system.debug(bookingObj.Make_up_Utilize_Bookings__c.split(';'));
+                           //system.debug(bookingObj.Make_up_Utilize_Bookings__c.split(';'));
                             for(string bookingWithDuration : bookingObj.Make_up_Utilize_Bookings__c.split(';')){
                                 if(string.isNotBlank(bookingWithDuration)){
                                     mapOfUtilizeBookings.put(bookingWithDuration.split('-')[0],Integer.valueOf(bookingWithDuration.split('-')[1]));
@@ -316,7 +356,7 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
                                                               Available_Make_up_Units__c = (Decimal)mapOfHours.get(keysetValue)));
                     }
                 }
-                System.debug('@@@bookingUpdatedList '+bookingUpdatedList);
+               //system.debug('@@@bookingUpdatedList '+bookingUpdatedList);
                 if(bookingUpdatedList.size() > 0){
                     Database.SaveResult[] saveResults = Database.update(bookingUpdatedList, false);
                     for(Database.SaveResult saveResult : saveResults){
@@ -373,161 +413,202 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
     
     //Hit API and create Invoice and Line Items and Payment Record if the Next Bill Date is Greater than Effective Date
     Private UpgradeCaseCreation updatePackageNextDateIsGreater(String enrolmentId, Date effectiveDate, Date nextBillDate, String newPackageId, String oldPackageId, 
-                                                               Time newTimeSlot, Country__c countryObj,string newClassId,string newTeacherId){
+                                                               Time newTimeSlot,/* Country__c countryObj*/Organisation__c  organisationObj,string newClassId,string newTeacherId){
                                                                    UpgradeCaseCreation upgradeCaseDetails = new UpgradeCaseCreation();
                                                                    Boolean isSuccess = false;
                                                                    String invoiceId;
                                                                    if(String.isNotBlank(enrolmentId) && nextBillDate != Null && effectiveDate != Null &&
-                                                                      String.isNotBlank(newPackageId) && String.isNotBlank(oldPackageId) && newTimeSlot != Null && String.isNotBlank(countryObj.Id)){
-                                                                          upgradeCaseDetails = upgradeGroupPackage(enrolmentId, effectiveDate, newPackageId, oldPackageId, newTimeSlot, 
+                                                                      String.isNotBlank(newPackageId) && String.isNotBlank(oldPackageId) && newTimeSlot != Null && String.isNotBlank(organisationObj.Id) /*String.isNotBlank(countryObj.Id)*/){
+                                                                        /*  upgradeCaseDetails = upgradeGroupPackage(enrolmentId, effectiveDate, newPackageId, oldPackageId, newTimeSlot, 
                                                                                                                    countryObj.Currency_Code__c, countryObj.Stripe_Base_Url__c, countryObj.Stripe_Secret_Key__c,
-                                                                                                                   countryObj.Tax_Rate__c,newClassId,newTeacherId);
+                                                                                                                   countryObj.Tax_Rate__c,newClassId,newTeacherId);*/
+                                                                            upgradeCaseDetails = upgradeGroupPackage(enrolmentId, effectiveDate, newPackageId, oldPackageId, newTimeSlot, 
+                                                                            organisationObj.country__r.Currency_Code__c, organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c,
+                                                                            organisationObj.Tax_Rate__c,newClassId,newTeacherId);
                                                                       }
                                                                    return upgradeCaseDetails;
                                                                }
     public static UpgradeCaseCreation upgradeGroupPackage(Id enrollMentId,Date effectDate,Id PackageId,Id OldPackage, 
                                                           Time timeslot, String currencyCode, String baseUrl, String apiKey,
                                                           Decimal taxRate, string newClassId,string newTeacherId){
-                                                              UpgradeCaseCreation upgradePackageCaseDetails = new UpgradeCaseCreation();
-                                                              Boolean flag = false;
-                                                              String invoiceId;
-                                                              Map<String,Package__c> mapOfPackageFee = UpgradeDowngradeController.getPackage(oldPackage,PackageId);
-                                                              Package__c oldPackg = mapOfPackageFee.get(OldPackage);
-                                                              Package__c newPackg = mapOfPackageFee.get(PackageId);
-                                                              system.debug('@@@oldPackg'+oldPackg);
-                                                              system.debug('@@@newPackg'+newPackg);
-                                                              Subscription_Line_Item__c objSubLineItem = UpgradeDowngradeController.fetchSubsLineItem(enrollmentId);
-                                                              Integer countWithOldPackage = 0;
-                                                              Integer countWithNewPackage = 0;
-                                                              Integer minutesOfFifthBooking = 0;
-                                                              Decimal currentPackageDeposit = 0;
-                                                              
-                                                              //Create MAp for Create makeup Booking
-                                                              Map<String, Booking__c> mapOfMakeupBooking = new Map<String, Booking__c>();
-                                                              Date effectiveDate = effectDate; //objSubLineItem.Enrolment__r.Effective_Date__c;
-                                                              List<Booking__c> listOfBookings = UpgradeDowngradeController.fetchListOfBookings(enrollmentId);
-                                                              system.debug('@@listOfBookings'+listOfBookings);
-                                                              system.debug('@@@effectDate'+effectDate);
-                                                              //@Jatin, 23 October 2019, Change due to populate the tax amount on invoice line item. 
-                                                              
-                                                              Decimal newPackageUnitPrice = 0;
-                                                              Decimal depositeFee = 0;
-                                                              Decimal totalAmount = 0; Decimal gstAmount = 0; Decimal totalWithNoGST = 0;
-                                                              Decimal fifthBookingPrice = 0;
-                                                              
-                                                              
-                                                              for(Booking__c objBooking : listOfBookings){
-                                                                  if(objBooking.Booking_Date__c >= effectiveDate){
-                                                                      // @jatin:3 -dec: add group class
-                                                                      if(objBooking.Type__c == ConstantsClass.groupLessonTypeBooking ){//||objBooking.Type__c == ConstantsClass.groupLessonTypeBooking
-                                                                          newPackageUnitPrice += (newPackg.Unit_Fee__c - oldPackg.Unit_Fee__c);
-                                                                          if(taxRate > 0){
-                                                                              gstAmount += (newPackg.Unit_Fee__c - oldPackg.Unit_Fee__c) * taxRate/100;
-                                                                          }
-                                                                      } 
-                                                                  }
-                                                              }
-                                                              System.debug('@@@@@newPackageUnitPrice'+newPackageUnitPrice);
-                                                              System.debug('@@@@@gstAmount'+gstAmount);
-                                                              system.debug('@@enrollMentId'+enrollMentId);
-                                                              
-                                                              //return sum of all deposit amount for enrolment
-                                                              if(String.isNotBlank(enrollMentId)){
-                                                                  currentPackageDeposit = AureusCalendarController.getDepositFromFile(enrollMentId);
-                                                              }
-                                                              
-                                                              depositeFee = BillingUtility.roundOffAmount(newPackg.Deposit_Fee__c - currentPackageDeposit);
-                                                              newPackageUnitPrice = BillingUtility.roundOffAmount(newPackageUnitPrice);
-                                                              gstAmount = BillingUtility.roundOffAmount(gstAmount);
-                                                              
-                                                              totalAmount = BillingUtility.roundOffAmount(newPackageUnitPrice + gstAmount + depositeFee);
-                                                              totalWithNoGST = BillingUtility.roundOffAmount(newPackageUnitPrice + depositeFee);
-                                                              String stripeId = objSubLineItem.Subscription__r.Parent__r.Stripe_Customer_Id__c;
-                                                              System.debug('@@@@@newPackageUnitPrice'+newPackageUnitPrice);
-                                                              System.debug('@@@@@gstAmount'+gstAmount);
-                                                              System.debug('@@@@@totalAmount'+totalAmount);
-                                                              System.debug('@@@@@depositeFee'+depositeFee);
-                                                              System.debug('@@@@@totalWithNoGST'+totalWithNoGST);
-                                                              System.debug('@@@@@stripeId'+stripeId);
-                                                              //Summary Details for case for upgrade package.....
-                                                              upgradePackageCaseDetails.depositAmount = depositeFee;
-                                                              upgradePackageCaseDetails.lessonCharge = BillingUtility.roundOffAmount(newPackageUnitPrice + gstAmount);
-                                                              
-                                                              
-                                                              if(String.isNotBlank(stripeId) && totalAmount > 0){
-                                                                  BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId,totalAmount, currencyCode, baseUrl, apiKey); 
-                                                                  System.debug('@@chargeResponse'+chargeResponse);
-                                                                  if(chargeResponse.statusCode == 200 && chargeResponse.paid){
-                                                                      flag = true;
-                                                                      upgradePackageCaseDetails.isSuccess = true;
-                                                                      Invoice__c objInvoice = BillingUtility.fillInvoice(objSubLineItem.Subscription__c,objSubLineItem.Subscription__r.Parent__c,constantsClass.paidStatus);
-                                                                      objInvoice.Center__c = objSubLineItem.Subscription__r.Center__c;
-                                                                      Invoice_Line_Item__c inlineItemForChange = new Invoice_Line_Item__c();
-                                                                      List<Invoice_Line_Item__c> listOfInvoiceLineItems = new List<Invoice_Line_Item__c>();
-                                                                      insert objInvoice;
-                                                                      system.debug('@@objInvoice'+objInvoice);
-                                                                      if(String.isNotBlank(objInvoice.Id)){
-                                                                          upgradePackageCaseDetails.invoiceId = objInvoice.Id;
-                                                                      }
-                                                                      if(depositeFee > 0){
-                                                                          inlineItemForChange = PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,BillingUtility.roundOffAmount(depositeFee), newPackg.Id,true, '');
-                                                                          inlineItemForChange.Is_Deposit__c = True;
-                                                                          inlineItemForChange.month__c = effectiveDate;
-                                                                          listOfInvoiceLineItems.add(inlineItemForChange);
-                                                                          
-                                                                      }
-                                                                      if(upgradePackageCaseDetails.lessonCharge > 0){
-                                                                          inlineItemForChange = PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,BillingUtility.roundOffAmount(newPackageUnitPrice), newPackg.Id,FALSE, objSubLineItem.Enrolment__r.teacher__c);
-                                                                          inlineItemForChange.month__c = effectiveDate;
-                                                                          listOfInvoiceLineItems.add(inlineItemForChange);
-                                                                          
-                                                                      }
-                                                                      if(totalWithNoGST > 0){
-                                                                          upgradePackageCaseDetails.total = totalWithNoGST;
-                                                                      }
-                                                                      if(fifthBookingPrice > 0){
-                                                                          inlineItemForChange = PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,BillingUtility.roundOffAmount(fifthBookingPrice),newPackg.Id,FALSE, objSubLineItem.Enrolment__r.teacher__c);
-                                                                          inlineItemForChange.month__c = effectiveDate;
-                                                                          listOfInvoiceLineItems.add(inlineItemForChange);
-                                                                      }
-                                                                      if(listOfInvoiceLineItems.size() > 0){
-                                                                          INSERT listOfInvoiceLineItems;
-                                                                      } 
-                                                                      system.debug('@@listOfInvoiceLineItems'+listOfInvoiceLineItems);
-                                                                      objInvoice = [SELECT Id,Name,Total_Amount__c,Parent_Account__c FROM Invoice__c WHERE Id =:objInvoice.Id];
-                                                                      
-                                                                      if(String.isNotBlank(baseUrl) && String.isNotBlank(apiKey)){
-                                                                          BillingUtility.updateCharge(chargeResponse.Id,objInvoice.Name, baseUrl, apiKey);                    
-                                                                      }
-                                                                      
-                                                                      
-                                                                      Payment__c objPayment = BillingUtility.fillPayment(objInvoice.Parent_Account__c,objInvoice.Id,totalAmount,ConstantsClass.successStatus);
-                                                                      objPayment.Transaction_ID__c = chargeResponse.Id;
-                                                                      objPayment.Method_of_Payment__c = ConstantsClass.cardModeType;
-                                                                      INSERT objPayment; 
-                                                                      
-                                                                      system.debug('@@objPayment'+objPayment);
-                                                                      if(objInvoice != NULL){
-                                                                          BillingUtility.createAttachment(new Set<String>{objInvoice.Id});
-                                                                      }
-                                                                      upgradePackageCaseDetails.enrolObj = updateEnrollment(enrollMentId,PackageId, timeslot, effectDate,newClassId,newTeacherId);
-                                                                      upgradePackageCaseDetails.enrolObj = UpgradeDowngradeController.fetchEnrolment(enrollMentId);
-                                                                      system.debug('@@@upgradePackageCaseDetails.enrolObj '+upgradePackageCaseDetails.enrolObj );
-                                                                      if(String.isNotBlank(objPayment.id) && String.isNotBlank(objInvoice.id)){
-                                                                          SageIntacctIntegrationUtility.packageUpgrade(objInvoice.Id, objPayment.Id);
-                                                                      }
-                                                                      
-                                                                  }else{
-                                                                      flag = false;
-                                                                      upgradePackageCaseDetails.isSuccess = false;
-                                                                  }    
-                                                              }else{
-                                                                  flag = false;
-                                                                  upgradePackageCaseDetails.isSuccess = false;
-                                                              }
-                                                              system.debug('@@upgradePackageCaseDetails'+upgradePackageCaseDetails);
-                                                              return upgradePackageCaseDetails ;
-                                                          }
+        UpgradeCaseCreation upgradePackageCaseDetails = new UpgradeCaseCreation();
+        Boolean flag = false;
+        String invoiceId;
+        Map<String,Package__c> mapOfPackageFee = UpgradeDowngradeController.getPackage(oldPackage,PackageId);
+        Package__c oldPackg = mapOfPackageFee.get(OldPackage);
+        Package__c newPackg = mapOfPackageFee.get(PackageId);
+       //system.debug('@@@oldPackg'+oldPackg);
+       //system.debug('@@@newPackg'+newPackg);
+        Subscription_Line_Item__c objSubLineItem = UpgradeDowngradeController.fetchSubsLineItem(enrollmentId);
+        Integer countWithOldPackage = 0;
+        Integer countWithNewPackage = 0;
+        Integer minutesOfFifthBooking = 0;
+        Decimal currentPackageDeposit = 0;
+        Decimal newPackageNextMonthPrice = 0;
+        Decimal gstNextMonthAmount = 0;
+        //Create MAp for Create makeup Booking
+        Map<String, Booking__c> mapOfMakeupBooking = new Map<String, Booking__c>();
+        Date effectiveDate = effectDate; //objSubLineItem.Enrolment__r.Effective_Date__c;
+        List<Booking__c> listOfBookings = UpgradeDowngradeController.fetchListOfBookings(enrollmentId);
+       //system.debug('@@listOfBookings'+listOfBookings);
+       //system.debug('@@@effectDate'+effectDate);
+        //@Jatin, 23 October 2019, Change due to populate the tax amount on invoice line item. 
+        
+        Decimal newPackageUnitPrice = 0;
+        Decimal depositeFee = 0;
+        Decimal totalAmount = 0; Decimal gstAmount = 0; Decimal totalWithNoGST = 0;
+        Decimal fifthBookingPrice = 0;
+        
+        
+        for(Booking__c objBooking : listOfBookings){
+            if(objBooking.Booking_Date__c >= effectiveDate){
+                // @jatin:3 -dec: add group class
+                if(objBooking.Type__c == ConstantsClass.groupLessonTypeBooking ){//||objBooking.Type__c == ConstantsClass.groupLessonTypeBooking
+                    newPackageUnitPrice += (newPackg.Unit_Fee__c - oldPackg.Unit_Fee__c);
+                    if(taxRate > 0){
+                        gstAmount += (newPackg.Unit_Fee__c - oldPackg.Unit_Fee__c) * taxRate/100;
+                    }
+                } 
+            }
+        }
+        // // added by Nishi: 21-Sep-2020: if next billing date is greater then next month then we create new invoice for adjuct new upgraded package unitfee 
+       //  // ex: 12-Aug-2020 effective date and next Billing date 01-Oct-2020 
+        date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1);
+        date nextBillDate = objSubLineItem.Next_Bill_Date__c;
+        if(nextBillDate >= nextMonthDate && effectiveDate.month() < nextMonthDate.addMonths(-1).month()){
+            List<Booking__c> listOfNextMonthBookings = UpgradeDowngradeController.fetchListOfNextMonthBookings(enrollmentId);
+            for(Booking__c objBooking : listOfNextMonthBookings){
+                if(objBooking.Booking_Date__c >= effectiveDate){
+                    if(objBooking.Type__c == ConstantsClass.bookTypeRegular ){//||objBooking.Type__c == ConstantsClass.groupLessonTypeBooking
+                        newPackageNextMonthPrice += (newPackg.Unit_Fee__c - oldPackg.Unit_Fee__c);
+                        if(taxRate > 0){
+                            gstNextMonthAmount += (newPackg.Unit_Fee__c - oldPackg.Unit_Fee__c) * taxRate/100;
+                        }
+                    }      
+                }
+            }
+        }
+           // // added by Nishi: 21-Sep-2020: if next billing date is greater then next month then we create new invoice for adjuct new upgraded package unitfee 
+       //  // ex: 12-Aug-2020 effective date and next Billing date 01-Oct-2020 
+
+       //system.debug('@@@@@newPackageUnitPrice'+newPackageUnitPrice);
+       //system.debug('@@@@@gstAmount'+gstAmount);
+       //system.debug('@@enrollMentId'+enrollMentId);
+        
+        //return sum of all deposit amount for enrolment
+        if(String.isNotBlank(enrollMentId)){
+            currentPackageDeposit = AureusCalendarController.getDepositFromFile(enrollMentId);
+        }
+        
+        depositeFee = BillingUtility.roundOffAmount(newPackg.Deposit_Fee__c - currentPackageDeposit);
+        newPackageUnitPrice = BillingUtility.roundOffAmount(newPackageUnitPrice);
+        gstAmount = BillingUtility.roundOffAmount(gstAmount);
+        
+        totalAmount = BillingUtility.roundOffAmount(newPackageUnitPrice + gstAmount + depositeFee);
+        totalWithNoGST = BillingUtility.roundOffAmount(newPackageUnitPrice + depositeFee);
+        String stripeId = objSubLineItem.Subscription__r.Parent__r.Stripe_Customer_Id__c;
+       //system.debug('@@@@@newPackageUnitPrice'+newPackageUnitPrice);
+       //system.debug('@@@@@gstAmount'+gstAmount);
+       //system.debug('@@@@@totalAmount'+totalAmount);
+       //system.debug('@@@@@depositeFee'+depositeFee);
+       //system.debug('@@@@@totalWithNoGST'+totalWithNoGST);
+       //system.debug('@@@@@stripeId'+stripeId);
+        //Summary Details for case for upgrade package.....
+        upgradePackageCaseDetails.depositAmount = depositeFee;
+        Decimal lessonCharge = newPackageUnitPrice + gstAmount;
+        if(newPackageNextMonthPrice != 0){
+            totalAmount += (newPackageNextMonthPrice + gstNextMonthAmount);
+            totalWithNoGST += newPackageNextMonthPrice;
+            lessonCharge += (newPackageNextMonthPrice + gstNextMonthAmount);
+            gstNextMonthAmount = BillingUtility.roundOffAmount(gstNextMonthAmount);
+        }
+        upgradePackageCaseDetails.lessonCharge = BillingUtility.roundOffAmount(lessonCharge);
+        totalAmount = BillingUtility.roundOffAmount(totalAmount);
+        totalWithNoGST = BillingUtility.roundOffAmount(totalWithNoGST);
+        totalAmount = BillingUtility.roundOffAmount(totalAmount);
+        gstAmount = BillingUtility.roundOffAmount(gstAmount);
+        
+        
+        if(String.isNotBlank(stripeId) && totalAmount > 0){
+            BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId,totalAmount, currencyCode, baseUrl, apiKey); 
+           //system.debug('@@chargeResponse'+chargeResponse);
+            if(chargeResponse.statusCode == 200 && chargeResponse.paid){
+                flag = true;
+                upgradePackageCaseDetails.isSuccess = true;
+                Invoice__c objInvoice = BillingUtility.fillInvoice(objSubLineItem.Subscription__c,objSubLineItem.Subscription__r.Parent__c,constantsClass.paidStatus);
+                objInvoice.Center__c = objSubLineItem.Subscription__r.Center__c;
+                Invoice_Line_Item__c inlineItemForChange = new Invoice_Line_Item__c();
+                List<Invoice_Line_Item__c> listOfInvoiceLineItems = new List<Invoice_Line_Item__c>();
+                insert objInvoice;
+               //system.debug('@@objInvoice'+objInvoice);
+                if(String.isNotBlank(objInvoice.Id)){
+                    upgradePackageCaseDetails.invoiceId = objInvoice.Id;
+                }
+                if(depositeFee > 0){
+                    inlineItemForChange = PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,BillingUtility.roundOffAmount(depositeFee), newPackg.Id,true, '');
+                    inlineItemForChange.Is_Deposit__c = True;
+                    inlineItemForChange.month__c = effectiveDate;
+                    listOfInvoiceLineItems.add(inlineItemForChange);
+                    
+                }
+                if(upgradePackageCaseDetails.lessonCharge > 0){
+                    inlineItemForChange = PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,BillingUtility.roundOffAmount(newPackageUnitPrice), newPackg.Id,FALSE, objSubLineItem.Enrolment__r.teacher__c);
+                    inlineItemForChange.month__c = effectiveDate;
+                    listOfInvoiceLineItems.add(inlineItemForChange);
+                   // 21-Sep=-2020: nishi: for added new line item for next month invoice already generated
+                    if(newPackageNextMonthPrice != 0){
+                        inlineItemForChange = PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,BillingUtility.roundOffAmount(newPackageNextMonthPrice), newPackg.Id,FALSE, objSubLineItem.Enrolment__r.teacher__c);
+                        inlineItemForChange.month__c = nextMonthDate.addMonths(-1);
+                        listOfInvoiceLineItems.add(inlineItemForChange);
+                    }
+                    // 21-Sep=-2020: nishi: for added new line item for next month invoice already generated
+                }
+                if(totalWithNoGST > 0){
+                    upgradePackageCaseDetails.total = totalWithNoGST;
+                }
+                if(fifthBookingPrice > 0){
+                    inlineItemForChange = PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,BillingUtility.roundOffAmount(fifthBookingPrice),newPackg.Id,FALSE, objSubLineItem.Enrolment__r.teacher__c);
+                    inlineItemForChange.month__c = effectiveDate;
+                    listOfInvoiceLineItems.add(inlineItemForChange);
+                }
+                if(listOfInvoiceLineItems.size() > 0){
+                    INSERT listOfInvoiceLineItems;
+                } 
+               //system.debug('@@listOfInvoiceLineItems'+listOfInvoiceLineItems);
+                objInvoice = [SELECT Id,Name,Total_Amount__c,Parent_Account__c FROM Invoice__c WHERE Id =:objInvoice.Id];
+                
+                if(String.isNotBlank(baseUrl) && String.isNotBlank(apiKey)){
+                    BillingUtility.updateCharge(chargeResponse.Id,objInvoice.Name, baseUrl, apiKey);                    
+                }
+                
+                
+                Payment__c objPayment = BillingUtility.fillPayment(objInvoice.Parent_Account__c,objInvoice.Id,totalAmount,ConstantsClass.successStatus);
+                objPayment.Transaction_ID__c = chargeResponse.Id;
+                objPayment.Method_of_Payment__c = ConstantsClass.cardModeType;
+                INSERT objPayment; 
+                
+               //system.debug('@@objPayment'+objPayment);
+                if(objInvoice != NULL){
+                    BillingUtility.createAttachment(new Set<String>{objInvoice.Id});
+                }
+                upgradePackageCaseDetails.enrolObj = updateEnrollment(enrollMentId,PackageId, timeslot, effectDate,newClassId,newTeacherId);
+                upgradePackageCaseDetails.enrolObj = UpgradeDowngradeController.fetchEnrolment(enrollMentId);
+               //system.debug('@@@upgradePackageCaseDetails.enrolObj '+upgradePackageCaseDetails.enrolObj );
+                if(String.isNotBlank(objPayment.id) && String.isNotBlank(objInvoice.id)){
+                    SageIntacctIntegrationUtility.packageUpgrade(objInvoice.Id, objPayment.Id);
+                }
+                
+            }else{
+                flag = false;
+                upgradePackageCaseDetails.isSuccess = false;
+            }    
+        }else{
+            flag = false;
+            upgradePackageCaseDetails.isSuccess = false;
+        }
+       //system.debug('@@upgradePackageCaseDetails'+upgradePackageCaseDetails);
+        return upgradePackageCaseDetails ;
+    }
     
     
     public static Enrolment__c updateEnrollment(Id enrolMentId,Id packageId, Time newTimeSlot, Date effectiveDate,string newClassId,string newTeacherId){
@@ -555,7 +636,8 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
     }
     
     //Hit API and create Invoice and Line Items and Payment Record if the Next Bill Date is Greater than Effective Date
-    Private UpgradeCaseCreation updatePackageEffectiveDateIsGreater(Enrolment__c enrolmentObj, String oldPackageId, String newPackageId, Country__c centreCountry, Date effectiveDate){
+    Private UpgradeCaseCreation updatePackageEffectiveDateIsGreater(Enrolment__c enrolmentObj, String oldPackageId, String newPackageId,/* Country__c centreCountry*/
+    Organisation__c  organisationObj, Date effectiveDate){
         Boolean isSuccess = false;
         UpgradeCaseCreation upgradePackageCaseDetails = new UpgradeCaseCreation();
         String invoiceId = '';
@@ -566,15 +648,15 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
         AureusCalendarController.UpgradeDowngradePackageSummary summary = AureusCalendarController.getPackageDetailsUpgradeDowngrade(oldPackageId, newPackageId);
         newPackage = summary.newPackage;
         oldPackage = summary.oldPackage; 
-         system.debug('##newPackage'+newPackage);
+        //system.debug('##newPackage'+newPackage);
         if(String.isNotBlank(enrolmentObj.Id)){
             currentPackageDeposit = AdvanceActionsHelper.getDepositFromFile(enrolmentObj.Id);
         }
-         system.debug('!!currentPackageDeposit'+currentPackageDeposit);
+        //system.debug('!!currentPackageDeposit'+currentPackageDeposit);
         List<Invoice_Line_Item__c> listOfInvoiceLineItems = new List<Invoice_Line_Item__c>();
-         system.debug('!!newPackage.Deposit_Fee__c'+newPackage.Deposit_Fee__c);
+        //system.debug('!!newPackage.Deposit_Fee__c'+newPackage.Deposit_Fee__c);
         Decimal depositeFee = BillingUtility.roundOffAmount((newPackage.Deposit_Fee__c - currentPackageDeposit)); 
-         system.debug('!!depositeFee'+depositeFee);
+        //system.debug('!!depositeFee'+depositeFee);
         if(enrolmentObj != Null){
             stripeId = enrolmentObj.Subscription_Line_Items__r[0].Subscription__r.Parent__r.Stripe_Customer_Id__c;
             parentId = enrolmentObj.Subscription_Line_Items__r[0].Subscription__r.Parent__c;
@@ -584,15 +666,17 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
         upgradePackageCaseDetails.depositAmount = depositeFee;
         upgradePackageCaseDetails.total = depositeFee;
         upgradePackageCaseDetails.isSuccess = true;
-        system.debug('!!stripeId'+stripeId);
-         system.debug('!!depositeFee'+depositeFee);
-         system.debug('!!centreCountry.Id'+centreCountry.Id);
-        if(String.isNotBlank(stripeId) && depositeFee > 0 && String.isNotBlank(centreCountry.Id)){
+       //system.debug('!!stripeId'+stripeId);
+        //system.debug('!!depositeFee'+depositeFee);
+         //system.debug('!!centreCountry.Id'+centreCountry.Id);
+        if(String.isNotBlank(stripeId) && depositeFee > 0 && String.isNotBlank(organisationObj.Id)){ //commented by @nishi 21 Sep 2020,Organisation wise charge as per new logic*/String.isNotBlank(centreCountry.Id)){
             
             Invoice_Line_Item__c inlineItemforChange = new Invoice_Line_Item__c();
-            BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId, depositeFee, centreCountry.Currency_Code__c, centreCountry.Stripe_Base_Url__c, centreCountry.Stripe_Secret_Key__c); 
+             //commented by @nishi 21 Sep 2020,Organisation wise charge as per new logic*/
+            //BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId, depositeFee, centreCountry.Currency_Code__c, centreCountry.Stripe_Base_Url__c, centreCountry.Stripe_Secret_Key__c); 
+            BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId, depositeFee, organisationObj.country__r.Currency_Code__c, organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c); 
             
-            System.debug('@@@chargeResponse'+chargeResponse);
+           //system.debug('@@@chargeResponse'+chargeResponse);
             if(chargeResponse.statusCode == 200 && chargeResponse.paid){                
                 isSuccess = true;
                 Invoice__c objInvoice = BillingUtility.fillInvoice(enrolmentObj.Subscription_Line_Items__r[0].Subscription__c, parentId, constantsClass.paidStatus);
@@ -615,8 +699,10 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
                 } 
                 
                 objInvoice = [SELECT Id,Name,Total_Amount__c,Parent_Account__c, status__c FROM Invoice__c WHERE Id =:objInvoice.Id];
-                if(!Test.isRunningTest() && String.isNotBlank(centreCountry.Id)){
-                    BillingUtility.updateCharge(chargeResponse.Id,objInvoice.Name, centreCountry.Stripe_Base_Url__c, centreCountry.Stripe_Secret_Key__c);
+                if(!Test.isRunningTest() &&  String.isNotBlank(organisationObj.Id)){ //String.isNotBlank(centreCountry.Id)){
+                   //commented by @nishi 21 Sep 2020,Organisation wise charge as per new logic*/
+                    // BillingUtility.updateCharge(chargeResponse.Id,objInvoice.Name, centreCountry.Stripe_Base_Url__c, centreCountry.Stripe_Secret_Key__c);
+                    BillingUtility.updateCharge(chargeResponse.Id,objInvoice.Name, organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c);
                 }
                 
                 
@@ -640,7 +726,7 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
         }else{
             isSuccess = false;
         }
-        system.debug('@@@updatePackageEffectiveDateIsGreater upgradePackageCaseDetails'+upgradePackageCaseDetails);
+       //system.debug('@@@updatePackageEffectiveDateIsGreater upgradePackageCaseDetails'+upgradePackageCaseDetails);
         return upgradePackageCaseDetails;
     }
     
@@ -718,7 +804,7 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
             }
         }
         if(bookingsToInsert.size() > 0){
-            System.debug('@@bookingsToInsert'+bookingsToInsert);
+           //system.debug('@@bookingsToInsert'+bookingsToInsert);
             UPSERT bookingsToInsert;
         }
     }
@@ -739,7 +825,7 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
     
     /*Public Static void processFutureBookings(Enrolment__c enrolmentObj, String type, string newClassId,Map<Date,String> mapOfEffectiveDateGroupLesson){
         // add by jatin:5:Dec:2019 - upgraded booking then add same date Groupclass booking
-        system.debug('@@@enrolmentObj.class__c'+enrolmentObj.class__c);
+       //system.debug('@@@enrolmentObj.class__c'+enrolmentObj.class__c);
         Integer timeDuration = 0;
         List<Booking__c> bookingList = new List<Booking__c>();
         for(Booking__c objBook : [SELECT Id, Start_Time__c, Group_Class__c,end_time__c, Booking_Date__c, Teacher_Account__c, Student__r.Name, Enrolment__c, Enrolment__r.new_package_Id__c, 
@@ -782,7 +868,7 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
                                       bookingList.add(objBook);
                                   }
         if(bookingList.size() > 0){
-            System.debug('@@updateEnrollment'+bookingList);
+           //system.debug('@@updateEnrollment'+bookingList);
             UPSERT bookingList;
         }
     }*/

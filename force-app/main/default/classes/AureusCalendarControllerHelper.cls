@@ -1403,7 +1403,7 @@ It will perform following tasks
     /*
 * This method will fetch all bookings of Enrolment greater than effective date except ad-hoc type bookings
 */
-    
+    /*commented by nishi: 24-Sep-2020: this funciton not use in our class 
     private static List<Booking__c> fetchAllFutureBookingsOfEnrolment(Enrolment__c enrolObj, Date effectiveDate){
         DateTime weekDayDT = effectiveDate;
         List<Booking__c> bookingList = new List<Booking__c>();
@@ -1412,25 +1412,25 @@ It will perform following tasks
                            Make_up_Utilize_Bookings__c, Category__c FROM Booking__c WHERE Enrolment__c =: enrolObj.Id /*((Enrolment__c =: enrolObj.Id) OR 
 (Type__c =: ConstantsClass.typeMakeup AND Status__c !=: ConstantsClass.statusCanceled AND 
 Student__c =: enrolObj.Student__c AND Teacher_Account__c =: enrolObj.Teacher__c AND 
-start_Time__c =: enrolObj.Lesson_Start_time__c AND Duration__c = :Decimal.valueOf(enrolObj.Package__r.Duration__c)))*/ AND 
+start_Time__c =: enrolObj.Lesson_Start_time__c AND Duration__c = :Decimal.valueOf(enrolObj.Package__r.Duration__c)))* AND 
                            Booking_Date__c >=: effectiveDate AND Type__c !=: ConstantsClass.typeAdhoc];
         }
         return bookingList;
-    }
+    }*/
    
     /*
 * This method will delete all non canceled and makeup bookings greater than effective date
 */
-    
+   /* commented by nishi: 24-Sep-2020: this funciton not use in our class 
     private static void deleteRegularFutureBooking(List<Booking__c> bookingsToBeDeleted){
         DELETE bookingsToBeDeleted;
-    }
+    }*/
     
     /*
 * This method will return the canceled bookings whose available makeup hours
 * will be processed with the following formula : Available Makeup Minutes = (Available Makeup Minutes - Duration)
 */
-    
+    /*commented by nishi: 24-Sep-2020: this funciton not use in our class 
     private static List<Booking__c> processCanceledRegularBookings(List<Booking__c> canceledBookings){
         List<Booking__c> bookingsToUpsert = new List<Booking__c>();
         for(Booking__c bookObj : canceledBookings){
@@ -1439,7 +1439,7 @@ start_Time__c =: enrolObj.Lesson_Start_time__c AND Duration__c = :Decimal.valueO
         
         return bookingsToUpsert;
     }
-    
+    */
     /*
 * This method will Re-Create all Regular Bookings for the enrolment which is deleted by previous step.  
 */

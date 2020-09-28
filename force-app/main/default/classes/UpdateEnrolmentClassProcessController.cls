@@ -57,9 +57,13 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
         STRING previousTime;
         Time oldTimeSlot;
         Integer duration=0;
-        Boolean isGroupLesson = false;
-        if( String.isNotBlank(newClassId)  &&  String.isNotBlank(oldClassId)){
-            isGroupLesson = true;
+        Boolean isGroupLessonChange = false;
+        Boolean teacherPackageChange = false;
+        if( String.isNotBlank(newClassId)  &&  String.isNotBlank(oldClassId) && newClassId != oldClassId){
+            isGroupLessonChange = true;
+        }
+        if(newTeacherId != enrolmentObj.Teacher__c || newPackage != enrolmentObj.Package__c){
+            teacherPackageChange =  true;                                      
         }
         DateTime newEffectiveDateTime = DateTime.newInstance(effectiveDate, timeslot);
         Boolean isSameMonth = false;
@@ -111,7 +115,7 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                 processFutureMakeupGroupLessonBookings(enrolmentObj,mapOfEffectiveDateGroupLesson);
                   //uncommented by jatin:6-jan-2020 now we change our logic we change you class with new lesson day so thats why we deleted all previous lesson then create new one.
                 processFutureGroupLessonBookings(enrolmentObj, mapOfEffectiveDateGroupLesson);
-                if( isSameMonth ){
+                if( isSameMonth && (isGroupLessonChange || teacherPackageChange)){
                     invoiceId =  createInvoiceAndLineItemsChangeEnrol(enrolmentObj, effectiveDate, nextBillDate, oldTeacher,oldPackage,newTeacherId,newPackage);
                 }    
             }
@@ -153,6 +157,7 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
     // 27-Dec-2019: process Future Makeup Group Lesson Bookings
     public static void processFutureMakeupGroupLessonBookings(Enrolment__c enrolmentObj,Map<Date,String> mapOfEffectiveDateGroupLesson){
         map<Id,booking__c> mapOfMakeupBooking =new  map<Id,booking__c> ();
+        List<Booking__c> makeupBookingList = new List<Booking__c>();
         for(Booking__c bookingObj : [SELECT Id,Start_time__c,End_time__c, Booking_Date__c, Available_Make_up_Units__c, 
                                      Student__r.Name, Center__c, Teacher_Account__c, Make_up_Utilize_Bookings__c, Duration__c, Type__c, Category__c 
                                      FROM Booking__c 
@@ -164,13 +169,17 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                                      AND  recordType.Name =:ConstantsClass.groupLessonBookingRecordType
                                     ]){
                                         mapOfMakeupBooking.put(bookingObj.id,bookingObj);
+                                        makeupBookingList.add(bookingObj);
                                     }
         if(String.isNotBlank(enrolmentObj.Id) && mapOfMakeupBooking.size() > 0){
             updateMakeUpBookingOnUpgrade(enrolmentObj, mapOfMakeupBooking,mapOfEffectiveDateGroupLesson);
         }
+        
     }
     // 27-Dec-2019: update makeup bookings if booking date is match in class booking_date
-    public static void updateMakeUpBookingOnUpgrade(Enrolment__c enrolmentObj, map<Id,booking__c> mapOfMakeupBooking,Map<Date,String> mapOfEffectiveDateGroupLesson){
+    //commented by nishi: 25-Sep-2020: for according to new class we dont manage makup booking so we cancle all future makup bookings
+     public static void updateMakeUpBookingOnUpgrade(Enrolment__c enrolmentObj, map<Id,booking__c> mapOfMakeupBooking,Map<Date,String> mapOfEffectiveDateGroupLesson){
+         
         if(mapOfMakeupBooking != null && mapOfMakeupBooking.size() > 0){
             Map<Id, Booking__c> mapOfUpdateMakeUpBooking = new   Map<Id, Booking__c>();
             for(Id bookingId : mapOfMakeupBooking.keySet()){
@@ -196,12 +205,12 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
             if(mapOfUpdateMakeUpBooking != null && mapOfUpdateMakeUpBooking.size () > 0){
                 update mapOfUpdateMakeUpBooking.values();
                 string parentId = String.isNotBlank(enrolmentObj.Parent__c) ? enrolmentObj.Parent__c : enrolmentObj.Student__c;
-                deductMakeupHours(mapOfUpdateMakeUpBooking.keySet(),parentId);
+                deductMakeupHours(mapOfUpdateMakeUpBooking.keySet(),parentId,enrolmentObj.id);
             }
         }
     }
     // 28-dec-2019: deduct makeup hours and minus available mins and calculate utilize min then update parent 
-    public static void deductMakeupHours(set<id> bookingIds, String bookingParentId){
+    public static void deductMakeupHours(set<id> bookingIds, String bookingParentId,string enrolmentObjId){
         //System.debug('Deduct Makeup hours called');
         String statusCanceled = ConstantsClass.statusCanceled;
         Boolean isError = false;
@@ -215,12 +224,33 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
         if(String.isNotBlank(bookingParentId)){
             setOfParentStudent = getParentsChild(bookingParentId);
         }
-        List<Booking__C> bookingObjList =  [SELECT Id,Start_time__c,End_time__c, Booking_Date__c, Available_Make_up_Units__c, 
+        List<Booking__c> bookingObjList = new List<Booking__c>();
+        List<Booking__c> ossiaBookingList = new List<Booking__c>();
+         //start:added By nishi: 21-sep-2020:deduct makeup hours and minus available mins and calculate utilize min then update parent 
+        //  according to new requiremnt While utilizing Make up credit, 
+        //it should consider those makeup minutes which are related to the booking with the cancellation reason – Teacher MC/Leave first.
+        for(Booking__c objBook:[SELECT Id,Start_time__c,End_time__c, Booking_Date__c, Available_Make_up_Units__c, 
                                             Student__r.Name, Center__c, Teacher_Account__c, Make_up_Utilize_Bookings__c,
-                                            Duration__c, Type__c, Category__c 
+                                            Duration__c, Type__c, Category__c ,Center__r.Organisation__r.Name
                                             FROM Booking__c 
                                             WHERE id IN: bookingIds
-                                           ];
+                                           ]){
+                                            if(String.isNotBlank(objBook.Center__c) && 
+                                            String.isNotBlank(objBook.Center__r.Organisation__c) && 
+                                            String.isNotBlank(objBook.Center__r.Organisation__r.Name) && 
+                                            objBook.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                                                ossiaBookingList.add(objBook);  
+                                            }else{
+                                                bookingObjList.add(objBook);
+                                            }
+                                           }
+        if(ossiaBookingList != null && ossiaBookingList.size() > 0){
+            OssiaCenterCalendarController.deductOssiaMakeupHours(ossiaBookingList,bookingParentId,new Set<String>{enrolmentObjId});
+        }
+        // end:added By nishi: 21-sep-2020:deduct makeup hours and minus available mins and calculate utilize min then update parent 
+     //  according to new requiremnt While utilizing Make up credit, 
+     //it should consider those makeup minutes which are related to the booking with the cancellation reason – Teacher MC/Leave first.
+                                                    
         if(bookingObjList.size() > 0){
             
             if(setOfParentStudent.size() > 0){
@@ -246,10 +276,10 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                         bookObj = new Booking__c();
                         bookObj.Id = bookingObj.Id;
                         mapOfUtilizeBookings = new  map<string,Integer>();
-                        system.debug(bookingObj.Make_up_Utilize_Bookings__c);
+                       //system.debug(bookingObj.Make_up_Utilize_Bookings__c);
                         // if makeup Utilize mins is exist then get old utilize mins for updation
                         if(string.isNotBlank(bookingObj.Make_up_Utilize_Bookings__c)){
-                            system.debug(bookingObj.Make_up_Utilize_Bookings__c.split(';'));
+                           //system.debug(bookingObj.Make_up_Utilize_Bookings__c.split(';'));
                             for(string bookingWithDuration : bookingObj.Make_up_Utilize_Bookings__c.split(';')){
                                 if(string.isNotBlank(bookingWithDuration)){
                                     mapOfUtilizeBookings.put(bookingWithDuration.split('-')[0],Integer.valueOf(bookingWithDuration.split('-')[1]));
@@ -306,7 +336,7 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                                                               Available_Make_up_Units__c = (Decimal)mapOfHours.get(keysetValue)));
                     }
                 }
-                System.debug('@@@bookingUpdatedList '+bookingUpdatedList);
+               //system.debug('@@@bookingUpdatedList '+bookingUpdatedList);
                 if(bookingUpdatedList.size() > 0){
                     Database.SaveResult[] saveResults = Database.update(bookingUpdatedList, false);
                     for(Database.SaveResult saveResult : saveResults){
@@ -393,7 +423,7 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
         
     }
     private static void reCreateGroupLessonBookings(Enrolment__c  enrolmentObj, Map<Date,String> mapOfEffectiveDateGroupLesson){					
-       system.debug('enrolmentObj.new_teacher__c'+enrolmentObj.new_teacher__c);
+      //system.debug('enrolmentObj.new_teacher__c'+enrolmentObj.new_teacher__c);
         List<Booking__c> bookingsToInsert = new List<Booking__c>();
         if(mapOfEffectiveDateGroupLesson!= null && mapOfEffectiveDateGroupLesson.size() > 0){
             for(date effectiveDate : mapOfEffectiveDateGroupLesson.keySet()){
@@ -450,18 +480,18 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
             }
         }
         if(bookingsToInsert.size() > 0){
-            System.debug('@@bookingsToInsert'+bookingsToInsert);
+           //system.debug('@@bookingsToInsert'+bookingsToInsert);
             UPSERT bookingsToInsert;
         }
     }
     private static String getPackageInvoiceAmount(Enrolment__c objEnrol,Map<Id,Package__c> mapOfPackages,map<id,String> packageInvoiceAmount,string packageId){
         decimal totalAmount = 0;
         decimal gstAmount = 0;
-        system.debug('@@@packageId --'+ packageId);
+       //system.debug('@@@packageId --'+ packageId);
         if(packageInvoiceAmount.containsKey(packageId)){
             totalAmount = decimal.valueOf(packageInvoiceAmount.get(packageId).split(';')[0]);
         }
-        system.debug('@@unit fee '+ mapOfPackages.get(packageId).Unit_Fee__c);
+       //system.debug('@@unit fee '+ mapOfPackages.get(packageId).Unit_Fee__c);
         totalAmount += mapOfPackages.get(packageId).Unit_Fee__c;
         if(String.isNotBlank(objEnrol.Id) &&  String.isNotBlank(objEnrol.Center__c)
            && String.isNotBlank(objEnrol.Center__r.Country__c) && objEnrol.Center__r.Country__r.Tax_Rate__c > 0
@@ -469,8 +499,8 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                if(packageInvoiceAmount.containsKey(packageId)){
                    gstAmount = decimal.valueOf(packageInvoiceAmount.get(packageId).split(';')[1]);
                }
-               system.debug('@@@Gst Amount= '+ (mapOfPackages.get(packageId).Unit_Fee__c * objEnrol.Center__r.Country__r.Tax_Rate__c)/100);
-               system.debug('@@@Tax_Rate__c = '+ (objEnrol.Center__r.Country__r.Tax_Rate__c)/100);
+              //system.debug('@@@Gst Amount= '+ (mapOfPackages.get(packageId).Unit_Fee__c * objEnrol.Center__r.Country__r.Tax_Rate__c)/100);
+              //system.debug('@@@Tax_Rate__c = '+ (objEnrol.Center__r.Country__r.Tax_Rate__c)/100);
                gstAmount += (mapOfPackages.get(packageId).Unit_Fee__c * objEnrol.Center__r.Country__r.Tax_Rate__c)/100;
            }
         return totalAmount+';'+gstAmount;
@@ -489,7 +519,7 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
         packageIds.add(newPackage);
         Map<id,Package__c> mapOfPackage = new Map<Id,package__c>([Select Id,Unit_Fee__c from Package__c where Id In:packageIds]);
         List<Booking__c> bookingList = [SELECT Id, Package__c, center__c, Teacher_Account__c, Package__r.Unit_Fee__c, Student__c,
-                                        Student__r.Parent__c 
+                                        Student__r.Parent__c ,Booking_date__c
                                         FROM Booking__c WHERE 
                                         Enrolment__c =: objEnrol.id 
                                         AND Booking_Date__c >= :effectiveDate AND 
@@ -497,41 +527,63 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                                         Type__c =:  ConstantsClass.groupLessonTypeBooking
                                          //jatin:7-jan-2020 : for now we calculate all booking Status__c !=: ConstantsClass.statusCanceled 
                                          ORDER BY Booking_Date__c ];
-        system.debug('@@@ get bookingList'+bookingList);
+       //system.debug('@@@ get bookingList'+bookingList);
         if(objEnrol != NULL && objEnrol.subscription_line_items__r != null && objEnrol.subscription_line_items__r.size() > 0 ){
             subLineItemId = objEnrol.subscription_line_items__r[0].id;
         }
         if(bookingList.size() > 0){
             String parentId = String.isNotBlank(bookingList[0].Student__r.Parent__c) ? bookingList[0].Student__r.Parent__c : bookingList[0].Student__c;
-            system.debug('@@@@@bookingList.size()--'+bookingList.size());
+           //system.debug('@@@@@bookingList.size()--'+bookingList.size());
             map<id,String> packageInvoiceAmount = new Map<Id,String>();
+            map<id,String> packageInvoiceNextMonthAmount = new Map<Id,String>();
             Map<Id,Package__c> mapOfPackages =New Map<Id,Package__c>([Select Id,Unit_Fee__c from Package__c where Id In:packageIds]);
-            system.debug('@@@@@mapOfPackages'+mapOfPackages);
+           //system.debug('@@@@@mapOfPackages'+mapOfPackages);
+            date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1);
             // 6 Dec 2019: jatin for manage packages fee  old package and new package unit fee
             for(Booking__c booking : bookingList){
-                if(string.isNotBlank(booking.Package__c)){
-                    if(mapOfPackages.containsKey(newPackage)){
-                        packageInvoiceAmount.put(newPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceAmount,newPackage));    
-                    }if(mapOfPackages.containsKey(oldPackage)){
-                        packageInvoiceAmount.put(oldPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceAmount,oldPackage)); 
-                    } 
+                if(nextBillingDate >= nextMonthDate && effectiveDate.month() < nextMonthDate.addMonths(-1).month() && booking.Booking_date__c.month() == nextMonthDate.addMonths(-1).month() ){
+                   //system.debug('@@@@@next Month'+booking.Booking_date__c);
+                    if(string.isNotBlank(booking.Package__c)){
+                        if(mapOfPackages.containsKey(newPackage)){
+                            packageInvoiceNextMonthAmount.put(newPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceNextMonthAmount,newPackage));    
+                        }if(mapOfPackages.containsKey(oldPackage)){
+                            packageInvoiceNextMonthAmount.put(oldPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceNextMonthAmount,oldPackage)); 
+                        } 
+                    }
+                }else{
+                    if(string.isNotBlank(booking.Package__c)){
+                        if(mapOfPackages.containsKey(newPackage)){
+                            packageInvoiceAmount.put(newPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceAmount,newPackage));    
+                        }if(mapOfPackages.containsKey(oldPackage)){
+                            packageInvoiceAmount.put(oldPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceAmount,oldPackage)); 
+                        } 
+                    }
                 }
             }
             decimal newPackageTotalAmount = 0;
             decimal oldPackageTotalAmount = 0;
+            decimal newPackageNextMonthTotalAmount = 0;
+            decimal oldPackageNextMonthTotalAmount = 0;
             if(packageInvoiceAmount.containsKey(newPackage)){
                 newPackageTotalAmount += decimal.valueOf(packageInvoiceAmount.get(newPackage).split(';')[0]);
             }
             if(packageInvoiceAmount.containsKey(oldPackage)){
                 oldPackageTotalAmount += decimal.valueOf(packageInvoiceAmount.get(oldPackage).split(';')[0]);
             }
-            system.debug('@@@@@packageInvoiceAmount'+packageInvoiceAmount);
-            system.debug('@@parentId'+parentId);
+            if(packageInvoiceNextMonthAmount.containsKey(newPackage)){
+                newPackageNextMonthTotalAmount += decimal.valueOf(packageInvoiceNextMonthAmount.get(newPackage).split(';')[0]);
+            }
+            if(packageInvoiceNextMonthAmount.containsKey(oldPackage)){
+                oldPackageNextMonthTotalAmount += decimal.valueOf(packageInvoiceNextMonthAmount.get(oldPackage).split(';')[0]);
+            }
+            
+           //system.debug('@@@@@packageInvoiceAmount'+packageInvoiceAmount);
+           //system.debug('@@parentId'+parentId);
             if(oldPackageTotalAmount > 0 && newPackageTotalAmount > 0 && String.isNotBlank(parentId)){
                 objectOfInvoice = new Invoice__c(Status__c=ConstantsClass.paidStatus, Due_Date__c = system.today().AddDays(ConstantsClass.addInvoiceDueDays),
                                                 Invoice_Date__c =system.today(), Parent_Account__c = parentId, Center__c=bookingList[0].center__c);
                 INSERT objectOfInvoice;
-                system.debug('@@@ created objectOfInvoice'+objectOfInvoice);
+               //system.debug('@@@ created objectOfInvoice'+objectOfInvoice);
                 if(objectOfInvoice != NULL){
                     if(packageInvoiceAmount.containsKey(newPackage)){
                         newPackageTotalAmount = decimal.valueOf(packageInvoiceAmount.get(newPackage).split(';')[0]);
@@ -543,8 +595,8 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                         if(gstAmount != 0){
                             gstAmount = BillingUtility.roundOffAmount(gstAmount);
                         }
-                        system.debug('@@@totalAmount'+totalAmount);
-                        system.debug('@@@gstAmount'+gstAmount);
+                       //system.debug('@@@totalAmount'+totalAmount);
+                       //system.debug('@@@gstAmount'+gstAmount);
                         invoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,
                                                                     Amount__c = newPackageTotalAmount, 
                                                                     Teacher_Id__c = newTeacher, Month__c= effectiveDate, Enrolment__c =objEnrol.id, 
@@ -564,19 +616,57 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                         if(gstAmount > 0){
                             gstAmount = -gstAmount;
                         }
-                        system.debug('@@@totalAmount'+totalAmount);
-                        system.debug('@@@gstAmount'+gstAmount);
+                       //system.debug('@@@totalAmount'+totalAmount);
+                       //system.debug('@@@gstAmount'+gstAmount);
                         invoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,Amount__c = oldPackageTotalAmount, 
                                                                     Teacher_Id__c = oldTeacher,Month__c= effectiveDate,
                                                                     Enrolment__c =objEnrol.id,Subscription_line_item__c = subLineItemId,
                                                                     Package__c = oldPackage,  GST_Amount__c = gstAmount));
+                    }
+                    if(packageInvoiceNextMonthAmount.containsKey(newPackage)){
+                        newPackageNextMonthTotalAmount = decimal.valueOf(packageInvoiceNextMonthAmount.get(newPackage).split(';')[0]);
+                        gstAmount = decimal.valueOf(packageInvoiceNextMonthAmount.get(newPackage).split(';')[1]);
+                    
+                        if(newPackageNextMonthTotalAmount != 0){
+                            newPackageNextMonthTotalAmount = BillingUtility.roundOffAmount(newPackageNextMonthTotalAmount);
+                        }
+                        if(gstAmount != 0){
+                            gstAmount = BillingUtility.roundOffAmount(gstAmount);
+                        }
+                    //system.debug('@@@totalAmount'+totalAmount);
+                    //system.debug('@@@gstAmount'+gstAmount);
+                        invoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,
+                                                                    Amount__c = newPackageNextMonthTotalAmount, 
+                                                                    Teacher_Id__c = newTeacher, Month__c= nextMonthDate.addMonths(-1), Enrolment__c =objEnrol.id, 
+                                                                    Subscription_line_item__c = subLineItemId,Package__c= newPackage ,
+                                                                    GST_Amount__c = gstAmount));
+                    }
+                    if(packageInvoiceNextMonthAmount.containsKey(oldPackage)){
+                        oldPackageNextMonthTotalAmount = decimal.valueOf(packageInvoiceNextMonthAmount.get(oldPackage).split(';')[0]);
+                        gstAmount = decimal.valueOf(packageInvoiceNextMonthAmount.get(oldPackage).split(';')[1]);
+                        if(oldPackageNextMonthTotalAmount != 0){
+                            oldPackageNextMonthTotalAmount = BillingUtility.roundOffAmount(oldPackageNextMonthTotalAmount);
+                        }
+                        if(gstAmount != 0){
+                            gstAmount = BillingUtility.roundOffAmount(gstAmount);
+                        }
+                        oldPackageNextMonthTotalAmount = -oldPackageNextMonthTotalAmount;
+                        if(gstAmount > 0){
+                            gstAmount = -gstAmount;
+                        }
+                        //system.debug('@@@totalAmount'+totalAmount);
+                    //system.debug('@@@gstAmount'+gstAmount);
+                        invoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,Amount__c = oldPackageNextMonthTotalAmount, 
+                                                                Teacher_Id__c = oldTeacher,Month__c= nextMonthDate.addMonths(-1),
+                                                                Enrolment__c =objEnrol.id,Subscription_line_item__c = subLineItemId,
+                                                                Package__c = oldPackage,  GST_Amount__c = gstAmount));
                     }
                 }
                 
                 if(invoiceLineItem.size() > 0){
                     INSERT invoiceLineItem;
                 }
-                system.debug('@@ create new invoiceLineItem'+invoiceLineItem);
+               //system.debug('@@ create new invoiceLineItem'+invoiceLineItem);
                 if(String.isNotBlank(objectOfInvoice.id)){
                     SageIntacctIntegrationUtility.changeEnrolment(objectOfInvoice.Id);
                 }
@@ -587,7 +677,7 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                 
             }
         }
-        system.debug('@@objectOfInvoice.Id'+objectOfInvoice.Id);
+       //system.debug('@@objectOfInvoice.Id'+objectOfInvoice.Id);
         return objectOfInvoice.Id;
     }
     

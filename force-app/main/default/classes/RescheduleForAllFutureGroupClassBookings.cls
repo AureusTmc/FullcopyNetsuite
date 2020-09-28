@@ -123,6 +123,7 @@ public with sharing class RescheduleForAllFutureGroupClassBookings {
      *      o	All future 5th lesson record will be rescheduled to the timeslot
      *      o   All group class Bookings get Reschedule
      */
+
     private void dayIsNotChanged(Class__c classObj, Date effectiveDate){
         if(string.isNotBlank(classObj.id)){
             List<Booking__c> listofGroupClassBookings = fetchSelectedGroupClassBookings(classObj.Id, effectiveDate);
@@ -351,7 +352,7 @@ public with sharing class RescheduleForAllFutureGroupClassBookings {
     *   by cancelling them and Rollback the makeup minutes to parent if its invoice is Paid
     *   and if its invoice is due then it gets cancelled and no makeup is rollback to parent.   
     */
-
+	
     private  List<Booking__c> processmakeupAdhocbookings(List<Booking__c> makeupAdhocbookingsToUpdate){
         List<Booking__c> adhocBookingsToUpdate = new List<Booking__c>();
         List<Booking__c> makeupBooking = new List<Booking__c>();
@@ -449,7 +450,7 @@ public with sharing class RescheduleForAllFutureGroupClassBookings {
         }
 
     }
-
+@testVisible
     private void processPublicHolidays(Date effectiveDate, Date maxDate, String centreOrgId, Account teacherObj){
         Map<String, Public_Holiday__c> mapOfPublicLeaves = new Map<String, Public_Holiday__c>();
         List<Booking__c> bookingtoUpdate = new List<Booking__c>();

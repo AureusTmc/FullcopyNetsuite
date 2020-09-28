@@ -54,7 +54,7 @@ public without sharing class UpdateEnrolmentProcessController implements IAdvanc
             
             enrolmentObj = AdvanceActionsHelper.fetchEnrolment(enrolmentId);
             
-            system.debug('@@@enrolmentObj'+enrolmentObj);
+           //system.debug('@@@enrolmentObj'+enrolmentObj);
             nextBillDate = AdvanceActionsHelper.fetchNextBillDateFromEnrolment(enrolmentObj);
             oldTeacher = enrolmentObj.Teacher__c;
             oldPackage = enrolmentObj.Package__c;
@@ -67,9 +67,9 @@ public without sharing class UpdateEnrolmentProcessController implements IAdvanc
             }
             
         }
-        system.debug('###effectiveDate'+effectiveDate);
-        system.debug('###nextBillDate'+nextBillDate);
-         system.debug('###timeslot'+timeslot);
+       //system.debug('###effectiveDate'+effectiveDate);
+       //system.debug('###nextBillDate'+nextBillDate);
+        //system.debug('###timeslot'+timeslot);
          /*
         * commented by arpit as we are not allowing for day change
         * if(effectiveDate.format('EEEE') != lessonDay){
@@ -127,31 +127,31 @@ enrol.New_Lesson_Day__c = effectiveDate.format('EEEE');
 enrol.Lesson_Day__c = effectiveDate.format('EEEE');
 }
 */
-        system.debug('@@enrolmentObj.Id'+enrolmentObj.Id);                                     
+       //system.debug('@@enrolmentObj.Id'+enrolmentObj.Id);                                     
         if(String.isNotBlank(enrolmentObj.Id)){
             //Set<String> setOfMakeupBookings = new Set<String>();
             //List<Booking__c> listOfMakeupBoookings = new List<Booking__c>();
              Database.SaveResult saveResult = Database.update(enrolmentObj, false);
             if(saveResult.isSuccess()){
-                  system.debug('@@updated enrolmentObj -- '+enrolmentObj);   
+                 //system.debug('@@updated enrolmentObj -- '+enrolmentObj);   
                 Boolean isEffectiveDateAndTimeChange = true;
-                system.debug('@@isDifferEffectiveDate'+isDifferEffectiveDate);
-               system.debug('@@currentEffectiveDate'+currentEffectiveDate);
-             system.debug('@@effectiveDate'+effectiveDate);
+               //system.debug('@@isDifferEffectiveDate'+isDifferEffectiveDate);
+              //system.debug('@@currentEffectiveDate'+currentEffectiveDate);
+            //system.debug('@@effectiveDate'+effectiveDate);
                 if(!isDifferEffectiveDate){
-                     system.debug('@@oldTimeSlot'+oldTimeSlot);
-                     system.debug('@@timeslot'+timeslot);
+                    //system.debug('@@oldTimeSlot'+oldTimeSlot);
+                    //system.debug('@@timeslot'+timeslot);
                     string currentEffectiveTimeSlot =DateTime.newInstance(currentEffectiveDate, oldTimeSlot).format('EEE @ h:mm a');
                     string newEffectiveTimeSlot =DateTime.newInstance(effectiveDate, timeslot).format('EEE @ h:mm a');
-                 system.debug('@@@currentEffectiveTimeSlot'+currentEffectiveTimeSlot);
-                    system.debug('@@@newEffectiveTimeSlot'+newEffectiveTimeSlot);
-                   system.debug('@@@oldTimeSlot'+oldTimeSlot);
-                   system.debug('@@@timeslot'+newEffectiveTimeSlot);
+                //system.debug('@@@currentEffectiveTimeSlot'+currentEffectiveTimeSlot);
+                   //system.debug('@@@newEffectiveTimeSlot'+newEffectiveTimeSlot);
+                  //system.debug('@@@oldTimeSlot'+oldTimeSlot);
+                  //system.debug('@@@timeslot'+newEffectiveTimeSlot);
                     isEffectiveDateAndTimeChange = (currentEffectiveTimeSlot.equals(newEffectiveTimeSlot) ? false : true);
                 }
-                system.debug('@@isEffectiveDateAndTimeChange'+isEffectiveDateAndTimeChange);
+               //system.debug('@@isEffectiveDateAndTimeChange'+isEffectiveDateAndTimeChange);
                  RescheduleAllBookings allReschedule = new RescheduleAllBookings(isEffectiveDateAndTimeChange, enrolmentObj, effectiveDate, currentEffectiveDate);
-                System.debug('@@@allReschedule --'+allReschedule);
+               //system.debug('@@@allReschedule --'+allReschedule);
                 /* commented by jatin 14-Nov-2014 : for change enrollment new requirement 
                 AureusCalendarControllerHelper.processFutureBookings(enrolmentObj, 'change');
                 setOfMakeupBookings = AdvanceActionsHelper.processFutureFifthLessons(enrolmentObj, 'change');
@@ -184,7 +184,7 @@ enrol.Lesson_Day__c = effectiveDate.format('EEEE');
             
             error = false;
         }
-        system.debug('@@invoiceId'+invoiceId);
+       //system.debug('@@invoiceId'+invoiceId);
         if(caseRedirect == 'true' && error == false && enrolmentObj != NULL){
             caseReturn =    updateCase(myCaseId,enrolmentObj.id,oldPackageName,newPackageName,teacherId, oldTeacher,effectiveDate, timeslot,previousTime, invoiceId);
         }else if(error == false){
@@ -192,28 +192,37 @@ enrol.Lesson_Day__c = effectiveDate.format('EEEE');
         }else{
             caseReturn = 'error';
         }
-       system.debug('@@@caseId'+caseReturn);                                    
+      //system.debug('@@@caseId'+caseReturn);                                    
         return caseReturn;
     }
     
     private static String getPackageInvoiceAmount(Enrolment__c objEnrol,Map<Id,Package__c> mapOfPackages,map<id,String> packageInvoiceAmount,string packageId){
         decimal totalAmount = 0;
         decimal gstAmount = 0;
-        system.debug('@@@packageId --'+ packageId);
+       //system.debug('@@@packageId --'+ packageId);
         if(packageInvoiceAmount.containsKey(packageId)){
             totalAmount = decimal.valueOf(packageInvoiceAmount.get(packageId).split(';')[0]);
         }
-        system.debug('@@unit fee '+ mapOfPackages.get(packageId).Unit_Fee__c);
+       //system.debug('@@unit fee '+ mapOfPackages.get(packageId).Unit_Fee__c);
         totalAmount += mapOfPackages.get(packageId).Unit_Fee__c;
+        /*//start:commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
         if(String.isNotBlank(objEnrol.Id) &&  String.isNotBlank(objEnrol.Center__c)
         && String.isNotBlank(objEnrol.Center__r.Country__c) && objEnrol.Center__r.Country__r.Tax_Rate__c > 0
         && mapOfPackages.get(packageId).Unit_Fee__c  > 0 ){
             if(packageInvoiceAmount.containsKey(packageId)){
                 gstAmount = decimal.valueOf(packageInvoiceAmount.get(packageId).split(';')[1]);
             }
-            system.debug('@@@Gst Amount= '+ (mapOfPackages.get(packageId).Unit_Fee__c * objEnrol.Center__r.Country__r.Tax_Rate__c)/100);
-            system.debug('@@@Tax_Rate__c = '+ (objEnrol.Center__r.Country__r.Tax_Rate__c)/100);
+           //system.debug('@@@Gst Amount= '+ (mapOfPackages.get(packageId).Unit_Fee__c * objEnrol.Center__r.Country__r.Tax_Rate__c)/100);
+           //system.debug('@@@Tax_Rate__c = '+ (objEnrol.Center__r.Country__r.Tax_Rate__c)/100);
             gstAmount += (mapOfPackages.get(packageId).Unit_Fee__c * objEnrol.Center__r.Country__r.Tax_Rate__c)/100;
+        }//end:commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic*/
+        if(String.isNotBlank(objEnrol.Id) &&  String.isNotBlank(objEnrol.Center__c)
+        && String.isNotBlank(objEnrol.Center__r.Organisation__c) && objEnrol.Center__r.Organisation__r.Tax_Rate__c > 0
+        && mapOfPackages.get(packageId).Unit_Fee__c  > 0 ){
+            if(packageInvoiceAmount.containsKey(packageId)){
+                gstAmount = decimal.valueOf(packageInvoiceAmount.get(packageId).split(';')[1]);
+            }
+            gstAmount += (mapOfPackages.get(packageId).Unit_Fee__c * objEnrol.Center__r.Organisation__r.Tax_Rate__c)/100;
         }
         return totalAmount+';'+gstAmount;
     }
@@ -227,28 +236,29 @@ enrol.Lesson_Day__c = effectiveDate.format('EEEE');
         List<Invoice_Line_Item__c> invoiceLineItem = new List<Invoice_Line_Item__c>();
         String subLineItemId ;
         Integer noOfOldLesson,noOfNewLesson;
-        system.debug('@@createInvoiceAndLineItemsChangeEnrol objEnrol'+objEnrol);
-        system.debug('@@createInvoiceAndLineItemsChangeEnrol effectiveDate'+effectiveDate);
-    system.debug('@@createInvoiceAndLineItemsChangeEnrol nextBillingDate'+nextBillingDate);
-        system.debug('@@createInvoiceAndLineItemsChangeEnrol oldTeacher'+oldTeacher);
-        system.debug('@@createInvoiceAndLineItemsChangeEnrol oldPackage'+oldPackage);
-        system.debug('@@createInvoiceAndLineItemsChangeEnrol newTeacher'+newTeacher);
-       system.debug('@@createInvoiceAndLineItemsChangeEnrol newPackage'+newPackage);
+       //system.debug('@@createInvoiceAndLineItemsChangeEnrol objEnrol'+objEnrol);
+       //system.debug('@@createInvoiceAndLineItemsChangeEnrol effectiveDate'+effectiveDate);
+   //system.debug('@@createInvoiceAndLineItemsChangeEnrol nextBillingDate'+nextBillingDate);
+       //system.debug('@@createInvoiceAndLineItemsChangeEnrol oldTeacher'+oldTeacher);
+       //system.debug('@@createInvoiceAndLineItemsChangeEnrol oldPackage'+oldPackage);
+       //system.debug('@@createInvoiceAndLineItemsChangeEnrol newTeacher'+newTeacher);
+      //system.debug('@@createInvoiceAndLineItemsChangeEnrol newPackage'+newPackage);
         Set<String> packageIds = new Set<string>();
         packageIds.add(oldPackage);
         packageIds.add(newPackage);
         Map<id,Package__c> mapOfPackage = new Map<Id,package__c>([Select Id,Unit_Fee__c from Package__c where Id In:packageIds]);
-        List<Booking__c> bookingList = [SELECT Id, Package__c, center__c, Teacher_Account__c, Package__r.Unit_Fee__c, Student__c, Student__r.Parent__c FROM Booking__c WHERE 
+        List<Booking__c> bookingList = [SELECT Id, Package__c, center__c, Teacher_Account__c, Package__r.Unit_Fee__c, Student__c, Student__r.Parent__c,Booking_date__c FROM Booking__c WHERE 
                                         Enrolment__c =: objEnrol.id AND Booking_Date__c >= :effectiveDate AND 
                                         Booking_Date__c < :nextBillingDate AND Type__c =: regularType AND 
                                         Status__c !=: canceledStatus ORDER BY Booking_Date__c ];
-        system.debug('@@@ get bookingList'+bookingList);
+       
+      //system.debug('@@@ get bookingList'+bookingList);
         if(objEnrol != NULL && objEnrol.subscription_line_items__r != null && objEnrol.subscription_line_items__r.size() > 0 ){
             subLineItemId = objEnrol.subscription_line_items__r[0].id;
         }
         if(bookingList.size() > 0){
             String parentId = String.isNotBlank(bookingList[0].Student__r.Parent__c) ? bookingList[0].Student__r.Parent__c : bookingList[0].Student__c;
-           system.debug('@@@@@bookingList.size()--'+bookingList.size());
+          //system.debug('@@@@@bookingList.size()--'+bookingList.size());
             /*for(Booking__c booking : bookingList){
                 if(string.isNotBlank(booking.Package__c))
                     totalAmount += booking.Package__r.Unit_Fee__c;
@@ -259,104 +269,179 @@ enrol.Lesson_Day__c = effectiveDate.format('EEEE');
                 
             }*/
             map<id,String> packageInvoiceAmount = new Map<Id,String>();
+            map<id,String> packageInvoiceNextMonthAmount = new Map<Id,String>();
             Map<Id,Package__c> mapOfPackages =New Map<Id,Package__c>([Select Id,Unit_Fee__c from Package__c where Id In:packageIds]);
-            system.debug('@@@@@mapOfPackages'+mapOfPackages);
+           //system.debug('@@@@@mapOfPackages'+mapOfPackages);
             // 6 Dec 2019: jatin for manage packages fee  old package and new package unit fee
+            date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1);
             for(Booking__c booking : bookingList){
-                if(string.isNotBlank(booking.Package__c)){
-                    if(mapOfPackages.containsKey(newPackage)){
-                        packageInvoiceAmount.put(newPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceAmount,newPackage));    
-                    }if(mapOfPackages.containsKey(oldPackage)){
-                       packageInvoiceAmount.put(oldPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceAmount,oldPackage)); 
-                    } 
+               //system.debug('@@@@@booking.Booking_date__c'+booking.Booking_date__c);
+                // added by nishi: 21-sep-2020: for if next month invoice already generated then we create new invoice line item
+                if(nextBillingDate >= nextMonthDate && effectiveDate.month() < nextMonthDate.addMonths(-1).month() && booking.Booking_date__c.month() == nextMonthDate.addMonths(-1).month() ){
+                   //system.debug('@@@@@next Month'+booking.Booking_date__c);
+                    if(string.isNotBlank(booking.Package__c)){
+                        if(mapOfPackages.containsKey(newPackage)){
+                            packageInvoiceNextMonthAmount.put(newPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceNextMonthAmount,newPackage));    
+                        }if(mapOfPackages.containsKey(oldPackage)){
+                            packageInvoiceNextMonthAmount.put(oldPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceNextMonthAmount,oldPackage)); 
+                        } 
+                    }
+                }else{
+                //end: added by nishi: 21-sep-2020: for if next month invoice already generated then we create new invoice line item
+                   //system.debug('@@@@ Current Month'+booking.Booking_date__c);
+                    if(string.isNotBlank(booking.Package__c)){
+                        if(mapOfPackages.containsKey(newPackage)){
+                            packageInvoiceAmount.put(newPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceAmount,newPackage));    
+                        }if(mapOfPackages.containsKey(oldPackage)){
+                            packageInvoiceAmount.put(oldPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceAmount,oldPackage)); 
+                        } 
+                    }
                 }
             }
             decimal newPackageTotalAmount = 0;
             decimal oldPackageTotalAmount = 0;
+            decimal newPackageNextMonthTotalAmount = 0;
+            decimal oldPackageNextMonthTotalAmount = 0;
              if(packageInvoiceAmount.containsKey(newPackage)){
                  newPackageTotalAmount += decimal.valueOf(packageInvoiceAmount.get(newPackage).split(';')[0]);
              }
              if(packageInvoiceAmount.containsKey(oldPackage)){
                  oldPackageTotalAmount += decimal.valueOf(packageInvoiceAmount.get(oldPackage).split(';')[0]);
              }
-            system.debug('@@@@@packageInvoiceAmount'+packageInvoiceAmount);
-            system.debug('@@parentId'+parentId);
-            if(oldPackageTotalAmount > 0 && newPackageTotalAmount > 0 && String.isNotBlank(parentId)){
-                objectOfInvoice = new Invoice__c(Status__c=ConstantsClass.paidStatus, Due_Date__c = system.today().AddDays(ConstantsClass.addInvoiceDueDays),
-                                                Invoice_Date__c =system.today(), Parent_Account__c = parentId, Center__c=bookingList[0].center__c);
-                INSERT objectOfInvoice;
-                system.debug('@@@ created objectOfInvoice'+objectOfInvoice);
-                if(objectOfInvoice != NULL){
-                    if(packageInvoiceAmount.containsKey(newPackage)){
-                        newPackageTotalAmount = decimal.valueOf(packageInvoiceAmount.get(newPackage).split(';')[0]);
-                        gstAmount = decimal.valueOf(packageInvoiceAmount.get(newPackage).split(';')[1]);
-                    
-                        if(newPackageTotalAmount != 0){
-                            newPackageTotalAmount = BillingUtility.roundOffAmount(newPackageTotalAmount);
+             // added by nishi: 21-sep-2020: for if next month invoice already generated then we add  invoice line item amount
+             if(packageInvoiceNextMonthAmount.containsKey(newPackage)){
+                newPackageNextMonthTotalAmount += decimal.valueOf(packageInvoiceNextMonthAmount.get(newPackage).split(';')[0]);
+            }
+            if(packageInvoiceNextMonthAmount.containsKey(oldPackage)){
+                oldPackageNextMonthTotalAmount += decimal.valueOf(packageInvoiceNextMonthAmount.get(oldPackage).split(';')[0]);
+            }
+            // added by nishi: 21-sep-2020: for if next month invoice already generated then  we add  invoice line item amount
+            
+           //system.debug('@@@@@newPackageTotalAmount'+newPackageTotalAmount);
+           //system.debug('@@@@@oldPackageTotalAmount'+oldPackageTotalAmount);
+           //system.debug('@@@@@newPackageNextMonthTotalAmount'+newPackageNextMonthTotalAmount);
+           //system.debug('@@@@@oldPackageNextMonthTotalAmount'+oldPackageNextMonthTotalAmount);
+           //system.debug('@@@@@packageInvoiceAmount'+packageInvoiceAmount);
+           //system.debug('@@parentId'+parentId);
+           //nishi: 18-Sep-2020: No invoice when no change in teacher and package
+           if(oldPackage != newPackage || oldTeacher != newTeacher){
+                if(oldPackageTotalAmount > 0 && newPackageTotalAmount > 0 && String.isNotBlank(parentId)){
+                    objectOfInvoice = new Invoice__c(Status__c=ConstantsClass.paidStatus, Due_Date__c = system.today().AddDays(ConstantsClass.addInvoiceDueDays),
+                                                    Invoice_Date__c =system.today(), Parent_Account__c = parentId, Center__c=bookingList[0].center__c);
+                    INSERT objectOfInvoice;
+                //system.debug('@@@ created objectOfInvoice'+objectOfInvoice);
+                    if(objectOfInvoice != NULL){
+                        if(packageInvoiceAmount.containsKey(newPackage)){
+                            newPackageTotalAmount = decimal.valueOf(packageInvoiceAmount.get(newPackage).split(';')[0]);
+                            gstAmount = decimal.valueOf(packageInvoiceAmount.get(newPackage).split(';')[1]);
+                        
+                            if(newPackageTotalAmount != 0){
+                                newPackageTotalAmount = BillingUtility.roundOffAmount(newPackageTotalAmount);
+                            }
+                            if(gstAmount != 0){
+                                gstAmount = BillingUtility.roundOffAmount(gstAmount);
+                            }
+                        //system.debug('@@@totalAmount'+totalAmount);
+                        //system.debug('@@@gstAmount'+gstAmount);
+                            invoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,
+                                                                        Amount__c = newPackageTotalAmount, 
+                                                                        Teacher_Id__c = newTeacher, Month__c= effectiveDate, Enrolment__c =objEnrol.id, 
+                                                                        Subscription_line_item__c = subLineItemId,Package__c= newPackage ,
+                                                                        GST_Amount__c = gstAmount));
                         }
-                        if(gstAmount != 0){
-                            gstAmount = BillingUtility.roundOffAmount(gstAmount);
+                        if(packageInvoiceAmount.containsKey(oldPackage)){
+                            oldPackageTotalAmount = decimal.valueOf(packageInvoiceAmount.get(oldPackage).split(';')[0]);
+                            gstAmount = decimal.valueOf(packageInvoiceAmount.get(oldPackage).split(';')[1]);
+                            if(oldPackageTotalAmount != 0){
+                                oldPackageTotalAmount = BillingUtility.roundOffAmount(oldPackageTotalAmount);
+                            }
+                            if(gstAmount != 0){
+                                gstAmount = BillingUtility.roundOffAmount(gstAmount);
+                            }
+                            oldPackageTotalAmount = -oldPackageTotalAmount;
+                            if(gstAmount > 0){
+                                gstAmount = -gstAmount;
+                            }
+                            //system.debug('@@@totalAmount'+totalAmount);
+                        //system.debug('@@@gstAmount'+gstAmount);
+                            invoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,Amount__c = oldPackageTotalAmount, 
+                                                                    Teacher_Id__c = oldTeacher,Month__c= effectiveDate,
+                                                                    Enrolment__c =objEnrol.id,Subscription_line_item__c = subLineItemId,
+                                                                    Package__c = oldPackage,  GST_Amount__c = gstAmount));
                         }
-                        system.debug('@@@totalAmount'+totalAmount);
-                        system.debug('@@@gstAmount'+gstAmount);
-                        invoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,
-                                                                    Amount__c = newPackageTotalAmount, 
-                                                                    Teacher_Id__c = newTeacher, Month__c= effectiveDate, Enrolment__c =objEnrol.id, 
-                                                                    Subscription_line_item__c = subLineItemId,Package__c= newPackage ,
-                                                                    GST_Amount__c = gstAmount));
+                         // start:added by nishi: 21-sep-2020: for if next month invoice already generated then we create new invoice line item
+                        if(packageInvoiceNextMonthAmount.containsKey(newPackage)){
+                            newPackageNextMonthTotalAmount = decimal.valueOf(packageInvoiceNextMonthAmount.get(newPackage).split(';')[0]);
+                            gstAmount = decimal.valueOf(packageInvoiceNextMonthAmount.get(newPackage).split(';')[1]);
+                        
+                            if(newPackageNextMonthTotalAmount != 0){
+                                newPackageNextMonthTotalAmount = BillingUtility.roundOffAmount(newPackageNextMonthTotalAmount);
+                            }
+                            if(gstAmount != 0){
+                                gstAmount = BillingUtility.roundOffAmount(gstAmount);
+                            }
+                        //system.debug('@@@totalAmount'+totalAmount);
+                        //system.debug('@@@gstAmount'+gstAmount);
+                            invoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,
+                                                                        Amount__c = newPackageNextMonthTotalAmount, 
+                                                                        Teacher_Id__c = newTeacher, Month__c= nextMonthDate.addMonths(-1), Enrolment__c =objEnrol.id, 
+                                                                        Subscription_line_item__c = subLineItemId,Package__c= newPackage ,
+                                                                        GST_Amount__c = gstAmount));
+                        }
+                        if(packageInvoiceNextMonthAmount.containsKey(oldPackage)){
+                            oldPackageNextMonthTotalAmount = decimal.valueOf(packageInvoiceNextMonthAmount.get(oldPackage).split(';')[0]);
+                            gstAmount = decimal.valueOf(packageInvoiceNextMonthAmount.get(oldPackage).split(';')[1]);
+                            if(oldPackageNextMonthTotalAmount != 0){
+                                oldPackageNextMonthTotalAmount = BillingUtility.roundOffAmount(oldPackageNextMonthTotalAmount);
+                            }
+                            if(gstAmount != 0){
+                                gstAmount = BillingUtility.roundOffAmount(gstAmount);
+                            }
+                            oldPackageNextMonthTotalAmount = -oldPackageNextMonthTotalAmount;
+                            if(gstAmount > 0){
+                                gstAmount = -gstAmount;
+                            }
+                            //system.debug('@@@totalAmount'+totalAmount);
+                        //system.debug('@@@gstAmount'+gstAmount);
+                            invoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,Amount__c = oldPackageNextMonthTotalAmount, 
+                                                                    Teacher_Id__c = oldTeacher,Month__c= nextMonthDate.addMonths(-1),
+                                                                    Enrolment__c =objEnrol.id,Subscription_line_item__c = subLineItemId,
+                                                                    Package__c = oldPackage,  GST_Amount__c = gstAmount));
+                        }
+                        // end:added by nishi: 21-sep-2020: for if next month invoice already generated then we create new invoice line item
                     }
-                     if(packageInvoiceAmount.containsKey(oldPackage)){
-                        oldPackageTotalAmount = decimal.valueOf(packageInvoiceAmount.get(oldPackage).split(';')[0]);
-                        gstAmount = decimal.valueOf(packageInvoiceAmount.get(oldPackage).split(';')[1]);
-                        if(oldPackageTotalAmount != 0){
-                            oldPackageTotalAmount = BillingUtility.roundOffAmount(oldPackageTotalAmount);
-                        }
-                        if(gstAmount != 0){
-                            gstAmount = BillingUtility.roundOffAmount(gstAmount);
-                        }
-                        oldPackageTotalAmount = -oldPackageTotalAmount;
-                        if(gstAmount > 0){
-                            gstAmount = -gstAmount;
-                        }
-                         system.debug('@@@totalAmount'+totalAmount);
-                       system.debug('@@@gstAmount'+gstAmount);
-                        invoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,Amount__c = oldPackageTotalAmount, 
-                                                                Teacher_Id__c = oldTeacher,Month__c= effectiveDate,
-                                                                Enrolment__c =objEnrol.id,Subscription_line_item__c = subLineItemId,
-                                                                Package__c = oldPackage,  GST_Amount__c = gstAmount));
-                    }
-                }
-                
-                if(invoiceLineItem.size() > 0){
-                    INSERT invoiceLineItem;
-                }
-                system.debug('@@ create new invoiceLineItem'+invoiceLineItem);
-                if(String.isNotBlank(objectOfInvoice.id)){
-                    SageIntacctIntegrationUtility.changeEnrolment(objectOfInvoice.Id);
-                }
-                if(objectOfInvoice != NULL){
                     
-                    BillingUtility.createAttachment(new Set<String>{objectOfInvoice.id});
+                    if(invoiceLineItem.size() > 0){
+                        INSERT invoiceLineItem;
+                    }
+               //system.debug('@@ create new invoiceLineItem'+invoiceLineItem);
+                    if(String.isNotBlank(objectOfInvoice.id)){
+                        SageIntacctIntegrationUtility.changeEnrolment(objectOfInvoice.Id);
+                    }
+                    if(objectOfInvoice != NULL){
+                        
+                        BillingUtility.createAttachment(new Set<String>{objectOfInvoice.id});
+                    }
+                    
                 }
-                
             }
         }
-        system.debug('@@objectOfInvoice.Id'+objectOfInvoice.Id);
+       //system.debug('@@objectOfInvoice.Id'+objectOfInvoice.Id);
         return objectOfInvoice.Id;
     }
     
     Private Static String updateCase(String myCaseId,String enrolmentId,String oldPackageName,string newPackageName,string teacherId,String oldTeacher,
                                     date effectiveDate,time timeslot,string previousTime,string invoiceId){
-        system.debug('@@@updateCase myCaseId'+myCaseId);
-        system.debug('@@@updateCase enrolmentId'+enrolmentId);
-        system.debug('@@@updateCase oldPackageName'+oldPackageName);
-        system.debug('@@@updateCase newPackageName'+newPackageName);
-        system.debug('@@@updateCase teacherId'+teacherId);
-       system.debug('@@@updateCase oldTeacher'+oldTeacher);
-    system.debug('@@@updateCase effectiveDate'+effectiveDate);
-        system.debug('@@@updateCase timeslot'+timeslot);
-       system.debug('@@@updateCase previousTime'+previousTime);
-        system.debug('@@@updateCase invoiceId'+invoiceId);
+       //system.debug('@@@updateCase myCaseId'+myCaseId);
+       //system.debug('@@@updateCase enrolmentId'+enrolmentId);
+       //system.debug('@@@updateCase oldPackageName'+oldPackageName);
+       //system.debug('@@@updateCase newPackageName'+newPackageName);
+       //system.debug('@@@updateCase teacherId'+teacherId);
+      //system.debug('@@@updateCase oldTeacher'+oldTeacher);
+   //system.debug('@@@updateCase effectiveDate'+effectiveDate);
+       //system.debug('@@@updateCase timeslot'+timeslot);
+      //system.debug('@@@updateCase previousTime'+previousTime);
+       //system.debug('@@@updateCase invoiceId'+invoiceId);
         Case caseObj = AureusCalendarControllerHelper.createCaseForEnrolment(myCaseId, enrolmentId, 'change', false);
             if(String.isNotBlank(oldPackageName)){
                 caseObj.Previous_Package__c = oldPackageName; 
@@ -374,14 +459,14 @@ enrol.Lesson_Day__c = effectiveDate.format('EEEE');
             caseObj.Previous_Lesson_Day_Time__c = previousTime;
             caseObj.Invoice__c = invoiceId;     
             upsert caseObj; 
-            System.debug('@@caseObj'+caseObj);
+           //system.debug('@@caseObj'+caseObj);
             return  caseObj.id;
     }
   /* Private static Boolean updatedEnrollement(boolean isSameMonth,Enrolment__c enrol, time timeslot, string teacherId, Integer duration,date effectiveDate,boolean isDayChange, date currentEffectiveDate,string packageId, boolean Error){
         enrol = AdvanceActionsHelper.getUpdatedEnrollmentFields(enrol.id,ConstantsClass.enrollmentProcessChanged,
                                                                            null,effectiveDate,packageId,timeslot);
         //Set<String> setOfMakeupBookings = new Set<String>();
-        system.debug('@@@enrol'+enrol);
+       //system.debug('@@@enrol'+enrol);
         //List<Booking__c> listOfMakeupBoookings = new List<Booking__c>();
         if(String.isNotBlank(teacherId)){
             if(isSameMonth){
@@ -391,8 +476,8 @@ enrol.Lesson_Day__c = effectiveDate.format('EEEE');
         }
         Database.SaveResult saveResult = Database.update(enrol, false);
         if(saveResult.isSuccess()){
-            system.debug('@@@enrol'+enrol);
-            system.debug('@@@effectiveDate'+effectiveDate);
+           //system.debug('@@@enrol'+enrol);
+           //system.debug('@@@effectiveDate'+effectiveDate);
             enrol = AdvanceActionsHelper.fetchEnrolment(enrol.id);
             RescheduleAllBookings allReschedule = new RescheduleAllBookings(isDayChange, enrol, effectiveDate, currentEffectiveDate);
             /*AureusCalendarControllerHelper.processFutureBookings(enrol, 'change');
@@ -421,9 +506,9 @@ enrol.Lesson_Day__c = effectiveDate.format('EEEE');
             //system.debug('@@listOfMakeupBoookings'+listOfMakeupBoookings);
         }else{
             for(Database.Error err : saveResult.getErrors()) {
-                System.debug('##The following error has occurred.');                    
-                System.debug('###'+err.getStatusCode() + ': ' + err.getMessage());
-                System.debug('###Account fields that affected this error: ' + err.getFields());
+               //system.debug('##The following error has occurred.');                    
+               //system.debug('###'+err.getStatusCode() + ': ' + err.getMessage());
+               //system.debug('###Account fields that affected this error: ' + err.getFields());
             }
         }
         return saveResult.isSuccess();

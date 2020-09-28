@@ -234,10 +234,10 @@ public class ClassEditController {
                     isDayChange = true;
                 }
                 Class__c classObj = new Class__c();
-                system.debug('bookingObj.Group_Class__c'+bookingObj.Class__c);
+               //system.debug('bookingObj.Group_Class__c'+bookingObj.Class__c);
                 if(String.isNotBlank(bookingObj.Class__c)){
                     List<Class__c> classlist= fetchGroupClass(bookingObj.Class__c);
-                    system.debug('classlist'+classlist);
+                   //system.debug('classlist'+classlist);
                     if(classlist != null && classlist.size() > 0){
                         classObj = classlist[0];
                         oldTeacherId = classObj.teacher__c;
@@ -258,7 +258,7 @@ public class ClassEditController {
                         } 
                         if(String.isNotBlank(classObj.Id)){
                             UPDATE classObj;
-                            system.debug('classObj'+classObj);
+                           //system.debug('classObj'+classObj);
                             RescheduleForAllFutureGroupClassBookings allReschedule = new RescheduleForAllFutureGroupClassBookings(isDayChange, classObj, dateChange.date(), bookingObj.Booking_Date__c);
                         }
                     }
@@ -351,8 +351,8 @@ public class ClassEditController {
                                                 And type__c =: ConstantsClass.enrolGroupType]){
             listOfEnrolmentStudents.add(objEnrolment.Student__c);
         }
-        system.debug('!!!listOfEnrolmentStudents'+listOfEnrolmentStudents);
-        system.debug('!!!studentName'+studentName);
+       //system.debug('!!!listOfEnrolmentStudents'+listOfEnrolmentStudents);
+       //system.debug('!!!studentName'+studentName);
         if(listOfEnrolmentStudents!= null && listOfEnrolmentStudents.size() > 0){
             accList = [SELECT Id, Name, RecordType.Name, available_Make_up_mins_For_Group__c, Also_a_Student__c, Parent__c, 
                         Parent__r.available_Make_up_mins_For_Group__c, Parent__r.Name, PersonEmail, Parent__r.PersonEmail, PersonMobilePhone ,
@@ -364,7 +364,7 @@ public class ClassEditController {
                         AND Id IN :listOfEnrolmentStudents
                         AND (Name LIKE :'%'+studentName+'%')
                         AND Centre_Name__c=:centerId LIMIT 10];
-            system.debug('!!!accList'+accList);
+           //system.debug('!!!accList'+accList);
             if(accList != null && accList.size() >0 ){
                 for(Account acc : accList){
                     sObj = new AureusCalendarController.Students();
@@ -458,7 +458,13 @@ public class ClassEditController {
             //System.debug('lastLessonDateObj'+lastLessonDateObj);
             String chargeId = AureusCalendarController.fetchCurrentMonthPaymentEntry(enrolment,lastLessonDateObj);
             if(String.isNotBlank(chargeId) && (lastLessonDateObj < nextBillingDate)){
-                withdrawSummary.refund += getLessonRefundAmount(enrolment,lastLessonDateObj);        
+                withdrawSummary.refund += getLessonRefundAmount(enrolment,lastLessonDateObj);   
+                  //start:  added by nishi: 21-sep-2020: if next Billing date is greated then next month
+                  date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1); // 1-10-2020
+                  if(nextBillingDate >= nextMonthDate && lastLessonDateObj.Month() < nextMonthDate.addMonths(-1).Month()){ 
+                      withdrawSummary.refund += getLessonRefundAmount(enrolment,nextMonthDate.addMonths(-1));  
+                  }
+                  //start:  added by nishi: 21-sep-2020: if next Billing date is greated then next month     
             }
         }
         return withdrawSummary;
@@ -680,8 +686,8 @@ public class ClassEditController {
         List<Enrolment__c> enrolmentList = new List<Enrolment__c>(); 
         AureusCalendarController.UpgradeDowngradePackageSummary summary = new AureusCalendarController.UpgradeDowngradePackageSummary();
         Set<id> setOfClassIds = new Set<Id>();
-                                                                                        system.debug('!!oldClassId'+oldClassId);
-                                                                                        system.debug('!!newClassId'+newClassId);
+                                                                                       //system.debug('!!oldClassId'+oldClassId);
+                                                                                       //system.debug('!!newClassId'+newClassId);
         if(String.isNotBlank(oldClassId) && String.isNotBlank(newClassId) &&   (typeOfSummary == 'GroupToHigherPackage' || typeOfSummary == 'GroupToSameClass' )){
             setOfClassIds.add(oldClassId);
             setOfClassIds.add(newClassId);
@@ -785,11 +791,38 @@ public class ClassEditController {
                 if(summary.taxRate>0){
                     newPackageUnitPrice += newPackageUnitPrice * Decimal.valueOf(summary.taxRate)/100;
                 }
-                summary.invoiceDepositLessonTopup = BillingUtility.roundOffAmount(newPackageUnitPrice);
+                //summary.invoiceDepositLessonTopup = BillingUtility.roundOffAmount(newPackageUnitPrice);
                 totalAmount = BillingUtility.roundOffAmount(newPackageUnitPrice);
                 totalAmount +=   BillingUtility.roundOffAmount(depositeFee) ;
                 if(newDateTime <= nextBillDate){
-                    summary.invoiceTopup = BillingUtility.roundOffAmount(totalAmount);
+                   
+                     // added by Nishi: 21-Sep-2020: if next billing date is greater then next month then we create new invoice for adjuct new upgraded package unitfee 
+                        //  ex: 12-Aug-2020 effective date and next Billing date 01-Oct-2020 
+                        date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1);
+                        Integer countWithNextPackage = 0;
+                        Decimal nextPackageUnitPrice =0;
+                        if(nextBillDate >= nextMonthDate && newDateTime.month() < nextMonthDate.addMonths(-1).month()){
+                            if(String.isNotBlank(enrolmentId)){
+                                List<Booking__c> nextMonthlistOfBookings =UpgradeDowngradeController.fetchListOfNextMonthBookings(enrolmentId);
+                                //system.debug('nextMonthlistOfBookings'+nextMonthlistOfBookings);
+                                for(Booking__c objBooking : nextMonthlistOfBookings){
+                                    if(objBooking.Booking_Date__c <= nextMonthDate){
+                                        if(objBooking.Type__c == ConstantsClass.groupLessonTypeBooking ){
+                                            countWithNextPackage += 1;
+                                        }
+                                    }
+                                }
+                            }
+                            nextPackageUnitPrice = (newPackg.Unit_Fee__c - oldPackg.Unit_Fee__c)*countWithNextPackage ;
+                            Decimal nextPackageFacilityPrice = 0;
+                            if(summary.taxRate > 0 && nextPackageUnitPrice > 0){
+                                nextPackageUnitPrice += nextPackageUnitPrice * (Decimal.valueOf(summary.taxRate)/100);
+                            }
+                            totalAmount +=   nextPackageUnitPrice ;
+                        }
+                        // added by Nishi: 21-Sep-2020: if next billing date is greater then next month then we create new invoice for adjuct new upgraded package unitfee 
+                        summary.invoiceTopup = BillingUtility.roundOffAmount(totalAmount);
+                        summary.invoiceDepositLessonTopup = BillingUtility.roundOffAmount(newPackageUnitPrice+nextPackageUnitPrice);
                 }else{
                     summary.invoiceTopup = BillingUtility.roundOffAmount(depositeFee);
                     summary.invoiceDepositLessonTopup = 0;
@@ -857,7 +890,14 @@ public class ClassEditController {
                 if(grade.equalsIgnoreCase('GroupToIndividual')){
                     teachers = AureusCalendarControllerHelper.getListOfTeacher(enrolDetails.get('currentCenter'));
                 }else if(grade.equalsIgnoreCase('GroupToSameClass') || grade.equalsIgnoreCase('GroupToHigherPackage')){
-                    teachers = getListOfClassTeacher(enrolDetails.get('currentCenter'), enrolEdit.currentPackageId,grade);
+                    //21-Sep-2020:nishi:start: show check enrolment is related to ossia group class then we get teacher accoding to Ossia_Group_Grade_Package__c child records
+                    Boolean isOssia = enrolDetails.containsKey('isOssia')  ? Boolean.valueOf( enrolDetails.get('isOssia')) : false;
+                    if(isOssia){
+                        teachers = OssiaCenterCalendarController.getListOfOssiaClassTeacher(enrolDetails.get('currentCenter'), enrolEdit.currentPackageId,grade);
+                    }else{
+                        teachers = getListOfClassTeacher(enrolDetails.get('currentCenter'), enrolEdit.currentPackageId,grade);
+                    }
+                     //21-Sep-2020:nishi:end: show check enrolment is related to ossia group class then we get teacher accoding to Ossia_Group_Grade_Package__c child records
                 }
                 //commented by jatin: for now w get all teachers 
                 //List<Account> teachers = AureusCalendarControllerHelper.getListOfTeachersByInstrument(enrolDetails.get('currentCenter'),enrolDetails.get('instrument'));
@@ -1014,7 +1054,7 @@ public class ClassEditController {
            //system.debug('instruments'+instruments);
             if(String.isNotBlank(bookingId)){
                 bookingList = [SELECT Id, Name, Package__c,Type__c, Package__r.Name, Package__r.Active__c, enrolment__r.Package__c,
-                                enrolment__r.Package__r.Package_Fee__c, enrolment__c,
+                                enrolment__r.Package__r.Package_Fee__c, enrolment__c,Center__r.Organisation__r.Name,
                                 enrolment__r.Package__r.Duration__c, enrolment__r.Lesson_Day__c, enrolment__r.Package__r.Type__c, 
                                 enrolment__r.Package__r.Location__c, enrolment__r.Package__r.Program__r.Instrument__c
                                 FROM Booking__c 
@@ -1068,22 +1108,45 @@ public class ClassEditController {
                     for(Package__c pkg :  listOfPackage){
                         mapOfpackages.put(pkg.id ,pkg);
                     }
-                    for(CLass__C objClass : [Select Id,Package__c From Class__c 
-                                                WHERE Active__c = true  
-                                                AND Centre_Name__c =:centerId 
-                                                AND Teacher__c =: teacherId
-                                                AND Package__r.Program__r.Instrument__c IN: instruments 
-                                                And Available_Capacity__c > 0]){
-                            if(mapOfpackages.containsKey(objClass.Package__c)){
-                                mapOfGroupClassPackage.put(objClass.Package__c,mapOfpackages.get(objClass.Package__c));
-                            }
+                    if(bookingList != null && bookingList.size() > 0 && String.isNotBlank(bookingList[0].Center__c) && 
+                    String.isNotBlank(bookingList[0].Center__r.Organisation__c) && 
+                    String.isNotBlank(bookingList[0].Center__r.Organisation__r.Name) && 
+                    bookingList[0].Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                        for(Ossia_Group_Grade_Package__c objClass : [SELECT Class_Name__c, Package__c,Package__r.name,  Name, Id ,Package__r.Program__r.Instrument__c
+                                                    FROM Ossia_Group_Grade_Package__c
+                                                    WHERE Class_Name__r.Active__c = true  
+                                                    AND Class_Name__r.Centre_Name__c =:centerId 
+                                                    AND Class_Name__r.Teacher__c =: teacherId
+                                                    AND Package__r.Program__r.Instrument__c IN: instruments 
+                                                    And Class_Name__r.Available_Capacity__c > 0]){
+                                if(mapOfpackages.containsKey(objClass.Package__c)){
+                                    mapOfGroupClassPackage.put(objClass.Package__c,mapOfpackages.get(objClass.Package__c));
+                                }
+                            }  
+                        for(Package__c pkg :  mapOfGroupClassPackage.values()){
+                            dt = new AureusCalendarController.Data();
+                            dt.Id = pkg.Id;
+                            dt.name = pkg.Name;
+                            packageList.add(dt);
                         }  
-                    for(Package__c pkg :  mapOfGroupClassPackage.values()){
-                        dt = new AureusCalendarController.Data();
-                        dt.Id = pkg.Id;
-                        dt.name = pkg.Name;
-                        packageList.add(dt);
-                    }    
+                    }else{
+                        for(CLass__C objClass : [Select Id,Package__c From Class__c 
+                                                    WHERE Active__c = true  
+                                                    AND Centre_Name__c =:centerId 
+                                                    AND Teacher__c =: teacherId
+                                                    AND Package__r.Program__r.Instrument__c IN: instruments 
+                                                    And Available_Capacity__c > 0]){
+                                if(mapOfpackages.containsKey(objClass.Package__c)){
+                                    mapOfGroupClassPackage.put(objClass.Package__c,mapOfpackages.get(objClass.Package__c));
+                                }
+                            }  
+                        for(Package__c pkg :  mapOfGroupClassPackage.values()){
+                            dt = new AureusCalendarController.Data();
+                            dt.Id = pkg.Id;
+                            dt.name = pkg.Name;
+                            packageList.add(dt);
+                        }    
+                    }
                 }else{// is grade condition is group to regular than show all package records 
                     for(Package__c pkg :  listOfPackage){
                         dt = new AureusCalendarController.Data();
@@ -1258,13 +1321,36 @@ public class ClassEditController {
     @RemoteAction 
     public static  Set<string> getNewEffectiveGroupDateSlots(String packageId, String teacherId){
         Set<string> weekdays = new Set<String>();
-        for(class__c objclass : [SELECT id,Class_Day__c,Start_Time__c ,Class_Start_Date__c,End_Time__c
+        boolean isOssia = true;
+        for(class__c objclass : [SELECT id,Class_Day__c,Start_Time__c ,Class_Start_Date__c,End_Time__c,Centre_Name__r.Organisation__r.Name
                                 FROM Class__C
                                 WHERE Teacher__c =:teacherId
                                 AND Package__c =: packageId
                                 AND Active__c = true]){
-            weekdays.add(objclass.Class_Day__c);
+            if(String.isNotBlank(objclass.Centre_Name__c) && 
+            String.isNotBlank(objclass.Centre_Name__r.Organisation__c) && 
+            String.isNotBlank(objclass.Centre_Name__r.Organisation__r.Name) && 
+            objclass.Centre_Name__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                isOssia= true;
+            }else{          
+                isOssia= false;          
+                weekdays.add(objclass.Class_Day__c);
+            }
         }
+       //system.debug('weekdays'+weekdays);
+       //system.debug('isOssia'+isOssia);
+       //system.debug('packageId'+packageId);
+       //system.debug('teacherId'+teacherId);
+        if(isOssia){
+            for(Ossia_Group_Grade_Package__c objclass:  [SELECT Class_Name__c, Class_Name__r.Class_Day__c,Package__c,Package__r.name,  Name, Id ,Package__r.Program__r.Instrument__c
+                                                                FROM Ossia_Group_Grade_Package__c
+                                                                WHERE Class_Name__r.Teacher__c =:teacherId
+                                                                AND Package__c =: packageId
+                                                                AND Class_Name__r.Active__c = true]){
+                weekdays.add(objclass.Class_Name__r.Class_Day__c); 
+            }
+        }
+       //system.debug('weekdays'+weekdays);
         return weekdays;
     }
     private static set<String> getFormatedTimeSlotList(DateTime startTime, DateTime endTime){
@@ -1337,6 +1423,15 @@ public class ClassEditController {
             for(Booking__c currentBook : bookingList){
                 dateTime startTime =DateTime.newInstance(currentBook.Booking_Date__c, currentBook.Start_Time__c);
                 bookingSlots.add(currentBook.Class__C +'-'+startTime.format('h:mm a'));
+            }
+        }else{
+            bookingList = OssiaCenterCalendarController.getGroupClassOssiaBookingsOnSelectedDates(centerId, teacherId,selectedPackage, dt);
+            bookingSlots = new Set<String>();
+            if(bookingList.size() > 0){
+                for(Booking__c currentBook : bookingList){
+                    dateTime startTime =DateTime.newInstance(currentBook.Booking_Date__c, currentBook.Start_Time__c);
+                    bookingSlots.add(currentBook.Class__C +'-'+startTime.format('h:mm a'));
+                }
             }
         }
         return bookingSlots;

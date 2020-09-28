@@ -541,7 +541,7 @@ this method takes 5 actual arguments
         String facilityRecordtype = ConstantsClass.recordTypeFacility;
         String busyType = ConstantsClass.typeBusy;
         if(String.isNotBlank(bookingId)){
-            bookingObjList = [SELECT Id, Name, Enrolment__c,Package__c , Student__c, Student__r.Name, Resource__c,
+            bookingObjList = [SELECT Id, Name, Enrolment__c,Package__c , Student__c, Student__r.Name, Resource__c,Center__r.Organisation__r.Name,
                               Enrolment__r.Teacher__c, Individual_Booking__c, Type__c, Enrolment__r.Lesson_Day__c, 
                               Enrolment__r.Lesson_Start_time__c, Booking_Date__c, Start_Time__c, End_Time__c, 
                               Status__c, Center__c, Teacher_Account__c, Teacher_Account__r.Name, Lesson_Type__c,
@@ -2930,7 +2930,7 @@ newBookingWrapperObj.studentList = sObjList;
                 details.isPackagePromotional = (bookingList[0].Enrolment__r.Package__r.Is_Promotion_Discount__c || 
                 bookingList[0].Enrolment__r.Package__r.Type_of_package__c == ConstantsClass.prePaymentType) ? true : false;
                  if(String.isNotBlank(bookingList[0].Enrolment__c)){
-                    system.debug('bookingList[0].Enrolment__c'+bookingList[0].Enrolment__c);
+                   //system.debug('bookingList[0].Enrolment__c'+bookingList[0].Enrolment__c);
                     List<Enrolment__c> enrollList = new List<Enrolment__c>([SELECT Id, Lesson_Day__c,Package_Process_Status__c,Center__r.Organisation__r.Name,
                                                                                 (SELECT Id, Subscription__c,Next_Bill_Date__c, Subscription__r.Payment_Frequency__c, 
                                                                                 Subscription__r.Subscription_Start_Date__c
@@ -2942,7 +2942,7 @@ newBookingWrapperObj.studentList = sObjList;
                                                                                 FROM Enrolment__c 
                                                                                 WHERE Id =: bookingList[0].Enrolment__c]);
                     if(enrollList.size() > 0){
-                        system.debug('enrollList'+enrollList);
+                       //system.debug('enrollList'+enrollList);
                          //10-Aug-2020:nishi:start- manage ossia Upgrade ,downGrade Subscription model 
                         details.isOssia = false;
                         if( String.isNotBlank(enrollList[0].Center__c) && String.isNotBlank(enrollList[0].Center__r.Organisation__c) && 	
@@ -2968,8 +2968,8 @@ newBookingWrapperObj.studentList = sObjList;
                             date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1); // 1-10-2020
                              //@Nishi on 27-Aug-2019 to check An advance invoice is generated Change Or Package_Process_Status__c is Pending
                              // then we disable Change Centre Button
-                             system.debug('Next_Bill_Date__c'+(enrollList[0].Subscription_Line_Items__r[0].Next_Bill_Date__c >= nextMonthDate));
-                             system.debug('status'+((string.isNotBlank(enrollList[0].Package_Process_Status__c) && enrollList[0].Package_Process_Status__c !='Completed')));
+                            //system.debug('Next_Bill_Date__c'+(enrollList[0].Subscription_Line_Items__r[0].Next_Bill_Date__c >= nextMonthDate));
+                            //system.debug('status'+((string.isNotBlank(enrollList[0].Package_Process_Status__c) && enrollList[0].Package_Process_Status__c !='Completed')));
                             if(enrollList[0].Subscription_Line_Items__r[0].Next_Bill_Date__c < nextMonthDate && 
                                 (string.isBlank(enrollList[0].Package_Process_Status__c) || (string.isNotBlank(enrollList[0].Package_Process_Status__c)
                                  && enrollList[0].Package_Process_Status__c =='Completed'))){
@@ -3459,8 +3459,8 @@ Selected by the user from the calendar UI.
     public static String fetchCurrentMonthPaymentEntry(Enrolment__c objEnrol,Date lastLessonDateObj){
         Date firstDate = Date.newInstance(lastLessonDateObj.Year(),lastLessonDateObj.month(),01);
         Date lastDate = firstDate.addMonths(1).addDays(-1);
-        system.debug('firstDate'+firstDate);
-        system.debug('lastDate'+lastDate);
+       //system.debug('firstDate'+firstDate);
+       //system.debug('lastDate'+lastDate);
         String chargeId ='';
         List<Invoice__c> listOfInvoice =[SELECT Id,Stripe_Charge_Id__c FROM Invoice__c WHERE 
                                          Id IN (SELECT Invoice__c FROM 
@@ -3470,11 +3470,11 @@ Selected by the user from the calendar UI.
                                                 AND Booking__c = NULL)
                                          AND Invoice_Date__c >=: firstDate AND Invoice_Date__c <=: lastDate AND Status__c = 'Paid' 
                                          Order By total_amount__c ];
-                                         system.debug('listOfInvoice'+listOfInvoice);
+                                        //system.debug('listOfInvoice'+listOfInvoice);
         if(listOfInvoice.size()>0){
             chargeId = listOfInvoice[0].Stripe_charge_id__c;
         }
-        system.debug('chargeId'+chargeId);
+       //system.debug('chargeId'+chargeId);
         return chargeId;                                  
     }
     /* Commented by jatin: this function is not using in Calendar
@@ -3846,10 +3846,10 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
             if(withdrawSummary.deposit > 0){
                 withdrawSummary.refund = withdrawSummary.deposit - withdrawSummary.total;
             }
-            System.debug('lastLessonDateObj'+lastLessonDateObj);
-            System.debug('withdrawSummary.refund'+withdrawSummary.refund);
-            System.debug('withdrawSummary.deposit'+withdrawSummary.deposit);
-            System.debug('withdrawSummary.total'+withdrawSummary.total);
+           //system.debug('lastLessonDateObj'+lastLessonDateObj);
+           //system.debug('withdrawSummary.refund'+withdrawSummary.refund);
+           //system.debug('withdrawSummary.deposit'+withdrawSummary.deposit);
+           //system.debug('withdrawSummary.total'+withdrawSummary.total);
             String chargeId = fetchCurrentMonthPaymentEntry(enrolment,lastLessonDateObj);
             // 14 Sep, 2020 <  01/10/2020
             if(String.isNotBlank(chargeId) && (lastLessonDateObj < nextBillingDate)){
@@ -3862,7 +3862,7 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
                 //start:  added by nishi: 21-aug-2020: if next Billing date is greated then next month
        
             }
-            System.debug('withdrawSummary.refund'+withdrawSummary.refund);
+           //system.debug('withdrawSummary.refund'+withdrawSummary.refund);
         }
         return withdrawSummary;
     }
@@ -3900,10 +3900,10 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
                                      (RecordType.Name = 'Refund' AND Payment_Status__c =: ConstantsClass.paymentSuccessStatus))]){
             paymentDeposit += payment.Payment_Amount__c;
         }
-        system.debug('invoiceDeposit'+invoiceDeposit);
-        system.debug('paymentDeposit'+paymentDeposit);
+       //system.debug('invoiceDeposit'+invoiceDeposit);
+       //system.debug('paymentDeposit'+paymentDeposit);
         depositToReturn = invoiceDeposit - paymentDeposit;
-       system.debug('depositToReturn'+depositToReturn);
+      //system.debug('depositToReturn'+depositToReturn);
         return depositToReturn;
     }  
 
@@ -3920,14 +3920,14 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
     public static Decimal getLessonRefundAmount(Enrolment__c objEnrol,Date lastLessonDate){
         Decimal amount = 0;
         List<Booking__c> bookings = getCurrentBilledBooking(objEnrol.id,lastLessonDate);
-        system.debug('bookings'+bookings);
+       //system.debug('bookings'+bookings);
         Integer count= 0;
         for(Booking__c objBook : bookings){
             if(objBook.booking_date__c > lastLessonDate){
                 count+=1;
             }
         }
-        system.debug('count'+count);
+       //system.debug('count'+count);
         if(count >0){
             amount = count * objEnrol.package__r.unit_fee__c;
             //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
@@ -3945,7 +3945,7 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
                 amount+= (amount  * objEnrol.Center__r.Organisation__r.Tax_Rate__c)  / 100;
             }
         }
-        system.debug('amount'+amount);
+       //system.debug('amount'+amount);
         return amount;
     }
     
@@ -3956,8 +3956,8 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
     private static List<Booking__c> getCurrentBilledBooking(String enrolId,Date lastLessonDate){
         Date firstDate = Date.newInstance(lastLessonDate.year(),lastLessonDate.month(),01);
         Date lastDate = firstDate.addMonths(1).addDays(-1);
-        system.debug('firstDate'+firstDate);
-        system.debug('lastDate'+lastDate);
+       //system.debug('firstDate'+firstDate);
+       //system.debug('lastDate'+lastDate);
 
         return [SELECT Booking_Date__c FROM Booking__c WHERE Enrolment__c=: enrolId AND Booking_Date__c >=: firstDate AND Booking_Date__c <=: lastDate
                 AND (Type__c='Regular' or Type__c ='Ad-hoc') and 
@@ -3998,8 +3998,8 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
             lesson.unitPrice = bookObj.Package__r.Unit_Fee__c;
             lesson.student = bookObj.Student__r.Name;
             lesson.qty = 1;
-            system.debug('nextBillingDate'+nextBillingDate);
-            system.debug('bookObj.Booking_Date__c'+bookObj.Booking_Date__c);
+           //system.debug('nextBillingDate'+nextBillingDate);
+           //system.debug('bookObj.Booking_Date__c'+bookObj.Booking_Date__c);
             if(bookObj.Booking_Date__c < nextBillingDate){
                 if(mapOfInvoiceName.keyset().size() > 0){
                     lesson.status = mapOfInvoiceName.get('Id')+':'+ mapOfInvoiceName.get('Name');
@@ -4010,10 +4010,10 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
             }else if(bookObj.Booking_Date__c >= nextBillingDate){
                 lesson.status = 'Deposit';
             }
-            system.debug('lesson.status'+lesson.status);
+           //system.debug('lesson.status'+lesson.status);
             reverselessonList.add(lesson); 
         }
-        system.debug('reverselessonList'+reverselessonList);
+       //system.debug('reverselessonList'+reverselessonList);
         if(reverselessonList.size() > 0){
             for(integer i = reverselessonList.size() - 1; i >= 0; i--){
                 lessonsList.add(reverselessonList[i]);
@@ -4057,7 +4057,7 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
             lesson.nextExpiryDate = lastDateObj.format('dd MMM, yyyy');
             lessonsList.add(lesson);
         }
-        system.debug('lessonsList'+lessonsList);
+       //system.debug('lessonsList'+lessonsList);
         return lessonsList;
     } 
     
@@ -4081,7 +4081,7 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
     public  static List<Lessons> getFinalDepositSummary(List<lessons> lessons){
         List<Lessons> depositLessons = new List<Lessons>();
         Lessons currentLesson = new Lessons();
-        system.debug('lessons'+lessons);
+       //system.debug('lessons'+lessons);
         if(lessons.size() > 0){
             for(Lessons lesson : lessons){
                 if(lesson.status == 'Deposit'){
@@ -4097,7 +4097,7 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
                 
             }
         }
-        system.debug('depositLessons'+depositLessons);
+       //system.debug('depositLessons'+depositLessons);
         return depositLessons;
     }
     
@@ -4817,8 +4817,8 @@ countWithNewPackage +=1;
                    // summary.invoiceFacilityLessonTopup = newPackageFacilityFee;
                     summary.invoiceDepositLessonTopup = BillingUtility.roundOffAmount(newPackageUnitPrice);
                     totalAmount = newPackageUnitPrice;
-                    system.debug('newNextMonthPackageUnitPrice'+newNextMonthPackageUnitPrice);
-                    system.debug('countWithNextMonthPackageDowngrade'+countWithNextMonthPackageDowngrade);
+                   //system.debug('newNextMonthPackageUnitPrice'+newNextMonthPackageUnitPrice);
+                   //system.debug('countWithNextMonthPackageDowngrade'+countWithNextMonthPackageDowngrade);
                     if(newNextMonthPackageUnitPrice != 0){
                         summary.invoiceDepositLessonNextMonthTopup = BillingUtility.roundOffAmount(newNextMonthPackageUnitPrice);
                         totalAmount += newNextMonthPackageUnitPrice;
@@ -5136,7 +5136,10 @@ countWithNewPackage +=1;
                                             Center__c, Student__c, Student__r.Name, Lesson_Start_time__c, Next_Lesson_Start_time__c,
                                             Package__c, Package__r.Duration__c,Parent__c, Center__r.Country__r.Tax_Rate__c, Center__r.Country__r.Currency_Code__c, 
                                             Center__r.Country__r.Stripe_Secret_Key__c, Center__r.Country__r.Stripe_Base_Url__c,Center__r.Country__r.Id, 
-                                            Center__r.Organisation__c, (Select Id, Next_Bill_Date__c, Subscription__r.Parent__r.Stripe_Customer_Id__c,
+                                            Center__r.Organisation__c,
+                                            Center__r.Organisation__r.Tax_Rate__c, Center__r.Organisation__r.Country__r.Currency_Code__c, 
+                                            Center__r.Organisation__r.Stripe_Secret_Key__c, Center__r.Organisation__r.Stripe_Base_Url__c,Center__r.Organisation__r.Name, 
+                                             (Select Id, Next_Bill_Date__c, Subscription__r.Parent__r.Stripe_Customer_Id__c,
                                              Subscription__c, Subscription__r.Center__c, Enrolment__c, Enrolment__r.Center__r.Country__r.Tax_Rate__c FROM Subscription_Line_Items__r
                                              Where Status__c =:ConstantsClass.activeStatus //4-sep-2020: added by nishi for new requirement one enrolment have two subscrition so we get active line item
                                              And Next_Bill_Date__c != null),

@@ -221,7 +221,7 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
 
     //Hit API and create Invoice and Line Items and Payment Record if the Next Bill Date is less than Effective Date
     //// ex: 8-Sep-2020 effective date and next Billing date 1-Sep-2020
-    Private UpgradeCaseCreation updatePackageEffectiveDateIsGreater(Enrolment__c enrolmentObj, String oldPackageId, String newPackageId, 
+    public static UpgradeCaseCreation updatePackageEffectiveDateIsGreater(Enrolment__c enrolmentObj, String oldPackageId, String newPackageId, 
     Organisation__c  organisationObj, Date effectiveDate,string newTeacherId,string newCenterId){
         List<Subscription_Line_Item__c> sublineItemList = fetchsublineItemList(enrolmentObj.id);
         Boolean isSuccess = false;
@@ -242,8 +242,10 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
         }
         system.debug('##currentPackageDeposit'+currentPackageDeposit);
         List<Invoice_Line_Item__c> listOfInvoiceLineItems = new List<Invoice_Line_Item__c>();
-        system.debug('##newPackage.Deposit_Fee__c '+newPackage.Deposit_Fee__c );
-        Decimal depositeFee = BillingUtility.roundOffAmount((newPackage.Deposit_Fee__c - currentPackageDeposit)); 
+        system.debug('##newPackage.Deposit_Fee__c '+newPackage );
+        Decimal depositeFee = 0;
+        if(newPackage.Deposit_Fee__c != null && newPackage.Deposit_Fee__c> 0)
+            depositeFee = BillingUtility.roundOffAmount((newPackage.Deposit_Fee__c - currentPackageDeposit)); 
         if(enrolmentObj != Null){
             stripeId = sublineItemList[0].Subscription__r.Parent__r.Stripe_Customer_Id__c;// enrolmentObj.Subscription_Line_Items__r[0].Subscription__r.Parent__r.Stripe_Customer_Id__c;
             parentId =sublineItemList[0].Subscription__r.Parent__c;//enrolmentObj.Subscription_Line_Items__r[0].Subscription__r.Parent__c;
@@ -259,7 +261,8 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
         if(String.isNotBlank(stripeId) && depositeFee > 0 && String.isNotBlank(organisationObj.Id)){ //String.isNotBlank(centreCountry.Id)){commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic*/
            
             Invoice_Line_Item__c inlineItemforChange = new Invoice_Line_Item__c();
-           BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId, depositeFee, organisationObj.country__r.Currency_Code__c, 
+           
+            BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId, depositeFee, organisationObj.country__r.Currency_Code__c, 
                                                             organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c); 
             
             System.debug('@@@chargeResponse'+chargeResponse);
