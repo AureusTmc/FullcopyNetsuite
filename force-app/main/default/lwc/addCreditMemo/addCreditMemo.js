@@ -42,7 +42,18 @@ export default class AddCreditMemo extends LightningElement {
               mode: "dismissable"
             });
             this.dispatchEvent(event);
-          } else {
+          } else if( this.creditMemoWrap.invoiceAmount == 0){
+
+            const event = new ShowToastEvent({
+              title: "Error",
+              message:
+                "Invoice does not have sufficient amount for adding credit memo",
+              variant: "error",
+              mode: "dismissable"
+            });
+            this.dispatchEvent(event);
+
+          }else {
             this.showModal = true;
             this.options.forEach((opt) => {
               if (
