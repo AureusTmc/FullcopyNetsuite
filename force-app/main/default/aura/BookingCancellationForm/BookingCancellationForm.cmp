@@ -13,6 +13,7 @@
     <aura:attribute name="ParentId" type="string"/>
     
     
+    
     <!-- aura:attribute name="accList" type="object[]"/>
     <aura:attribute name="objectName" type="String" description="Name of object"/>
     <aura:attribute name="availableList" type="List" default="[]" description="get all available objects"/>

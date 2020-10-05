@@ -10,12 +10,25 @@ public class payNowDetailController {
     public boolean displayPopup {get; set;} 
     public boolean displayPopupforDeclined {get; set;} 
     public boolean displayUpdateCard {get; set;} 
+    public boolean isOssia {get; set;} 
     
     public  payNowDetailController() {
+        isOssia= false;
         paymentRecType = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get(ConstantsClass.paymentTransactionRecType).getRecordTypeId();
         InvId=ApexPages.currentPage().getParameters().get('id');
-        InvObj= [Select Id,Status__c,Parent_Account__r.Card_Type__c,Parent_Account__r.Card_Image__c,Customer_Name__c,Parent_Account__r.Name,Parent_Account__c,Name,Balance_Amount__c,Parent_Account__r.Stripe_Customer_Id__c,Parent_Account__r.Card_Number__c from Invoice__c where Id=:InvId];
-        
+        InvObj= [Select Id,Status__c,Parent_Account__r.Card_Type__c,Parent_Account__r.Card_Image__c,Customer_Name__c,Parent_Account__r.Name,Parent_Account__c,Name,Balance_Amount__c,Parent_Account__r.Stripe_Customer_Id__c,Parent_Account__r.Card_Number__c, 
+                 Center__r.Organisation__r.Name //added by nishi :5-Oct:2020  for show Ossia Logo image
+                from Invoice__c where Id=:InvId];
+
+         // added by nishi: 5-Oct:2020 for show Ossia Logo
+         if(String.isNotBlank(InvObj.Center__c) && 
+         String.isNotBlank(InvObj.Center__r.Organisation__c) && 
+         String.isNotBlank(InvObj.Center__r.Organisation__r.Name) && 
+         InvObj.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+             isOssia= true;  
+         }
+         // added by nishi: 5-Oct:2020 for show Ossia Logo
+
         changePayment = 'Charge credit card';
         displayPopup=false;
         displayPopupforDeclined=false;
@@ -30,6 +43,7 @@ public class payNowDetailController {
         set<Id> successinvoiceIdSet = new set<Id>();
         List<Payment__c> paymentListToCreate = new List<Payment__c>();
         map<string,Country__c> maptoCoutry=BillingUtility.getCountryMap('');
+        map<string,Organisation__c> organisationMap=BillingUtility.getOrganisationMap('');
         // Added By Ravi on ... 21st july 2020 to send mail in case of failure
         list<EmailTemplate> listOfEmailTemplate = [SELECT Id, Name 
                                                     FROM EmailTemplate 
@@ -37,6 +51,7 @@ public class payNowDetailController {
         List<Messaging.SingleEmailMessage> sendSingleEmailMessage = new List<Messaging.SingleEmailMessage>();
          // End..Added By Ravi on ... 21st july 2020 to send mail in case of failure
         for(Invoice__c invObject:[Select Id,Customer_Name__c,Parent_Account__c,Center__r.Country__c,
+                                  Center__r.Organisation__r.Name , //added  by nishi 5th Oct 2020,start: for get stripe information bases of the Organisation
                                   Name,Balance_Amount__c,Parent_Account__r.Stripe_Customer_Id__c,
                                   Parent_Account__r.Card_Number__c,Parent_Account__r.PersonContactId,Parent_Account__r.Centre_Name__r.Location__c
                                   from Invoice__c where Id=:InvId]){
@@ -48,6 +63,12 @@ public class payNowDetailController {
                 if(maptoCoutry.containsKey(invObject.Center__r.Country__c)){
                     countryObj = maptoCoutry.get(invObject.Center__r.Country__c);
                 }
+                 //added  by nishi 5th Oct 2020,start: for get stripe information bases of the Organisation
+                 Organisation__c organisationObj = new Organisation__c();
+                 if(organisationMap.containsKey(invObject.Center__r.Organisation__c)){
+                    organisationObj = organisationMap.get(invObject.Center__r.Organisation__c);
+                }
+                //added  by nishi 5th Oct 2020,end: for get stripe information bases of the Organisation
                 system.debug('invObject.Balance_Amount__c'+invObject.Balance_Amount__c);
                 if(invObject.Balance_Amount__c >=0.30){
                     system.debug('InvObj.Parent_Account__r.Stripe_Customer_Id__c'+InvObj.Parent_Account__r.Stripe_Customer_Id__c +'InvObj.Balance_Amount__c'+InvObj.Balance_Amount__c +'ConstantsClass.currencyCode,'+ConstantsClass.currencyCode +'InvObj.Name'+InvObj.Name);
@@ -55,7 +76,10 @@ public class payNowDetailController {
                     if(!test.isRunningTest()){
                          // updated currency code dynamically on 3rd Nov by Ravi....
                     	//objStripeCharge = BillingUtility.createChargeForCustomerWithInvoice(InvObj.Parent_Account__r.Stripe_Customer_Id__c,InvObj.Balance_Amount__c,ConstantsClass.currencyCode,InvObj.Name,countryObj.Stripe_Base_Url__c, countryObj.Stripe_Secret_Key__c); 
-                    	objStripeCharge = BillingUtility.createChargeForCustomerWithInvoice(InvObj.Parent_Account__r.Stripe_Customer_Id__c,InvObj.Balance_Amount__c,countryObj.Currency_Code__c,InvObj.Name,countryObj.Stripe_Base_Url__c, countryObj.Stripe_Secret_Key__c); 
+                        // commented by nishi: 5-oct-2020:  for get stripe information bases of the Organisation
+                        //	objStripeCharge = BillingUtility.createChargeForCustomerWithInvoice(InvObj.Parent_Account__r.Stripe_Customer_Id__c,InvObj.Balance_Amount__c,countryObj.Currency_Code__c,InvObj.Name,countryObj.Stripe_Base_Url__c, countryObj.Stripe_Secret_Key__c); 
+                        objStripeCharge = BillingUtility.createChargeForCustomerWithInvoice(InvObj.Parent_Account__r.Stripe_Customer_Id__c,InvObj.Balance_Amount__c,countryObj.Currency_Code__c,InvObj.Name,organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c); 
+                    
                     }else{
                         BillingUtility.StripeCharge sc = new BillingUtility.StripeCharge();
                         sc.statusCode = 100;

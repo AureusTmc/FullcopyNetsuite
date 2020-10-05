@@ -119,7 +119,12 @@
             <div class="main-content">
                 <div class="slds-grid slds-wrap slds-grid--align-center">
                     <div class="slds-col content-box">            
-                        <div class="header slds-col"><div class="slds-col"><a href="#" class="logo"><img src="https://aureusacademy.com/wp-content/uploads/2017/03/cropped-Aureus-Logo-Small.png"/></a></div>
+                        <div class="header slds-col"><div class="slds-col"><a href="#" class="logo">
+                            <!-- <img src="https://aureusacademy.com/wp-content/uploads/2017/03/cropped-Aureus-Logo-Small.png"/> -->
+                            <apex:image url="{!iF(isOssia,$Resource.Osia_Logo,$Resource.Aureus_logo_png)}" />
+                    
+                            </a>
+                        </div>
                             <div class="slds-col ">
                                 <span class="main-title">Make Payment</span>
                             </div>

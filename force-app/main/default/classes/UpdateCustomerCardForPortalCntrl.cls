@@ -12,6 +12,7 @@ global class UpdateCustomerCardForPortalCntrl{
     public String errorMessage{get;set;}
     
     public Boolean isErrorInUpdateCard{get;set;}
+    public Boolean isossiaOrg{get;set;} // added by nishi: for check current organisation is ossia or aureus
     
     String stCstmrId;
     
@@ -21,50 +22,82 @@ global class UpdateCustomerCardForPortalCntrl{
     //Added by Rajesh 10th Sept 2019, for get stripe infromation bases of the country
     public String countryCode{get;set;}
     String stripeBaseUrl;
-    String stripeApiSecKey;    
-    public UpdateCustomerCardForPortalCntrl(){
-        String tempCstmr = apexpages.currentpage().getparameters().get('id');
-        isNotaStripeCstmr = false;
-        
-        List<Account> cstmrAccList = [SELECT Id, Name, Card_Number__c, Card_Type__c, Centre_Name__r.Country__r.Name,
-                                            Card_Image__c, Stripe_Customer_Id__c, Expiry_Month__c, Expiry_Year__c  
-                                      FROM Account WHERE Id =: tempCstmr];
-        if(cstmrAccList.size()>0){
-            cstmrAccId = cstmrAccList.get(0).Id;
-			cstmrName  = cstmrAccList.get(0).Name;
-            if(String.isBlank(cstmrAccList.get(0).stripe_Customer_Id__c)){
-                isNotaStripeCstmr = true;
-            }else{
-                cardNumber = cstmrAccList.get(0).Card_Number__c; 
-                cardImage  = cstmrAccList.get(0).Card_Image__c;
-                stCstmrId  = cstmrAccList.get(0).Stripe_Customer_Id__c;
-                
-                 //added by Rajesh: 10th Sept 2019. For store/display expirty month or year in customer 
-                selMonth   = ''+cstmrAccList.get(0).Expiry_Month__c;
-                selYear	   = ''+cstmrAccList.get(0).Expiry_Year__c;
-            }
-            
-            
-            //Added by Rajesh 9th Sept 2019, for get stripe infromation bases of the country
-            countryCode	 = cstmrAccList.get(0).Centre_Name__r.Country__r.Name; 
-            if(countryCode == null|| String.isBlank(countryCode))
-                countryCode = 'SG';
-            
-            Map<String,Country__c> countryMap = new Map<String,Country__c>();
-            for(Country__c cntry : BillingUtility.getCountryMap(null).values())
-                countryMap.put(cntry.Name.toUpperCase(), cntry);
-            
-            String tempCntryCodeUpper = countryCode.toUpperCase();
-            if(countryMap.get(tempCntryCodeUpper) != null){
-                Country__c cntry    = countryMap.get(tempCntryCodeUpper);
-                stripeBaseUrl		= cntry.Stripe_Base_Url__c;
-                apiKey 				= cntry.Stripe_Publishable_Key__c;
-                stripeApiSecKey		= cntry.Stripe_Secret_Key__c;
-            }
-        }else{
-            isError = true;
-            errorMessage = 'Customer not found, Please contact to center admin.';
+    String stripeApiSecKey;  
+    // added by nishi: 5-oct-2020: for thank you page check organisation is ossia or aureus then according to organisation we show logo image    
+    public UpdateCustomerCardForPortalCntrl(ApexPages.StandardController controller){
+        isossiaOrg = false;
+        if(String.isNotBlank(ApexPages.currentPage().getParameters().get('isOssia'))){
+            isossiaOrg =  Boolean.valueOf((ApexPages.currentPage().getParameters().get('isOssia')));
         }
+    }
+    public UpdateCustomerCardForPortalCntrl(){
+        isossiaOrg = false;
+        
+            String tempCstmr = apexpages.currentpage().getparameters().get('id');
+            isNotaStripeCstmr = false;
+            List<Account> cstmrAccList = [SELECT Id, Name, Card_Number__c, Card_Type__c, Centre_Name__r.Country__r.Name,
+                                                Card_Image__c, Stripe_Customer_Id__c, Expiry_Month__c, Expiry_Year__c  ,
+                                                Centre_Name__r.Organisation__r.Name,Organisation_Sharing__c // added by nishi: 5-Oct-2020 : for  get stripe infromation bases of the organisation
+                                        FROM Account WHERE Id =: tempCstmr];
+            if(cstmrAccList.size()>0){
+                cstmrAccId = cstmrAccList.get(0).Id;
+                cstmrName  = cstmrAccList.get(0).Name;
+                if(String.isBlank(cstmrAccList.get(0).stripe_Customer_Id__c)){
+                    isNotaStripeCstmr = true;
+                }else{
+                    cardNumber = cstmrAccList.get(0).Card_Number__c; 
+                    cardImage  = cstmrAccList.get(0).Card_Image__c;
+                    stCstmrId  = cstmrAccList.get(0).Stripe_Customer_Id__c;
+                    
+                    //added by Rajesh: 10th Sept 2019. For store/display expirty month or year in customer 
+                    selMonth   = ''+cstmrAccList.get(0).Expiry_Month__c;
+                    selYear	   = ''+cstmrAccList.get(0).Expiry_Year__c;
+                }
+                
+                
+                //Added by Rajesh 9th Sept 2019, for get stripe infromation bases of the country
+                countryCode	 = cstmrAccList.get(0).Centre_Name__r.Country__r.Name; 
+                if(countryCode == null|| String.isBlank(countryCode))
+                    countryCode = 'SG';
+                
+
+                if(string.isNotBlank(cstmrAccList.get(0).Organisation_Sharing__c) && 
+                    cstmrAccList.get(0).Organisation_Sharing__c.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                        isossiaOrg= true;
+                    }
+
+
+
+                /*//commented  by nishi 5th Oct 2020, for get stripe infromation bases of the Organisation
+                Map<String,Country__c> countryMap = new Map<String,Country__c>();
+                for(Country__c cntry : BillingUtility.getCountryMap(null).values())
+                    countryMap.put(cntry.Name.toUpperCase(), cntry);
+                
+                String tempCntryCodeUpper = countryCode.toUpperCase();
+                if(countryMap.get(tempCntryCodeUpper) != null){
+                    Country__c cntry    = countryMap.get(tempCntryCodeUpper);
+                    stripeBaseUrl		= cntry.Stripe_Base_Url__c;
+                    apiKey 				= cntry.Stripe_Publishable_Key__c;
+                    stripeApiSecKey		= cntry.Stripe_Secret_Key__c;
+                }*/
+                //added  by nishi 5th Oct 2020,start: for get stripe infromation bases of the Organisation
+                Map<String,Organisation__c> organisationMap =  new Map<String,Organisation__c>();
+                for(Organisation__c org : BillingUtility.getOrganisationMap(null).values())
+                        organisationMap.put(org.Name.toUpperCase(), org);
+                
+                String tempCntryCodeUpper = cstmrAccList.get(0).Organisation_Sharing__c.toUpperCase();
+                if(organisationMap.get(tempCntryCodeUpper) != null){
+                    Organisation__c org    = organisationMap.get(tempCntryCodeUpper);
+                    stripeBaseUrl		= org.Stripe_Base_Url__c;
+                    stripeApiSecKey		= org.Stripe_Secret_Key__c;
+                    apiKey 				= org.Stripe_Publishable_Key__c;
+                }
+                //added  by nishi 5th Oct 2020,end: for get stripe infromation bases of the Organisation
+                
+            }else{
+                isError = true;
+                errorMessage = 'Customer not found, Please contact to center admin.';
+            }
         
         //Commented by Rajesh 9th Sept 2019, for get stripe infromation bases of the country
        // getInvoiceLineItemRecords(invoiceId);
@@ -93,7 +126,7 @@ global class UpdateCustomerCardForPortalCntrl{
     }
     @RemoteAction
     global static String addCard(string token,String cstmrId, Boolean isNotaStripeCstmr, String countryCode){
-        List<Account> cstmrAccList = [SELECT Id,Name,PersonEmail,Stripe_Customer_Id__c FROM Account WHERE Id =: cstmrId];
+        List<Account> cstmrAccList = [SELECT Id,Name,PersonEmail,Stripe_Customer_Id__c,Organisation_Sharing__c FROM Account WHERE Id =: cstmrId];
         
         if(cstmrAccList.size()>0){
             Account csmtr = cstmrAccList[0];
@@ -106,6 +139,7 @@ global class UpdateCustomerCardForPortalCntrl{
             if(String.isBlank(countryCode))
             	countryCode = 'SG';
             
+            /*commented  by nishi 5th Oct 2020,start: for get stripe infromation bases of the Organisation
             Map<String,Country__c> countryMap = new Map<String,Country__c>();
             for(Country__c cntry : BillingUtility.getCountryMap(null).values())
                 countryMap.put(cntry.Name.toUpperCase(), cntry);
@@ -115,8 +149,21 @@ global class UpdateCustomerCardForPortalCntrl{
                 Country__c cntry    = countryMap.get(tempCntryCodeUpper);
                 stripeBaseUrl		= cntry.Stripe_Base_Url__c;
                 stripeApiSecKey		= cntry.Stripe_Secret_Key__c;
+            }*/
+            //added  by nishi 5th Oct 2020,start: for get stripe infromation bases of the Organisation
+            Map<String,Organisation__c> organisationMap =  new Map<String,Organisation__c>();
+            for(Organisation__c org : BillingUtility.getOrganisationMap(null).values())
+                     organisationMap.put(org.Name.toUpperCase(), org);
+            
+            String tempCntryCodeUpper = cstmrAccList.get(0).Organisation_Sharing__c.toUpperCase();
+            if(organisationMap.get(tempCntryCodeUpper) != null){
+                Organisation__c org    = organisationMap.get(tempCntryCodeUpper);
+                stripeBaseUrl		= org.Stripe_Base_Url__c;
+                stripeApiSecKey		= org.Stripe_Secret_Key__c;
             }
             
+            //added  by nishi 5th Oct 2020,End: for get stripe infromation bases of the Organisation
+
             if(isNotaStripeCstmr){
                 //Added by Rajesh 9th Sept 2019, for get stripe infromation bases of the country
                 //BillingUtility.StripeCustomer sCstmr = BillingUtility.createStripeCustomer(token, csmtr.Name, csmtr.PersonEmail, 'Add customer from update card page');    
@@ -215,7 +262,7 @@ global class UpdateCustomerCardForPortalCntrl{
         if(String.isNotBlank(errorMessage))
             isErrorInUpdateCard = true;
         else
-            return new pageReference('/apex/trialthankyou');
+            return new pageReference('/apex/trialthankyou?isOssia='+isossiaOrg);// 5-Oct-2020: nishi: added parameter to thankyou page 
         
         return null;
     }

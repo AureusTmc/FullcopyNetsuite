@@ -2,9 +2,10 @@
 //CH02 Karan Singh 16 Sep 2020 Replacing Sage Integration with Net Suite Integration for fetching inventory Details and changing the getProducts()method for this
 //			and checking the enrolment is active type or not.
 //CH03 Karan Singh 17/18 Sep 2020 : Deposit should be inclusive of GST in the rental summary and Pandadoc as well and also showing (T) in vf in the rental summary for indicating amount is inclusive of GST.
-//									Updating the Instrument_Type__c for the selected enrolment
+//									Updating the Instrument_Type__c for the selected enrolment ideally piano
 //CH04 Karan Singh 22 Sep 2020 : Adding NetSuite API logger.
-
+//CH05 Karan Singh 24 Sep 2020 : showing the type of the instrument in the page and storing the type of the instrument in the enrolment which can be piano,keyboard etc
+//CH06 Karan Singh 25 Sep 2020 : Now will calculate the GST amount from selected piano location , as these location will be stored in our center(Account) record, center -> country(parent) -> taxrate will be applicable.
 public class SearchInstrumentRental_IpadCntrl {
     public String slcdCenter{get;set;}
     public String slcdEnrId{get;set;}
@@ -251,7 +252,7 @@ options.add(new SelectOption(str,str));*/
             List<Enrolment__c> enrList = [SELECT Id, Name, Parent__c, Parent__r.Name, Parent__r.Personemail, Parent_Email__c, Student__c, Parent__r.FirstName, Parent__r.LastName,
                                           Parent__r.Phone, Parent__r.BillingStreet, Parent__r.BillingCity,  Parent__r.BillingPostalCode,  Parent__r.BillingCountryCode, House_type__c, Block__c,Additional_Delivery_comments__c,
                                           Teacher__c, Teacher__r.Name, Package__c, Package__r.Name, Trial_Date__c, Trial_Start_Time__c, Center__c, Center__r.Name, Standard_Accessories__c,
-                                          Parent__r.Stripe_Customer_Id__c, Parent__r.Card_Number__c, Parent__r.Card_Type__c, Parent__r.Card_Image__c, Center__r.Country__c, Center__r.Organisation__c
+                                          Parent__r.Stripe_Customer_Id__c, Parent__r.Card_Number__c, Parent__r.Card_Type__c, Parent__r.Card_Image__c,Center__r.Country__r.name, Center__r.Country__c, Center__r.Organisation__c
                                           
                                           //CH02 17 sep 2020 will work later on this
                                           //   ,recordtype.name,Parent__r.Enroled__c
@@ -264,8 +265,8 @@ options.add(new SelectOption(str,str));*/
             if(enrList.size() > 0){
                 
                 //CH03 Karan 18 Sep 2020
-                if( enrList.get(0).Center__r.Country__r.Tax_Rate__c != null )
-                    gstAmount = BillingUtility.roundOffAmount(enrList.get(0).Center__r.Country__r.Tax_Rate__c);
+                //CH06  if( enrList.get(0).Center__r.Country__r.Tax_Rate__c != null )
+                    //CH06  gstAmount = BillingUtility.roundOffAmount(enrList.get(0).Center__r.Country__r.Tax_Rate__c);
                 //CH03 
                 
                 // 17 sep 2020 will work later on thisCH02 17 Sep 2020 checking if it is existing  active/enrolled Lesson Enrolment
@@ -282,7 +283,6 @@ options.add(new SelectOption(str,str));*/
                 parentAcc.BillingCity        = enrList.get(0).Parent__r.BillingCity;
                 parentAcc.BillingPostalCode  = enrList.get(0).Parent__r.BillingPostalCode;
                 parentAcc.BillingCountryCode = enrList.get(0).Parent__r.BillingCountryCode;
-                PersonMobilePhoneCustom = parentAcc.Phone;
                 cenOrgId = enrList.get(0).Center__r.Organisation__c;
                 
                 slcdEnrolment = enrList.get(0);
@@ -290,7 +290,7 @@ options.add(new SelectOption(str,str));*/
                 slcdEnrolment.Standard_Accessories__c = defStnAss;
                 
                 if(String.isBlank(parentAcc.BillingCountryCode))
-                    parentAcc.BillingCountryCode = countryCode;
+                    parentAcc.BillingCountryCode = enrList.get(0).Center__r.Country__r.name;
                 
                 if(enrList.get(0).Parent__r.Stripe_Customer_Id__c != null && enrList.get(0).Parent__r.Card_Number__c != null && enrList.get(0).Parent__r.Card_Type__c != null){
                     stripeCstmrId = enrList.get(0).Parent__r.Stripe_Customer_Id__c;
@@ -346,9 +346,9 @@ options.add(new SelectOption(str,str));*/
         return page.SearchInstrumentRentalDeliveryPage_Ipad3;
     }
     public PageReference nextBtnCmp3(){ 
-        fm.deliCharges = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Delivery_Charges));
-        fm.tuningFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Tuning_Fee));
-        fm.heatingRodInsFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Heating_Rod_Installation_Fee));
+        fm.deliCharges = (Decimal.valueOf(Label.Delivery_Charges));
+        fm.tuningFee = (Decimal.valueOf(Label.Tuning_Fee));
+        fm.heatingRodInsFee = (Decimal.valueOf(Label.Heating_Rod_Installation_Fee));
         
         //Start: nishi: 27-Jul-2020: Existing Student – one month (with any active enrolment) ; others – two months
         if(isAlreadyStripCstmr != null && isAlreadyStripCstmr){ 
@@ -356,12 +356,12 @@ options.add(new SelectOption(str,str));*/
             //CH02 
             //fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Piano_Rental_Deposit_Fee)); CH02 Karan 17 Sep 2020 :use piano Deposit fee only instead Label as now we are getting rental amount of piano from netSuite
             system.debug('gstAmount-->  ' + gstAmount);
-            if( slcdPiano.monthlyRental != Null ){
+            if(string.isNotBlank(slcdPiano.monthlyRental) &&  slcdPiano.monthlyRental != Null ){
                 
-                fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.monthlyRental));
+                fm.depFee = (Decimal.valueOf(slcdPiano.monthlyRental));
                 //CH03 Will add Gst amount as well
-                fm.depFee += (BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.monthlyRental)) * gstAmount) /100;
-                fm.depFee = BillingUtility.roundOffAmount(fm.depFee);
+                fm.depFee += BillingUtility.roundOffAmount((Decimal.valueOf(slcdPiano.monthlyRental)) * gstAmount) /100;
+                fm.depFee = (fm.depFee);
                 //CH03 END
             }
             
@@ -369,12 +369,12 @@ options.add(new SelectOption(str,str));*/
         }else{
             //CH02
             //fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Piano_Rental_Deposit_Fee) *2 ); CH02 Karan 17 Sep 2020: use piano Deposit fee only instead Label as now we are getting rental amount of piano from netSuite
-            if( slcdPiano.monthlyRental != Null ){
+            if(string.isNotBlank(slcdPiano.monthlyRental) &&  slcdPiano.monthlyRental != Null ){
                 
-                fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.monthlyRental) *2 );
+                fm.depFee =(Decimal.valueOf(slcdPiano.monthlyRental) *2 );
                 //CH03 Will add Gst amount as well
-                fm.depFee += (BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.monthlyRental) *2 ) * gstAmount) /100;
-                fm.depFee = BillingUtility.roundOffAmount(fm.depFee);
+                fm.depFee += BillingUtility.roundOffAmount((Decimal.valueOf(slcdPiano.monthlyRental) *2 ) * gstAmount) /100;
+                fm.depFee = (fm.depFee);
                 //CH03 END
             }
             
@@ -382,36 +382,42 @@ options.add(new SelectOption(str,str));*/
         }
         //End:nishi: 27-Jul-2020:Existing Student – one month (with any active enrolment) ; others – two months
         //fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Piano_Rental_Deposit_Fee) *2 ); commented by CH02 17 sep 2020 Karan as now will use above if else only 
-        fm.perStairCharges  = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Per_Stair_Charges));
+        fm.perStairCharges  = (Decimal.valueOf(Label.Per_Stair_Charges));
         
         Integer isTwiceCharge = isRentalOrSellType.equalsIgnoreCase('Rent') ? 2 : 1;
         //Stair charge with twice for the Rental
         if(nostairs > 0)
-            fm.stairDelCharges = BillingUtility.roundOffAmount((fm.perStairCharges * nostairs)*isTwiceCharge);
+            fm.stairDelCharges = ((fm.perStairCharges * nostairs)*isTwiceCharge);
         
         //Delivery charges twice for the Rental
-        fm.deliCharges = BillingUtility.roundOffAmount(fm.deliCharges*isTwiceCharge);
+        fm.deliCharges = (fm.deliCharges*isTwiceCharge);
         
         //Instrument charge will be zero During rent. it will be taken on the time of Delivery
         fm.instrumentChrg = 0;//BillingUtility.roundOffAmount(slcdPiano.rentalPrice);
         if(isRentalOrSellType.equalsIgnoreCase('Rent')){
             fm.totFee = fm.deliCharges + fm.tuningFee + fm.heatingRodInsFee + fm.stairDelCharges;
+            // added by nishi: 2:Oct-2020: for we calculate gst per invoice line item
+            fm.gstAmt += BillingUtility.roundOffAmount(fm.deliCharges > 0 && fm.gstTaxPer > 0 ?  (fm.deliCharges*fm.gstTaxPer/100) : 0);
+            fm.gstAmt += BillingUtility.roundOffAmount(fm.tuningFee > 0 && fm.gstTaxPer > 0 ?  (fm.tuningFee*fm.gstTaxPer/100) : 0);
+            fm.gstAmt += BillingUtility.roundOffAmount(fm.heatingRodInsFee > 0 && fm.gstTaxPer > 0 ?  (fm.heatingRodInsFee*fm.gstTaxPer/100) : 0);
+            fm.gstAmt += BillingUtility.roundOffAmount(fm.stairDelCharges > 0 && fm.gstTaxPer > 0 ?  (fm.stairDelCharges*fm.gstTaxPer/100) : 0);
         }else{
             fm.depFee = fm.deliCharges = fm.tuningFee = fm.heatingRodInsFee = fm.stairDelCharges = fm.perStairCharges = 0;
             //CH02 
             //fm.instrumentChrg = BillingUtility.roundOffAmount(slcdPiano.salesPrice);
             system.debug(' --> ' + BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.listPrice )));
-            fm.instrumentChrg = BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.listPrice) );
+            fm.instrumentChrg = (Decimal.valueOf(slcdPiano.listPrice) );
             //CH02 END
             fm.totFee = fm.instrumentChrg;
+              fm.gstAmt += BillingUtility.roundOffAmount(fm.instrumentChrg > 0 && fm.gstTaxPer > 0 ?  (fm.instrumentChrg*fm.gstTaxPer/100) : 0);
         }
         
         
-        fm.gstAmt = BillingUtility.roundOffAmount(fm.totFee > 0 && fm.gstTaxPer > 0 ?  (fm.totFee*fm.gstTaxPer/100) : 0);
+        //fm.gstAmt = BillingUtility.roundOffAmount(fm.totFee > 0 && fm.gstTaxPer > 0 ?  (fm.totFee*fm.gstTaxPer/100) : 0);
         
         fm.totFee += fm.depFee;
-        fm.totFee = BillingUtility.roundOffAmount(fm.totFee);
         fm.grandTot = BillingUtility.roundOffAmount(fm.totFee + fm.gstAmt);
+        fm.totFee = BillingUtility.roundOffAmount(fm.totFee);
         return page.SearchInstrumentFinalConfirmPage_Ipad4;
     }
     public void setSlots(){
@@ -507,24 +513,29 @@ dtimeslot.add(dateMap.get(slcdDt));
     
     public void fetchFullAddress(){
         string postalCode = Apexpages.currentPage().getParameters().get('postalCode');
-        
+        system.debug('postalCode'+postalCode);
+        system.debug('parentAcc.BillingCountryCode'+parentAcc.BillingCountryCode);
         if(String.isNotBlank(parentAcc.BillingCountryCode) && String.isNotBlank(postalCode)){
             String tempPostalCode = postalCode;
             try{
                 tempPostalCode = ''+Integer.valueOf(postalCode);
             }catch(Exception e){}
-            System.debug('@@@@'+postalCode);
+            System.debug('@@@@'+[SELECT Id, Name, BuildingNo__c, Country__r.Name, Country__r.Country_Name__c, Street_Name__c, Building_Name__c 
+                                       FROM Postal_code__c 
+                                       WHERE Country__r.Name =: parentAcc.BillingCountryCode AND Name =: tempPostalCode LIMIT 1]);
             for(Postal_code__c code : [SELECT Id, Name, BuildingNo__c, Country__r.Name, Country__r.Country_Name__c, Street_Name__c, Building_Name__c 
                                        FROM Postal_code__c 
                                        WHERE Country__r.Name =: parentAcc.BillingCountryCode AND Name =: tempPostalCode LIMIT 1]){
-                                           if(String.isNotBlank(parentAcc.id)){
-                                               parentAcc.BillingStreet = (String.isNotBlank(code.BuildingNo__c)) ? code.BuildingNo__c + ' ': '';
-                                               parentAcc.BillingStreet += (String.isNotBlank(code.Building_Name__c)) ? code.Building_Name__c + ', ': '';
-                                               parentAcc.BillingStreet += (String.isNotBlank(code.Street_Name__c)) ? code.Street_Name__c: '';
-                                               // enrolDetails.parent.country = code.Country__c;
-                                               parentAcc.BillingCity = code.Building_Name__c;
-                                               parentAcc.BillingPostalCode = code.Name;
-                                           }
+                                            System.debug('code'+code);
+                                           parentAcc.BillingStreet = (String.isNotBlank(code.BuildingNo__c)) ? code.BuildingNo__c + ' ': '';
+                                           parentAcc.BillingStreet += (String.isNotBlank(code.Building_Name__c)) ? code.Building_Name__c + ', ': '';
+                                           parentAcc.BillingStreet += (String.isNotBlank(code.Street_Name__c)) ? code.Street_Name__c: '';
+                                           // enrolDetails.parent.country = code.Country__c;
+                                           parentAcc.BillingCity = code.Building_Name__c;
+                                           parentAcc.BillingPostalCode = code.Name;
+                                           
+                                           
+                                           
                                        }
         }    
     }
@@ -809,11 +820,13 @@ rw.errorMsg = 'Unknown error occured. Please contact your admin.';
     
     public pageReference prcToRental(){
         isRentalOrSellType = 'Rent';
+        getStripeDetails();
         return page.SearchInstrumentRentalDeliveryPage_Ipad3;
     }
     
     public pageReference prcToSell(){
         isRentalOrSellType = 'Sell';       
+        getStripeDetails();
         return page.SearchInstrumentRentalDeliveryPage_Ipad3;
     }
     
@@ -823,7 +836,26 @@ rw.errorMsg = 'Unknown error occured. Please contact your admin.';
         //slcdPiano = sageProducts.get(slctdPianoOpt-1); old
         slcdPiano = netSuiteProducts.get(slctdPianoOpt-1);
         system.debug('slcdPiano -> '+ slcdPiano);
-        getStripeDetails();
+
+        //CH06 will fetch the tax rate from the selected piano center
+        if( String.isNotBlank( slcdPiano.location ) ){
+            List< Account > listCenterAccnt = [ SELECT ID, Country__r.Tax_Rate__c  FROM Account 
+                                                WHERE Country__r.Tax_Rate__c  <> NULL 
+                                                AND Recordtype.Name=:ConstantsClass.centerRecTypeName
+                                                AND NAME =: slcdPiano.location
+                                                LIMIT 1 ];
+
+            if( listCenterAccnt.size() > 0 ){
+                gstAmount = BillingUtility.roundOffAmount(listCenterAccnt[0].Country__r.Tax_Rate__c); 
+            }else{ //incase no center is found
+                gstAmount = 0;
+            }
+            
+        }else{ //incase piano center is blank make it 0
+            gstAmount = 0;
+        }
+        System.debug( 'gstAmount --> ' + gstAmount );
+        //CH06 END
         //CH02
     }
     // added by nishi: 23-Sep-2020: for stripe id and other country details the enrollment's center was inserted according to the home page selected center. So we get stripe details according to this center   
@@ -831,21 +863,38 @@ rw.errorMsg = 'Unknown error occured. Please contact your admin.';
         system.debug('slcdPiano -> '+ slcdPiano.location);
         system.debug('slcdEnrolment -> '+ slcdEnrolment);
         if( string.isBlank(slcdEnrolment.id)){
-            isAlreadyStripCstmr = false;
+           isAlreadyStripCstmr = false;
             parentAcc.Centre_Name__c = slcdCenter;
             parentAcc.Phone =  PersonMobilePhoneCustom;
-           if(parentAcc.PersonEmail != null){
-               List<Account> accList = [SELECT Id,Name FROM Account WHERE PersonEmail =: parentAcc.PersonEmail]; 
-               if(accList.size() > 0)
-                   parentAcc.Id = accList.get(0).Id;
-           }
-            List<Account> centerlist =  [Select id,Name,Organisation__c from account where id=:slcdCenter and recordtype.Name=:ConstantsClass.centerRecTypeName];
+            system.debug('PersonMobilePhoneCustom -> '+ PersonMobilePhoneCustom);
+            if(parentAcc.PersonEmail != null){
+                List<Account> accList = [SELECT Id,Name,Stripe_Customer_Id__c,Card_Number__c,Card_Type__c,Card_Image__c,
+                                            BillingStreet,BillingCity,BillingPostalCode,BillingCountryCode
+                                        FROM Account WHERE PersonEmail =: parentAcc.PersonEmail]; 
+                if(accList.size() > 0){
+                    parentAcc.Id = accList.get(0).Id;
+                    parentAcc.BillingStreet      = accList.get(0).BillingStreet;
+                    parentAcc.BillingCity        =accList.get(0).BillingCity;
+                    parentAcc.BillingPostalCode  = accList.get(0).BillingPostalCode;
+                    if(accList.get(0).Stripe_Customer_Id__c != null && accList.get(0).Card_Number__c != null && accList.get(0).Card_Type__c != null){
+                        stripeCstmrId = accList.get(0).Stripe_Customer_Id__c;
+                        cardNumber    = accList.get(0).Card_Number__c;
+                        cardType      = accList.get(0).Card_Type__c;            
+                        cardImage     = accList.get(0).Card_Image__c;
+                        isAlreadyStripCstmr = true;
+                    }
+                }
+                
+            }
+            upsert parentAcc;
+            List<Account> centerlist =  [Select id,Name,Organisation__c,country__r.name from account where id=:slcdCenter and recordtype.Name=:ConstantsClass.centerRecTypeName];
             
             system.debug('centerlist -> '+ centerlist);
             if(centerlist != null && centerlist.size() > 0){
+                parentAcc.BillingCountryCode  = centerlist.get(0).country__r.name;
                 String organisationId          = centerlist[0].Organisation__c;
                 system.debug('organisationId -> '+ organisationId);
-                if((!isAlreadyStripCstmr) && string.isBlank(stripeBaseUrl)&& string.isBlank(apiKey) && string.isBlank(stripeApiSecKey) && 
+                if(string.isBlank(stripeBaseUrl) && string.isBlank(apiKey) && string.isBlank(stripeApiSecKey) && 
                 string.isBlank(templateId) && string.isBlank(folderId)){
                     Map<String,Organisation__c> organisationMap = BillingUtility.getOrganisationMap(organisationId);
                     if(organisationMap.containsKey(organisationId)){
@@ -865,6 +914,21 @@ rw.errorMsg = 'Unknown error occured. Please contact your admin.';
                         countryCurrencyCode = ConstantsClass.currencyCode;
                 }
             }
+            List<Enrolment__c> enrList = [SELECT Id, Name, Parent__c, Parent__r.FirstName, Parent__r.LastName, Parent__r.PersonEmail, Model__c, Serial_Number__c,
+                                          Rental_price_per_month__c 
+                                          FROM Enrolment__c WHERE Parent__c =: parentAcc.Id and stage__c = null and RecordType.Name ='Instrument Rental'];  
+            if(enrList!= null && enrList.size() >0){
+                slcdEnrolment.id = enrList[0].id;
+            }
+            /*start: added by nishi:23-Sep-2020 for insert parent and student id */  
+            String enrInsRenRecId =  Schema.SObjectType.Enrolment__c.getRecordTypeInfosByName().get('Instrument Rental').getRecordTypeId();  
+            slcdEnrolment.Parent__c     = parentAcc.Id;
+            slcdEnrolment.Student__c    = parentAcc.Id;
+            slcdEnrolment.RecordTypeId  = enrInsRenRecId;
+            slcdEnrolment.Type__c       = 'Instrument';
+            slcdEnrolment.Center__c = slcdCenter;
+            upsert slcdEnrolment;
+            /*end: added by nishi:23-Sep-2020 for insert parent and student id */   
         }
     }
     
@@ -989,6 +1053,7 @@ rw.errorMsg = 'Unknown error occured. Please contact your admin.';
         List<Enrolment__c> enrList = [SELECT Id, Name, Parent__c, Parent__r.FirstName, Parent__r.LastName, Parent__r.PersonEmail, Model__c, Serial_Number__c, Rental_price_per_month__c 
                                       FROM Enrolment__c WHERE Id =: enrolDetail.Id];
         List<User> userList = [SELECT Id,FirstName,LastName,Email FROM User WHERE Id=: Userinfo.getUserId()];
+        
         if(enrList.size() > 0 && userList.size() > 0){
             String pandaFolderId   =  'Hk2younc4gRoh696TvY6yn';
             String pandaTemplateId =  '9LbUZRRrAofSkQ3ECrYfEB';
@@ -1020,9 +1085,15 @@ recipientTransporter.has_completed = true;
 createDocWrapper.recipients.add(recipientTransporter);  */
             
             // pass a list of tokens/values to pre-fill tokens used in a template
-            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Parent_First_Name__c', enrolmentObj.Parent__r.FirstName));
-            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Parent_Last_Name__c', enrolmentObj.Parent__r.LastName));
-            
+            ///added by nishi: 2-Oct-2020: for if enrolment not exist then we get deatils to parent account;
+                if(string.isBlank(enrolmentObj.id)){ 
+                    tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Parent_First_Name__c',parentAcc.FirstName));
+                    tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Parent_Last_Name__c', parentAcc.LastName));
+                }else{
+                    tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Parent_First_Name__c', enrolmentObj.Parent__r.FirstName));
+                    tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Parent_Last_Name__c', enrolmentObj.Parent__r.LastName));
+                }
+            ///added by nishi:end: 2-Oct-2020: for if enrolment not exist then we get deatils to parent account;
             //CH02 Changes after NetSuite Integration
             
             /*tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Model__c', slcdPiano.modelNo));
@@ -1044,20 +1115,27 @@ tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Selling__c', ''+(slcdPia
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Selling__c', ''+(slcdPiano.listPrice !=null ? Decimal.valueOf(slcdPiano.listPrice)  : 0)));
             
             //CH02 END
+            ///added by nishi: 2-Oct-2020: for if enrolment not exist then we get deatils to parent account;
+            if(string.isBlank(enrolmentObj.id)){ 
+                createDocWrapper.metadata.salesforceAccount_id = parentAcc.id;     
+                recipientClient.first_name = parentAcc.FirstName;        
+                recipientClient.last_name = parentAcc.LastName;      
+                recipientClient.email = parentAcc.PersonEmail; 
+                  createDocWrapper.name += parentAcc.FirstName+'-'+parentAcc.LastName + '-';  
+            }else{
+                if(enrolmentObj.Parent__c != null){       
+                    createDocWrapper.metadata.salesforceAccount_id = enrolmentObj.Parent__c;     
+                    recipientClient.first_name = enrolmentObj.Parent__r.FirstName;        
+                    recipientClient.last_name = enrolmentObj.Parent__r.LastName;      
+                    recipientClient.email = enrolmentObj.Parent__r.PersonEmail; 
+                      createDocWrapper.name += enrolmentObj.name + '-';  
+                }      
+            }
+            recipientClient.recipient_type = 'signer';  
+            recipientClient.has_completed = true;  
+            recipientClient.role = 'Client';      
+            createDocWrapper.recipients.add(recipientClient); 
             
-            if(enrolmentObj.Parent__c != null){       
-                createDocWrapper.metadata.salesforceAccount_id = enrolmentObj.Parent__c;     
-                recipientClient.first_name = enrolmentObj.Parent__r.FirstName;        
-                recipientClient.last_name = enrolmentObj.Parent__r.LastName;      
-                recipientClient.email = enrolmentObj.Parent__r.PersonEmail; 
-                recipientClient.recipient_type = 'signer';  
-                recipientClient.has_completed = true;  
-                recipientClient.role = 'Client';      
-                createDocWrapper.recipients.add(recipientClient);     
-            } 
-            
-            
-            createDocWrapper.name += enrolmentObj.name + '-';    
             createDocWrapper.tokens = tokens;
             createDocWrapper.name += 'RentalAgreement';       
             if(String.isNotBlank(createDocWrapper.name)){       
@@ -1241,7 +1319,7 @@ System.debug('@@@jsonBody'+jsonBody);
                         parentAcc.Expiry_Month__c = exp_month;
                         parentAcc.Expiry_Year__c = exp_year;
                         
-                      
+                        parentAcc.Centre_Name__c = slcdCenter;
                         // parentAcc.Enroled__c     = true;
                         // parentAcc.Enroled_Date__c= System.today();
                         List<Account> centrList = [SELECT Id, Name, Location__c, Country__r.Country_Name__c FROM Account WHERE Id =: slcdCenter];
@@ -1258,16 +1336,6 @@ System.debug('@@@jsonBody'+jsonBody);
                             slcdEnrolment.Stage__c = 'Piano Rental Active';
                         else
                             slcdEnrolment.Stage__c = 'Piano Sold';
-                        /*start: added by nishi:23-Sep-2020 for insert parent and student id */  
-                        if(string.isBlank(slcdEnrolment.id)){  
-                            String enrInsRenRecId =  Schema.SObjectType.Enrolment__c.getRecordTypeInfosByName().get('Instrument Rental').getRecordTypeId();  
-                            slcdEnrolment.Parent__c     = parentAcc.Id;
-                            slcdEnrolment.Student__c    = parentAcc.Id;
-                            slcdEnrolment.RecordTypeId  = enrInsRenRecId;
-                            slcdEnrolment.Type__c       = 'Instrument';
-                        }
-                        /*end: added by nishi:23-Sep-2020 for insert parent and student id */    
-                        
                         slcdEnrolment.Cancellation_Policy_Agreed__c = true;
                         slcdEnrolment.No_of_Stairs__c = nostairs;
                         slcdEnrolment.Center__c = slcdCenter;
@@ -1320,8 +1388,10 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                         //CH01  Karan Singh25 March   
                         slcdEnrolment.Offline_Signing_Selected__c = isCustmrOptedOfflineSign; 
                         //CH01 END     
-                        //CH03 updating the Instrument type
-                        slcdEnrolment.Instrument_Type__c = instrumentType;
+                        //CH03 updating the Instrument type -piano only
+                        //CH05 any instrunemnt which can be piano,violin etc
+                        slcdEnrolment.Instrument_Type__c = slcdPiano.inventoryType;
+                        //CH05 END
                         //CH03
                         //update slcdEnrolment;// commented by nishi:23-Sep-2020: according to  new requirement we update or insert customer details
                         upsert slcdEnrolment;
@@ -1387,7 +1457,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                             remarksStr = slcdPiano.brand;
                             //CH02 END
                             //
-                            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.instrumentChrg), remarksStr, slcdEnrolment.Teacher__c);
+                            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, fm.instrumentChrg, remarksStr, slcdEnrolment.Teacher__c);
                             invLnItm.Teacher_Id__c = null;
                             invLnItm.Invoice__c   = inv.Id;
                             invLnItm.Enrolment__c = slcdEnrolment.Id; 
@@ -1401,7 +1471,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                         }
                         if(fm.depFee > 0){
                             remarksStr = ConstantsClass.pkgDepFeesDes;
-                            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.depFee), remarksStr, slcdEnrolment.Teacher__c);
+                            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null,fm.depFee, remarksStr, slcdEnrolment.Teacher__c);
                             invLnItm.Teacher_Id__c = null;
                             invLnItm.Invoice__c   = inv.Id;
                             invLnItm.Enrolment__c = slcdEnrolment.Id;
@@ -1416,7 +1486,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                                 remarksStr += '(2-way)';
                             else    
                                 remarksStr += '(1-way)';
-                            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.deliCharges), remarksStr, slcdEnrolment.Teacher__c);
+                            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, fm.deliCharges, remarksStr, slcdEnrolment.Teacher__c);
                             invLnItm.Teacher_Id__c = null;
                             invLnItm.Invoice__c   = inv.Id;
                             invLnItm.Enrolment__c = slcdEnrolment.Id; 
@@ -1428,7 +1498,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                         if(fm.tuningFee> 0){
                             remarksStr = 'Tuning Fee';
                             
-                            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.tuningFee), remarksStr, slcdEnrolment.Teacher__c);
+                            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null,fm.tuningFee, remarksStr, slcdEnrolment.Teacher__c);
                             invLnItm.Teacher_Id__c = null;
                             invLnItm.Invoice__c   = inv.Id;
                             invLnItm.Enrolment__c = slcdEnrolment.Id; 
@@ -1443,7 +1513,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                                 remarksStr += '(2-way)';
                             else    
                                 remarksStr += '(1-way)';        
-                            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.stairDelCharges), remarksStr, slcdEnrolment.Teacher__c);
+                            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, fm.stairDelCharges, remarksStr, slcdEnrolment.Teacher__c);
                             invLnItm.Teacher_Id__c = null;
                             invLnItm.Invoice__c   = inv.Id;
                             invLnItm.Enrolment__c = slcdEnrolment.Id; 
@@ -1455,7 +1525,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                         if(fm.heatingRodInsFee> 0){
                             remarksStr = 'Heating Rod Installation';
                             
-                            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.heatingRodInsFee), remarksStr, slcdEnrolment.Teacher__c);
+                            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null,fm.heatingRodInsFee, remarksStr, slcdEnrolment.Teacher__c);
                             invLnItm.Teacher_Id__c = null;
                             invLnItm.Invoice__c   = inv.Id;
                             invLnItm.Enrolment__c = slcdEnrolment.Id; 
@@ -1482,7 +1552,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                         pageRef.getParameters().put('scId', sc.id);
                         
                         //CH02 Karan 17 sep 2020 updating the NetSuite Inventory
-                        //SearchInstrumentRental_IpadCntrl.pushDataToNetsuite( slcdEnrolment.Name,slcdPiano.serialNumber, slcdPiano.productId);
+                        SearchInstrumentRental_IpadCntrl.pushDataToNetsuite( slcdEnrolment.Name,slcdPiano.serialNumber, slcdPiano.productId);
                         //CH02 END
                         return pageRef.setRedirect(true);
                     }else{
@@ -1643,7 +1713,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
             //remarksStr = slcdPiano.brand;
             remarksStr = slcdPiano.brand;
             //CH02 END
-            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.instrumentChrg), remarksStr, slcdEnrolment.Teacher__c);
+            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (fm.instrumentChrg), remarksStr, slcdEnrolment.Teacher__c);
             invLnItm.Teacher_Id__c = null;
             invLnItm.Invoice__c   = inv.Id;
             invLnItm.Enrolment__c = slcdEnrolment.Id; 
@@ -1657,7 +1727,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
         }
         if(fm.depFee > 0){
             remarksStr = ConstantsClass.pkgDepFeesDes;
-            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.depFee), remarksStr, slcdEnrolment.Teacher__c);
+            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (fm.depFee), remarksStr, slcdEnrolment.Teacher__c);
             invLnItm.Teacher_Id__c = null;
             invLnItm.Invoice__c   = inv.Id;
             invLnItm.Enrolment__c = slcdEnrolment.Id;
@@ -1672,7 +1742,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                 remarksStr += '(2-way)';
             else    
                 remarksStr += '(1-way)';
-            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.deliCharges), remarksStr, slcdEnrolment.Teacher__c);
+            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (fm.deliCharges), remarksStr, slcdEnrolment.Teacher__c);
             invLnItm.Teacher_Id__c = null;
             invLnItm.Invoice__c   = inv.Id;
             invLnItm.Enrolment__c = slcdEnrolment.Id; 
@@ -1684,7 +1754,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
         if(fm.tuningFee> 0){
             remarksStr = 'Tuning Fee';
             
-            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.tuningFee), remarksStr, slcdEnrolment.Teacher__c);
+            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (fm.tuningFee), remarksStr, slcdEnrolment.Teacher__c);
             invLnItm.Teacher_Id__c = null;
             invLnItm.Invoice__c   = inv.Id;
             invLnItm.Enrolment__c = slcdEnrolment.Id; 
@@ -1699,7 +1769,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                 remarksStr += '(2-way)';
             else    
                 remarksStr += '(1-way)';        
-            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.stairDelCharges), remarksStr, slcdEnrolment.Teacher__c);
+            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (fm.stairDelCharges), remarksStr, slcdEnrolment.Teacher__c);
             invLnItm.Teacher_Id__c = null;
             invLnItm.Invoice__c   = inv.Id;
             invLnItm.Enrolment__c = slcdEnrolment.Id; 
@@ -1711,7 +1781,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
         if(fm.heatingRodInsFee> 0){
             remarksStr = 'Heating Rod Installation';
             
-            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, BillingUtility.roundOffAmount(fm.heatingRodInsFee), remarksStr, slcdEnrolment.Teacher__c);
+            Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (fm.heatingRodInsFee), remarksStr, slcdEnrolment.Teacher__c);
             invLnItm.Teacher_Id__c = null;
             invLnItm.Invoice__c   = inv.Id;
             invLnItm.Enrolment__c = slcdEnrolment.Id; 
@@ -1799,7 +1869,13 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
             }
             else{
                 resp.setStatusCode( 200 );
-                resp.setBody( '[{"serialNumber": "123","item": "1234","location": "Test Location","status": "New","inventoryType": "Piano","monthlyRental": "62","listPrice": "66.66","model": "123","productId": "Serialized Item001","brand": "xyz"}]' );
+                if( methodName == 'pushDataToNetsuite() :  Convert Item to Fixed Asset' ){
+                    
+                    resp.setBody( '{"error" : {"code" : "INVALID_LOGIN_ATTEMPT", "message" : "Invalid login attempt."}}' );
+                }else{
+                    resp.setBody( '[{"serialNumber": "123","item": "1234","location": "Test Location","status": "New","inventoryType": "Piano","monthlyRental": "62","listPrice": "66.66","model": "123","productId": "Serialized Item001","brand": "xyz"}]' );
+                }
+                
             }
             /*system.debug('resp->> ' + resp);system.debug('resp->> ' + resp.getBody());system.debug('resp->> ' + req);system.debug('req.getBody->> ' + req.getBody());system.debug('req.getEndpoint->> ' + req.getEndpoint());system.debug('req.getHeader->> ' + req.getHeader('Authorization'));system.debug('req.getHeader->> ' + req.getHeader('Content-Type'));system.debug('req.getMethod->> ' + req.getMethod());*/
             

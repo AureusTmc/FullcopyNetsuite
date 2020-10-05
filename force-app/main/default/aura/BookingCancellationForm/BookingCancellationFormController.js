@@ -41,7 +41,7 @@
                     inputCmp.showHelpMessageIfInvalid();
                     return validFields && inputCmp.get('v.validity').valid;
                 }, true);
-               objAccount.Student=component.get("v.StudentId"); 
+               objAccount.Student=component.get("v.StudentId");
                objAccount.Parent=component.get("v.ParentId");
                objAccount.Center=component.get("v.CenterId"); 
                objAccount.Booking_Date=valuse[i].Booking_Date;
@@ -54,7 +54,8 @@
         if(allValid){
             var action=component.get("c.SaveBooking");
             action.setParams({
-                'BookingTypeList':JSON.stringify(objBookingArray)
+                'BookingTypeList':JSON.stringify(objBookingArray),
+                'enrolmentId': component.get("v.enrolId")  // added by nishi:5-oct-2020 : if enrolment belong to ossia then we add enrolment id on booking
             });
             action.setCallback(this,function(response){
                 if(response.getState()=='SUCCESS'){

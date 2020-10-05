@@ -322,7 +322,8 @@ public with sharing class OssiaCenterCalendarController {
                                         //)
                                         AND Stage__c =:ConstantsClass.enroledStatus
                                         AND Type__c =: ConstantsClass.enrolRegularStatus
-                                        AND Center__c = :centerId
+                                        //AND Center__c = :centerId  // commented by nishi: 5-Oct-2020: Makeup credit for Ossia should allow booking across the other Ossia centres
+                                        and Center__r.Organisation__r.Name = :System.Label.Ossia_Organisation_Name
                                         //AND Teacher__c = :teacherId
                                         ]){
                     if(string.isNotBlank(objEnrol.Center__c) && string.isNotBlank(objEnrol.Center__r.Organisation__c) &&
@@ -564,7 +565,8 @@ public with sharing class OssiaCenterCalendarController {
         
         if(String.isNotBlank(centerId)){
             List<Teacher_Working_Hour__c> teacherWorkingHourList = new List<Teacher_Working_Hour__c>();
-            teacherWorkingHourList = [SELECT id, Center_Name__c, Teacher_Name__c, Start_Time__c, End_Time__c FROM Teacher_Working_Hour__c WHERE Center_Name__c =: centerId ];
+            teacherWorkingHourList = [SELECT id, Center_Name__c, Teacher_Name__c, Start_Time__c, End_Time__c FROM Teacher_Working_Hour__c 
+                                    WHERE Center_Name__c =: centerId ];
             for(Teacher_Working_Hour__c twh : teacherWorkingHourList){
                 teachersIdSet.add(twh.Teacher_Name__c);
             }
