@@ -361,7 +361,11 @@
                     <apex:repeat value="{!invoice.Invoice_Line_Items__r}" var="invLineItm">
                         <tr class="border_bottom">
                             <td >
-                                <div class="item-Name"><b style="color:rgb(79,79,78);">{!invLineItm.Package_Name__c}</b><br/>
+                                <div class="item-Name"><b style="color:rgb(79,79,78);">
+                                    <apex:outputPanel rendered="{!invLineItm.Is_Discount__c}">
+                                        Discount - 
+                                    </apex:outputPanel>
+                                    {!invLineItm.Package_Name__c}</b><br/>
                                     <span class="grayColor">
                                         <apex:outputPanel rendered="{!If(invLineItm.Package__r.Type__c == 'Adhoc', FALSE, TRUE)}">
                                                 {!invLineItm.Subscription_Line_Item__r.Student__r.Name}
@@ -382,10 +386,10 @@
                             <td class="center PQT2">
                                 <div class="invoice">
                                     <b><apex:outputField value="{!invLineItm.Amount__c}"/></b>
-                                    <apex:outputPanel rendered="{!IF(invoice.Center__r.country__r.Tax_Rate__c > 0, IF(invLineItm.Is_Deposit__c, FALSE, TRUE), FALSE)}" layout="none">
+                                    <apex:outputPanel rendered="{!IF(and (invoice.Center__r.country__r.Tax_Rate__c != null,invoice.Center__r.country__r.Tax_Rate__c > 0), IF(invLineItm.Is_Deposit__c, FALSE, TRUE), FALSE)}" layout="none">
                                         (T)
                                     </apex:outputPanel>
-                                    <apex:outputPanel rendered="{!IF(invoice.Center__r.country__r.Tax_Rate__c < 0, IF(invLineItm.Is_Deposit__c, TRUE, FALSe), FALSE)}" layout="none" >
+                                    <apex:outputPanel rendered="{!IF(and (invoice.Center__r.country__r.Tax_Rate__c != null,invoice.Center__r.country__r.Tax_Rate__c < 0), IF(invLineItm.Is_Deposit__c, TRUE, FALSe), FALSE)}" layout="none" >
                                         <span style="padding-right:17px;"></span>
                                     </apex:outputPanel>
                                 </div>
@@ -423,9 +427,9 @@
                                 </tr>
                                 <!--nishi:start: 15-Sep-2020: for new requirement in netsuite we adjust discount as a line item -->
                                 <tr style="font-size:12px;">
-                                   <td><apex:outputPanel rendered="{!IF(AND(subTotal != 0,subTotal != NULL), TRUE,FALSE)}" layout="block"><div class="taxbox border-none" ><b>Sub Total</b></div> </apex:outputPanel></td>
+                                   <td><apex:outputPanel rendered="{!IF(AND(subTotal != NULL,subTotal != 0), TRUE,FALSE)}" layout="block"><div class="taxbox border-none" ><b>Sub Total</b></div> </apex:outputPanel></td>
                                    <td>
-                                       <apex:outputPanel rendered="{!IF(AND(subTotal != 0,subTotal != NULL), TRUE,FALSE)}" layout="block">
+                                       <apex:outputPanel rendered="{!IF(AND(subTotal != NULL,subTotal != 0), TRUE,FALSE)}" layout="block">
                                            <div class="taxbox taxbox-right border-none">
                                                 <b><apex:outputText value="{0, number, $###,###,###.00}"><apex:param value="{!subTotal}" /></apex:outputText></b>
                                             </div>
@@ -434,14 +438,14 @@
                                 </tr>
                                 <tr style="font-size:12px;">
                                   
-                                   <td><apex:outputPanel rendered="{!IF(AND(invoice.Discount_LineItem_Amount__c != 0,invoice.Discount_LineItem_Amount__c != NULL), TRUE,FALSE)}" layout="block">
+                                   <td><apex:outputPanel rendered="{!IF(AND(invoice.Discount_LineItem_Amount__c != NULL,invoice.Discount_LineItem_Amount__c != 0), TRUE,FALSE)}" layout="block">
                                        <div class="taxbox text-right" style="color:red;padding-right:22px;padding-bottom:5px;padding-top:5px;border-bottom: solid 0.5px #DCDCDC;text-align:left;">Discount</div> </apex:outputPanel></td>
-                                   <td><apex:outputPanel rendered="{!IF(AND(invoice.Discount_LineItem_Amount__c != 0,invoice.Discount_LineItem_Amount__c != NULL), TRUE,FALSE)}" layout="block">
+                                   <td><apex:outputPanel rendered="{!IF(AND(invoice.Discount_LineItem_Amount__c != NULL,invoice.Discount_LineItem_Amount__c != 0), TRUE,FALSE)}" layout="block">
                                        <div class="discValue"><apex:outputField value="{!invoice.Discount_LineItem_Amount__c}"/></div> </apex:outputPanel></td>
                                 </tr>
                                 <tr style="font-size:12px;">
-                                   <td><apex:outputPanel rendered="{!IF(AND(totalAmount != 0,totalAmount!= NULL), TRUE,FALSE)}" layout="block"><div class="taxbox border-none" ><b> Total Amount</b></div> </apex:outputPanel></td>
-                                   <td><apex:outputPanel rendered="{!IF(AND(totalAmount != 0,totalAmount != NULL), TRUE,FALSE)}" layout="block">
+                                   <td><apex:outputPanel rendered="{!IF(AND(totalAmount!= NULL,totalAmount != 0), TRUE,FALSE)}" layout="block"><div class="taxbox border-none" ><b> Total Amount</b></div> </apex:outputPanel></td>
+                                   <td><apex:outputPanel rendered="{!IF(AND(totalAmount != NULL,totalAmount != 0), TRUE,FALSE)}" layout="block">
                                         <div class="taxbox taxbox-right border-none">
                                         <b> <apex:outputText value="{0, number, $###,###,###.00}"><apex:param value="{!totalAmount}" /></apex:outputText>    </b>
                                             </div> 
@@ -482,14 +486,15 @@
                                  <!--15-Sep-2020:start: Credit Memo  handling we show Credit_Memo_Amount__c amount after showing  payableAmount (grand total duction amount)-->
                                 <tr  style="font-size:12px;">
                           
-                                    <td style="text-align:left;"><apex:outputPanel rendered="{!IF(AND(invoice.Credit_Memo_Amount__c != 0,invoice.Credit_Memo_Amount__c != NULL), TRUE,FALSE)}" layout="block">
+                                    <td style="text-align:left;"><apex:outputPanel rendered="{!IF(AND(invoice.Credit_Memo_Amount__c != NULL,invoice.Credit_Memo_Amount__c != 0), TRUE,FALSE)}" layout="block">
                                         <div class="taxbox  border-none" style="color:red;">Credit Memo Amount</div> </apex:outputPanel></td>
-                                    <td><apex:outputPanel rendered="{!IF(AND(invoice.Credit_Memo_Amount__c != 0,invoice.Credit_Memo_Amount__c != NULL), TRUE,FALSE)}" layout="block">
+                                    <td><apex:outputPanel rendered="{!IF(AND(invoice.Credit_Memo_Amount__c != NULL,invoice.Credit_Memo_Amount__c != 0), TRUE,FALSE)}" layout="block">
                                         <div class="taxValue border-none" style="color:red;"><apex:outputField value="{!invoice.Credit_Memo_Amount__c}"/></div> </apex:outputPanel></td>
                                  </tr>
                                  <tr  style="font-size:12px;">
-                                    <td style="border-bottom: solid 0.5px #DCDCDC;text-align:left;"><apex:outputPanel rendered="{!IF(AND(invoice.Credit_Memo_Amount__c != 0,invoice.Credit_Memo_Amount__c!= NULL), TRUE,FALSE)}" layout="block"><div class="taxbox  border-none" ><b>Total Payable</b></div> </apex:outputPanel></td>
-                                    <td><apex:outputPanel rendered="{!IF(AND(invoice.Credit_Memo_Amount__c != 0,invoice.Credit_Memo_Amount__c != NULL), TRUE,FALSE)}" layout="block">
+                                    <td style="border-bottom: solid 0.5px #DCDCDC;text-align:left;">
+                                        <apex:outputPanel rendered="{!IF(AND(invoice.Credit_Memo_Amount__c!= NULL,invoice.Credit_Memo_Amount__c != 0), TRUE,FALSE)}" layout="block"><div class="taxbox  border-none" ><b>Total Payable</b></div> </apex:outputPanel></td>
+                                    <td><apex:outputPanel rendered="{!IF(AND(invoice.Credit_Memo_Amount__c!= NULL,invoice.Credit_Memo_Amount__c != 0), TRUE,FALSE)}" layout="block">
                                          <div class="taxValue">
                                          <b> <apex:outputText value="{0, number, $###,###,###.00}"><apex:param value="{!payableAmount}" /></apex:outputText>    </b>
                                              </div> 
@@ -560,7 +565,9 @@
                             <apex:outputPanel rendered="{!OR(InvoiceStatus=='Due', InvoiceStatus=='Overdue')}">
                                 <div style="float: right;">
                                     <!--<button type="button" class="button"><a href="{!customLabelValue +'/apex/PayNowDetail?id='+InvoiceId}" style="color: white;font-weight: bold;text-decoration: none;font-size: medium;" target="_blank">Pay Now</a> </button>-->
-                                    <button type="button" style="background-color: #f6901e;color: white;padding: 11px;border-radius: 5px;margin-right: 9%;float: right;"><apex:outputLink value="{!customLabelValue +'/apex/PayNowDetail?id='+InvoiceId}" style="color: white;font-weight: bold;text-decoration: none;font-size: medium;" id="theLink">Pay Now</apex:outputLink></button>
+                                    <button type="button" class="{!IF(isOssia==true,'backgroundcolor_ossia','backgroundcolor')}" style="color: white;padding: 11px;border-radius: 5px;margin-right: 9%;float: right;">
+                                    <apex:outputLink value="{!customLabelValue +'/apex/PayNowDetail?id='+InvoiceId}" style="color: white;font-weight: bold;text-decoration: none;font-size: medium;" id="theLink">Pay Now</apex:outputLink>
+                                    </button>
                                 </div>
                             </apex:outputPanel>
                             
@@ -571,3 +578,4 @@
         </body>    
     </html>
 </apex:page>
+                         

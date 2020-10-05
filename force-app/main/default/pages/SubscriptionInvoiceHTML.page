@@ -486,13 +486,13 @@
                 
                 <apex:outputPanel rendered="{!OR(InvoiceStatus=='Due', InvoiceStatus=='Overdue') && (displayUpdate==true)}">
                     <Div style="float: right;margin-right: 6%;">
-                        <button type="button" class="{!IF(isOssia==true,'backgroundcolor_ossia','backgroundcolor')}"><a href="{!customLabelValue +'/apex/PayNowDetail?id='+InvoiceId}" style="color: white;font-weight: bold;text-decoration: none;font-size: medium;" target="_blank">Pay Now</a> </button>
+                        <button type="button" class="{!IF(isOssia==true,'backgroundcolor_ossia button','button')}"><a href="{!customLabelValue +'/apex/PayNowDetail?id='+InvoiceId}" style="color: white;font-weight: bold;text-decoration: none;font-size: medium;" target="_blank">Pay Now</a> </button>
                         
                     </Div>
                 </apex:outputPanel>
                  <apex:outputPanel rendered="{!OR(InvoiceStatus=='Due', InvoiceStatus=='Overdue') && (displayUpdate==false)}">
                     <Div style="float: right;margin-right: 6%;">
-                        <button type="button" class="{!IF(isOssia==true,'backgroundcolor_ossia','backgroundcolor')}"><a href="{!customLabelValue +'/apex/UpdateCustomerCard?id='+ParentAccId}" style="color: white;font-weight: bold;text-decoration: none;font-size: medium;" target="_blank">Pay Now</a> </button>
+                        <button type="button" class="{!IF(isOssia==true,'backgroundcolor_ossia button','button')}"><a href="{!customLabelValue +'/apex/UpdateCustomerCard?id='+ParentAccId}" style="color: white;font-weight: bold;text-decoration: none;font-size: medium;" target="_blank">Pay Now</a> </button>
                         
                     </Div>
                 </apex:outputPanel>
