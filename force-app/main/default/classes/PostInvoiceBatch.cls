@@ -24,7 +24,7 @@ global class PostInvoiceBatch implements Database.Batchable<sObject>, database.s
         noOfRecords  = 0;
         startTime = system.now();
          enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus,ConstantsClass.enrolGroupType};
-        
+         enrolmentIds = new Set<String>();
      }
     public PostInvoiceBatch(Set<string> enrolIds){
         enrolmentIds = enrolIds;
@@ -45,6 +45,17 @@ global class PostInvoiceBatch implements Database.Batchable<sObject>, database.s
        enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus,ConstantsClass.enrolGroupType};
   }
      global Database.QueryLocator start(Database.BatchableContext BC){
+        string queryString = 'SELECT Id, Student__c, Center__c, Center__r.Name, Teacher__c, Package__c,Lesson_Start_time__c, Package__r.Duration__c, Lesson_Day__c,Parent__c, Parent__r.Available_Make_up_Units__c,Student__r.Name,Parent__r.Name, ';
+         queryString+= ' Package_Process_Type__c, Package_Process_Request_Date__c,New_Package_Id__c, Package_Process_Status__c, Effective_Date__c,New_Teacher__c, Next_Lesson_Start_time__c, New_Lesson_Day__c, Stage__c,New_Centre__c,';
+         queryString+= ' Type__c, Class__c,New_Class__c  FROM Enrolment__c ';
+         queryString+= ' WHERE Type__c In: enrolTypes ';
+         queryString+= ' AND Stage__c =: enroledStatus ';
+         queryString+= ' AND Lessons_Start_Date__c <= THIS_MONTH ';
+         if(enrolmentIds != null && enrolmentIds.size() > 0){
+            queryString+= ' And Id IN: enrolmentIds';
+         }
+        return Database.getQueryLocator(queryString);
+        /* commented by nishi:6-Oct-2020
         return Database.getQueryLocator([SELECT Id, Student__c, Center__c, Center__r.Name, Teacher__c, Package__c,
                                           Lesson_Start_time__c, Package__r.Duration__c, Lesson_Day__c,
                                           Parent__c, Parent__r.Available_Make_up_Units__c,Student__r.Name,Parent__r.Name,
@@ -60,7 +71,8 @@ global class PostInvoiceBatch implements Database.Batchable<sObject>, database.s
                                           //Type__c = :enrolRegularType
                                           Stage__c =: enroledStatus AND 
                                           Lessons_Start_Date__c <= THIS_MONTH AND
-                                          Id IN: enrolmentIds]);
+                                          Id IN: enrolmentIds]);*/
+
      }
      
      global void execute(Database.BatchableContext BC, List<Enrolment__c> enrolmentList){

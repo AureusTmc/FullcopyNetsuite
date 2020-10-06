@@ -271,7 +271,7 @@
                 <td colspan="4" class="text-right" style="padding-top:30px;padding-right: 7%;"><b>Credit Memo Status</b> <span style="{!IF(creditMemo.Status__c =='Success','color:green',IF(creditMemo.Status__c=='Pending','color:#f6901e',IF(creditMemo.Status__c=='Overdue','color:red','')))}">{!creditMemo.Status__c}</span></td>
             </tr>
             <tr>
-                <td colspan="4" class="text-right" style=" padding-bottom:10px;padding-right: 7%;"><b>Pending Reason : </b> <span style="" >{!creditMemo.Comments__c}</span></td>
+                <td colspan="4" class="text-right" style=" padding-bottom:10px;padding-right: 7%;"><b> Reason : </b> <span style="" >{!creditMemo.Comments__c}</span></td>
             
                 <!--commented by nishi: 5-Oct-2020: for now we show reason without any condition
                      <td colspan="4" class="text-right" style=" padding-bottom:10px;padding-right: 7%;{!IF(creditMemo.Status__c =='Pending','','display:none')}"><b>Pending Reason : </b> <span style="{!IF(creditMemo.Status__c =='Pending','','display:none')}" >{!creditMemo.Comments__c}</span></td> -->

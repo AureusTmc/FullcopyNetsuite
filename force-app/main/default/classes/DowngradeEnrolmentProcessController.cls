@@ -223,15 +223,18 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
         // Decimal negativeFacilityInvoiceAmount =  mapOfCase.containsKey('negativeFacilityInvoiceAmount') ? Decimal.valueOf(mapOfCase.get('negativeFacilityInvoiceAmount')) : 0;
         // Decimal positiveFacilityInvoiceAmount =  mapOfCase.containsKey('positiveFacilityInvoiceAmount') ? Decimal.valueOf(mapOfCase.get('positiveFacilityInvoiceAmount')) : 0;
         // // added by nishi: 19_aug-2020: for added facility fee is exist
-        Decimal positiveNextMonthInvoiceAmount  = mapOfCase.containsKey('positiveNextMonthInvoiceAmount') ? Decimal.valueOf(mapOfCase.get('positiveNextMonthInvoiceAmount')) : 0;
-        Decimal negativeNextMonthInvoiceAmount =  mapOfCase.containsKey('negativeNextMonthInvoiceAmount') ? Decimal.valueOf(mapOfCase.get('negativeNextMonthInvoiceAmount')) : 0;
-        Decimal nextMonthAmount =  mapOfCase.containsKey('lessonNextLessonCharge') ? Decimal.valueOf(mapOfCase.get('lessonNextLessonCharge')) : 0;
+        Decimal positiveNextMonthInvoiceAmount  = mapOfCase.containsKey('positiveNextMonthInvoiceAmount') && mapOfCase.get('positiveNextMonthInvoiceAmount') != null? Decimal.valueOf(mapOfCase.get('positiveNextMonthInvoiceAmount')) : 0;
+        Decimal negativeNextMonthInvoiceAmount =  mapOfCase.containsKey('negativeNextMonthInvoiceAmount') && mapOfCase.get('negativeNextMonthInvoiceAmount') != null? Decimal.valueOf(mapOfCase.get('negativeNextMonthInvoiceAmount')) : 0;
+        Decimal nextMonthAmount =  mapOfCase.containsKey('lessonNextLessonCharge') && mapOfCase.get('lessonNextLessonCharge') != null? Decimal.valueOf(mapOfCase.get('lessonNextLessonCharge')) : 0;
         Boolean isTransaction = false;
         Subscription_Line_Item__c objSubLineItem;
         String stripeId;
         Invoice__c objInvoice = new Invoice__c();
         List<Invoice_Line_Item__c> invoiceLineItems = new List<Invoice_Line_Item__c>();
         List<Payment__c> listOfPayments = new List<Payment__c>(); 
+        // added by nishi: 6-oct-2020: for create credit memo records
+        map<string,Credit_Memo__c> newPendingCreditMemos = new map<string,Credit_Memo__c>();
+        map<string,Credit_memo_line_item__c> listOfCreditmemolineitem = new map<string,Credit_memo_line_item__c>();
         String payAsCredit = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get('Payment As Credit').getRecordTypeId();
         String paymentRecordTypeId =  Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get(ConstantsClass.paymentAsDepositRecordType).getRecordTypeId();
         String paymentTransaction = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get(ConstantsClass.paymentTransactionRecType).getRecordTypeId();
@@ -301,18 +304,21 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                         Parent_Account__c = objEnrol.Parent__c, 
                                         Center__c=objEnrol.Center__c);
             INSERT objInvoice;
-           //system.debug('@objInvoice'+objInvoice);
+            
+             //system.debug('@objInvoice'+objInvoice);
             // JATIN  25-Nov-2019 :for add transaction id in payment reocrds
             Map<String, Payment__c> mapOfInvoicePayments = new Map<String, Payment__c>();
             List<Id> invoiceIds = NEW List<Id>();
-            for(Invoice_Line_Item__c lineItem : [SELECT Id, Invoice__c, Amount__c, Invoice__r.Parent_Account__c, Subscription_Line_Item__r.Next_Bill_Date__c 
+            Map<Id,Invoice_Line_Item__c> invoicemap = NEW Map<Id,Invoice_Line_Item__c>();
+            for(Invoice_Line_Item__c lineItem : [SELECT Id, Invoice__c, Amount__c, Invoice__r.Parent_Account__c, Subscription_Line_Item__r.Next_Bill_Date__c ,Package__c
                                                 FROM Invoice_Line_Item__c 
                                                 WHERE Enrolment__c =: objEnrol.id 
                                                 AND Is_Deposit__c = true 
                                                 AND Subscription_Line_Item__c != NULL]){
                                                     invoiceIds.add(lineItem.Invoice__c);
+                                                    invoicemap.put(lineItem.Invoice__c,lineItem);
                                                 }
-                for(Payment__c payment : [SELECT Id, Transaction_ID__c, Invoice__c  
+                for(Payment__c payment : [SELECT Id, Transaction_ID__c, Invoice__c  ,Method_of_Payment__c 
                                         FROM Payment__c 
                                         WHERE Invoice__c In: invoiceIds AND 
                                         RecordType.Name =:ConstantsClass.paymentTransactionRecType]){
@@ -322,7 +328,8 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                         }
             
             if(depositAmount != 0){
-                string transactionID ='';
+                 //added by nishi: 6-Oct-2020 : start:for new requirement we Create a Credit Memo record with the status pending instead of the Payment as Deposit record.
+               /* string transactionID ='';
                 if(mapOfInvoicePayments != null && mapOfInvoicePayments.size() > 0){
                     for(string invoiceId : mapOfInvoicePayments.keyset()){
                         if(mapOfInvoicePayments.containsKey(invoiceId)){
@@ -331,30 +338,50 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                     } 
                 }
                //system.debug('@@transactionID'+transactionID);
+               
                 listOfPayments.add(new Payment__c(Payment_Date__c = lastLessonDateObj, 
                                                   RecordTypeId = paymentRecordTypeId, 
                                                   Transaction_ID__c = transactionID,
                                                   Payment_Amount__c = Math.abs(depositAmount), 
                                                   Payment_Status__c = ConstantsClass.paymentPendingStatus,
                                                   Parent_Account__c = objEnrol.Parent__c, 
-                                                  Enrolment__c = objEnrol.Id));    
+                                                  Enrolment__c = objEnrol.Id));   */
+                Credit_Memo__c objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, null,  lastLessonDateObj,'Deposit Adjustment');
+                objCreditMemo.Credit_Memo_Date__c = lastLessonDateObj;
+                if(mapOfInvoicePayments != null && mapOfInvoicePayments.size() > 0){
+                    for( string invoiceId : mapOfInvoicePayments.keyset()){
+                        if(mapOfInvoicePayments.containsKey(invoiceId)){
+                            objCreditMemo.Payment_Method__c =   mapOfInvoicePayments.get(invoiceId).Method_of_Payment__c; 
+                            objCreditMemo.From_Invoice__c = invoiceId;
+                            Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(Math.abs(depositAmount),null,invoicemap.get(invoiceId).Package__c,
+                                                            objEnrol.id,invoicemap.get(invoiceId).Id,'Deposit Adjustment');
+                                                            objCreditLineItem.Is_Deposit__c = true;
+                                                            objCreditLineItem.Month__c = lastLessonDateObj;
+                            listOfCreditmemolineitem.put('Deposit Adjustment',objCreditLineItem);
+                        }
+                    }
+                }
+                newPendingCreditMemos.put('Deposit Adjustment',objCreditMemo);
+                 //added by nishi: 6-Oct-2020 : start:for new requirement we Create a Credit Memo record with the status pending instead of the Payment as Deposit record.
             }
            //system.debug('@listOfPayments'+listOfPayments);
         }   
         
         if(lastLessonDateObj < nextBillDate){
             decimal gstAmount = 0;
+            if( string.isNotBlank(objEnrol.Center__c) && string.isNotBlank(objEnrol.Center__r.Country__c) &&
+            objEnrol.Center__r.Country__r.Tax_Rate__c != null ){
+                gstAmount = BillingUtility.roundOffAmount(objEnrol.Center__r.Country__r.Tax_Rate__c);
+            }
+           
+           /* //commented by nishi: 6-OCT-2020:Create a Credit Memo record with the status pending instead of the Payment as Credit record for the remaining lessons. No invoice will be generated.
+            
             decimal positiveInvoiceAmountGST =0;
             decimal negativeInvoiceAmountGST =0;
             decimal positiveFacilityInvoiceAmountGST =0;
             decimal negativeFacilityInvoiceAmountGST =0;
             decimal positiveNextMonthInvoiceAmountGST =0;
             decimal negativeNextMonthInvoiceAmountGST =0;
-            if( string.isNotBlank(objEnrol.Center__c) && string.isNotBlank(objEnrol.Center__r.Country__c) &&
-             objEnrol.Center__r.Country__r.Tax_Rate__c != null ){
-                 gstAmount = BillingUtility.roundOffAmount(objEnrol.Center__r.Country__r.Tax_Rate__c);
-             }
-
            
             if(positiveInvoiceAmount != NULL && negativeInvoiceAmount != NULL && String.isNotBlank(objInvoice.Id)){
                 if(positiveInvoiceAmount != NULL && gstAmount > 0){
@@ -428,19 +455,18 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                 //     lessonsAmt+=facilityFee;
                 // }
                  //end: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
-                 //start: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
                 if(nextMonthAmount  != null && nextMonthAmount != 0){
                     lessonsAmt+=nextMonthAmount;
                 }
                //System.debug('lessonsAmt'+lessonsAmt);
                  //end: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
-                listOfPayments.add(new Payment__c(RecordTypeId = payAsCredit, Payment_Amount__c = BillingUtility.roundOffAmount(lessonsAmt), Payment_Status__c = ConstantsClass.paymentPendingStatus,
+                 listOfPayments.add(new Payment__c(RecordTypeId = payAsCredit, Payment_Amount__c = BillingUtility.roundOffAmount(lessonsAmt), Payment_Status__c = ConstantsClass.paymentPendingStatus,
                                                   
                                                   Parent_Account__c = objEnrol.Parent__c, Payment_Date__c = lastLessonDateObj));
-
+                                                               
                 // 8-jan-2020: jatin for add Balanced invoices
-                 decimal balancedInvoice =0;
-                  decimal balancedInvoiceGST = 0;
+                decimal balancedInvoice =0;
+                decimal balancedInvoiceGST = 0;
                 if(BillingUtility.roundOffAmount(positiveInvoiceAmount) > math.abs(BillingUtility.roundOffAmount(negativeInvoiceAmount))){
                     balancedInvoice = -(BillingUtility.roundOffAmount(positiveInvoiceAmount) - math.abs(BillingUtility.roundOffAmount(negativeInvoiceAmount)));
                 }if( math.abs(BillingUtility.roundOffAmount(negativeInvoiceAmount)) > BillingUtility.roundOffAmount(positiveInvoiceAmount)){
@@ -477,10 +503,27 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                             Subscription_Line_Item__c = objEnrol.Subscription_Line_Items__r[0].Id,
                                             Remarks__c ='Credit Note Adjustment'));
                 }
-                 
-
             }
-            
+            //commented by nishi: 6-OCT-2020:End:Create a Credit Memo record with the status pending instead of the Payment as Credit record for the remaining lessons. No invoice will be generated.
+            */
+
+            if(nextMonthAmount  != null && nextMonthAmount != 0){
+                lessonsAmt+=nextMonthAmount;
+            }
+            Decimal taxAmount = 0;
+            if(gstAmount != null && gstAmount != 0){
+                taxAmount =(gstAmount/100)*lessonsAmt; 
+            }
+            system.debug('taxAmount'+taxAmount);
+            system.debug('lessonsAmt'+lessonsAmt);
+            Credit_Memo__c objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, null,lastLessonDateObj,'Remaining Lessons Adjustment');
+            newPendingCreditMemos.put('Remaining Lessons Adjustment',objCreditMemo);
+            Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(lessonsAmt - BillingUtility.roundOffAmount(taxAmount),
+                                            BillingUtility.roundOffAmount(taxAmount),NULL,
+                                            objEnrol.id,NULL,'Remaining Lessons Adjustment');
+                                            objCreditLineItem.Month__c = lastLessonDateObj;
+            listOfCreditmemolineitem.put('Remaining Lessons Adjustment',objCreditLineItem);
+                //added by nishi: 6-Oct-2020 :end: Create a Credit Memo record with the status pending instead of the Payment as Credit record for the remaining lessons.
             
         }
         
@@ -495,8 +538,26 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
         }  
        //System.debug('@@@listOfPayments'+listOfPayments);
         if(listOfPayments.size() > 0){
-            insert listOfPayments;
+             insert listOfPayments;
         }
+        //added by nishi: 6-Oct-2020 : start:for new requirement Create a Credit Memo record with the status pending instead of the Payment as Deposit record.
+        if(newPendingCreditMemos.size() > 0){
+            Insert newPendingCreditMemos.values();  
+           system.debug('newPendingCreditMemos'+newPendingCreditMemos);
+           List<Credit_memo_line_item__c> listOfnewCreditmemolineitem = new list<Credit_memo_line_item__c>();
+            for(string creditMemoRemark : newPendingCreditMemos.keyset()){
+                if(listOfCreditmemolineitem.containskey(creditMemoRemark)){
+                    Credit_memo_line_item__c objCreditLineItem= listOfCreditmemolineitem.get(creditMemoRemark);
+                    objCreditLineItem.Credit_Memo_Number__c = newPendingCreditMemos.get(creditMemoRemark).id;
+                    listOfnewCreditmemolineitem.add(objCreditLineItem);
+                }
+            } 
+            if(listOfnewCreditmemolineitem != null && listOfnewCreditmemolineitem.size() > 0){
+                insert listOfnewCreditmemolineitem;
+            }
+                                       
+        }
+         //added by nishi: 6-Oct-2020 : end:for new requirement Create a Credit Memo record with the status pending instead of the Payment as Deposit record.
        //system.debug('@@@listOfPayments'+listOfPayments);
        //system.debug('@@@isTransaction'+isTransaction);
         return isTransaction;

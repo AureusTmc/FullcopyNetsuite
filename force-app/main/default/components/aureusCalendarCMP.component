@@ -854,7 +854,8 @@
                                                     History
                                                 </a>
                                             </li>
-                                            <li class="slds-tabs--default__item slds-text-heading--label slds-hide" title="Advance Actions" role="presentation" id="advanceDetailsSection">
+                                            <li class="slds-tabs--default__item slds-text-heading--label slds-hide" title="
+                                            e Actions" role="presentation" id="advanceDetailsSection">
                                                 <a class="slds-tabs--default__link" href="javascript:void(0);" role="tab" tabindex="-1" aria-selected="true" aria-controls="tab-default-4" id="tab-defaul-4__item">
                                                     Adv. Actions
                                                 </a>
@@ -1171,7 +1172,7 @@ Enrol now
                                         </div>
                                         <!-- End Added By Ravi on 8 july 2020 .. for Online leesson Tab-->
                                         
-											
+                                            
                                     </div>
                                     <!-- tab 4 ends && tab 5 starts -->
                                     
@@ -4623,15 +4624,15 @@ Enrol now
         var isOssia =  $('#cancelBooking').attr('data-isOssia');
         $('#newGroupClassCMP').addClass('slds-hide');
         if(bookingId && bookingCancelTime && bookingType){
-            // added by Nishi: 20-jul-2020:Start: for is Student is Ossia organization and booking type is Makeup then	
-            // we show cancellation table for user can manage selected student given makeup mins or not 	
-            if(isOssia && isOssia === 'true'){	
-                $('#cancelOssiaBookingWithoutMakeup').attr({'data-id':bookingId, 'data-reason':cancelReasonValue });	
-                $('#cancelOssiaBookingWithMakeup').attr({'data-id':bookingId, 'data-reason':cancelReasonValue });	
-                OssiaStudentCancelBooking(bookingId);	
-            }	
-            // added by Nishi: 20-jul-2020: End:for is Student is Ossia organization and booking type is Makeup then	
-            // we show cancellation table for user can manage selected student given makeup mins or not 	
+            // added by Nishi: 20-jul-2020:Start: for is Student is Ossia organization and booking type is Makeup then  
+            // we show cancellation table for user can manage selected student given makeup mins or not     
+            if(isOssia && isOssia === 'true'){  
+                $('#cancelOssiaBookingWithoutMakeup').attr({'data-id':bookingId, 'data-reason':cancelReasonValue });    
+                $('#cancelOssiaBookingWithMakeup').attr({'data-id':bookingId, 'data-reason':cancelReasonValue });   
+                OssiaStudentCancelBooking(bookingId);   
+            }   
+            // added by Nishi: 20-jul-2020: End:for is Student is Ossia organization and booking type is Makeup then    
+            // we show cancellation table for user can manage selected student given makeup mins or not     
             else{
                 if(bookingCancelTime < 24 && (bookingType == 'Regular' || bookingType == 'Make-up') && cancelReasonValue){
                     $('.cancellationReasonPopup').addClass('slds-hide');
@@ -4698,42 +4699,42 @@ Enrol now
         var makeupCreditRemark = $('#remarkForCancellation').val();
          var isOssia =  $('#cancelBooking').attr('data-isOssia');
         if(bookingId){ //&& cancelReasonValue
-            // added by Nishi: 20-jul-2020:Start: for is Student is Ossia organization and booking type is Makeup then	
-            // we show cancellation table for user can manage selected student given makeup mins or not 	
-            if(isOssia && isOssia === 'true'){	
-                if(makeupReason && (makeupReason == 'Other' || makeupReason == 'Admin/CM Exception')){	
-                    if(makeupCreditRemark){	
-                        $('.cancellationReasonPopup').addClass('slds-hide');	
-                        $('#confirmBody').html('Do you want to send an email?');	
-                        $('#confirmHeader').html('Email Confirmation');	
-                        $('#confirmModal').removeClass('slds-hide');	
-                        $('#confirmModalNo').attr({'data-id': bookingId, 'cancelReason': '', 'makeupReason': makeupReason, 'makeupRemark': makeupCreditRemark, 'redirectCase': 'true','data-openEmail':'false'});	
-                        $('#confirmModalYes').attr({'data-id': bookingId, 'cancelReason': '', 'makeupReason': makeupReason, 'makeupRemark': makeupCreditRemark, 'redirectCase': 'false','data-openEmail':'false'});	
-                        $('#confirmModalYes').attr('data-origin','cancelOssia');	
-                        $('#confirmModalNo').attr('data-origin','cancelOssia');	
-                        OssiaStudentCancelBooking(bookingId); 	
-                    }else{	
-                        $('#errorMsgRemark').html('Makeup Remark cannot be empty for '+makeupReason);	
-                    }	
-                }else if(makeupReason){	
-                    $('.cancellationReasonPopup').addClass('slds-hide');	
-                    $('#confirmBody').html('Do you want to send an email?');	
-                    $('#confirmHeader').html('Email Confirmation');	
-                    $('#confirmModal').removeClass('slds-hide');	
-                    $('#confirmModalYes').attr({'data-id': bookingId, 'cancelReason': '', 'makeupReason': makeupReason, 'redirectCase': 'true','data-openEmail':'true'});	
-                    $('#confirmModalNo').attr({'data-id': bookingId, 'cancelReason': '', 'makeupReason': makeupReason, 'redirectCase': 'false','data-openEmail':'true'});	
-                    $('#confirmModalYes').attr('data-origin','cancelOssia');	
-                    $('#confirmModalNo').attr('data-origin','cancelOssia');	
-                    OssiaStudentCancelBooking(bookingId);	
-                }else{	
-                    $('#errorMsgReason').html('Please select the reason');	
-                }	
-               // $('#confirmModalYes').attr({'data-id':bookingId, 'data-reason':cancelReasonValue });	
-              //  $('#confirmModalNo').attr({'data-id':bookingId, 'data-reason':cancelReasonValue });	
-              //  OssiaStudentCancelBooking(bookingId);	
-            }	
-            // added by Nishi: 20-jul-2020: End:for is Student is Ossia organization and booking type is Makeup then	
-            // we show cancellation table for user can manage selected student given makeup mins or not 	
+            // added by Nishi: 20-jul-2020:Start: for is Student is Ossia organization and booking type is Makeup then  
+            // we show cancellation table for user can manage selected student given makeup mins or not     
+            if(isOssia && isOssia === 'true'){  
+                if(makeupReason && (makeupReason == 'Other' || makeupReason == 'Admin/CM Exception')){  
+                    if(makeupCreditRemark){ 
+                        $('.cancellationReasonPopup').addClass('slds-hide');    
+                        $('#confirmBody').html('Do you want to send an email?');    
+                        $('#confirmHeader').html('Email Confirmation'); 
+                        $('#confirmModal').removeClass('slds-hide');    
+                        $('#confirmModalNo').attr({'data-id': bookingId, 'cancelReason': '', 'makeupReason': makeupReason, 'makeupRemark': makeupCreditRemark, 'redirectCase': 'true','data-openEmail':'false'});   
+                        $('#confirmModalYes').attr({'data-id': bookingId, 'cancelReason': '', 'makeupReason': makeupReason, 'makeupRemark': makeupCreditRemark, 'redirectCase': 'false','data-openEmail':'false'}); 
+                        $('#confirmModalYes').attr('data-origin','cancelOssia');    
+                        $('#confirmModalNo').attr('data-origin','cancelOssia'); 
+                        OssiaStudentCancelBooking(bookingId);   
+                    }else{  
+                        $('#errorMsgRemark').html('Makeup Remark cannot be empty for '+makeupReason);   
+                    }   
+                }else if(makeupReason){ 
+                    $('.cancellationReasonPopup').addClass('slds-hide');    
+                    $('#confirmBody').html('Do you want to send an email?');    
+                    $('#confirmHeader').html('Email Confirmation'); 
+                    $('#confirmModal').removeClass('slds-hide');    
+                    $('#confirmModalYes').attr({'data-id': bookingId, 'cancelReason': '', 'makeupReason': makeupReason, 'redirectCase': 'true','data-openEmail':'true'});   
+                    $('#confirmModalNo').attr({'data-id': bookingId, 'cancelReason': '', 'makeupReason': makeupReason, 'redirectCase': 'false','data-openEmail':'true'});   
+                    $('#confirmModalYes').attr('data-origin','cancelOssia');    
+                    $('#confirmModalNo').attr('data-origin','cancelOssia'); 
+                    OssiaStudentCancelBooking(bookingId);   
+                }else{  
+                    $('#errorMsgReason').html('Please select the reason');  
+                }   
+               // $('#confirmModalYes').attr({'data-id':bookingId, 'data-reason':cancelReasonValue });  
+              //  $('#confirmModalNo').attr({'data-id':bookingId, 'data-reason':cancelReasonValue });   
+              //  OssiaStudentCancelBooking(bookingId); 
+            }   
+            // added by Nishi: 20-jul-2020: End:for is Student is Ossia organization and booking type is Makeup then    
+            // we show cancellation table for user can manage selected student given makeup mins or not     
             else{
                 if(makeupReason && (makeupReason == 'Other' || makeupReason == 'Admin/CM Exception')){
                     if(makeupCreditRemark){
@@ -4934,44 +4935,44 @@ Enrol now
                 }, 
                 {escape: true}
             );
-        } // added by Nishi jain:start: 21-Jul-2020: for manage ossia student want to cancel booking	
-        else if(origin == 'cancelOssia'){	
-            bookingId = $('#confirmModalYes').attr('data-id');	
-            $('.confirmModal').addClass('slds-hide');	
-           //console.log('origin',origin);	
-            /*$('.sendEmail').attr('data-bookingId', bookingId);	
-                $('.confirmModal').addClass('slds-hide');	
-                $('.sendEmail').removeClass('slds-hide');	
-                $('#sendEmailYes').attr({'data-origin': 'cancel', 'bookId': bookingId, 'redirectCase': 'true'});*/	
-            	
-            var cancelReason = '';	
-            if($('#confirmModalYes').attr('cancelReason')){	
-                cancelReason  = $('#confirmModalYes').attr('cancelReason');	
-            }	
-            //console.log('cancelReason'+cancelReason);	
-            var makeupReason = '';	
-            if($('#confirmModalYes').attr('makeupReason')){	
-                makeupReason = $('#confirmModalYes').attr('makeupReason');	
-            }	
-            //console.log('makeupReason'+makeupReason);	
-            var makeupRemark = '';	
-            if($('#confirmModalYes').attr('makeupRemark')){	
-                makeupRemark = $('#confirmModalYes').attr('makeupRemark');	
-            }	
-            //console.log('makeupRemark'+makeupRemark);	
-            var isfuture = '';	
-            if($('#confirmModalYes').attr('data-future')){	
-                isfuture = $('#confirmModalYes').attr('data-future');	
-            }	
-            var isNoMakeup = '';	
-            if($('#confirmModalYes').attr('data-isNoMakeup')){	
-                isNoMakeup = $('#confirmModalYes').attr('data-isNoMakeup');	
-            }	
-           // $('#cancelOssiaBookingWithoutMakeup').attr({'data-id':bookingId, 'data-reason':cancelReason,'data-caseid':caseId,'data-isfuture':isfuture,'data-redirect':'true' });	
-           // $('#cancelOssiaBookingWithMakeup').attr({'data-id':bookingId, 'data-reason':cancelReason,'data-caseid':caseId,'data-isfuture':isfuture,'data-redirect':'true' });	
-            cancelOssiaStudentBooking(bookingId,cancelReason,caseId,isfuture,isNoMakeup,'true',makeupReason,makeupRemark);	
-			   	
-        }	
+        } // added by Nishi jain:start: 21-Jul-2020: for manage ossia student want to cancel booking    
+        else if(origin == 'cancelOssia'){   
+            bookingId = $('#confirmModalYes').attr('data-id');  
+            $('.confirmModal').addClass('slds-hide');   
+           //console.log('origin',origin);  
+            /*$('.sendEmail').attr('data-bookingId', bookingId);    
+                $('.confirmModal').addClass('slds-hide');   
+                $('.sendEmail').removeClass('slds-hide');   
+                $('#sendEmailYes').attr({'data-origin': 'cancel', 'bookId': bookingId, 'redirectCase': 'true'});*/  
+                
+            var cancelReason = '';  
+            if($('#confirmModalYes').attr('cancelReason')){ 
+                cancelReason  = $('#confirmModalYes').attr('cancelReason'); 
+            }   
+            //console.log('cancelReason'+cancelReason); 
+            var makeupReason = '';  
+            if($('#confirmModalYes').attr('makeupReason')){ 
+                makeupReason = $('#confirmModalYes').attr('makeupReason');  
+            }   
+            //console.log('makeupReason'+makeupReason); 
+            var makeupRemark = '';  
+            if($('#confirmModalYes').attr('makeupRemark')){ 
+                makeupRemark = $('#confirmModalYes').attr('makeupRemark');  
+            }   
+            //console.log('makeupRemark'+makeupRemark); 
+            var isfuture = '';  
+            if($('#confirmModalYes').attr('data-future')){  
+                isfuture = $('#confirmModalYes').attr('data-future');   
+            }   
+            var isNoMakeup = '';    
+            if($('#confirmModalYes').attr('data-isNoMakeup')){  
+                isNoMakeup = $('#confirmModalYes').attr('data-isNoMakeup'); 
+            }   
+           // $('#cancelOssiaBookingWithoutMakeup').attr({'data-id':bookingId, 'data-reason':cancelReason,'data-caseid':caseId,'data-isfuture':isfuture,'data-redirect':'true' });  
+           // $('#cancelOssiaBookingWithMakeup').attr({'data-id':bookingId, 'data-reason':cancelReason,'data-caseid':caseId,'data-isfuture':isfuture,'data-redirect':'true' }); 
+            cancelOssiaStudentBooking(bookingId,cancelReason,caseId,isfuture,isNoMakeup,'true',makeupReason,makeupRemark);  
+                
+        }   
          // added by Nishi jain:End: 21-Jul-2020: for manage ossia student want to cancel booking
             else if(origin == 'update'){
             bookingId = '';
@@ -5486,37 +5487,37 @@ Enrol now
                 }, 
                 {escape: true}
             );
-        }// added by Nishi jain:start: 21-Jul-2020: for manage ossia student want to cancel booking	
-        else if(origin == 'cancelOssia'){	
-            $('.confirmModal').addClass('slds-hide');	
-            bookingId = $('#confirmModalNo').attr('data-id');	
-           //console.log('origin',origin);	
-            var cancelReason = '';	
-            if($('#confirmModalNo').attr('cancelReason')){	
-                cancelReason  = $('#confirmModalNo').attr('cancelReason');	
-            }	
-            //console.log('@@cancelReason'+cancelReason);	
-            var makeupReason = '';	
-            if($('#confirmModalNo').attr('makeupReason')){	
-                makeupReason = $('#confirmModalNo').attr('makeupReason');	
-            }	
-            //console.log('@@makeupReason'+makeupReason);	
-            var makeupRemark = '';	
-            if($('#confirmModalNo').attr('makeupRemark')){	
-                makeupRemark = $('#confirmModalNo').attr('makeupRemark');	
-            }	
-            var isNoMakeup = '';	
-            if($('#confirmModalNo').attr('data-isNoMakeup')){	
-                isNoMakeup = $('#confirmModalNo').attr('data-isNoMakeup');	
-            }	
-            var isfuture = '';	
-            if($('#confirmModalYes').attr('data-future')){	
-                isfuture = $('#confirmModalYes').attr('data-future');	
-            }	
-           // $('#cancelOssiaBookingWithoutMakeup').attr({'data-id':bookingId, 'data-reason':cancelReason,'data-caseid':caseId,'data-isfuture':'','data-redirect':'false' });	
-           // $('#cancelOssiaBookingWithMakeup').attr({'data-id':bookingId, 'data-reason':cancelReason,'data-caseid':caseId,'data-isfuture':'','data-redirect':'false' });	
-           cancelOssiaStudentBooking(bookingId,cancelReason,caseId,isfuture,isNoMakeup,'false',makeupReason,makeupRemark);	
-        }	
+        }// added by Nishi jain:start: 21-Jul-2020: for manage ossia student want to cancel booking 
+        else if(origin == 'cancelOssia'){   
+            $('.confirmModal').addClass('slds-hide');   
+            bookingId = $('#confirmModalNo').attr('data-id');   
+           //console.log('origin',origin);  
+            var cancelReason = '';  
+            if($('#confirmModalNo').attr('cancelReason')){  
+                cancelReason  = $('#confirmModalNo').attr('cancelReason');  
+            }   
+            //console.log('@@cancelReason'+cancelReason);   
+            var makeupReason = '';  
+            if($('#confirmModalNo').attr('makeupReason')){  
+                makeupReason = $('#confirmModalNo').attr('makeupReason');   
+            }   
+            //console.log('@@makeupReason'+makeupReason);   
+            var makeupRemark = '';  
+            if($('#confirmModalNo').attr('makeupRemark')){  
+                makeupRemark = $('#confirmModalNo').attr('makeupRemark');   
+            }   
+            var isNoMakeup = '';    
+            if($('#confirmModalNo').attr('data-isNoMakeup')){   
+                isNoMakeup = $('#confirmModalNo').attr('data-isNoMakeup');  
+            }   
+            var isfuture = '';  
+            if($('#confirmModalYes').attr('data-future')){  
+                isfuture = $('#confirmModalYes').attr('data-future');   
+            }   
+           // $('#cancelOssiaBookingWithoutMakeup').attr({'data-id':bookingId, 'data-reason':cancelReason,'data-caseid':caseId,'data-isfuture':'','data-redirect':'false' });   
+           // $('#cancelOssiaBookingWithMakeup').attr({'data-id':bookingId, 'data-reason':cancelReason,'data-caseid':caseId,'data-isfuture':'','data-redirect':'false' });  
+           cancelOssiaStudentBooking(bookingId,cancelReason,caseId,isfuture,isNoMakeup,'false',makeupReason,makeupRemark);  
+        }   
          // added by Nishi jain:End: 21-Jul-2020: for manage ossia student want to cancel booking
             else if(origin == 'update'){
             let bookingId = '';
@@ -6047,13 +6048,13 @@ Enrol now
                             if(eventResult.type == 'Trial' || eventResult.type == 'Regular'|| eventResult.type == 'Make-up'|| eventResult.type == 'Ad-hoc'){
                                 $('#lessonTypeName').text(eventResult.lessonType);  
                                 // added By Ravi on 8 july 2020..lessonTypeName
-                                if(eventResult.lessonURL != null && eventResult.lessonURL !=''){	
-                                    $('#onlineLesson').removeClass('slds-hide');	
-                                    $('#lessonURL').val(eventResult.lessonURL);        	
-                                    //$('#lessonURL').attr('href',eventResult.lessonURL);	
-                                    $('#lessonPassCode').text(eventResult.lessonPassCode); 	
-                                }else{	
-                                    $('#onlineLesson').addClass('slds-hide');	
+                                if(eventResult.lessonURL != null && eventResult.lessonURL !=''){    
+                                    $('#onlineLesson').removeClass('slds-hide');    
+                                    $('#lessonURL').val(eventResult.lessonURL);         
+                                    //$('#lessonURL').attr('href',eventResult.lessonURL);   
+                                    $('#lessonPassCode').text(eventResult.lessonPassCode);  
+                                }else{  
+                                    $('#onlineLesson').addClass('slds-hide');   
                                 }
                                 // added By Ravi on 8 july 2020..lessonTypeName
                             }
@@ -6065,8 +6066,8 @@ Enrol now
                             var centerName = eventResult.centerName;
                             $('#centerName').html(centerName);
                             //  start:added by nishi: 30-Jul-2020: for change Resouce current enrolment 
-                            //Start:1-aug-2020:nishi: #1	Change studio option not appearing in online bookings
-                            //#2	Also, can we remove Change lesson mode and Change studio options if the booking is completed/cancelled
+                            //Start:1-aug-2020:nishi: #1    Change studio option not appearing in online bookings
+                            //#2    Also, can we remove Change lesson mode and Change studio options if the booking is completed/cancelled
 
                             if(eventResult.status == 'Completed' || eventResult.status == 'Canceled'){
                                 $('#changeResourceType').addClass('slds-hide');
@@ -6081,8 +6082,8 @@ Enrol now
                                     $('#changeResourceType').addClass('slds-hide');
                                 }*/
                             }
-                              //End:1-aug-20202:nishi: #1	Change studio option not appearing in online bookings
-                            //#2	Also, can we remove Change lesson mode and Change studio options if the booking is completed/cancelled
+                              //End:1-aug-20202:nishi: #1   Change studio option not appearing in online bookings
+                            //#2    Also, can we remove Change lesson mode and Change studio options if the booking is completed/cancelled
                            
                             $('#ResourceTypeName').html(eventResult.resourceName);
                             $('#ResourceTypeName').attr('data-resourceName',eventResult.resourceName);
@@ -6350,7 +6351,7 @@ Enrol now
                                     // Create an auxiliary hidden input
                                     var aux = document.createElement("input");
                                     // Get the text from the element passed into the input
-                                    var msgLesson='To join this video Meeting Click this link:'+document.getElementById('lessonURL').value +',\n Meeting PassCode:'+ document.getElementById('lessonPassCode').textContent;	
+                                    var msgLesson='To join this video Meeting Click this link:'+document.getElementById('lessonURL').value +',\n Meeting PassCode:'+ document.getElementById('lessonPassCode').textContent; 
                                     aux.setAttribute("value",msgLesson);
                                     // Append the aux input to the body
                                     document.body.appendChild(aux);
@@ -6975,12 +6976,12 @@ Enrol now
                                                     initEvents(eventId, event.start.format());
                                                 }else if(event.Type != 'Trial' && event.Type == 'Regular' && !event.c){
                                                     // Added by Ravi on 21st july 2020 .. removed slds-hide from Id ='advanceOptionsBtn' below button
-                                                    $('#button_Group_EditDetails').append('<button class="slds-col slds-button slds-button_icon slds-button_icon-border-filled button-shadow " title="Advance Actions" aria-pressed="false" id="advanceOptionsBtn" onclick="showAdvanceOptions();return false;" data-id="'+eventId+'" data-bookingType="'+event.Type+'">Advance Actions <svg class="slds-button__icon" aria-hidden="true"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#settings')}" /></svg><span class="slds-assistive-text">Advance Actions</span></button>');
+                                                    $('#button_Group_EditDetails').append('<button class="slds-col slds-button slds-button_icon slds-button_icon-border-filled button-shadow" title="Advance Actions" aria-pressed="false" id="advanceOptionsBtn" onclick="showAdvanceOptions();return false;" data-id="'+eventId+'" data-bookingType="'+event.Type+'">Advance Actions <svg class="slds-button__icon" aria-hidden="true"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#settings')}" /></svg><span class="slds-assistive-text">Advance Actions</span></button>');
                                                                                           initEvents(eventId, event.start.format());
-                                                    // added by nishi: Start : 10-Aug-2020: for Ossia organisation student 	
-                                                    if(event.isOssia){	
+                                                    // added by nishi: Start : 10-Aug-2020: for Ossia organisation student  
+                                                    if(event.isOssia){  
                                                         $('#advanceOptionsBtn').attr({'data-isOssia': event.isOssia});
-                                                    }	
+                                                    }   
                                                     // added by nishi:End 10-Aug-2020: for Ossia organisation student 
                                                 }else if(event.Type == 'Busy' && eventId && !event.isClass){
                                                     $('.addNewBookingFromBusy').removeClass('slds-hide');
@@ -7019,10 +7020,10 @@ Enrol now
                                                     }
                                                     
                                                 }
-                                              // added by nishi: Start : 17-Jul-2020: for Ossia organisation student 	
-                                               //console.log('isOssia',event.isOssia);	
-                                                $('#cancelBooking').removeAttr('data-isOssia');	
-                                                if(event.isOssia){	
+                                              // added by nishi: Start : 17-Jul-2020: for Ossia organisation student    
+                                               //console.log('isOssia',event.isOssia);  
+                                                $('#cancelBooking').removeAttr('data-isOssia'); 
+                                                if(event.isOssia){  
                                                     $('#cancelBooking').attr({'data-isOssia': event.isOssia});
                                                     if(event.Type == 'Make-up'){
                                                         $('#cancelOssiaBookingWithoutMakeup').html('Ok');
@@ -7031,7 +7032,7 @@ Enrol now
                                                         $('#cancelOssiaBookingWithoutMakeup').html('Without Make-up');
                                                         $('#cancelOssiaBookingWithMakeup').removeClass('slds-hide');
                                                     }
-                                                }	
+                                                }   
                                                 // added by nishi:End 17-Jul-2020: for Ossia organisation student 
                                                 
                                                 
@@ -7330,27 +7331,27 @@ Enrol now
                                        //console.log('value6.id'+value6.id);
                                        //console.log('value6.type'+value6.type);
                                         $('#packageSelect').val(value6.name);
-                                         // Nishi: 18-Aug-2020 : start : if center is ossia then we manage teacher and enrolment	
-                                         var isossia = $('#saveNewBooking').attr('data-isossia');	
-                                            if(isossia && isossia === 'true'){	
-                                                //$('#OssiaTeacherSelect').removeAttr('disabled');	
-                                                $('#OssiaInstrumentSelect').removeAttr('disabled');	
-                                                // $('#ossiaStudentBlock').removeClass('slds-hide');	
-                                            } else{	
-                                                $('#OssiaInstrumentSelect').attr('disabled', 'true');	
-                                                $('#OssiaTeacherSelect').attr('disabled', 'true');	
-                                            }  	
+                                         // Nishi: 18-Aug-2020 : start : if center is ossia then we manage teacher and enrolment    
+                                         var isossia = $('#saveNewBooking').attr('data-isossia');   
+                                            if(isossia && isossia === 'true'){  
+                                                //$('#OssiaTeacherSelect').removeAttr('disabled');  
+                                                $('#OssiaInstrumentSelect').removeAttr('disabled'); 
+                                                // $('#ossiaStudentBlock').removeClass('slds-hide');    
+                                            } else{ 
+                                                $('#OssiaInstrumentSelect').attr('disabled', 'true');   
+                                                $('#OssiaTeacherSelect').attr('disabled', 'true');  
+                                            }   
                                             // Nishi: 18-Aug-2020 : start : if center is ossia then we manage teacher and enrolment 
                                         $('#getPackageId').removeClass('slds-is-open');
                                         if(value6.type == 'Trial'){
                                             bookingData.type =  value6.type; // value6.duration;
                                             bookingData.duration = value6.duration;   //'30';
-                                            $('#OssiaInstrumentSelect').attr('disabled', 'true');	
+                                            $('#OssiaInstrumentSelect').attr('disabled', 'true');   
                                             $('#OssiaTeacherSelect').attr('disabled', 'true');
                                         }else if(value6.duration == 'Trial' && value6.type == 'Home'){
                                             bookingData.type = 'home-trial';
                                             bookingData.duration = '30';
-                                            $('#OssiaInstrumentSelect').attr('disabled', 'true');	
+                                            $('#OssiaInstrumentSelect').attr('disabled', 'true');   
                                             $('#OssiaTeacherSelect').attr('disabled', 'true');
                                         }else if(value6.type == 'Makeup'){
                                             bookingData.type = 'Makeup';
@@ -7459,22 +7460,22 @@ Enrol now
                             
                             function newAppointmentPopup(centerid, teacherid, dateOfAppointment){
                                 $("#busyBookingViewModal").addClass('slds-hide');
-                                   $('#saveNewBooking').removeAttr('data-isossia');	
-                                $('#saveNewBooking').removeAttr('data-enrolementId');	
-                                $('#saveNewBooking').removeAttr('data-enrolteacherId');	
-                                $('#saveNewBooking').removeAttr('data-centerid');	
-                                $('#saveNewBooking').removeAttr('data-teacher');	
-                                $('#saveNewBooking').removeAttr('data-newTeacherId');	
-                                $('#saveNewBooking').removeAttr('data-instrument');	
-                                $('#saveNewBooking').removeAttr('data-makeupHours');	
-                                $('#saveNewBooking').removeAttr('data-teacherinstrument');	
-                                $('#ossiaStudentBlock').addClass('slds-hide');	
-                                $('#OssiaStudentErrorMsg').text('');	
-                                $('#OssiaInstrumentErrorMsg').text('');	
-                                $('#saveNewBooking').css('pointer-events','');	
-                                $('#OssiaTeacherSelect').empty();	
-                                $('#OssiaInstrumentSelect').empty();	
-                                bookingData.isOssia = false;	
+                                   $('#saveNewBooking').removeAttr('data-isossia'); 
+                                $('#saveNewBooking').removeAttr('data-enrolementId');   
+                                $('#saveNewBooking').removeAttr('data-enrolteacherId'); 
+                                $('#saveNewBooking').removeAttr('data-centerid');   
+                                $('#saveNewBooking').removeAttr('data-teacher');    
+                                $('#saveNewBooking').removeAttr('data-newTeacherId');   
+                                $('#saveNewBooking').removeAttr('data-instrument'); 
+                                $('#saveNewBooking').removeAttr('data-makeupHours');    
+                                $('#saveNewBooking').removeAttr('data-teacherinstrument');  
+                                $('#ossiaStudentBlock').addClass('slds-hide');  
+                                $('#OssiaStudentErrorMsg').text('');    
+                                $('#OssiaInstrumentErrorMsg').text(''); 
+                                $('#saveNewBooking').css('pointer-events','');  
+                                $('#OssiaTeacherSelect').empty();   
+                                $('#OssiaInstrumentSelect').empty();    
+                                bookingData.isOssia = false;    
                                 bookingData.enrolmentId = '';
                                 Visualforce.remoting.Manager.invokeAction(
                                     '{!$RemoteAction.AureusCalendarController.getTeacherAndCenter}',
@@ -7485,14 +7486,14 @@ Enrol now
                                             $('#newBookingModal').addClass('slds-hide'); 
                                             var eventResult = JSON.parse(result.replace(/(&quot\;)/g,"\""));
                                             createBookingResult = eventResult;
-                                            //console.log('createBookingResult',createBookingResult);	
-                                            // added by nishi: 22-jul-2020: for get new booking is created in ossia center or not	
-                                            $('#saveNewBooking').attr('data-isossia', createBookingResult.isOssia);	
-                                            if(createBookingResult.isOssia){	
-                                                $('#ossiaStudentBlock').removeClass('slds-hide');	
+                                            //console.log('createBookingResult',createBookingResult);   
+                                            // added by nishi: 22-jul-2020: for get new booking is created in ossia center or not   
+                                            $('#saveNewBooking').attr('data-isossia', createBookingResult.isOssia); 
+                                            if(createBookingResult.isOssia){    
+                                                $('#ossiaStudentBlock').removeClass('slds-hide');   
                                                 
-                                            }	
-                                            //console.log('----------createBookingResult',createBookingResult);	
+                                            }   
+                                            //console.log('----------createBookingResult',createBookingResult); 
                                              // added by nishi: 22-jul-2020: for get new booking is created in ossia center or not
                                             var packages = '';
                                             $('#dateLabel').html(convertDateToMoment(dateOfAppointment.split('T')[0]));
@@ -7500,7 +7501,7 @@ Enrol now
                                             $(eventResult.entities).each(function(index, value){
                                                 if(value.type == 'Centre'){
                                                     $('#centerNameLabel').html(value.name);
-                                                     $('#saveNewBooking').attr('data-centerid', value.id);  	
+                                                     $('#saveNewBooking').attr('data-centerid', value.id);      
                                                    //console.log('center Id', value.id);
                                                 }else if(value.type == 'Teacher'){      
                                                     $('#saveNewBooking').attr('data-teacher', value.id);        
@@ -8735,93 +8736,93 @@ Enrol now
                                 if(bookingData.type == 'home-trial'){
                                     
                                     validationOnCreationOfHomeTrialBookings(bookingData);
-                                }else if(bookingData.type == 'Makeup'){	
-                                    // added by Nishi: 22-Jul-2020: Start : for If new booking is created in Ossia center 	
-                                    // then according to new requirement we check current teacher id is equals is student old teacher  	
-                                    var isossia = $('#saveNewBooking').attr('data-isossia');	
-                                    var enrolTeacher = $('#OssiaTeacherSelect').val();	
-                                    var selectedTeacherInstrument = $('#saveNewBooking').attr('data-teacherinstrument');	
-                                    var selectedInstrument = $('#saveNewBooking').attr('data-instrument');	
-                                    var enrolInstrument = $('#OssiaInstrumentSelect').val(); 	
-                                    $('#OssiaStudentErrorMsg').text('');	
-                                    $('#OssiaInstrumentErrorMsg').text('');	
-                                    if(isossia && isossia === 'true'){	
-                                        var errorFlag = false;	
-                                        if(!enrolTeacher || enrolTeacher == '' || enrolTeacher == undefined  ){	
-                                            $('#OssiaStudentErrorMsg').html('Please Select the Teacher...');	
-                                            errorFlag = true;           	
-                                        }	
-                                        if(!enrolInstrument || enrolInstrument == '' || enrolInstrument == undefined  ){	
-                                            $('#OssiaInstrumentErrorMsg').html('Please Select the Instrument...');	
-                                            errorFlag = true;           	
-                                        }	
-                                        if(!errorFlag){	
-                                            if(!(selectedInstrument && selectedInstrument != null && selectedInstrument != undefined && selectedInstrument.length > 0 &&	
-                                                 selectedTeacherInstrument && selectedTeacherInstrument != null && selectedTeacherInstrument != undefined && selectedTeacherInstrument.length > 0	
-                                                 && selectedTeacherInstrument.includes(selectedInstrument))){	
-                                                $('#saveNewBooking').css('pointer-events','none');	
+                                }else if(bookingData.type == 'Makeup'){ 
+                                    // added by Nishi: 22-Jul-2020: Start : for If new booking is created in Ossia center   
+                                    // then according to new requirement we check current teacher id is equals is student old teacher   
+                                    var isossia = $('#saveNewBooking').attr('data-isossia');    
+                                    var enrolTeacher = $('#OssiaTeacherSelect').val();  
+                                    var selectedTeacherInstrument = $('#saveNewBooking').attr('data-teacherinstrument');    
+                                    var selectedInstrument = $('#saveNewBooking').attr('data-instrument');  
+                                    var enrolInstrument = $('#OssiaInstrumentSelect').val();    
+                                    $('#OssiaStudentErrorMsg').text('');    
+                                    $('#OssiaInstrumentErrorMsg').text(''); 
+                                    if(isossia && isossia === 'true'){  
+                                        var errorFlag = false;  
+                                        if(!enrolTeacher || enrolTeacher == '' || enrolTeacher == undefined  ){ 
+                                            $('#OssiaStudentErrorMsg').html('Please Select the Teacher...');    
+                                            errorFlag = true;               
+                                        }   
+                                        if(!enrolInstrument || enrolInstrument == '' || enrolInstrument == undefined  ){    
+                                            $('#OssiaInstrumentErrorMsg').html('Please Select the Instrument...');  
+                                            errorFlag = true;               
+                                        }   
+                                        if(!errorFlag){ 
+                                            if(!(selectedInstrument && selectedInstrument != null && selectedInstrument != undefined && selectedInstrument.length > 0 &&    
+                                                 selectedTeacherInstrument && selectedTeacherInstrument != null && selectedTeacherInstrument != undefined && selectedTeacherInstrument.length > 0   
+                                                 && selectedTeacherInstrument.includes(selectedInstrument))){   
+                                                $('#saveNewBooking').css('pointer-events','none');  
                                                // $('#OssiaStudentErrorMsg').text('select a different teacher.');
-                                               $('#OssiaStudentErrorMsg').text('Current teacher skills do not match the instrument you have chosen.');	
-                                                $('#OssiaInstrumentErrorMsg').text('Please Select the different Instrument.');	
-                                                errorFlag = true;   	
+                                               $('#OssiaStudentErrorMsg').text('Current teacher skills do not match the instrument you have chosen.');  
+                                                $('#OssiaInstrumentErrorMsg').text('Please Select the different Instrument.');  
+                                                errorFlag = true;       
                                             }else if(bookingData.isRecurring == 'false'){
-                                                if(parseInt(bookingData.duration) > parseInt($('#makeupHoursLabel').text().split(' ')[0])){	
-                                                    $('#saveNewBooking').css('pointer-events','none');	
-                                                    $('#makeupHoursErrorMsg').text('Insufficient Makup minutes');	
-                                                }else{	
-                                                    bookingData.teacherId =  $('#saveNewBooking').attr('data-newTeacherId');	
-                                                    bookingData.enrolmentId =  $('#saveNewBooking').attr('data-enrolementId');	
-                                                    bookingData.isOssia =true;	
-                                                    createBookingProceed();  	
+                                                if(parseInt(bookingData.duration) > parseInt($('#makeupHoursLabel').text().split(' ')[0])){ 
+                                                    $('#saveNewBooking').css('pointer-events','none');  
+                                                    $('#makeupHoursErrorMsg').text('Insufficient Makup minutes');   
+                                                }else{  
+                                                    bookingData.teacherId =  $('#saveNewBooking').attr('data-newTeacherId');    
+                                                    bookingData.enrolmentId =  $('#saveNewBooking').attr('data-enrolementId');  
+                                                    bookingData.isOssia =true;  
+                                                    createBookingProceed();     
                                                 }
-                                            }else{	
-                                                bookingData.teacherId =  $('#saveNewBooking').attr('data-newTeacherId');	
-                                                bookingData.enrolmentId =  $('#saveNewBooking').attr('data-enrolementId');	
-                                                bookingData.isOssia =true;	
-                                                createBookingProceed();  	
-                                            }	
-                                        }	
-                                    }else if(bookingData.isRecurring == 'false'){	
-                                        // added by Nishi: 22-Jul-2020: End  : for If new booking is created in Ossia center	
-                                        if(parseInt(bookingData.duration) > parseInt($('#makeupHoursLabel').text().split(' ')[0])){	
-                                            $('#saveNewBooking').css('pointer-events','');	
-                                            $('#makeupHoursErrorMsg').text('Insufficient Makup minutes');	
-                                        }else{	
-                                            createBookingProceed();  	
-                                        }	
-                                    }else{	
-                                        createBookingProceed();	
-                                    }	
+                                            }else{  
+                                                bookingData.teacherId =  $('#saveNewBooking').attr('data-newTeacherId');    
+                                                bookingData.enrolmentId =  $('#saveNewBooking').attr('data-enrolementId');  
+                                                bookingData.isOssia =true;  
+                                                createBookingProceed();     
+                                            }   
+                                        }   
+                                    }else if(bookingData.isRecurring == 'false'){   
+                                        // added by Nishi: 22-Jul-2020: End  : for If new booking is created in Ossia center    
+                                        if(parseInt(bookingData.duration) > parseInt($('#makeupHoursLabel').text().split(' ')[0])){ 
+                                            $('#saveNewBooking').css('pointer-events','');  
+                                            $('#makeupHoursErrorMsg').text('Insufficient Makup minutes');   
+                                        }else{  
+                                            createBookingProceed();     
+                                        }   
+                                    }else{  
+                                        createBookingProceed(); 
+                                    }   
                                     
                                 }else if(bookingData.type == 'Adhoc'){
-                                     // added by Nishi: 22-Jul-2020: Start : for If new booking is created in Ossia center 	
-                                    // then according to new requirement we check current teacher id is equals is student old teacher  	
-                                    var isossia = $('#saveNewBooking').attr('data-isossia');	
-                                    var enrolTeacher = $('#OssiaTeacherSelect').val();	
-                                    var selectedTeacherInstrument = $('#saveNewBooking').attr('data-teacherinstrument');	
-                                    var selectedInstrument = $('#saveNewBooking').attr('data-instrument');	
-                                    var enrolInstrument = $('#OssiaInstrumentSelect').val(); 	
+                                     // added by Nishi: 22-Jul-2020: Start : for If new booking is created in Ossia center  
+                                    // then according to new requirement we check current teacher id is equals is student old teacher   
+                                    var isossia = $('#saveNewBooking').attr('data-isossia');    
+                                    var enrolTeacher = $('#OssiaTeacherSelect').val();  
+                                    var selectedTeacherInstrument = $('#saveNewBooking').attr('data-teacherinstrument');    
+                                    var selectedInstrument = $('#saveNewBooking').attr('data-instrument');  
+                                    var enrolInstrument = $('#OssiaInstrumentSelect').val();    
                                    //console.log('Adhoc bookingData',bookingData);
-                                    $('#OssiaStudentErrorMsg').text('');	
-                                    $('#OssiaInstrumentErrorMsg').text('');	
-                                    if(isossia && isossia === 'true'){	
-                                        var errorFlag = false;	
-                                        if(!enrolTeacher || enrolTeacher == '' || enrolTeacher == undefined  ){	
-                                            $('#OssiaStudentErrorMsg').html('Please Select the Teacher...');	
-                                            errorFlag = true;           	
-                                        }	
-                                        if(!enrolInstrument || enrolInstrument == '' || enrolInstrument == undefined  ){	
-                                            $('#OssiaInstrumentErrorMsg').html('Please Select the Instrument...');	
-                                            errorFlag = true;           	
-                                        }	
-                                        if(!errorFlag){	
-                                            if(!(selectedInstrument && selectedInstrument != null && selectedInstrument != undefined && selectedInstrument.length > 0 &&	
-                                                 selectedTeacherInstrument && selectedTeacherInstrument != null && selectedTeacherInstrument != undefined && selectedTeacherInstrument.length > 0	
-                                                 && selectedTeacherInstrument.includes(selectedInstrument))){	
-                                                $('#saveNewBooking').css('pointer-events','none');	
-                                                // $('#OssiaStudentErrorMsg').text('select a different teacher.');	
-                                                $('#OssiaStudentErrorMsg').text('Current teacher skills do not match the instrument you have chosen.');	
-                                                $('#OssiaInstrumentErrorMsg').text('Please Select the different Instrument.');	
+                                    $('#OssiaStudentErrorMsg').text('');    
+                                    $('#OssiaInstrumentErrorMsg').text(''); 
+                                    if(isossia && isossia === 'true'){  
+                                        var errorFlag = false;  
+                                        if(!enrolTeacher || enrolTeacher == '' || enrolTeacher == undefined  ){ 
+                                            $('#OssiaStudentErrorMsg').html('Please Select the Teacher...');    
+                                            errorFlag = true;               
+                                        }   
+                                        if(!enrolInstrument || enrolInstrument == '' || enrolInstrument == undefined  ){    
+                                            $('#OssiaInstrumentErrorMsg').html('Please Select the Instrument...');  
+                                            errorFlag = true;               
+                                        }   
+                                        if(!errorFlag){ 
+                                            if(!(selectedInstrument && selectedInstrument != null && selectedInstrument != undefined && selectedInstrument.length > 0 &&    
+                                                 selectedTeacherInstrument && selectedTeacherInstrument != null && selectedTeacherInstrument != undefined && selectedTeacherInstrument.length > 0   
+                                                 && selectedTeacherInstrument.includes(selectedInstrument))){   
+                                                $('#saveNewBooking').css('pointer-events','none');  
+                                                // $('#OssiaStudentErrorMsg').text('select a different teacher.');  
+                                                $('#OssiaStudentErrorMsg').text('Current teacher skills do not match the instrument you have chosen.'); 
+                                                $('#OssiaInstrumentErrorMsg').text('Please Select the different Instrument.');  
                                             }else{
                                                 $('#newBookingDetails').addClass('slds-hide');
                                                 if(bookingData.isRecurring == 'false'){
@@ -8919,11 +8920,11 @@ Enrol now
                         var recurring = $('#createAdhocBookingBtn').attr('data-count');
                         var bookDate = $('#createAdhocBookingBtn').attr('data-date');
                         var center = $('#createAdhocBookingBtn').attr('data-centerId');
-                        var isossia = $('#saveNewBooking').attr('data-isossia');	
+                        var isossia = $('#saveNewBooking').attr('data-isossia');    
                         var enrolmentId ='';
-                        if(isossia && isossia === 'true'){	
-                            teacherId =  $('#saveNewBooking').attr('data-newTeacherId');	
-                            enrolmentId =  $('#saveNewBooking').attr('data-enrolementId');	
+                        if(isossia && isossia === 'true'){  
+                            teacherId =  $('#saveNewBooking').attr('data-newTeacherId');    
+                            enrolmentId =  $('#saveNewBooking').attr('data-enrolementId');  
                         }
                          // Added by Nishi.. on 1 Aug 2020
                         var lessonMode = $('#selectLessonListSection').val();
