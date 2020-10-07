@@ -515,6 +515,11 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
         String subLineItemId ;
         Integer noOfOldLesson,noOfNewLesson;
         Set<String> packageIds = new Set<string>();
+          // added by nishi: 7-oct-2020: for create credit memo records
+          map<string,Credit_Memo__c> newPendingCreditMemos = new map<string,Credit_Memo__c>();
+          map<string,List<Credit_memo_line_item__c>> mapOfCreditmemolineitem = new map<string,List<Credit_memo_line_item__c>>();
+          List<Credit_memo_line_item__c> listOfCreditmemolineitem = new List<Credit_memo_line_item__c>(); 
+        
         packageIds.add(oldPackage);
         packageIds.add(newPackage);
         Map<id,Package__c> mapOfPackage = new Map<Id,package__c>([Select Id,Unit_Fee__c from Package__c where Id In:packageIds]);
@@ -539,6 +544,24 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
             Map<Id,Package__c> mapOfPackages =New Map<Id,Package__c>([Select Id,Unit_Fee__c from Package__c where Id In:packageIds]);
            //system.debug('@@@@@mapOfPackages'+mapOfPackages);
             date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1);
+               //added by nishi: 7-Oct-2020 : start:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+                        
+             Map<String,Invoice__c> mapofinvoice = new Map<String,Invoice__c>();
+             for(Invoice__c objInvoice : [Select id,Invoice_Date__c,(Select id from Invoice_Line_Items__r 
+                                         where Enrolment__C =:objEnrol.id)
+                                         From Invoice__C 
+                                         Where  Parent_Account__c =: parentId
+                                         And invoice_type__c = 'Recurring']){
+                 if(nextBillingDate >= nextMonthDate && effectiveDate.month() < nextMonthDate.addMonths(-1).month() && objInvoice.Invoice_Date__c.month() == nextMonthDate.addMonths(-1).month() ){
+                         mapofinvoice.put('Next Month',objInvoice);
+                 }else{
+                     if(objInvoice.Invoice_Date__c.month() == system.today().month()){
+                         mapofinvoice.put('Current',objInvoice);
+                     }
+                 }
+             }
+              //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+            
             // 6 Dec 2019: jatin for manage packages fee  old package and new package unit fee
             for(Booking__c booking : bookingList){
                 if(nextBillingDate >= nextMonthDate && effectiveDate.month() < nextMonthDate.addMonths(-1).month() && booking.Booking_date__c.month() == nextMonthDate.addMonths(-1).month() ){
@@ -585,6 +608,19 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                 INSERT objectOfInvoice;
                //system.debug('@@@ created objectOfInvoice'+objectOfInvoice);
                 if(objectOfInvoice != NULL){
+                     //added by nishi: 7-Oct-2020 : start:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+                     String invoiceId = null;
+                     if(mapofinvoice != null && mapofinvoice.size() > 0 ){
+                         if(mapofinvoice.containskey('Current')){
+                             invoiceId = mapofinvoice.get('Current').id;
+                         }
+                     }
+                      Credit_Memo__c objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, invoiceId,  system.today(),'Update Enrolment invoice Adjustment');
+                     objCreditMemo.Status__c = ConstantsClass.creditMemoSuccessStatus;
+                     objCreditMemo.Invoice_Number__c = objectOfInvoice.Id;
+                     newPendingCreditMemos.put('Update Enrolment invoice Adjustment',objCreditMemo);
+                     //added by nishi: 7-Oct-2020 : start:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+                    
                     if(packageInvoiceAmount.containsKey(newPackage)){
                         newPackageTotalAmount = decimal.valueOf(packageInvoiceAmount.get(newPackage).split(';')[0]);
                         gstAmount = decimal.valueOf(packageInvoiceAmount.get(newPackage).split(';')[1]);
@@ -612,16 +648,33 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                         if(gstAmount != 0){
                             gstAmount = BillingUtility.roundOffAmount(gstAmount);
                         }
+                        /*Commenter by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+                       
                         oldPackageTotalAmount = -oldPackageTotalAmount;
                         if(gstAmount > 0){
                             gstAmount = -gstAmount;
-                        }
+                        }*/
                        //system.debug('@@@totalAmount'+totalAmount);
                        //system.debug('@@@gstAmount'+gstAmount);
-                        invoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,Amount__c = oldPackageTotalAmount, 
+                        //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+                        /*invoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,Amount__c = oldPackageTotalAmount, 
                                                                     Teacher_Id__c = oldTeacher,Month__c= effectiveDate,
                                                                     Enrolment__c =objEnrol.id,Subscription_line_item__c = subLineItemId,
-                                                                    Package__c = oldPackage,  GST_Amount__c = gstAmount));
+                                                                    Package__c = oldPackage,  GST_Amount__c = gstAmount));*/
+                        String invoicelineitemId = null;
+                        if(mapofinvoice != null && mapofinvoice.size() > 0 ){
+                            if(mapofinvoice.containskey('Current')){
+                                if(mapofinvoice.get('Current').Invoice_Line_Items__r != null && mapofinvoice.get('Current').Invoice_Line_Items__r.size()>0){
+                                    invoicelineitemId =mapofinvoice.get('Current').Invoice_Line_Items__r[0].id; 
+                                }
+                            }
+                        }
+                        Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(Math.abs(oldPackageTotalAmount),gstAmount,oldPackage,
+                        objEnrol.id,invoicelineitemId,'');
+                        objCreditLineItem.Month__c = effectiveDate;
+                        listOfCreditmemolineitem.add(objCreditLineItem);                                                  
+                        mapOfCreditmemolineitem.put('Update Enrolment invoice Adjustment',listOfCreditmemolineitem);             
+                        //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
                     }
                     if(packageInvoiceNextMonthAmount.containsKey(newPackage)){
                         newPackageNextMonthTotalAmount = decimal.valueOf(packageInvoiceNextMonthAmount.get(newPackage).split(';')[0]);
@@ -650,22 +703,60 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                         if(gstAmount != 0){
                             gstAmount = BillingUtility.roundOffAmount(gstAmount);
                         }
+                         /*Commented by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
                         oldPackageNextMonthTotalAmount = -oldPackageNextMonthTotalAmount;
                         if(gstAmount > 0){
                             gstAmount = -gstAmount;
                         }
                         //system.debug('@@@totalAmount'+totalAmount);
-                    //system.debug('@@@gstAmount'+gstAmount);
-                        invoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,Amount__c = oldPackageNextMonthTotalAmount, 
+                        //system.debug('@@@gstAmount'+gstAmount);
+                        
+                        /*invoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,Amount__c = oldPackageNextMonthTotalAmount, 
                                                                 Teacher_Id__c = oldTeacher,Month__c= nextMonthDate.addMonths(-1),
                                                                 Enrolment__c =objEnrol.id,Subscription_line_item__c = subLineItemId,
-                                                                Package__c = oldPackage,  GST_Amount__c = gstAmount));
+                                                                Package__c = oldPackage,  GST_Amount__c = gstAmount));*/
+                        //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+                    
+                        String invoicelineitemId = null;
+                        if(mapofinvoice != null && mapofinvoice.size() > 0 ){
+                            if(mapofinvoice.containskey('Next Month')){
+                                if(mapofinvoice.get('Next Month').Invoice_Line_Items__r != null && mapofinvoice.get('Next Month').Invoice_Line_Items__r.size()>0){
+                                    invoicelineitemId =mapofinvoice.get('Next Month').Invoice_Line_Items__r[0].id; 
+                                }
+                            }
+                        }
+                        Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(Math.abs(oldPackageNextMonthTotalAmount),gstAmount,oldPackage,
+                        objEnrol.id,invoicelineitemId,'');
+                        objCreditLineItem.Month__c = nextMonthDate.addMonths(-1);
+                        listOfCreditmemolineitem.add(objCreditLineItem);                                                  
+                        mapOfCreditmemolineitem.put('Update Enrolment invoice Adjustment',listOfCreditmemolineitem);  
+                         //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+                    
                     }
                 }
                 
                 if(invoiceLineItem.size() > 0){
                     INSERT invoiceLineItem;
                 }
+                 //added by nishi: 7-Oct-2020 : start:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+                 if(newPendingCreditMemos.size() > 0){
+                    Insert newPendingCreditMemos.values();  
+                system.debug('newPendingCreditMemos'+newPendingCreditMemos);
+                List<Credit_memo_line_item__c> listOfnewCreditmemolineitem = new list<Credit_memo_line_item__c>();
+                    for(string creditMemoRemark : newPendingCreditMemos.keyset()){
+                        if(mapOfCreditmemolineitem.containskey(creditMemoRemark)){
+                            for(Credit_memo_line_item__c objCreditLineItem: mapOfCreditmemolineitem.get(creditMemoRemark)){
+                                objCreditLineItem.Credit_Memo_Number__c = newPendingCreditMemos.get(creditMemoRemark).id;
+                                listOfnewCreditmemolineitem.add(objCreditLineItem);
+                            }
+                        }
+                    } 
+                    if(listOfnewCreditmemolineitem != null && listOfnewCreditmemolineitem.size() > 0){
+                        insert listOfnewCreditmemolineitem;
+                    }
+                                            
+                }
+                //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
                //system.debug('@@ create new invoiceLineItem'+invoiceLineItem);
                 if(String.isNotBlank(objectOfInvoice.id)){
                     SageIntacctIntegrationUtility.changeEnrolment(objectOfInvoice.Id);

@@ -1,0 +1,570 @@
+<apex:page renderAs="pdf" controller="SubscriptionCreditMemoDetailsController" applyBodyTag="false" applyHtmlTag="false"
+    showHeader="false">
+    <html>
+
+    <head>
+        <!-- <apex:stylesheet value="{!URLFOR($Resource.InvocieStyle,'InvoiceStyle.css')}"/> -->
+        <style>
+            @page {
+                
+                @bottom-left {
+                content: element(footer);
+                }
+                margin:0px ;
+                margin-bottom:90px;
+                padding:20px,0px,0px,0px !important;
+                }
+                
+                tr{
+                page-break-inside: avoid;
+                }
+                td{
+                page-break-inside: avoid;
+                }
+                div.footer {
+                display: block;
+                position: running(footer);
+                }
+                .discValue{
+                text-align:right;
+                color:red;
+                width:69.5px;
+                border-bottom: solid 0.5px #DCDCDC;
+                padding-top:5px;
+                padding-bottom:5px;
+                font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif !important;
+                }
+                .taxValue{
+                text-align:right;
+                color:#bfbaba;
+                width:69.5px;
+                border-bottom: solid 0.5px #DCDCDC;
+                padding-top:5px;
+                padding-bottom:5px;
+                font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif !important;
+                }
+                .tax{
+                padding-bottom:5px;
+                padding-top:5px;
+                padding-right:15px;
+                border-bottom: solid 0.5px #DCDCDC;
+                font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif !important;
+                }
+                .taxAmount{
+                padding-bottom:5px;
+                padding-right:14.5px;
+                padding-top:5px;
+                text-align:center;
+                border-bottom: solid 0.5px #DCDCDC;
+                font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif !important;
+                }
+                .grandTotal{
+                width:50%;
+                padding-right:16px;
+                padding-top:5px;
+                padding-bottom:5px;
+                border-bottom: solid 0.5px #DCDCDC;
+                }
+                .text-right{
+                text-align:right;
+                font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif !important;
+                }
+                .text-left{
+                text-align:left;
+                }
+                .center{
+                /*text-align:center;*/
+                }
+                .color{
+                color:#f6901e !important;
+                font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif !important;
+                }
+                .invoice-To{
+                border-left: solid 1.5px #f6901e;
+                padding: 0px,6px,0px,6px !important;
+                margin-left:53px;
+                font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif !important;
+                }
+                .invoice{
+                font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif !important;
+                font-size:12px;
+                color:rgb(79,79,78) !important;
+                }
+                .invoice-from{
+                border-left: solid 1.5px #f6901e;
+                padding-right:4px;
+                padding-left:6px;
+                margin-left:30px;
+                font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif !important;
+                }
+                th{
+                text-align: center;
+                font-weight: bold;
+                white-space: nowrap;
+                color:white;
+                font-size:15px;
+                letter-spacing: 1px;
+                }
+                .td{
+                padding:5px;
+                text-align:center;
+                }
+                .grayColor{
+                color:gray;
+                font-size:12px;
+                }
+                .lightgray{
+                color:#bfbaba;
+                }
+                .item-Name{
+                /*border-bottom: solid 1px gray;*/
+                margin-right: 11px;
+                padding: 10px;
+                padding-left: 35px !important;
+                font-size:14px;
+                font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif !important;
+                }
+                .PQT{
+                text-align:right;
+                padding:0px,50px,0px,0px;
+                font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif !important;
+                }
+                .PQT2{
+                text-align:right;
+                padding:0px,28px,0px,0px;
+                font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif !important;
+                }
+                .PQT1{
+                text-align:center;
+                padding:0px,15px,0px,0px;
+                font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif !important;
+                }
+                .item-header{
+                color:black;background-color:lightgray;border-bottom:solid 4px #f6901e;
+                font-family: Raleway-Black;
+                text-align:left;
+                padding-left:35px;
+                }
+                .taxbox{
+                /*border-bottom: solid 0.5px #DCDCDC;
+                padding: 5px;*/
+                font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+                }
+                .taxbox-right{
+                width: 60%;
+                text-align:right;
+                }
+                .border-none{
+                border:none
+                }
+                .paybtn{
+                background-color: #f6901e;
+                color: white;
+                padding: 11px;
+                border-radius: 5px;
+                margin-right: 9%;
+                float: right;
+                }
+                .arrow{
+                margin-left: 10px;
+                font-size: 23px;
+                color: #827c7c;
+                }
+                .invoiceNo{
+                text-align:right;
+                padding-right:35px;
+                font-family: Arial,serif !important;
+                color: rgb(114,114,114);
+                font-style: normal;
+                }
+                .issueDate{
+                border-right:solid 1px #f6901e;
+                padding-right:10px;
+                width:70%;
+                font-size:12px;
+                text-align:right;
+                color:gray;
+                }
+                .invoiceDate{
+                width:30%;
+                font-size:12px;
+                padding-left:10px;
+                color:gray;
+                }
+                .payment{
+                padding-left: 35px;
+                font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif !important;
+                }
+                .header{
+                padding:0px;
+                margin:0px;
+                }
+                b{
+                color:gray;
+                }
+                .noteDetail{
+                /*color:#bfbaba;*/
+                color:gray;
+                font-size:12px;
+                font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif !important;
+                }
+                table{
+                font-size:15px;
+                }
+                .item-Description{
+                margin:0px;
+                height:100%;
+                }
+                .item-Description{
+                font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif !important;
+                display: block;
+                height: 100%;
+                top: 0;
+                background:Gainsboro;
+                transform-origin: bottom left;
+                -ms-transform: skew(-30deg, 0deg);
+                -webkit-transform: skew(-30deg, 0deg);
+                transform: skew(-30deg, 0deg);
+                }
+                tr.border_bottom td {
+                border-bottom:solid 0.5px #DCDCDC;
+                }
+                .tableHead{
+                width:120px;
+                padding-top:3px;
+                padding-bottom:9px;
+                font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+                }
+                .tableDesc{
+                width:450px;
+                padding-top:4px;
+                padding-bottom:4px;
+                background-color:#DCDCDC !important;
+                background-image: linear-gradient(red 10%, green 85%, blue 90%) !important;
+                color:rgb(79,79,78);
+                font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif !important;
+                }
+                <!-- By Bhawna -->
+                .color_Ossia{
+                color:#ed1c24 ;
+                font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif !important;
+                }
+                .backgroundcolor_ossia{
+                background-color:#ed1c24;
+                }
+                
+                .backgroundcolor{
+                background-color:#f6901e;
+                }
+        </style>
+    </head>
+
+    <body>
+        <table class="header" style="width:100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td>
+                    <apex:outputPanel rendered="{!If(isOssia, true, false)}">
+                        <apex:image url="{!$Resource.Osia_Logo}" />
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!If(isOssia, FALSE, TRUE)}">
+                        <apex:image url="{!$Resource.Aureus_logo}" />
+                    </apex:outputPanel>
+                </td>
+                <td>
+                    <table width="100%">
+                        <tr>
+                            <td colspan="2" class="invoiceNo">
+                                <span style="font-size:18px;color:gray;font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;color:rgb(79,79,78);">
+                                    <b>TAX CREDIT MEMO</b>
+                                </span>
+                                <span class="{!IF(isOssia==true,'color_Ossia','color')}">#{!creditMemo.Name}</span>
+                            </td>
+                        </tr>
+                        <tr style="font-size:18px;color:gray;font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;">
+                            <td class="issueDate lightgray">Issue Date:
+                                <Br/>
+                                <b>
+                                    <apex:outputText value="{0,date,EEE, MMM dd yyyy}">
+                                        <apex:param value="{!creditMemo.createdDate}" />
+                                    </apex:outputText>
+                                </b>
+                            </td>
+                            <td class="invoiceDate lightgray">Credit Memo Date:
+                                <Br/>
+                                <b>
+                                    <apex:outputText value="{0,date,EEE, MMM dd yyyy}">
+                                        <apex:param value="{!creditMemo.Credit_Memo_Date__c}" />
+                                    </apex:outputText>
+                                </b>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <br/>
+                    <br/>
+                    <br/>
+                    <br/>
+                    <div class="invoice-To">
+                        <!--Color Class Applied By Bhawna On 19-8-20 -->
+                        <b class="{!IF(isOssia==true,'color_Ossia','color')}">Credit Memo To</b>
+                        <br/>
+                        <b style="color:rgb(79,79,78)">{!creditMemo.Parent_Account__r.Name}</b>
+                        <br/>
+                        <b class="invoice">A:</b>
+                        <span class="grayColor"> {!creditMemo.Parent_Account__r.Billingstreet} {!creditMemo.Parent_Account__r.BillingCountry} {!creditMemo.Parent_Account__r.BillingPostalcode}</span>
+                        <br/>
+                        <b class="invoice">E:</b>
+                        <span class="grayColor"> {!creditMemo.Parent_Account__r.personEmail}
+                            <b class="invoice">P:</b> {!creditMemo.Parent_Account__r.personMobilePhone}</span>
+                        <br/>
+                    </div>
+                </td>
+                <td>
+                    <br/>
+                    <br/>
+                    <br/>
+                    <br/>
+                    <div class="invoice-from">
+                        <!--Color Class Applied By Bhawna On 19-8-20 -->
+                        <b class="{!IF(isOssia==true,'color_Ossia','color')}">Credit Memo From</b>
+                        <br/>
+                        <b style="color:rgb(79,79,78)">{!center.name}</b>
+                        <br/>
+                        <b class="invoice">A:</b>
+                        <span class="grayColor"> {!center.address}</span>
+                        <br/>
+                        <!-- added on 14 july 2020 hardcoded '(Aureus Group Pte. Ltd.)'-->
+                        <b class="invoice">GST Reg:</b>
+                        <span class="grayColor"> {!creditMemo.Center__r.GST_Number__c} {!IF(creditMemo.Center__r.GST_Number__c!='',' (Aureus Group
+                            Pte. Ltd.)','')}</span>
+                        <br/>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4" class="text-right" style="padding:10px;padding-top:30px;padding-right:35px;font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif">
+                    <b>Credit Memo Status:</b>
+                    <span style="{!IF(creditMemo.Status__c =='Success','color:green',IF(creditMemo.Status__c=='Pending','color:#f6901e',IF(creditMemo.Status__c=='Overdue','color:red','')))}">{!creditMemo.Status__c}</span>
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="4" class="text-right" style=" padding-bottom:10px;padding-right: 7%;">
+                    <b>Reason : </b>
+                    <span style="">{!creditMemo.Comments__c}</span>
+                </td>
+            </tr>
+        </table>
+        <div class="footer">
+            <!--Color Class Applied By Bhawna On 19-8-20 -->
+            <b class="{!IF(isOssia==true,'color_Ossia','color')}">
+                <h1 style="font-size:15px;padding-left:35px">Thank You For Your Business!</h1>
+                <div style="font-size:15px;padding-left:35px">
+                    <span style="padding-right:30px;padding:bottom:5px;color: #a9a9a9;font-size:15px;">
+                        <apex:image url="{!URLFOR($Resource.invoiceIcons,'invoiceIcons/phone.png')}" width="11px" /> {!center.phone}</span>
+                    <span style="padding-right:30px;padding:bottom:5px;color: #a9a9a9;font-size:15px;">
+                        <apex:image url="{!URLFOR($Resource.invoiceIcons,'invoiceIcons/post.png')}" width="11px" /> {!center.email}</span>
+                    <span style="padding-right:30px;padding:bottom:5px;color: #a9a9a9;font-size:15px;">
+                        <apex:image url="{!URLFOR($Resource.invoiceIcons,'invoiceIcons/globe.png')}" width="11px" /> {!center.website}</span>
+                </div>
+            </b>
+        </div>
+
+        <br/>
+        <table class="header" cellpadding="0" cellspacing="0" style="width:100%;-fs-table-paginate: paginate;">
+            <thead>
+                <tr>
+                    <th class="tableDesc item-Descriptions">Item Descriptions</th>
+                    <th class="tableHead {!IF(isOssia==true,'backgroundcolor_ossia','backgroundcolor')}">Price
+                        <span class="arrow">&rsaquo;</span>
+                    </th>
+                    <th class="tableHead {!IF(isOssia==true,'backgroundcolor_ossia','backgroundcolor')}">QTY
+                        <span class="arrow">&rsaquo;</span>
+                    </th>
+                    <th class="tableHead {!IF(isOssia==true,'backgroundcolor_ossia','backgroundcolor')}">Total
+                        <span class="arrow"></span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat value="{!creditMemo.Credit_memo_line_items__r}" var="invLineItm">
+                    <tr class="border_bottom">
+                        <td>
+                            <div class="item-Name">
+                                <b style="color:rgb(79,79,78);">{!invLineItm.Package_Name__c}</b>
+                                <br/>
+                                <span class="grayColor">
+                                    <apex:outputPanel rendered="{!If(invLineItm.Package__r.Type__c == 'Adhoc', FALSE, TRUE)}">
+                                        (
+                                        <apex:outputText value="{0, date,MMM','  yyyy}">
+                                            <apex:param value="{!invLineItm.Month__c}" />
+                                        </apex:outputText>)
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!If(invLineItm.Package__r.Type__c == 'Adhoc', TRUE, FALSE)}">
+                                        (For Ad-hoc booking on
+                                        <apex:outputText value="{0, date, dd MMM yyyy}">
+                                            <apex:param value="{!invLineItm.Month__c}" />
+                                        </apex:outputText>)
+                                    </apex:outputPanel>
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="PQT grayColor">
+                                <apex:outputField value="{!invLineItm.Amount__c}" />
+                            </div>
+                        </td>
+                        <td>
+                            <div class="PQT1 grayColor">01</div>
+                        </td>
+                        <td class="center PQT2">
+                            <div class="invoice">
+                                <b>
+                                    <apex:outputField value="{!invLineItm.Amount__c}" />
+                                </b>
+                                <apex:outputPanel rendered="{!IF(creditMemo.Center__r.country__r.Tax_Rate__c > 0, IF(invLineItm.Is_Deposit__c, FALSE, TRUE), FALSE)}"
+                                    layout="none">
+                                    (T)
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!IF(creditMemo.Center__r.country__r.Tax_Rate__c < 0, IF(invLineItm.Is_Deposit__c, TRUE, FALSe), FALSE)}"
+                                    layout="none">
+                                    <span style="padding-right:17px;"></span>
+                                </apex:outputPanel>
+                            </div>
+
+                        </td>
+                    </tr>
+                </apex:repeat>
+                <tr>
+                    <td colspan="2" style="padding-left: 40px;">
+                        
+                    </td>
+                    <td colspan="2">
+                        <table width="100%" cellpadding="0" cellspacing="0">
+
+                            <tr style="font-size:12px;">
+                                <td>
+                                    <apex:outputPanel rendered="{!IF(AND(subTotal != 0,subTotal != NULL), TRUE,FALSE)}" layout="block">
+                                        <div class="taxbox border-none">
+                                            <b>Sub Total</b>
+                                        </div>
+                                    </apex:outputPanel>
+                                </td>
+                                <td>
+                                    <apex:outputPanel rendered="{!IF(AND(subTotal != 0,subTotal != NULL), TRUE,FALSE)}" layout="block">
+                                        <div class="taxbox taxbox-right border-none">
+                                            <b>
+                                                <apex:outputText value="{0, number, $###,###,###.00}">
+                                                    <apex:param value="{!subTotal}" /></apex:outputText>
+                                            </b>
+                                        </div>
+                                    </apex:outputPanel>
+                                </td>
+                            </tr>
+                            <tr style="font-size:12px;">
+
+                                <td>
+
+                                    <apex:outputPanel rendered="{!IF(AND(discountAmount != 0,discountAmount != NULL), TRUE,FALSE)}" layout="block">
+                                        <div class="taxbox text-right" style="color:red;padding-right:22px;padding-bottom:5px;padding-top:5px;border-bottom: solid 0.5px #DCDCDC;text-align:left;">Discount</div>
+                                    </apex:outputPanel>
+
+                                </td>
+                                <td>
+                                    <apex:outputPanel rendered="{!IF(AND(discountAmount != 0,discountAmount != NULL), TRUE,FALSE)}" layout="block">
+                                        <div class="discValue" >
+                                            <apex:outputText value="{0, number, $###,###,###.00}">
+                                                <apex:param value="{!discountAmount}" /></apex:outputText>
+                                        </div>
+                                    </apex:outputPanel>
+                                </td>
+                            </tr>
+
+                            <tr style="font-size:12px;">
+                                <td>
+                                    <div class="taxbox border-none">
+                                        <b>Total Amount</b>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="taxbox taxbox-right border-none">
+                                        <b>
+                                            <apex:outputField value="{!creditMemo.Amount_Exl_tax_Rollup__c}" />
+                                        </b>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr style="font-size:11px;">
+                                <td width="50%" style="text-align:left;">
+                                    <apex:outputPanel rendered="{!IF(AND(creditMemo.Center__r.country__r.Tax_Rate__c != NULL, creditMemo.Center__r.country__r.Tax_Rate__c > 0), TRUE,FALSE)}">
+                                        <div class="taxbox tax lightgray">Tax GST({!creditMemo.Center__r.country__r.Tax_Rate__c}%)</div>
+                                    </apex:outputPanel>
+                                </td>
+                                <td width="50%">
+                                    <apex:outputPanel rendered="{!IF(AND(creditMemo.Center__r.country__r.Tax_Rate__c != NULL, creditMemo.Center__r.country__r.Tax_Rate__c > 0), TRUE,FALSE)}">
+                                        <div class="taxValue" >
+                                            <!--<apex:outputField value="{!invoice.New_GST_Amount__c}"/>-->
+                                            <apex:outputField value="{!creditMemo.Tax_Amount_Rollup__c}" />
+                                        </div>
+                                    </apex:outputPanel>
+                                </td>
+                            </tr>
+
+
+                            <tr style="font-size:12px;">
+                                <td style="border-bottom: solid 0.5px #DCDCDC;text-align:left;">
+                                    <div class="taxbox border-none">
+                                        <b class="grandTotal">Grand Total:</b>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="taxValue">
+                                        <b>
+                                            <apex:outputField value="{!creditMemo.Total_Amount__c}" />
+                                        </b>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+               
+                <tr style="padding-top: 35px;" >
+                    <td colspan="2" style="padding-top: 35px;">  
+                        <div class="payment" style="font-size:12px;">
+                            <b style="color:rgb(79,79,78)">TO INVOICE DETAILS</b><br/>
+                            <b style="color: rgb(50,59,121);">Invoice Date: </b>
+                            <apex:outputText styleClass="noteDetail" value="{0,date,EEE, MMM dd yyyy}">
+                                <apex:param value="{!invoice.createdDate }"/>
+                            </apex:outputText>
+                            </div>
+                            <div class="payment" style="font-size:12px;">
+                            <b style="color:rgb(61, 61, 47) !important">Invoice Reference: </b>
+                            <apex:outputText value="{!invoiceNo}" escape="false" Rendered="{!NOT(ISBLANK(invoiceNo))}"/>
+                        </div>
+                     </td>
+                    <td colspan="2" style="padding-top: 35px;">
+                        <div class="payment" style="font-size:12px;">
+                            <b style="color:rgb(79,79,78)">FROM INVOICE DETAILS</b><br/>
+                            <b style="color: rgb(50,59,121);">Invoice Date: </b>
+                            <apex:outputText styleClass="noteDetail" value="{0,date,EEE, MMM dd yyyy}">
+                                <apex:param value="{!frominvoice.createdDate }"/>
+                            </apex:outputText>
+                            </div>
+                            <div class="payment" style="font-size:12px;">
+                            <b style="color:rgb(61, 61, 47) !important">Invoice Reference: </b>
+                            <apex:outputText value="{!frominvoiceNo}" escape="false" Rendered="{!NOT(ISBLANK(frominvoiceNo))}"/>
+                        </div>
+                    </td>
+                </tr>
+
+            </tbody>
+        </table>
+    </body>
+
+    </html>
+</apex:page>

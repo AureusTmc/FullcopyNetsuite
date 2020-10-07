@@ -234,7 +234,11 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
         List<Payment__c> listOfPayments = new List<Payment__c>(); 
         // added by nishi: 6-oct-2020: for create credit memo records
         map<string,Credit_Memo__c> newPendingCreditMemos = new map<string,Credit_Memo__c>();
-        map<string,Credit_memo_line_item__c> listOfCreditmemolineitem = new map<string,Credit_memo_line_item__c>();
+        map<string,List<Credit_memo_line_item__c>> mapOfCreditmemolineitem = new map<string,List<Credit_memo_line_item__c>>();
+        List<Credit_memo_line_item__c> listOfCreditmemolineitem = new List<Credit_memo_line_item__c>(); 
+        date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1);
+        Credit_memo_line_item__c objCreditLineItem = new  Credit_memo_line_item__c();    
+        Credit_Memo__c  objCreditMemo = new     Credit_Memo__c();
         String payAsCredit = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get('Payment As Credit').getRecordTypeId();
         String paymentRecordTypeId =  Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get(ConstantsClass.paymentAsDepositRecordType).getRecordTypeId();
         String paymentTransaction = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get(ConstantsClass.paymentTransactionRecType).getRecordTypeId();
@@ -346,18 +350,20 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                                   Payment_Status__c = ConstantsClass.paymentPendingStatus,
                                                   Parent_Account__c = objEnrol.Parent__c, 
                                                   Enrolment__c = objEnrol.Id));   */
-                Credit_Memo__c objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, null,  lastLessonDateObj,'Deposit Adjustment');
+                objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, null,  lastLessonDateObj,'Deposit Adjustment');
                 objCreditMemo.Credit_Memo_Date__c = lastLessonDateObj;
                 if(mapOfInvoicePayments != null && mapOfInvoicePayments.size() > 0){
                     for( string invoiceId : mapOfInvoicePayments.keyset()){
                         if(mapOfInvoicePayments.containsKey(invoiceId)){
                             objCreditMemo.Payment_Method__c =   mapOfInvoicePayments.get(invoiceId).Method_of_Payment__c; 
                             objCreditMemo.From_Invoice__c = invoiceId;
-                            Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(Math.abs(depositAmount),null,invoicemap.get(invoiceId).Package__c,
+                            objCreditLineItem = BillingUtility.createCreditMemoLineRec(Math.abs(depositAmount),null,invoicemap.get(invoiceId).Package__c,
                                                             objEnrol.id,invoicemap.get(invoiceId).Id,'Deposit Adjustment');
                                                             objCreditLineItem.Is_Deposit__c = true;
                                                             objCreditLineItem.Month__c = lastLessonDateObj;
-                            listOfCreditmemolineitem.put('Deposit Adjustment',objCreditLineItem);
+                            listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
+                            listOfCreditmemolineitem.add(objCreditLineItem);                                                  
+                            mapOfCreditmemolineitem.put('Deposit Adjustment',listOfCreditmemolineitem);
                         }
                     }
                 }
@@ -368,13 +374,44 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
         }   
         
         if(lastLessonDateObj < nextBillDate){
+            //added by nishi: 7-Oct-2020 : start:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+                    
+            Map<String,Invoice__c> mapofinvoice = new Map<String,Invoice__c>();
+            for(Invoice__c invoiceobj : [Select id,Invoice_Date__c,(Select id from Invoice_Line_Items__r 
+                                        where Enrolment__C =:objEnrol.id)
+                                        From Invoice__C 
+                                        Where  Parent_Account__c =: objEnrol.Parent__c
+                                        And invoice_type__c = 'Recurring']){
+                if(nextBillDate >= nextMonthDate && effectiveDate.month() < nextMonthDate.addMonths(-1).month() && invoiceobj.Invoice_Date__c.month() == nextMonthDate.addMonths(-1).month() ){
+                        mapofinvoice.put('Next Month',invoiceobj);
+                }else{
+                    if(invoiceobj.Invoice_Date__c.month() == system.today().month()){
+                        mapofinvoice.put('Current',invoiceobj);
+                    }
+                }
+            }
+            //added by nishi: 7-Oct-2020 : start:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+            String invoiceId = null;
+            if(mapofinvoice != null && mapofinvoice.size() > 0 ){
+                if(mapofinvoice.containskey('Current')){
+                    invoiceId = mapofinvoice.get('Current').id;
+                }
+            }
+             objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, invoiceId,  system.today(),'Downgrade Enrolment Adjustment');
+            objCreditMemo.Status__c = ConstantsClass.creditMemoSuccessStatus;
+            objCreditMemo.Invoice_Number__c = objInvoice.Id;
+            newPendingCreditMemos.put('Downgrade Enrolment Adjustment',objCreditMemo);
+            listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
+            //added by nishi: 7-Oct-2020 : start:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+           
+            //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+            
             decimal gstAmount = 0;
             if( string.isNotBlank(objEnrol.Center__c) && string.isNotBlank(objEnrol.Center__r.Country__c) &&
             objEnrol.Center__r.Country__r.Tax_Rate__c != null ){
                 gstAmount = BillingUtility.roundOffAmount(objEnrol.Center__r.Country__r.Tax_Rate__c);
             }
            
-           /* //commented by nishi: 6-OCT-2020:Create a Credit Memo record with the status pending instead of the Payment as Credit record for the remaining lessons. No invoice will be generated.
             
             decimal positiveInvoiceAmountGST =0;
             decimal negativeInvoiceAmountGST =0;
@@ -416,7 +453,6 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
 
                  // added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
                 if(positiveNextMonthInvoiceAmount != NULL && positiveNextMonthInvoiceAmount != 0 && negativeNextMonthInvoiceAmount != NULL && negativeNextMonthInvoiceAmount != 0){
-                    date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1);
                     if(positiveNextMonthInvoiceAmount != NULL && gstAmount > 0){
                         positiveNextMonthInvoiceAmountGST  = (BillingUtility.roundOffAmount(positiveNextMonthInvoiceAmount) * gstAmount) /100;
                    }
@@ -432,11 +468,27 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                         Subscription_Line_Item__c = objEnrol.Subscription_Line_Items__r[0].Id));
 
                         //Line Item for negative amount.
-
-                    invoiceLineItems.add(new Invoice_Line_Item__c(invoice__c = objInvoice.id,Amount__c = BillingUtility.roundOffAmount(negativeNextMonthInvoiceAmount), 
+                   //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+                    /*invoiceLineItems.add(new Invoice_Line_Item__c(invoice__c = objInvoice.id,Amount__c = BillingUtility.roundOffAmount(negativeNextMonthInvoiceAmount), 
                                             GST_Amount__c = negativeNextMonthInvoiceAmountGST,
                                             Teacher_Id__c = objEnrol.Teacher__c,Package__c=oldPackId,Month__c= nextMonthDate.addMonths(-1), 
                                             Subscription_Line_Item__c = objEnrol.Subscription_Line_Items__r[0].Id));
+                    */
+                    String invoicelineitemId = null;
+                        if(mapofinvoice != null && mapofinvoice.size() > 0 ){
+                            if(mapofinvoice.containskey('Next Month')){
+                                if(mapofinvoice.get('Next Month').Invoice_Line_Items__r != null && mapofinvoice.get('Next Month').Invoice_Line_Items__r.size()>0){
+                                    invoicelineitemId =mapofinvoice.get('Next Month').Invoice_Line_Items__r[0].id; 
+                                }
+                            }
+                        }
+                    objCreditLineItem = BillingUtility.createCreditMemoLineRec(BillingUtility.roundOffAmount(math.abs(negativeNextMonthInvoiceAmount)),
+                                                    math.abs(negativeNextMonthInvoiceAmountGST),oldPackId,
+                                                    objEnrol.id,invoicelineitemId,'');
+                                                    objCreditLineItem.Month__c = nextMonthDate.addMonths(-1);
+                    listOfCreditmemolineitem.add(objCreditLineItem);                                      
+                    mapOfCreditmemolineitem.put('Downgrade Enrolment Adjustment',listOfCreditmemolineitem);      
+                    //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.                                      
                 }
                  // added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
 
@@ -446,11 +498,30 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                                              GST_Amount__c = positiveInvoiceAmountGST,
                                                              Teacher_Id__c = objEnrol.Teacher__c,Package__c=newPackId,Month__c= effectiveDate, Subscription_Line_Item__c = objEnrol.Subscription_Line_Items__r[0].Id));
                 //Line Item for negative amount.
-                
+                /* //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+                  
                 invoiceLineItems.add(new Invoice_Line_Item__c(invoice__c = objInvoice.id,Amount__c = BillingUtility.roundOffAmount(negativeInvoiceAmount), 
                                                                GST_Amount__c = negativeInvoiceAmountGST,
                                                               Teacher_Id__c = objEnrol.Teacher__c,Package__c=oldPackId,Month__c= effectiveDate, Subscription_Line_Item__c = objEnrol.Subscription_Line_Items__r[0].Id));
-                //start: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
+               
+                */
+                String invoicelineitemId = null;
+                if(mapofinvoice != null && mapofinvoice.size() > 0 ){
+                    if(mapofinvoice.containskey('Current')){
+                        if(mapofinvoice.get('Current').Invoice_Line_Items__r != null && mapofinvoice.get('Current').Invoice_Line_Items__r.size()>0){
+                            invoicelineitemId =mapofinvoice.get('Current').Invoice_Line_Items__r[0].id; 
+                        }
+                    }
+                }
+                objCreditLineItem = BillingUtility.createCreditMemoLineRec(BillingUtility.roundOffAmount(math.abs(negativeInvoiceAmount)),
+                                                math.abs(negativeInvoiceAmountGST),oldPackId,
+                                                objEnrol.id,invoicelineitemId,'');
+                                                objCreditLineItem.Month__c = effectiveDate;
+                listOfCreditmemolineitem.add(objCreditLineItem);                                      
+                mapOfCreditmemolineitem.put('Downgrade Enrolment Adjustment',listOfCreditmemolineitem);      
+                //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record. 
+
+               //start: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
                 // if(facilityFee  != null && facilityFee != 0){
                 //     lessonsAmt+=facilityFee;
                 // }
@@ -458,11 +529,29 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                 if(nextMonthAmount  != null && nextMonthAmount != 0){
                     lessonsAmt+=nextMonthAmount;
                 }
+                //added by nishi: 6-Oct-2020 :end: Create a Credit Memo record with the status pending instead of the Payment as Credit record for the remaining lessons.   
                //System.debug('lessonsAmt'+lessonsAmt);
                  //end: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
-                 listOfPayments.add(new Payment__c(RecordTypeId = payAsCredit, Payment_Amount__c = BillingUtility.roundOffAmount(lessonsAmt), Payment_Status__c = ConstantsClass.paymentPendingStatus,
+                /* listOfPayments.add(new Payment__c(RecordTypeId = payAsCredit, Payment_Amount__c = BillingUtility.roundOffAmount(lessonsAmt), Payment_Status__c = ConstantsClass.paymentPendingStatus,
                                                   
                                                   Parent_Account__c = objEnrol.Parent__c, Payment_Date__c = lastLessonDateObj));
+                                                  */
+                Decimal taxAmount = 0;
+                if(gstAmount != null && gstAmount != 0){
+                    taxAmount =(gstAmount/100)*lessonsAmt; 
+                }
+                system.debug('taxAmount'+taxAmount);
+                system.debug('lessonsAmt'+lessonsAmt);
+                objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, null,lastLessonDateObj,'Remaining Lessons Adjustment');
+                newPendingCreditMemos.put('Remaining Lessons Adjustment',objCreditMemo);
+                 objCreditLineItem = BillingUtility.createCreditMemoLineRec(lessonsAmt - BillingUtility.roundOffAmount(taxAmount),
+                                                BillingUtility.roundOffAmount(taxAmount),NULL,
+                                                objEnrol.id,NULL,'Remaining Lessons Adjustment');
+                                                objCreditLineItem.Month__c = lastLessonDateObj;
+                listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
+                listOfCreditmemolineitem.add(objCreditLineItem);                                      
+                mapOfCreditmemolineitem.put('Remaining Lessons Adjustment',listOfCreditmemolineitem);
+                    //added by nishi: 6-Oct-2020 :end: Create a Credit Memo record with the status pending instead of the Payment as Credit record for the remaining lessons.                                                      
                                                                
                 // 8-jan-2020: jatin for add Balanced invoices
                 decimal balancedInvoice =0;
@@ -504,26 +593,9 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                             Remarks__c ='Credit Note Adjustment'));
                 }
             }
-            //commented by nishi: 6-OCT-2020:End:Create a Credit Memo record with the status pending instead of the Payment as Credit record for the remaining lessons. No invoice will be generated.
-            */
+           
 
-            if(nextMonthAmount  != null && nextMonthAmount != 0){
-                lessonsAmt+=nextMonthAmount;
-            }
-            Decimal taxAmount = 0;
-            if(gstAmount != null && gstAmount != 0){
-                taxAmount =(gstAmount/100)*lessonsAmt; 
-            }
-            system.debug('taxAmount'+taxAmount);
-            system.debug('lessonsAmt'+lessonsAmt);
-            Credit_Memo__c objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, null,lastLessonDateObj,'Remaining Lessons Adjustment');
-            newPendingCreditMemos.put('Remaining Lessons Adjustment',objCreditMemo);
-            Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(lessonsAmt - BillingUtility.roundOffAmount(taxAmount),
-                                            BillingUtility.roundOffAmount(taxAmount),NULL,
-                                            objEnrol.id,NULL,'Remaining Lessons Adjustment');
-                                            objCreditLineItem.Month__c = lastLessonDateObj;
-            listOfCreditmemolineitem.put('Remaining Lessons Adjustment',objCreditLineItem);
-                //added by nishi: 6-Oct-2020 :end: Create a Credit Memo record with the status pending instead of the Payment as Credit record for the remaining lessons.
+           
             
         }
         
@@ -546,10 +618,11 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
            system.debug('newPendingCreditMemos'+newPendingCreditMemos);
            List<Credit_memo_line_item__c> listOfnewCreditmemolineitem = new list<Credit_memo_line_item__c>();
             for(string creditMemoRemark : newPendingCreditMemos.keyset()){
-                if(listOfCreditmemolineitem.containskey(creditMemoRemark)){
-                    Credit_memo_line_item__c objCreditLineItem= listOfCreditmemolineitem.get(creditMemoRemark);
-                    objCreditLineItem.Credit_Memo_Number__c = newPendingCreditMemos.get(creditMemoRemark).id;
-                    listOfnewCreditmemolineitem.add(objCreditLineItem);
+                if(mapOfCreditmemolineitem.containskey(creditMemoRemark)){
+                    for(Credit_memo_line_item__c creditLineItemobj: mapOfCreditmemolineitem.get(creditMemoRemark)){
+                        creditLineItemobj.Credit_Memo_Number__c = newPendingCreditMemos.get(creditMemoRemark).id;
+                        listOfnewCreditmemolineitem.add(creditLineItemobj);
+                    }
                 }
             } 
             if(listOfnewCreditmemolineitem != null && listOfnewCreditmemolineitem.size() > 0){
