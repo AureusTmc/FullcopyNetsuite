@@ -28,7 +28,11 @@ global class SubscriptionMonthlyInvoiceBatch implements Database.Batchable<sObje
                                           Next_Bill_Date__c, Enrolment__r.Center__r.Country__r.Id, Enrolment__r.Center__r.Country__r.Tax_Rate__c ,
                                           // added by nishi:18_aug-2020: for manage facility fee is ossia student Subscription invoice created
                                           Enrolment__r.Center__r.Organisation__r.Name,//Enrolment__r.New_Package_Id__r.Facility_Fee__c,Enrolment__r.Package__r.Facility_Fee__c,
-                                          Enrolment__r.Package__r.Name,Enrolment__r.New_Package_Id__r.Name, Enrolment__r.Center__r.Organisation__r.Tax_Rate__c , Enrolment__r.Center__r.Organisation__r.Id
+                                          Enrolment__r.Package__r.Name,Enrolment__r.New_Package_Id__r.Name, Enrolment__r.Center__r.Organisation__r.Tax_Rate__c , Enrolment__r.Center__r.Organisation__r.Id,
+                                            // added by nishi: 7-Sep-2020: for manage Change center subscription line item
+                                          Enrolment__r.New_Centre__r.Country__r.Id, Enrolment__r.New_Centre__r.Country__r.Tax_Rate__c ,
+                                          Enrolment__r.New_Centre__r.Organisation__r.Name, Enrolment__r.New_Centre__r.Organisation__r.Tax_Rate__c , Enrolment__r.New_Centre__r.Organisation__r.Id
+                                            // added by nishi: 7-Sep-2020: for manage Change center subscription line item
                                           FROM Subscription_Line_Items__r 
                                           WHERE Status__c=:ConstantsClass.activeStatus 
                                           AND Next_Bill_Date__c <= :system.today()
@@ -75,11 +79,15 @@ global class SubscriptionMonthlyInvoiceBatch implements Database.Batchable<sObje
     global void finish(Database.BatchableContext BC){
         BillingUtility.createBatchLog('Subscription  Monthly Invoice Batch',startTime,system.now(),noOfRecords,errorDesciption);
         // Jatin : for call postInvoiceBatch class with enrolment Ids
+        /*Commented by Nishi 7-Oct-2020: for call postInvoiceBatch class without enrolment Ids
         System.debug('@@@enrolmentIds'+enrolmentIds);
         if(enrolmentIds != NULL && enrolmentIds.size() > 0){
             
             Database.executeBatch(new PostInvoiceBatch(enrolmentIds), 200);
-        }
+        }*/
+        // Nishi 7-Oct-2020:start for call postInvoiceBatch class without enrolment Ids
+        Database.executeBatch(new PostInvoiceBatch(), 200);
+         // Nishi 7-Oct-2020:end: for call postInvoiceBatch class without enrolment Ids
         if(invIds!=null && invIds.size()>0){
             //database.executeBatch(new EmailInvoicebatch(invIds));
             /*
