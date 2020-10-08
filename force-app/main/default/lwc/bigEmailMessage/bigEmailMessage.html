@@ -1,0 +1,270 @@
+<template>
+
+    <!-- #######################################  Realted List Start ############################################# -->
+    <lightning-card>
+        <h3 slot="title" class="slds-box slds-theme_shade">
+            <lightning-icon icon-name="standard:email" size="small"></lightning-icon>
+            <b> {totalEmailMessage} </b>
+        </h3>
+
+        <div if:true={tableSpinner} class="slds-spinner_inline spinner-padding">
+            <lightning-spinner variant="brand" alternative-text="Loading Cases" size="medium">
+            </lightning-spinner>
+        </div>
+        <!-- ########################################  Data table Start ######################################  -->
+        <template if:true={isDataFetchCorrectly}>
+
+            <div class="slds-p-left_medium">
+                <lightning-datatable key-field="id" hide-checkbox-column resize-column-disabled
+                    onrowaction={handleRowAction} data={listBigEmailMessagePaginated} columns={columns}>
+                </lightning-datatable>
+            </div>
+        </template>
+        <!-- ########################################  Data table END ######################################  -->
+
+        <!-- ###########################  Error Section ##################################################### -->
+        <template if:false={isDataFetchCorrectly}>
+            <p class="slds-p-left_medium" style="color: red;"><b>{errorMessage}</b></p>
+        </template>
+
+        <template if:true={showViewAll}>
+            <div>
+                <br />
+                <lightning-button label="Prev" onclick={handlePrev}></lightning-button>
+                <lightning-button style="float: right;" variant="brand" label="Next" onclick={handleNext}>
+                </lightning-button>
+            </div>
+        </template>
+
+        <template if:false={showViewAll}>
+
+            <div slot="footer">
+                <a onclick={fetchMoreEmailMessage} class="slds-card__footer-action" href="javascript:void(0);">View
+                    All</a>
+            </div>
+
+        </template>
+
+    </lightning-card>
+    <!-- #######################################  Realted List End ############################################# -->
+
+
+    <!-- #######################################  Record View Start ############################################# -->
+    <template if:true={showRecordModal}>
+
+        <div style="height: 500px;">
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+
+                    <!--################################  Header Modal Start ####################################-->
+                    <header class="slds-modal__header">
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                            title="Close" onclick={handleCloseModal}>
+                            <lightning-icon icon-name="utility:close" variant="inverse" alternative-text="Close"
+                                size="medium">
+                            </lightning-icon>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">
+
+                            <lightning-icon icon-name="standard:email" size="small"></lightning-icon>
+                            &nbsp;&nbsp;{selectedEMailRecord.subject}
+                        </h2>
+                    </header>
+                    <!--################################   Modal Body End ####################################-->
+
+                    <!--################################  Modal Record Form Body Start ####################################-->
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <div class="slds-text-heading_small slds-text-align_center">
+
+                            <lightning-accordion allow-multiple-sections-open active-section-name={activeSections}>
+
+                                <!--########################### Information Section #############################-->
+                                <lightning-accordion-section name="Information" label="Information">
+
+                                    <div class="slds-grid slds-wrap">
+                                        <div class="slds-col slds-size_1-of-2">
+                                            <p style="font-size: 14px;float: left;">
+                                                Message Date
+                                            </p>
+                                            <br />
+                                            <p
+                                                style="padding-top: 10px;float: left;border-bottom: 1px solid black;font-size: 12px;">
+                                                {selectedEMailRecord.MessageDate}
+                                            </p>
+                                            <br /><br />
+                                        </div>
+
+                                        <div class="slds-col slds-size_1-of-2">
+                                            <p style="font-size: 14px;float: left;">
+                                                Last Modified By
+                                            </p>
+                                            <br />
+                                            <p
+                                                style="padding-top: 10px;float: left;border-bottom: 1px solid black;font-size: 12px;">
+                                                {selectedEMailRecord.LastModifiedByName},{selectedEMailRecord.LastModifiedDate}
+                                            </p>
+                                            <br /><br />
+                                        </div>
+
+                                        <div class="slds-col slds-size_1-of-2">
+                                            <p style="font-size: 14px;float: left;">
+                                                Created By
+                                            </p>
+                                            <br />
+                                            <p
+                                                style="padding-top: 10px;float: left;border-bottom: 1px solid black;font-size: 12px;">
+                                                {selectedEMailRecord.createdByName},{selectedEMailRecord.createdDate}
+                                            </p>
+                                            <br /><br />
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-2">
+                                            <p style="font-size: 14px;float: left;">
+                                                IsIncoming(Text)
+                                            </p>
+                                            <br />
+                                            <p
+                                                style="padding-top: 10px;float: left;border-bottom: 1px solid black;font-size: 12px;">
+                                                {selectedEMailRecord.incomingText}
+                                            </p>
+                                            <br /><br />
+                                        </div>
+
+                                    </div>
+                                    <!--Wrap Div end-->
+
+                                </lightning-accordion-section>
+                                <!--########################### Information Section END #############################-->
+
+                                <!--########################### Address Information Section #############################-->
+                                <lightning-accordion-section name="AddressInformation" label="Address Information">
+
+                                    <div class="slds-col slds-size_1-of-1">
+                                        <p style="font-size: 14px;float: left;">
+                                            From Address
+                                        </p>
+                                        <br />
+                                        <p
+                                            style="padding-top: 10px;float: left;border-bottom: 1px solid black;font-size: 12px;">
+                                            {selectedEMailRecord.fromAddress}
+                                        </p>
+                                        <br /><br />
+                                    </div>
+
+                                    <div class="slds-col slds-size_1-of-1">
+                                        <p style="font-size: 14px;float: left;">
+                                            From Name
+                                        </p>
+                                        <br />
+                                        <p
+                                            style="padding-top: 10px;float: left;border-bottom: 1px solid black;font-size: 12px;">
+                                            {selectedEMailRecord.fromName}
+                                        </p>
+                                        <br /><br />
+                                    </div>
+
+                                    <div class="slds-col slds-size_1-of-1">
+                                        <p style="font-size: 14px;float: left;">
+                                            To Address
+                                        </p>
+                                        <br />
+                                        <p
+                                            style="padding-top: 10px;float: left;border-bottom: 1px solid black;font-size: 12px;">
+                                            {selectedEMailRecord.toAddress}
+                                        </p>
+                                        <br /><br />
+                                    </div>
+
+                                    <div class="slds-col slds-size_1-of-1">
+                                        <p style="font-size: 14px;float: left;">
+                                            CC Address
+                                        </p>
+                                        <br />
+                                        <p
+                                            style="padding-top: 10px;float: left;border-bottom: 1px solid black;font-size: 12px;">
+                                            {selectedEMailRecord.ccAddress}
+                                        </p>
+                                        <br /><br />
+                                    </div>
+
+                                    <div class="slds-col slds-size_1-of-1">
+                                        <p style="font-size: 14px;float: left;">
+                                            BCC Address
+                                        </p>
+                                        <br />
+                                        <p
+                                            style="padding-top: 10px;float: left;border-bottom: 1px solid black;font-size: 12px;">
+                                            {selectedEMailRecord.bccAddress}
+                                        </p>
+                                        <br /><br />
+                                    </div>
+
+                                </lightning-accordion-section>
+                                <!--########################### Address Information Section END #############################-->
+
+                                <!--########################### Message Content Section #############################-->
+                                <lightning-accordion-section name="MessageContent" label="Message Content">
+
+                                    <div class="slds-col slds-size_1-of-1">
+                                        <p style="font-size: 14px;float: left;">
+                                            Subject
+                                        </p>
+                                        <br />
+                                        <p
+                                            style="padding-top: 10px;float: left;border-bottom: 1px solid black;font-size: 12px;">
+                                            {selectedEMailRecord.subject}
+                                        </p>
+                                        <br /><br />
+                                    </div>
+
+                                    <div class="slds-col slds-size_1-of-1">
+                                        <p style="font-size: 14px;float: left;">
+                                            HTML Body
+                                        </p>
+                                        <br />
+                                        <p
+                                            style="padding-top: 10px;float: left;border-bottom: 1px solid black;font-size: 12px;">
+                                            <lightning-formatted-rich-text value={selectedEMailRecord.htmlBody}>
+                                            </lightning-formatted-rich-text>
+
+                                        </p>
+                                        <br /><br />
+                                    </div>
+                                    <br />
+                                    <div class="slds-col slds-size_1-of-1">
+                                        <p style="font-size: 14px;float: left;">
+                                            Text Body
+                                        </p>
+                                        <br />
+                                        <p
+                                            style="padding-top: 10px;float: left;border-bottom: 1px solid black;font-size: 12px;">
+                                            <lightning-formatted-rich-text value={selectedEMailRecord.textBody}>
+                                            </lightning-formatted-rich-text>
+
+                                        </p>
+                                        <br /><br />
+                                    </div>
+
+                                </lightning-accordion-section>
+                                <!--########################### Message Content Section END #############################-->
+
+                            </lightning-accordion>
+
+
+                        </div>
+                    </div>
+                    <!--################################  Modal Record Form Body End ####################################-->
+
+                    <footer class="slds-modal__footer">
+                        <lightning-button label="Cancel" variant="neutral" onclick={handleCloseModal}>
+                        </lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </div>
+
+    </template>
+    <!-- #######################################  Record View End ############################################# -->
+</template>
