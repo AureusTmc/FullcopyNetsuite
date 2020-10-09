@@ -12,7 +12,7 @@ Component   :		 AddCreditMemo(LWC)
 //						Also Addng new field mapping for the Credit memo/line item as per fields req in  credit memo reports 
 //CH02 24 Sep 2020 : Karan Singh Adding the Gst AMount + Amount in the invoice line item credit amount so that it can balance out the invoice line item total amount
 //CH03 25 Sep 2020 : Karan Singh Need -> Ashish bansal : to set the intial value of Credit Memo Date in creation of Credit memo not of Success Status (CH01)
-
+//CH04 9 Oct 2020 : Adding of remarks from Invoice Line Items to credit memo line items
 public with sharing class AddCreditMemoController {
     
     //This method will may refund and create the credit memo or create credit memo only
@@ -92,7 +92,12 @@ public with sharing class AddCreditMemoController {
             //need to do this in wrapper from lwc to apex, it cannot desrialize nested query results (FATAL_ERROR System.JSONException: QueryResult must start with '{')
             // prettier-ignore
             Invoice__c objInvoice = [ SELECT Id, Status__c,Currency_Code__c,Name,Parent_Account__c,Center__c,                                   
-                                     (SELECT ID, Amount__c, GST_Amount__c,Package__c,Enrolment__c,Is_Deposit__c,Is_Discount__c,Month__c FROM Invoice_Line_Items__r),
+                                     (SELECT ID, Amount__c, GST_Amount__c,Package__c,Enrolment__c,Is_Deposit__c,Is_Discount__c,Month__c
+                                     //CH04 added this field
+                                     ,Remarks__c
+                                     //CH04 ENd
+                                     
+                                     FROM Invoice_Line_Items__r),
                                      (SELECT Id, Payment_Amount__c, Transaction_Id__c, remarks__c, Invoice__c, Parent_Account__c, 
                                       Invoice__r.Center__r.Organisation__r.name,Payment_Date__c,method_of_payment__c,
                                       Invoice__r.Center__r.Organisation__r.Stripe_Base_Url__c, Invoice__r.Center__r.Organisation__r.Stripe_Secret_Key__c
@@ -268,7 +273,7 @@ public with sharing class AddCreditMemoController {
         objCreditLineItem.Month__c = objInvLine.Month__c;
         //CH01 ENd
         
-        //objCreditLineItem.Remarks__c = reasons;
+        objCreditLineItem.Remarks__c = objInvLine.Remarks__c;
         if (isDml)
             insert objCreditLineItem;
         return objCreditLineItem;
