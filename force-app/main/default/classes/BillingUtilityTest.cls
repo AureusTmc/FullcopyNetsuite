@@ -257,15 +257,15 @@ BillingUtility.sendDeclinedMail(invoiceList, '7');*/
         listOfInvoice_Line_Item[1].Is_Deposit__c = false;
         insert listOfInvoice_Line_Item;  
         List<Credit_Memo__c> newPendingCreditMemos = new List<Credit_Memo__c>();
-        newPendingCreditMemos.add(BillingUtility.createCreditMemoRec(listOfinvoice[0],System.today(),'test'));
+        newPendingCreditMemos.add(BillingUtility.createCreditMemoRec(cust.Id,accCentre.id,listOfinvoice[0].id,System.today(),'test'));
         insert newPendingCreditMemos;
         List<Credit_memo_line_item__c> listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
         listOfCreditmemolineitem.add( BillingUtility.createCreditMemoLineRec(50.00,1.00,objPack.id,
-                                                                             objEnrol.id,listOfInvoice_Line_Item[1].Id,'test'));
+                                                                             objEnrol.id,listOfInvoice_Line_Item[1].Id,'test',system.today()));
         listOfCreditmemolineitem.add( BillingUtility.createCreditMemoLineRec(50.00,1.00,objPack.id,
-                                                                             objEnrol.id,listOfInvoice_Line_Item[1].Id,'test'));
+                                                                             objEnrol.id,listOfInvoice_Line_Item[1].Id,'test', date.today()));
         listOfCreditmemolineitem[0].Credit_Memo_Number__c =  newPendingCreditMemos[0].id;
-         listOfCreditmemolineitem[1].Credit_Memo_Number__c =  newPendingCreditMemos[0].id;
+        listOfCreditmemolineitem[1].Credit_Memo_Number__c =  newPendingCreditMemos[0].id;
         insert listOfCreditmemolineitem;  
         String strRecordTypeId = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get(ConstantsClass.paymentAsDepositRecordType).getRecordTypeId();
         BillingUtility.createInvoiceFromSubscription(subscriptionList, null, date.today());
@@ -356,24 +356,24 @@ BillingUtility.sendDeclinedMail(invoiceList, '7');*/
         listOfInvoice_Line_Item[1].Is_Deposit__c = false;
         insert listOfInvoice_Line_Item;  
         List<Credit_Memo__c> newPendingCreditMemos = new List<Credit_Memo__c>();
-        newPendingCreditMemos.add(BillingUtility.createCreditMemoRec(listOfinvoice[0],System.today(),'test'));
+        newPendingCreditMemos.add(BillingUtility.createCreditMemoRec(cust.Id,accCentre.id,listOfinvoice[0].id,System.today(),'test'));
         insert newPendingCreditMemos;
         List<Credit_memo_line_item__c> listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
         listOfCreditmemolineitem.add(BillingUtility.createCreditMemoLineRec(100.00,1.00,objPack.id,
-                                                                            objEnrol.id,listOfInvoice_Line_Item[0].Id,'test'));
+                                                                            objEnrol.id,listOfInvoice_Line_Item[0].Id,'test', date.today()));
         listOfCreditmemolineitem.add(BillingUtility.createCreditMemoLineRec(400.00,4.00,objPack.id,
-                                                                            objEnrol.id,listOfInvoice_Line_Item[0].Id,'test'));
+                                                                            objEnrol.id,listOfInvoice_Line_Item[0].Id,'test', date.today()));
         listOfCreditmemolineitem.add( BillingUtility.createCreditMemoLineRec(200.00,2.00,objPack.id,
-                                                                             objEnrol2.id,listOfInvoice_Line_Item[1].Id,'test'));
+                                                                             objEnrol2.id,listOfInvoice_Line_Item[1].Id,'test', date.today()));
         listOfCreditmemolineitem[0].Credit_Memo_Number__c =  newPendingCreditMemos[0].id;
         listOfCreditmemolineitem[1].Credit_Memo_Number__c =  newPendingCreditMemos[0].id;
-         listOfCreditmemolineitem[2].Credit_Memo_Number__c =  newPendingCreditMemos[0].id;
+        listOfCreditmemolineitem[2].Credit_Memo_Number__c =  newPendingCreditMemos[0].id;
         insert listOfCreditmemolineitem;  
         String strRecordTypeId = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get(ConstantsClass.paymentAsDepositRecordType).getRecordTypeId();
         BillingUtility.createInvoiceFromSubscription(subscriptionList, null, date.today().addmonths(1));
         Test.stopTest();
     }
-     @isTest
+    @isTest
     public static void testCreditMemoChanges3(){
         Test.startTest();
         Account cust = [SELECT Id FROM Account WHERE RecordType.Name = 'Customer' LIMIT 1];
@@ -463,15 +463,15 @@ BillingUtility.sendDeclinedMail(invoiceList, '7');*/
         listOfInvoice_Line_Item[1].Is_Deposit__c = false;
         insert listOfInvoice_Line_Item;  
         List<Credit_Memo__c> newPendingCreditMemos = new List<Credit_Memo__c>();
-        newPendingCreditMemos.add(BillingUtility.createCreditMemoRec(listOfinvoice[0],System.today(),'test'));
+        newPendingCreditMemos.add(BillingUtility.createCreditMemoRec(cust.Id,accCentre.id,listOfinvoice[0].id,System.today(),'test'));
         insert newPendingCreditMemos;
         List<Credit_memo_line_item__c> listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
         listOfCreditmemolineitem.add(BillingUtility.createCreditMemoLineRec(100.00,1.00,objPack.id,
-                                                                            objEnrol.id,listOfInvoice_Line_Item[0].Id,'test'));
+                                                                            objEnrol.id,listOfInvoice_Line_Item[0].Id,'test', date.today()));
         listOfCreditmemolineitem.add(BillingUtility.createCreditMemoLineRec(400.00,4.00,objPack.id,
-                                                                            objEnrol.id,listOfInvoice_Line_Item[0].Id,'test'));
+                                                                            objEnrol.id,listOfInvoice_Line_Item[0].Id,'test', date.today()));
         listOfCreditmemolineitem.add( BillingUtility.createCreditMemoLineRec(200.00,2.00,objPack.id,
-                                                                             objEnrol2.id,listOfInvoice_Line_Item[1].Id,'test'));
+                                                                             objEnrol2.id,listOfInvoice_Line_Item[1].Id,'test', date.today()));
         listOfCreditmemolineitem[0].Credit_Memo_Number__c =  newPendingCreditMemos[0].id;
         listOfCreditmemolineitem[1].Credit_Memo_Number__c =  newPendingCreditMemos[0].id;
         listOfCreditmemolineitem[2].Credit_Memo_Number__c =  newPendingCreditMemos[0].id;
@@ -479,7 +479,120 @@ BillingUtility.sendDeclinedMail(invoiceList, '7');*/
         String strRecordTypeId = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get(ConstantsClass.paymentAsDepositRecordType).getRecordTypeId();
         BillingUtility.createInvoiceFromSubscription(subscriptionList, null, date.today().addmonths(1));
         objEnrol2.Package_Process_Type__c = ConstantsClass.enrollmentProcessCancelType;
-        
         Test.stopTest();
     }
+    @isTest
+    public static void testcoverCodeChanges3(){
+        
+        Account cust = [SELECT Id FROM Account WHERE RecordType.Name = 'Customer' LIMIT 1];
+        Firebase_Settings__c objSetting = new Firebase_Settings__c();
+        objSetting.Name = 'setting';
+        objSetting.Enable_Notifications__c = false;
+        insert objSetting;
+        Country__c country = new Country__c(); 
+        country.Name = 'IN'; 
+        country.Country_Name__c = 'India';
+        country.Tax_Rate__c = 7.0; 
+        country.Currency_Code__c = 'INR'; 
+        country.Student_Policies_Template_Id__c = 'test'; 
+        country.Stripe_Base_Url__c = 'www.test.com'; 
+        country.Stripe_Publishable_Key__c = 'ABC';
+        country.Stripe_Secret_Key__c = 'deede'; 
+        insert country;
+        //added by nishi:25-sep-2020: create organisation
+        Organisation__c organisationRecord = new Organisation__c();
+        organisationRecord.Name = 'Aureus Academy Singapore';
+        organisationRecord.Bank_Account_Number__c = '1123456789';
+        organisationRecord.Branch_Code__c = 'test';
+        organisationRecord.Country__c = country.id;
+        organisationRecord.Stripe_Base_Url__c = 'www.test.com';
+        organisationRecord.Stripe_Publishable_Key__c = 'ABC';
+        organisationRecord.Stripe_Secret_Key__c = 'test_key';
+        organisationRecord.Sage_Company__c = 'AGP';
+        Insert organisationRecord;  
+        Account accCentre = TestUtil.createAccount('Centre',TRUE,FALSE);
+        accCentre.Country__c = country.Id;
+        //added by @nishi 25 sep 2020
+        accCentre.Organisation__c = organisationRecord.id;
+        accCentre.Organisation_Sharing__c ='Aureus Academy Singapore';
+        //updated by @nishi 25 sep 2020
+        INSERT accCentre;
+        
+        Account accTecher = TestUtil.createAccount('Teacher',TRUE,TRUE);
+        
+        Program__c objProg = TestUtil.createProgram('Active','Piano', TRUE);
+        Package__c objPack = TestUtil.createPackage(objProg.Id, accCentre.Id,'30',True);
+        Enrolment__c objEnrol = TestUtil.createEnrolment(accCentre.Id,accTecher.id,cust.Id,objPack.Id,true);
+        Enrolment__c objEnrol2 = TestUtil.createEnrolment(accCentre.Id,accTecher.id,cust.Id,objPack.Id,true);
+        objEnrol2.Package_Process_Type__c = ConstantsClass.enrollmentProcessCancelType;
+        objEnrol2.Effective_Date__c=  date.today().addmonths(1).adddays(2);
+        update objEnrol2;
+        objEnrol.Package_Process_Type__c = ConstantsClass.enrollmentProcessCancelType;
+        objEnrol.Effective_Date__c=  date.today().addmonths(1).adddays(2);
+        update objEnrol;
+        List<Subscription__C> listOfSubscription = New List<Subscription__C>();
+        listOfSubscription.add(AureusCalendarControllerTestHelper.createSubscription(cust.Id,accCentre.Id, FALSE));
+        Insert listOfSubscription;
+        
+        // create Subscription_Line_Item__c
+        List<Subscription_Line_Item__c> listOfSubscLine = new List<Subscription_Line_Item__c>();
+        listOfSubscLine.add(AureusCalendarControllerTestHelper.createSubscriptionLineItem(listOfSubscription[0].Id,objEnrol.Id, Date.newInstance(System.today().year(), System.today().month(), 1), False));
+        listOfSubscLine.add(AureusCalendarControllerTestHelper.createSubscriptionLineItem(listOfSubscription[0].Id,objEnrol2.Id, Date.newInstance(System.today().year(), System.today().month(), 1).AddDays(1), False));
+        listOfSubscLine[0].amount__c=100;
+        listOfSubscLine[1].amount__c=100;
+        insert listOfSubscLine;
+        List<Subscription__c> subscriptionList = [Select Id,Parent__c,Parent__r.personContactId,Next_Bill_Date__c,Center__c,
+                                                  (Select Id,Amount__c,Enrolment__c,Plan_Package__c,Enrolment__r.Effective_Date__c,
+                                                   Enrolment__r.Termination_request_date__c,Enrolment__r.recordtype.Name,
+                                                   Enrolment__r.Package_Process_Type__c,Enrolment__r.Package_Process_Status__c,Enrolment__r.Lesson_day__c,
+                                                   Enrolment__r.New_Package_Id__c,Enrolment__r.Package_Process_Request_Date__c,
+                                                   Enrolment__r.New_Package_Id__r.Deposit_Fee__c,Enrolment__r.New_Package_Id__r.Unit_Fee__c,
+                                                   Enrolment__r.Package__c,Enrolment__r.Teacher__c, Enrolment__r.New_Teacher__c,Enrolment__r.Promotional_Period_End_Date__c,
+                                                   Enrolment__r.Package__r.Deposit_Fee__c,Enrolment__r.Package__r.Unit_Fee__c,
+                                                   Next_Bill_Date__c, Enrolment__r.Center__r.Country__r.Id, Enrolment__r.Center__r.Country__r.Tax_Rate__c ,
+                                                   Enrolment__r.Center__r.Organisation__r.Name,
+                                                   Enrolment__r.Package__r.Name,Enrolment__r.New_Package_Id__r.Name, Enrolment__r.Center__r.Organisation__r.Tax_Rate__c , Enrolment__r.Center__r.Organisation__r.Id,
+                                                   Enrolment__r.New_Centre__r.Country__r.Id, Enrolment__r.New_Centre__r.Country__r.Tax_Rate__c ,
+                                                   Enrolment__r.New_Centre__r.Organisation__r.Name, Enrolment__r.New_Centre__r.Organisation__r.Tax_Rate__c , Enrolment__r.New_Centre__r.Organisation__r.Id
+                                                   FROM Subscription_Line_Items__r )
+                                                  FROM Subscription__c 
+                                                  WHERE id=:listOfSubscription[0].id];
+        
+        List<invoice__c> listOfinvoice = new List<invoice__c>();
+        listOfinvoice.add(AureusCalendarControllerTestHelper.createInvoice(cust.Id, accCentre.Id,false));
+        listOfinvoice[0].status__c='Due';
+        insert listOfinvoice;
+        List<Invoice_Line_Item__c> listOfInvoice_Line_Item = new List<Invoice_Line_Item__c>();
+        listOfInvoice_Line_Item.add(AureusCalendarControllerTestHelper.createInvLineItem(listOfinvoice[0].id,100,accTecher.id,date.today().addDays(2),
+                                                                                         objEnrol.id,listOfSubscLine[0].id,objPack.id,1.00,false));
+        listOfInvoice_Line_Item.add(AureusCalendarControllerTestHelper.createInvLineItem(listOfinvoice[0].id,200,accTecher.id,date.today().addDays(3),
+                                                                                         objEnrol2.id,listOfSubscLine[1].id,objPack.id,1.00,false));
+        listOfInvoice_Line_Item[0].Is_Deposit__c = false;
+        listOfInvoice_Line_Item[1].Is_Deposit__c = false;
+        insert listOfInvoice_Line_Item;  
+        List<Credit_Memo__c> newPendingCreditMemos = new List<Credit_Memo__c>();
+        newPendingCreditMemos.add(BillingUtility.createCreditMemoRec(cust.Id,accCentre.id,listOfinvoice[0].id,System.today(),'test'));
+        insert newPendingCreditMemos;
+        List<Credit_memo_line_item__c> listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
+        listOfCreditmemolineitem.add(BillingUtility.createCreditMemoLineRec(100.00,1.00,objPack.id,
+                                                                            objEnrol.id,listOfInvoice_Line_Item[0].Id,'test', date.today()));
+        listOfCreditmemolineitem.add(BillingUtility.createCreditMemoLineRec(400.00,4.00,objPack.id,
+                                                                            objEnrol.id,listOfInvoice_Line_Item[0].Id,'test', date.today()));
+        listOfCreditmemolineitem.add( BillingUtility.createCreditMemoLineRec(200.00,2.00,objPack.id,
+                                                                             objEnrol2.id,listOfInvoice_Line_Item[1].Id,'test', date.today()));
+        listOfCreditmemolineitem[0].Credit_Memo_Number__c =  newPendingCreditMemos[0].id;
+        listOfCreditmemolineitem[1].Credit_Memo_Number__c =  newPendingCreditMemos[0].id;
+        listOfCreditmemolineitem[2].Credit_Memo_Number__c =  newPendingCreditMemos[0].id;
+        insert listOfCreditmemolineitem;  
+        Test.startTest();
+        Test.setMock(HttpCalloutMock.class, new MockHttpResponseGenerator(200,'{"paid": true,"Id":"ch_1AxWbTFytruJp2FXW6iuRd1X"}'));
+        BillingUtility.createChargeForCustomer(cust.Id,200,organisationRecord.id); 
+        BillingUtility.getOrganisationMap('');
+        BillingUtility.getOrganisationMap(organisationRecord.id);
+        BillingUtility.createBatchLog('Monthly Payment Batch',system.now(),system.now(),1,'');
+        listOfCreditmemolineitem.add( BillingUtility.createCreditMemoLineRec(200.00,2.00,objPack.id,
+                                                                             objEnrol2.id,listOfInvoice_Line_Item[1].Id,'test'));
+        Test.stopTest();
+    }
+    
 }

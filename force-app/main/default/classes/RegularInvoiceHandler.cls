@@ -22,12 +22,22 @@ public class RegularInvoiceHandler implements PackageProcessInterface{
         if(objSubLineItem.Enrolment__r.recordtype.Name == ConstantsClass.enrollmentInstrumentRecTypeName){
             Date effectiveDate = objSubLineItem.Enrolment__r.Termination_request_date__c;  
             if(effectiveDate != NULL && effectiveDate >= firstDate && effectiveDate <= lastDate){
+                system.debug(effectiveDate.day());
+                system.debug(objSubLineItem.Amount__c /  date.daysInMonth(effectiveDate.year(), effectiveDate.month()));
                 Decimal rentalTotalAmount = effectiveDate.day() * ( objSubLineItem.Amount__c /  date.daysInMonth(effectiveDate.year(), effectiveDate.month()));
                 system.debug(rentalTotalAmount);
                 Invoice_Line_Item__c invLineItm = PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,rentalTotalAmount,
                                                                 objSubLineItem.Enrolment__r.Package__c,False,objSubLineItem.Enrolment__r.Teacher__c);
                 invLineItm.Remarks__c = 'Final Piano Rental';
                 listOfInvoiceLineItems.add(invLineItm);
+                Decimal noOfStairs = objSubLineItem.Enrolment__r.No_of_Stairs__c;
+                system.debug(noOfStairs);
+                Decimal noOfStairsAmount = (noOfStairs != null && noOfStairs > 0 ? noOfStairs * 10 : 0); 
+                system.debug(noOfStairsAmount);
+                Invoice_Line_Item__c invLineItmStair = PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,noOfStairsAmount,
+                                                                null,False,objSubLineItem.Enrolment__r.Teacher__c);
+                                                                invLineItmStair.Remarks__c = 'Additional Stairs Pickup Charges ('+noOfStairs+' Steps - $10/Step)';
+                listOfInvoiceLineItems.add(invLineItmStair);
             }else{
                 Invoice_Line_Item__c invLineItm = PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,objSubLineItem.Amount__c,
                                                                 objSubLineItem.Enrolment__r.Package__c,False,objSubLineItem.Enrolment__r.Teacher__c);

@@ -243,7 +243,7 @@ public with sharing class InvoiceGeneraterController {
                                                         Next_Bill_Date__c, Enrolment__r.Center__r.Country__r.Id, Enrolment__r.Center__r.Country__r.Tax_Rate__c,
                                                         Enrolment__r.Center__r.Organisation__r.Name,/*Enrolment__r.New_Package_Id__r.Facility_Fee__c,Enrolment__r.Package__r.Facility_Fee__c,*/
                                                         Enrolment__r.Center__r.Organisation__r.Tax_Rate__c,
-                                                        
+                                                        Enrolment__r.No_of_Stairs__c, // 9-oct-2020: for manage Additional pickup charges with stair case charges  
                                                         Enrolment__r.New_Centre__r.Country__r.Id, Enrolment__r.New_Centre__r.Country__r.Tax_Rate__c,
                                                         Enrolment__r.New_Centre__r.Organisation__r.Name,/*Enrolment__r.New_Package_Id__r.Facility_Fee__c,Enrolment__r.Package__r.Facility_Fee__c,*/
                                                         Enrolment__r.New_Centre__r.Organisation__r.Tax_Rate__c,
