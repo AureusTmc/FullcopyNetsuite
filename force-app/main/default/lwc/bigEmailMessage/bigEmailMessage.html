@@ -27,7 +27,7 @@
             <p class="slds-p-left_medium" style="color: red;"><b>{errorMessage}</b></p>
         </template>
 
-        <template if:true={showViewAll}>
+        <template if:true={showPaginationButton}>
             <div>
                 <br />
                 <lightning-button label="Prev" onclick={handlePrev}></lightning-button>
@@ -52,6 +52,7 @@
     <!-- #######################################  Record View Start ############################################# -->
     <template if:true={showRecordModal}>
 
+        <template if:true={isRecordFetchCorreclty}>
         <div style="height: 500px;">
             <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
                 aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
@@ -70,6 +71,8 @@
 
                             <lightning-icon icon-name="standard:email" size="small"></lightning-icon>
                             &nbsp;&nbsp;{selectedEMailRecord.subject}
+                            <template if:true={selectedEMailRecord.isError}>&nbsp;&nbsp;
+                                <p style="color:red;">{selectedEMailRecord.isError}</p></template>
                         </h2>
                     </header>
                     <!--################################   Modal Body End ####################################-->
@@ -264,7 +267,7 @@
             </section>
             <div class="slds-backdrop slds-backdrop_open"></div>
         </div>
-
+    </template>
     </template>
     <!-- #######################################  Record View End ############################################# -->
 </template>

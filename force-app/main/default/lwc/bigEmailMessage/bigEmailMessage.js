@@ -1,6 +1,6 @@
 import { LightningElement, track, api } from "lwc";
 import fetchBigEmail from "@salesforce/apex/BigEmailMessageController.fetchBigEmailMessages";
-
+import fetchBigEmailRec from "@salesforce/apex/BigEmailMessageController.fetchBigEMailMessageRecord";
 export default class BigEmailMessage extends LightningElement {
   totalEmailMessage = " Archive Emails (0)";
   @track listBigEmailMessage = []; //this will fetch Limited Big Email Messages
@@ -23,11 +23,13 @@ export default class BigEmailMessage extends LightningElement {
 
   intialRecordCount = 5;
   isDataFetchCorrectly = false;
+  isRecordFetchCorreclty = false;
   errorMessage = "";
   tableSpinner = false;
   showRecordModal = false;
   selectedEMailRecord;
   showViewAll = false;
+  showPaginationButton = false;
   disablePrev;
   disableNext;
   startPage;
@@ -35,9 +37,10 @@ export default class BigEmailMessage extends LightningElement {
   totalRecords;
   pageSize = 5;
 
-  constructor() {
-    super();
+  connectedCallback() {
+    
     this.tableSpinner = true;
+    console.log('This Record --> '+ this.recordId);
     fetchBigEmail({ limitRec: this.intialRecordCount, recordId: this.recordId })
       .then((result) => {
         console.log(result);
@@ -45,6 +48,7 @@ export default class BigEmailMessage extends LightningElement {
           this.errorMessage =
             result[0].isError + ". Please contact Salesforce Administrator.";
         } else if (result.length > 0) {
+          console.log('inside');
           this.listBigEmailMessagePaginated = result;
           this.isDataFetchCorrectly = true;
 
@@ -62,6 +66,8 @@ export default class BigEmailMessage extends LightningElement {
               this.listBigEmailMessagePaginated.length +
               ")";
           }
+        }else{
+          this.showViewAll = true;
         }
         this.tableSpinner = false;
       })
@@ -92,6 +98,7 @@ export default class BigEmailMessage extends LightningElement {
             " Archive Emails (" + this.listBigEmailMessage.length + ")";
         }
         this.tableSpinner = false;
+        this.showPaginationButton = true;
         this.showViewAll = true;
         this.startPage = 0;
         this.endPage = this.pageSize - 1;
@@ -108,30 +115,36 @@ export default class BigEmailMessage extends LightningElement {
       });
   }
   handleRowAction(event) {
-    //5002s000000nHnBAAU
-    //https://www.salesforcecodecrack.com/2019/07/lightning-datatable-with-row-actions-in.html
-    //https://salesforce.stackexchange.com/questions/219619/search-functionality-in-lightningdatatable
-    //https://www.forcetree.com/2019/06/lightning-datatable-client-search.html
-    let actionName = event.detail.action.name;
-    window.console.log("actionName ====> " + actionName);
+    
     let row = event.detail.row;
-    window.console.log("row  ====> " + JSON.stringify(row));
-    this.selectedEMailRecord = row;
+    this.tableSpinner = true;
 
-    console.log(" --> " + JSON.stringify(this.selectedEMailRecord));
-    this.showRecordModal = true;
+    fetchBigEmailRec({
+      accntId: this.recordId,
+      emailMessageId: row.emailMessageId
+    })
+      .then((result) => {
+
+        console.log(JSON.stringify(result));
+          this.selectedEMailRecord = result;
+          this.showRecordModal = true;
+          this.isRecordFetchCorreclty = true;
+          this.tableSpinner = false;
+      })
+      .catch((error) => {
+        console.log(JSON.stringify(error));
+        this.tableSpinner = false;
+      });
   }
   handleCloseModal(event) {
     this.showRecordModal = false;
   }
 
   handleNext(event) {
-    console.log(this.listBigEmailMessage);
     console.log(this.endPage);
     console.log(this.pageSize);
     console.log(this.endPage + this.pageSize + 1);
-
-    if (this.endPage + 1 >= this.listBigEmailMessage.length) {
+if (this.endPage + 1 >= this.listBigEmailMessage.length) {
       return;
     }
     this.tableSpinner = true;
@@ -157,7 +170,6 @@ export default class BigEmailMessage extends LightningElement {
     this.tableSpinner = false;
   }
   handlePrev(event) {
-    console.log(this.listBigEmailMessage);
     console.log(this.endPage);
     console.log(this.pageSize);
     console.log(this.startPage);

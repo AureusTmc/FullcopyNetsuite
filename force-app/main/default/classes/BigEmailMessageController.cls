@@ -1,159 +1,201 @@
-//Karan Singh Created on 6 Oct 2020
+/*
+Name        :        BigEmailMessageController
+Date        :        6 Oct 2020
+Author      :        Karan Singh Soni
+Test Class  :        
+Component   :		 BigEMailMessage(LWC)
+*/
 public with sharing class BigEmailMessageController {
+    
     
     //SELECT Id,Subject__c,FromAddress__c,ToAddress__c,MessageDate__c,Related_to_Case__c,Related_to_Case__r.recordtype.name
     //FROM Big_Email_Message__b
     //record type -  Sales Enquiry
-@AuraEnabled
-public static List< BigEmailMessageWrap > fetchBigEmailMessages( Id recordId,Integer limitRec){
-
-    List< BigEmailMessageWrap > listBigEMailMessageWrap = new List< BigEmailMessageWrap >();
-    String queryBigEmail = 'SELECT Id,FirstOpenedDate__c,Headers__c ,LastOpenedDate__c,MessageDate__c,CreatedDate__c,';
-    queryBigEmail += 'LastModifiedById__r.Name, IsIncoming_Text__c, FromAddress__c, FromName__c, ToAddress__c,';
-    queryBigEmail += 'CC_Address__c, BCC_Address__c, Subject__c, HTML_Body__c, text_Body__c,';
-    queryBigEmail += 'Related_to_Account__c,CreatedBy.Name, CreatedDate, LastModifiedDate__c FROM Big_Email_Message_1__b ';
-   
-    try{
-        if( String.isNotBlank( recordId )){
-
-            if( recordId.getSobjectType() == Account.getSObjectType() ){
-
-              queryBigEmail += ' WHERE Related_to_Account__c = \'' + recordId +'\'';
-            }else if( recordId.getSobjectType() == Case.getSObjectType() ){
+    @AuraEnabled
+    public static List< BigEmailMessageWrap > fetchBigEmailMessages( Id recordId,Integer limitRec){
+        
+        List< BigEmailMessageWrap > listBigEMailMessageWrap = new List< BigEmailMessageWrap >();
+        String queryBigEmail = returnQueryString();
+        
+        try{
+            if( String.isNotBlank( recordId )){
                 
-                //queryBigEmail += ' WHERE Related_to_Case__c =: ' + recordId;
+                if( recordId.getSobjectType() == Account.getSObjectType() ){
+                    
+                    queryBigEmail += ' WHERE Related_to_Account__c = \'' + recordId +'\'';
+                }else{
+                    return listBigEMailMessageWrap;
+                    //queryBigEmail += ' WHERE Related_to_Case__c =: ' + recordId;
+                }
             }
-        }
-        //limitRec + 1 is done as to check if the total no of record is more than limitRec(ex 5) .
-        // Then in the UI it will show 5+ records
-        if ( limitRec != 0 ){ queryBigEmail += ' LIMIT ' + (limitRec + 1); }
-        //else{ queryBigEmail += ' LIMIT 100 '; }
-
-        system.debug( queryBigEmail );
-
-        Integer i = 1;
-        //listBigEMailMessageWrap = Database.query( queryBigEmail); 
-        for( Big_Email_Message_1__b objBigEmail : Database.query( queryBigEmail)){
-
-            BigEmailMessageWrap objBigEmailWrap = new BigEmailMessageWrap();
+            //limitRec + 1 is done as to check if the total no of record is more than limitRec(ex 5) .
+            // Then in the UI it will show 5+ records
+            if ( limitRec != 0 ){ queryBigEmail += ' LIMIT ' + (limitRec + 1); }
+            //else{ queryBigEmail += ' LIMIT 100 '; }
             
-            system.debug(objBigEmail.HTML_Body__c);
-            system.debug(objBigEmail.text_Body__c);
-            objBigEmailWrap.index = i;
-            i++;
-            objBigEmailWrap.bccAddress = objBigEmail.BCC_Address__c;
-            objBigEmailWrap.ccAddress = objBigEmail.CC_Address__c;
-            objBigEmailWrap.emailMessageId = '' ;
-            objBigEmailWrap.fromAddress = objBigEmail.FromAddress__c ;
-            objBigEmailWrap.fromName = objBigEmail.FromName__c ;
-            objBigEmailWrap.Headers = objBigEmail.Headers__c ;
-            objBigEmailWrap.htmlBody = objBigEmail.HTML_Body__c ;
-            objBigEmailWrap.incomingText = objBigEmail.IsIncoming_Text__c ;
-            objBigEmailWrap.LastModifiedByName = objBigEmail.LastModifiedById__r.Name ;
-            objBigEmailWrap.relatedTo = '' ;
-            objBigEmailWrap.subject = objBigEmail.Subject__c ;
-            objBigEmailWrap.textBody = objBigEmail.text_Body__c ;
-            objBigEmailWrap.toAddress = objBigEmail.ToAddress__c ;
-            objBigEmailWrap.createdByName = objBigEmail.CreatedBy.Name;
-            objBigEmailWrap.isError = '' ;
-
-            objBigEmailWrap.createdDate =  formatDateTime(objBigEmail.CreatedDate__c,String.valueOf(UserInfo.getTimeZone()) ) ;
-            objBigEmailWrap.MessageDate = formatDateTime(objBigEmail.MessageDate__c,String.valueOf(UserInfo.getTimeZone()) ) ;
-            objBigEmailWrap.firstOpenedDate = formatDateTime(objBigEmail.FirstOpenedDate__c,String.valueOf(UserInfo.getTimeZone()) ) ;
-            objBigEmailWrap.LastModifiedDate = formatDateTime(objBigEmail.LastModifiedDate__c,String.valueOf(UserInfo.getTimeZone()) ) ;
-            objBigEmailWrap.LastOpenedDate = formatDateTime(objBigEmail.LastOpenedDate__c ,String.valueOf(UserInfo.getTimeZone()) );
-
+            system.debug( queryBigEmail );
+            
+            Integer i = 1;
+            //listBigEMailMessageWrap = Database.query( queryBigEmail); 
+            for( Big_Email_Message_1__b objBigEmail : Database.query( queryBigEmail)){
+                
+                BigEmailMessageWrap objBigEmailWrap = mapBigEmailMessageWrapValues( new BigEmailMessageWrap() , objBigEmail, i);
+                objBigEmailWrap.htmlBody = ''; //some times htmlbody n text body will contains more data which cannot
+                objBigEmailWrap.textBody = '';// be transfer in the list, need to show this seperatly by calling the method again in the view record modal
+                
+                listBigEMailMessageWrap.add( objBigEmailWrap );
+                i++;
+            }
+            
+        }catch( Exception objException ){
+            System.debug( 'Error : ' + objException.getMessage() + ' at Line Number : ' + objException.getLineNumber());
+            listBigEMailMessageWrap.clear();
+            BigEmailMessageWrap objBigEmailWrap = new BigEmailMessageWrap();
+            objBigEmailWrap.isError = 'Error : ' + objException.getMessage() + ' at Line Number : ' + objException.getLineNumber();
             listBigEMailMessageWrap.add( objBigEmailWrap );
         }
-
-    }catch( Exception objException ){
-        System.debug( 'Error : ' + objException.getMessage() + ' at Line Number : ' + objException.getLineNumber());
-        listBigEMailMessageWrap.clear();
-        BigEmailMessageWrap objBigEmailWrap = new BigEmailMessageWrap();
-        objBigEmailWrap.isError = 'Error : ' + objException.getMessage() + ' at Line Number : ' + objException.getLineNumber();
-        listBigEMailMessageWrap.add( objBigEmailWrap );
-    }
-   return listBigEMailMessageWrap;
-}//end of fetchBigEmailMessage()
-
-//this method is used to convert the UTC dateTime to the given time zone
-public static string formatDateTime( DateTime objdate, String timeZone ){
-
-    String formatedDate = '';
-    if( objdate != Null && String.isNotBlank(timeZone) ){
-        formatedDate = objdate.format('MM/dd/yyyy HH:mm:ss a',timeZone );
-    }
-    return formatedDate;
-}
-
-public class BigEmailMessageWrap {
+        return listBigEMailMessageWrap;
+    }//end of fetchBigEmailMessage()
     
-    @AuraEnabled
-    public Integer index;
-    @AuraEnabled
-    public String bccAddress;
-    @AuraEnabled
-    public String ccAddress;
-    @AuraEnabled
-    public String createdDate;
-    @AuraEnabled
-    public String createdByName;
-    @AuraEnabled
-    public String emailMessageId;
-    @AuraEnabled
-    public String firstOpenedDate;
-    @AuraEnabled
-    public String fromAddress;
-    @AuraEnabled
-    public String fromName;
-    @AuraEnabled
-    public String Headers;
-    @AuraEnabled
-    public String htmlBody;
-    @AuraEnabled
-    public String incomingText;
-    @AuraEnabled
-    public String LastModifiedByName;
-    @AuraEnabled
-    public String LastModifiedDate;
-    @AuraEnabled
-    public String LastOpenedDate;
-    @AuraEnabled
-    public String MessageDate;
-    @AuraEnabled
-    public String relatedTo;
-    @AuraEnabled
-    public String subject;
-    @AuraEnabled
-    public String textBody;
-    @AuraEnabled
-    public String toAddress;
-    @AuraEnabled
-    public String isError;
-
-    public BigEmailMessageWrap(){
-
-        bccAddress = '' ;
-ccAddress = '' ;
-createdDate = '' ;
-emailMessageId = '' ;
-firstOpenedDate = '' ;
-fromAddress = '' ;
-fromName = '' ;
-Headers = '' ;
-htmlBody = '' ;
-incomingText = '' ;
-LastModifiedByName = '' ;
-LastModifiedDate = '' ;
-LastOpenedDate = '' ;
-MessageDate = '' ;
-relatedTo = '' ;
-subject = '' ;
-textBody = '' ;
-toAddress = '' ;
-isError = '' ;
+    //this method is used to convert the UTC dateTime to the given time zone
+    public static string formatDateTime( DateTime objdate, String timeZone ){
+        
+        String formatedDate = '';
+        if( objdate != Null && String.isNotBlank(timeZone) ){
+            formatedDate = objdate.format('MM/dd/yyyy HH:mm:ss a',timeZone );
+        }
+        return formatedDate;
     }
-}
+    
+    public static BigEmailMessageWrap mapBigEmailMessageWrapValues( BigEmailMessageWrap objBigEmailWrap, Big_Email_Message_1__b objBigEmail, Integer index ){
+        system.debug(objBigEmail.HTML_Body__c);
+        system.debug(objBigEmail.text_Body__c);
+        objBigEmailWrap.index = index;
+        objBigEmailWrap.bccAddress = objBigEmail.BCC_Address__c;
+        objBigEmailWrap.ccAddress = objBigEmail.CC_Address__c;
+        objBigEmailWrap.emailMessageId = objBigEmail.Email_Message_Id__c  ;
+        objBigEmailWrap.fromAddress = objBigEmail.FromAddress__c ;
+        objBigEmailWrap.fromName = objBigEmail.FromName__c ;
+        objBigEmailWrap.Headers = objBigEmail.Headers__c ;
+        
+        if( String.isNotBlank( objBigEmail.HTML_Body__c ) ){
+            objBigEmailWrap.htmlBody = objBigEmail.HTML_Body__c.remove('http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">') ;
+        }
+        
+        objBigEmailWrap.incomingText = objBigEmail.IsIncoming_Text__c ;
+        objBigEmailWrap.LastModifiedByName = objBigEmail.LastModifiedById__r.Name ;
+        objBigEmailWrap.relatedTo = '' ;
+        objBigEmailWrap.subject = objBigEmail.Subject__c ;
+        objBigEmailWrap.textBody = objBigEmail.text_Body__c ;
+        objBigEmailWrap.toAddress = objBigEmail.ToAddress__c ;
+        objBigEmailWrap.createdByName = objBigEmail.CreatedBy.Name;
+        objBigEmailWrap.isError = '' ;
+        
+        objBigEmailWrap.createdDate =  formatDateTime(objBigEmail.CreatedDate__c,String.valueOf(UserInfo.getTimeZone()) ) ;
+        objBigEmailWrap.MessageDate = formatDateTime(objBigEmail.MessageDate__c,String.valueOf(UserInfo.getTimeZone()) ) ;
+        objBigEmailWrap.firstOpenedDate = formatDateTime(objBigEmail.FirstOpenedDate__c,String.valueOf(UserInfo.getTimeZone()) ) ;
+        objBigEmailWrap.LastModifiedDate = formatDateTime(objBigEmail.LastModifiedDate__c,String.valueOf(UserInfo.getTimeZone()) ) ;
+        objBigEmailWrap.LastOpenedDate = formatDateTime(objBigEmail.LastOpenedDate__c ,String.valueOf(UserInfo.getTimeZone()) );
+        return objBigEmailWrap;
+    }
+    
+    public static string returnQueryString(){
+        
+        String queryBigEmail = 'SELECT Id,FirstOpenedDate__c,Email_Message_Id__c ,Headers__c ,LastOpenedDate__c,MessageDate__c,CreatedDate__c,';
+        queryBigEmail += 'LastModifiedById__r.Name, IsIncoming_Text__c, FromAddress__c, FromName__c, ToAddress__c,';
+        queryBigEmail += 'CC_Address__c, BCC_Address__c, Subject__c, HTML_Body__c, text_Body__c,';
+        queryBigEmail += 'Related_to_Account__c,CreatedBy.Name, CreatedDate, LastModifiedDate__c FROM Big_Email_Message_1__b ';
+        
+        return queryBigEmail;
+    }
+    @AuraEnabled
+    public static BigEmailMessageWrap fetchBigEMailMessageRecord( String accntId, String emailMessageId ){
+        
+        String queryString = returnQueryString();
+        BigEmailMessageWrap objBigEmailWrap = new BigEmailMessageWrap();
+        try{
+            
+            queryString += ' WHERE Related_to_Account__c = \'' + accntId +'\' AND Email_Message_Id__c = \''+ emailMessageId +'\'' ;
+            for( Big_Email_Message_1__b objBigEmail : Database.query( queryString)){
+                
+                objBigEmailWrap = mapBigEmailMessageWrapValues(objBigEmailWrap, objBigEmail, 0 );
+            }
+            
+        }catch(Exception objException){
+            System.debug( 'Error : ' + objException.getMessage() + ' at Line Number : ' + objException.getLineNumber());
+            objBigEmailWrap.isError = 'Error : ' + objException.getMessage() + ' at Line Number : ' + objException.getLineNumber();
+        }
+        
+        return objBigEmailWrap;
+    }
+    public class BigEmailMessageWrap {
+        
+        @AuraEnabled
+        public Integer index;
+        @AuraEnabled
+        public String bccAddress;
+        @AuraEnabled
+        public String ccAddress;
+        @AuraEnabled
+        public String createdDate;
+        @AuraEnabled
+        public String createdByName;
+        @AuraEnabled
+        public String emailMessageId;
+        @AuraEnabled
+        public String firstOpenedDate;
+        @AuraEnabled
+        public String fromAddress;
+        @AuraEnabled
+        public String fromName;
+        @AuraEnabled
+        public String Headers;
+        @AuraEnabled
+        public String htmlBody;
+        @AuraEnabled
+        public String incomingText;
+        @AuraEnabled
+        public String LastModifiedByName;
+        @AuraEnabled
+        public String LastModifiedDate;
+        @AuraEnabled
+        public String LastOpenedDate;
+        @AuraEnabled
+        public String MessageDate;
+        @AuraEnabled
+        public String relatedTo;
+        @AuraEnabled
+        public String subject;
+        @AuraEnabled
+        public String textBody;
+        @AuraEnabled
+        public String toAddress;
+        @AuraEnabled
+        public String isError;
+        
+        public BigEmailMessageWrap(){
+            
+            bccAddress = '' ;
+            ccAddress = '' ;
+            createdDate = '' ;
+            emailMessageId = '' ;
+            firstOpenedDate = '' ;
+            fromAddress = '' ;
+            fromName = '' ;
+            Headers = '' ;
+            htmlBody = '' ;
+            incomingText = '' ;
+            LastModifiedByName = '' ;
+            LastModifiedDate = '' ;
+            LastOpenedDate = '' ;
+            MessageDate = '' ;
+            relatedTo = '' ;
+            subject = '' ;
+            textBody = '' ;
+            toAddress = '' ;
+            isError = '' ;
+        }
+    }
 }
 
 //Data insert query from email message to big object
