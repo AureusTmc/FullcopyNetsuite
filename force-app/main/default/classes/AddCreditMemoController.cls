@@ -13,6 +13,8 @@ Component   :		 AddCreditMemo(LWC)
 //CH02 24 Sep 2020 : Karan Singh Adding the Gst AMount + Amount in the invoice line item credit amount so that it can balance out the invoice line item total amount
 //CH03 25 Sep 2020 : Karan Singh Need -> Ashish bansal : to set the intial value of Credit Memo Date in creation of Credit memo not of Success Status (CH01)
 //CH04 9 Oct 2020 : Adding of remarks from Invoice Line Items to credit memo line items
+//CH05 12 Oct 2020 : removing the creteria as if already credit memo existed , then it should not create another Credit memo.
+//                    Instead check the invoice's Line Item Amount >  Invoice CM_Created__c amount, then it will allow to create the Credit Memo
 public with sharing class AddCreditMemoController {
     
     //This method will may refund and create the credit memo or create credit memo only
@@ -21,6 +23,7 @@ public with sharing class AddCreditMemoController {
         system.debug('invId --> ' + invId);
         creditMemoWrap objCreditMemoWrap = new creditMemoWrap();
         
+        Decimal invoiceTotalCreditMemoAmount = 0; //CH05
         // prettier-ignore
         if ( String.isBlank(invId) || invId.getSobjectType() != Schema.Invoice__c.SObjectType) {
             objCreditMemoWrap.isError = 'Invalid Invoice Id';
@@ -28,7 +31,8 @@ public with sharing class AddCreditMemoController {
             
         } else {
             //we will include inv line item having negative amount as well
-            for (Invoice__c objInv : [ SELECT Id, Status__c,Currency_Code__c,Name,                                    
+            for (Invoice__c objInv : [ SELECT Id, Status__c,Currency_Code__c,Name  
+                                        /* CH05 */ ,CM_Created__c,                                 
                                       (SELECT ID, Amount__c, GST_Amount__c,Package__c,Enrolment__c,Is_Deposit__c,Is_Discount__c	 FROM Invoice_Line_Items__r)
                                       FROM Invoice__c 
                                       WHERE ID = :invId ]) {
@@ -37,7 +41,12 @@ public with sharing class AddCreditMemoController {
                                           objCreditMemoWrap.invoiceCurrcyCode = objInv.Currency_Code__c;
                                           objCreditMemoWrap.objInvoiceName = objInv.Name;
                                           objCreditMemoWrap.invoiceId = invId;
-                                          
+                                        
+                                          //CH05 Start
+                                            if( objInv.CM_Created__c != Null && objInv.CM_Created__c != 0){
+                                                invoiceTotalCreditMemoAmount = BillingUtility.roundOffAmount( objInv.CM_Created__c );
+                                            }
+                                        //CH05 End
                                           if( objInv.Invoice_Line_Items__r.size() > 0 ){
                                               
                                               for( Invoice_Line_Item__c objInvLine : objInv.Invoice_Line_Items__r ){
@@ -52,16 +61,37 @@ public with sharing class AddCreditMemoController {
                                               }
                                               
                                           }
-                                      }
+                                      }//end of loop
+
+                                      system.debug(' --> ' + invoiceTotalCreditMemoAmount);
             //to scale it till two decimal points
             if(  objCreditMemoWrap.invoiceAmount > 0 ){
+                //objCreditMemoWrap.invoiceAmount = BillingUtility.roundOffAmount( objCreditMemoWrap.invoiceAmount );
+                //system.debug(' --> ' + objCreditMemoWrap.invoiceAmount);
+                
+                //CH05 Start removing any orevious created Credit memo amount
+                objCreditMemoWrap.invoiceAmount = objCreditMemoWrap.invoiceAmount - invoiceTotalCreditMemoAmount;
                 objCreditMemoWrap.invoiceAmount = BillingUtility.roundOffAmount( objCreditMemoWrap.invoiceAmount );
                 system.debug(' --> ' + objCreditMemoWrap.invoiceAmount);
+                //CH05 END
             }
-            
+            //Ch05 - CHecking the no amount is left for creation of credit memo, then show the user the created Credit memo Name
+            if( objCreditMemoWrap.invoiceAmount == 0 ){
+
+                for( Credit_Memo__c objCreditMem : [ SELECT ID,Name FROM Credit_Memo__c WHERE From_Invoice__c =: objCreditMemoWrap.invoiceId ] ){
+                    objCreditMemoWrap.existCreditMemo = objCreditMemoWrap.existCreditMemo + objCreditMem.Name + '  ';
+                }
+            }
+            //Ch05 End
+
+            /*Commneted due to CH05
             for( Credit_Memo__c objCreditMem : [ SELECT ID,Name FROM Credit_Memo__c WHERE From_Invoice__c =: objCreditMemoWrap.invoiceId ] ){
                 objCreditMemoWrap.existCreditMemo = objCreditMem.Name;
-            }
+            }*/
+            //CH05 Start
+            
+            //CH05 ENd
+            
         }
         return objCreditMemoWrap;
     }

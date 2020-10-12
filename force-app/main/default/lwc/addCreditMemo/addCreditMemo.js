@@ -4,6 +4,9 @@ import createCreditMemoRec from "@salesforce/apex/AddCreditMemoController.create
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 
 //CH01 9&12 Oct 2020 Karan Singh : Incase of Refund, message should be -> ex "$20 refunded successfully via Stripe."
+//CH02 12 Oct 2020 : removing the creteria as if already credit memo existed , then it should not create another Credit memo.
+//                    Instead check the invoice's Line Item Amount >  Invoice CM_Created__c amount, then it will allow to create the Credit Memo
+
 export default class AddCreditMemo extends LightningElement {
   @api recordId;
   @track creditMemoWrap;
