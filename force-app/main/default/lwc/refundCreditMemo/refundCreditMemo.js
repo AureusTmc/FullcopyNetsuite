@@ -128,7 +128,7 @@ export default class RefundCreditMemo extends LightningElement {
         if (result === "Success") {
             const event = new ShowToastEvent({
               title: "Success",
-              message: "Credit Memo Created",
+              message: this.creditMemoWrap.creditCurrcyCode + ' ' + this.creditMemoWrap.userEnterAMount +' refunded successfully via Stripe.',//"Credit Memo Created",
               variant: "success",
               mode: "dismissable"
             });
