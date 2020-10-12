@@ -2,6 +2,7 @@ import { LightningElement, api, track } from "lwc";
 import fetchCreditMemoDetails from "@salesforce/apex/RefundCreditMemoController.getCreditMemoDetails";
 import RefundCreditMemoRec from "@salesforce/apex/RefundCreditMemoController.refundCreditMemo";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
+//CH01 12 Oct 2020 Karan Singh : Incase of Refund, message should be -> ex "$20 refunded successfully via Stripe."
 export default class RefundCreditMemo extends LightningElement {
   @api recordId;
   @track creditMemoWrap;
