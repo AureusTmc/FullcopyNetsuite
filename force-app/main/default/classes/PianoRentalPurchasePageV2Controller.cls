@@ -12,7 +12,7 @@
 *==============================================================================
 * 1.0 31 Aug 2020 Karan Singh Soni ( Inital version )
 **/
-//CH01 13 Oct 2020 : In case if the Enrolment Cneter Name is "Aureus HQ" , then it will use the "Aureus Admin" OWA.
+//CH01 13 Oct 2020 : In case if the Enrolment center Name is "Aureus HQ" , then it will use the "Aureus Admin" OWA.
 public class PianoRentalPurchasePageV2Controller {
     
     Public Enrolment__c enrolment{get;set;}
