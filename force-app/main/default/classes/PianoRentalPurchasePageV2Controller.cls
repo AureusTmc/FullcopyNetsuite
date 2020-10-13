@@ -12,6 +12,7 @@
 *==============================================================================
 * 1.0 31 Aug 2020 Karan Singh Soni ( Inital version )
 **/
+//CH01 13 Oct 2020 : In case if the Enrolment Cneter Name is "Aureus HQ" , then it will use the "Aureus Admin" OWA.
 public class PianoRentalPurchasePageV2Controller {
     
     Public Enrolment__c enrolment{get;set;}
@@ -42,7 +43,7 @@ public class PianoRentalPurchasePageV2Controller {
             }
         }
         if( String.isNotBlank( enrolment.Teacher__r.name ))
-        posUserName = enrolment.Teacher__r.name;
+            posUserName = enrolment.Teacher__r.name;
         
         if(enrolment.Stage__c != ConstantsClass.enrollmentPianoSoldStage){
             isAlreadySold = false;
@@ -154,6 +155,15 @@ Note : 3 Sep 2020 This method was taken from another class -> PianoRentalPurchas
                                                            FROM EmailTemplate 
                                                            WHERE DeveloperName = 'Piano_Rental_to_Purchase_Process' LIMIT 1 ];                
                 
+                //CH01
+                if(listOWA.size() == 0  && enrolment.Center__r.Name == 'Aureus HQ' ){
+                    
+                    listOWA = [SELECT Id, Address, DisplayName 
+                               FROM OrgWideEmailAddress 
+                               WHERE displayName = 'Aureus Admin' LIMIT 1 ];
+                }
+                //CH01 END
+                
                 if( listOWA.size() > 0  && listEmailTemplate.size() > 0 ){
                     
                     //https://hub.appirio.com/cloud-powered-blog/simplify-sending-email-to-non-contacts-with-renderstoredemailtemplate
@@ -163,10 +173,10 @@ Note : 3 Sep 2020 This method was taken from another class -> PianoRentalPurchas
                     objOutGoingEmail.setOrgWideEmailAddressId( listOWA[0].Id );
                     
                     /*10 SEP 2020 Karan : will use the email template instead
-						* string emailHtmlBody = 'Dear Karan <br/>' ;
-						emailHtmlBody += 'Customer ' + enrolment.Parent__r.Name + '  has opted for the Rent-to-purchase option for their ongoing piano rental subscription. <br/>';
-						emailHtmlBody += 'Please see the credit statement that needs to be applied at the time of purchase. <br/>';
-						objOutGoingEmail.setHtmlBody(emailHtmlBody); */
+* string emailHtmlBody = 'Dear Karan <br/>' ;
+emailHtmlBody += 'Customer ' + enrolment.Parent__r.Name + '  has opted for the Rent-to-purchase option for their ongoing piano rental subscription. <br/>';
+emailHtmlBody += 'Please see the credit statement that needs to be applied at the time of purchase. <br/>';
+objOutGoingEmail.setHtmlBody(emailHtmlBody); */
                     
                     //3 Sep 2020 Karan: will use OWA instead  objOutGoingEmail.setTargetObjectId( UserInfo.getUserId()); //need to to this as as validation rule written on Email message ->Check_if_From_Email_is_same_as_User
                     //3 Sep 2020 Karan: will use OWA instead  objOutGoingEmail.saveAsActivity = false;					//need to to this as as validation rule written on Email message ->Check_if_From_Email_is_same_as_User
@@ -176,7 +186,7 @@ Note : 3 Sep 2020 This method was taken from another class -> PianoRentalPurchas
                     objEmailAttchmt.setFileName('Reciept.pdf');
                     
                     If(!Test.isRunningTest()){ //28 Sep 2020 Methods defined as TestMethod do not support getContent 
-                    objEmailAttchmt.setBody(new PageReference('/apex/PianoRentalPurchasePageV2?Id=' + enrolment.Id).getContentAsPDF());     
+                        objEmailAttchmt.setBody(new PageReference('/apex/PianoRentalPurchasePageV2?Id=' + enrolment.Id).getContentAsPDF());     
                     }
                     objOutGoingEmail.setFileAttachments(new Messaging.EmailFileAttachment[] {objEmailAttchmt});
                     
@@ -199,8 +209,9 @@ Note : 3 Sep 2020 This method was taken from another class -> PianoRentalPurchas
                 system.debug('sendEmailResults -->  ' + sendEmailResults[0].isSuccess() );
             } 
             
+             system.debug('sendEmailResults --> ' + sendEmailResults);
             //only work if successfule email is send
-            if( Test.isRunningTest() || sendEmailResults[0].isSuccess() ){
+            if( Test.isRunningTest() || ( sendEmailResults != Null && sendEmailResults.size() > 0 && sendEmailResults[0].isSuccess() )){
                 
                 enrolment.Stage__c = ConstantsClass.enrollmentPianoSoldStage; 
                 enrolment.Rental_Termination_Date__c = Date.today();
