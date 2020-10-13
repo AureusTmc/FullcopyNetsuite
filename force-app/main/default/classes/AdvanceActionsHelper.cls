@@ -360,7 +360,8 @@ public without sharing class AdvanceActionsHelper {
 * This Method will Add Makeup Minutes to the Parent
 */
     Public Static void AddFifthMakeupMinutesToParent(String centreId, Integer newPackageDuration, Integer timediff, Time startTime, Time newStartTime, Set<String> setOfBookings){
-        List<Booking__c> bookingListToUpsert = new List<Booking__c>();
+        //List<Booking__c> bookingListToUpsert = new List<Booking__c>();
+        Map<String,Booking__c> bookingMapToUpsert = new Map<String,Booking__c>();
         Map<String, Integer> makeupReferencMap = new Map<String, Integer>();
         String utilizeBookings = '';
         Package__c makeupPackage = AureusCalendarControllerHelper.fetchDesiredPackage(centreId, String.valueOf(newPackageDuration));
@@ -395,18 +396,29 @@ public without sharing class AdvanceActionsHelper {
                 }
                 utilizeBookings = '';
                 for(Booking__c bookobj : fetchAllBooking(makeupReferencMap.keySet())){
-                    bookingListToUpsert.add(new Booking__c(Id = bookobj.Id, Available_Make_up_Units__c =  bookobj.Available_Make_up_Units__c + makeupReferencMap.get(bookobj.Id)));
+                    //Commented by nishi:12-Oct-2020 some time we get same booking multiplte time
+                    //bookingListToUpsert.add(new Booking__c(Id = bookobj.Id, Available_Make_up_Units__c =  bookobj.Available_Make_up_Units__c + makeupReferencMap.get(bookobj.Id)));
+                    bookingMapToUpsert.put(bookobj.Id,new Booking__c(Id = bookobj.Id, Available_Make_up_Units__c =  bookobj.Available_Make_up_Units__c + makeupReferencMap.get(bookobj.Id)));
                 }
-                bookingListToUpsert.add(newBookObj);                                                                         
+                bookingMapToUpsert.put(bookingObj.Id,newBookObj);
+                //Commented by nishi:12-Oct-2020 some time we get same booking multiplte time
+                //bookingListToUpsert.add(newBookObj);                                                                         
             }else if(bookingObj.Type__c == ConstantsClass.typeBusy){
                 bookingObj.start_Time__c = newStartTime;
                 bookingObj.End_Time__c = bookingObj.start_Time__c.addMinutes(newPackageDuration);
-                bookingListToUpsert.add(bookingObj);
+                //Commented by nishi:12-Oct-2020 some time we get same booking multiplte time
+                //bookingListToUpsert.add(bookingObj);
+                bookingMapToUpsert.put(bookingObj.Id,newBookObj);
             }            
         }
         
+        /*//Commented by nishi:12-Oct-2020 some time we get same booking multiplte time
         if(bookingListToUpsert.size() > 0){
             update bookingListToUpsert;
+        }*/
+        system.debug('bookingMapToUpsert'+bookingMapToUpsert);
+        if(bookingMapToUpsert != null && bookingMapToUpsert.size() > 0){
+            update bookingMapToUpsert.values();
         }
     }
     

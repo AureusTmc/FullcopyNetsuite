@@ -321,26 +321,71 @@ public class LeaveRequestHelper {
         // Savepoint sp = Database.setSavepoint();
         string templateId ='';
         list<EmailTemplate> templateList= new list<EmailTemplate>();
+        map<string,EmailTemplate> templatemap= new map<string,EmailTemplate>();
         // list<string> personEmailList = new list<string>();
         if(leaveType =='Teacher MC'){
             // template when teacher is on medical leave
-            templateList = [Select Id from EmailTemplate where name = 'Teacher MC' limit 1];  
+            //templateList = [Select Id from EmailTemplate where name = 'Teacher MC' limit 1];  
+            //added by nishi: 12-Oct-2020:start: for send email according to organisation
+            for(EmailTemplate objEmailTemplate :[Select Id,name from EmailTemplate 
+            where name = 'Teacher MC' 
+            or name = 'Ossia_Teacher MC' 
+            ]){
+                templatemap.put(objEmailTemplate.name,objEmailTemplate);
+            }
+            //added by nishi: 12-Oct-2020:end: for send email according to organisation
         }else{
             // template when teacher is on Holiday
-            templateList = [Select Id from EmailTemplate where name = 'Teacher Leave' limit 1];
-        }
-        if(templateList[0].Id != null){
-            templateId = templateList[0].Id;  
+            //templateList = [Select Id from EmailTemplate where name = 'Teacher Leave' limit 1];
+            //added by nishi: 12-Oct-2020:start: for send email according to organisation
+            for(EmailTemplate objEmailTemplate :[Select Id,name from EmailTemplate 
+            where name = 'Teacher Leave' 
+            or name = 'Ossia_Teacher Leave' 
+            ]){
+                templatemap.put(objEmailTemplate.name,objEmailTemplate);
+            }
+            //added by nishi: 12-Oct-2020:end: for send email according to organisation
         }
         
         List<Messaging.SingleEmailMessage> emailList = new List<Messaging.SingleEmailMessage>();
-        for(Case CasObject:[select Id,Booking__r.Type__c,Booking__r.Status__c,Booking__r.Start_Time__c,Booking__r.Parent__r.PersonContactId,Booking__r.Parent__r.personEmail,Booking__r.Center__c,Booking__r.Center__r.Location__c,Booking__r.Teacher_Account__c from Case where Id in:Ids]){
+        for(Case CasObject:[select Id,Booking__r.Type__c,Booking__r.Status__c,Booking__r.Start_Time__c,Booking__r.Parent__r.PersonContactId,Booking__r.Parent__r.personEmail,
+                        Booking__r.Center__c,Booking__r.Center__r.Location__c,Booking__r.Teacher_Account__c,Booking__r.Center__r.Organisation__r.Name 
+                        from Case where Id in:Ids]){
             system.debug('CasObject---'+CasObject.Booking__r.Parent__r.PersonEmail);
-            if(String.isNotBlank(templateId) && String.isNotBlank(CasObject.Booking__r.Parent__r.PersonEmail) && (CasObject.Booking__r.Type__c =='Regular' || CasObject.Booking__r.Type__c =='Ad-hoc' ||  CasObject.Booking__r.Type__c =='Make-up' ) ){
+            if(String.isNotBlank(CasObject.Booking__r.Center__r.Organisation__r.Name) && String.isNotBlank(CasObject.Booking__r.Parent__r.PersonEmail) && (CasObject.Booking__r.Type__c =='Regular' || CasObject.Booking__r.Type__c =='Ad-hoc' ||  CasObject.Booking__r.Type__c =='Make-up' ) ){
                 //personEmailList.add(CasObject.Booking__r.Parent__r.personEmail);
-                Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templateId, CasObject.Booking__r.Parent__r.PersonContactId, CasObject.Id, CasObject.Booking__r.Center__r.Location__c);
                 //mail.setToAddresses(personEmailList);
-                emailList.add(mail);
+                //added by nishi: 12-Oct-2020:start: for send email according to organisation
+                if(templatemap != null && templatemap.size() > 0){
+                    if(leaveType =='Teacher MC'){
+                        if(CasObject.Booking__r.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                            if(templateMap.containsKey('Ossia_Teacher MC')){
+                            Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Ossia_Teacher MC').id, CasObject.Booking__r.Parent__r.PersonContactId, CasObject.Id, CasObject.Booking__r.Center__r.Location__c);
+                            emailList.add(mail); 
+                            }
+                        }else{
+                            if(templateMap.containsKey('Teacher MC')){
+                                Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Teacher MC').id, CasObject.Booking__r.Parent__r.PersonContactId, CasObject.Id, CasObject.Booking__r.Center__r.Location__c);
+                                emailList.add(mail); 
+                            }
+                        } 
+                    }else{
+                        if(CasObject.Booking__r.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                            if(templateMap.containsKey('Ossia_Teacher Leave')){
+                                Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Ossia_Teacher Leave').id, CasObject.Booking__r.Parent__r.PersonContactId, CasObject.Id, CasObject.Booking__r.Center__r.Location__c);
+                                emailList.add(mail); 
+                            }
+                        }else{
+                            if(templateMap.containsKey('Teacher Leave')){
+                                Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Teacher Leave').id, CasObject.Booking__r.Parent__r.PersonContactId, CasObject.Id, CasObject.Booking__r.Center__r.Location__c);
+                                emailList.add(mail); 
+                            }
+                        } 
+                    }
+                }
+                /*Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templateId, CasObject.Booking__r.Parent__r.PersonContactId, CasObject.Id, CasObject.Booking__r.Center__r.Location__c);
+                emailList.add(mail);*/
+                //added by nishi: 12-Oct-2020:end: for send email according to organisation
             }
         }
         system.debug('emailList'+emailList);

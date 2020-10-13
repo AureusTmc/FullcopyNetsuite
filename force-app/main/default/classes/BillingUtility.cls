@@ -1079,20 +1079,45 @@ List<Task> listOftask = new List<Task>();
         if(String.isNotBlank(mailfor)){
             Email_Settings__mdt[] declinedEmail = [SELECT DeveloperName, Id, Template_Id__c FROM Email_Settings__mdt WHERE DeveloperName =: mailfor];
             List<EmailTemplate> templateList = new List<EmailTemplate>();
+            map<string,EmailTemplate> templatemap= new map<string,EmailTemplate>();
             String emailTemplateId = '';
             if(mailfor == 'Declined'){
                 if(declinedEmail.size() > 0){
                     emailTemplateId = declinedEmail[0].Template_Id__c;
                 }
             }else if(mailfor== '3'){
-                templateList = [Select Id from EmailTemplate where Name='PaymentReminderFor3Days' limit 1];
-                emailTemplateId = templateList[0].Id;
+                //added by nishi: 12-Oct-2020:start: for send email according to organisation
+                for(EmailTemplate objEmailTemplate :[Select Id,name from EmailTemplate 
+									where name = 'PaymentReminderFor3Days' 
+									or name = 'Ossia_PaymentReminderFor3Days' 
+									]){
+										templatemap.put(objEmailTemplate.name,objEmailTemplate);
+									}
+               /* templateList = [Select Id from EmailTemplate where Name='PaymentReminderFor3Days' limit 1];
+                emailTemplateId = templateList[0].Id;*/
+                  //added by nishi: 12-Oct-2020:end: for send email according to organisation
             }else if(mailfor== '5'){
-                templateList = [Select Id from EmailTemplate where Name='PaymentReminderFor5Days' limit 1];
-                emailTemplateId = templateList[0].Id;
+                //added by nishi: 12-Oct-2020:start: for send email according to organisation
+                for(EmailTemplate objEmailTemplate :[Select Id,name from EmailTemplate 
+									where name = 'PaymentReminderFor5Days' 
+									or name = 'Ossia_PaymentReminderFor5Days' 
+									]){
+										templatemap.put(objEmailTemplate.name,objEmailTemplate);
+									}
+               /* templateList = [Select Id from EmailTemplate where Name='PaymentReminderFor5Days' limit 1];
+                emailTemplateId = templateList[0].Id;*/
+                  //added by nishi: 12-Oct-2020:end: for send email according to organisation
             }else if(mailfor== '7'){
-                templateList = [Select Id from EmailTemplate where Name='PaymentReminderFor7Days' limit 1];
-                emailTemplateId = templateList[0].Id;
+                //added by nishi: 12-Oct-2020:start: for send email according to organisation
+                for(EmailTemplate objEmailTemplate :[Select Id,name from EmailTemplate 
+									where name = 'PaymentReminderFor7Days' 
+									or name = 'Ossia_PaymentReminderFor7Days' 
+									]){
+										templatemap.put(objEmailTemplate.name,objEmailTemplate);
+									}
+                /*templateList = [Select Id from EmailTemplate where Name='PaymentReminderFor7Days' limit 1];
+                emailTemplateId = templateList[0].Id;*/
+                  //added by nishi: 12-Oct-2020:end: for send email according to organisation
             }
             
             
@@ -1106,9 +1131,61 @@ List<Task> listOftask = new List<Task>();
                     mail.setWhatId(inv.Parent_Account__c);
                     mail.setTemplateId(emailTemplateId);  
                     */
-                    Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(emailTemplateId,
+                    //added by nishi: 12-Oct-2020:start: for send email according to organisation
+                    if(mailfor == 'Declined'){
+                        Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(emailTemplateId,
+                                                inv.Parent_Account__r.personContactId, inv.Id,inv.Center__r.Location__c);
+                        emailList.add(mail);  
+                    }
+                    else if(mailfor== '3'){
+                        if(string.isnotBlank( inv.Center__r.Organisation__r.Name) &&  inv.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                            if(templateMap.containsKey('Ossia_PaymentReminderFor3Days')){
+                            Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Ossia_PaymentReminderFor3Days').id,
                                                         inv.Parent_Account__r.personContactId, inv.Id,inv.Center__r.Location__c);
-                    emailList.add(mail);     
+                                                        emailList.add(mail);  
+                            }
+                        }else{
+                            if(templateMap.containsKey('PaymentReminderFor3Days')){
+                            Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('PaymentReminderFor3Days').id,
+                                                        inv.Parent_Account__r.personContactId, inv.Id,inv.Center__r.Location__c);
+                                                        emailList.add(mail);  
+                            }
+                        }
+                    }else if(mailfor== '5'){
+                        if(string.isnotBlank( inv.Center__r.Organisation__r.Name) &&  inv.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                            if(templateMap.containsKey('Ossia_PaymentReminderFor5Days')){
+                            Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Ossia_PaymentReminderFor5Days').id,
+                                                        inv.Parent_Account__r.personContactId, inv.Id,inv.Center__r.Location__c);
+                                                        emailList.add(mail); 
+                            } 
+                        }else{
+                            if(templateMap.containsKey('PaymentReminderFor5Days')){
+                            Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('PaymentReminderFor5Days').id,
+                                                        inv.Parent_Account__r.personContactId, inv.Id,inv.Center__r.Location__c);
+                                                        emailList.add(mail);  
+                            }
+                        }       
+                                   
+                    }else if(mailfor== '7'){
+                        if(string.isnotBlank( inv.Center__r.Organisation__r.Name) &&  inv.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                            if(templateMap.containsKey('Ossia_PaymentReminderFor7Days')){
+                                Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Ossia_PaymentReminderFor7Days').id,
+                                                        inv.Parent_Account__r.personContactId, inv.Id,inv.Center__r.Location__c);
+                                                        emailList.add(mail);  
+                            }
+                        }else{
+                            if(templateMap.containsKey('PaymentReminderFor7Days')){
+                                Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('PaymentReminderFor7Days').id,
+                                                        inv.Parent_Account__r.personContactId, inv.Id,inv.Center__r.Location__c);
+                                                        emailList.add(mail);  
+                            }
+                        }  
+                    }
+
+                    /*Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(emailTemplateId,
+                                                        inv.Parent_Account__r.personContactId, inv.Id,inv.Center__r.Location__c);
+                    emailList.add(mail);     */
+                    //added by nishi: 12-Oct-2020:end: for send email according to organisation
                 }
                 Messaging.sendEmail(emailList);
             }

@@ -146,8 +146,12 @@ D. Change of Enrolment
         Date current = startingDate.addMonths(13);
         Date firstDate = Date.newInstance(current.year(),current.month(),01);
         Date lastDate = Date.newInstance(current.year(),current.month(),Date.daysInMonth(current.month(),current.year()));
+        system.debug('!!current'+current);
+        system.debug('!!firstDate'+firstDate);
+        system.debug('!!lastDate'+lastDate);
          // nishi: 6-Oct-2020: for get all enrolment ids if 13 month booking exist
         Set<string> existing13MonthBookingEnrolmentIds = getexisting13MonthBookingEnrolmentIds(enrolmentMap,firstDate,lastDate);
+        system.debug('!!existing13MonthBookingEnrolmentIds'+existing13MonthBookingEnrolmentIds);
         if(enrolmentRegularMap != null && enrolmentRegularMap.size() > 0 ){
              // commented by nishi: 9-Sep-2020: for creating next month invoice requirement we send next month date with enrolment id
              //createBookingFor13Month(enrolmentRegularMap.values(), cancelledEnrolmentSet);
@@ -861,6 +865,7 @@ D. Change of Enrolment
         Boolean isHome = FALSE;
         if(enrolmentList.size() > 0){
             for(Enrolment__c enrolmentObj : enrolmentList){
+                system.debug('contains'+existing13MonthBookingEnrolmentIds.contains(enrolmentObj.id));
                  // nishi: 6-Oct-2020: for if any enrolment ids is exist in existing13MonthBookingEnrolmentIds this set 
                  //that a 13-month booking has already been created, so we do not want to make the 13th month booking again
                 if(!existing13MonthBookingEnrolmentIds.contains(enrolmentObj.id)){
@@ -1008,38 +1013,78 @@ D. Change of Enrolment
     
     //Send Email Notification To Parent
     Public static void makeupCreationNotification(List<Enrolment__c> makeupsCreated, List<Enrolment__c> makeupsNotCreated){
-
-        EmailTemplate templateForMakeupCreation = new EmailTemplate();
-        EmailTemplate templateForMakeupCreationFailed = new EmailTemplate();
+        map<string,EmailTemplate> templatemap= new map<string,EmailTemplate>();
         Messaging.SingleEmailMessage mailNotification = new Messaging.SingleEmailMessage();
         List<Messaging.SingleEmailMessage> emailList = new List<Messaging.SingleEmailMessage>();
         Map<String,OrgWideEmailAddress> mapOfOrgWide = new Map<String,OrgWideEmailAddress>(); 
-        for(EmailTemplate templateObj : [SELECT Id, Developername FROM EmailTemplate WHERE Developername ='Makeup_Booking_Creation_Notification' OR Developername ='Makeup_Booking_Creation_Fails_Notification']){
+        //added by nishi: 12-Oct-2020:start: for send email according to organisation
+        for(EmailTemplate templateObj : [SELECT Id, Developername FROM EmailTemplate 
+        WHERE Developername ='Makeup_Booking_Creation_Notification' 
+        OR Developername ='Makeup_Booking_Creation_Fails_Notification'
+        Or Developername ='Ossia_Makeup_Booking_Creation_Notification' 
+        OR Developername ='Ossia_Makeup_Booking_Creation_Fails_Notification'
+        ]){
+            templatemap.put(templateObj.Developername,templateObj);
+        }
+        /**  commneted  by nishi: 12-Oct-2020:end: for send email according to organisation
+         * EmailTemplate templateForMakeupCreation = new EmailTemplate();
+            EmailTemplate templateForMakeupCreationFailed = new EmailTemplate();
+         *  for(EmailTemplate templateObj : [SELECT Id, Developername FROM EmailTemplate WHERE Developername ='Makeup_Booking_Creation_Notification' OR Developername ='Makeup_Booking_Creation_Fails_Notification']){
             if(templateObj.Developername == 'Makeup_Booking_Creation_Notification'){
                 templateForMakeupCreation = templateObj;
             }else if(templateObj.Developername == 'Makeup_Booking_Creation_Fails_Notification'){
                 templateForMakeupCreationFailed = templateObj;
             }
         }
+         */
+        //added by nishi: 12-Oct-2020:end: for send email according to organisation
         
         for(OrgWideEmailAddress objAddress : [SELECT Address, DisplayName, Id FROM OrgWideEmailAddress]){
             mapOfOrgWide.put(objAddress.DisplayName,objAddress);
         }
-        if(String.isNotBlank(templateForMakeupCreation.id)){
+        // if(String.isNotBlank(templateForMakeupCreation.id)){
+        if(templatemap != null && templatemap.size()>0){    
             for(Enrolment__c makeupCreated : makeupsCreated){
                 String location = makeupCreated.Center__r.Location__c;
                 mailNotification = new Messaging.SingleEmailMessage();
-                mailNotification = getSingleEmailMessage(templateForMakeupCreation.id, makeupCreated.Parent__r.personContactId, makeupCreated.Id, location);
-                emailList.add(mailNotification);
+                //added by nishi: 12-Oct-2020:start: for send email according to organisation
+                if(String.isNotBlank(makeupCreated.Center__c) && String.isNotBlank(makeupCreated.Center__r.Organisation__c) && 
+                String.isNotBlank(makeupCreated.Center__r.Organisation__r.Name) && makeupCreated.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                    if(templatemap.containsKey('Ossia_Makeup_Booking_Creation_Notification')){
+                        mailNotification = getSingleEmailMessage(templatemap.get('Ossia_Makeup_Booking_Creation_Notification').id, makeupCreated.Parent__r.personContactId, makeupCreated.Id, location);
+                        emailList.add(mailNotification);
+                    }
+                }else{
+                    if(templatemap.containsKey('Makeup_Booking_Creation_Notification')){
+                        mailNotification = getSingleEmailMessage(templatemap.get('Makeup_Booking_Creation_Notification').id, makeupCreated.Parent__r.personContactId, makeupCreated.Id, location);
+                        emailList.add(mailNotification);
+                    }
+                }
+                //ailNotification = getSingleEmailMessage(templateForMakeupCreation.id, makeupCreated.Parent__r.personContactId, makeupCreated.Id, location);
+                 //added by nishi: 12-Oct-2020:end: for send email according to organisation
+                
             }
-        }
+        //}
         
-        if(String.isNotBlank(templateForMakeupCreationFailed.id)){
+        //if(String.isNotBlank(templateForMakeupCreationFailed.id)){
             for(Enrolment__c makeupnotCreated : makeupsNotCreated){
                 String location = makeupnotCreated.Center__r.Location__c;
                 mailNotification = new Messaging.SingleEmailMessage();
-                mailNotification = getSingleEmailMessage(templateForMakeupCreationFailed.id, makeupnotCreated.Parent__r.personContactId, makeupnotCreated.Id, location);
-                emailList.add(mailNotification);
+                //added by nishi: 12-Oct-2020:start: for send email according to organisation
+                if(String.isNotBlank(makeupnotCreated.Center__c) && String.isNotBlank(makeupnotCreated.Center__r.Organisation__c) && 
+                String.isNotBlank(makeupnotCreated.Center__r.Organisation__r.Name) && makeupnotCreated.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                    if(templatemap.containsKey('Ossia_Makeup_Booking_Creation_Fails_Notification')){
+                        mailNotification = getSingleEmailMessage(templatemap.get('Ossia_Makeup_Booking_Creation_Fails_Notification').id, makeupnotCreated.Parent__r.personContactId, makeupnotCreated.Id, location);
+                        emailList.add(mailNotification);
+                    }
+                }else{
+                    if(templatemap.containsKey('Makeup_Booking_Creation_Fails_Notification')){
+                        mailNotification = getSingleEmailMessage(templatemap.get('Makeup_Booking_Creation_Fails_Notification').id, makeupnotCreated.Parent__r.personContactId, makeupnotCreated.Id, location);
+                        emailList.add(mailNotification);
+                    }
+                }
+                //added by nishi: 12-Oct-2020:end: for send email according to organisation
+               
             }
         }
         if(emailList.size() > 0){
@@ -1584,8 +1629,8 @@ D. Change of Enrolment
         
         Map<String,Id> templateMap = new Map<String,Id>();
         for(EmailTemplate et: [Select Id,Name,DeveloperName from EmailTemplate where (DeveloperName  = 'Ossia_Teacher_Leave_Enrolment' OR 
-                                                                                      DeveloperName  = 'Ossia_Holiday_Enrolment_Open' OR 
-                                                                                      DeveloperName  = 'Ossia_Holiday_Enrolment_Closed')]){
+                                                                                      DeveloperName  = 'Holiday_Enrolment_Open_Ossia' OR 
+                                                                                      DeveloperName  = 'Holiday_Enrolment_Closed_Ossia')]){
                                                                                           templateMap.put(et.DeveloperName, et.Id);
                                                                                       }
         
@@ -1599,10 +1644,10 @@ D. Change of Enrolment
                                 if(CasObject.Booking__r.Cancellation_Reason__c.equalsIgnoreCase('Teacher Mc') && templateMap.containsKey('Ossia_Teacher_Leave_Enrolment')){
                                     templateId = templateMap.get('Ossia_Teacher_Leave_Enrolment');
                                 }else if(CasObject.Booking__r.Cancellation_Reason__c.equalsIgnoreCase('Holidays') && String.isNotBlank(CasObject.Booking__r.Public_Holiday_Status__c)){
-                                    if(CasObject.Booking__r.Public_Holiday_Status__c.equalsIgnoreCase('Open') && templateMap.containsKey('Ossia_Holiday_Enrolment_Open'))
-                                        templateId = templateMap.get('Ossia_Holiday_Enrolment_Open');
-                                    else if(CasObject.Booking__r.Public_Holiday_Status__c.equalsIgnoreCase('Closed') && templateMap.containsKey('Ossia_Holiday_Enrolment_Closed'))
-                                        templateId = templateMap.get('Ossia_Holiday_Enrolment_Closed');
+                                    if(CasObject.Booking__r.Public_Holiday_Status__c.equalsIgnoreCase('Open') && templateMap.containsKey('Holiday_Enrolment_Open_Ossia'))
+                                        templateId = templateMap.get('Holiday_Enrolment_Open_Ossia');
+                                    else if(CasObject.Booking__r.Public_Holiday_Status__c.equalsIgnoreCase('Closed') && templateMap.containsKey('Holiday_Enrolment_Closed_Ossia'))
+                                        templateId = templateMap.get('Holiday_Enrolment_Closed_Ossia');
                                 }
                                 
                                 if(String.isNotBlank(templateId) && String.isNotBlank(CasObject.Booking__r.Parent__r.PersonEmail)){

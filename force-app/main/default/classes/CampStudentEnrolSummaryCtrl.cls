@@ -313,15 +313,20 @@ system.debug(bookList);
         DateTime now = DateTime.now();
         system.debug('@@@invoices'+invoices);
         system.debug('@@@enrolmentId'+enrolmentId);
+        Boolean isOssia = false;
         if(string.isNotBlank(invoices)){
             List<Invoice__c> invoiceList = [SELECT Id,Name,Total_Amount__c,
                                             Center__r.Location__c,Parent_Account__r.personContactId,
+                                            Center__r.Organisation__r.Name,
                                             status__c FROM Invoice__c 
                                             WHERE Id =:invoices];
             map<String ,Blob> mapOfAttachment = new map<String,Blob>();
             List<Attachment> listOfAttachment = new List<Attachment>();
             if(invoiceList != null && invoiceList.size() > 0){
                 Invoice__c inv = invoiceList[0];
+                if(string.isNotBlank(inv.Center__r.Organisation__r.Name) && inv.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                    isOssia= true;
+                }
                 map<string,Attachment> mapOfInvoiceAttachment  = PianoRentalHelperController.createInvoiceAttachment(invoiceList);
                 if(string.isnotBlank(pandaDocAttachmentName)){
                     pandaDocAttachmentName ='%'+pandaDocAttachmentName+'%';
@@ -344,7 +349,13 @@ system.debug(bookList);
                     // 21-feb-2020: manage send email and invoice attachment 
                     //PianoRentalHelperController.sendEmailWithInvoiceAttachment(new Map<string,map<String ,Blob>>{inv.id =>mapOfAttachment}, invoiceList,'Camp Class Enrolment Confirmation');
                     // 3-Mar-2020: for send email for enrolmentid
-                    CampClassUtilityController.sendEmailWithInvoiceAttachment(new Map<string,map<String ,Blob>>{enrolmentId=>mapOfAttachment},'Camp_Enrolment');
+                    //added by nishi: 12-Oct-2020: for send email according to organisation
+                    if(isOssia){
+                        CampClassUtilityController.sendEmailWithInvoiceAttachment(new Map<string,map<String ,Blob>>{enrolmentId=>mapOfAttachment},'Ossia_Camp_Enrolment');
+                    }else{
+                        CampClassUtilityController.sendEmailWithInvoiceAttachment(new Map<string,map<String ,Blob>>{enrolmentId=>mapOfAttachment},'Camp_Enrolment');
+                    }
+                    //added by nishi: 12-Oct-2020: for send email according to organisation
                     
                 }
             }

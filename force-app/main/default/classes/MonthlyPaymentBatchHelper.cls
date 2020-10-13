@@ -28,10 +28,20 @@ public class MonthlyPaymentBatchHelper{
             declinedSet.add(decMdt.Label);
         } 
         //26-Nov-2019:jatin Send Email to the Customer if its charge gives error and the payment is not collected from his account
-        list<EmailTemplate> listOfEmailTemplate = [SELECT Id, Name 
-                                                    FROM EmailTemplate 
-                                                    WHERE DeveloperName ='Payment_Collection_Failed'];
-        system.debug('@@listOfEmailTemplate'+listOfEmailTemplate);
+        
+        //Commented by nishi:12-Oct-2020 we get templete according to organisation
+        // list<EmailTemplate> listOfEmailTemplate = [SELECT Id, Name 
+        //                                             FROM EmailTemplate 
+        //                                             WHERE DeveloperName ='Payment_Collection_Failed'];
+        //system.debug('@@listOfEmailTemplate'+listOfEmailTemplate);
+        Set<String> paymentFailedEmails=new Set<string>{'Ossia_Payment_Collection_Failed','Payment_Collection_Failed'};
+        Map<String,EmailTemplate> mapOfEmailTemplate = new Map<String,EmailTemplate>();
+        for(EmailTemplate objEmailTemplate: [SELECT Id, Name ,DeveloperName
+                                            FROM EmailTemplate 
+                                            WHERE DeveloperName In:paymentFailedEmails]){
+                                                mapOfEmailTemplate.put(objEmailTemplate.DeveloperName,objEmailTemplate);
+                                            }
+        //Commented by nishi:12-Oct-2020:end: we get templete according to organisation
         List<Messaging.SingleEmailMessage> sendSingleEmailMessage = new List<Messaging.SingleEmailMessage>();
         for(Invoice__c objInvoice : listOfInvoice){
             Stripe_Payment_Log__c iLog = new Stripe_Payment_Log__c();
@@ -102,7 +112,8 @@ public class MonthlyPaymentBatchHelper{
                         }
                         invoiceLogList.add(iLog); 
                         //26-Nov-2019:jatin Send Email to the Customer if its charge gives error and the payment is not collected from his account
-                        if(listOfEmailTemplate != null && listOfEmailTemplate.size() > 0 ){
+                        //if(listOfEmailTemplate != null && listOfEmailTemplate.size() > 0 ){
+                        if(mapOfEmailTemplate != null && mapOfEmailTemplate.size() > 0 ){
                             string centerId,personContactId;
                             if(objInvoice.Parent_Account__r != null && objInvoice.Parent_Account__r.Centre_Name__r != null &&
                                 string.isNotBlank(objInvoice.Parent_Account__r.Centre_Name__r.Location__c) ){
@@ -111,7 +122,19 @@ public class MonthlyPaymentBatchHelper{
                             if(objInvoice.Parent_Account__r != null && string.isNotBlank(objInvoice.Parent_Account__r.PersonContactId)){
                                 personContactId = objInvoice.Parent_Account__r.PersonContactId;
                             }
-                            sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(listOfEmailTemplate[0].Id,personContactId,objInvoice.id,centerId));
+                             //nishi:12-Oct-2020: for sending a email according to organisation
+                            if(organisationObj.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                                if(mapOfEmailTemplate.containsKey('Ossia_Payment_Collection_Failed')){
+                                    sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(mapOfEmailTemplate.get('Ossia_Payment_Collection_Failed').Id,personContactId,objInvoice.id,centerId));
+                                }
+                            }else{
+                                if(mapOfEmailTemplate.containsKey('Payment_Collection_Failed')){
+                                    sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(mapOfEmailTemplate.get('Payment_Collection_Failed').Id,personContactId,objInvoice.id,centerId));
+                                }   
+                            }
+
+                            //sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(listOfEmailTemplate[0].Id,personContactId,objInvoice.id,centerId));
+                             //nishi:12-Oct-2020:end: for sending a email according to organisation
                         }
                     }        
                 } //commmented by jatin: 15-jan-2020:Payment should not be created if zero amount is due
@@ -129,22 +152,41 @@ public class MonthlyPaymentBatchHelper{
                 }   
             }catch(Exception ex){
                 System.debug('@@@@Exception '+ex.getMessage());
-                iLog.Status__c = 'Failure';
-                iLog.Invoice__c = objInvoice.Id;
-                iLog.Message__c =   ex.getMessage(); //objStripeCharge.error.message;
-                iLog.Type__c =     ex.getTypeName();  //objStripeCharge.error.stripeType;
-                invoiceLogList.add(iLog);  
-                //26-Nov-2019:jatin Send Email to the Customer if its charge gives error and the payment is not collected from his account
-                if(listOfEmailTemplate != null && listOfEmailTemplate.size() > 0 ){
-                    string centerId,personContactId;
-                    if(objInvoice.Parent_Account__r != null && objInvoice.Parent_Account__r.Centre_Name__r != null &&
-                        string.isNotBlank(objInvoice.Parent_Account__r.Centre_Name__r.Location__c) ){
-                        centerId = objInvoice.Parent_Account__r.Centre_Name__r.Location__c;
+                Organisation__c organisationObj = new Organisation__c();
+                if(organisationMap.containsKey(objInvoice.Center__r.Organisation__c)){
+                    organisationObj = organisationMap.get(objInvoice.Center__r.Organisation__c);
+                }
+                if(!test.isRunningTest()){
+                    iLog.Status__c = 'Failure';
+                    iLog.Invoice__c = objInvoice.Id;
+                    iLog.Message__c =   ex.getMessage(); //objStripeCharge.error.message;
+                    iLog.Type__c =     ex.getTypeName();  //objStripeCharge.error.stripeType;
+                    invoiceLogList.add(iLog);  
+                    //26-Nov-2019:jatin Send Email to the Customer if its charge gives error and the payment is not collected from his account
+                    //if(listOfEmailTemplate != null && listOfEmailTemplate.size() > 0 ){
+                    if(mapOfEmailTemplate != null && mapOfEmailTemplate.size() > 0 ){    
+                        string centerId,personContactId;
+                        if(objInvoice.Parent_Account__r != null && objInvoice.Parent_Account__r.Centre_Name__r != null &&
+                            string.isNotBlank(objInvoice.Parent_Account__r.Centre_Name__r.Location__c) ){
+                            centerId = objInvoice.Parent_Account__r.Centre_Name__r.Location__c;
+                        }
+                        if(objInvoice.Parent_Account__r != null && string.isNotBlank(objInvoice.Parent_Account__r.PersonContactId)){
+                            personContactId = objInvoice.Parent_Account__r.PersonContactId;
+                        }
+                        //nishi:12-Oct-2020: for sending a email according to organisation
+                        if(organisationObj.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                            if(mapOfEmailTemplate.containsKey('Ossia_Payment_Collection_Failed')){
+                                sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(mapOfEmailTemplate.get('Ossia_Payment_Collection_Failed').Id,personContactId,objInvoice.id,centerId));
+                            }
+                        }else{
+                            if(mapOfEmailTemplate.containsKey('Payment_Collection_Failed')){
+                                sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(mapOfEmailTemplate.get('Payment_Collection_Failed').Id,personContactId,objInvoice.id,centerId));
+                            }
+                        }
+
+                        //sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(listOfEmailTemplate[0].Id,personContactId,objInvoice.id,centerId));
+                        //nishi:12-Oct-2020:end: for sending a email according to organisation
                     }
-                    if(objInvoice.Parent_Account__r != null && string.isNotBlank(objInvoice.Parent_Account__r.PersonContactId)){
-                        personContactId = objInvoice.Parent_Account__r.PersonContactId;
-                    }
-                    sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(listOfEmailTemplate[0].Id,personContactId,objInvoice.id,centerId));
                 }
             }
            

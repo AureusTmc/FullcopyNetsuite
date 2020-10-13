@@ -161,31 +161,78 @@ global class PublicHolidayProcess  implements Database.Batchable<sObject>, Datab
         string templateListOpenId ='';
         List<Messaging.SingleEmailMessage> emailList = new List<Messaging.SingleEmailMessage>();
         list<EmailTemplate> templateList= new list<EmailTemplate>();
+        map<string,EmailTemplate> templatemap= new map<string,EmailTemplate>();
         // template when teacher is on Holiday
+        /*Commented by nishi: 12-Oct-2020: for send email according to organisation
         templateList = [Select Id from EmailTemplate where name = 'Public Holiday Closed Cancellation Execution' limit 1];
-        if(templateList[0].Id != null){
+         if(templateList[0].Id != null){
             templateId = templateList[0].Id;  
-        }
-        list<EmailTemplate> templateListOpen= new list<EmailTemplate>();
+        }*/
+        //add by nishi: 12-Oct-2020:Start for send email according to organisation
+        for(EmailTemplate objEmailTemplate :[Select Id,name from EmailTemplate 
+                                            where name = 'Public Holiday Closed Cancellation Execution' 
+                                            or name = 'Ossia_Public Holiday Closed Cancellation Execution' 
+                                            ]){
+                                                templatemap.put(objEmailTemplate.name,objEmailTemplate);
+                                            }
+       //add by nishi: 12-Oct-2020:end: for send email according to organisation
+       /*Commented by nishi: 12-Oct-2020: for send email according to organisation list<EmailTemplate> templateListOpen= new list<EmailTemplate>();
         // template when teacher is on Holiday
         templateListOpen = [Select Id from EmailTemplate where name = 'Public Holiday Open' limit 1];
         if(templateListOpen[0].Id != null){
             templateListOpenId = templateListOpen[0].Id;  
-        }
-            
+        }*/
+        //add by nishi: 12-Oct-2020:Start for send email according to organisation
+        map<string,EmailTemplate> templateMapOpen= new map<string,EmailTemplate>();
+        for(EmailTemplate objEmailTemplate :[Select Id,name from EmailTemplate 
+        where name = 'Public Holiday Open' 
+        or name = 'Ossia_Public Holiday Open' 
+        ]){
+            templateMapOpen.put(objEmailTemplate.name,objEmailTemplate);
+        }   
+        //add by nishi: 12-Oct-2020:end: for send email according to organisation 
         if(Ids.size()>0){
-            for(Booking__c bkgiList:[Select Id,Public_Holiday_Status__c,Parent__r.PersonContactId,Center__r.Location__c,Parent__r.PersonEmail,Booking_Date__c,Teacher_Account__c from Booking__c where Id in:Ids and Status__c='Canceled' and Cancellation_Reason__c='Holidays']){
+            for(Booking__c bkgiList:[Select Id,Public_Holiday_Status__c,Parent__r.PersonContactId,Center__r.Location__c,Parent__r.PersonEmail,
+                                    Booking_Date__c,Teacher_Account__c ,Center__r.Organisation__r.name
+                                    from Booking__c where Id in:Ids and Status__c='Canceled' and Cancellation_Reason__c='Holidays']){
                 //system.debug('----'+bkgiList.Id);
-                if(String.isNotBlank(templateId) && bkgiList.Parent__r.PersonContactId != null && bkgiList.Parent__r.PersonEmail != null && bkgiList.Public_Holiday_Status__c=='Closed'){
+                if(templatemap!= null && templatemap.size() > 0 && String.isNotBlank(bkgiList.Center__r.Organisation__r.Name) && bkgiList.Parent__r.PersonContactId != null && bkgiList.Parent__r.PersonEmail != null && bkgiList.Public_Holiday_Status__c=='Closed'){
                     //system.debug('=bkgList.Id' + bkgiList.Id );
-                    Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templateId, bkgiList.Parent__r.PersonContactId, bkgiList.Id, bkgiList.Center__r.Location__c);
-                    emailList.add(mail);
-                }else if(String.isNotBlank(templateListOpenId) && bkgiList.Parent__r.PersonContactId != null && bkgiList.Parent__r.PersonEmail != null && bkgiList.Public_Holiday_Status__c=='Open'){
+                    //add by nishi: 12-Oct-2020:Start for send email according to organisation
+                    if(bkgiList.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                        if(templatemap.containsKey('Ossia_Public Holiday Closed Cancellation Execution')){
+                            Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Ossia_Public Holiday Closed Cancellation Execution').id, bkgiList.Parent__r.PersonContactId, bkgiList.Id, bkgiList.Center__r.Location__c);
+                            emailList.add(mail);
+                        }
+                    }else{
+                        if(templatemap.containsKey('Public Holiday Closed Cancellation Execution')){
+                            Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Public Holiday Closed Cancellation Execution').id, bkgiList.Parent__r.PersonContactId, bkgiList.Id, bkgiList.Center__r.Location__c);
+                            emailList.add(mail);
+                        }
+                    }
+                    //add by nishi: 12-Oct-2020:end: for send email according to organisation
+                        /* Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templateId, bkgiList.Parent__r.PersonContactId, bkgiList.Id, bkgiList.Center__r.Location__c);
+                    emailList.add(mail);*/    
+                }else if(templateMapOpen!= null && templateMapOpen.size() > 0 && String.isNotBlank(bkgiList.Center__r.Organisation__r.Name)  /*String.isNotBlank(templateListOpenId)*/ && bkgiList.Parent__r.PersonContactId != null && bkgiList.Parent__r.PersonEmail != null && bkgiList.Public_Holiday_Status__c=='Open'){
+                    //add by nishi: 12-Oct-2020:Start for send email according to organisation
+                    if(bkgiList.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                        if(templatemap.containsKey('Ossia_Public Holiday Open')){
+                            Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Ossia_Public Holiday Open').id, bkgiList.Parent__r.PersonContactId, bkgiList.Id, bkgiList.Center__r.Location__c);
+                            emailList.add(mail);
+                        }
+                    }else{
+                        if(templatemap.containsKey('Public Holiday Open')){
+                            Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Public Holiday Open').id, bkgiList.Parent__r.PersonContactId, bkgiList.Id, bkgiList.Center__r.Location__c);
+                            emailList.add(mail);
+                        }
+                    }
+                    //add by nishi: 12-Oct-2020:end: for send email according to organisation
                     //system.debug('=bkgList.Id' + bkgiList.Id );
-                    Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templateListOpenId, bkgiList.Parent__r.PersonContactId, bkgiList.Id, bkgiList.Center__r.Location__c);
-                    emailList.add(mail);
+                    /*Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templateListOpenId, bkgiList.Parent__r.PersonContactId, bkgiList.Id, bkgiList.Center__r.Location__c);
+                    emailList.add(mail);*/
                 }
             }
+            
             system.debug('--->'+emailList);
             if(!test.isRunningTest())
                 for(Messaging.SendEmailResult results :Messaging.sendEmail(emailList,false)){

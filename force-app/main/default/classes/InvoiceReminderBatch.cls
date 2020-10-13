@@ -18,7 +18,7 @@ global class InvoiceReminderBatch implements Database.Batchable<sObject>,databas
     global Database.QueryLocator start(Database.BatchableContext BC){
         Date preDate = system.today().addDays(noOfDays);
         return Database.getQueryLocator([SELECT Id,Due_Date__c,Parent_Account__c,Parent_Account__r.PersonEmail,Parent_Account__r.Phone,
-                                         Parent_Account__r.personContactId
+                                         Parent_Account__r.personContactId,Center__r.Organisation__r.Name
                                          FROM Invoice__c
                                          WHERE Due_Date__c < today and Due_Date__c =:preDate and Status__c = 'Due']);
     }

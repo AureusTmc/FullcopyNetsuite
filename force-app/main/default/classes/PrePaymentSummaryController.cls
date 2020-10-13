@@ -114,7 +114,7 @@ public without sharing class PrePaymentSummaryController {
                 if(String.isNotBlank(enrolment.Center__r.Country__r.Id) && enrolment.Center__r.Country__r.Tax_Rate__c > 0){
                     //    gstAmount += ((summary.amount - summary.discount) + (isOssia ? summary.faclityFee :0)) * (enrolment.Center__r.Country__r.Tax_Rate__c / 100);    
                    
-                    gstAmount += ((summary.amount) * (enrolment.Center__r.Country__r.Tax_Rate__c / 100));    
+                    gstAmount += BillingUtility.roundOffAmount((summary.amount) * (enrolment.Center__r.Country__r.Tax_Rate__c / 100));    
                    
                     // gstAmount += ((summary.amount - summary.discount) * (enrolment.Center__r.Country__r.Tax_Rate__c / 100));    //commented by nishi: 15-Sep-2020:start for change Netsuite requirement we add new line items for discount amount
                 }
@@ -428,40 +428,65 @@ public without sharing class PrePaymentSummaryController {
     
     
     private static void sendEmail(Blob body, Enrolment__c enrolment,String pdfName){
-       //system.debug('@@sendEmail - body'+body);
-       //system.debug('@@sendEmail - enrolment'+enrolment);
-       //system.debug('@@sendEmail - pdfName'+pdfName);
-        List<Messaging.SingleEmailMessage> emailList = new List<Messaging.SingleEmailMessage>();
-        Map<String,OrgWideEmailAddress> mapOfOrgWide = new Map<String,OrgWideEmailAddress>(); 
-        for(OrgWideEmailAddress objAddress : [SELECT Address, DisplayName, Id FROM OrgWideEmailAddress]){
-            mapOfOrgWide.put(objAddress.DisplayName,objAddress);
+        //system.debug('@@sendEmail - body'+body);
+        //system.debug('@@sendEmail - enrolment'+enrolment);
+        //system.debug('@@sendEmail - pdfName'+pdfName);
+         List<Messaging.SingleEmailMessage> emailList = new List<Messaging.SingleEmailMessage>();
+         Map<String,OrgWideEmailAddress> mapOfOrgWide = new Map<String,OrgWideEmailAddress>(); 
+         for(OrgWideEmailAddress objAddress : [SELECT Address, DisplayName, Id FROM OrgWideEmailAddress]){
+             mapOfOrgWide.put(objAddress.DisplayName,objAddress);
+         }
+        //system.debug('@@sendEmail - mapOfOrgWide'+mapOfOrgWide);
+         //Commented by nishi: 12-Oct-2020: for send email according to organisation
+         //EmailTemplate template = [SELECT Id FROM EmailTemplate WHERE Developername ='Prepayment_Summary' LIMIT 1];
+         //added by nishi: 12-Oct-2020: for send email according to organisation
+         map<string,EmailTemplate> templatemap= new map<string,EmailTemplate>();
+         for(EmailTemplate objEmailTemplate :[Select Id,Developername from EmailTemplate 
+             where Developername = 'Prepayment_Summary' 
+             or Developername = 'Ossia_Prepayment_Summary' 
+             ]){
+                 templatemap.put(objEmailTemplate.Developername,objEmailTemplate);
+             }
+        enrolment = [SELECT Id, Name,Parent__r.personContactId,Center__r.Organisation__r.Name, Center__r.Location__c,next_bill_Date__c FROM Enrolment__c WHERE Id =:enrolment.id];
+        //added by nishi: 12-Oct-2020: for send email according to organisation 
+        //system.debug('@@sendEmail - template'+template);
+        if(templatemap != null && templatemap.size() > 0){
+            Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+            mail.setTargetObjectId(enrolment.Parent__r.personContactId);
+            mail.setWhatId(enrolment.Id);
+            //added by nishi: 12-Oct-2020:start: for send email according to organisation
+            if(String.isnotBlank(enrolment.Center__r.Organisation__r.Name) && enrolment.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name))   {
+                if(templateMap.containsKey('Ossia_Prepayment_Summary')){
+                     mail.setTemplateId(templatemap.get('Ossia_Prepayment_Summary').id);
+                }
+            }else{
+                if(templateMap.containsKey('Prepayment_Summary')){
+                    mail.setTemplateId(templatemap.get('Prepayment_Summary').id);
+                }
+            } 
+            //added by nishi: 12-Oct-2020:end: for send email according to organisation
+            //mail.setTemplateId(template.id);
+            mail.saveAsActivity = true;
+            String location = enrolment.Center__r.Location__c;
+            //system.debug('@@sendEmail - location'+location);
+            if(String.isNotBlank(location) && mapOfOrgWide.containsKey(location)){
+                mail.setOrgWideEmailAddressId(mapOfOrgWide.get(location).Id);
+            }
+            List<Messaging.Emailfileattachment> fileAttachments = new List<Messaging.Emailfileattachment>();
+            Messaging.Emailfileattachment efa = new Messaging.Emailfileattachment();
+            efa.setFileName(pdfName);
+            efa.setBody(body);
+            fileAttachments.add(efa);
+            //system.debug('@@@@sendEmail  - Emailfileattachment - '+efa);
+            mail.setFileAttachments(fileAttachments);
+            //system.debug('@@@@sendEmail  - SingleEmailMessage - '+mail);
+            emailList.add(mail);
+            Messaging.sendEmail(emailList);
         }
-       //system.debug('@@sendEmail - mapOfOrgWide'+mapOfOrgWide);
-        EmailTemplate template = [SELECT Id FROM EmailTemplate WHERE Developername ='Prepayment_Summary' LIMIT 1];
-       //system.debug('@@sendEmail - template'+template);
-        Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
-        mail.setTargetObjectId(enrolment.Parent__r.personContactId);
-        mail.setWhatId(enrolment.Id);
-        mail.setTemplateId(template.id);
-        mail.saveAsActivity = true;
-        String location = enrolment.Center__r.Location__c;
-       //system.debug('@@sendEmail - location'+location);
-        if(String.isNotBlank(location) && mapOfOrgWide.containsKey(location)){
-             mail.setOrgWideEmailAddressId(mapOfOrgWide.get(location).Id);
-        }
-        List<Messaging.Emailfileattachment> fileAttachments = new List<Messaging.Emailfileattachment>();
-        Messaging.Emailfileattachment efa = new Messaging.Emailfileattachment();
-        efa.setFileName(pdfName);
-        efa.setBody(body);
-        fileAttachments.add(efa);
-       //system.debug('@@@@sendEmail  - Emailfileattachment - '+efa);
-        mail.setFileAttachments(fileAttachments);
-       //system.debug('@@@@sendEmail  - SingleEmailMessage - '+mail);
-        emailList.add(mail);
-        Messaging.sendEmail(emailList);
-       //system.debug('@@@@sendEmail  - SingleEmailMessageList - '+emailList);
-        updateNextBillDate(enrolment);
-    }
+        //system.debug('@@@@sendEmail  - SingleEmailMessageList - '+emailList);
+         updateNextBillDate(enrolment);
+        
+     }
     
     private Enrolment__c fetchEnrol(String enrolId){
         Enrolment__c enrolment = new Enrolment__c();
