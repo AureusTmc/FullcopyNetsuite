@@ -240,10 +240,10 @@
                     <!-- added by nishi:  12-Oct-2020: for show credit memo logo for indicate invoice paid and its patial credit memo or full-->
                     <apex:outputPanel rendered="{!If(isShowCreditMemo, true, false)}">
                         <apex:outputPanel rendered="{!If(isPartial, true, false)}">
-                            <apex:image alt="heart" title="heart" url="{!URLFOR($Resource.Credit_Memo_Logo, 'Credit_Memo_partial.png')}" />
+                            <apex:image alt="Partially Used Amount in Credit Memo" title="Partially Used Amount in Credit Memo" url="{!URLFOR($Resource.Credit_Memo_Logo, 'Credit_Memo_partial.png')}" />
                         </apex:outputPanel>
                         <apex:outputPanel rendered="{!If(isPartial, FALSE, TRUE)}">
-                            <apex:image alt="heart" title="heart" url="{!URLFOR($Resource.Credit_Memo_Logo, 'Credit_Memo_full.png')}" />
+                            <apex:image alt="Full Used Amount in Credit Memo" title="Full Used Amount in Credit Memo" url="{!URLFOR($Resource.Credit_Memo_Logo, 'Credit_Memo_full.png')}" />
                         </apex:outputPanel>
                     </apex:outputPanel>
                     <!-- added by nishi: 12-Oct-2020: for show credit memo logo for indicate invoice paid and its patial credit memo or full-->

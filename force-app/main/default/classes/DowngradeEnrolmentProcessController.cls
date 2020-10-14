@@ -47,114 +47,123 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                                }
     //Init Method where all the process gets Start...
     Public String initProcess(){
+        Savepoint downgradeSavePoint;
         Boolean isSuccess = true;
         String caseIdToReturn;String enrollmentId;
-        //Country__c centreCountry = new Country__c();
-        Organisation__c  organisationObj = new Organisation__c();
-        String studentId, teacherId, lessonDay, oldPackage, newPackage, centreId;
-                                                          Integer duration, newPackageDuration; 
-                                                          Time startTime, newStartTime;
-        if(String.isNotBlank(bookingId)){
-            enrollmentId = upgradeDowngradeController.getEnrolmentId(bookingId);
-        }
-       //system.debug('@@@enrolmentObj'+enroll);
-        // get old and new Package Time Differnce
-        Integer timeDiff = 0;
-        AdvanceActionsHelper.UpDownSummary objSummary =  AdvanceActionsHelper.getOldNewPackage(oldPackageId,newPackageId);                                         
-        if(String.isNotBlank(objSummary.oldPack.Id) && String.isNotBlank(objSummary.newPack.Id)){
-            timeDiff =   Integer.valueOf(objSummary.oldPack.Duration__c) - Integer.valueOf(objSummary.newPack.Duration__c);                                                
-        }
-       //system.debug('@@@timeDiff'+timeDiff);
-        if(String.isNotBlank(enrollmentId)){
-            enroll = AdvanceActionsHelper.fetchEnrolment(enrollmentId);
-            
-            // if(String.isNotBlank(enroll.Center__r.country__r.Id)){
-            //     centreCountry = enroll.Center__r.country__r;    
-            // }
-            if(String.isNotBlank(enroll.Center__r.Organisation__r.Id)){
-                organisationObj = enroll.Center__r.Organisation__r;    
+        try{
+            downgradeSavePoint = Database.setSavepoint();
+            //Country__c centreCountry = new Country__c();
+            Organisation__c  organisationObj = new Organisation__c();
+            String studentId, teacherId, lessonDay, oldPackage, newPackage, centreId;
+                                                            Integer duration, newPackageDuration; 
+                                                            Time startTime, newStartTime;
+            if(String.isNotBlank(bookingId)){
+                enrollmentId = upgradeDowngradeController.getEnrolmentId(bookingId);
             }
-            newPackage = newPackageId;
-            studentId = enroll.Student__c;
-            teacherId = enroll.Teacher__c;
-            duration = Integer.valueOf(enroll.Package__r.duration__c);
-            startTime = enroll.Lesson_Start_time__c;
-            lessonDay = enroll.Lesson_Day__c;
-            oldPackage = enroll.Package__c;
-            centreId = enroll.center__c;
-        }
-		system.debug('isSuccessCreatePaymentsDowngradeProcess'+depositamount);
-        if(String.isNotBlank(enrollmentId)){
-            isSuccess = isSuccessCreatePaymentsDowngradeProcess(mapOfCase, enroll, effectiveDate, depositamount, lessonsFees, 
-                        oldPackageId, newPackageId,newTeacherId,organisationObj);//centreCountry);
-        }
-       //system.debug('isSuccess'+isSuccess); 
-
-        if(isSuccess){
+        //system.debug('@@@enrolmentObj'+enroll);
+            // get old and new Package Time Differnce
+            Integer timeDiff = 0;
+            AdvanceActionsHelper.UpDownSummary objSummary =  AdvanceActionsHelper.getOldNewPackage(oldPackageId,newPackageId);                                         
+            if(String.isNotBlank(objSummary.oldPack.Id) && String.isNotBlank(objSummary.newPack.Id)){
+                timeDiff =   Integer.valueOf(objSummary.oldPack.Duration__c) - Integer.valueOf(objSummary.newPack.Duration__c);                                                
+            }
+        //system.debug('@@@timeDiff'+timeDiff);
             if(String.isNotBlank(enrollmentId)){
-                enroll.Id = enrollmentId;
-                enroll = AdvanceActionsHelper.initEnroll(enroll);
-                enroll.New_Package_Id__c = newPackageId;
-                if(string.isNotBlank(newTeacherId)){
-                    enroll.New_Teacher__c = newTeacherId;
-                }
+                enroll = AdvanceActionsHelper.fetchEnrolment(enrollmentId);
                 
-                enroll.Package_Process_Type__c = ConstantsClass.enrollmentProcessDowngradeType;
-                if(effectiveDate != NULL){
-                    enroll.Effective_Date__c = effectiveDate;
+                // if(String.isNotBlank(enroll.Center__r.country__r.Id)){
+                //     centreCountry = enroll.Center__r.country__r;    
+                // }
+                if(String.isNotBlank(enroll.Center__r.Organisation__r.Id)){
+                    organisationObj = enroll.Center__r.Organisation__r;    
                 }
-                
-                if(enroll.Effective_Date__c != NULL){
-                    enroll.Notice_Period_End_Date__c = enroll.Effective_Date__c;
-                    enroll.Notice_Period_Start_Date__c = enroll.Notice_Period_End_Date__c.addDays(-30);
-                }
-                date nextBillDate = AdvanceActionsHelper.fetchNextBillDateFromEnrolment(enroll);
-                if(enroll.Effective_Date__c >= nextBillDate){
-                    enroll.Package_Process_Status__c = ConstantsClass.enrollmentProcessPendingStatus;       
-                }else{
-                    enroll.Package_Process_Status__c = ConstantsClass.enrollmentProcessCompletedStatus;      
-                    enroll.Package__c = newPackageId;
-                    if(string.isNotBlank(newTeacherId)){
-                        enroll.Teacher__c = newTeacherId;
-                    }
-                }
-                enroll.Next_Lesson_Start_time__c = timeslot;
-                enroll.Advance_Action_Requested_By__c = Userinfo.getUserId();
-                enroll.Package_Process_Request_Date__c = System.today();
+                newPackage = newPackageId;
+                studentId = enroll.Student__c;
+                teacherId = enroll.Teacher__c;
+                duration = Integer.valueOf(enroll.Package__r.duration__c);
+                startTime = enroll.Lesson_Start_time__c;
+                lessonDay = enroll.Lesson_Day__c;
+                oldPackage = enroll.Package__c;
+                centreId = enroll.center__c;
             }
-            
-            if(enroll != NULL){
-                Set<String> setOfMakeupBookings = new Set<String>();
-                Database.SaveResult saveResult = Database.Update(enroll, false);
-                if(!saveResult.isSuccess()){
-                    isSuccess = false;
-                }else{
-                    List<Enrolment__c> enrolmentList = AdvanceActionsHelper.getNextBillingDateSubscription(enroll.id);
-                    if(enrolmentList.size() > 0){
-                        enroll = enrolmentList[0];
-                    }
-                    AureusCalendarControllerHelper.processFutureBookings(enroll, 'downgrade');
-                    setOfMakeupBookings = AdvanceActionsHelper.processFutureFifthLessons(enroll,  'downgrade');
-                    if(setOfMakeupBookings.size() > 0){
-                        AdvanceActionsHelper.AddFifthMakeupMinutesToParent(centreId, Integer.valueOf(objSummary.newPack.Duration__c), timediff, startTime, timeSlot, setOfMakeupBookings);
-                    }
-                    /*if(String.isNotBlank(studentId) && String.isNotBlank(teacherId) && duration > 0 && 
-                        startTime != NULL && effectiveDate != NULL && String.isNotBlank(lessonDay) && 
-                        getDateTimeFromString(timeSlot).time() != NULL && String.isNotBlank(objSummary.newPack.Duration__c) && String.isNotBlank(centreId)){
-                            AureusCalendarControllerHelper.AddFifthMakeupMinutesToParent(studentId, teacherId, duration, startTime, effectiveDate, lessonDay, timediff, getDateTimeFromString(timeSlot).time(), Integer.valueOf(objSummary.newPack.Duration__c), centreId);
-                        }*/
+            system.debug('isSuccessCreatePaymentsDowngradeProcess'+depositamount);
+            if(String.isNotBlank(enrollmentId)){
+                isSuccess = isSuccessCreatePaymentsDowngradeProcess(mapOfCase, enroll, effectiveDate, depositamount, lessonsFees, 
+                            oldPackageId, newPackageId,newTeacherId,organisationObj);//centreCountry);
+            }
+        //system.debug('isSuccess'+isSuccess); 
 
+            if(isSuccess){
+                if(String.isNotBlank(enrollmentId)){
+                    enroll.Id = enrollmentId;
+                    enroll = AdvanceActionsHelper.initEnroll(enroll);
+                    enroll.New_Package_Id__c = newPackageId;
+                    if(string.isNotBlank(newTeacherId)){
+                        enroll.New_Teacher__c = newTeacherId;
+                    }
                     
+                    enroll.Package_Process_Type__c = ConstantsClass.enrollmentProcessDowngradeType;
+                    if(effectiveDate != NULL){
+                        enroll.Effective_Date__c = effectiveDate;
+                    }
+                    
+                    if(enroll.Effective_Date__c != NULL){
+                        enroll.Notice_Period_End_Date__c = enroll.Effective_Date__c;
+                        enroll.Notice_Period_Start_Date__c = enroll.Notice_Period_End_Date__c.addDays(-30);
+                    }
+                    date nextBillDate = AdvanceActionsHelper.fetchNextBillDateFromEnrolment(enroll);
+                    if(enroll.Effective_Date__c >= nextBillDate){
+                        enroll.Package_Process_Status__c = ConstantsClass.enrollmentProcessPendingStatus;       
+                    }else{
+                        enroll.Package_Process_Status__c = ConstantsClass.enrollmentProcessCompletedStatus;      
+                        enroll.Package__c = newPackageId;
+                        if(string.isNotBlank(newTeacherId)){
+                            enroll.Teacher__c = newTeacherId;
+                        }
+                    }
+                    enroll.Next_Lesson_Start_time__c = timeslot;
+                    enroll.Advance_Action_Requested_By__c = Userinfo.getUserId();
+                    enroll.Package_Process_Request_Date__c = System.today();
                 }
-            }                                                             
-        }
-       //system.debug('caseRedirect'+caseRedirect); 
-        if(isSuccess && caseRedirect == 'true'){
-            caseIdToReturn = getCaseIdToReturn(mapOfCase,myCaseId,enrollmentId,amount,lessonsFees,depositAmount);
-        }else if(!isSuccess){
-            caseIdToReturn = 'error';
-        }else{
-            caseIdToReturn = '';
+                
+                if(enroll != NULL){
+                    Set<String> setOfMakeupBookings = new Set<String>();
+                    Database.SaveResult saveResult = Database.Update(enroll, false);
+                    if(!saveResult.isSuccess()){
+                        isSuccess = false;
+                    }else{
+                        List<Enrolment__c> enrolmentList = AdvanceActionsHelper.getNextBillingDateSubscription(enroll.id);
+                        if(enrolmentList.size() > 0){
+                            enroll = enrolmentList[0];
+                        }
+                        AureusCalendarControllerHelper.processFutureBookings(enroll, 'downgrade');
+                        setOfMakeupBookings = AdvanceActionsHelper.processFutureFifthLessons(enroll,  'downgrade');
+                        if(setOfMakeupBookings.size() > 0){
+                            AdvanceActionsHelper.AddFifthMakeupMinutesToParent(centreId, Integer.valueOf(objSummary.newPack.Duration__c), timediff, startTime, timeSlot, setOfMakeupBookings);
+                        }
+                        /*if(String.isNotBlank(studentId) && String.isNotBlank(teacherId) && duration > 0 && 
+                            startTime != NULL && effectiveDate != NULL && String.isNotBlank(lessonDay) && 
+                            getDateTimeFromString(timeSlot).time() != NULL && String.isNotBlank(objSummary.newPack.Duration__c) && String.isNotBlank(centreId)){
+                                AureusCalendarControllerHelper.AddFifthMakeupMinutesToParent(studentId, teacherId, duration, startTime, effectiveDate, lessonDay, timediff, getDateTimeFromString(timeSlot).time(), Integer.valueOf(objSummary.newPack.Duration__c), centreId);
+                            }*/
+
+                        
+                    }
+                }                                                             
+            }
+        //system.debug('caseRedirect'+caseRedirect); 
+            if(isSuccess && caseRedirect == 'true'){
+                caseIdToReturn = getCaseIdToReturn(mapOfCase,myCaseId,enrollmentId,amount,lessonsFees,depositAmount);
+            }else if(!isSuccess){
+                caseIdToReturn = 'error';
+            }else{
+                caseIdToReturn = '';
+            }
+        }catch (Exception e){
+            //On 14-Oct-2020: Nishi to Add Custom Save Points so If Error Occures we can trace that.
+            Database.rollback(downgradeSavePoint);
+            caseIdToReturn  += e.getStackTraceString()+'-'+e.getMessage() +';';
+            System.debug('@@caseIdToReturn'+caseIdToReturn);
         }
         
         return caseIdToReturn ;
@@ -246,13 +255,13 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                     if(string.isBlank(newTeacherId)){
                         newTeacherId = objEnrol.Teacher__c;
                     }
-      //System.debug('nextMonthAmount'+nextMonthAmount);
-      //System.debug('positiveNextMonthInvoiceAmount'+positiveNextMonthInvoiceAmount);
-      //System.debug('negativeNextMonthInvoiceAmount'+negativeNextMonthInvoiceAmount);
-      //System.debug('negativeInvoiceAmount'+negativeInvoiceAmount);
-      //System.debug('positiveInvoiceAmount'+positiveInvoiceAmount);
-      //System.debug('lessonsAmt'+lessonsAmt);
-      //System.debug('depositAmount'+depositAmount);
+      System.debug('nextMonthAmount'+nextMonthAmount);
+      System.debug('positiveNextMonthInvoiceAmount'+positiveNextMonthInvoiceAmount);
+      System.debug('negativeNextMonthInvoiceAmount'+negativeNextMonthInvoiceAmount);
+      System.debug('negativeInvoiceAmount'+negativeInvoiceAmount);
+      System.debug('positiveInvoiceAmount'+positiveInvoiceAmount);
+      System.debug('lessonsAmt'+lessonsAmt);
+      System.debug('depositAmount'+depositAmount);
         if(depositAmount > 0){
             depositAmount = BillingUtility.roundOffAmount(depositAmount);
         }
@@ -306,10 +315,13 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                         Due_Date__c = system.today().AddDays(ConstantsClass.addInvoiceDueDays),
                                         Invoice_Date__c =system.today(),
                                         Parent_Account__c = objEnrol.Parent__c, 
-                                        Center__c=objEnrol.Center__c);
+                                        Center__c=objEnrol.Center__c,
+                                        Credit_Memo_Amount__c=0
+                                        );
+                                        
             INSERT objInvoice;
             
-             //system.debug('@objInvoice'+objInvoice);
+             system.debug('@objInvoice'+objInvoice);
             // JATIN  25-Nov-2019 :for add transaction id in payment reocrds
             Map<String, Payment__c> mapOfInvoicePayments = new Map<String, Payment__c>();
             List<Id> invoiceIds = NEW List<Id>();
@@ -362,11 +374,14 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                                             objCreditLineItem.Is_Deposit__c = true;
                                                             objCreditLineItem.Month__c = lastLessonDateObj;
                             listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
-                            listOfCreditmemolineitem.add(objCreditLineItem);                                                  
+                            listOfCreditmemolineitem.add(objCreditLineItem);           
+                            system.debug('objCreditLineItem'+objCreditLineItem);                                         
                             mapOfCreditmemolineitem.put('Deposit Adjustment',listOfCreditmemolineitem);
                         }
                     }
                 }
+                system.debug('objCreditMemo'+objCreditMemo);  
+                
                 newPendingCreditMemos.put('Deposit Adjustment',objCreditMemo);
                  //added by nishi: 6-Oct-2020 : start:for new requirement we Create a Credit Memo record with the status pending instead of the Payment as Deposit record.
             }
@@ -400,7 +415,9 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
              objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, invoiceId,  system.today(),'Downgrade Enrolment Adjustment');
             objCreditMemo.Status__c = ConstantsClass.creditMemoSuccessStatus;
             objCreditMemo.Invoice_Number__c = objInvoice.Id;
+            
             newPendingCreditMemos.put('Downgrade Enrolment Adjustment',objCreditMemo);
+            system.debug('objCreditMemo'+objCreditMemo);    
             listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
             //added by nishi: 7-Oct-2020 : start:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
            
@@ -486,15 +503,17 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                                     math.abs(negativeNextMonthInvoiceAmountGST),oldPackId,
                                                     objEnrol.id,invoicelineitemId,'');
                                                     objCreditLineItem.Month__c = nextMonthDate.addMonths(-1);
+                                                    objInvoice.Credit_Memo_Amount__c += (math.abs(negativeNextMonthInvoiceAmount) + math.abs(negativeNextMonthInvoiceAmountGST));
                     listOfCreditmemolineitem.add(objCreditLineItem);                                      
-                    mapOfCreditmemolineitem.put('Downgrade Enrolment Adjustment',listOfCreditmemolineitem);      
+                    mapOfCreditmemolineitem.put('Downgrade Enrolment Adjustment',listOfCreditmemolineitem);  
+                    system.debug('listOfCreditmemolineitem'+listOfCreditmemolineitem);      
                     //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.                                      
                 }
                  // added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
 
                 //Line Item for positive amount
                
-                	invoiceLineItems.add(new Invoice_Line_Item__c(Invoice__c = objInvoice.id,Amount__c = BillingUtility.roundOffAmount(positiveInvoiceAmount), 
+                    invoiceLineItems.add(new Invoice_Line_Item__c(Invoice__c = objInvoice.id,Amount__c = BillingUtility.roundOffAmount(positiveInvoiceAmount), 
                                                              GST_Amount__c = positiveInvoiceAmountGST,
                                                              Teacher_Id__c = objEnrol.Teacher__c,Package__c=newPackId,Month__c= effectiveDate, Subscription_Line_Item__c = objEnrol.Subscription_Line_Items__r[0].Id));
                 //Line Item for negative amount.
@@ -517,7 +536,9 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                                 math.abs(negativeInvoiceAmountGST),oldPackId,
                                                 objEnrol.id,invoicelineitemId,'');
                                                 objCreditLineItem.Month__c = effectiveDate;
-                listOfCreditmemolineitem.add(objCreditLineItem);                                      
+                                                objInvoice.Credit_Memo_Amount__c += (math.abs(negativeInvoiceAmount) + math.abs(negativeInvoiceAmountGST));
+                listOfCreditmemolineitem.add(objCreditLineItem);     
+                system.debug('objCreditLineItem'+objCreditLineItem);                                        
                 mapOfCreditmemolineitem.put('Downgrade Enrolment Adjustment',listOfCreditmemolineitem);      
                 //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record. 
 
@@ -544,12 +565,14 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                 system.debug('lessonsAmt'+lessonsAmt);
                 objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, null,lastLessonDateObj,'Remaining Lessons Adjustment');
                 newPendingCreditMemos.put('Remaining Lessons Adjustment',objCreditMemo);
+                system.debug('objCreditMemo'+objCreditMemo);
                  objCreditLineItem = BillingUtility.createCreditMemoLineRec(lessonsAmt - BillingUtility.roundOffAmount(taxAmount),
                                                 BillingUtility.roundOffAmount(taxAmount),NULL,
                                                 objEnrol.id,NULL,'Remaining Lessons Adjustment');
                                                 objCreditLineItem.Month__c = lastLessonDateObj;
                 listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
-                listOfCreditmemolineitem.add(objCreditLineItem);                                      
+                listOfCreditmemolineitem.add(objCreditLineItem);              
+                system.debug('objCreditLineItem'+objCreditLineItem);                        
                 mapOfCreditmemolineitem.put('Remaining Lessons Adjustment',listOfCreditmemolineitem);
                     //added by nishi: 6-Oct-2020 :end: Create a Credit Memo record with the status pending instead of the Payment as Credit record for the remaining lessons.                                                      
                                                                
@@ -602,20 +625,22 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
         if(invoiceLineItems.size() > 0){
             insert invoiceLineItems;
         }
-      //System.debug('@@@invoiceLineItems'+invoiceLineItems);
+      System.debug('@@@invoiceLineItems'+invoiceLineItems);
        
         if(String.isNotBlank(objInvoice.id) && isTransaction){
             SageIntacctIntegrationUtility.changeEnrolment(objInvoice.Id);
             BillingUtility.createAttachment(new Set<String> {objInvoice.id});
         }  
-       //System.debug('@@@listOfPayments'+listOfPayments);
+       System.debug('@@@listOfPayments'+listOfPayments);
         if(listOfPayments.size() > 0){
              insert listOfPayments;
         }
         //added by nishi: 6-Oct-2020 : start:for new requirement Create a Credit Memo record with the status pending instead of the Payment as Deposit record.
         if(newPendingCreditMemos.size() > 0){
+            update objInvoice;
             Insert newPendingCreditMemos.values();  
            system.debug('newPendingCreditMemos'+newPendingCreditMemos);
+           system.debug('mapOfCreditmemolineitem'+mapOfCreditmemolineitem);
            List<Credit_memo_line_item__c> listOfnewCreditmemolineitem = new list<Credit_memo_line_item__c>();
             for(string creditMemoRemark : newPendingCreditMemos.keyset()){
                 if(mapOfCreditmemolineitem.containskey(creditMemoRemark)){

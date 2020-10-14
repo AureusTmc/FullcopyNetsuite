@@ -270,7 +270,20 @@
                         <apex:outputPanel rendered="{!If(isOssia, FALSE, TRUE)}">
                             <apex:image url="{!$Resource.Aureus_logo}" />
                         </apex:outputPanel>
-                        <!-- added by nishi: 18-aug-2020: for if center is Ossia then we show ossiaLogo otherwise Aureus logo--></td>
+                        <!-- added by nishi: 18-aug-2020: for if center is Ossia then we show ossiaLogo otherwise Aureus logo-->
+                    </td>
+                    <td >
+                        <!-- added by nishi:  14-Oct-2020: for show credit memo logo for indicate invoice paid and its patial credit memo or full-->
+                        <apex:outputPanel rendered="{!If(isShowCreditMemo, true, false)}">
+                            <apex:outputPanel rendered="{!If(isPartial, true, false)}">
+                                <apex:image  style="margin-left:30px;"  title="Partially Used Amount  in Credit Memo" url="{!URLFOR($Resource.Credit_Memo_Logo, 'Credit_Memo_partial.png')}" width="190" height="190" alt="Partially Used Amount in Credit Memo"/>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!If(isPartial, FALSE, TRUE)}">
+                                <apex:image  style="margin-left:30px;" title="Full Used Amount in Credit Memo" url="{!URLFOR($Resource.Credit_Memo_Logo, 'Credit_Memo_full.png')}" width="190" height="190" alt="Full Used Amount in Credit Memo"/>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        <!-- added by nishi: 14-Oct-2020: for show credit memo logo for indicate invoice paid and its patial credit memo or full-->
+                    </td>
                     <td>
                         <table width="100%">
                             <!-- Color Class Applied By Bhawna On 19-08-20 --->
@@ -306,6 +319,8 @@
                         </table>
                     </td>
                 </tr>
+            </table>
+            <table class="header" style="width:100%" cellpadding="0" cellspacing="0" >
                 <tr>
                     <td>
                         <br/><br/><br/><br/>
@@ -578,4 +593,3 @@
         </body>    
     </html>
 </apex:page>
-                         

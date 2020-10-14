@@ -352,7 +352,7 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
                               // One equivalent to the invoice amount and other the balance with the status pending
                                 
                                 if(finding){
-                                    // @@jatin 11-jan-2020 : for manage invoice and payment per amount  
+                                    // for manage invoice and payment per amount  
                                     if(objCreditMemo.Total_Amount__c  > invoiceTotalAmount ){ //235.00 > 219.63 
                                         adjustedPaymentAmount =  adjustedPaymentAmount + objCreditMemo.Total_Amount__c; 
                                     }else if(objCreditMemo.Total_Amount__c == invoiceTotalAmount){
@@ -377,7 +377,7 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
                                                     decimal totalCreditMemoLineItemTax=objCreditmemolineitem.Tax_Amount__c; 
                                                     system.debug('totalCreditMemoLineItemAmountWithoutTax'+totalCreditMemoLineItemAmountWithoutTax);
                                                     system.debug('totalCreditMemoLineItemTax'+totalCreditMemoLineItemTax);
-                                                    totalCreditMemoLineItemAmount =  objCreditmemolineitem.Amount__c+objCreditmemolineitem.Tax_Amount__c; 
+                                                    totalCreditMemoLineItemAmount =  objCreditmemolineitem.Amount__c+ (objCreditmemolineitem.Tax_Amount__c != null ?objCreditmemolineitem.Tax_Amount__c : 0); 
                                                     system.debug('adjustmentCreditMemoLineItemAmount'+adjustmentCreditMemoLineItemAmount);
                                                     if(adjustmentCreditMemoLineItemAmount <= 0.00){
                                                         List<Credit_memo_line_item__c> listOfCreditmemolineitem  = new  List<Credit_memo_line_item__c>();
@@ -1936,7 +1936,7 @@ List<Task> listOftask = new List<Task>();
     }*/
 
     // get if there is any pending credit memo available with the customer account
-    private static Map<String,List<Credit_Memo__c>> getParentCreditMemo(Set<String> setOfParentIds, Date lastDate){
+    public static Map<String,List<Credit_Memo__c>> getParentCreditMemo(Set<String> setOfParentIds, Date lastDate){
         Map<String,List<Credit_Memo__c>>  parentCreditMemos = new Map<String,List<Credit_Memo__c>>();
         String query = generateCreditMemoQuery(setOfParentIds,lastDate);
         for(Credit_Memo__c objPay : Database.query(query)){
@@ -1949,7 +1949,7 @@ List<Task> listOftask = new List<Task>();
     }
 
 // get  pending credit memo available with the customer account
-     private static string generateCreditMemoQuery(Set<String> setOfParentIds, Date lastDate){
+     public static string generateCreditMemoQuery(Set<String> setOfParentIds, Date lastDate){
         String pendingStatus = ConstantsClass.creditMemoPendingStatus;
         String query = 'SELECT From_Invoice__c, Parent_Account__c, Organisations_Name__c, Comments__c, Currency_Code__c, Total_Amount__c, Payment_Method__c, Invoice_Number__c, ';
         query+= ' Credit_Memo_Date__c, Status__c, Refund_ID__c, Stripe_Payout_Id__c, Stripe_Fee__c, Cheque_Date__c, Cheque_No__c, Bank_Name__c, NETS_Code__c, Amount_Exl_tax_Rollup__c, ';
@@ -1964,7 +1964,7 @@ List<Task> listOftask = new List<Task>();
     }
 
      // this method is used for filling sum of Credit memo of parent
-     private static Map<String,Decimal> getParentCreditMemoMap(Map<String,List<Credit_Memo__c>> mapOfCreditMemos){
+     public static Map<String,Decimal> getParentCreditMemoMap(Map<String,List<Credit_Memo__c>> mapOfCreditMemos){
         Map<String,Decimal> parentWithCreditMemos = new Map<String,Decimal>();
         for(String parentId : mapOfCreditMemos.keySet()){
             for(Credit_Memo__c objCreditMemos : mapOfCreditMemos.get(parentId)){

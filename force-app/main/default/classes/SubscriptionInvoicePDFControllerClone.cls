@@ -61,10 +61,10 @@ Public without sharing class SubscriptionInvoicePDFControllerClone{
                 isOssia= true;  
             }
             // added by nishi: 18-Aug-2020: for show Ossia Logo
-            if(invoice.CM_Created__c != null && invoice.CM_Created__c >= 0){
+            if(invoice.CM_Created__c != null && invoice.CM_Created__c > 0){
                 isShowCreditMemo= true;
             }
-            if(invoice.CM_Created__c == invoice.Total_Payable__c){
+            if(invoice.CM_Created__c == invoice.Total_Amount__c){
                 isPartial = false;
             }
             //nishi: 15-Sep-2020: for new requirement in netsuite we adjust discount as a line item 
