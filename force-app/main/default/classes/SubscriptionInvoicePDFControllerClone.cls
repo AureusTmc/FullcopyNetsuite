@@ -64,7 +64,7 @@ Public without sharing class SubscriptionInvoicePDFControllerClone{
             if(invoice.CM_Created__c != null && invoice.CM_Created__c > 0){
                 isShowCreditMemo= true;
             }
-            if(invoice.CM_Created__c == invoice.Total_Amount__c){
+            if(BillingUtility.roundOffAmount( invoice.CM_Created__c) == BillingUtility.roundOffAmount(invoice.Total_Amount__c)){
                 isPartial = false;
             }
             //nishi: 15-Sep-2020: for new requirement in netsuite we adjust discount as a line item 

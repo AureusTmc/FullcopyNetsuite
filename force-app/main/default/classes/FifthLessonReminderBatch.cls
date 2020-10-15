@@ -72,6 +72,7 @@ global class FifthLessonReminderBatch implements Database.Batchable<sObject>, da
                  Boolean isSendNotification = true;
                  Boolean isOssiaOrganisation = false;
                 Decimal availableMakeupUnits = 0;
+                system.debug('fl.Enrolment__r.Center__r.Organisation__r.Name'+fl.Enrolment__r.Center__r.Organisation__r.Name);
                 if(string.isNotBlank(fl.Enrolment__c) && string.isNotBlank(fl.Enrolment__r.Center__c) && string.isNotBlank(fl.Enrolment__r.Center__r.Organisation__c)
                  && string.isNotBlank(fl.Enrolment__r.Center__r.Organisation__r.Name) && fl.Enrolment__r.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
                     availableMakeupUnits = fl.Enrolment__r.Available_Make_up_Mins__c != null ? fl.Enrolment__r.Available_Make_up_Mins__c : 0;
@@ -88,6 +89,7 @@ global class FifthLessonReminderBatch implements Database.Batchable<sObject>, da
                 Decimal duration = fl.Duration__c != null ? fl.Duration__c : 0;
                 system.debug('!!duration'+duration);
                  system.debug('!!availableMakeupUnits'+availableMakeupUnits);
+                 system.debug('fl.Parent__r.PersonContactId'+fl.Parent__r.PersonContactId);
                 // 19-mar-2020:jatin: for check Available_Make_up_Units__c is less then then fifth_lesson_ Package_duration 
                 //then we send email otherwise not
                 if(duration > availableMakeupUnits && isSendNotification){
@@ -98,8 +100,9 @@ global class FifthLessonReminderBatch implements Database.Batchable<sObject>, da
                                 singleEmailList.add(mail);
                             
                         }else if(numberOfDays == 15 && emailTemplatemap.containskey('Ossia_FifthLessonReminderFor15Days')){
-                                Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(emailTemplatemap.get('Ossia_FifthLessonReminderFor15Days').Id,fl.Parent__r.PersonContactId,fl.Enrolment__c,fl.Enrolment__r.Center__r.Location__c);
-                                singleEmailList.add(mail);
+                            system.debug('isOssiaOrganisation'+isOssiaOrganisation);
+                            Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(emailTemplatemap.get('Ossia_FifthLessonReminderFor15Days').Id,fl.Parent__r.PersonContactId,fl.Enrolment__c,fl.Enrolment__r.Center__r.Location__c);
+                            singleEmailList.add(mail);
                         }
                    }else{
                         if(numberOfDays == 10 && emailTemplatemap.containskey('FifthLessonReminderFor10Days')){
@@ -122,7 +125,8 @@ global class FifthLessonReminderBatch implements Database.Batchable<sObject>, da
         }
         system.debug('!!singleEmailList'+singleEmailList);
         if(singleEmailList.size()>0){
-            Messaging.sendEmail(singleEmailList, FALSE);     
+            system.debug('!!singleEmailList'+singleEmailList);
+            Messaging.sendEmail(singleEmailList,FALSE);   
         }   
     }
     global void finish(Database.BatchableContext BC){

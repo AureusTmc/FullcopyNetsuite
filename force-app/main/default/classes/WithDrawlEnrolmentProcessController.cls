@@ -394,7 +394,10 @@ system.debug('depositAmount'+depositAmount);
                 refundPayments.add(refund);
             }  */
             //14-jan-2020: for create refund amount
-            Payment__c  refund = BillingUtility.fillPayment(objEnrol.Parent__c,null, depositAmount, ConstantsClass.paymentPendingStatus);
+          /*
+         Commented by nishi: 15-Oct-2020:start:for new requirement Create a Credit Memo record with the status pending instead of the pending Payment as credit record.
+                           
+          Payment__c  refund = BillingUtility.fillPayment(objEnrol.Parent__c,null, depositAmount, ConstantsClass.paymentPendingStatus);
             refund.Payment_amount__c = -1*refund.Payment_amount__c;
             refund.recordTypeId = refundRecType;
             refund.Payment_Date__c = lastLessonDateObj;
@@ -407,7 +410,15 @@ system.debug('depositAmount'+depositAmount);
                  
                 }
             }
-            refundPayments.add(refund);  
+            refundPayments.add(refund);  */
+            Credit_Memo__c objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, null,  lastLessonDateObj,'Refund Deposit');
+            Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(depositAmount,0,null,objEnrol.id,null,'Refund Deposit');
+                                            objCreditLineItem.Month__c = lastLessonDateObj;
+                                            objCreditLineItem.Is_Deposit__c = true;
+            listOfCreditmemolineitem.put('Refund Deposit',objCreditLineItem);
+            system.debug('objCreditLineItem'+objCreditLineItem);
+            system.debug('objCreditMemo'+objCreditMemo);
+            newPendingCreditMemos.put('Refund Deposit',objCreditMemo);
         }
        //system.debug('isRefund'+isRefund);
          // we need to refund current month amount if applicable
@@ -418,6 +429,24 @@ system.debug('depositAmount'+depositAmount);
              // added by nishi: 21-aug-2020: for if next month invoice already generated then we create next month payment records
             date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1); // 1-10-2020
             Boolean isNextMonthInvoicCreated = false;
+            //added by nishi: 15-Oct-2020 : start:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+            Map<String,Invoice__c> mapofinvoice = new Map<String,Invoice__c>();
+            for(Invoice__c objInvoice : [Select id,Invoice_Date__c,(Select id from Invoice_Line_Items__r 
+                                        where Enrolment__C =:objEnrol.id)
+                                        From Invoice__C 
+                                        Where  Parent_Account__c =: objEnrol.Parent__c
+                                        And invoice_type__c = 'Recurring']){
+                if(nextBillDate >= nextMonthDate && lastLessonDateObj.month() < nextMonthDate.addMonths(-1).month() && objInvoice.Invoice_Date__c.month() == nextMonthDate.addMonths(-1).month() ){
+                        mapofinvoice.put('Next Month',objInvoice);
+                }else{
+                    if(objInvoice.Invoice_Date__c.month() == system.today().month()){
+                        mapofinvoice.put('Current',objInvoice);
+                    }
+                }
+            }
+             //added by nishi: 15-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+             
+          
             // 1-10-2020 >= 1-10-2020 && 8<9
            //system.debug('nextBillDate'+nextBillDate);
            //system.debug('nextMonthDate'+nextMonthDate);
@@ -427,16 +456,26 @@ system.debug('depositAmount'+depositAmount);
                 Decimal refundNextMonthAmount = getLessonRefundAmount(objEnrol,nextMonthDate.addMonths(-1)); // 1-9-2020
                 String refundNextMontAmountWithTax = getLessonRefundAmountWithTax(objEnrol,nextMonthDate.addMonths(-1));//8
                 if(refundNextMonthAmount > 0){
+                    String invoiceId = null;
+                    String invoicelineitemId = null;
+                    if(mapofinvoice != null && mapofinvoice.size() > 0 ){
+                        if(mapofinvoice.containskey('Next Month')){
+                            invoiceId = mapofinvoice.get('Next Month').id;
+                            if(mapofinvoice.get('Next Month').Invoice_Line_Items__r != null && mapofinvoice.get('Next Month').Invoice_Line_Items__r.size()>0){
+                                invoicelineitemId =mapofinvoice.get('Next Month').Invoice_Line_Items__r[0].id; 
+                            }
+                        }
+                    }
                     Payment__c objPay = new Payment__c();
                     if(hasMoreEnrolment){
                         if(refundNextMontAmountWithTax.split('@') != null &&  refundNextMontAmountWithTax.split('@').size() > 0){
                             system.debug('refundNextMontAmountWithTax'+refundNextMontAmountWithTax);
                             //added by nishi: 6-Oct-2020 : start:for new requirement Create a Credit Memo record with the status pending instead of the pending Payment as credit record.
                             //objPay = BillingUtility.fillPayment(objEnrol.Parent__c,null, refundNextMonthAmount, ConstantsClass.paymentPendingStatus);
-                            Credit_Memo__c objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, null,  lastLessonDateObj,'Refund  (Next month invoice amount)');
+                            Credit_Memo__c objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, invoiceId,  lastLessonDateObj,'Refund  (Next month invoice amount)');
                             Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(Decimal.valueOf(refundNextMontAmountWithTax.split('@')[0]),
                                                             Decimal.valueOf(refundNextMontAmountWithTax.split('@')[1]),null,
-                                                            objEnrol.id,null,'Refund  (Next month invoice amount)');
+                                                            objEnrol.id,invoicelineitemId,'Refund  (Next month invoice amount)');
                                                             objCreditLineItem.Month__c = lastLessonDateObj;
                             listOfCreditmemolineitem.put('Refund  (Next month invoice amount)',objCreditLineItem);
                             system.debug('objCreditLineItem'+objCreditLineItem);
@@ -446,7 +485,9 @@ system.debug('depositAmount'+depositAmount);
                         }
                     }else{
                         system.debug('refundNextMonthAmount'+refundNextMonthAmount);
-                            objPay = BillingUtility.fillPayment(objEnrol.Parent__c,null, refundNextMonthAmount, ConstantsClass.paymentSuccessStatus);
+                         //added by nishi: 15-Oct-2020 : start:for new requirement Create a Credit Memo record with the status pending instead of the success Payment as credit record.
+                           
+                            /*objPay = BillingUtility.fillPayment(objEnrol.Parent__c,null, refundNextMonthAmount, ConstantsClass.paymentSuccessStatus);
                             objPay.RecordTypeId =  payAsCredit ;
                             objPay.Payment_Date__c = lastLessonDateObj;
                             if(String.isNotBlank(chargeId)){
@@ -458,7 +499,20 @@ system.debug('depositAmount'+depositAmount);
                             objPay.Remarks__c ='Refund  (Next month invoice amount)';
                             objPay.last_lesson_date__c = lastLessonDateObj;
                         //system.debug('objPay'+objPay);
-                            paymentList.add(objPay);
+                            paymentList.add(objPay);*/
+                        if(refundNextMontAmountWithTax.split('@') != null &&  refundNextMontAmountWithTax.split('@').size() > 0){
+                            Credit_Memo__c objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, invoiceId,  lastLessonDateObj,'Refund  (Next month invoice amount)');
+                            Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(Decimal.valueOf(refundNextMontAmountWithTax.split('@')[0]),
+                                                            Decimal.valueOf(refundNextMontAmountWithTax.split('@')[1]),null,
+                                                            objEnrol.id,invoicelineitemId,'Refund  (Next month invoice amount)');
+                                                            objCreditLineItem.Month__c = lastLessonDateObj;
+                            listOfCreditmemolineitem.put('Refund  (Next month invoice amount)',objCreditLineItem);
+                            system.debug('objCreditLineItem'+objCreditLineItem);
+                            system.debug('objCreditMemo'+objCreditMemo);
+                            newPendingCreditMemos.put('Refund  (Next month invoice amount)',objCreditMemo);
+                        }
+                            //added by nishi: 15-Oct-2020 : end:for new requirement Create a Credit Memo record with the status pending instead of the success Payment as credit record.
+
                     }
                     isNextMonthInvoicCreated = true;
                 }
@@ -468,16 +522,26 @@ system.debug('depositAmount'+depositAmount);
              //end: added by nishi: 21-aug-2020: for if next month invoice already generated then we create next month payment records
            //system.debug(refundAmount);
             if(refundAmount > 0){
+                String invoiceId = null;
+                String invoicelineitemId = null;
+                if(mapofinvoice != null && mapofinvoice.size() > 0 ){
+                    if(mapofinvoice.containskey('Current')){
+                        invoiceId = mapofinvoice.get('Current').id;
+                        if(mapofinvoice.get('Current').Invoice_Line_Items__r != null && mapofinvoice.get('Current').Invoice_Line_Items__r.size()>0){
+                            invoicelineitemId =mapofinvoice.get('Current').Invoice_Line_Items__r[0].id; 
+                        }
+                    }
+                }
                 Payment__c objPay = new Payment__c();
                 if(hasMoreEnrolment){
                     if(refundAmountWithTax.split('@') != null &&  refundAmountWithTax.split('@').size() > 0){
                         system.debug('refundAmountWithTax'+refundAmountWithTax);
                         //added by nishi: 6-Oct-2020 : start:for new requirement Create a Credit Memo record with the status pending instead of the pending Payment as credit record.
                         //objPay = BillingUtility.fillPayment(objEnrol.Parent__c,null, refundAmount, ConstantsClass.paymentPendingStatus);
-                        Credit_Memo__c objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, null,  lastLessonDateObj,'Refund  (Effective month invoice amount)');
+                        Credit_Memo__c objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, invoiceId,  lastLessonDateObj,'Refund  (Effective month invoice amount)');
                         Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(Decimal.valueOf(refundAmountWithTax.split('@')[0]),
                                                         Decimal.valueOf(refundAmountWithTax.split('@')[1]),null,
-                                                        objEnrol.id,null,'Refund  (Effective month invoice amount)');
+                                                        objEnrol.id,invoicelineitemId,'Refund  (Effective month invoice amount)');
                                                         objCreditLineItem.Month__c = lastLessonDateObj;
                         listOfCreditmemolineitem.put('Refund  (Effective month invoice amount)',objCreditLineItem);
                         system.debug('objCreditMemo'+objCreditMemo);
@@ -486,7 +550,9 @@ system.debug('depositAmount'+depositAmount);
                         //added by nishi: 6-Oct-2020 : end:for new requirement Create a Credit Memo record with the status pending instead of the pending Payment as credit record.
                     }
                 }else{
-                    objPay = BillingUtility.fillPayment(objEnrol.Parent__c,null, refundAmount, ConstantsClass.paymentSuccessStatus);
+                   //added by nishi: 15-Oct-2020 : start:for new requirement Create a Credit Memo record with the status pending instead of the success Payment as credit record.
+
+                    /*objPay = BillingUtility.fillPayment(objEnrol.Parent__c,null, refundAmount, ConstantsClass.paymentSuccessStatus);
                     objPay.RecordTypeId =  payAsCredit ;
                     objPay.Payment_Date__c = lastLessonDateObj;
                     if(String.isNotBlank(chargeId)){
@@ -499,6 +565,19 @@ system.debug('depositAmount'+depositAmount);
                     if(isNextMonthInvoicCreated){
                         objPay.Remarks__c ='Refund  (Effective month invoice amount)';
                     }
+                    paymentList.add(objPay);
+                    */
+                    Credit_Memo__c objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, invoiceId,  lastLessonDateObj,'Refund  (Effective month invoice amount)');
+                    Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(Decimal.valueOf(refundAmountWithTax.split('@')[0]),
+                                                    Decimal.valueOf(refundAmountWithTax.split('@')[1]),null,
+                                                    objEnrol.id,invoicelineitemId,'Refund  (Effective month invoice amount)');
+                                                    objCreditLineItem.Month__c = lastLessonDateObj;
+                    listOfCreditmemolineitem.put('Refund  (Effective month invoice amount)',objCreditLineItem);
+                    system.debug('objCreditMemo'+objCreditMemo);
+                    system.debug('objCreditLineItem'+objCreditLineItem);
+                    newPendingCreditMemos.put('Refund  (Effective month invoice amount)',objCreditMemo);
+                    //added by nishi: 15-Oct-2020 : end:for new requirement Create a Credit Memo record with the status pending instead of the success Payment as credit record.
+
                     /*Payment__c objPay = new Payment__c();
                     objPay.RecordTypeId =  payAsCredit ;
                     objPay.Payment_Date__c = lastLessonDateObj;
@@ -512,7 +591,7 @@ system.debug('depositAmount'+depositAmount);
                     objPay.Transaction_ID__c = chargeId;
                     objPay.last_lesson_date__c = lastLessonDateObj;*/
                     //system.debug('objPay'+objPay);
-                    paymentList.add(objPay);
+                    
                 }
                
             }
