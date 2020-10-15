@@ -2,10 +2,11 @@
 Name        :        NetSuiteIntegrationUtility
 Date        :        9 Oct 2020
 Author      :        Karan Singh Soni
-Test Class  :        
+Test Class  :        SearchInstrumentRental_IpadCntrlTest
 Desc        :       This is a helper class for the NetSuite Integration.		 
 */
 //Note : This class contains code from the another class SearchInstrumentRental_IpadCntrl.apxc
+//CH01 Karan Singh 14 Oct 2020 : added one more parameter from the Netsuite Wrapper class as they will additionally send the aurues student rental fees.
 public class NetSuiteIntegrationUtility {
    
     public static HTTPResponse sendNetSuiteRequest( NetSuite_Integration_Creds__c objNetSuiteCred, String jsonRequestBody, String methodName ){
@@ -13,7 +14,7 @@ public class NetSuiteIntegrationUtility {
         Integer noOfApiCallout = 1;
         HttpRequest req;
         HTTPResponse resp;
-        
+         
         //CH04 Start
         Datetime requestDatetime;
         Datetime responseDatetime;
@@ -123,6 +124,7 @@ public class NetSuiteIntegrationUtility {
         public String inventoryType {get;set;}
         public String monthlyRental {get;set;}
         public String listPrice {get;set;}
+        public String studentPrice {get;set;} //CH01 Added
         public String model {get;set;}
         public String productId {get;set;}
         public String brand {get;set;}
@@ -135,6 +137,7 @@ public class NetSuiteIntegrationUtility {
             inventoryType = '';
             monthlyRental = '';
             listPrice = '';
+            studentPrice = ''; //CH01 added
             model = '';
             productId = '';
             brand = '';

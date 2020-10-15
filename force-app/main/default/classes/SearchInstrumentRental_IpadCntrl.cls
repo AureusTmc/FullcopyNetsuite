@@ -6,7 +6,9 @@
 //CH04 Karan Singh 22 Sep 2020 : Adding NetSuite API logger.
 //CH05 Karan Singh 24 Sep 2020 : showing the type of the instrument in the page and storing the type of the instrument in the enrolment which can be piano,keyboard etc
 //CH06 Karan Singh 25 Sep 2020 : Now will calculate the GST amount from selected piano location , as these location will be stored in our center(Account) record, center -> country(parent) -> taxrate will be applicable.
-//CH07 Karan Singh 9 Oct 2020 : Now migrating the Netsuite Integration Code to seprate Class
+//CH07 Karan Singh 9 Oct 2020 : Now migrating the Netsuite Integration Code to seprate Class 
+//CH08 Karan Singh 14 Oct 2020 : Now incase if the existing aureus student is selected for the piano rental, then we will use studentPrice instead of monthlyRental price from the api.
+//								adding the Delivery changes for Aureus Students
 public class SearchInstrumentRental_IpadCntrl {
     public String slcdCenter{get;set;}
     public String slcdEnrId{get;set;}
@@ -351,6 +353,11 @@ options.add(new SelectOption(str,str));*/
         fm.tuningFee = (Decimal.valueOf(Label.Tuning_Fee));
         fm.heatingRodInsFee = (Decimal.valueOf(Label.Heating_Rod_Installation_Fee));
         
+        //CH08 : for Aureus Students Delivery fees
+        if(isAlreadyStripCstmr != null && isAlreadyStripCstmr && String.isNotBlank( Label.Delivery_Charges_for_Aureus_Students )){
+             fm.deliCharges = (Decimal.valueOf(Label.Delivery_Charges_for_Aureus_Students));
+        }
+        //CH08 END
         //Start: nishi: 27-Jul-2020: Existing Student – one month (with any active enrolment) ; others – two months
         if(isAlreadyStripCstmr != null && isAlreadyStripCstmr){ 
             //if(isExistingLessonEnrolment != null && isExistingLessonEnrolment){// 17 sep 2020 will work later on this CH02 Karan :as 17 sep 2020 , now checking if the selected enrolment is existing active/enrolled enrolment of type lesson.
@@ -1818,12 +1825,24 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
     //this will call the netsuite inventorty products
     public void getProducts1(){
         
+        system.debug(' isAlreadyStripCstmr ->> ' + isAlreadyStripCstmr );
         NetSuite_Integration_Creds__c objNetSuiteCred = NetSuite_Integration_Creds__c.getValues('Aureus Inventory Search');
         
         if( objNetSuiteCred == null ){
             return;
         }
-        HTTPResponse resp = NetSuiteIntegrationUtility.sendNetSuiteRequest( objNetSuiteCred,'{"type": "'+ instrumentType +'"}', 'getProducts1() : Inventory Search' );
+
+		//CH08 Start        
+         //'{"type": "'+ instrumentType +'"}' for production
+        //{ "location": "test location"}  for sandbox
+        String requestBody = '{"type": "'+ instrumentType +'"}';
+        if( String.isNotBlank( objNetSuiteCred.Sample_Request__c ) ){
+            requestBody = objNetSuiteCred.Sample_Request__c;
+        }
+        HTTPResponse resp = NetSuiteIntegrationUtility.sendNetSuiteRequest( objNetSuiteCred,requestBody, 'getProducts1() : Inventory Search' );
+       
+        //Before CH08 HTTPResponse resp = NetSuiteIntegrationUtility.sendNetSuiteRequest( objNetSuiteCred,'{"type": "'+ instrumentType +'"}', 'getProducts1() : Inventory Search' );
+        //CH08 End
         
         //checking some params so that it is ensure it doesnot contains any error json
         if( resp.getBody().contains( 'serialNumber' ) && resp.getBody().contains( 'item' ) && resp.getBody().contains( 'location' ) && resp.getBody().contains( 'inventoryType' )){
@@ -1841,6 +1860,19 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                 if( String.isBlank(netSuiteProducts[ index ].monthlyRental) ){
                     netSuiteProducts[ index ].monthlyRental = '0';
                 }
+                
+                //CH08 if already aureus existing customer then change the rental price
+                
+                if( String.isBlank(netSuiteProducts[ index ].studentPrice) ){
+                    netSuiteProducts[ index ].studentPrice = '0';
+                }
+                
+                //isAlreadyStripCstmr : this will decide if the customer is existing or not
+                if( isAlreadyStripCstmr != Null && isAlreadyStripCstmr ){
+                    netSuiteProducts[ index ].monthlyRental = netSuiteProducts[ index ].studentPrice;
+                }
+                //CH08 END
+
             }//end of for Loop
         }//end of response check
     }//end of getProducts1
