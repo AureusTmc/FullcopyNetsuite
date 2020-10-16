@@ -23,11 +23,14 @@ public with sharing class TerminationEnrolmentProcessController {
                 objEnrolment = listOfEnrolment[0];
             }
             
-            //CH01 : Fetching other details of the enrolment.
+            //CH01 : Fetching other details of the enrolment to check if the student is existing or not. Similar exisitng aureus student logic as used in PIano Rental process where we check if the customer is existing or no
+            //			CLass- > SearchInstrumentRental_IpadCntrl , exisitng logic used, search this loginc in the class : isAlreadyStripCstmr
             List< Enrolment__c > listofEnrolForAureusStruent = [ SELECT Id,Instrument_Type__c, Parent__r.Stripe_Customer_Id__c, Parent__r.Card_Number__c, Parent__r.Card_Type__c FROM Enrolment__c WHERE Id =: objEnrolment.id ];
             Boolean isMinimumPeriodApplicable = false;
             
-            if( new Set< String > { 'Keyboard','Drum'}.contains( listofEnrolForAureusStruent[0].Instrument_Type__c ) && String.isNotBlank( listofEnrolForAureusStruent[0].Parent__r.Stripe_Customer_Id__c  ) 
+            if( new Set< String > { 'Keyboard','Drum'}.contains( listofEnrolForAureusStruent[0].Instrument_Type__c ) 
+               //Existing Aureus Student checking loginc - (isAlreadyStripCstmr) 
+               && String.isNotBlank( listofEnrolForAureusStruent[0].Parent__r.Stripe_Customer_Id__c  ) 
                && String.isNotBlank( listofEnrolForAureusStruent[0].Parent__r.Card_Number__c  ) && String.isNotBlank( listofEnrolForAureusStruent[0].Parent__r.Card_Type__c  ) ){
                    isMinimumPeriodApplicable = true;
                }
