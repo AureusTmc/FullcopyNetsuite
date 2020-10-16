@@ -9,6 +9,8 @@
 //CH07 Karan Singh 9 Oct 2020 : Now migrating the Netsuite Integration Code to seprate Class 
 //CH08 Karan Singh 14 Oct 2020 : Now incase if the existing aureus student is selected for the piano rental, then we will use studentPrice instead of monthlyRental price from the api.
 //								adding the Delivery changes for Aureus Students
+//CH09 Karan Singh 16 Oct 2020 : Need to show both the Aureus / Non Aureus Student Price in the Rental Column in UI.
+ 								
 public class SearchInstrumentRental_IpadCntrl {
     public String slcdCenter{get;set;}
     public String slcdEnrId{get;set;}
@@ -356,6 +358,10 @@ options.add(new SelectOption(str,str));*/
         //CH08 : for Aureus Students Delivery fees
         if(isAlreadyStripCstmr != null && isAlreadyStripCstmr && String.isNotBlank( Label.Delivery_Charges_for_Aureus_Students )){
              fm.deliCharges = (Decimal.valueOf(Label.Delivery_Charges_for_Aureus_Students));
+            
+            //CH09 Start : Chainging the monthly rental for aureus students
+            slcdPiano.monthlyRental = slcdPiano.studentPrice;
+            //CH09
         }
         //CH08 END
         //Start: nishi: 27-Jul-2020: Existing Student – one month (with any active enrolment) ; others – two months
@@ -1861,15 +1867,10 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                     netSuiteProducts[ index ].monthlyRental = '0';
                 }
                 
-                //CH08 if already aureus existing customer then change the rental price
+                //CH08 : reseting the value if the api doesnot retrun any value
                 
                 if( String.isBlank(netSuiteProducts[ index ].studentPrice) ){
                     netSuiteProducts[ index ].studentPrice = '0';
-                }
-                
-                //isAlreadyStripCstmr : this will decide if the customer is existing or not
-                if( isAlreadyStripCstmr != Null && isAlreadyStripCstmr ){
-                    netSuiteProducts[ index ].monthlyRental = netSuiteProducts[ index ].studentPrice;
                 }
                 //CH08 END
 

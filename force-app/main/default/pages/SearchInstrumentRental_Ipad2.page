@@ -2,6 +2,7 @@
    <!-- CH02 Karan Singh As Netsuite integration is used of Sage integration so changing the fetch piano list and slcd piano details -->
     <!-- CH05 Karan Singh 24 Sep 2020 : showing the type of the instrument in the page and storing the type of the instrument in the enrolment which can be piano,keyboard etc -->
     <!-- CH06 Karan Singh 24 Sep 2020 : Making the data table optimized for the Ipad -->
+    <!-- CH09 Karan Singh 16 Oct 2020 : Need to show both the Aureus / Non Aureus Student Price in the Rental Column in UI. -->
     <head> 
         <title>Aureus Academy</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0"/>
@@ -379,7 +380,7 @@
                                 <td>{!net.inventoryType}</td><!-- CH05 added new column -->
                                 <td>{!net.serialNumber}</td>
                                 <td>{!net.location}</td>
-                                <td>{!net.monthlyRental}</td>
+                                <td>{!net.studentPrice}&nbsp;/&nbsp;{!net.monthlyRental}</td> <!-- CH09 now will show both the fields : <td>{!net.monthlyRental}</td> -->
                                 <td>{!net.listPrice}</td>
                                 <td>{!net.status}</td>
                             </tr>
