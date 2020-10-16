@@ -12,9 +12,13 @@ Component   :		 AddCreditMemo(LWC)
 //						Also Addng new field mapping for the Credit memo/line item as per fields req in  credit memo reports 
 //CH02 24 Sep 2020 : Karan Singh Adding the Gst AMount + Amount in the invoice line item credit amount so that it can balance out the invoice line item total amount
 //CH03 25 Sep 2020 : Karan Singh Need -> Ashish bansal : to set the intial value of Credit Memo Date in creation of Credit memo not of Success Status (CH01)
-//CH04 9 Oct 2020 : Adding of remarks from Invoice Line Items to credit memo line items
-//CH05 12 Oct 2020 : removing the creteria as if already credit memo existed , then it should not create another Credit memo.
+//CH04 9 Oct 2020 :  Karan Singh -> Adding of remarks from Invoice Line Items to credit memo line items
+//CH05 12 Oct 2020 : Karan Singh ->  removing the creteria as if already credit memo existed , then it should not create another Credit memo.
 //                    Instead check the invoice's Line Item Amount >  Invoice CM_Created__c amount, then it will allow to create the Credit Memo
+//CH06 15 OCt 2020 : Karan Singh ->  Refund a Credit Memo (other than stripe) : Incase the user had made payment without stripe as cash,cheque etc then in that case
+//                   it will not hit the stripe api and there are changes in the api instead.
+//                    Also changes in the refund toast message in Js.
+//CH07 16 Oct 2020 : Add Card Number and Card tyoe in the UI In case of Refund method is Card on file and payment method will be change from cheque to bank 
 public with sharing class AddCreditMemoController {
     
     //This method will may refund and create the credit memo or create credit memo only
@@ -32,8 +36,17 @@ public with sharing class AddCreditMemoController {
         } else {
             //we will include inv line item having negative amount as well
             for (Invoice__c objInv : [ SELECT Id, Status__c,Currency_Code__c,Name  
-                                        /* CH05 */ ,CM_Created__c,                                 
+                                        /* CH05 */ ,CM_Created__c,    
+                                        
+                                        /*CH07 : adding card information details */ Parent_Account__r.Card_Number__c,  Parent_Account__r.Card_Type__c,
                                       (SELECT ID, Amount__c, GST_Amount__c,Package__c,Enrolment__c,Is_Deposit__c,Is_Discount__c	 FROM Invoice_Line_Items__r)
+                                      
+                                      //CH06 : Start 
+                                      ,(SELECT Id, Payment_Amount__c, Transaction_Id__c, remarks__c, Invoice__c, Parent_Account__c, 
+                                      Invoice__r.Center__r.Organisation__r.name,Payment_Date__c,method_of_payment__c,
+                                      Invoice__r.Center__r.Organisation__r.Stripe_Base_Url__c, Invoice__r.Center__r.Organisation__r.Stripe_Secret_Key__c
+                                      FROM Payments__r LIMIT 1 ) 
+                                      //CH06 : ENd  
                                       FROM Invoice__c 
                                       WHERE ID = :invId ]) {
                                           
@@ -60,7 +73,29 @@ public with sharing class AddCreditMemoController {
                                                   
                                               }
                                               
+                                          }//end of Invoice line Item size check
+
+                                          //CH06 Start : Check if it is Stripe payment or not
+                                          if( objInv.Payments__r.size() > 0 && String.isNotBlank(objInv.Payments__r[0].Invoice__r.Center__r.Organisation__r.Id) 
+                                            && String.isNotBlank(objInv.Payments__r[0].Invoice__r.Center__r.Organisation__r.Stripe_Base_Url__c) 
+                                            && String.isNotBlank(objInv.Payments__r[0].Invoice__r.Center__r.Organisation__r.Stripe_Secret_Key__c) 
+                                            && String.isNotBlank(objInv.Payments__r[0].Transaction_Id__c) ){
+
+                                                objCreditMemoWrap.isStripePayment = true;
+
+                                                //CH07 Adding Card Information
+                                                if( String.isNotBlank( objInv.Parent_Account__r.Card_Number__c ) ){
+
+                                                    objCreditMemoWrap.cardNumber = 'XXXX-' + objInv.Parent_Account__r.Card_Number__c;
+                                                }
+                                                if( String.isNotBlank( objInv.Parent_Account__r.Card_Type__c   ) ){
+                                                    
+                                                    objCreditMemoWrap.cardType = objInv.Parent_Account__r.Card_Type__c;
+                                                }
+                                                //CH07 END
                                           }
+                                        //CH06 ENd
+
                                       }//end of loop
 
                                       system.debug(' --> ' + invoiceTotalCreditMemoAmount);
@@ -134,7 +169,9 @@ public with sharing class AddCreditMemoController {
                                       FROM Payments__r LIMIT 1 ) 
                                      FROM Invoice__c 
                                      WHERE ID = :creditWrap.invoiceId];
-            if (creditMode == 'Refund Memo') {
+
+            if (creditMode == 'Refund Memo' && creditWrap.isStripePayment ) { //CH06 : added isStripePayment creteria
+                //if (creditMode == 'Refund Memo') { //CH06 : in case of Stripe Trnsaction is found , then only it will work
                 // prettier-ignore
                 Decimal amountToRefund =  BillingUtility.roundOffAmount( creditWrap.invoiceAmount );
                 System.debug(creditWrap.invoiceAmount); 
@@ -169,13 +206,23 @@ public with sharing class AddCreditMemoController {
                    }
             }  
             objSavePoint = Database.setSavepoint();
-            if (creditMode == 'Refund Memo' && objCreditMemo.Status__c == 'Success') {
+
+            //CH06  : added creditWrap.isStripePayment creteria in this if
+            if ( creditWrap.isStripePayment && creditMode == 'Refund Memo' && objCreditMemo.Status__c == 'Success') {
                 
                 //CH01 21 Sep 2020 : Karan incase of refund, also add the payment method
                 objCreditMemo.Payment_Method__c =  objInvoice.Payments__r[0].Method_of_Payment__c;
                 //CH01 end
                 insert objCreditMemo;
             } 
+            //CH06 : Creating Credit Memo for the offline refunds, Aureus will refund them as per their convince
+            if( !creditWrap.isStripePayment && creditMode == 'Refund Memo' ){
+
+                objCreditMemo = createCreditMemoRec( objInvoice.Parent_Account__c,objInvoice.Center__c,objInvoice.Id,'Success',remarks,false);
+                objCreditMemo.Payment_Method__c = 'Bank';  //CH07 : change the payment method Cheque
+                insert objCreditMemo;
+            }
+            //CH06 ENd
             
             if (creditMode == 'Credit Memo (Future Adj)') {
                 objCreditMemo = createCreditMemoRec(
@@ -324,7 +371,19 @@ public with sharing class AddCreditMemoController {
         public String objInvoiceName;
         @AuraEnabled
         public String invoiceId;
-        
+
+        //CH06 Start : checking if the payment is done with stripe or not
+        @AuraEnabled
+        public Boolean isStripePayment;
+        //CH06 ENd
+
+        //CH07 Start
+        @AuraEnabled
+        public String cardNumber;
+        @AuraEnabled
+        public String cardType;
+        //CH07 END
+
         public creditMemoWrap() {
             invoiceAmount = 0;
             existCreditMemo = '';
@@ -332,6 +391,12 @@ public with sharing class AddCreditMemoController {
             invoiceStatus = '';
             invoiceCurrcyCode = '';
             objInvoiceName = '';
+            isStripePayment = false; //Ch06
+
+            //CH07 Start
+            cardNumber = 'XXXX-XXXX';
+            cardType = 'X-Card';
+            //CH07 END
         }
     }
 }

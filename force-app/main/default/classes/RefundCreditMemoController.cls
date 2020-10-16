@@ -5,6 +5,11 @@ Author      :        Karan Singh Soni
 Apex Class :        RefundCreditMemoController
 */
 //CH01 25 Sep 2020 : Karan Singh : Ashish Bansal -> on the status as success credit memo date will also populate.
+//CH02 15 OCt 2020 : Refund a Credit Memo (other than stripe) : Incase the user had made payment without stripe as cash,cheque etc then in that case
+//                   it will not hit the stripe api and there are changes in the api instead.
+//                    Also changes in the refund toast message in Js.
+//CH03 16 Oct 2020 : Add Card Number and Card tyoe in the UI In case of Refund method is Card on file 
+//                      and payment method will be change from cheque to bank 
 public with sharing class RefundCreditMemoController {
     
     //____________________________________________  INITIALIZATION  _____________________________________________________________
@@ -35,6 +40,44 @@ public with sharing class RefundCreditMemoController {
         if( String.isBlank( objCreditMemoWrap.parentInvoiceId )){
             objCreditMemoWrap.isError = 'No Invoice linked to this Credit Memo.';
         }
+        //CH02 Start : checking the payment is done through stripe or not
+        else{
+
+            for (Invoice__c objInv : [ SELECT Id,  
+
+                                 /*CH03 : adding card information details */ Parent_Account__r.Card_Number__c,  Parent_Account__r.Card_Type__c,
+                                         (SELECT Id, Payment_Amount__c, Transaction_Id__c, remarks__c, Invoice__c, Parent_Account__c, 
+                                         Invoice__r.Center__r.Organisation__r.name,Payment_Date__c,method_of_payment__c,
+                                         Invoice__r.Center__r.Organisation__r.Stripe_Base_Url__c, Invoice__r.Center__r.Organisation__r.Stripe_Secret_Key__c
+                                         FROM Payments__r LIMIT 1 ) 
+          
+                                    FROM Invoice__c 
+                                    WHERE ID = :objCreditMemoWrap.parentInvoiceId ]) {
+              
+                if( objInv.Payments__r.size() > 0 && String.isNotBlank(objInv.Payments__r[0].Invoice__r.Center__r.Organisation__r.Id) 
+                && String.isNotBlank(objInv.Payments__r[0].Invoice__r.Center__r.Organisation__r.Stripe_Base_Url__c) 
+                && String.isNotBlank(objInv.Payments__r[0].Invoice__r.Center__r.Organisation__r.Stripe_Secret_Key__c) 
+                && String.isNotBlank(objInv.Payments__r[0].Transaction_Id__c) ){
+
+                    objCreditMemoWrap.isStripePayment = true;
+
+                    //CH03 Adding Card Information
+                    if( String.isNotBlank( objInv.Parent_Account__r.Card_Number__c ) ){
+
+                        objCreditMemoWrap.cardNumber = 'XXXX-' + objInv.Parent_Account__r.Card_Number__c;
+                    }
+                    if( String.isNotBlank( objInv.Parent_Account__r.Card_Type__c   ) ){
+                        
+                        objCreditMemoWrap.cardType = objInv.Parent_Account__r.Card_Type__c;
+                    }
+                    //CH03 END
+
+              }
+          }//end of loop
+
+        }//end if parent Invoice is not blank
+        //CH02 END
+
         //to scale it till two decimal points
         if(  objCreditMemoWrap.creditMemoAmnt > 0 ){
             
@@ -98,7 +141,9 @@ public with sharing class RefundCreditMemoController {
                 if(  objInvoice.Payments__r.size() == 0 ){
                     return 'Cannot find the payment record associated with the linked invoice amount';
                 }
-                if( String.isNotBlank(objInvoice.Payments__r[0].Invoice__r.Center__r.Organisation__r.Id) && String.isNotBlank(objInvoice.Payments__r[0].Invoice__r.Center__r.Organisation__r.Stripe_Base_Url__c) && 
+                System.debug(' objCreditMemoWrap.isStripePayment --> ' + objCreditMemoWrap.isStripePayment );
+                //CH02 : Added isStripePayment condition, incase of non stripe refund , then it will skip
+                if( objCreditMemoWrap.isStripePayment && String.isNotBlank(objInvoice.Payments__r[0].Invoice__r.Center__r.Organisation__r.Id) && String.isNotBlank(objInvoice.Payments__r[0].Invoice__r.Center__r.Organisation__r.Stripe_Base_Url__c) && 
                    String.isNotBlank(objInvoice.Payments__r[0].Invoice__r.Center__r.Organisation__r.Stripe_Secret_Key__c) &&
                    amountToRefund > 0 &&  objInvoice.Payments__r[0].Payment_Amount__c >= amountToRefund && String.isNotBlank(objInvoice.Payments__r[0].Transaction_Id__c) ){
                        
@@ -128,6 +173,16 @@ public with sharing class RefundCreditMemoController {
                        message = 'Something went wrong.';
                    }
                 
+                //CH02 : Incase of Non Stripe payments, changing the some filed update
+                if( !objCreditMemoWrap.isStripePayment ){
+                    message = 'Success';       //resettng the error which will come from line no -> 157 as if it is not stripe payment it will throw error
+                    refundId = '';
+                    //this is done for the credit memo payment method
+                    objInvoice.Payments__r[0].Method_of_Payment__c = 'Bank';  //CH04 : change the payment method Cheque
+                    isPaymentSuccess = true;            //bypassing the payment success condition as in case of offline payment, it will not hit API
+                }
+                //CH02 END
+
                 //incase of payment successful then only update the credit memo
                 if( isPaymentSuccess ){
                     
@@ -347,7 +402,18 @@ public with sharing class RefundCreditMemoController {
         public Decimal userEnterAMount;
         @AuraEnabled
         public String userRemarks;
-        
+        //CH02 START
+        @AuraEnabled
+        public Boolean isStripePayment;
+        //CH02 END
+
+         //CH03 Start
+         @AuraEnabled
+         public String cardNumber;
+         @AuraEnabled
+         public String cardType;
+         //CH03 END
+
         //_____________________________________________Constructor ______________________________________________________
         public creditMemoWrap() {
             creditMemoAmnt = 0;
@@ -357,6 +423,13 @@ public with sharing class RefundCreditMemoController {
             creditMemoId = '';
             userRemarks = '';
             parentInvoiceId = '';
+            isStripePayment = false;
+
+             //CH03 Start
+             cardNumber = 'XXXX-XXXX';
+             cardType = 'X-Card';
+             //CH03 END
+
         }
     }
 }

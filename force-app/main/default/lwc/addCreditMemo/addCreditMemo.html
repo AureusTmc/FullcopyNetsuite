@@ -35,6 +35,57 @@
             </fieldset>
 
             <!--_________________________________________  CREDIT MEMO OPTIONS END ______________________________________________-->
+
+            <!--_________________________________________ (CH03) REFUND PAYMENT OPTIONS START ______________________________________________-->
+
+             <template if:true={isRefundMemoSelected}> 
+            
+              <fieldset class="slds-form-element">
+              <legend class="slds-form-element__legend slds-form-element__label">Refund Method</legend>
+              <div class="slds-form-element__control">
+                <div class="slds-radio_button-group">
+                  <template for:each={refundOptions} for:item="op" for:index="index">
+                    <span class="slds-button slds-radio_button" key={op.value}>
+                      <input disabled={op.disabled} checked={op.checked} type="radio"
+                        name={op.label} id={op.label} value={op.label} data-value={op.value} />
+                      <label class="slds-radio_button__label" for={op.label}>
+                        <span class="slds-radio_faux">{op.label}</span>
+                      </label>
+                    </span>
+                  </template>
+                </div>
+              </div>
+            </fieldset>
+
+             </template>
+            <!--_________________________________________ (CH03)  REFUND PAYMENT OPTIONS END ______________________________________________-->
+
+            <!--_________________________________________ (CH04) SHOW CARD DETAILS START ______________________________________________-->
+
+            <template if:true={showCardDetails}> 
+            
+              <fieldset class="slds-form-element">
+              <legend class="slds-form-element__legend slds-form-element__label">Card Details</legend>
+              <div class="slds-form-element__control">
+                <div class="slds-radio_button-group">
+                  <template for:each={cardDetails} for:item="op" for:index="index">
+                    <span class="slds-button slds-radio_button" key={op.value}>
+                      <input disabled={op.disabled} checked={op.checked} type="radio"
+                        name={op.label} id={op.label} value={op.label} data-value={op.value} />
+                      <label class="slds-radio_button__label" for={op.label}>
+                        <span class="slds-radio_faux">{op.label}</span>
+                      </label>
+                    </span>
+                  </template>
+                </div>
+              </div>
+            </fieldset>
+
+             </template>
+            <!--_________________________________________ (CH04)  SHOW CARD DETAILS END ______________________________________________-->
+
+
+
             <lightning-input class="userAmount" type="number" name="input8" readonly
               value={creditMemoWrap.invoiceAmount} label="Amount">
             </lightning-input>

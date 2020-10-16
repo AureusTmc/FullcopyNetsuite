@@ -6,6 +6,10 @@ import { ShowToastEvent } from "lightning/platformShowToastEvent";
 //CH01 9&12 Oct 2020 Karan Singh : Incase of Refund, message should be -> ex "$20 refunded successfully via Stripe."
 //CH02 12 Oct 2020 : removing the creteria as if already credit memo existed , then it should not create another Credit memo.
 //                    Instead check the invoice's Line Item Amount >  Invoice CM_Created__c amount, then it will allow to create the Credit Memo
+//CH03 15 OCt 2020 : Refund a Credit Memo (other than stripe) : Incase the user had made payment without stripe as cash,cheque etc then in that case
+//                   it will not hit the stripe api and there are changes in the api instead.
+//                    Also changes in the refund toast message in Js.
+//CH04 16 Oct 2020 : Add Card Number and Card tyoe in the UI In case of Refund method is Card on file
 
 export default class AddCreditMemo extends LightningElement {
   @api recordId;
@@ -16,18 +20,36 @@ export default class AddCreditMemo extends LightningElement {
   confirmationMessage = "";
   showConfirmBox = false;
   isLoaded = false;
-
+  isRefundMemoSelected = false; //CH03 : if the refund memo selected then show the payment option.
+  showCardDetails = false; //CH04 : show the card details in card of Card-on-file only
+  
   // prettier-ignore
   @track options = [
 { label: "Refund Memo", value: "Refund Memo", disabled: true, checked : false },
 { label: "Credit Memo (Future Adj)", value: "Credit Memo (Future Adj)", disabled: true,checked : false },
 { label: "Credit Memo (Invoice Cancellation)", value: "Credit Memo (Invoice Cancellation)", disabled: true,checked : false }
 ];
+//CH03 Start : this will show the user the refund payment mode, it is read only
+@track refundOptions = [
+  { label: "Card-on-file", value: "Cardonfile", disabled: true, checked : false },
+  { label: "Bank Cheque", value: "Bank Cheque", disabled: true,checked : false },
+  ];
+//CH03 End
+
+//CH04 Start : this will show the user the Card Details, it is read only
+@track cardDetails = [
+  { label: "XXXX-XXXX", value: "cardNumber", disabled: true, checked : false },
+  { label: "X-Card", value: "cardType", disabled: true,checked : false },
+  ];
+//CH04 End
 
   showModalBox(event) {
     if (this.showModal) {
       this.showModal = false;
     } else {
+      this.isRefundMemoSelected = false; //CH03
+      this.showCardDetails = false;     //CH04
+
       this.error = "";
       this.remarks = "";
       this.confirmationMessage = "";
@@ -82,6 +104,37 @@ export default class AddCreditMemo extends LightningElement {
                 this.value = opt.value;
               }
             });
+
+            //CH03
+            if(  this.creditMemoWrap.isStripePayment ){
+              
+              this.refundOptions[0].checked = true;
+              this.refundOptions[0].disabled = false;
+
+              this.refundOptions[1].checked = false;
+              this.refundOptions[1].disabled = true;
+
+              //CH04 : Enabling Card detals
+              this.cardDetails[0].label = this.creditMemoWrap.cardNumber;
+              this.cardDetails[0].checked = true;
+              this.cardDetails[0].disabled = false;
+
+              this.cardDetails[1].label = this.creditMemoWrap.cardType;
+              this.cardDetails[1].checked = true;
+              this.cardDetails[1].disabled = false;
+              //CH04 END
+
+            }else{
+
+              this.refundOptions[0].checked = false;
+              this.refundOptions[0].disabled = true;
+
+              this.refundOptions[1].checked = true;
+              this.refundOptions[1].disabled = false;
+              this.showCardDetails = false;     //CH04
+              
+            }
+            //CH03
           }
         })
         .catch((error) => {
@@ -121,11 +174,13 @@ export default class AddCreditMemo extends LightningElement {
     }
 
     if (this.value === "Refund Memo") {
-      //  prettier-ignore
+      
       this.confirmationMessage ="This will create a Credit memo ( " +this.value +" ) and also refund "+ this.creditMemoWrap.invoiceCurrcyCode+" "+this.creditMemoWrap.invoiceAmount +
-    " amount via stripe. Do you want to continue?";
+    " amount. Do you want to continue?";
+    //" amount via stripe. Do you want to continue?"; Chnegd the above messae : CH03
+
     } else {
-      //  prettier-ignore
+      
       this.confirmationMessage =
       "This will create a " + this.value + " of amount "+ this.creditMemoWrap.invoiceCurrcyCode+" "+ this.creditMemoWrap.invoiceAmount +". Do you want to continue?";
     }
@@ -149,7 +204,7 @@ export default class AddCreditMemo extends LightningElement {
 
             const event = new ShowToastEvent({
               title: "Success",
-              message: this.creditMemoWrap.invoiceCurrcyCode + ' ' + this.creditMemoWrap.invoiceAmount +' refunded successfully via Stripe.',
+              message: this.creditMemoWrap.invoiceCurrcyCode + ' ' + this.creditMemoWrap.invoiceAmount +' refunded successfully.', //CH03 : Removed this " via Stripe." 
               variant: "success",
               mode: "dismissable"
             });
@@ -215,6 +270,20 @@ export default class AddCreditMemo extends LightningElement {
       } else {
         opt.checked = false;
       }
+      //CH03 Start : only show refund optionin case of refund memo only
+      if( this.value == "Refund Memo"){
+        this.isRefundMemoSelected = true;
+
+        //CH04 Start
+        if( this.refundOptions[0].checked )
+        this.showCardDetails = true;      //CH04
+        //CH04 END
+      }else{
+        this.isRefundMemoSelected = false;
+        this.showCardDetails = false;     //CH04
+      }
+      //CH03 END
     });
+    
   }
 }
