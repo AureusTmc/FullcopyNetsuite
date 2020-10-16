@@ -1,9 +1,12 @@
 /*
-    Name: TerminationEnrolmentProcessController
-    Date: 23-jan-2020
-    Author: JATIN
-    Description :  this controller for Terminating Piano Rental  for get Terminating date and pickup date 
+Name: TerminationEnrolmentProcessController
+Date: 23-jan-2020
+Author: JATIN
+Description :  this controller for Terminating Piano Rental  for get Terminating date and pickup date 
 */
+
+//CH01 15 Oct 2020 Karan Singh : CHanging the minimum period and Terminate Notice Period for aureus Student.
+
 public with sharing class TerminationEnrolmentProcessController {
     Public Enrolment__c objEnrolment{get;set;}
     Public String TerminationReasonName{get;set;}
@@ -19,19 +22,43 @@ public with sharing class TerminationEnrolmentProcessController {
             if(listOfEnrolment != null && listOfEnrolment.size() > 0 ){
                 objEnrolment = listOfEnrolment[0];
             }
+            
+            //CH01 : Fetching other details of the enrolment.
+            List< Enrolment__c > listofEnrolForAureusStruent = [ SELECT Id,Instrument_Type__c, Parent__r.Stripe_Customer_Id__c, Parent__r.Card_Number__c, Parent__r.Card_Type__c FROM Enrolment__c WHERE Id =: objEnrolment.id ];
+            Boolean isMinimumPeriodApplicable = false;
+            
+            if( new Set< String > { 'Keyboard','Drum'}.contains( listofEnrolForAureusStruent[0].Instrument_Type__c ) && String.isNotBlank( listofEnrolForAureusStruent[0].Parent__r.Stripe_Customer_Id__c  ) 
+               && String.isNotBlank( listofEnrolForAureusStruent[0].Parent__r.Card_Number__c  ) && String.isNotBlank( listofEnrolForAureusStruent[0].Parent__r.Card_Type__c  ) ){
+                   isMinimumPeriodApplicable = true;
+               }
+            //CH01 END
             Date terminateDate = system.today().addMonths(2);
+            
+            //CH01 Start
+            if(isMinimumPeriodApplicable) { terminateDate = system.today().addMonths(1);  }
+            //CH01 END
             Date minCommitmentRentalDate;
             isSendToButton = true;
             //consider Terminating Piano Rental:
             //a.	Minimum commitment period – 6 months
             //b.	Minimum notice period – 2 months
+            
+            //CH01 : ALso consider this points for Terminating Piano Rental
+            //c.	Minimum Commitment period for the Aureus Student will be 3 months for KeyBoard and drum only
+            //d.	Minimum notice period for the Aureus Student will be 1 months for KeyBoard and drum only
+            
             if(objEnrolment.Subscription_Line_Items__r != null && objEnrolment.Subscription_Line_Items__r.size() > 0){
                 if(objEnrolment.Subscription_Line_Items__r[0].Subscription_Start_Date__c != null){
-                   /* if(objEnrolment.Minimum_Rental_Commitment_Period__c != null){
-                        minCommitmentRentalDate = objEnrolment.Minimum_Rental_Commitment_Period__c;
-                    }else{*/
-                        minCommitmentRentalDate = objEnrolment.Subscription_Line_Items__r[0].Subscription_Start_Date__c.AddMonths(6);
+                    /* if(objEnrolment.Minimum_Rental_Commitment_Period__c != null){
+minCommitmentRentalDate = objEnrolment.Minimum_Rental_Commitment_Period__c;
+}else{*/
+                    minCommitmentRentalDate = objEnrolment.Subscription_Line_Items__r[0].Subscription_Start_Date__c.AddMonths(6);
                     //}
+                    
+                    //CH01 Start
+                    if(isMinimumPeriodApplicable) { minCommitmentRentalDate = objEnrolment.Subscription_Line_Items__r[0].Subscription_Start_Date__c.AddMonths(3);  }
+                    //CH01 END
+                    
                     if(minCommitmentRentalDate > terminateDate){
                         terminateDate = terminateDate.addDays(terminateDate.daysBetween(minCommitmentRentalDate));
                     }
@@ -40,7 +67,7 @@ public with sharing class TerminationEnrolmentProcessController {
                     isRentalNotFound= false;
                     errorMessage ='We cannot process your request at the moment Rental Date not found. Please centre admin for further assistance.';
                 }
-               // terminateDate = terminateDate.addDays(1);
+                // terminateDate = terminateDate.addDays(1);
                 rentalDateString = terminateDate.month()+'/'+terminateDate.day()+'/'+terminateDate.year();
                 if(objEnrolment.Stage__c =='Piano Termination In-Progress' || objEnrolment.Stage__c =='Piano Rental Terminated'){
                     isRentalNotFound = false;
@@ -52,7 +79,7 @@ public with sharing class TerminationEnrolmentProcessController {
             }
         }
     }
-
+    
     public  List<SelectOption> getTerminationReason(){
         List<SelectOption> options = new List<SelectOption>();
         Schema.DescribeSobjectResult[] results = Schema.describeSObjects(new List<String>{'Enrolment__c'});
