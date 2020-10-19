@@ -28,7 +28,16 @@ public with sharing class TerminationEnrolmentProcessController {
             List< Enrolment__c > listofEnrolForAureusStruent = [ SELECT Id,Instrument_Type__c, Parent__r.Stripe_Customer_Id__c, Parent__r.Card_Number__c, Parent__r.Card_Type__c FROM Enrolment__c WHERE Id =: objEnrolment.id ];
             Boolean isMinimumPeriodApplicable = false;
             
-            if( new Set< String > { 'Keyboard','Drum'}.contains( listofEnrolForAureusStruent[0].Instrument_Type__c ) 
+            set< String > setInstrumentType = new set< String >();
+            if( String.isNotBlank( Label.Instrument_Type_for_the_Existing_Aureus_Students ) ){
+                
+                if( Label.Instrument_Type_for_the_Existing_Aureus_Students.contains(',') ){
+                    setInstrumentType.addAll( Label.Instrument_Type_for_the_Existing_Aureus_Students.split(',') );
+                }else{
+                    setInstrumentType.add( Label.Instrument_Type_for_the_Existing_Aureus_Students);
+                }
+            }
+            if( setInstrumentType.contains( listofEnrolForAureusStruent[0].Instrument_Type__c ) 
                //Existing Aureus Student checking loginc - (isAlreadyStripCstmr) 
                && String.isNotBlank( listofEnrolForAureusStruent[0].Parent__r.Stripe_Customer_Id__c  ) 
                && String.isNotBlank( listofEnrolForAureusStruent[0].Parent__r.Card_Number__c  ) && String.isNotBlank( listofEnrolForAureusStruent[0].Parent__r.Card_Type__c  ) ){
@@ -38,7 +47,9 @@ public with sharing class TerminationEnrolmentProcessController {
             Date terminateDate = system.today().addMonths(2);
             
             //CH01 Start
-            if(isMinimumPeriodApplicable) { terminateDate = system.today().addMonths(1);  }
+            if(isMinimumPeriodApplicable && String.isNotBlank( Label.Min_Notice_Period_for_Instrument_Rental_Termination_For_Aureus_Students )) {
+                terminateDate = system.today().addMonths( Integer.valueOf( Label.Min_Notice_Period_for_Instrument_Rental_Termination_For_Aureus_Students ) );
+            }
             //CH01 END
             Date minCommitmentRentalDate;
             isSendToButton = true;
@@ -59,7 +70,9 @@ minCommitmentRentalDate = objEnrolment.Minimum_Rental_Commitment_Period__c;
                     //}
                     
                     //CH01 Start
-                    if(isMinimumPeriodApplicable) { minCommitmentRentalDate = objEnrolment.Subscription_Line_Items__r[0].Subscription_Start_Date__c.AddMonths(3);  }
+                    if(isMinimumPeriodApplicable && String.isNotBlank( Label.Min_Commitment_Duration_for_Instrument_Rental_For_Aureus_Students )) {
+                        minCommitmentRentalDate = objEnrolment.Subscription_Line_Items__r[0].Subscription_Start_Date__c.AddMonths( Integer.valueOf( Label.Min_Commitment_Duration_for_Instrument_Rental_For_Aureus_Students ) );  
+                    }
                     //CH01 END
                     
                     if(minCommitmentRentalDate > terminateDate){
