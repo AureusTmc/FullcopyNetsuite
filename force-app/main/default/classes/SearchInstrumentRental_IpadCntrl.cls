@@ -10,6 +10,8 @@
 //CH08 Karan Singh 14 Oct 2020 : Now incase if the existing aureus student is selected for the piano rental, then we will use studentPrice instead of monthlyRental price from the api.
 //								adding the Delivery changes for Aureus Students
 //CH09 Karan Singh 16 Oct 2020 : Need to show both the Aureus / Non Aureus Student Price in the Rental Column in UI.
+//									After the Client Call, Tuning Fees should be zero for all the customer for the Instrument type -> Keyboard and Drum
+//		Karan Singh 19 Oct 2020 : Minimum commitment/rental termination date for existing aureus students for selected instruments
  								
 public class SearchInstrumentRental_IpadCntrl {
     public String slcdCenter{get;set;}
@@ -87,8 +89,29 @@ public class SearchInstrumentRental_IpadCntrl {
     String instrumentType {get;set;} //currently we are using for piano, but later it will used to show ohter instrument like drum,violin etc
     //CH03
     
+    //CH09 Start
+    public Set<String> setNoTuningFeeInstrument = new Set<String>();
+    public Set<String> setMinimumRental_Termination_InstrumentTypes = new Set<String>();
+    public Integer minimumCommitmentPeriod = 6; //Default Commintment period for the instrument
+    public Integer minimumRentalTerminationPeriod = 2;	//Default termination period for the instrument
+    //CH09 END
+    
     //public static 
     public SearchInstrumentRental_IpadCntrl(){
+        
+        //CH09 Start
+            if( String.isNotBlank( Label.Instrument_Type_for_the_Existing_Aureus_Students ) ){
+                
+                if( Label.Instrument_Type_for_the_Existing_Aureus_Students.contains(',') ){
+                    setNoTuningFeeInstrument.addAll( Label.Instrument_Type_for_the_Existing_Aureus_Students.split(',') );
+                }else{
+                    setNoTuningFeeInstrument.add( Label.Instrument_Type_for_the_Existing_Aureus_Students);
+                }
+            }
+        
+        //for now both the instrument are same for no tuning and minimum rental / termination date
+        setMinimumRental_Termination_InstrumentTypes.addAll(setNoTuningFeeInstrument);
+        //CH09 END
         
         //CH03
         gstAmount = 0;
@@ -259,12 +282,10 @@ options.add(new SelectOption(str,str));*/
                                           Teacher__c, Teacher__r.Name, Package__c, Package__r.Name, Trial_Date__c, Trial_Start_Time__c, Center__c, Center__r.Name, Standard_Accessories__c,
                                           Parent__r.Stripe_Customer_Id__c, Parent__r.Card_Number__c, Parent__r.Card_Type__c, Parent__r.Card_Image__c,Center__r.Country__r.name, Center__r.Country__c, Center__r.Organisation__c
                                           
-                                          //CH02 17 sep 2020 will work later on this
-                                          //   ,recordtype.name,Parent__r.Enroled__c
-                                          //CH02 END
-                                          //CH03 Karan for Calc GST Price as well
-                                          ,Center__r.Country__r.Tax_Rate__c
-                                          //CH03
+                                          /*CH03 Karan for Calc GST Price as well */ ,Center__r.Country__r.Tax_Rate__c
+                                          
+                                          /* CH09 : for the minimum rental commitmnet/ termination  */ ,Min_Commit_Dur_Inst_Rental__c, Min_Notice_Inst_Rental_Termination__c
+                                          
                                           FROM Enrolment__c 
                                           WHERE Id =: slcdEnrId];
             if(enrList.size() > 0){
@@ -354,6 +375,31 @@ options.add(new SelectOption(str,str));*/
         fm.deliCharges = (Decimal.valueOf(Label.Delivery_Charges));
         fm.tuningFee = (Decimal.valueOf(Label.Tuning_Fee));
         fm.heatingRodInsFee = (Decimal.valueOf(Label.Heating_Rod_Installation_Fee));
+        
+		//CH09 Start
+        if( setNoTuningFeeInstrument.contains( slcdPiano.inventoryType) ){
+             fm.tuningFee = 0;
+        }
+        
+        //setting the minimum rental termination and commitment date for the existing Aureus Students
+        if( setMinimumRental_Termination_InstrumentTypes.contains( slcdPiano.inventoryType ) && isAlreadyStripCstmr != null && isAlreadyStripCstmr ){
+            
+            if( String.isNotBlank( Label.Min_Notice_Period_for_Instrument_Rental_Termination_For_Aureus_Students )) {
+                
+                minimumRentalTerminationPeriod =  Integer.valueOf( Label.Min_Notice_Period_for_Instrument_Rental_Termination_For_Aureus_Students );
+            }else{
+                
+                minimumRentalTerminationPeriod = 2;
+            }
+            if( String.isNotBlank( Label.Min_Commitment_Duration_for_Instrument_Rental_For_Aureus_Students )) {
+            
+                minimumCommitmentPeriod = Integer.valueOf( Label.Min_Commitment_Duration_for_Instrument_Rental_For_Aureus_Students );  
+            }else{
+                
+                minimumCommitmentPeriod = 6;
+            }
+        }//end of checking the exisitng student creteria
+        //CH09 END         
         
         //CH08 : for Aureus Students Delivery fees
         if(isAlreadyStripCstmr != null && isAlreadyStripCstmr && String.isNotBlank( Label.Delivery_Charges_for_Aureus_Students )){
@@ -1128,6 +1174,14 @@ tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Selling__c', ''+(slcdPia
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Delivery__c', ''+(fm.deliCharges!=null ? fm.deliCharges : 0)));
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Selling__c', ''+(slcdPiano.listPrice !=null ? Decimal.valueOf(slcdPiano.listPrice)  : 0)));
             
+            //CH09 Start : Adding the instrument type, minimum Rental terminate date, ,minimum commitment date for existing students
+            
+            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Instrument_Type__c', slcdPiano.inventoryType));
+            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Min_Commit_Dur_Inst_Rental__c', '' + minimumCommitmentPeriod ));
+            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Min_Notice_Inst_Rental_Termination__c', '' + minimumRentalTerminationPeriod ));
+            
+            //CH09 End
+            
             //CH02 END
             ///added by nishi: 2-Oct-2020: for if enrolment not exist then we get deatils to parent account;
             if(string.isBlank(enrolmentObj.id)){ 
@@ -1407,6 +1461,12 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                         slcdEnrolment.Instrument_Type__c = slcdPiano.inventoryType;
                         //CH05 END
                         //CH03
+                        
+                        //CH09 Start : updating the period as per existing customer/ new customer.
+                        slcdEnrolment.Min_Commit_Dur_Inst_Rental__c = minimumCommitmentPeriod;
+                        slcdEnrolment.Min_Notice_Inst_Rental_Termination__c = minimumRentalTerminationPeriod;
+                        //CH09 End
+                        
                         //update slcdEnrolment;// commented by nishi:23-Sep-2020: according to  new requirement we update or insert customer details
                         upsert slcdEnrolment;
                         //Mark as complete booking which created trail earlier
@@ -1566,7 +1626,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                         pageRef.getParameters().put('scId', sc.id);
                         
                         //CH02 Karan 17 sep 2020 updating the NetSuite Inventory
-                        SearchInstrumentRental_IpadCntrl.pushDataToNetsuite( slcdEnrolment.Name,slcdPiano.serialNumber, slcdPiano.productId);
+                       // SearchInstrumentRental_IpadCntrl.pushDataToNetsuite( slcdEnrolment.Name,slcdPiano.serialNumber, slcdPiano.productId);
                         //CH02 END
                         return pageRef.setRedirect(true);
                     }else{
