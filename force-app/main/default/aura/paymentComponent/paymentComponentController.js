@@ -80,10 +80,24 @@
         console.log('chkValue-->'+component.get("v.chkValue"));
         let recordId = component.get("v.recordId");
         let paymentType = component.find("mygroup").get("v.value");
+        let invoiceAmount =  component.get("v.invoiceAmount");
         if(paymentType== 'Cash' || paymentType== 'Offline card' ||paymentType=='NETS'){
             component.set("v.selectedOption", paymentType);
-            $A.enqueueAction(component.get('c.closeModel'));
-            component.set("v.openPopUp", true);
+            if(invoiceAmount <=0){
+                var toastEvent = $A.get("e.force:showToast");
+                toastEvent.setParams({
+                    title : 'error',
+                    message: 'Invoice amount is '+invoiceAmount+'. So we not get this Amount.',            
+                    duration:' 5000',
+                    key: 'info_alt',
+                    type: 'error',
+                    mode: 'pester'
+                });
+                toastEvent.fire();
+            }else{
+                $A.enqueueAction(component.get('c.closeModel'));
+                component.set("v.openPopUp", true);
+            }
         }
         
     },

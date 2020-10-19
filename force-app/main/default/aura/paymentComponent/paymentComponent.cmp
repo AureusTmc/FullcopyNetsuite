@@ -37,7 +37,7 @@
                     <div class="slds-modal__content slds-p-around_medium time-list_red" id="modal-content-id-1">
                         <!-- added by nishi: 15-oct-2020:start: for show paid amount-->
                         <div class="slds-text-align_right slds-text-title_bold">
-                            <p>Paid Amount: <lightning:formattedNumber value="{!v.paidAmount}" style="currency" /></p>
+                            <p>Amount to be Paid: <lightning:formattedNumber value="{!v.paidAmount}" style="currency" /></p>
                         </div>
                          <!-- added by nishi: 15-oct-2020:end: for show paid amount-->
                         <lightning:radioGroup name="radioGroup" aura:id="mygroup" class="slds-p-top_medium "
@@ -71,7 +71,7 @@
                         <div class="slds-modal__content slds-p-around_medium time-list" id="modal-content-id-2">
                              <!-- added by nishi: 15-oct-2020: for show paid amount-->
                             <div class="slds-text-align_right slds-text-title_bold">
-                                <p>Paid Amount: <lightning:formattedNumber value="{!v.paidAmount}" style="currency" /></p>
+                                <p>Amount to be Paid: <lightning:formattedNumber value="{!v.paidAmount}" style="currency" /></p>
                             </div>
                              <!-- added by nishi: 15-oct-2020:end: for show paid amount-->
                             <lightning:radioGroup name="radioGroup" aura:id="mygroup" class="slds-p-top_medium"

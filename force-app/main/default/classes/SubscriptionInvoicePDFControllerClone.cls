@@ -82,6 +82,9 @@ Public without sharing class SubscriptionInvoicePDFControllerClone{
             if(subTotal == totalAmount){
                 subTotal =0;
             }
+            if(BillingUtility.roundOffAmount( invoice.CM_Created__c) == BillingUtility.roundOffAmount( totalAmount)){ //commented by nishi: for now we check invoice amount is equal to credit memo then we show credit memo logo BillingUtility.roundOffAmount(invoice.Total_Amount__c)){
+                isPartial = false;
+            }
             if(subTotal != 0){
                 subTotal = BillingUtility.roundOffAmount(subTotal);
             }

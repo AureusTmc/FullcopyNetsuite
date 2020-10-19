@@ -43,6 +43,7 @@ public with Sharing class AureusCalendarController{
     }
     
     public List<SelectOption> getTeachers() {
+        system.debug('accListForTeacher--->'+accListForTeacher);
         getTeacherByCenter();
         List<SelectOption> options = new List<SelectOption>();
         options.add(new SelectOption('Select Teacher' , 'Select Teacher'));
@@ -64,6 +65,9 @@ public with Sharing class AureusCalendarController{
     }
     
     public void getTeacherByCenter(){
+        system.debug('centerName---------->'+centerName);
+        system.debug('accListForCenter'+accListForCenter.size());
+         system.debug('accListForCenter'+accListForCenter);
         if(String.isBlank(centerName) && accListForCenter.size() > 0){
             centerName = accListForCenter[0].Id;
         }
@@ -118,6 +122,7 @@ public with Sharing class AureusCalendarController{
         for(Resource__c objResource :listOfResources){
             selectListForResource.add(new SelectOption(objResource.Id,objResource.Name));    
         }
+        system.debug('selectListForResource-->'+selectListForResource);
         return selectListForResource;
     }
      /*Commented by jatin: 11-mar-2020: for employee Calendar not Deploye*/
@@ -2015,7 +2020,7 @@ update parentList;
                 book.Lesson_Type__c = lessonMode;
                 if(book.Lesson_Type__c == ConstantsClass.Online){
                     book.Online_Lesson_URL__c=onlineLessonURL;
-                    book.Online_Lesson_Passcode__c= passcode; 
+                    book.Online_Lesson_Passcode__c= AureusUtility.getRandomSixDigit();//passcode; 
                     
                 }else if(book.Lesson_Type__c ==ConstantsClass.InCentre){
                     book.Online_Lesson_URL__c='';
@@ -2444,7 +2449,7 @@ newBookingWrapperObj.studentList = sObjList;
                              //start: 30-jul-2020 added by nishi id resourceId is not blank then we added in resource lookup 
                             //if(bookingObj.Lesson_Type__c != ConstantsClass.Online){
                                 if(string.isnotBlank(resourceId)){
-                                	bookingObj.resource__c =resourceId;
+                                    bookingObj.resource__c =resourceId;
                                 }
                                  //start:Commented By nishi: 4-Aur-2020: Now this work managed in Booking trigger so we don't want to insert resource
                                 /*else{
@@ -2945,9 +2950,9 @@ newBookingWrapperObj.studentList = sObjList;
                        //system.debug('enrollList'+enrollList);
                          //10-Aug-2020:nishi:start- manage ossia Upgrade ,downGrade Subscription model 
                         details.isOssia = false;
-                        if( String.isNotBlank(enrollList[0].Center__c) && String.isNotBlank(enrollList[0].Center__r.Organisation__c) && 	
-                        String.isNotBlank(enrollList[0].Center__r.Organisation__r.Name) && 	
-                        enrollList[0].Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){	
+                        if( String.isNotBlank(enrollList[0].Center__c) && String.isNotBlank(enrollList[0].Center__r.Organisation__c) &&     
+                        String.isNotBlank(enrollList[0].Center__r.Organisation__r.Name) &&  
+                        enrollList[0].Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){   
                             details.isOssia = true;
                         }
                         //10-Aug-2020:nishi:end- manage ossia Upgrade ,downGrade Subscription model 
@@ -3393,12 +3398,13 @@ Selected by the user from the calendar UI.
                                                             if(String.isNotBlank(bookingId) && String.isNotBlank(effectiveDateStr) && String.isNotBlank(newPackageId) && 
                                                                 String.isNotBlank(oldPackageId) && String.isNotBlank(timeSlot)){
                                                                 IAdvanceAction downgradePackageObj;
-                                                                downgradePackageObj = new DowngradeEnrolmentProcessController(bookingId, effectiveDateStr, newPackageId, 
-                                                                                                                        oldPackageId, timeSlot, myCaseId, caseRedirect,
-                                                                                                                        amount,depositAmount,lessonsFees, caseValues,
-                                                                                                                         // added by nishi:start-11-Aug-2020: for we added new teacher in Ossia Oraganisation case
-                                                                                                                        '','');
-                                                                                                                         // added by nishi:start-11-Aug-2020: for we added new teacher in Ossia Oraganisation case
+                                                                downgradePackageObj = new DowngradeEnrolmentProcessController
+                                                                    (bookingId, effectiveDateStr, newPackageId, 
+                                                                     oldPackageId, timeSlot, myCaseId, caseRedirect,
+                                                                     amount,depositAmount,lessonsFees, caseValues,
+                                                                     // added by nishi:start-11-Aug-2020: for we added new teacher in Ossia Oraganisation case
+                                                                     '','');
+                                                                    // added by nishi:start-11-Aug-2020: for we added new teacher in Ossia Oraganisation case
                                                                 caseIdToReturn = downgradePackageObj.initProcess();
                                                             }
                                                             return caseIdToReturn;
@@ -3871,7 +3877,9 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
         Map<String, String> invoiceNameMap = new Map<String, String>();
         if(String.isNotBlank(enrolmentId)){
             List<Invoice_Line_Item__c> invoiceLineItem = [SELECT Id, Invoice__c, Invoice__r.Name FROM Invoice_Line_Item__c 
-                                                          WHERE Enrolment__c =: enrolmentId AND Invoice_Date__c = THIS_MONTH 
+                                                          WHERE Enrolment__c =: enrolmentId 
+                                                          //commented bynishi:19-Oct-2020 :
+                                                           AND Invoice_Date__c = THIS_MONTH 
                                                           ORDER BY Amount__c DESC LIMIT 1];
             if(invoiceLineItem.size() > 0){
                 invoiceNameMap.put('Id', invoiceLineItem[0].Invoice__c);
@@ -4848,7 +4856,7 @@ countWithNewPackage +=1;
         ////system.debug('@@packageIds'+packageIds);
         if(packageIds.size() > 0){
             packageList = [SELECT Id, Name, Deposit_Fee__c, duration__c, Unit_Fee__c, Location__r.Country__r.Tax_Rate__c  ,
-                             /*facility_Fee__c,*/Grade__c,Location__r.Organisation__r.Name,Location__r.Organisation__r.Tax_Rate__c  
+                             /*facility_Fee__c,*/Grade_New__c,Location__r.Organisation__r.Name,Location__r.Organisation__r.Tax_Rate__c  
                             FROM Package__c 
                             WHERE Id IN: packageIds];
             //commented by jatin : 13-dec-2019: for if any package is same then list size is one
@@ -4914,7 +4922,7 @@ countWithNewPackage +=1;
                                         Package__c, Package__r.Package_Fee__c, Package__r.Deposit_Fee__c,Class__r.name ,
                                         Package__r.Instrument__c,Class__c,Center__r.Organisation__r.Name,
                                         //start: added by nishi: 14-aug-2020 for if user select package then we show related details like: duration,monthly fee, grade,Facility fee
-                                        /*Package__r.facility_Fee__c,*/Package__r.Grade__c,
+                                        /*Package__r.facility_Fee__c,*/Package__r.Grade_New__c,
                                          // end:added by nishi: 14-aug-2020 for if user select package then we show related details like: duration,monthly fee, grade,Facility fee
                                         Package__r.Name, Teacher__c, Teacher__r.Name, Package__r.Duration__c, 
                                         Student__r.name,Parent__r.name,Student__r.Also_a_Student__c,Student__r.Parent__c,
@@ -4936,11 +4944,11 @@ countWithNewPackage +=1;
             }
 
             // added by nishi: 10-aug-2020: for manage ossia Upgrade ,downGrade Subscription model
-            if( String.isNotBlank(objEnrol.Center__c) && String.isNotBlank(objEnrol.Center__r.Organisation__c) && 	
-            String.isNotBlank(objEnrol.Center__r.Organisation__r.Name) && 	
-            objEnrol.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){	
+            if( String.isNotBlank(objEnrol.Center__c) && String.isNotBlank(objEnrol.Center__r.Organisation__c) &&   
+            String.isNotBlank(objEnrol.Center__r.Organisation__r.Name) &&   
+            objEnrol.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){    
                 mapToReturn.put('isOssia', 'true'); 
-            }	else{
+            }   else{
                 mapToReturn.put('isOssia', 'false'); 
             }
              // added by nishi: 10-aug-2020: for manage ossia Upgrade ,downGrade Subscription model
@@ -4968,7 +4976,7 @@ countWithNewPackage +=1;
             mapToReturn.put('currentPackageDepositFee', String.valueOf(objEnrol.Package__r.Deposit_Fee__c));
              //start:14-Aug-2020 added by nishi for show ossia change package details
            // mapToReturn.put('currentPackageFacilityFee', String.valueOf(objEnrol.Package__r.facility_Fee__c));
-            mapToReturn.put('currentPackageGrade', String.valueOf(objEnrol.Package__r.Grade__c));
+            mapToReturn.put('currentPackageGrade', String.valueOf(objEnrol.Package__r.Grade_New__c));
              //end: 14-Aug-2020 added by nishi for show ossia change package details
             
              //28-Nov-2019 added by jatin for change class details

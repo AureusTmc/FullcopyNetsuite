@@ -127,7 +127,7 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
             //@Jatin on 21st Nov 2019 commented due to refund record not created
             //Map<String, Set<String>> mapOfParentEnrolments = new Map<String, Set<String>>();
             for(Invoice__c invoiceObj : [SELECT Id, Name,Parent_Account__c,Total_Amount__c, Remarks__c,Invoice_Date__c,Parent_Account__r.Centre_Name__c,
-                                            Parent_Account__r.Centre_Name__r.Country__r.Tax_Rate__c,
+                                            Parent_Account__r.Centre_Name__r.Country__r.Tax_Rate__c,Credit_Memo_Amount__c,
                                              (SELECT Id, Enrolment__r.id,Enrolment__r.Package_Process_Type__c ,
                                                 Enrolment__r.Effective_Date__c ,Package__c
                                                 FROM Invoice_Line_Items__r) 
@@ -313,8 +313,12 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
        system.debug('mapOfParentCreditMemo'+mapOfParentCreditMemo);  
        system.debug('mapOfActiveParent'+mapOfActiveParent);                                 
        system.debug('parentCreditMemoTotal'+parentCreditMemoTotal);  
+       Map<String,string> frominvoiceids = new Map<String,string>();
         for(Invoice__c invoice : listOfInv){
-
+            decimal existingCreditMemoAmount = 0;
+            if(invoice.Credit_Memo_Amount__c != null && invoice.Credit_Memo_Amount__c>0){
+                existingCreditMemoAmount = invoice.Credit_Memo_Amount__c;
+            }
             newCreditMemo = new Credit_Memo__c();
             Decimal totalCreditMemoLineItemAmount =0;
             Boolean finding = TRUE;
@@ -337,7 +341,7 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
                                     objCreditMemo.Comments__c = 'Adjusted against '+invoice.Name;
                                     objCreditMemo.Credit_Memo_Date__c = invoice.Invoice_Date__c; 
                                     mapOfCreditMemos.put(objCreditMemo.Id, objCreditMemo);
-                                    invoice.Credit_Memo_Amount__c = objCreditMemo.Total_Amount__c;
+                                    invoice.Credit_Memo_Amount__c = existingCreditMemoAmount+ objCreditMemo.Total_Amount__c;
                                     if(accumulatedCreditMemoAmount == invoiceTotalAmount){
                                         invoice.status__c = 'Paid';
                                     }
@@ -432,6 +436,17 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
                                                                 creditMemoTotalAmount = Decimal.valueOf(mapofAdjustmentCreditNoteAmount.get(invoice.id).split('@')[0]);
                                                                 creditMemoTotaltaxAmount =Decimal.valueOf(mapofAdjustmentCreditNoteAmount.get(invoice.id).split('@')[1]);
                                                             }
+                                                            if((!frominvoiceids.containsKey(objCreditMemo.From_Invoice__c)) && string.isnotBlank(objCreditmemolineitem.Invoice_Line_Item__c)){
+                                                                string creditmemoEnrolment = '';
+                                                                string creditmemopackage = '';
+                                                                if(string.isnotBlank(objCreditmemolineitem.enrolment__c)){
+                                                                    creditmemoEnrolment = objCreditmemolineitem.enrolment__c;
+                                                                }
+                                                                if(string.isnotBlank(objCreditmemolineitem.Package__c)){
+                                                                    creditmemopackage = objCreditmemolineitem.Package__c;
+                                                                }
+                                                                frominvoiceids.put(objCreditMemo.From_Invoice__c,objCreditmemolineitem.Invoice_Line_Item__c+'@'+creditmemoEnrolment+'@'+creditmemopackage);
+                                                            }
                                                             system.debug('objCreditmemolineitem.Amount__c'+objCreditmemolineitem.Amount__c);
                                                             system.debug('objCreditmemolineitem.Tax_Amount__c'+objCreditmemolineitem.Tax_Amount__c);
                                                             creditMemoTotalAmount += (totalCreditMemoLineItemAmountWithoutTax - objCreditmemolineitem.Amount__c);
@@ -460,7 +475,7 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
                                     objCreditMemo.Credit_Memo_Date__c = invoice.Invoice_Date__c; 
                                     objCreditMemo.Comments__c = 'Total Deposit '+ String.valueOf(accumulatedCreditMemoAmount) +' adjusted with the final invoice to the extent of '+String.valueOf(invoiceTotalAmount)+' and balance '+String.valueOf(accumulatedCreditMemoAmount - invoiceTotalAmount)+' refunded';
                                     mapOfCreditMemos.put(objCreditMemo.Id, objCreditMemo);
-                                    invoice.Credit_Memo_Amount__c = invoiceTotalAmount;
+                                    invoice.Credit_Memo_Amount__c = existingCreditMemoAmount+invoiceTotalAmount;
                                     invoice.status__c = 'Paid';
                                      // Run if the Adjust payment is equals to total invoice Amount
                                     if(adjustedPaymentAmount ==  invoiceTotalAmount){ // 100 ==100
@@ -495,8 +510,8 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
                system.debug('adjustedAmount'+adjustedAmount);
                 if(adjustedAmount > 0){
                     string remarks='';
-                    if(mapOfActiveParent.containsKey(invoice.parent_account__c)
-                         && mapOfActiveParent.get(invoice.parent_account__c)){
+                    //if(mapOfActiveParent.containsKey(invoice.parent_account__c)
+                      //   && mapOfActiveParent.get(invoice.parent_account__c)){
                              //creditNoteAmountAdjustment.put(invoice.id,mapOfCreditMemosAmount);
                              //mapofAdjustmentCreditNoteAmount.put(objCreditMemo.id,creditMemoTotalAmount+'-'+creditMemoTotaltaxAmount);
                         // if credit Memo total is greater then invoice total then we check this adjusted payment record type  and 
@@ -546,6 +561,7 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
                                 // 9-Oct-2020:nishi: start at the time of dividing the credit memo From Invoice number was similar changes are required in Credit memo line item.
                                 string creditMemoFromId =(mapofAdjustmentCreditNoteAmount.get(invoice.id).split('@')[2]);
                                 string isDeposit =(mapofAdjustmentCreditNoteAmount.get(invoice.id).split('@')[3]);
+                                
                                 if(string.isnotBlank(creditMemoFromId) &&  !(creditMemoFromId.equalsIgnoreCase('null'))){
                                     newCreditMemo.From_Invoice__c = creditMemoFromId;
                                 }else{
@@ -559,72 +575,35 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
                                 if(creditNoteAmountAdjustment.containsKey(invoice.id)){
                                     listOfCreditmemolineitem =    creditNoteAmountAdjustment.get(invoice.id);
                                 } 
-                                if(invoice.Invoice_Line_Items__r != null && invoice.Invoice_Line_Items__r.size()> 0){
-                                    Credit_memo_line_item__c  objCreditmemolineitem= createCreditMemoLineRec(creditMemoTotalAmount,creditMemoTotaltaxAmount,invoice.Invoice_Line_Items__r[0].Package__c,
-                                    null,null,remarks,System.today());
-                                    if(string.isnotBlank(isDeposit) && isDeposit.equalsIgnoreCase('true') ){
-                                        objCreditmemolineitem.Is_Deposit__c = true;
+                                string creditmemoinvoiceLineItemId = null;
+                                string packageId = null;
+                                string creditmemoenrolmentId = null;
+                                /*if(invoice.Invoice_Line_Items__r != null && invoice.Invoice_Line_Items__r.size()> 0){
+                                    creditmemoinvoiceLineItemId = invoice.Invoice_Line_Items__r[0].id;
+                                    creditmemoenrolmentId = invoice.Invoice_Line_Items__r[0].enrolment__c;
+                                    packageId = invoice.Invoice_Line_Items__r[0].Package__c;
+                                }*/
+                                if(string.isnotBlank(creditMemoFromId) &&  !(creditMemoFromId.equalsIgnoreCase('null'))){
+                                    if(frominvoiceids.containsKey(creditMemoFromId)){
+                                        if(string.isNotBlank(frominvoiceids.get(creditMemoFromId)) && frominvoiceids.get(creditMemoFromId).split('@') != null && frominvoiceids.get(creditMemoFromId).split('@').size() > 0){
+                                            creditmemoenrolmentId = frominvoiceids.get(creditMemoFromId).split('@')[1];
+                                            creditmemoinvoiceLineItemId = frominvoiceids.get(creditMemoFromId).split('@')[0];
+                                            packageId = frominvoiceids.get(creditMemoFromId).split('@')[2];
+                                        }
                                     }
-                                    listOfCreditmemolineitem.add(objCreditmemolineitem );
-                                }else{
-                                    Credit_memo_line_item__c  objCreditmemolineitem= createCreditMemoLineRec(creditMemoTotalAmount,creditMemoTotaltaxAmount,null,
-                                    null,null,remarks,System.today());
-                                    if(string.isnotBlank(isDeposit) && isDeposit.equalsIgnoreCase('true') ){
-                                        objCreditmemolineitem.Is_Deposit__c = true;
-                                    }
-                                    listOfCreditmemolineitem.add(objCreditmemolineitem );
                                 }
+                                Credit_memo_line_item__c  objCreditmemolineitem= createCreditMemoLineRec(creditMemoTotalAmount,creditMemoTotaltaxAmount,packageId,
+                                creditmemoenrolmentId,creditmemoinvoiceLineItemId,remarks,System.today());
+                                if(string.isnotBlank(isDeposit) && isDeposit.equalsIgnoreCase('true') ){
+                                    objCreditmemolineitem.Is_Deposit__c = true;
+                                }
+                                listOfCreditmemolineitem.add(objCreditmemolineitem );
                                 system.debug('listOfCreditmemolineitem'+listOfCreditmemolineitem);
                                 creditNoteAmountAdjustment.put(creditMemoFromId,listOfCreditmemolineitem);
                             }
-                    }else{
-                        remarks = 'Total Deposit '+String.valueOf(accumulatedCreditMemoAmount)+' adjusted with the final invoice to the extent of '+String.valueOf(invoiceTotalAmount) + ' and balance '+adjustedAmount+' refunded.';
-                        if(creditNoteAmountAdjustment.containsKey(invoice.id)){
-                            newCreditMemo = createCreditMemoRec(invoice.parent_account__c,invoice.Parent_Account__r.Centre_Name__c,invoice.id, mapOfParentEnrolmentLastDate.get(invoice.parent_account__c),remarks);
-                        }else {
-                            if(mapofAdjustmentCreditNoteAmount.containsKey(invoice.id)){
-                                newCreditMemo = createCreditMemoRec(invoice.parent_account__c,invoice.Parent_Account__r.Centre_Name__c,invoice.id, mapOfParentEnrolmentLastDate.get(invoice.parent_account__c),remarks);
-                            }
-                        }
+                    /*}else{
                        
-                        if(mapofAdjustmentCreditNoteAmount.containsKey(invoice.id)){
-                            Decimal creditMemoTotalAmount = Decimal.valueOf(mapofAdjustmentCreditNoteAmount.get(invoice.id).split('@')[0]);
-                            Decimal creditMemoTotaltaxAmount =Decimal.valueOf(mapofAdjustmentCreditNoteAmount.get(invoice.id).split('@')[1]);
-                            // 9-Oct-2020:nishi: start at the time of dividing the credit memo From Invoice number was similar changes are required in Credit memo line item.
-                            string creditMemoFromId =(mapofAdjustmentCreditNoteAmount.get(invoice.id).split('@')[2]);
-                            string isDeposit =(mapofAdjustmentCreditNoteAmount.get(invoice.id).split('@')[3]);
-                            if(string.isnotBlank(creditMemoFromId)&& !(creditMemoFromId.equalsIgnoreCase('null'))){
-                                newCreditMemo.From_Invoice__c = creditMemoFromId;
-                            }else{
-                                newCreditMemo.From_Invoice__c = null;
-                                creditMemoFromId = invoice.parent_account__c+'-'+remarks;
-                            }
-                            // 9-Oct-2020:end: nishi: at the time of dividing the credit memo From Invoice number was similar changes are required in Credit memo line item.
-                            system.debug('creditMemoTotalAmount'+creditMemoTotalAmount);
-                            system.debug('creditMemoTotalAmount'+creditMemoTotalAmount);
-                            List<Credit_memo_line_item__c> listOfCreditmemolineitem  = new  List<Credit_memo_line_item__c>();
-                            if(creditNoteAmountAdjustment.containsKey(invoice.id)){
-                                listOfCreditmemolineitem =    creditNoteAmountAdjustment.get(invoice.id);
-                            } 
-                            if(invoice.Invoice_Line_Items__r != null && invoice.Invoice_Line_Items__r.size()> 0){
-                                Credit_memo_line_item__c  objCreditmemolineitem= createCreditMemoLineRec(creditMemoTotalAmount,creditMemoTotaltaxAmount,invoice.Invoice_Line_Items__r[0].Package__c,
-                                invoice.Invoice_Line_Items__r[0].Enrolment__r.id,invoice.Invoice_Line_Items__r[0].Id,remarks,mapOfParentEnrolmentLastDate.get(invoice.parent_account__c));
-                                if(string.isnotBlank(isDeposit) && isDeposit.equalsIgnoreCase('true') ){
-                                    objCreditmemolineitem.Is_Deposit__c = true;
-                                }
-                                listOfCreditmemolineitem.add(objCreditmemolineitem );
-                            }else{
-                                Credit_memo_line_item__c  objCreditmemolineitem=createCreditMemoLineRec(creditMemoTotalAmount,creditMemoTotaltaxAmount,null,
-                                null,null,remarks,mapOfParentEnrolmentLastDate.get(invoice.parent_account__c));
-                                if(string.isnotBlank(isDeposit) && isDeposit.equalsIgnoreCase('true') ){
-                                    objCreditmemolineitem.Is_Deposit__c = true;
-                                }
-                                listOfCreditmemolineitem.add(objCreditmemolineitem );
-                            }
-                            system.debug('listOfCreditmemolineitem'+listOfCreditmemolineitem);
-                            creditNoteAmountAdjustment.put(creditMemoFromId,listOfCreditmemolineitem);
-                        }
-                    }
+                    }*/
                     system.debug('newCreditMemo'+newCreditMemo);
                     newPendingCreditMemos.add(newCreditMemo);
                 }
@@ -632,7 +611,6 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
             }
         }
 
-        
         
         if(newPendingCreditMemos.size() > 0){
             Insert newPendingCreditMemos;  

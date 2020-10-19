@@ -24,7 +24,7 @@ public class PaymentComponentController {
     @AuraEnabled
     public static invoiceWrapper getCurrentCredit(String recordId){
         if(String.isNotBlank(recordId)){
-            List<Invoice__c> invoiceList = [SELECT Id,Status__c, Total_Amount__c,Parent_Account__c,Parent_Account__r.Total_Payment_Credit_Available__c,Parent_Account__r.Total_Credit_Memo_Available__c ,
+            List<Invoice__c> invoiceList = [SELECT Id,Status__c, Balance_Amount__c,Parent_Account__c,Parent_Account__r.Total_Payment_Credit_Available__c,Parent_Account__r.Total_Credit_Memo_Available__c ,
                                             Total_Invoice_Amount__c,Center__r.Organisation__r.Name FROM Invoice__c WHERE Id =:recordId];
             if(!invoiceList.isEmpty()){
                 Invoice__c invoice =invoiceList[0];
@@ -34,7 +34,7 @@ public class PaymentComponentController {
                     && invoiceList[0].Center__r.Organisation__r.Name ==System.Label.Ossia_Organisation_Name ){
                     isOssia=true;
                 }
-                return new invoiceWrapper(invoiceList[0].Parent_Account__r.Total_Credit_Memo_Available__c,invoiceList[0].Total_Amount__c,isOssia);
+                return new invoiceWrapper(invoiceList[0].Parent_Account__r.Total_Credit_Memo_Available__c,invoiceList[0].Balance_Amount__c,isOssia);
             }
             return new invoiceWrapper();
         }

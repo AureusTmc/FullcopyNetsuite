@@ -233,36 +233,37 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
         
        //for add transaction id in payment reocrds
         Map<String, Payment__c> mapOfInvoicePayments = new Map<String, Payment__c>();
-        
+        map<String,Invoice_Line_Item__c> updateInvoiceLineItem = new map<String,Invoice_Line_Item__c>();
 
         Decimal depositAmount = 0;
         if(String.isNotBlank(objEnrol.Id)){
             depositAmount = AureusCalendarController.getDepositFromFile(objEnrol.Id);
         }
-
+        List<Id> invoiceIds = NEW List<Id>();
+        Map<Id,Invoice_Line_Item__c> invoicemap = NEW Map<Id,Invoice_Line_Item__c>();
+        for(Invoice_Line_Item__c lineItem : [SELECT Id, Invoice__c, Amount__c, Invoice__r.Parent_Account__c, Subscription_Line_Item__r.Next_Bill_Date__c ,Package__c,
+                                            Credit_Memo_Amount__c,Credit_Memo_tax__c
+                                            FROM Invoice_Line_Item__c 
+                                            WHERE Enrolment__c =: objEnrol.id 
+                                            AND Is_Deposit__c = true 
+                                            AND Subscription_Line_Item__c != NULL]){
+                                                invoiceIds.add(lineItem.Invoice__c);
+                                                invoicemap.put(lineItem.Invoice__c,lineItem);
+                                                updateInvoiceLineItem.put(lineItem.id,lineItem);
+                                            }
+        
+        if(invoiceIds.size() > 0){
+            for(Payment__c payment : [SELECT Id, Transaction_ID__c, Invoice__c ,Method_of_Payment__c 
+                                        FROM Payment__c 
+                                        WHERE Invoice__c IN: invoiceIds AND 
+                                        RecordType.Name =:ConstantsClass.paymentTransactionRecType]){
+                                        if(string.isNotBlank( payment.Transaction_ID__c)){
+                                            mapOfInvoicePayments.put(payment.Invoice__c, payment);
+                                        }
+                                    }
+        }
         if(depositAmount > 0){
              paymentObj = new Payment__c();
-            List<Id> invoiceIds = NEW List<Id>();
-            Map<Id,Invoice_Line_Item__c> invoicemap = NEW Map<Id,Invoice_Line_Item__c>();
-            for(Invoice_Line_Item__c lineItem : [SELECT Id, Invoice__c, Amount__c, Invoice__r.Parent_Account__c, Subscription_Line_Item__r.Next_Bill_Date__c ,Package__c
-                                                FROM Invoice_Line_Item__c 
-                                                WHERE Enrolment__c =: objEnrol.id 
-                                                AND Is_Deposit__c = true 
-                                                AND Subscription_Line_Item__c != NULL]){
-                                                    invoiceIds.add(lineItem.Invoice__c);
-                                                    invoicemap.put(lineItem.Invoice__c,lineItem);
-                                                }
-            
-            if(invoiceIds.size() > 0){
-                for(Payment__c payment : [SELECT Id, Transaction_ID__c, Invoice__c ,Method_of_Payment__c 
-                                            FROM Payment__c 
-                                            WHERE Invoice__c IN: invoiceIds AND 
-                                            RecordType.Name =:ConstantsClass.paymentTransactionRecType]){
-                                            if(string.isNotBlank( payment.Transaction_ID__c)){
-                                                mapOfInvoicePayments.put(payment.Invoice__c, payment);
-                                            }
-                                        }
-            }
             if(hasMoreEnrolment){
                  /*//commented by nishi: 6-Oct-2020 : for new requirement we Create a Credit Memo record with the status pending instead of the Payment as Deposit record.
                   paymentObj = BillingUtility.fillPayment(objEnrol.Parent__c,null, depositAmount, ConstantsClass.paymentPendingStatus);
@@ -284,24 +285,39 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
                //system.debug('paymentObj'+paymentObj);
                 paymentList.add(paymentObj);*/
                 Credit_Memo__c objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, null,  System.today(),'Deposit Adjustment');
+                Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(depositAmount,0,null,
+                                                        objEnrol.id,null,'Deposit Adjustment');
                 if(isRefund){
                     objCreditMemo.Credit_Memo_Date__c = System.today();
+                    objCreditLineItem.Month__c = System.today();
                 }else{
                     objCreditMemo.Credit_Memo_Date__c = lastLessonDateObj;
-                   }
+                    objCreditLineItem.Month__c = lastLessonDateObj;
+                }
                 for( string invoiceId : mapOfInvoicePayments.keyset()){
                     if(mapOfInvoicePayments.containsKey(invoiceId)){
                        objCreditMemo.Payment_Method__c =   mapOfInvoicePayments.get(invoiceId).Method_of_Payment__c; 
                        objCreditMemo.From_Invoice__c = invoiceId;
-                       Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(depositAmount,null,invoicemap.get(invoiceId).Package__c,
-                                                        objEnrol.id,invoicemap.get(invoiceId).Id,'Deposit Adjustment');
-                                                        objCreditLineItem.Is_Deposit__c = true;
-                                                        objCreditLineItem.Month__c = lastLessonDateObj;
-                       listOfCreditmemolineitem.put('Deposit Adjustment',objCreditLineItem);
+                       objCreditLineItem.Package__c = invoicemap.get(invoiceId).Package__c;
+                       objCreditLineItem.Invoice_Line_Item__c = invoicemap.get(invoiceId).Id;
                     }
                 }
+                listOfCreditmemolineitem.put('Deposit Adjustment',objCreditLineItem);
                 newPendingCreditMemos.put('Deposit Adjustment',objCreditMemo);
-
+                //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
+                if(string.isNotBlank(objCreditLineItem.Invoice_Line_Item__c)){
+                    decimal invoicelineItemCreditAmount=0;
+                    decimal invoicelineItemCreditGst=0;
+                    
+                    if(updateInvoiceLineItem.containskey(objCreditLineItem.Invoice_Line_Item__c)){
+                        invoicelineItemCreditAmount = updateInvoiceLineItem.get(objCreditLineItem.Invoice_Line_Item__c).Credit_Memo_Amount__c !=null ?updateInvoiceLineItem.get(objCreditLineItem.Invoice_Line_Item__c).Credit_Memo_Amount__c:0;
+                        invoicelineItemCreditGst = updateInvoiceLineItem.get(objCreditLineItem.Invoice_Line_Item__c).Credit_Memo_tax__c != null ?updateInvoiceLineItem.get(objCreditLineItem.Invoice_Line_Item__c).Credit_Memo_tax__c :0;
+                   
+                    }
+                    updateInvoiceLineItem.put(objCreditLineItem.Invoice_Line_Item__c,new Invoice_Line_Item__c(id=objCreditLineItem.Invoice_Line_Item__c,
+                                    Credit_Memo_Amount__c =invoicelineItemCreditAmount+depositAmount,
+                                    Credit_Memo_tax__c=invoicelineItemCreditGst+0));
+                }
             }/*/*Commented by jatin: 13-jan-2020: for now change requirement only multiple enrollment exist then we create payment record
             otherwise not
             else{
@@ -312,7 +328,7 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
             
         }
         
-        if(!hasMoreEnrolment){
+        if(!hasMoreEnrolment && depositAmount!= null){
            //system.debug('paymentObj'+paymentList);
             /*for(Payment__c objPay : paymentList){
                 Payment__c refund = objPay.clone(false,false,false,false);
@@ -339,13 +355,33 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
             }
             refundPayments.add(refund);   */
             Credit_Memo__c objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, null,  lastLessonDateObj,'Refund Deposit');
-            Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(depositAmount,0,null,objEnrol.id,null,'Refund Deposit');
-                                            objCreditLineItem.Month__c = lastLessonDateObj;
-                                            objCreditLineItem.Is_Deposit__c = true;
+            Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(depositAmount,0,null,
+                objEnrol.id,null,'Refund Deposit');
+                objCreditLineItem.Is_Deposit__c = true;
+                objCreditLineItem.Month__c = lastLessonDateObj;
+            for( string invoiceId : mapOfInvoicePayments.keyset()){
+                if(mapOfInvoicePayments.containsKey(invoiceId)){
+                    objCreditMemo.Payment_Method__c =   mapOfInvoicePayments.get(invoiceId).Method_of_Payment__c; 
+                    objCreditMemo.From_Invoice__c = invoiceId;
+                    objCreditLineItem.Package__c = invoicemap.get(invoiceId).Package__c;
+                    objCreditLineItem.Invoice_Line_Item__c = invoicemap.get(invoiceId).Id;
+                }
+            }
             listOfCreditmemolineitem.put('Refund Deposit',objCreditLineItem);
-            system.debug('objCreditLineItem'+objCreditLineItem);
-            system.debug('objCreditMemo'+objCreditMemo);
             newPendingCreditMemos.put('Refund Deposit',objCreditMemo);
+            //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
+            if(string.isNotBlank(objCreditLineItem.Invoice_Line_Item__c)){
+                decimal invoicelineItemCreditAmount=0;
+                decimal invoicelineItemCreditGst=0;
+                
+                if(updateInvoiceLineItem.containskey(objCreditLineItem.Invoice_Line_Item__c)){
+                    invoicelineItemCreditAmount = updateInvoiceLineItem.get(objCreditLineItem.Invoice_Line_Item__c).Credit_Memo_Amount__c !=null ?updateInvoiceLineItem.get(objCreditLineItem.Invoice_Line_Item__c).Credit_Memo_Amount__c:0;
+                    invoicelineItemCreditGst = updateInvoiceLineItem.get(objCreditLineItem.Invoice_Line_Item__c).Credit_Memo_tax__c != null ?updateInvoiceLineItem.get(objCreditLineItem.Invoice_Line_Item__c).Credit_Memo_tax__c :0;
+                }
+                 updateInvoiceLineItem.put(objCreditLineItem.Invoice_Line_Item__c,new Invoice_Line_Item__c(id=objCreditLineItem.Invoice_Line_Item__c,
+                                            Credit_Memo_Amount__c =invoicelineItemCreditAmount+depositAmount,
+                                            Credit_Memo_tax__c=invoicelineItemCreditGst+0));
+            }
         }
 
          // we need to refund current month amount if applicable
@@ -358,8 +394,10 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
             Boolean isNextMonthInvoicCreated = false;
             //added by nishi: 15-Oct-2020 : start:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
             Map<String,Invoice__c> mapofinvoice = new Map<String,Invoice__c>();
-            for(Invoice__c objInvoice : [Select id,Invoice_Date__c,(Select id from Invoice_Line_Items__r 
-                                        where Enrolment__C =:objEnrol.id)
+            for(Invoice__c objInvoice : [Select id,Invoice_Date__c,
+                                            (Select id,Credit_Memo_Amount__c,Credit_Memo_tax__c
+                                            from Invoice_Line_Items__r 
+                                            where Enrolment__C =:objEnrol.id)
                                         From Invoice__C 
                                         Where  Parent_Account__c =: objEnrol.Parent__c
                                         And invoice_type__c = 'Recurring']){
@@ -405,6 +443,19 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
                             listOfCreditmemolineitem.put('Refund  (Next month invoice amount)',objCreditLineItem);
                         
                             newPendingCreditMemos.put('Refund  (Next month invoice amount)',objCreditMemo);
+                            //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
+                            if(string.isNotBlank(invoicelineitemId)){
+                                decimal invoicelineItemCreditAmount=0;
+                                decimal invoicelineItemCreditGst=0;
+                                
+                                if(updateInvoiceLineItem.containskey(invoicelineitemId)){
+                                    invoicelineItemCreditAmount = updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_Amount__c != null ?updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_Amount__c :0;
+                                    invoicelineItemCreditGst = updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_tax__c != null ? updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_tax__c:0;
+                                }
+                                updateInvoiceLineItem.put(invoicelineitemId,new Invoice_Line_Item__c(id=invoicelineitemId,
+                                                        Credit_Memo_Amount__c =invoicelineItemCreditAmount+Decimal.valueOf(refundNextMontAmountWithTax.split('@')[0]),
+                                                        Credit_Memo_tax__c=invoicelineItemCreditGst+Decimal.valueOf(refundNextMontAmountWithTax.split('@')[1])));
+                            }
                         }
                          //added by nishi: 6-Oct-2020 : end:for new requirement Create a Credit Memo record with the status pending instead of the pending Payment as credit record.
                     }else{
@@ -433,6 +484,19 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
                                 system.debug('objCreditLineItem'+objCreditLineItem);
                                 system.debug('objCreditMemo'+objCreditMemo);
                                 newPendingCreditMemos.put('Refund  (Next month invoice amount)',objCreditMemo);
+                                //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
+                                if(string.isNotBlank(invoicelineitemId)){
+                                    decimal invoicelineItemCreditAmount=0;
+                                    decimal invoicelineItemCreditGst=0;
+                                    
+                                    if(updateInvoiceLineItem.containskey(invoicelineitemId)){
+                                        invoicelineItemCreditAmount = updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_Amount__c != null ?updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_Amount__c :0;
+                                        invoicelineItemCreditGst = updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_tax__c != null ? updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_tax__c:0;
+                                    }
+                                    updateInvoiceLineItem.put(invoicelineitemId,new Invoice_Line_Item__c(id=invoicelineitemId,
+                                                            Credit_Memo_Amount__c =invoicelineItemCreditAmount+Decimal.valueOf(refundNextMontAmountWithTax.split('@')[0]),
+                                                            Credit_Memo_tax__c=invoicelineItemCreditGst+Decimal.valueOf(refundNextMontAmountWithTax.split('@')[1])));
+                                }
                             }   
                     }
                    
@@ -463,8 +527,21 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
                                                     objEnrol.id,invoicelineitemId,'Refund  (Effective month invoice amount)');
                                                     objCreditLineItem.Month__c = lastLessonDateObj;
                     listOfCreditmemolineitem.put('Refund  (Effective month invoice amount)',objCreditLineItem);
-                   
                     newPendingCreditMemos.put('Refund  (Effective month invoice amount)',objCreditMemo);
+
+                     //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
+                     if(string.isNotBlank(invoicelineitemId)){
+                        decimal invoicelineItemCreditAmount=0;
+                        decimal invoicelineItemCreditGst=0;
+                        
+                        if(updateInvoiceLineItem.containskey(invoicelineitemId)){
+                            invoicelineItemCreditAmount = updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_Amount__c != null ?updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_Amount__c :0;
+                            invoicelineItemCreditGst = updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_tax__c != null ? updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_tax__c:0;
+                        }
+                        updateInvoiceLineItem.put(invoicelineitemId,new Invoice_Line_Item__c(id=invoicelineitemId,
+                                                    Credit_Memo_Amount__c =invoicelineItemCreditAmount+Decimal.valueOf(refundAmountWithTax.split('@')[0]),
+                                                    Credit_Memo_tax__c=invoicelineItemCreditGst+Decimal.valueOf(refundAmountWithTax.split('@')[1])));
+                    }
                      //added by nishi: 6-Oct-2020 : end:for new requirement Create a Credit Memo record with the status pending instead of the pending Payment as credit record.
                 }else{
                       //added by nishi: 15-Oct-2020 : start:for new requirement Create a Credit Memo record with the status pending instead of the success Payment as credit record.
@@ -489,8 +566,21 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
                                                     objEnrol.id,invoicelineitemId,'Refund  (Effective month invoice amount)');
                                                     objCreditLineItem.Month__c = lastLessonDateObj;
                     listOfCreditmemolineitem.put('Refund  (Effective month invoice amount)',objCreditLineItem);
-                    
                     newPendingCreditMemos.put('Refund  (Effective month invoice amount)',objCreditMemo);
+
+                     //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
+                     if(string.isNotBlank(invoicelineitemId)){
+                        decimal invoicelineItemCreditAmount=0;
+                        decimal invoicelineItemCreditGst=0;
+                        
+                        if(updateInvoiceLineItem.containskey(invoicelineitemId)){
+                            invoicelineItemCreditAmount = updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_Amount__c != null ?updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_Amount__c :0;
+                            invoicelineItemCreditGst = updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_tax__c != null ? updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_tax__c:0;
+                        }
+                        updateInvoiceLineItem.put(invoicelineitemId,new Invoice_Line_Item__c(id=invoicelineitemId,
+                                                    Credit_Memo_Amount__c =invoicelineItemCreditAmount+Decimal.valueOf(refundAmountWithTax.split('@')[0]),
+                                                    Credit_Memo_tax__c=invoicelineItemCreditGst+Decimal.valueOf(refundAmountWithTax.split('@')[1])));
+                    }
                 }
                
             }
@@ -500,8 +590,9 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
         if(refundPayments.size() > 0){
             paymentList.addAll(refundPayments);
         }
-          //added by nishi: 6-Oct-2020 : start:for new requirement Create a Credit Memo record with the status pending instead of the Payment as Deposit record.
-          if(newPendingCreditMemos.size() > 0){
+        
+        //added by nishi: 6-Oct-2020 : start:for new requirement Create a Credit Memo record with the status pending instead of the Payment as Deposit record.
+        if(newPendingCreditMemos.size() > 0){
             Insert newPendingCreditMemos.values();  
            system.debug('newPendingCreditMemos'+newPendingCreditMemos);
             List<Credit_memo_line_item__c> listOfnewCreditmemolineitem = new list<Credit_memo_line_item__c>();
@@ -515,6 +606,9 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
             if(listOfnewCreditmemolineitem != null && listOfnewCreditmemolineitem.size() > 0){
                 insert listOfnewCreditmemolineitem;
             }
+        }
+        if(updateInvoiceLineItem != null && updateInvoiceLineItem.size() > 0){
+            update updateInvoiceLineItem.values();
         }
          //added by nishi: 6-Oct-2020 : end:for new requirement Create a Credit Memo record with the status pending instead of the Payment as Deposit record.
         if(paymentList.size() > 0){
