@@ -98,7 +98,7 @@ public class PaymentComponentController {
                 List<Invoice__c> invoiceList = new List<Invoice__c>();
                 Map<String, Date> mapOfParentEnrolmentLastDate = new Map<String, Date>();
                 for(Invoice__c invoiceObj : [SELECT Id, Name,Parent_Account__c,Total_Amount__c, Remarks__c,Invoice_Date__c,Parent_Account__r.Centre_Name__c,
-                                                Parent_Account__r.Centre_Name__r.Country__r.Tax_Rate__c,
+                                                Center__r.Country__r.Tax_Rate__c,Credit_Memo_Amount__c,Balance_Amount__c,
                                                 Parent_Account__r.Total_Payment_Credit_Available__c,
                                                 Total_Invoice_Amount__c,Status__c,Parent_Account__r.Total_Credit_Memo_Available__c,
                                                 (SELECT Id, Enrolment__r.id,Enrolment__r.Package_Process_Type__c ,
@@ -126,16 +126,16 @@ public class PaymentComponentController {
                     Decimal accumulatedCreditMemoAmount = invoice.Parent_Account__r.Total_Credit_Memo_Available__c != null ?invoice.Parent_Account__r.Total_Credit_Memo_Available__c : 0;
                             
                     if(accumulatedCreditMemoAmount != null && accumulatedCreditMemoAmount > 0){
-                        Decimal invoiceTotalAmount = invoice.Total_Amount__c; 
+                        Decimal invoiceTotalAmount = invoice.Balance_Amount__c; 
                         Decimal diffrenceAmount = 0;
                         if(isCreditAmnt){
                             List<Credit_Memo__c> listOfCreditMemos  =generateCreditMemoQuery( new Set<String>{invoice.Parent_Account__c});
                             if(listOfCreditMemos != null && listOfCreditMemos.size()>0){
                                 Date lastDate = listOfCreditMemos[0].Credit_Memo_Date__c;
                                 BillingUtility.adjustCreditMemoDeposit(invoiceList, new Set<String>{invoice.id}, new Set<String>{invoice.Parent_Account__c}, 
-                                system.today(), lastDate, mapOfParentEnrolmentLastDate);
+                                system.today(), lastDate, mapOfParentEnrolmentLastDate,false);
                                 if(accumulatedCreditMemoAmount<invoiceTotalAmount){
-                                    diffrenceAmount =  invoiceList[0].Total_Amount__c - accumulatedCreditMemoAmount;
+                                    diffrenceAmount =  invoiceList[0].Balance_Amount__c - accumulatedCreditMemoAmount;
                                 }
                                 if(diffrenceAmount >0){
                                     //Create new payment credit for remaning amount
@@ -147,14 +147,14 @@ public class PaymentComponentController {
                                 return new invoiceWrapper(400,'Pending Credit Memo Record Not Found');
                             }
                         }else{//If customer dont want to pay with credit amount 
-                            objpayment = createpaymentrecord(invoiceList[0].Total_Amount__c,selectedMethod,invoiceList[0].Id,transacId,paySuccesRecId,invoiceList[0].Parent_Account__c);
+                            objpayment = createpaymentrecord(invoiceList[0].Balance_Amount__c,selectedMethod,invoiceList[0].Id,transacId,paySuccesRecId,invoiceList[0].Parent_Account__c);
                             paymentsToUpsert.add(objpayment);
                             invoiceList[0].Status__c ='Paid';
                         }
                     }
                     // for if payment is credit record not found then we insert new payment record with full amount
                     else{
-                        objpayment = createpaymentrecord(invoiceList[0].Total_Amount__c,selectedMethod,invoiceList[0].Id,transacId,paySuccesRecId,invoiceList[0].Parent_Account__c);
+                        objpayment = createpaymentrecord(invoiceList[0].Balance_Amount__c,selectedMethod,invoiceList[0].Id,transacId,paySuccesRecId,invoiceList[0].Parent_Account__c);
                         paymentsToUpsert.add(objpayment);
                         invoiceList[0].Status__c ='Paid';
                     }
