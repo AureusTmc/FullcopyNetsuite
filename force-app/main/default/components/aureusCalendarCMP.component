@@ -2065,6 +2065,16 @@ Enrol now
                                         </svg>
                                         <span class="slds-assistive-text">Withdrawal</span>
                                     </button>
+
+                                      <!-- 20-Oct-2020 : start: @@nishi  :if Enrolment package type is Prepayemnt or promo then we show this button for Withdrawal Enhancement This button should be accessible to only a limited users. -->
+                                    <button class="slds-col slds-button slds-button_icon slds-button_icon-border-filled button-shadow slds-button-group-width slds-hide" style="background-color:lightgrey;" title="Withdrawal Admin" aria-pressed="false" id="cancelSubscriptionAdminBtn" onclick="cancelSubscription();return false;">Withdrawal Admin
+                                        <svg class="slds-button__icon" aria-hidden="true">
+                                            <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#close')}" />
+                                        </svg>
+                                        <span class="slds-assistive-text">Withdrawal Admin</span>
+                                    </button>
+                                       <!-- 20-Oct-2020 :end: @@nishi  :if Enrolment package type is Prepayemnt or promo then we show this button for Withdrawal Enhancement This button should be accessible to only a limited users. -->
+                                   
                                     <button class="slds-col slds-button slds-button_icon slds-button_icon-border-filled button-shadow slds-button-group-width" title="Advancement" aria-pressed="false" id="upgradeSubscriptionBtn" onclick="upgradeSubscription();return false;">Advancement
                                         <svg class="slds-button__icon" aria-hidden="true">
                                             <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#arrowup')}" />
@@ -2077,6 +2087,15 @@ Enrol now
                                         </svg>
                                         <span class="slds-assistive-text">Downgrade</span>
                                     </button>
+                                       <!-- 20-Oct-2020 :start: @@nishi  :if Enrolment package type is Prepayemnt or promo then we show this button for Downgrade Enhancement This button should be accessible to only a limited users. -->
+                                    <button class="slds-col slds-button slds-button_icon slds-button_icon-border-filled button-shadow slds-button-group-width slds-hide" style="background-color:lightgrey;" title="Downgrade Admin" aria-pressed="false" id="downgradeSubscriptionAdminBtn" onclick="downgradeSubscription();return false;">Downgrade Admin
+                                        <svg class="slds-button__icon" aria-hidden="true">
+                                            <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#arrowdown')}" />
+                                        </svg>
+                                        <span class="slds-assistive-text">Downgrade Admin</span>
+                                    </button>
+                                       <!-- 20-Oct-2020 :end: @@nishi  :if Enrolment package type is Prepayemnt or promo then we show this button for Withdrawal Enhancement This button should be accessible to only a limited users. -->
+                                   
                                     <button class="slds-col slds-button slds-button_icon slds-button_icon-border-filled button-shadow slds-button-group-width" title="Change Enrolment" aria-pressed="false" id="updateEnrolmentBtn" onclick="updateEnrolment();return false;">Change Enrolment
                                         <svg class="slds-button__icon" aria-hidden="true">
                                             <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#edit')}" />
@@ -8225,7 +8244,18 @@ Enrol now
                         $('#confirmModalYes').removeAttr('data-updateEnrolmentAdmin');
                         $('#downgradeSubscriptionBtn').attr('title', 'Downgrade Subscription');
                         $('#downgradeSubscriptionBtn').css('pointer-events', '');
-                      
+                        //20-Oct-2020 : @@nishi  :if Enrolment package type is Prepayemnt or promo then we show this button for Withdrawal Enhancement This button should be accessible to only a limited users.
+                        $('#downgradeSubscriptionAdminBtn').removeAttr('disabled');
+                        $('#downgradeSubscriptionAdminBtn').css('pointer-events', '');
+                        $('#downgradeSubscriptionBtn').addClass('slds-hide');
+                        $('#downgradeSubscriptionAdminBtn').addClass('slds-hide');
+
+                        $('#cancelSubscriptionAdminBtn').css('pointer-events', '');
+                        $('#cancelSubscriptionAdminBtn').removeAttr('disabled');
+                        $('#cancelSubscriptionAdminBtn').addClass('slds-hide');
+                        $('#cancelSubscriptionBtn').addClass('slds-hide');
+                        //20-Oct-2020 :end: @@nishi  :if Enrolment package type is Prepayemnt or promo then we show this button for Withdrawal Enhancement This button should be accessible to only a limited users.
+                        
                         $('#cancelSubscriptionBtn').attr('title', 'Cancel Subscription');
                         $('#cancelSubscriptionBtn').css('pointer-events', '');
                       
@@ -8313,6 +8343,7 @@ Enrol now
                                             //@Nishi on 27-Aug-2019 to check An advance invoice is generated Change Or Package_Process_Status__c is Pending
                                             // then we disable Change Centre Button   
                                             $('#downgradeSubscriptionBtn').removeClass('slds-hide');
+                                            $('#cancelSubscriptionBtn').removeClass('slds-hide');
                                             $('#prePaymentId').removeClass('slds-hide');
                                             $('#upgradeEnrolmentGroupToIndividualBtn').addClass('slds-hide');
                                             $('#upgradeEnrolmentGroupToSameClassBtn').addClass('slds-hide');
@@ -8320,13 +8351,22 @@ Enrol now
                                             $('#upgradeSubscriptionBtn').removeClass('slds-hide');
                                            
                                             if(result.isPackagePromotional){
-                                                $('#downgradeSubscriptionBtn').attr('disabled', 'true');
-                                                $('#downgradeSubscriptionBtn').attr('title', 'Current Package is Promotional type');
-                                                $('#downgradeSubscriptionBtn').css('pointer-events', 'none');
-                                                
-                                                $('#cancelSubscriptionBtn').attr('disabled', 'true');
-                                                $('#cancelSubscriptionBtn').attr('title', 'Current Package is Promotional type');
-                                                $('#cancelSubscriptionBtn').css('pointer-events', 'none');
+                                                 //20-Oct-2020 : @@nishi  :for downgrade,withdrawal Enrollement Enhancement This button should be 
+                                                //accessible to only a limited users
+                                                if(result.isPrepayment_Advance_Action_Admin){    
+                                                    $('#downgradeSubscriptionAdminBtn').removeClass('slds-hide');
+                                                    $('#cancelSubscriptionAdminBtn').removeClass('slds-hide');
+                                                    $('#downgradeSubscriptionBtn').addClass('slds-hide');
+                                                    $('#cancelSubscriptionBtn').addClass('slds-hide');
+                                                }else{
+                                                    $('#downgradeSubscriptionBtn').attr('disabled', 'true');
+                                                    $('#downgradeSubscriptionBtn').attr('title', 'Current Package is Promotional type');
+                                                    $('#downgradeSubscriptionBtn').css('pointer-events', 'none');
+                                                    
+                                                    $('#cancelSubscriptionBtn').attr('disabled', 'true');
+                                                    $('#cancelSubscriptionBtn').attr('title', 'Current Package is Promotional type');
+                                                    $('#cancelSubscriptionBtn').css('pointer-events', 'none');
+                                                }
                                                 //9-Dec-2019 : @@jatin  :for Change Enrollement Enhancement This button should be accessible to only a limited users
                                                 if(result.isChange_Enrolment_Admin){    
                                                     $('#updateEnrolmentAdminBtn').attr('disabled','true'); 
