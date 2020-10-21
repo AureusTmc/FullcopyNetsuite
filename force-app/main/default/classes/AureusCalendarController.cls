@@ -1,6 +1,7 @@
 /*
 Name    :  
-
+Test Class  :        AureusCalendarControllerTest2
+Component   :		 AureusCalendarCMP
 */
 public with Sharing class AureusCalendarController{
     public String centerName{get;set;}
@@ -4952,7 +4953,7 @@ countWithNewPackage +=1;
                                         Package__c, Package__r.Package_Fee__c, Package__r.Deposit_Fee__c,Class__r.name ,
                                         Package__r.Instrument__c,Class__c,Center__r.Organisation__r.Name,
                                         //start: added by nishi: 14-aug-2020 for if user select package then we show related details like: duration,monthly fee, grade,Facility fee
-                                        /*Package__r.facility_Fee__c,*/Package__r.Grade_New__c,
+                                        /*Package__r.facility_Fee__c,*/Package__r.Grade_New__c,Package__r.Promotion_period_In_months__c,
                                          // end:added by nishi: 14-aug-2020 for if user select package then we show related details like: duration,monthly fee, grade,Facility fee
                                         Package__r.Name, Teacher__c, Teacher__r.Name, Package__r.Duration__c, Type_of_Package__c,
                                         Student__r.name,Parent__r.name,Student__r.Also_a_Student__c,Student__r.Parent__c,
@@ -5005,8 +5006,15 @@ countWithNewPackage +=1;
             
             mapToReturn.put('currentTeacher', objEnrol.Teacher__r.Name);              
             mapToReturn.put('currentPackageDuration', objEnrol.Package__r.Duration__c);
-            mapToReturn.put('currentMonthInvoice', String.valueOf(objEnrol.Package__r.Package_Fee__c));
             mapToReturn.put('currentPackageDepositFee', String.valueOf(objEnrol.Package__r.Deposit_Fee__c));
+            Decimal packageFee = objEnrol.Package__r.Package_Fee__c;
+            //20-Oct-2020 : @@nishi  :start:if Enrolment package type is Prepayemnt or promo then we manage current Month Invoice amount devided into Promotion_period_In_months__c
+            if(objEnrol.Type_of_Package__c == ConstantsClass.prePaymentType || objEnrol.Type_of_Package__c != ConstantsClass.PromoTypePayment){
+                Decimal noOfMonths = String.isNotBlank(objEnrol.Package__r.Promotion_period_In_months__c) ? Integer.valueOf(objEnrol.Package__r.Promotion_period_In_months__c) : 0;
+                packageFee = BillingUtility.roundOffAmount(objEnrol.Package__r.Package_Fee__c/noOfMonths);
+            }
+             //20-Oct-2020 : @@nishi:end:if Enrolment package type is Prepayemnt or promo then we manage current Month Invoice amount devided into Promotion_period_In_months__c
+            mapToReturn.put('currentMonthInvoice', String.valueOf(packageFee));
              //start:14-Aug-2020 added by nishi for show ossia change package details
            // mapToReturn.put('currentPackageFacilityFee', String.valueOf(objEnrol.Package__r.facility_Fee__c));
             mapToReturn.put('currentPackageGrade', String.valueOf(objEnrol.Package__r.Grade_New__c));

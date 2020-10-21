@@ -132,8 +132,8 @@ public class PaymentComponentController {
                             List<Credit_Memo__c> listOfCreditMemos  =generateCreditMemoQuery( new Set<String>{invoice.Parent_Account__c});
                             if(listOfCreditMemos != null && listOfCreditMemos.size()>0){
                                 Date lastDate = listOfCreditMemos[0].Credit_Memo_Date__c;
-                                BillingUtility.adjustCreditMemoDeposit(invoiceList, new Set<String>{invoice.id}, new Set<String>{invoice.Parent_Account__c}, 
-                                system.today(), lastDate, mapOfParentEnrolmentLastDate,false);
+                                Map<String,List<Credit_Memo__c>> mapOfParentCreditMemo = BillingUtility.getParentCreditMemo(new Set<String>{invoice.Parent_Account__c},lastDate);
+                                BillingUtility.adjustPendingCreditMemoDeposit(invoiceList, new Set<String>{invoice.id}, new Set<String>{invoice.Parent_Account__c},mapOfParentEnrolmentLastDate,false,mapOfParentCreditMemo);
                                 if(accumulatedCreditMemoAmount<invoiceTotalAmount){
                                     diffrenceAmount =  invoiceList[0].Balance_Amount__c - accumulatedCreditMemoAmount;
                                 }

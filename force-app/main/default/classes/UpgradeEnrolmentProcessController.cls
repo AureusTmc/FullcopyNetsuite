@@ -54,7 +54,10 @@ public without sharing class UpgradeEnrolmentProcessController implements IAdvan
         Boolean isSuccess = FALSE;
         Set<String> setOfBookings = new Set<String>();
         Map<String, Booking__c> mapOfMakeupBooking = new Map<String, Booking__c>();
-
+        Boolean isPromotionalEnrolment=false;
+        if( String.isNotBlank(enrolmentObj.Type_of_Package__c) && (enrolmentObj.Type_of_Package__c == ConstantsClass.prePaymentType || enrolmentObj.Type_of_Package__c == ConstantsClass.PromoTypePayment)){
+            isPromotionalEnrolment= true;
+        }
         //Fetch Next Bill Date From Enrolment
         nextBillDate = AdvanceActionsHelper.fetchNextBillDateFromEnrolment(enrolmentObj);
         
@@ -73,7 +76,7 @@ public without sharing class UpgradeEnrolmentProcessController implements IAdvan
         }*/
         //end:commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic*/
         if(effectiveDate <= nextBillDate && String.isNotBlank(enrolmentObj.Id) && String.isNotBlank(organisationObj.Id)){
-            upgradeDetails = updatePackageNextDateIsGreater(enrolmentObj.Id, effectiveDate, nextBillDate, newPackage, oldPackage, timeslot, organisationObj,newTeacherId);
+            upgradeDetails = updatePackageNextDateIsGreater(enrolmentObj.Id, effectiveDate, nextBillDate, newPackage, oldPackage, timeslot, organisationObj,newTeacherId,isPromotionalEnrolment);
             enrolmentObj = upgradeDetails.enrolObj;
         }
         // New Effective date   is greated then next Billing date
@@ -82,6 +85,7 @@ public without sharing class UpgradeEnrolmentProcessController implements IAdvan
            // upgradeDetails = updatePackageEffectiveDateIsGreater(enrolmentObj, oldPackage, newPackage, countryObj, effectiveDate,newTeacherId);
            upgradeDetails = updatePackageEffectiveDateIsGreater(enrolmentObj, oldPackage, newPackage, organisationObj, effectiveDate,newTeacherId);
             if(upgradeDetails.isSuccess){
+                
                  // added by nishi:start-11-Aug-2020: for manage ossia organisation new teacher
                 if(string.isNotBlank(newTeacherId)){
                     enrolmentObj.New_Teacher__c = newTeacherId;
@@ -104,7 +108,12 @@ public without sharing class UpgradeEnrolmentProcessController implements IAdvan
                 }
             }
         }
-
+         // 21-Oct-2020 : @@nishi  :if Enrolment package type is Prepayemnt or promo thenChange the next bill dates in Subs line items and Subscription to the first day of the next month
+        if(isPromotionalEnrolment){
+                enrolmentObj =AdvanceActionsHelper.updateSubscriptionNextBillDate(enrolmentObj,effectiveDate,nextBillDate);
+        }
+        // 21-Oct-2020 : @@nishi  End::if Enrolment package type is Prepayemnt or promo thenChange the next bill dates in Subs line items and Subscription to the first day of the next month
+    
         enrolmentObj = AdvanceActionsHelper.fetchEnrolmentDetailsFromBooking(this.booking);
         if(String.isNotBlank(enrolmentObj.Id) && upgradeDetails.isSuccess){
             AdvanceActionsHelper.processFutureBookings(enrolmentObj, 'upgrade');
@@ -132,6 +141,7 @@ public without sharing class UpgradeEnrolmentProcessController implements IAdvan
                 //End-added by nishi: 12-aug-2020: for if enrolment center is ossia then we get makeup mins  to enolment other wise parent makeup min we get  
             }
         }
+       
         if(caseRedirect == 'true'){
             Case objCase =  AureusCalendarControllerHelper.createCaseForEnrolment(caseId, enrolmentObj.Id, 'upgrade', false);
             if(String.isNotBlank(upgradeDetails.invoiceId)){
@@ -179,10 +189,12 @@ public without sharing class UpgradeEnrolmentProcessController implements IAdvan
         return caseIdToReturn;
     }
 
+    
+
     //Hit API and create Invoice and Line Items and Payment Record if the Next Bill Date is Greater than Effective Date
     //  // ex: 12-Aug-2020 effective date and next Billing date 1-Sep-2020
     Private UpgradeCaseCreation updatePackageNextDateIsGreater(String enrolmentId, Date effectiveDate, Date nextBillDate, String newPackageId, String oldPackageId, 
-    Time newTimeSlot, Organisation__c  organisationObj,/*Country__c countryObj,*/string newTeacherId){
+    Time newTimeSlot, Organisation__c  organisationObj,/*Country__c countryObj,*/string newTeacherId,Boolean isPromotionalEnrolment){
         UpgradeCaseCreation upgradeCaseDetails = new UpgradeCaseCreation();
         Boolean isSuccess = false;
         String invoiceId;
@@ -192,8 +204,8 @@ public without sharing class UpgradeEnrolmentProcessController implements IAdvan
             //    upgradeCaseDetails = upgradeDowngradeController.upgradePackage(enrolmentId, effectiveDate, newPackageId, oldPackageId, newTimeSlot, 
             //    countryObj.Currency_Code__c, countryObj.Stripe_Base_Url__c, countryObj.Stripe_Secret_Key__c, countryObj.Tax_Rate__c,newTeacherId);
             //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic*/
-            upgradeCaseDetails = upgradeDowngradeController.upgradePackage(enrolmentId, effectiveDate, newPackageId, oldPackageId, newTimeSlot, 
-                organisationObj.country__r.Currency_Code__c, organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c, organisationObj.Tax_Rate__c,newTeacherId);
+                 upgradeCaseDetails = upgradeDowngradeController.upgradePackage(enrolmentId, effectiveDate, newPackageId, oldPackageId, newTimeSlot, 
+                organisationObj.country__r.Currency_Code__c, organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c, organisationObj.Tax_Rate__c,newTeacherId,isPromotionalEnrolment);
            }
         return upgradeCaseDetails;
     }

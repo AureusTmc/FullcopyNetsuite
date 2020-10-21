@@ -194,7 +194,7 @@ public with sharing class AddCreditMemoController {
                        system.debug(refundObj);
                        if(refundObj.statusCode == 200 && refundObj.status == 'succeeded'){
                            objCreditMemo = createCreditMemoRec( objInvoice.Parent_Account__c,objInvoice.Center__c,objInvoice.Id,'Success',remarks,false);
-                           objCreditMemo.Refund_ID__c = refundObj.id;
+                           objCreditMemo.Refund_ID__c = Cheque_No__c.id;
                        }else{
                            if(refundObj.error != null){
                                message = refundObj.error.message;

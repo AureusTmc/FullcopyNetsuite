@@ -40,8 +40,8 @@ public without sharing class AdvanceActionsHelper {
                             Lessons_Start_Date__c, Center__c, Student__c, Student__r.Name, Lesson_Start_time__c, Center__r.Country__c,Next_Lesson_Start_time__c,
                              Package__c, Package__r.Duration__c,Parent__c, Center__r.Country__r.Tax_Rate__c, Center__r.Country__r.Currency_Code__c, 
                              Center__r.Country__r.Stripe_Secret_Key__c, Center__r.Country__r.Stripe_Base_Url__c,Center__r.Country__r.Id, 
-                             // added by nishi for update new Teacher Id for ossia organization
-                             New_Teacher__c,Teacher__c,Center__r.Organisation__r.Name,Available_Make_up_mins__c,
+                             New_Teacher__c,Teacher__c,Center__r.Organisation__r.Name,Available_Make_up_mins__c, // added by nishi for update new Teacher Id for ossia organization
+                             Type_of_Package__c,prepayment_period_end_date__c,Package_To_Be_Change__c,Promotional_Period_End_Date__c,//added by nishi: update enrolment Prepayemnt end date and change package field
                              //start:added by @nishi 24 Aug 2020,Organisation wise charge as per new logic*/
                              Center__r.Organisation__r.Tax_Rate__c, Center__r.Organisation__r.Country__r.Currency_Code__c, 
                              Center__r.Organisation__r.Stripe_Secret_Key__c, Center__r.Organisation__r.Stripe_Base_Url__c,Center__r.Organisation__r.Id, 
@@ -59,6 +59,46 @@ public without sharing class AdvanceActionsHelper {
         }
         return enrolmentObj;
     }
+
+     // 21-Oct-2020 : @@nishi  :if Enrolment package type is Prepayemnt or promo thenChange the next bill dates in Subs line items and Subscription to the first day of the next month
+     Public static Enrolment__c  updateSubscriptionNextBillDate(Enrolment__c objEnrol,Date effectiveDate,date nextBillDate){
+        updatePromotionalEnrolment(objEnrol,effectiveDate,nextBillDate);
+        if(effectiveDate <= nextBillDate){
+            Subscription_line_item__c objLineItem= UpgradeDowngradeController.fetchSubsLineItem(objEnrol.id);
+            String subscriptionId = objLineItem.Subscription__c;
+            objLineItem.Next_Bill_Date__c = date.newInstance(effectiveDate.addMonths(1).year(), effectiveDate.addMonths(1).month(), 1);
+            update objLineItem;
+            //Update Subscription next bill date with minimum date of its line item
+            if(String.isNotBlank(subscriptionId)){
+                Date minDate;
+                Subscription__c subsciptionObj = new Subscription__c();
+                subsciptionObj.Id = subscriptionId;
+                List<AggregateResult> AggregateResultList = [select MIN(Next_Bill_Date__c) mindate from Subscription_line_item__c 
+                                                            WHERE Subscription__c =: subscriptionId AND 
+                                                            Status__c =: ConstantsClass.activeStatus]; 
+                for(AggregateResult aggResult : AggregateResultList){
+                    subsciptionObj.Next_Bill_Date__c = Date.valueOf(aggResult.get('mindate'));
+                }
+                if(String.isNotBlank(subsciptionObj.Id)){
+                    update subsciptionObj;
+                }
+            }
+        }
+        return fetchEnrolment(objEnrol.id);
+    }
+    // 21-Oct-2020 : @@nishi  : update enrolment Prepayemnt end date and change package field
+    Public static void updatePromotionalEnrolment(Enrolment__c objEnrol,Date effectiveDate,date nextBillDate){
+        objEnrol.Package_To_Be_Change__c = null;
+        if(effectiveDate <= nextBillDate){
+            objEnrol.prepayment_period_end_date__c = effectiveDate;
+            objEnrol.Promotional_Period_End_Date__c = effectiveDate;
+        }
+        update objEnrol;
+       //system.debug('@@@updateEnrolment - updated enrolment -- '+enrolment);
+    }
+     // 21-Oct-2020 : @@nishi  :if Enrolment package type is Prepayemnt or promo thenChange the next bill dates in Subs line items and Subscription to the first day of the next month
+     
+
        /*
 *  This method is use for Cancel the future makeup bookings of the enrolment and delete the busy placeholder.
 */
@@ -146,6 +186,7 @@ public without sharing class AdvanceActionsHelper {
                                             New_Teacher__r.id,New_Teacher__r.Employee_Duty_Type__c,Package__c, Package__r.Duration__c,Parent__c,
                                             Center__r.Country__r.Tax_Rate__c, Center__r.Country__r.Currency_Code__c, 
                                             Center__r.Country__r.Stripe_Secret_Key__c, Center__r.Country__r.Stripe_Base_Url__c,Center__r.Country__r.Id, 
+                                            Type_of_Package__c,prepayment_period_end_date__c,Package_To_Be_Change__c,Promotional_Period_End_Date__c,//added by nishi: update enrolment Prepayemnt end date and change package field
                                             //Start: added by nishi: 24-Aug-2020: for manage tax according to organisation
                                             Center__r.Organisation__r.Tax_Rate__c, Center__r.Organisation__r.Country__r.Currency_Code__c, 
                                             Center__r.Organisation__r.Stripe_Secret_Key__c, Center__r.Organisation__r.Stripe_Base_Url__c,Center__r.Organisation__r.Id, 

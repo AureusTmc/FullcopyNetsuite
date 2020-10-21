@@ -1158,7 +1158,8 @@ system.debug('@@About to sendBookingCancelMail');
     
     
     public static void createFifthBookingOnUpgrade(Enrolment__c enrol, Map<String, Booking__c> mapOfFifthBookings, Integer timeDiff, Time startTime, Integer duration){
-        List<Booking__c> bookingsList = new List<Booking__c>();
+        List<Booking__c> bookingsinsertList = new List<Booking__c>();
+        map<string,Booking__c> mapbookingsupdate = new map<string,Booking__c>();
         List<Booking__c> cancelBookings = new List<Booking__c>();
         Decimal availableUnits = 0;
        
@@ -1172,10 +1173,11 @@ system.debug('@@About to sendBookingCancelMail');
         }
        //System.debug('cancelBookings'+cancelBookings);
        //System.debug('availableUnits'+availableUnits);
+       Booking__c bookObj = new Booking__c();
+       Booking__c newBook = new Booking__c();
         for(String bookingId : mapOfFifthBookings.keySet()){
-            Booking__c bookObj = mapOfFifthBookings.get(bookingId);
-            Booking__c newBook = new Booking__c();
-            
+            bookObj = mapOfFifthBookings.get(bookingId);
+            newBook = new Booking__c();
             if(startTime != NULL && duration > 0){
                 bookObj.start_Time__c = startTime;
                 bookObj.end_Time__c = bookObj.start_Time__c.addMinutes(duration);
@@ -1200,8 +1202,7 @@ system.debug('@@About to sendBookingCancelMail');
                             hoursToDeduct -= Integer.valueOf(bookingObj.Available_Make_up_Units__c);
                             bookingObj.Available_Make_up_Units__c = 0;
                         }
-                        bookingsList.add(bookingObj);
-                        
+                        mapbookingsupdate.put(bookingObj.id,bookingObj);
                         if(hoursToDeduct == 0){
                             break;
                         }
@@ -1224,12 +1225,16 @@ system.debug('@@About to sendBookingCancelMail');
                 bookObj.end_Time__c = bookObj.end_Time__c.addMinutes(timeDiff);
             }
             
-            bookingsList.add(bookObj);
-            bookingsList.add(newBook);
+            //bookingsList.add(bookObj);
+            mapbookingsupdate.put(bookingId,bookObj);
+            bookingsinsertList.add(newBook);
             
         }
-        if(bookingsList.size() > 0){
-            upsert bookingsList; 
+        if(bookingsinsertList.size() > 0){
+            upsert bookingsinsertList; 
+        }
+        if(mapbookingsupdate.size() > 0){
+            upsert mapbookingsupdate.values(); 
         }
        //System.debug('bookingsList'+bookingsList);
         
