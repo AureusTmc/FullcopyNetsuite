@@ -86,13 +86,21 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                 oldPackage = enroll.Package__c;
                 centreId = enroll.center__c;
             }
+            date nextBillDate = AdvanceActionsHelper.fetchNextBillDateFromEnrolment(enroll);
+            // added by nishi: 22-Oct-2020: for some limited user can downgrade prepayment enrolment
+            Boolean isPromotionalEnrolment=false;
+            if( String.isNotBlank(enroll.Type_of_Package__c) && (enroll.Type_of_Package__c == ConstantsClass.prePaymentType || enroll.Type_of_Package__c == ConstantsClass.PromoTypePayment)){
+                isPromotionalEnrolment= true;
+            }
+            // added by nishi: 22-Oct-2020: for some limited user can downgrade prepayment enrolment
+
             system.debug('isSuccessCreatePaymentsDowngradeProcess'+depositamount);
             if(String.isNotBlank(enrollmentId)){
                 isSuccess = isSuccessCreatePaymentsDowngradeProcess(mapOfCase, enroll, effectiveDate, depositamount, lessonsFees, 
-                            oldPackageId, newPackageId,newTeacherId,organisationObj);//centreCountry);
+                            oldPackageId, newPackageId,newTeacherId,organisationObj,isPromotionalEnrolment);//centreCountry);
             }
         //system.debug('isSuccess'+isSuccess); 
-
+            
             if(isSuccess){
                 if(String.isNotBlank(enrollmentId)){
                     enroll.Id = enrollmentId;
@@ -111,7 +119,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                         enroll.Notice_Period_End_Date__c = enroll.Effective_Date__c;
                         enroll.Notice_Period_Start_Date__c = enroll.Notice_Period_End_Date__c.addDays(-30);
                     }
-                    date nextBillDate = AdvanceActionsHelper.fetchNextBillDateFromEnrolment(enroll);
+                    
                     if(enroll.Effective_Date__c >= nextBillDate){
                         enroll.Package_Process_Status__c = ConstantsClass.enrollmentProcessPendingStatus;       
                     }else{
@@ -151,6 +159,12 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                     }
                 }                                                             
             }
+             // 21-Oct-2020 : @@nishi  :if Enrolment package type is Prepayemnt or promo thenChange the next bill dates in Subs line items and Subscription to the first day of the next month
+             if(isPromotionalEnrolment){
+                enroll = AdvanceActionsHelper.updateSubscriptionNextBillDate(enroll,effectiveDate,nextBillDate);
+            }
+            // 21-Oct-2020 : @@nishi  End::if Enrolment package type is Prepayemnt or promo thenChange the next bill dates in Subs line items and Subscription to the first day of the next month
+        
         //system.debug('caseRedirect'+caseRedirect); 
             if(isSuccess && caseRedirect == 'true'){
                 caseIdToReturn = getCaseIdToReturn(mapOfCase,myCaseId,enrollmentId,amount,lessonsFees,depositAmount);
@@ -160,10 +174,10 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                 caseIdToReturn = '';
             }
         }catch (Exception e){
-            //On 14-Oct-2020: Nishi to Add Custom Save Points so If Error Occures we can trace that.
-            Database.rollback(downgradeSavePoint);
             caseIdToReturn = 'error';
             System.debug('@@caseIdToReturn'+e.getStackTraceString()+'-'+e.getMessage() +';');
+              //On 14-Oct-2020: Nishi to Add Custom Save Points so If Error Occures we can trace that.
+              Database.rollback(downgradeSavePoint);
         }
         
         return caseIdToReturn ;
@@ -224,18 +238,23 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
     
     private static Boolean createPaymentsForDowngradeProcess(Enrolment__c objEnrol, Date lastLessonDateObj, Date nextBillDate, Decimal depositAmount,
      Decimal lessonsAmt, Decimal positiveInvoiceAmount, Decimal negativeInvoiceAmount, String oldPackId,String newPackId,String newTeacherId, Date effectiveDate, 
-     Organisation__c  organisationObj/*Country__c centreCountry*/,Map<String, String> mapOfCase ){
+     Organisation__c  organisationObj/*Country__c centreCountry*/,Map<String, String> mapOfCase,Boolean isPromotionalEnrolment ){
          
         // added by nishi: 19_aug-2020: for added facility fee is exist
         // Decimal facilityFee =  mapOfCase.containsKey('facilityFee') ? Decimal.valueOf(mapOfCase.get('facilityFee')) : 0;
         // Decimal negativeFacilityInvoiceAmount =  mapOfCase.containsKey('negativeFacilityInvoiceAmount') ? Decimal.valueOf(mapOfCase.get('negativeFacilityInvoiceAmount')) : 0;
         // Decimal positiveFacilityInvoiceAmount =  mapOfCase.containsKey('positiveFacilityInvoiceAmount') ? Decimal.valueOf(mapOfCase.get('positiveFacilityInvoiceAmount')) : 0;
         // // added by nishi: 19_aug-2020: for added facility fee is exist
+        Decimal negativeInvoiceDiscountAmount =  mapOfCase.containsKey('negativeInvoiceDiscountAmount') && mapOfCase.get('negativeInvoiceDiscountAmount') != null? Decimal.valueOf(mapOfCase.get('negativeInvoiceDiscountAmount')) : 0;
         Decimal positiveNextMonthInvoiceAmount  = mapOfCase.containsKey('positiveNextMonthInvoiceAmount') && mapOfCase.get('positiveNextMonthInvoiceAmount') != null? Decimal.valueOf(mapOfCase.get('positiveNextMonthInvoiceAmount')) : 0;
         Decimal negativeNextMonthInvoiceAmount =  mapOfCase.containsKey('negativeNextMonthInvoiceAmount') && mapOfCase.get('negativeNextMonthInvoiceAmount') != null? Decimal.valueOf(mapOfCase.get('negativeNextMonthInvoiceAmount')) : 0;
         Decimal nextMonthAmount =  mapOfCase.containsKey('lessonNextLessonCharge') && mapOfCase.get('lessonNextLessonCharge') != null? Decimal.valueOf(mapOfCase.get('lessonNextLessonCharge')) : 0;
         Boolean isTransaction = false;
+        List<Subscription_Line_Item__c> listSubLineItem = UpgradeDowngradeController.fetchSubsLineItems(objEnrol.Subscription_Line_Items__r[0].id);
         Subscription_Line_Item__c objSubLineItem;
+        if(listSubLineItem != null && listSubLineItem.size() > 0 ){
+            objSubLineItem  = listSubLineItem[0];
+        }
         String stripeId;
         Invoice__c objInvoice = new Invoice__c();
         List<Invoice_Line_Item__c> invoiceLineItems = new List<Invoice_Line_Item__c>();
@@ -266,46 +285,68 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
         if(depositAmount > 0){
             depositAmount = BillingUtility.roundOffAmount(depositAmount);
         }
+        Map<String,List<Credit_Memo__c>> mapOfParentPrepaymentCreditMemo = new Map<String,List<Credit_Memo__c>>();
+        if(isPromotionalEnrolment){
+            List<Invoice__c> listOfInvoice = UpgradeDowngradeController.getInvoiceDetails(objEnrol,lastLessonDateObj.addmonths(1),objSubLineItem) ;
+            mapOfParentPrepaymentCreditMemo =UpgradeDowngradeController.createCreditMemoForPrepaymentInvoice(listOfInvoice,objEnrol, lastLessonDateObj);
+        }
        //system.debug('@depositAmount'+depositAmount);
         if(depositAmount > 0 && objEnrol.Subscription_Line_Items__r.size() > 0){
             
-            objSubLineItem = objEnrol.Subscription_Line_Items__r[0];
+           
             stripeId = objSubLineItem.Subscription__r.Parent__r.Stripe_Customer_Id__c; 
             if(String.isNotBlank(stripeId)){
-               //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
-                //BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId, depositAmount, centreCountry.Currency_Code__c, centreCountry.Stripe_Base_Url__c, centreCountry.Stripe_Secret_Key__c);                 
+               //Insert Invoice if effective date is less than next bill date and deposit amount is positive
+               objInvoice = BillingUtility.fillInvoice(objSubLineItem.Subscription__c, objSubLineItem.Subscription__r.Parent__c, constantsClass.dueStatus);
+               objInvoice.Center__c = objSubLineItem.Subscription__r.Center__c;
+               insert objInvoice;
                 
-                BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId, depositAmount, organisationObj.country__r.Currency_Code__c, organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c);                 
-                if(chargeResponse.statusCode == 200 && chargeResponse.paid){
-                    isTransaction = true;
-                    
-                    //Insert Invoice if effective date is less than next bill date and deposit amount is positive
-                    objInvoice = BillingUtility.fillInvoice(objSubLineItem.Subscription__c, objSubLineItem.Subscription__r.Parent__c, constantsClass.paidStatus);
-                    objInvoice.Center__c = objSubLineItem.Subscription__r.Center__c;
-                    insert objInvoice;
-                    
-                    //add deposit invoice line item for the invoice
-                    Invoice_Line_Item__c inlineItemForDeposit = new Invoice_Line_Item__c();
-                    inlineItemForDeposit = PackageUpgradeController.createInvoiceLineItem(objInvoice.id, objSubLineItem, depositAmount, newPackId, true, '');
-                    inlineItemForDeposit.Is_Deposit__c = True;
-                    inlineItemForDeposit.month__c = effectiveDate;
-                    
-                    //invoiceLineItems.add(inlineItemForDeposit);
-                    newinvoiceLineItems.put('deposit',inlineItemForDeposit);
-                    if(String.isNotBlank(objInvoice.Id)){
-                        objInvoice = [SELECT Id,Name,Total_Amount__c,Parent_Account__c FROM Invoice__c WHERE Id =:objInvoice.Id];
-                        if(!Test.isRunningTest()){
-                            ////commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
-                            //  BillingUtility.updateCharge(chargeResponse.Id,objInvoice.Name, centreCountry.Stripe_Base_Url__c, centreCountry.Stripe_Secret_Key__c);
-                            BillingUtility.updateCharge(chargeResponse.Id,objInvoice.Name, organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c);
-                        }
-                        Payment__c objPayment = BillingUtility.fillPayment(objInvoice.Parent_Account__c, objInvoice.Id, depositAmount, ConstantsClass.successStatus);
-                        objPayment.Transaction_ID__c = chargeResponse.Id;
-                        objPayment.recordTypeId = paymentTransaction;
-                        objPayment.Method_of_Payment__c = ConstantsClass.cardModeType;
-                        listOfPayments.add(objPayment);
+                //add deposit invoice line item for the invoice
+                Invoice_Line_Item__c inlineItemForDeposit = new Invoice_Line_Item__c();
+                inlineItemForDeposit = PackageUpgradeController.createInvoiceLineItem(objInvoice.id, objSubLineItem, depositAmount, newPackId, true, '');
+                inlineItemForDeposit.Is_Deposit__c = True;
+                inlineItemForDeposit.month__c = effectiveDate;
+                
+                //invoiceLineItems.add(inlineItemForDeposit);
+                newinvoiceLineItems.put('deposit',inlineItemForDeposit);
+                decimal totalAmount = depositAmount;
+                // added by nishi: 23-oct-2020: for check if enrolment has promotional then  This invoice is adjusted with a credit memo. If a credit memo adjustment amount is less then the invoice amount then we charged via Stripe.
+                if(isPromotionalEnrolment){
+                    UpgradeDowngradeController.adjustPendingCreditMemoDeposit(objEnrol,lastLessonDateObj,objInvoice.Id,mapOfParentPrepaymentCreditMemo,true);
+                    Map<String,Decimal> parentCreditMemoTotal = BillingUtility.getParentCreditMemoMap(mapOfParentPrepaymentCreditMemo);
+                    Decimal accumulatedCreditMemoAmount =0;
+                    if(parentCreditMemoTotal.containsKey(objEnrol.parent__c)){
+                        accumulatedCreditMemoAmount = parentCreditMemoTotal.get(objEnrol.parent__c);
+                    }
+                    if(accumulatedCreditMemoAmount != null && accumulatedCreditMemoAmount > 0 && accumulatedCreditMemoAmount < totalAmount){ 
+                        totalAmount =  totalAmount - accumulatedCreditMemoAmount ;
                     }
                 }
+
+                    //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+                    //BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId, depositAmount, centreCountry.Currency_Code__c, centreCountry.Stripe_Base_Url__c, centreCountry.Stripe_Secret_Key__c);                 
+                if(totalAmount > 0){    
+                    BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId, totalAmount, organisationObj.country__r.Currency_Code__c, organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c);                 
+                    if(chargeResponse.statusCode == 200 && chargeResponse.paid){
+                        isTransaction = true;
+                        objInvoice.Status__c = constantsClass.paidStatus;
+                        update objInvoice;
+                        if(String.isNotBlank(objInvoice.Id)){
+                            objInvoice = [SELECT Id,Name,Total_Amount__c,Parent_Account__c FROM Invoice__c WHERE Id =:objInvoice.Id];
+                            if(!Test.isRunningTest()){
+                                ////commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+                                //  BillingUtility.updateCharge(chargeResponse.Id,objInvoice.Name, centreCountry.Stripe_Base_Url__c, centreCountry.Stripe_Secret_Key__c);
+                                BillingUtility.updateCharge(chargeResponse.Id,objInvoice.Name, organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c);
+                            }
+                            Payment__c objPayment = BillingUtility.fillPayment(objInvoice.Parent_Account__c, objInvoice.Id, totalAmount, ConstantsClass.successStatus);
+                            objPayment.Transaction_ID__c = chargeResponse.Id;
+                            objPayment.recordTypeId = paymentTransaction;
+                            objPayment.Method_of_Payment__c = ConstantsClass.cardModeType;
+                            listOfPayments.add(objPayment);
+                        }
+                    }
+                }
+                
             }
         }else if(depositAmount <= 0){
             isTransaction = true;
@@ -408,18 +449,33 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
             //added by nishi: 7-Oct-2020 : start:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
                     
             Map<String,Invoice__c> mapofinvoice = new Map<String,Invoice__c>();
-            for(Invoice__c invoiceobj : [Select id,Invoice_Date__c,(
-                                        Select id , Credit_Memo_Amount__c,Credit_Memo_tax__c
-                                        from Invoice_Line_Items__r 
-                                        where Enrolment__C =:objEnrol.id)
-                                        From Invoice__C 
-                                        Where  Parent_Account__c =: objEnrol.Parent__c
-                                        And invoice_type__c = 'Recurring']){
-                if(nextBillDate >= nextMonthDate && effectiveDate.month() < nextMonthDate.addMonths(-1).month() && invoiceobj.Invoice_Date__c.month() == nextMonthDate.addMonths(-1).month() ){
-                        mapofinvoice.put('Next Month',invoiceobj);
+            Map<String,Invoice_line_item__c> mapofinvoicelineitem = new Map<String,Invoice_line_item__c>();
+            for(Invoice__c invoiceobj : UpgradeDowngradeController.getInvoiceDetails(objEnrol,lastLessonDateObj,objSubLineItem)){
+                if(isPromotionalEnrolment){
+                    for(Invoice_line_item__c objlineitem: invoiceobj.Invoice_line_items__r){
+                        if(objlineitem.month__c.month() == lastLessonDateObj.month()){
+                            mapofinvoice.put('Current',invoiceobj);
+                            if(!objlineitem.Is_Discount__c)
+                                mapofinvoicelineitem.put('Current',objlineitem);
+                            else if(objlineitem.Is_Discount__c)
+                                mapofinvoicelineitem.put('DiscountInvoice',objlineitem);
+                        }
+                    }
                 }else{
-                    if(invoiceobj.Invoice_Date__c.month() == system.today().month()){
-                        mapofinvoice.put('Current',invoiceobj);
+                    string invoiceMonth ='';
+                    if(invoiceobj.Invoice_Date__c.month() == lastLessonDateObj.month())
+                        invoiceMonth = 'Current';
+                    if(nextBillDate >= nextMonthDate && lastLessonDateObj.month() < nextMonthDate.addMonths(-1).month() && invoiceobj.Invoice_Date__c.month() == nextMonthDate.addMonths(-1).month() )
+                        invoiceMonth = 'Next Month';
+                    system.debug('invoiceMonth'+invoiceMonth);
+                    if(string.isnotBlank(invoiceMonth)){
+                        mapofinvoice.put(invoiceMonth,invoiceobj);
+                        for(Invoice_line_item__c objlineitem: invoiceobj.Invoice_line_items__r){
+                            updateInvoiceLineItem.put(objlineitem.id,objlineitem);
+                            system.debug('objlineitem'+objlineitem);
+                            if(!objlineitem.Is_Discount__c)
+                                mapofinvoicelineitem.put(invoiceMonth,objlineitem);
+                        }
                     }
                 }
             }
@@ -437,7 +493,6 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
             newPendingCreditMemos.put('Downgrade Enrolment Adjustment',objCreditMemo);
             system.debug('objCreditMemo'+objCreditMemo);    
             listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
-            //added by nishi: 7-Oct-2020 : start:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
            
             //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
             
@@ -558,8 +613,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                     }
                     objCreditLineItem = BillingUtility.createCreditMemoLineRec(BillingUtility.roundOffAmount(math.abs(negativeNextMonthInvoiceAmountAdjustement)),
                                                     math.abs(negativeNextMonthInvoiceAmountAdjustementGST),oldPackId,
-                                                    objEnrol.id,invoicelineitemId,'');
-                                                    objCreditLineItem.Month__c = nextMonthDate.addMonths(-1);
+                                                    objEnrol.id,invoicelineitemId,'',nextMonthDate.addMonths(-1));
                                                     objInvoice.Credit_Memo_Amount__c += (math.abs(negativeNextMonthInvoiceAmountAdjustement) + math.abs(negativeNextMonthInvoiceAmountAdjustementGST));
                     listOfCreditmemolineitem.add(objCreditLineItem);                                      
                     mapOfCreditmemolineitem.put('Downgrade Enrolment Adjustment',listOfCreditmemolineitem);  
@@ -600,10 +654,14 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                
                 */
                 String invoicelineitemId = null;
-                if(mapofinvoice != null && mapofinvoice.size() > 0 ){
-                    if(mapofinvoice.containskey('Current')){
-                        if(mapofinvoice.get('Current').Invoice_Line_Items__r != null && mapofinvoice.get('Current').Invoice_Line_Items__r.size()>0){
-                            invoicelineitemId =mapofinvoice.get('Current').Invoice_Line_Items__r[0].id; 
+                if(isPromotionalEnrolment && mapofinvoicelineitem.containskey('Current')){
+                    invoicelineitemId =mapofinvoicelineitem.get('Current').id; 
+                }else{
+                    if(mapofinvoice != null && mapofinvoice.size() > 0 ){
+                        if(mapofinvoice.containskey('Current')){
+                            if(mapofinvoice.get('Current').Invoice_Line_Items__r != null && mapofinvoice.get('Current').Invoice_Line_Items__r.size()>0){
+                                invoicelineitemId =mapofinvoice.get('Current').Invoice_Line_Items__r[0].id; 
+                            }
                         }
                     }
                 }
@@ -615,8 +673,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                 }
                 objCreditLineItem = BillingUtility.createCreditMemoLineRec(BillingUtility.roundOffAmount(math.abs(negativeInvoiceAmountAdjustement)),
                                                 math.abs(negativeInvoiceAmountAdjustementGST),oldPackId,
-                                                objEnrol.id,invoicelineitemId,'');
-                                                objCreditLineItem.Month__c = effectiveDate;
+                                                objEnrol.id,invoicelineitemId,'',effectiveDate);
                                                 objInvoice.Credit_Memo_Amount__c += (math.abs(negativeInvoiceAmountAdjustement) + math.abs(negativeInvoiceAmountAdjustementGST));
                 listOfCreditmemolineitem.add(objCreditLineItem);     
                 system.debug('objCreditLineItem'+objCreditLineItem);                                        
@@ -637,7 +694,9 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                             Credit_Memo_Amount__c =invoicelineItemCreditAmount+math.abs(negativeInvoiceAmount),
                                             Credit_Memo_tax__c=invoicelineItemCreditGst+math.abs(negativeInvoiceAmountGST)));
                 }
-                
+
+
+                 
                //start: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
                 // if(facilityFee  != null && facilityFee != 0){
                 //     lessonsAmt+=facilityFee;
@@ -650,12 +709,10 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                                   
                                                   Parent_Account__c = objEnrol.Parent__c, Payment_Date__c = lastLessonDateObj));
                                                   */
-                Decimal taxAmount = 0;
-                if(gstAmount != null && gstAmount != 0){
-                    taxAmount =lessonsAmt * gstAmount/(100+gstAmount); 
-                }
-                system.debug('taxAmount'+taxAmount);
-                system.debug('lessonsAmt'+lessonsAmt);
+                
+
+                
+                
                 invoiceId = null;
                 invoicelineitemId = null;
                 string nextMonthinvoicelineitemId = null;
@@ -676,22 +733,57 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                 newPendingCreditMemos.put('Remaining Lessons Adjustment',objCreditMemo);
                 system.debug('objCreditMemo'+objCreditMemo);
                 listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
-                 objCreditLineItem = BillingUtility.createCreditMemoLineRec(lessonsAmt - BillingUtility.roundOffAmount(taxAmount),
-                                                BillingUtility.roundOffAmount(taxAmount),oldPackId,
-                                                objEnrol.id,invoicelineitemId,'Remaining Lessons Adjustment');
-                                                objCreditLineItem.Month__c = lastLessonDateObj;
-                listOfCreditmemolineitem.add(objCreditLineItem); 
-                if(string.isNotBlank(invoicelineitemId) ){
-                    decimal invoicelineItemCreditAmount=0;
-                    decimal invoicelineItemCreditGst=0;
-                    if(updateInvoiceLineItem.containskey(invoicelineitemId)){
-                        invoicelineItemCreditAmount =updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_Amount__c != null ?updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_Amount__c :0;
-                        invoicelineItemCreditGst = updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_tax__c != null ?updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_tax__c :0;
-                        
+                //start: added by nishi: 23-Aug-2020: for now user also can change enrolment process which type of package is promo and prepayment then we manage discount amount
+                if(isPromotionalEnrolment && negativeInvoiceDiscountAmount != null && negativeInvoiceDiscountAmount !=0){
+                    lessonsAmt +=negativeInvoiceDiscountAmount;
+                    String discountlineitemId = null;
+                    if(isPromotionalEnrolment && mapofinvoicelineitem.containskey('DiscountInvoice')){
+                        discountlineitemId =mapofinvoicelineitem.get('DiscountInvoice').id; 
                     }
-                    updateInvoiceLineItem.put(invoicelineitemId,new Invoice_Line_Item__c(id=invoicelineitemId,
-                                            Credit_Memo_Amount__c =invoicelineItemCreditAmount+(lessonsAmt - BillingUtility.roundOffAmount(taxAmount)),
-                                            Credit_Memo_tax__c=invoicelineItemCreditGst+BillingUtility.roundOffAmount(taxAmount)));
+                    decimal negativeInvoiceDiscountAmountGST = 0;
+                    if(negativeInvoiceDiscountAmount != NULL  && gstAmount > 0){
+                        negativeInvoiceDiscountAmountGST =negativeInvoiceDiscountAmount * gstAmount/(100+gstAmount); 
+                    }
+                    objCreditLineItem = BillingUtility.createCreditMemoLineRec(-BillingUtility.roundOffAmount(negativeInvoiceDiscountAmount - BillingUtility.roundOffAmount(negativeInvoiceDiscountAmountGST)),
+                                                    -(negativeInvoiceDiscountAmountGST),oldPackId,
+                                                    objEnrol.id,discountlineitemId,'Remaining Lessons Adjustment',lastLessonDateObj);
+                                                    objCreditLineItem.Is_Discount__c = true;                                                    
+                    listOfCreditmemolineitem.add(objCreditLineItem);     
+                    if(string.isNotBlank(discountlineitemId) ){
+                        decimal invoicelineItemCreditAmount=0;
+                        decimal invoicelineItemCreditGst=0;
+                        if(updateInvoiceLineItem.containskey(discountlineitemId)){
+                            invoicelineItemCreditAmount =updateInvoiceLineItem.get(discountlineitemId).Credit_Memo_Amount__c != null ?updateInvoiceLineItem.get(discountlineitemId).Credit_Memo_Amount__c :0;
+                            invoicelineItemCreditGst = updateInvoiceLineItem.get(discountlineitemId).Credit_Memo_tax__c != null ?updateInvoiceLineItem.get(discountlineitemId).Credit_Memo_tax__c :0;
+                            
+                        }
+                        updateInvoiceLineItem.put(discountlineitemId,new Invoice_Line_Item__c(id=discountlineitemId,
+                                                Credit_Memo_Amount__c =invoicelineItemCreditAmount+(-BillingUtility.roundOffAmount(negativeInvoiceDiscountAmount - BillingUtility.roundOffAmount(negativeInvoiceDiscountAmountGST))),
+                                                Credit_Memo_tax__c=invoicelineItemCreditGst+(-negativeInvoiceDiscountAmountGST)));
+                    }
+                }
+                //start: added by nishi: 23-Aug-2020: for now user also can change enrolment process which type of package is promo and prepayment then we manage discount amount
+                Decimal taxAmount = 0;
+                if(lessonsAmt != null && lessonsAmt !=0){
+                    if(gstAmount != null && gstAmount != 0){
+                        taxAmount =lessonsAmt * gstAmount/(100+gstAmount); 
+                    }
+                    objCreditLineItem = BillingUtility.createCreditMemoLineRec(lessonsAmt - BillingUtility.roundOffAmount(taxAmount),
+                                                    BillingUtility.roundOffAmount(taxAmount),oldPackId,
+                                                    objEnrol.id,invoicelineitemId,'Remaining Lessons Adjustment',lastLessonDateObj);
+                    listOfCreditmemolineitem.add(objCreditLineItem); 
+                    if(string.isNotBlank(invoicelineitemId) ){
+                        decimal invoicelineItemCreditAmount=0;
+                        decimal invoicelineItemCreditGst=0;
+                        if(updateInvoiceLineItem.containskey(invoicelineitemId)){
+                            invoicelineItemCreditAmount =updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_Amount__c != null ?updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_Amount__c :0;
+                            invoicelineItemCreditGst = updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_tax__c != null ?updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_tax__c :0;
+                            
+                        }
+                        updateInvoiceLineItem.put(invoicelineitemId,new Invoice_Line_Item__c(id=invoicelineitemId,
+                                                Credit_Memo_Amount__c =invoicelineItemCreditAmount+(lessonsAmt - BillingUtility.roundOffAmount(taxAmount)),
+                                                Credit_Memo_tax__c=invoicelineItemCreditGst+BillingUtility.roundOffAmount(taxAmount)));
+                    }
                 }
                 taxAmount =0;    
                 if(nextMonthAmount  != null && nextMonthAmount != 0){
@@ -700,8 +792,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                     }
                     objCreditLineItem = BillingUtility.createCreditMemoLineRec(nextMonthAmount - BillingUtility.roundOffAmount(taxAmount),
                                             BillingUtility.roundOffAmount(taxAmount),oldPackId,
-                                            objEnrol.id,nextMonthinvoicelineitemId,'Remaining Lessons Adjustment');
-                        objCreditLineItem.Month__c =  nextMonthDate.addMonths(-1);
+                                            objEnrol.id,nextMonthinvoicelineitemId,'Remaining Lessons Adjustment',nextMonthDate.addMonths(-1));
                     listOfCreditmemolineitem.add(objCreditLineItem); 
                     if(string.isNotBlank(nextMonthinvoicelineitemId) ){
                         decimal invoicelineItemCreditAmount=0;
@@ -715,7 +806,8 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                                 Credit_Memo_tax__c=invoicelineItemCreditGst+math.abs(taxAmount)));
                     }
                 }
-               
+
+                
                 
                          
                 system.debug('objCreditLineItem'+objCreditLineItem);                        
@@ -734,14 +826,20 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
             //     }
                  //end: added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
               //System.debug('@@@balancedInvoice'+balancedInvoice);
-                if(balancedInvoice != NULL && balancedInvoice != 0){
+               /* if(balancedInvoice != NULL && balancedInvoice != 0){
                     /*Commented by nishi: 15-oct-2020: according to the new requirement we create one pending credit memo insteds of Credit Note Adjustment
                     invoiceLineItems.add(new Invoice_Line_Item__c(invoice__c = objInvoice.id,
                                             Amount__c = BillingUtility.roundOffAmount(balancedInvoice), 
                                             GST_Amount__c = balancedInvoiceGST,
                                             Month__c= effectiveDate, 
                                             Subscription_Line_Item__c = objEnrol.Subscription_Line_Items__r[0].Id,
-                                            Remarks__c ='Credit Note Adjustment'));*/
+                                            Remarks__c ='Credit Note Adjustment'));
+                     invoiceLineItems.add(new Invoice_Line_Item__c(invoice__c = objInvoice.id,
+                                            Amount__c = BillingUtility.roundOffAmount(balancedInvoiceNextMonth), 
+                                            GST_Amount__c = balancedInvoiceNextMonthGST,
+                                            Month__c= nextMonthDate.addMonths(-1), 
+                                            Subscription_Line_Item__c = objEnrol.Subscription_Line_Items__r[0].Id,
+                                            Remarks__c ='Credit Note Adjustment'));*-/
                      invoiceId = null;
                      invoicelineitemId = null;
                      nextMonthinvoicelineitemId = null;
@@ -782,7 +880,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                        
                     }   
                     mapOfCreditmemolineitem.put('Credit Note Adjustment',listOfCreditmemolineitem); 
-                }       
+                }   */    
                
                 
             }
@@ -842,7 +940,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
     }
     
     private Static Boolean isSuccessCreatePaymentsDowngradeProcess(Map<String, String> mapOfCase,Enrolment__c enrolmentObj,
-    Date effectiveDate, Decimal depositamount,Decimal lessonsFees,Id oldPackageId,Id newPackageId ,string newTeacherId,Organisation__c  organisationObj/*Country__c centreCountry*/){
+    Date effectiveDate, Decimal depositamount,Decimal lessonsFees,Id oldPackageId,Id newPackageId ,string newTeacherId,Organisation__c  organisationObj/*Country__c centreCountry*/,Boolean isPromotionalEnrolment){
         
         Decimal positiveAmt  = mapOfCase.containsKey('positiveInvoiceAmount') ? Decimal.valueOf(mapOfCase.get('positiveInvoiceAmount')) : 0;
         Decimal negativeAmt =  mapOfCase.containsKey('negativeInvoiceAmount') ? Decimal.valueOf(mapOfCase.get('negativeInvoiceAmount')) : 0;
@@ -868,7 +966,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
               //system.debug('@@@enrolmentObj.Center__r.country__r'+enrolmentObj.Center__r.country__r);
                return createPaymentsForDowngradeProcess(enrolmentObj, effectiveDate, enrolmentObj.Subscription_Line_Items__r[0].Next_Bill_Date__c,
                                                         depositamount, lessonsFees, positiveAmt,negativeAmt, oldPackageId,newPackageId, newTeacherId,
-                                                        effectiveDate,organisationObj,mapOfCase);    
+                                                        effectiveDate,organisationObj,mapOfCase,isPromotionalEnrolment);    
            }
         return false;    
     }

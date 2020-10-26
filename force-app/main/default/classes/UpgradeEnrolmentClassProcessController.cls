@@ -23,7 +23,7 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
     Private Date nextBillDate;
     /*Private Country__c countryObj;commented by @nishi 21 Sep 2020,Organisation wise charge as per new logic*/
     Private Organisation__c organisationObj;
-    Private UpgradeCaseCreation upgradeDetails;
+    Private UpgradeEnrolmentProcessController.UpgradeCaseCreation upgradeDetails;
     
     //Constructor to Initialize all the data members
     public UpgradeEnrolmentClassProcessController(String booking, String effectiveDateStr, String newPackage, 
@@ -44,7 +44,7 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
                                                       enrolmentObj = new Enrolment__c();
                                                       //countryObj = new Country__c();commented by @nishi 21 sep 2020,Organisation wise charge as per new logic
                                                       organisationObj = new Organisation__c();
-                                                      upgradeDetails = new UpgradeCaseCreation();
+                                                      upgradeDetails = new UpgradeEnrolmentProcessController.UpgradeCaseCreation();
                                                       
                                                   }
     
@@ -412,9 +412,9 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
     }*/
     
     //Hit API and create Invoice and Line Items and Payment Record if the Next Bill Date is Greater than Effective Date
-    Private UpgradeCaseCreation updatePackageNextDateIsGreater(String enrolmentId, Date effectiveDate, Date nextBillDate, String newPackageId, String oldPackageId, 
+    Private UpgradeEnrolmentProcessController.UpgradeCaseCreation updatePackageNextDateIsGreater(String enrolmentId, Date effectiveDate, Date nextBillDate, String newPackageId, String oldPackageId, 
                                                                Time newTimeSlot,/* Country__c countryObj*/Organisation__c  organisationObj,string newClassId,string newTeacherId){
-                                                                   UpgradeCaseCreation upgradeCaseDetails = new UpgradeCaseCreation();
+                                                                UpgradeEnrolmentProcessController.UpgradeCaseCreation upgradeCaseDetails = new UpgradeEnrolmentProcessController.UpgradeCaseCreation();
                                                                    Boolean isSuccess = false;
                                                                    String invoiceId;
                                                                    if(String.isNotBlank(enrolmentId) && nextBillDate != Null && effectiveDate != Null &&
@@ -428,10 +428,11 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
                                                                       }
                                                                    return upgradeCaseDetails;
                                                                }
-    public static UpgradeCaseCreation upgradeGroupPackage(Id enrollMentId,Date effectDate,Id PackageId,Id OldPackage, 
+    public static UpgradeEnrolmentProcessController.UpgradeCaseCreation upgradeGroupPackage(Id enrollMentId,Date effectDate,Id PackageId,Id OldPackage, 
                                                           Time timeslot, String currencyCode, String baseUrl, String apiKey,
                                                           Decimal taxRate, string newClassId,string newTeacherId){
-        UpgradeCaseCreation upgradePackageCaseDetails = new UpgradeCaseCreation();
+                                                            UpgradeEnrolmentProcessController.UpgradeCaseCreation upgradePackageCaseDetails = new UpgradeEnrolmentProcessController.UpgradeCaseCreation();
+        enrolment__c enrolmentObj = UpgradeDowngradeController.fetchEnrolment(enrollMentId);
         Boolean flag = false;
         String invoiceId;
         Map<String,Package__c> mapOfPackageFee = UpgradeDowngradeController.getPackage(oldPackage,PackageId);
@@ -449,7 +450,7 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
         //Create MAp for Create makeup Booking
         Map<String, Booking__c> mapOfMakeupBooking = new Map<String, Booking__c>();
         Date effectiveDate = effectDate; //objSubLineItem.Enrolment__r.Effective_Date__c;
-        List<Booking__c> listOfBookings = UpgradeDowngradeController.fetchListOfBookings(enrollmentId);
+        List<Booking__c> listOfBookings = UpgradeDowngradeController.fetchListOfBookings(enrollmentId,effectDate);
        //system.debug('@@listOfBookings'+listOfBookings);
        //system.debug('@@@effectDate'+effectDate);
         //@Jatin, 23 October 2019, Change due to populate the tax amount on invoice line item. 
@@ -459,11 +460,14 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
         Decimal totalAmount = 0; Decimal gstAmount = 0; Decimal totalWithNoGST = 0;
         Decimal fifthBookingPrice = 0;
         
-        
+        Integer countWithNewPackageupgrade = 0;
+        Integer countNextMonthPackageupgrade = 0;
+        Map<string,Decimal> invoiceAdjustmentMap = new Map<string,Decimal>();
         for(Booking__c objBooking : listOfBookings){
             if(objBooking.Booking_Date__c >= effectiveDate){
                 // @jatin:3 -dec: add group class
-                if(objBooking.Type__c == ConstantsClass.groupLessonTypeBooking ){//||objBooking.Type__c == ConstantsClass.groupLessonTypeBooking
+                if(objBooking.Type__c == ConstantsClass.groupLessonTypeBooking ){
+                    countWithNewPackageupgrade +=1;
                     newPackageUnitPrice += (newPackg.Unit_Fee__c - oldPackg.Unit_Fee__c);
                     if(taxRate > 0){
                         gstAmount += (newPackg.Unit_Fee__c - oldPackg.Unit_Fee__c) * taxRate/100;
@@ -471,6 +475,8 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
                 } 
             }
         }
+        invoiceAdjustmentMap.put('positiveInvoiceAmount',(countWithNewPackageupgrade * newPackg.Unit_Fee__c));
+        invoiceAdjustmentMap.put('negativeInvoiceAmount',(countWithNewPackageupgrade * oldPackg.Unit_Fee__c));
         // // added by Nishi: 21-Sep-2020: if next billing date is greater then next month then we create new invoice for adjuct new upgraded package unitfee 
        //  // ex: 12-Aug-2020 effective date and next Billing date 01-Oct-2020 
         date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1);
@@ -479,7 +485,8 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
             List<Booking__c> listOfNextMonthBookings = UpgradeDowngradeController.fetchListOfNextMonthBookings(enrollmentId);
             for(Booking__c objBooking : listOfNextMonthBookings){
                 if(objBooking.Booking_Date__c >= effectiveDate){
-                    if(objBooking.Type__c == ConstantsClass.bookTypeRegular ){//||objBooking.Type__c == ConstantsClass.groupLessonTypeBooking
+                    if(objBooking.Type__c == ConstantsClass.groupLessonTypeBooking){
+                        countNextMonthPackageupgrade+=1;
                         newPackageNextMonthPrice += (newPackg.Unit_Fee__c - oldPackg.Unit_Fee__c);
                         if(taxRate > 0){
                             gstNextMonthAmount += (newPackg.Unit_Fee__c - oldPackg.Unit_Fee__c) * taxRate/100;
@@ -487,6 +494,8 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
                     }      
                 }
             }
+            invoiceAdjustmentMap.put('positiveNextMonthInvoiceAmount',(countNextMonthPackageupgrade * newPackg.Unit_Fee__c));
+            invoiceAdjustmentMap.put('negativeNextMonthInvoiceAmount',(countNextMonthPackageupgrade * oldPackg.Unit_Fee__c));
         }
            // // added by Nishi: 21-Sep-2020: if next billing date is greater then next month then we create new invoice for adjuct new upgraded package unitfee 
        //  // ex: 12-Aug-2020 effective date and next Billing date 01-Oct-2020 
@@ -500,12 +509,10 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
             currentPackageDeposit = AureusCalendarController.getDepositFromFile(enrollMentId);
         }
         
-        depositeFee = BillingUtility.roundOffAmount(newPackg.Deposit_Fee__c - currentPackageDeposit);
-        newPackageUnitPrice = BillingUtility.roundOffAmount(newPackageUnitPrice);
-        gstAmount = BillingUtility.roundOffAmount(gstAmount);
+        depositeFee = (newPackg.Deposit_Fee__c - currentPackageDeposit);
         
-        totalAmount = BillingUtility.roundOffAmount(newPackageUnitPrice + gstAmount + depositeFee);
-        totalWithNoGST = BillingUtility.roundOffAmount(newPackageUnitPrice + depositeFee);
+        totalAmount = (newPackageUnitPrice + gstAmount + depositeFee);
+        totalWithNoGST = (newPackageUnitPrice + depositeFee);
         String stripeId = objSubLineItem.Subscription__r.Parent__r.Stripe_Customer_Id__c;
        //system.debug('@@@@@newPackageUnitPrice'+newPackageUnitPrice);
        //system.debug('@@@@@gstAmount'+gstAmount);
@@ -525,89 +532,68 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
         upgradePackageCaseDetails.lessonCharge = BillingUtility.roundOffAmount(lessonCharge);
         totalAmount = BillingUtility.roundOffAmount(totalAmount);
         totalWithNoGST = BillingUtility.roundOffAmount(totalWithNoGST);
-        totalAmount = BillingUtility.roundOffAmount(totalAmount);
-        gstAmount = BillingUtility.roundOffAmount(gstAmount);
-        
-        
         if(String.isNotBlank(stripeId) && totalAmount > 0){
-            BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId,totalAmount, currencyCode, baseUrl, apiKey); 
-           //system.debug('@@chargeResponse'+chargeResponse);
-            if(chargeResponse.statusCode == 200 && chargeResponse.paid){
-                flag = true;
-                upgradePackageCaseDetails.isSuccess = true;
-                Invoice__c objInvoice = BillingUtility.fillInvoice(objSubLineItem.Subscription__c,objSubLineItem.Subscription__r.Parent__c,constantsClass.paidStatus);
-                objInvoice.Center__c = objSubLineItem.Subscription__r.Center__c;
-                Invoice_Line_Item__c inlineItemForChange = new Invoice_Line_Item__c();
-                List<Invoice_Line_Item__c> listOfInvoiceLineItems = new List<Invoice_Line_Item__c>();
-                insert objInvoice;
-               //system.debug('@@objInvoice'+objInvoice);
-                if(String.isNotBlank(objInvoice.Id)){
-                    upgradePackageCaseDetails.invoiceId = objInvoice.Id;
-                }
-                if(depositeFee > 0){
-                    inlineItemForChange = PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,BillingUtility.roundOffAmount(depositeFee), newPackg.Id,true, '');
-                    inlineItemForChange.Is_Deposit__c = True;
-                    inlineItemForChange.month__c = effectiveDate;
-                    listOfInvoiceLineItems.add(inlineItemForChange);
-                    
-                }
-                if(upgradePackageCaseDetails.lessonCharge > 0){
-                    inlineItemForChange = PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,BillingUtility.roundOffAmount(newPackageUnitPrice), newPackg.Id,FALSE, objSubLineItem.Enrolment__r.teacher__c);
-                    inlineItemForChange.month__c = effectiveDate;
-                    listOfInvoiceLineItems.add(inlineItemForChange);
-                   // 21-Sep=-2020: nishi: for added new line item for next month invoice already generated
-                    if(newPackageNextMonthPrice != 0){
-                        inlineItemForChange = PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,BillingUtility.roundOffAmount(newPackageNextMonthPrice), newPackg.Id,FALSE, objSubLineItem.Enrolment__r.teacher__c);
-                        inlineItemForChange.month__c = nextMonthDate.addMonths(-1);
-                        listOfInvoiceLineItems.add(inlineItemForChange);
-                    }
-                    // 21-Sep=-2020: nishi: for added new line item for next month invoice already generated
-                }
+            upgradePackageCaseDetails.isSuccess = true;
+            upgradePackageCaseDetails = invoiceForupgradegroupleassonPackages( upgradePackageCaseDetails, enrolmentObj,
+                                                stripeId,   currencyCode, baseUrl, apiKey, objSubLineItem , depositeFee,
+                                                oldPackg,  newPackg,  effectDate,  timeslot,  taxRate, newTeacherId, invoiceAdjustmentMap, newClassId,totalAmount);
+            if(upgradePackageCaseDetails.isSuccess){
                 if(totalWithNoGST > 0){
                     upgradePackageCaseDetails.total = totalWithNoGST;
                 }
-                if(fifthBookingPrice > 0){
-                    inlineItemForChange = PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,BillingUtility.roundOffAmount(fifthBookingPrice),newPackg.Id,FALSE, objSubLineItem.Enrolment__r.teacher__c);
-                    inlineItemForChange.month__c = effectiveDate;
-                    listOfInvoiceLineItems.add(inlineItemForChange);
+            }
+        }else{
+            //flag = false;
+            upgradePackageCaseDetails.isSuccess = false;
+        }
+        
+       //system.debug('@@upgradePackageCaseDetails'+upgradePackageCaseDetails);
+        return upgradePackageCaseDetails ;
+    }
+
+    Private static UpgradeEnrolmentProcessController.UpgradeCaseCreation invoiceForupgradegroupleassonPackages(UpgradeEnrolmentProcessController.UpgradeCaseCreation upgradePackageCaseDetails,enrolment__c objEnrol,
+                                                                        String stripeId, string currencyCode,string baseUrl,string apiKey,Subscription_Line_Item__c objSubLineItem ,Decimal depositeFee,
+                                                                        Package__c oldPackg, Package__c newPackg, Date effectDate, Time timeslot, Decimal taxRate,string newTeacherId,
+                                                                        Map<string,Decimal> invoiceAdjustmentMap,string newClassId,decimal totalAmount){
+        if(totalAmount > 0){
+            Invoice__c objInvoice  = new Invoice__c();
+            BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId,totalAmount, currencyCode, baseUrl, apiKey); 
+            //system.debug('@@chargeResponse'+chargeResponse);
+            if(chargeResponse.statusCode == 200 && chargeResponse.paid){
+                    // added by nishi: 24-oct-2020:  We have created a new invoice for additional deposits and full lesson fees for the enhanced package for the remaining period in the current invoice. we create a credit memo for  the previous package for the remaining period
+                // and then adjust this credit memo to the newly upgraded package invoice And the remaining invoice amount we charged via Stripe.                                                                
+                Map<String,List<Credit_Memo__c>>  mapOfParentCreditMemo = UpgradeDowngradeController.createCreditMemoForCurrentMonthUpgradeProcess(invoiceAdjustmentMap,objEnrol,effectDate,objSubLineItem, taxRate, false,oldPackg.id);
+                upgradePackageCaseDetails =  UpgradeDowngradeController.createUpgradedAmountInvoice( objSubLineItem, depositeFee,oldPackg,  newPackg,  effectDate,  taxRate, newTeacherId, objEnrol,mapOfParentCreditMemo,upgradePackageCaseDetails,invoiceAdjustmentMap);
+                if(string.isNotBlank(upgradePackageCaseDetails.invoiceId)){
+                    objInvoice = [SELECT Id,Name,Total_Amount__c,Balance_Amount__c,Status__c, Parent_Account__c FROM Invoice__c WHERE Id =:upgradePackageCaseDetails.invoiceId];
+                    objInvoice.Status__c = constantsClass.paidStatus;
+                    update objInvoice;
                 }
-                if(listOfInvoiceLineItems.size() > 0){
-                    INSERT listOfInvoiceLineItems;
-                } 
-               //system.debug('@@listOfInvoiceLineItems'+listOfInvoiceLineItems);
-                objInvoice = [SELECT Id,Name,Total_Amount__c,Parent_Account__c FROM Invoice__c WHERE Id =:objInvoice.Id];
+                upgradePackageCaseDetails.isSuccess = true;
                 
                 if(String.isNotBlank(baseUrl) && String.isNotBlank(apiKey)){
                     BillingUtility.updateCharge(chargeResponse.Id,objInvoice.Name, baseUrl, apiKey);                    
                 }
-                
-                
                 Payment__c objPayment = BillingUtility.fillPayment(objInvoice.Parent_Account__c,objInvoice.Id,totalAmount,ConstantsClass.successStatus);
                 objPayment.Transaction_ID__c = chargeResponse.Id;
                 objPayment.Method_of_Payment__c = ConstantsClass.cardModeType;
                 INSERT objPayment; 
-                
-               //system.debug('@@objPayment'+objPayment);
                 if(objInvoice != NULL){
                     BillingUtility.createAttachment(new Set<String>{objInvoice.Id});
                 }
-                upgradePackageCaseDetails.enrolObj = updateEnrollment(enrollMentId,PackageId, timeslot, effectDate,newClassId,newTeacherId);
-                upgradePackageCaseDetails.enrolObj = UpgradeDowngradeController.fetchEnrolment(enrollMentId);
-               //system.debug('@@@upgradePackageCaseDetails.enrolObj '+upgradePackageCaseDetails.enrolObj );
+                upgradePackageCaseDetails.enrolObj = updateEnrollment(objEnrol.id,newPackg.Id, timeslot, effectDate,newClassId,newTeacherId);
+                upgradePackageCaseDetails.enrolObj = UpgradeDowngradeController.fetchEnrolment(objEnrol.id);
                 if(String.isNotBlank(objPayment.id) && String.isNotBlank(objInvoice.id)){
                     SageIntacctIntegrationUtility.packageUpgrade(objInvoice.Id, objPayment.Id);
                 }
-                
             }else{
-                flag = false;
+                //flag = false;
                 upgradePackageCaseDetails.isSuccess = false;
-            }    
+            }  
         }else{
-            flag = false;
             upgradePackageCaseDetails.isSuccess = false;
-        }
-       //system.debug('@@upgradePackageCaseDetails'+upgradePackageCaseDetails);
-        return upgradePackageCaseDetails ;
+        }  
+        return upgradePackageCaseDetails;
     }
     
     
@@ -636,10 +622,10 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
     }
     
     //Hit API and create Invoice and Line Items and Payment Record if the Next Bill Date is Greater than Effective Date
-    Private UpgradeCaseCreation updatePackageEffectiveDateIsGreater(Enrolment__c enrolmentObj, String oldPackageId, String newPackageId,/* Country__c centreCountry*/
+    Private UpgradeEnrolmentProcessController.UpgradeCaseCreation updatePackageEffectiveDateIsGreater(Enrolment__c enrolmentObj, String oldPackageId, String newPackageId,/* Country__c centreCountry*/
     Organisation__c  organisationObj, Date effectiveDate){
         Boolean isSuccess = false;
-        UpgradeCaseCreation upgradePackageCaseDetails = new UpgradeCaseCreation();
+        UpgradeEnrolmentProcessController.UpgradeCaseCreation upgradePackageCaseDetails = new UpgradeEnrolmentProcessController.UpgradeCaseCreation();
         String invoiceId = '';
         String stripeId = '', parentId = '';
         Decimal currentPackageDeposit = 0;
@@ -873,13 +859,5 @@ public without sharing class UpgradeEnrolmentClassProcessController implements I
         }
     }*/
     
-    //Wrapper Class For Upgrade Enrolment Callout
-    public class UpgradeCaseCreation{
-        public String invoiceId;
-        public Decimal depositAmount;
-        public Decimal lessonCharge;
-        public Decimal total;
-        public Enrolment__c enrolObj;
-        public Boolean isSuccess = false;
-    }
+    
 }

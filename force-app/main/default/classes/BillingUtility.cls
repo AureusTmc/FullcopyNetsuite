@@ -268,6 +268,7 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
         }*/
         
     }
+    
      //@Nishi on 16-Sep:2020 Due to refund record not created for Deposit Adjust.
     // adjust deposit in invoice
   /*pplying a credit memo to the next invoice [Invoice generation process & Next month invoice]
@@ -303,6 +304,7 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
         List<Credit_memo_line_item__c> listOfDeletedCreditmemolineitem  = new  List<Credit_memo_line_item__c>();
         List<Credit_memo_line_item__c> listOfUpdatedCreditmemolineitem  = new  List<Credit_memo_line_item__c>();
         Map<String,Credit_memo_line_item__c> frominvoiceids = new Map<String,Credit_memo_line_item__c>();
+        Map<String,Decimal> creditmemoDiscounttotalAmount = getcreditmemoDiscounttotalAmount(mapOfParentCreditMemo,setOfParentIds);
         for(Invoice__c invoice : listOfInv){
             decimal existingCreditMemoAmount = (invoice.Credit_Memo_Amount__c != null && invoice.Credit_Memo_Amount__c>0) ? invoice.Credit_Memo_Amount__c :0;
             Credit_Memo__c newCreditMemo = new Credit_Memo__c();
@@ -337,12 +339,20 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
                                 adjustedPaymentAmount = adjustedPaymentAmount - remainingAmount;
                                 Double adjustmentCreditMemoLineItemAmount = objCreditMemo.Total_Amount__c - remainingAmount; 
                                 if(objCreditMemo.Credit_memo_line_items__r != null && objCreditMemo.Credit_memo_line_items__r.size() > 0){
+                                    // 26-Oct-2020:nishi: for if any dicount negative amount is found then we added this amount to total amount.
+                                    if(creditmemoDiscounttotalAmount.containskey(objCreditMemo.id)){
+                                        system.debug('creditmemoDiscounttotalAmount.get(objCreditMemo.id)'+creditmemoDiscounttotalAmount.get(objCreditMemo.id));
+                                        adjustmentCreditMemoLineItemAmount = adjustmentCreditMemoLineItemAmount + math.abs(creditmemoDiscounttotalAmount.get(objCreditMemo.id)) ; 
+                                    }
+                                    // 26-Oct-2020:nishi:end: for if any dicount negative amount is found then we added this amount to total amount.
+
                                     //One equivalent to the invoice amount and other the balance with the status pending
                                     for(Credit_memo_line_item__c objCreditmemolineitem : objCreditMemo.Credit_memo_line_items__r){
-                                        if(!objCreditmemolineitem.Is_Discount__c){
-                                            decimal totalCreditMemoLineItemAmountWithoutTax=objCreditmemolineitem.Amount__c;
-                                            decimal totalCreditMemoLineItemTax=(objCreditmemolineitem.Tax_Amount__c != null ?objCreditmemolineitem.Tax_Amount__c : 0); 
-                                            totalCreditMemoLineItemAmount =  objCreditmemolineitem.Amount__c+ (objCreditmemolineitem.Tax_Amount__c != null ?objCreditmemolineitem.Tax_Amount__c : 0); 
+                                        
+                                        decimal totalCreditMemoLineItemAmountWithoutTax=(objCreditmemolineitem.Amount__c != null ?objCreditmemolineitem.Amount__c : 0);
+                                        decimal totalCreditMemoLineItemTax= (objCreditmemolineitem.Tax_Amount__c != null ?objCreditmemolineitem.Tax_Amount__c : 0); 
+                                        totalCreditMemoLineItemAmount =  totalCreditMemoLineItemAmountWithoutTax+totalCreditMemoLineItemTax; 
+                                        if(totalCreditMemoLineItemAmount > 0){
                                             if(adjustmentCreditMemoLineItemAmount <= 0.00){
                                                 List<Credit_memo_line_item__c> listOfCreditmemolineitem  = new  List<Credit_memo_line_item__c>();
                                                 if(creditNoteAmountAdjustment.containsKey(invoice.id)){
@@ -445,7 +455,7 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
 
     
     // update old credit memo and insert new credit memo and related line item id credit memo amount is greated then invoice
-    public static void insertCreditmemoAndLineItem(List<Credit_Memo__c> newPendingCreditMemos,Map<String,List<Credit_memo_line_item__c>> creditNoteAmountAdjustment,
+    private static void insertCreditmemoAndLineItem(List<Credit_Memo__c> newPendingCreditMemos,Map<String,List<Credit_memo_line_item__c>> creditNoteAmountAdjustment,
      List<Credit_memo_line_item__c> listOfDeletedCreditmemolineitem,List<Credit_memo_line_item__c> listOfUpdatedCreditmemolineitem,Map<String, Credit_Memo__c> mapOfCreditMemos ){
         if(newPendingCreditMemos.size() > 0){
             Insert newPendingCreditMemos;  
@@ -487,7 +497,7 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
         }
     }
 
-    public static Credit_Memo__c manageCreditmemoAccordingtoPreviousCreditMemo(map<string,Credit_Memo__c> mapOfCreditmemodetilas,Credit_Memo__c newCreditMemo,string invoiceid){
+    private static Credit_Memo__c manageCreditmemoAccordingtoPreviousCreditMemo(map<string,Credit_Memo__c> mapOfCreditmemodetilas,Credit_Memo__c newCreditMemo,string invoiceid){
         if(mapOfCreditmemodetilas != null && mapOfCreditmemodetilas.size() >0 &&  mapOfCreditmemodetilas.containskey(invoiceid)){
             newCreditMemo.From_Invoice__c= mapOfCreditmemodetilas.get(invoiceid).From_Invoice__c;
             newCreditMemo.Payment_Method__c=  mapOfCreditmemodetilas.get(invoiceid).Payment_Method__c;
@@ -502,7 +512,7 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
         return newCreditMemo;
     }
     
-    public static Credit_Memo__c updateCreditmemo(invoice__c invoice,string remark ,Credit_Memo__c objCreditMemo){
+    private static Credit_Memo__c updateCreditmemo(invoice__c invoice,string remark ,Credit_Memo__c objCreditMemo){
         objCreditMemo.Status__c = ConstantsClass.creditMemoSuccessStatus;
         objCreditMemo.Invoice_Number__c = invoice.Id;
         objCreditMemo.Credit_Memo_Date__c = invoice.Invoice_Date__c; 
@@ -510,18 +520,18 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
         return objCreditMemo;
     }
 
-        // create credit memo line item records
-        public static Credit_memo_line_item__c createCreditMemoLineRec(Decimal amount,Decimal taxAmount,Id packageId,Id enrolmentId, Id invoiceLineItemId,String reasons) {
-            Credit_memo_line_item__c objCreditLineItem = new Credit_memo_line_item__c();
-            objCreditLineItem.Amount__c = amount;
-            objCreditLineItem.Tax_Amount__c = taxAmount;
-            objCreditLineItem.Package__c = packageId;
-            objCreditLineItem.Enrolment__c = enrolmentId;
-            objCreditLineItem.Invoice_Line_Item__c = invoiceLineItemId;
-            objCreditLineItem.Remarks__c = reasons;
-           //system.debug('objCreditLineItem'+objCreditLineItem);
-            return objCreditLineItem;
-          }
+    // create credit memo line item records
+    public static Credit_memo_line_item__c createCreditMemoLineRec(Decimal amount,Decimal taxAmount,Id packageId,Id enrolmentId, Id invoiceLineItemId,String reasons) {
+        Credit_memo_line_item__c objCreditLineItem = new Credit_memo_line_item__c();
+        objCreditLineItem.Amount__c = amount;
+        objCreditLineItem.Tax_Amount__c = taxAmount;
+        objCreditLineItem.Package__c = packageId;
+        objCreditLineItem.Enrolment__c = enrolmentId;
+        objCreditLineItem.Invoice_Line_Item__c = invoiceLineItemId;
+        objCreditLineItem.Remarks__c = reasons;
+        //system.debug('objCreditLineItem'+objCreditLineItem);
+        return objCreditLineItem;
+        }
 
      // create credit memo line item records
       public static Credit_memo_line_item__c createCreditMemoLineRec(Decimal amount,Decimal taxAmount,Id packageId,Id enrolmentId, Id invoiceLineItemId,String reasons,date creditMemoDate) {
@@ -1545,7 +1555,7 @@ List<Task> listOftask = new List<Task>();
        // commented by :18-dec:2019 jatin for manage regular and group lesson bookings available mins 
        //Map<String, Decimal> mapOfParentAggregate = new Map<String, Decimal>();
         Map<String, String> mapOfParentAggregate = new Map<String, String>();
-        Map<String, String> mapOfEnrolmentAggregate = new Map<String, String>();
+        Map<String, Decimal> mapOfEnrolmentAggregate = new Map<String, Decimal>();
         Map<String, String> mapOfStudentAndParent = new Map<String,String>();
         Map<String,String> mapOfSelfParent = new Map<String,String>();
         List<Account> listOfAccountsToUpdate = new List<Account>();
@@ -1586,16 +1596,18 @@ List<Task> listOftask = new List<Task>();
             String orgName = (String) agrResult.get('orgName');
            //system.debug('orgName'+orgName);
             String enrollId = (String) agrResult.get('enrollId');
-            if(String.isNotBlank(enrollId) &&String.isNotBlank(orgName) &&  orgName.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
-                string availableMakeupMins =mapOfEnrolmentAggregate.containsKey(enrollId)
-                                        ? mapOfEnrolmentAggregate.get(enrollId) : '0-0';
-                    Decimal sumToAddAvailableMakeupMins = decimal.valueOf(availableMakeupMins.split('-')[0]);
+            if(String.isNotBlank(orgName) &&  orgName.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                if(String.isNotBlank(enrollId)){
+                    Decimal availableMakeupMins =mapOfEnrolmentAggregate.containsKey(enrollId)
+                                        ? mapOfEnrolmentAggregate.get(enrollId) : 0;
+                    Decimal sumToAddAvailableMakeupMins = availableMakeupMins;//decimal.valueOf(availableMakeupMins.split('-')[0]);
                     if(creditSum!= NULL){
                         sumToAddAvailableMakeupMins += creditSum;
                     }
-                    availableMakeupMins = sumToAddAvailableMakeupMins+'-'+ availableMakeupMins.split('-')[1];
-                    mapOfEnrolmentAggregate.put(enrollId, availableMakeupMins);
+                    //availableMakeupMins = sumToAddAvailableMakeupMins;//+'-'+ availableMakeupMins.split('-')[1];
+                    mapOfEnrolmentAggregate.put(enrollId, sumToAddAvailableMakeupMins);
                    //system.debug('mapOfEnrolmentAggregate'+mapOfEnrolmentAggregate);
+                }
             }
             // added by Nishi: 20-Jul-2020:End: for Ossia student requirement 
             else{
@@ -1633,16 +1645,18 @@ List<Task> listOftask = new List<Task>();
             String orgName = (String) agrResult.get('orgName');
            //system.debug('orgName'+orgName);
             String enrollId = (String) agrResult.get('enrollId');
-            if(String.isNotBlank(enrollId) &&String.isNotBlank(orgName) &&  orgName.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
-                string availableMakeupMins =mapOfEnrolmentAggregate.containsKey(enrollId)
-                                        ? mapOfEnrolmentAggregate.get(enrollId) : '0-0';
-                    Decimal sumToAddAvailableMakeupMins = decimal.valueOf(availableMakeupMins.split('-')[0]);
+            if( String.isNotBlank(orgName) &&  orgName.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                if(String.isNotBlank(enrollId)){
+                    Decimal availableMakeupMins =mapOfEnrolmentAggregate.containsKey(enrollId)
+                                        ? mapOfEnrolmentAggregate.get(enrollId) : 0;
+                    Decimal sumToAddGroupLessonAvailableMakeupMins = availableMakeupMins;//decimal.valueOf(availableMakeupMins.split('-')[1]);
                     if(creditSum!= NULL){
-                        sumToAddAvailableMakeupMins += creditSum;
+                        sumToAddGroupLessonAvailableMakeupMins += creditSum;
                     }
-                    availableMakeupMins = sumToAddAvailableMakeupMins+'-'+ availableMakeupMins.split('-')[1];
-                    mapOfEnrolmentAggregate.put(enrollId, availableMakeupMins);
+                    //availableMakeupMins = availableMakeupMins.split('-')[0]+'-'+sumToAddGroupLessonAvailableMakeupMins;
+                    mapOfEnrolmentAggregate.put(enrollId, sumToAddGroupLessonAvailableMakeupMins);
                    //system.debug('mapOfEnrolmentAggregate'+mapOfEnrolmentAggregate);
+                }
             }else{
                 // added by Nishi: 21-Aug-2020:End: for Ossia student requirement
                 String parentId = mapOfStudentAndParent.get(studentId);
@@ -1665,8 +1679,8 @@ List<Task> listOftask = new List<Task>();
         // Makeup minutes will needs to be managed at enrolment level instead of parent level
        //system.debug('@@@mapOfParentAggregate'+listOfEnrolmentToUpdate);
         for(String enrolmentId : mapOfEnrolmentAggregate.keySet()){
-            string availableMakeupMins = mapOfEnrolmentAggregate.get(enrolmentId);
-            Enrolment__C objenrolment = new Enrolment__C(Id =enrolmentId, Available_Make_up_mins__c = decimal.valueOf(availableMakeupMins.split('-')[0]));
+            Decimal availableMakeupMins = mapOfEnrolmentAggregate.get(enrolmentId);
+            Enrolment__C objenrolment = new Enrolment__C(Id =enrolmentId, Available_Make_up_mins__c = availableMakeupMins);//decimal.valueOf(availableMakeupMins.split('-')[0]));
             listOfEnrolmentToUpdate.add(objenrolment);
         }
        //system.debug('@@@listOfEnrolmentToUpdate'+listOfEnrolmentToUpdate);
@@ -1836,6 +1850,29 @@ List<Task> listOftask = new List<Task>();
             }     
         }
         return parentWithCreditMemos;
+    }
+
+     // 26-Oct-2020:nishi: for if any dicount negative amount is found then we sum of Credit memo line item of credit memo
+    public static Map<String,Decimal> getcreditmemoDiscounttotalAmount(Map<String,List<Credit_Memo__c>> mapOfCreditMemos,Set<String> setOfParentIds){
+        Map<String,Decimal> mapOfcreditmemoDiscounttotalAmount = new Map<String,Decimal>();
+        for(String parentId : mapOfCreditMemos.keySet()){
+            for(Credit_Memo__c objCreditMemo : mapOfCreditMemos.get(parentId)){
+                Decimal total = mapOfcreditmemoDiscounttotalAmount.containsKey(objCreditMemo.id) ? mapOfcreditmemoDiscounttotalAmount.get(objCreditMemo.id) : 0;
+                if(objCreditMemo.Credit_memo_line_items__r != null && objCreditMemo.Credit_memo_line_items__r.size() > 0){
+                    //One equivalent to the invoice amount and other the balance with the status pending
+                    for(Credit_memo_line_item__c objCreditmemolineitem : objCreditMemo.Credit_memo_line_items__r){
+                        decimal totalCreditMemoLineItemAmountWithoutTax=(objCreditmemolineitem.Amount__c != null ?objCreditmemolineitem.Amount__c : 0);
+                        decimal totalCreditMemoLineItemTax= (objCreditmemolineitem.Tax_Amount__c != null ?objCreditmemolineitem.Tax_Amount__c : 0); 
+                        decimal totalCreditMemoLineItemAmount =  totalCreditMemoLineItemAmountWithoutTax+totalCreditMemoLineItemTax; 
+                        if(objCreditmemolineitem.Is_Discount__c && totalCreditMemoLineItemAmount <= 0){
+                            total+= totalCreditMemoLineItemAmount;
+                            mapOfcreditmemoDiscounttotalAmount.put(objCreditMemo.id,total);
+                        }
+                    }
+                }
+            }     
+        }
+        return mapOfcreditmemoDiscounttotalAmount;
     }
 
     // this method is used for filling sum of payment of parent
