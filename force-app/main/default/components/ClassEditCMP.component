@@ -294,11 +294,11 @@
                                 <button class="slds-button button-shadow slds-button_brand" aria-pressed="false" id="MakeupCustomer" title="Add Make-up Customer"
                                     onclick="newGroupAppointmentPopup('MakeUp');return false;">Add Make-Up Booking
                                 </button>
-                                <!-- added by nishi:start: for manage makeup and adhoc bookings -->
-                                <!-- <button class="slds-button button-shadow slds-button_brand" aria-pressed="false" id="AddhocCustomer" title="Add Ad-Hoc Customer"
+                                <!-- added by nishi::2-nov-2020:start: for manage makeup and adhoc bookings -->
+                                 <button class="slds-button button-shadow slds-button_brand" aria-pressed="false" id="AddhocCustomer" title="Add Ad-Hoc Customer"
                                     onclick="newGroupAppointmentPopup('AdHoc');return false;">Add Ad-Hoc Booking
-                                </button> -->
-                                <!-- added by nishi:end: for manage makeup and adhoc bookings -->
+                                </button> 
+                                <!-- added by nishi:2-nov-2020:end: for manage makeup and adhoc bookings -->
                             </footer>
                         </div>
                         <div id="HistoryTab" class="slds-tabs--default__content slds-hide" role="tabpanel" aria-labelledby="HistoryTabitem"
@@ -1392,6 +1392,9 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="slds-form__item" role="listitem">
+                            
+                        </div>
                     </div>
                     <!-- Added By Ravi on 14 july 2020 -->
                     <div class="slds-p-around_medium">
@@ -1656,13 +1659,13 @@
             bookingData.centerId = selectedStudentData.centerId;
             bookingData.teacherId = selectedStudentData.teacherId;
             bookingData.isOssia =selectedStudentData.isOssia;
-            
+            bookingData.selgroupClassId = selectedStudentData.selgroupClassId;
+            bookingData.selgroupClassName = selectedStudentData.selgroupClassName;
             //bookingData.isRecurring = 'false';
             // added by nishi: 3-Sep-2020: for manage Ossia group class makeup mins 
             if(selectedStudentData.isOssia == true){
                // $('.aureusGroupClassMakeupBooking').addClass('slds-hide');
                 $('.ossiaGroupClassMakeupBooking').removeClass('slds-hide');
-                bookingData.selgroupClassId = selectedStudentData.selgroupClassId;
             }else{
                // $('.aureusGroupClassMakeupBooking').removeClass('slds-hide');
                 $('.ossiaGroupClassMakeupBooking').addClass('slds-hide');
@@ -1693,6 +1696,7 @@
             var centerid = selectedStudentData.centerId;
             var student_name = $(this).val();
             var studentListItem = '';
+            var groupAppointmentType  = $('#saveNewGroupMakupBooking').attr('data-groupAppointmentType');
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.ClassEditController.getGroupStudents}',
                 student_name, centerid,
@@ -1718,9 +1722,11 @@
                         $('#GroupMakupParentInput').val('');
                         $('#GroupMakupPhoneInput').val('');
                         $('#GroupMakupEmailInput').val('');
+                        $('#ossiaGroupClassInstrment').empty();
                     }
 
                     $('.GroupMakupstudent-list').click(function () {
+                        $('#ossiaGroupClassInstrment').empty();
                         var studentId = $(this).parent().attr('id');
                         $(ResultOfEvent).each(function (index4, value4) {
                             if (value4.id == studentId) {
@@ -1749,20 +1755,28 @@
                                 } else {
                                     $('#GroupMakupEmailInput').val('');
                                 }
-                                if(bookingData.isOssia){
-                                    ossiaGroupClassMakeupEnrolment(centerid,bookingData.teacherId,bookingData.selgroupClassId,value4.id);
-                                }else{
-                                    $('#GroupMakupHoursLabel').html(value4.makeupHours + ' min');
-                                    bookingData.availableHours = value4.makeupHours;
-                                    var groupAppointmentType = $('#saveNewGroupMakupBooking').attr('data-groupAppointmentType');
-                                    if(groupAppointmentType === 'MakeUp'){
-                                        if (bookingData.availableHours < bookingData.duration) {
-                                            $('#saveNewGroupMakupBooking').attr('disabled', '');
-                                            $('#GroupMakupHoursErrorMsg').text('Insufficient Makup minutes');
-                                        } else {
-                                            $('#saveNewGroupMakupBooking').removeAttr('disabled');
-                                            $('#GroupMakupHoursErrorMsg').text('');
-                                        }
+                                console.log('groupAppointmentType',groupAppointmentType);
+                                if(groupAppointmentType === 'MakeUp'){
+                                    if(bookingData.isOssia){
+                                        ossiaGroupClassMakeupEnrolment(centerid,bookingData.teacherId,bookingData.selgroupClassId,value4.id);
+                                    }else{
+                                        $('#GroupMakupHoursLabel').html(value4.makeupHours + ' min');
+                                        bookingData.availableHours = value4.makeupHours;
+                                            if (bookingData.availableHours < bookingData.duration) {
+                                                $('#saveNewGroupMakupBooking').attr('disabled', '');
+                                                $('#GroupMakupHoursErrorMsg').text('Insufficient Makup minutes');
+                                            } else {
+                                                $('#saveNewGroupMakupBooking').removeAttr('disabled');
+                                                $('#GroupMakupHoursErrorMsg').text('');
+                                            }
+                                    }
+                                }
+                                if(groupAppointmentType === 'AdHoc'){
+                                    console.log('groupAppointmentType',groupAppointmentType);
+                                    ossiaGroupClassAdhocEnrolment(centerid,bookingData.teacherId,bookingData.selgroupClassId,value4.id,bookingData.isOssia);
+                                    if(!bookingData.isOssia){
+                                        $('#GroupMakupHoursLabel').html(value4.makeupHours + ' min');
+                                        bookingData.availableHours = value4.makeupHours;
                                     }
                                 }
                                 $('#GroupMakupParentInput').attr('disabled', '');
@@ -1785,6 +1799,10 @@
             );
 
         });
+
+
+         
+
         //@@jatin:19-dec-2019: for get Packages according to center or instrument
         function getUpgradePackageByTeacher() {
             $('#selectPackageEnrolGroupUpdate').empty();
@@ -2097,63 +2115,129 @@
                     $('#newGroupMakupBookingDetails').addClass('slds-hide');
                 }else{
                    //open adhoc payment summary model
-                   showAdhocBookings(bookingData.studentId,bookingData.packageId,bookingData.date,bookingData.dateTime,false);
+                   showAdhocGroupClassBookings(bookingData.studentId,bookingData.packageId,bookingData.date.split('T')[0], bookingData.date.split('T')[1],1);
                 }
             }
         }
 
-        function showAdhocBookings(student, package, dateOfAppointment, timeOfAppointment, recurring){
+        function showAdhocGroupClassBookings(student, package, dateOfAppointment, timeOfAppointment,recurring){
             $('#countOfClassBookingTableBody').empty();
-            var teacherId = $('#saveNewBooking').attr('data-teacher');
+            $('#newGroupMakupBookingDetails').addClass('slds-hide');
+            var teacherId = bookingData.teacherId; //$('#saveNewBooking').attr('data-teacher');
+            console.log('getPackageDetail -student',student);     
+            console.log('getPackageDetail -teacherId',teacherId);     
+            console.log('getPackageDetail -package',package);     
+            console.log('getPackageDetail -dateOfAppointment',dateOfAppointment);     
+            console.log('getPackageDetail -recurring',recurring); 
+            console.log('getPackageDetail -selgroupClassId',bookingData.selgroupClassId);     
             $('#newAdhocGroupClassDetailPopup').removeClass('slds-hide');
-          /*  Visualforce.remoting.Manager.invokeAction(
-                '{$RemoteAction.AureusCalendarController.getPackageDetail}',
+           Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.ClassEditController.getGroupAdhocPackageDetail}',
                 student, package, teacherId, 
                 function(result, event){
                     if (event.status) {
                         var trRow = '';
                         var total = 0;
                         var gstTotal = 0;  
-                        //console.log('getPackageDetail -result',result);     
+                        console.log('getPackageDetail -result',result);     
                         if(timeOfAppointment){      
                             var formmatedTime = convertTimeToMoment(timeOfAppointment.split(':')[0], timeOfAppointment.split(':')[1]);      
                         }
-                        $('#studentNameadhoc').html(result.studentFirstName + ' ' + result.studentLastName);
-                        $('#teacherNameAdhoc').html(result.teacherName);
-                        $('#centerNameadhoc').html(result.centerName);
-                        $('#packageDurationadhoc').html(result.duration + ' min');
-                        $('#createAdhocBookingBtn').attr({'data-package': result.packageId, 'data-centerId': filter.center, 'data-teacherId': result.teacherId, 'data-studentId': result.studentId, 'data-count': recurring, 'data-date': dateOfAppointment+'T'+timeOfAppointment});
+                        $('#studentNameAdhocGroupClass').html(result.studentFirstName + ' ' + result.studentLastName);
+                        $('#teacherNameAdhocGroupClass').html(result.teacherName);
+                        $('#classLessonAdhocGroupClass').html(bookingData.selgroupClassName);
+                        $('#centerNameAdhocGroupClass').html(result.centerName);
+                        $('#packageDurationAdhocGroupClass').html(result.duration + ' min');
+                        $('#classLessonAdhocGroupClass').html();
+                        $('#createAdhocGroupClassBookingBtn').attr({'data-package': result.packageId,
+                                                                    'data-centerId': filter.center,
+                                                                    'data-teacherId': result.teacherId,
+                                                                    'data-studentId': result.studentId,
+                                                                    'data-count': recurring,
+                                                                    'data-date': dateOfAppointment+'T'+fetchBookDetailsForScreen,
+                                                                    'data-isOssia': bookingData.isOssia,
+                                                                    'data-enrolementId' : bookingData.enrolementId});
                         var gstRate =0;
                         for(var i=1; i<=recurring; i++){
                             var unitfee = result.unitFee.toFixed(2);
-                            ////console.log('unitfee',unitfee);
+                            console.log('unitfee',unitfee);
                             total += parseFloat(unitfee);
 
                             trRow += '<tr class="slds-hint-parent"><td data-label="Sr.No"><div class="slds-truncate" title="Sr.No">'+i+'</div></td><td data-label="Package Name"><div class="slds-truncate" title="Package Name">'+result.packageName+'</div></td><td data-label="Package Time"><div class="slds-truncate" title="Package Time">'+formmatedTime+'</div></td><td data-label="Package Price"><div class="slds-truncate" title="Package Price">$'+result.unitFee.toFixed(2)+'</div></td></tr>';
                             if(result.gstRate > 0){
                                 gstRate += parseFloat((parseFloat(result.unitFee.toFixed(2)) * parseFloat(result.gstRate.toFixed(2)) / 100).toFixed(2));
-                                //console.log('GSTrate'+gstRate);
+                                console.log('GSTrate'+gstRate);
                                 
                             }
-                            //console.log('@@gstRate'+gstRate);
+                            console.log('@@gstRate'+gstRate);
                         }
                         if(gstRate > 0){
-                            ////console.log('total',total);
-                            // //console.log('result.gstRate',gstRate);
+                            console.log('total',total);
+                            console.log('result.gstRate',gstRate);
                             gstTotal = gstRate+total;
                             trRow += '<tr class="slds-hint-parent"><td  colspan="2"></td><td data-label="GST"><b>GST('+(result.gstRate.toFixed(2))+'%)</b></td><td>$'+(gstRate.toFixed(2))+'</td>';
                         }else{
                             gstTotal = 0;
                         }     
-                        //console.log('gstTotal',gstTotal);
+                        console.log('gstTotal',gstTotal);
                         trRow += '</tr><tr class="slds-hint-parent"><td colspan="2"></td><td data-label="total"><b>Total</b></td><td>$'+(parseFloat(gstTotal).toFixed(2))+'</td></tr>';
                         
                         $('#countOfClassBookingTableBody').append(trRow);
-                        $('#newAdhocDetailPopup').removeClass('slds-hide');
+                        $('#newGroupMakupBookingDetails').addClass('slds-hide');
+                        $('#newAdhocGroupClassDetailPopup').removeClass('slds-hide');
+                    }
+                }
+            );
+        }
+
+        function createAdhocGroupClassBookings(){
+            $('#createAdhocGroupClassBookingBtn').attr('disabled', 'true');
+            $('#createAdhocGroupClassBookingBtn').css('pointer-events', 'none');
+            var packageId = $('#createAdhocGroupClassBookingBtn').attr('data-package');
+            var teacherId = $('#createAdhocGroupClassBookingBtn').attr('data-teacherId');
+            var studentId = $('#createAdhocGroupClassBookingBtn').attr('data-studentId');
+            var recurring = $('#createAdhocGroupClassBookingBtn').attr('data-count');
+            var bookDate = $('#createAdhocGroupClassBookingBtn').attr('data-date');
+            var center = $('#createAdhocGroupClassBookingBtn').attr('data-centerId');
+            var groupLessonId =  $('#newGroupClassCMP').attr('data-groupclassid');
+            var isossia = $('#createAdhocGroupClassBookingBtn').attr('data-isOssia');
+            var enrolementId = $('#createAdhocGroupClassBookingBtn').attr('data-enrolementId');
+            console.log('packageId'+packageId);
+            console.log('teacherId'+teacherId);
+            console.log('studentId'+studentId);
+            console.log('recurring'+recurring);
+            console.log('bookDate'+bookDate);
+            console.log('center'+center);
+            console.log('groupLessonId'+groupLessonId);
+            console.log('isossia'+isossia);
+            console.log('enrolementId'+enrolementId);
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.ClassEditController.createAdhocGroupClassBookings}',
+                packageId,center,teacherId, studentId, recurring, bookDate,groupLessonId,enrolementId,
+                function(result, event){
+                    console.log('@@@result', result);
+                    if (event.status) {
+                        if(result){
+                            $('#newAdhocGroupClassDetailPopup').addClass('slds-hide');
+                            $('#createAdhocGroupClassBookingBtn').removeAttr('disabled');
+                            $('#createAdhocGroupClassBookingBtn').css('pointer-events', '');
+                            $('#toastMsg').html('Ad-hoc Bookings are successfully created...');
+                            toastLaunch();
+                            refreshCalendar();
+                        }else{
+                            $('#newAdhocGroupClassDetailPopup').addClass('slds-hide');
+                            $('#createAdhocGroupClassBookingBtn').removeAttr('disabled');
+                            $('#createAdhocGroupClassBookingBtn').css('pointer-events', '');
+                            $('#toastMsg').html('Booking cannot be created...');
+                            $('.toastclass').removeClass('slds-theme_success');
+                            $('.toastclass').addClass('slds-theme_error');
+                            toastLaunch();
+                        }
+                        
                     }
                 }, 
                 {escape: true}
-            );*/
+            ); 
         }
         // jatin:19-dec-2019 :show group package list
         $('#GroupMakupPackageSelect').focusin(function () {
@@ -2809,7 +2893,6 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                                     $('#showGroupClassGradeDetials').attr('data-classId',result.bookObj.Class__c);
                                     $('#newOssiaClassBookingDetailsHeader').html('Grade Details ' + result.bookObj.Class__r.Name);
                                     selectedStudentData.duration =result.bookObj.Class__r.Duration__c;
-                                    selectedStudentData.selgroupClassId = result.bookObj.Class__c;
                                 }
                             }else{
                                 selectedStudentData.packageId = result.bookObj.Package__r.Id;
@@ -2822,7 +2905,8 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                                 $('.ossiaGroupClassBookingDetail').addClass('slds-hide');
                                 $('.aureusGroupClassBookingDetail').removeClass('slds-hide');
                             }
-                          
+                            selectedStudentData.selgroupClassId = result.bookObj.Class__c;
+                            selectedStudentData.selgroupClassName = result.bookObj.Class__r.Name;
                             // added by nishi: 2-Sep-2020: for manage ossia group lesson details in ossia case we show grade other wise we show package realed details 
                             selectedStudentData.groupClassId = result.bookObj.Id;
                             selectedStudentData.ClassCapacity = result.bookObj.Class__r.Total_Capacity__c;

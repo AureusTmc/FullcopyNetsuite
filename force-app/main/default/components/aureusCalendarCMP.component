@@ -5326,6 +5326,9 @@ Enrol now
              casevalues.positiveNextMonthInvoiceAmount = $('#confirmModalYes').attr('data-positiveNextMonthInvoiceAmount'); 
              casevalues.negativeNextMonthInvoiceAmount = $('#confirmModalYes').attr('data-negativeNextMonthInvoiceAmount'); 
             //start: added by nishi: 17-Aug-2020: for next month invoice is differce and differce is greater then 0 then we manage Invoice
+            // added by nishi: 23-Oct-2020:start: for now user also can upgrade enrolment process which type of package is promo and prepayment
+            casevalues.negativeInvoiceDiscountAmount = $('#confirmModalYes').attr('data-negativeInvoiceDiscountAmount'); 
+            // added by nishi: 23-Oct-2020: end:for now user also can upgrade enrolment process which type of package is promo and prepayment
             casevalues.newPackage = $('#confirmModalYes').attr('data-newPackageName');
             casevalues.previousLessonDayTime = $('#confirmModalYes').attr('data-previousLessonDayTime');
             casevalues.newLessonDayTime = $('#confirmModalYes').attr('data-newLessonDayTime');
@@ -8325,10 +8328,12 @@ Enrol now
                                                 $('#updateEnrolmentAdminBtn').removeClass('slds-hide');
                                                 $('#confirmModalYes').attr('data-updateEnrolmentAdmin','true');
                                                 $('#enrolmentUpdatePopupHeader').html('Update Enrolment Admin');
+                                                $('#confirmModalYes').attr('data-isPackagePromotional', 'false');
                                             }else{ //9-Dec-2019 : @@jatin  :for Change enrolment changes -confirmation popup:
                                                 $('#updateEnrolmentBtn').removeClass('slds-hide');
                                                 $('#confirmModalYes').attr('data-updateEnrolmentAdmin','false');
                                                 $('#enrolmentUpdatePopupHeader').html('Update Enrolment');
+                                                $('#confirmModalYes').attr('data-isPackagePromotional', 'false');
                                             }
                                             
                                             // @19-Dec-2019: for show all buttons not Upgrade to individual
@@ -8351,13 +8356,28 @@ Enrol now
                                             $('#upgradeSubscriptionBtn').removeClass('slds-hide');
                                            
                                             if(result.isPackagePromotional){
-                                                 //20-Oct-2020 : @@nishi  :for downgrade,withdrawal Enrollement Enhancement This button should be 
+                                                if(result.isChangeEnrolmentCentre){
+                                                    $('#updateCentreEnrolmentBtn').attr('disabled','true'); 
+                                                }
+                                                 //9-Dec-2019 : @@jatin  :for Change Enrollement Enhancement This button should be accessible to only a limited users
+                                                if(result.isChange_Enrolment_Admin){    
+                                                    $('#updateEnrolmentAdminBtn').attr('disabled','true'); 
+                                                }else{
+                                                    $('#updateEnrolmentBtn').attr('disabled','true'); 
+                                                }
+                                                 //20-Oct-2020 : @@nishi  :for prepayment and promo enrolment can perform downgrade,withdrawal Enrollement Enhancement This button should be 
                                                 //accessible to only a limited users
                                                 if(result.isPrepayment_Advance_Action_Admin){    
                                                     $('#downgradeSubscriptionAdminBtn').removeClass('slds-hide');
                                                     $('#cancelSubscriptionAdminBtn').removeClass('slds-hide');
                                                     $('#downgradeSubscriptionBtn').addClass('slds-hide');
                                                     $('#cancelSubscriptionBtn').addClass('slds-hide');
+                                                    // commented by nishi: 28-oct-2020: for Change Enrollement Enhancement This button should be accessible to only a limited users and if prepayment and promo enrolment
+                                                    if(result.isChange_Enrolment_Admin){    
+                                                        $('#updateEnrolmentAdminBtn').removeAttr('disabled');
+                                                        $('#confirmModalYes').attr('data-isPackagePromotional', 'true');
+                                                    }
+                                                     // commented by nishi: 28-oct-2020:end: for Change Enrollement Enhancement This button should be accessible to only a limited users and if prepayment and promo enrolment
                                                 }else{
                                                     $('#downgradeSubscriptionBtn').attr('disabled', 'true');
                                                     $('#downgradeSubscriptionBtn').attr('title', 'Current Package is Promotional type');
@@ -8367,12 +8387,8 @@ Enrol now
                                                     $('#cancelSubscriptionBtn').attr('title', 'Current Package is Promotional type');
                                                     $('#cancelSubscriptionBtn').css('pointer-events', 'none');
                                                 }
-                                                //9-Dec-2019 : @@jatin  :for Change Enrollement Enhancement This button should be accessible to only a limited users
-                                                if(result.isChange_Enrolment_Admin){    
-                                                    $('#updateEnrolmentAdminBtn').attr('disabled','true'); 
-                                                }else{
-                                                    $('#updateEnrolmentBtn').attr('disabled','true'); 
-                                                }
+                                                //20-Oct-2020 : @@nishi  :end:for prepayment and promo enrolment can perform downgrade,withdrawal Enrollement Enhancement This button should be 
+                                                //accessible to only a limited users
                                             }
                                         }
                                     }
@@ -10832,6 +10848,9 @@ Enrol now
                                             if('negativeNextMonthInvoiceAmount' in result){
                                                 $('#confirmModalYes').attr('data-negativeNextMonthInvoiceAmount', result.negativeNextMonthInvoiceAmount.toFixed(2));
                                             }
+                                             if('invoiceDiscountLessonCurrentMonthTopup' in result){
+                                                $('#confirmModalYes').attr('data-negativeInvoiceDiscountAmount', result.invoiceDiscountLessonCurrentMonthTopup.toFixed(2));
+                                            }
                                         }
                                         
                                         //$('#gradeSubscriptionPopup').addClass('slds-hide');
@@ -10901,6 +10920,7 @@ Enrol now
                                             // if('invoiceFacilityLessonTopup' in result){
                                             //     $('#confirmModalYes').attr('data-facilityCharge', result.invoiceFacilityLessonTopup.toFixed(2));
                                             // }
+                                            
                                         }
                                         
                                        
@@ -10996,10 +11016,19 @@ Enrol now
                     }
                     function getPackageByTeacher(){
                          //10-Aug-2020:nishi:start manage ossia Upgrade Subscription model 
+                         var isPackagePromotional = $('#confirmModalYes').attr('data-isPackagePromotional');
+                         var bookingId = $('#updateEnrolmentonClick').attr('data-id');
                         var isOssia =$('#confirmModalYes').attr('data-isOssia');
                         if(isOssia ==='true'){
                                 $('#enrolmentOssiaUpdatePopupHeader').html('UpdateEnrolment');
-                                getOssiaChangeEnrolmentPackageByTeacher();
+                                // added by nishi: 28-oct-2020: if enrolment packages type is prepayement and user want to change enrolment then we show prepayment  packages not normal packages 
+                                if(isPackagePromotional === 'true'){
+                                    getOssiaChangeEnrolmentPackageByTeacher(true);
+                                }
+                                // added by nishi: 28-oct-2020:end: if enrolment packages type is prepayement and user want to change enrolment then we show prepayment  packages not normal packages
+                                else{
+                                    getOssiaChangeEnrolmentPackageByTeacher(false);
+                                }
                         }else{
                             ////10-Aug-2020:nishi:start manage ossia Upgrade Subscription model 
                             $('#selectPackageEnrolUpdate').empty();
@@ -11008,19 +11037,38 @@ Enrol now
                             var duration = $('#selectTeacherEnrolUpdate').attr('data-duration');
                             var centerId = $('#selectTeacherEnrolUpdate').attr('data-center');
                             if(teacherId != 'Select Teacher' && centerId && duration){
-                                Visualforce.remoting.Manager.invokeAction(
-                                    '{!$RemoteAction.AureusCalendarController.getPackageAccordingToTeacher}',
-                                    centerId, teacherId, duration,   
-                                    function(result, event){
-                                        var packageEnrol = '<option value="Select Package">Select an Option</option>';
-                                        $(result).each(function(index, value){
-                                            packageEnrol += '<option value="'+value.Id+'">'+value.Name+'</option>';
-                                        });
-                                        $('#selectPackageEnrolUpdate').append(packageEnrol);
-                                        $('#selectPackageEnrolUpdate').removeAttr('disabled');
-                                    
-                                    }
-                                );
+                                // added by nishi: 28-oct-2020: if enrolment packages type is prepayement and user want to change enrolment then we show prepayment  packages not normal packages
+                                if(isPackagePromotional === 'true'){
+                                    Visualforce.remoting.Manager.invokeAction(
+                                        '{!$RemoteAction.AureusCalendarController.getPackagePromotionalAccordingToTeacher}',
+                                        centerId, teacherId, duration,bookingId,   
+                                        function(result, event){
+                                            var packageEnrol = '<option value="Select Package">Select an Option</option>';
+                                            $(result).each(function(index, value){
+                                                packageEnrol += '<option value="'+value.Id+'">'+value.Name+'</option>';
+                                            });
+                                            $('#selectPackageEnrolUpdate').append(packageEnrol);
+                                            $('#selectPackageEnrolUpdate').removeAttr('disabled');
+                                        
+                                        }
+                                    );
+                                }
+                                // added by nishi: 28-oct-2020:end: if enrolment packages type is prepayement and user want to change enrolment then we show prepayment  packages not normal packages
+                                else{
+                                    Visualforce.remoting.Manager.invokeAction(
+                                        '{!$RemoteAction.AureusCalendarController.getPackageAccordingToTeacher}',
+                                        centerId, teacherId, duration,   
+                                        function(result, event){
+                                            var packageEnrol = '<option value="Select Package">Select an Option</option>';
+                                            $(result).each(function(index, value){
+                                                packageEnrol += '<option value="'+value.Id+'">'+value.Name+'</option>';
+                                            });
+                                            $('#selectPackageEnrolUpdate').append(packageEnrol);
+                                            $('#selectPackageEnrolUpdate').removeAttr('disabled');
+                                        
+                                        }
+                                    );
+                                }
                             }
                         }
                     }

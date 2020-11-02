@@ -1,3 +1,10 @@
+/*
+Name        :        OssianCalendarController
+Date        :        26 -sep- 2020 
+Author      :        Nishi
+Description :        this class for ossia oragnaisation realted changes in aureus calendar.
+test class:	OssianCalendarControllertest
+*/ 
 public with sharing class OssiaCenterCalendarController {
 
     @RemoteAction
@@ -369,19 +376,24 @@ public with sharing class OssiaCenterCalendarController {
                                          Student__c =: studentId
                                          AND Stage__c =:ConstantsClass.enroledStatus
                                          AND Type__c =: ConstantsClass.enrolGroupType
-                                         AND Center__c = :centerId
+                                         //AND Center__c = :centerId  // commented by nishi: 5-Oct-2020: Makeup credit for Ossia should allow booking across the other Ossia centres
+                                         and Center__r.Organisation__r.Name = :System.Label.Ossia_Organisation_Name
                                          ]){
-                EnrolmentInstrumentWrapper sObj = new EnrolmentInstrumentWrapper();
-                sObj.teacherId = objEnrol.Teacher__c;
-                sObj.instrument =objEnrol.Instrument__c;
-                sObj.enrolmentId = objEnrol.Id;
-                sObj.enrolmentName = objEnrol.Name;
-                if(objEnrol.Available_Make_up_mins__c != null && objEnrol.Available_Make_up_mins__c > 0){
-                    sObj.makeupHours = Integer.valueOf(objEnrol.Available_Make_up_mins__c);
-                }else{
-                    sObj.makeupHours = 0;
-                }
-                listOfEnrolmentInstrumentWrapper.add(sObj);     
+                                             if(string.isNotBlank(objEnrol.Center__c) && string.isNotBlank(objEnrol.Center__r.Organisation__c) &&
+                                                string.isNotBlank(objEnrol.Center__r.Organisation__r.Name) && 
+                                                objEnrol.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                                                    EnrolmentInstrumentWrapper sObj = new EnrolmentInstrumentWrapper();
+                                                    sObj.teacherId = objEnrol.Teacher__c;
+                                                    sObj.instrument =objEnrol.Instrument__c;
+                                                    sObj.enrolmentId = objEnrol.Id;
+                                                    sObj.enrolmentName = objEnrol.Name;
+                                                    if(objEnrol.Available_Make_up_mins__c != null && objEnrol.Available_Make_up_mins__c > 0){
+                                                        sObj.makeupHours = Integer.valueOf(objEnrol.Available_Make_up_mins__c);
+                                                    }else{
+                                                        sObj.makeupHours = 0;
+                                                    }
+                                                    listOfEnrolmentInstrumentWrapper.add(sObj);  
+                                                }
             }
          }
          objEnrolmentWrapper.listOfEnrolmentInstrumentWrapper = listOfEnrolmentInstrumentWrapper;
@@ -418,6 +430,147 @@ public with sharing class OssiaCenterCalendarController {
                 }                                    
         
             return objEnrolmentWrapper;
+        }
+
+     //2-Nov-2020: Nishi:  for get ossia student enrolment Ids which Available_Make_up_mins__c greater then 0 and get Adhoc-Group type packages accroding to duration
+    @RemoteAction 
+    public static EnrolmentWrapper getOssiaGroupClassAdhocPackages(String centerId,String teacherId,string groupClassId,string studentId,Boolean isOssia){
+        EnrolmentWrapper objEnrolmentWrapper = new EnrolmentWrapper();
+        List<EnrolmentInstrumentWrapper> listOfEnrolmentInstrumentWrapper  = new List<EnrolmentInstrumentWrapper>();
+        Map<string,List<Enrolment__c>> mapOfEnrolmentRelatedStudent = new Map<string,List<Enrolment__c>>();
+        List<Enrolment__c> listOfEnrolment = new List<Enrolment__c>();
+        list<string> accountIds = new list<string>();
+        Set<string> instrumentlist= new Set<String>();
+        Package__c packageObj = new Package__c();
+        if(String.isNotBlank(studentId) && string.isNotBlank(centerId)){
+            List<Enrolment__c> enrolmentList = [SELECT Id,Name, Center__c, Parent__c,Center__r.Organisation__c,Center__r.Organisation__r.Name, 
+                                                    Student__c, Teacher__c, Type__c, Stage__c ,Available_Make_up_mins__c,Instrument__c,Package__c,Package__r.name,
+                                                    package__r.Grade_new__c,Package__r.Duration__c,Package__r.Program__r.Instrument__c
+                                                    FROM Enrolment__c where 
+                                                    Student__c =: studentId
+                                                    AND Stage__c =:ConstantsClass.enroledStatus
+                                                    AND Type__c =: ConstantsClass.enrolGroupType
+                                                    ];
+            for(Enrolment__c objEnrol: enrolmentList){
+                                          
+                EnrolmentInstrumentWrapper sObj = new EnrolmentInstrumentWrapper();
+                sObj.teacherId = objEnrol.Teacher__c;
+                sObj.instrument =objEnrol.Instrument__c;
+                sObj.enrolmentId = objEnrol.Id;
+                sObj.enrolmentName = objEnrol.Name;
+                if(isOssia){
+                    if(objEnrol.Available_Make_up_mins__c != null && objEnrol.Available_Make_up_mins__c > 0){
+                        sObj.makeupHours = Integer.valueOf(objEnrol.Available_Make_up_mins__c);
+                    }else{
+                        sObj.makeupHours = 0;
+                    }
+                }
+                listOfEnrolmentInstrumentWrapper.add(sObj);  
+            
+            }
+            system.debug('enrolmentList'+enrolmentList);
+            objEnrolmentWrapper.listOfEnrolmentInstrumentWrapper = listOfEnrolmentInstrumentWrapper;
+            List<Account> tchrList = [SELECT Id,Major_Instruments_Disciplines__c,Minor_Instruments_Disciplines__c 
+                                        FROM Account WHERE Id =:teacherId];
+                if(tchrList.size() > 0){        
+
+                    for(Account acc: tchrList){        
+
+                        if(acc.Major_Instruments_Disciplines__c != null){       
+                            for(String strIns : acc.Major_Instruments_Disciplines__c.split(';'))        
+                                instrumentlist.add(strIns);        
+                        }       
+
+                        if(acc.Minor_Instruments_Disciplines__c != null){       
+                            for(String strIns : acc.Minor_Instruments_Disciplines__c.split(';'))        
+                                instrumentlist.add(strIns);        
+                        }       
+
+                    }
+                }
+                system.debug('objEnrolmentWrapper.classInstrument '+objEnrolmentWrapper.classInstrument );
+                system.debug('instrumentlist'+instrumentlist);
+                Map<String, Package__c> adhocPackageMap = new Map <String, Package__c>();
+                if(isOssia){
+                    Set<string> gradeList = new Set<string>();
+                    List<Ossia_Group_Grade_Package__c> listOfclass =  [SELECT Class_Name__c, Package__c,Package__r.Duration__c,Package__r.name,  Name, Id ,
+                                                                        Package__r.Program__r.Instrument__c,Class_Name__r.Grade__c
+                                                                        FROM Ossia_Group_Grade_Package__c
+                                                                        Where Class_Name__c =:groupClassId
+                                                                        AND Package__r.Program__r.Instrument__c In:instrumentlist ];
+                    if(listOfclass != null && listOfclass.size() > 0){
+                        Set<string> classInstrumentList= new Set<String>();
+                        for(Ossia_Group_Grade_Package__c classObj : listOfclass ){
+                            if(string.isnotBlank(classObj.Class_Name__r.Grade__c) && classObj.Class_Name__r.Grade__c.split(';') != null && classObj.Class_Name__r.Grade__c.split(';').size() > 0){
+                                gradeList.addAll(classObj.Class_Name__r.Grade__c.split(';'));
+                            }
+                            classInstrumentList.add(classObj.Package__r.Program__r.Instrument__c);
+                        }
+                        objEnrolmentWrapper.classInstrument = String.join(new List<String>(classInstrumentList),';') ; 
+                    }  
+                    adhocPackageMap = fetchOssiaAdhocLessons(centerId,listOfclass[0].Package__r.Duration__c,enrolmentList[0].Package__r.Program__r.Instrument__c,gradeList);
+                    if( string.isNotBlank(enrolmentList[0].package__r.Grade_new__c) && enrolmentList[0].package__r.Grade_new__c.split(';') != null &&  enrolmentList[0].package__r.Grade_new__c.split(';').size() >0){
+                        for(string grade :enrolmentList[0].package__r.Grade_new__c.split(';')){
+                            system.debug('grade'+grade);
+                            if(adhocPackageMap.containsKey(centerId + '-'+ listOfclass[0].Package__r.Duration__c + '-'+ grade+ '-'+ enrolmentList[0].Package__r.Program__r.Instrument__c)){
+                                packageObj = adhocPackageMap.get(centerId + '-'+ listOfclass[0].Package__r.Duration__c + '-'+ grade+ '-'+ enrolmentList[0].Package__r.Program__r.Instrument__c);
+                                objEnrolmentWrapper.packageId = packageObj.id;
+                                objEnrolmentWrapper.packageName = packageObj.name;
+                                break;
+                            }
+                        }
+                    }
+                }else{
+                    List<class__c> classList = [select id,Package__r.Duration__c from class__C where id=:groupClassId];
+                    adhocPackageMap = fetchAdhocLessons(centerId,classList[0].Package__r.Duration__c);
+                    //added by nishi:22-Oct-2020:end: for ossia center we get adhoc packages accoding to enrolment grade and instrument
+                    if( adhocPackageMap.containsKey(centerId + '-'+ classList[0].Package__r.Duration__c)){
+                        packageObj = adhocPackageMap.get(centerId + '-'+ classList[0].Package__r.Duration__c);
+                        objEnrolmentWrapper.packageId = packageObj.id;
+                        objEnrolmentWrapper.packageName = packageObj.name;
+                    }
+                }
+                system.debug('adhocPackageMap'+adhocPackageMap);
+                system.debug('packageObj'+packageObj);
+               
+            }                                 
+            return objEnrolmentWrapper;
+        }
+        public static Map<String, Package__c> fetchAdhocLessons(string centerId,string duration){
+            Map<String, Package__c> mapOfAdhocPackage = new Map<String, Package__c>();
+            if(string.isNotBlank(centerId) && string.isNotBlank(duration)  ){
+                for(Package__c packageObj : [SELECT Id,name, Location__c, Duration__c, unit_Fee__c/*,facility_Fee__c*/ FROM Package__c 
+                                             WHERE Active__c = TRUE AND Type__c =: ConstantsClass.typeAdhocGroup AND Location__c =:centerId AND 
+                                             Duration__c =:duration]){
+                    mapOfAdhocPackage.put(packageObj.Location__c + '-' + packageObj.Duration__c, packageObj);
+                } 
+            }
+            return mapOfAdhocPackage;
+        }
+        
+        //added by nishi:22-Oct-2020: for ossia center we get adhoc packages accoding to enrolment grade and instrument
+        public static  Map<String, Package__c> fetchOssiaAdhocLessons(string centerId,string duration,string instrument,Set<string> gradeList){
+            Map<String, Package__c> mapOfAdhocPackage = new Map<String, Package__c>();
+            if(string.isNotBlank(centerId) && string.isNotBlank(duration) ){
+                for(Package__c packageObj : [SELECT Id,name, Location__c, Duration__c, unit_Fee__c,Grade_new__c,Program__r.Instrument__c/*,facility_Fee__c*/ FROM Package__c 
+                                             WHERE Active__c = TRUE 
+                                             AND Type__c =: ConstantsClass.typeAdhocGroup 
+                                             AND Location__c = :centerId 
+                                             AND Duration__c =:duration
+                                             And Program__r.Instrument__c =: instrument]){
+                                                system.debug('packageObj.Grade_new__c'+packageObj.Grade_new__c);
+                    if(string.isNotBlank(packageObj.Grade_new__c)){
+                        for(String grade : packageObj.Grade_new__c.split(';')){
+                            system.debug('grade'+grade);
+                            if(gradeList.contains(grade)){ 
+                                mapOfAdhocPackage.put(packageObj.Location__c + '-' + packageObj.Duration__c+ '-' + grade+ '-' + packageObj.Program__r.Instrument__c, packageObj);
+                            }
+                        }
+                    } 
+                }
+            }
+            system.debug('mapOfAdhocPackage'+mapOfAdhocPackage);
+            return mapOfAdhocPackage;
         }
 
         // 21-Sep-2020: nsihi: for get time slots according to selected teacher,package, effective dates 
@@ -810,7 +963,7 @@ public with sharing class OssiaCenterCalendarController {
 
      @RemoteAction
      public static List<packageData> getPackageAccordingToOssiaTeacher(String centerId, String teacherId, Integer duration,
-     String bookingId,string bookingType){
+     String bookingId,string bookingType,Boolean isPackagePromotional){
             List<packageData> packageList = new List<packageData>();
             packageData dt = new packageData();
             Set<String> instruments =  new Set<String>();       
@@ -828,6 +981,8 @@ public with sharing class OssiaCenterCalendarController {
             if(String.isNotBlank(bookingId)){
                 bookingList = [SELECT Id, Name, Package__c,Type__c, Package__r.Name, Package__r.Active__c, enrolment__r.Package__c,
                                 enrolment__r.Package__r.Package_Fee__c, enrolment__c,// enrolment__r.Package__r.facility_Fee__c,
+                                 // added by nishi: 28-Oct-2020: for if enrolment package type is Promotionl then we get Promotion detials 
+                                enrolment__r.Package__r.Promotion_period_In_months__c,enrolment__r.Package__r.Promotion_Discount__c,enrolment__r.Package__r.Type_of_package__c,
                                 enrolment__r.Package__r.Duration__c, enrolment__r.Lesson_Day__c, enrolment__r.Package__r.Type__c, 
                                 enrolment__r.Package__r.Location__c, enrolment__r.Package__r.Program__r.Instrument__c
                                 FROM Booking__c 
@@ -871,6 +1026,7 @@ public with sharing class OssiaCenterCalendarController {
                                                 Package_Fee__c >:bookingList[0].enrolment__r.Package__r.Package_Fee__c  
                                                 //AND facility_Fee__c >=:bookingList[0].enrolment__r.Package__r.facility_Fee__c
                                                 ORDER BY Duration__c];
+                            
                         }else if(bookingType =='DowngradeEnrolment'){
                             getPackageList = [SELECT Id, Name, Program__r.Instrument__c, Active__c, Package_Fee__c, Location__c, Duration__c,//facility_Fee__c,
                                                 Grade_new__c
@@ -887,7 +1043,26 @@ public with sharing class OssiaCenterCalendarController {
                                                 //AND facility_Fee__c <=:bookingList[0].enrolment__r.Package__r.facility_Fee__c
                                                 ORDER BY Duration__c];
                         }else if(bookingType =='UpdateEnrolment'){
-                            getPackageList = [SELECT Id, Name, Program__r.Instrument__c, Active__c, Package_Fee__c, Location__c, Duration__c,//facility_Fee__c,
+                            // added by nishi: 28-oct-2020: if enrolment packages type is prepayement and user want to change enrolment then we show prepayment  packages not normal packages
+                            if(isPackagePromotional){
+                                getPackageList = [SELECT Id, Name, Program__r.Instrument__c, Active__c, Package_Fee__c, Location__c, Duration__c,//facility_Fee__c,
+                                                Grade_new__c
+                                                FROM Package__c 
+                                                WHERE 
+                                                Duration__c =: bookingList[0].enrolment__r.Package__r.Duration__c AND 
+                                                Type__c =: bookingList[0].enrolment__r.Package__r.Type__c AND 
+                                                Location__c =: bookingList[0].enrolment__r.Package__r.Location__c AND 
+                                                Program__r.Instrument__c IN: instruments   AND 
+                                                Active__c = true AND 
+                                                Type_of_package__c =: bookingList[0].enrolment__r.Package__r.Type_of_package__c AND
+                                                Package_Fee__c =:bookingList[0].enrolment__r.Package__r.Package_Fee__c   AND
+                                                Promotion_period_In_months__c =:bookingList[0].enrolment__r.Package__r.Promotion_period_In_months__c AND
+                                                Promotion_Discount__c =:bookingList[0].enrolment__r.Package__r.Promotion_Discount__c
+                                                ORDER BY Duration__c];
+                            }
+                            // added by nishi: 28-oct-2020: if enrolment packages type is prepayement and user want to change enrolment then we show prepayment  packages not normal packages
+                            else{
+                                getPackageList = [SELECT Id, Name, Program__r.Instrument__c, Active__c, Package_Fee__c, Location__c, Duration__c,//facility_Fee__c,
                                                 Grade_new__c
                                                 FROM Package__c 
                                                 WHERE 
@@ -901,6 +1076,7 @@ public with sharing class OssiaCenterCalendarController {
                                                 Package_Fee__c =:bookingList[0].enrolment__r.Package__r.Package_Fee__c  
                                                 //AND facility_Fee__c =:bookingList[0].enrolment__r.Package__r.facility_Fee__c
                                                 ORDER BY Duration__c];
+                            }
                         } else if(bookingType =='UpdateEnrolmentCenter'){
                             //31-Aug-2020: nishi:start-  all those packages where new price is > then current price if the target centre is Home
                             // other wise Packages whose monthly fee is equal to the current monthly fee 
@@ -1167,7 +1343,8 @@ public with sharing class OssiaCenterCalendarController {
      //If user  upgrade enrolement then we get fifth lesson makeup bookings 
         public static void createOssiaFifthBookingOnUpgrade(Enrolment__c enrol, Map<String, Booking__c> mapOfFifthBookings, Integer timeDiff, Time startTime, 
                                                             Integer duration){
-            List<Booking__c> bookingsList = new List<Booking__c>();
+            List<Booking__c> bookingsinsertList = new List<Booking__c>();
+            map<string,Booking__c> mapbookingsupdate = new map<string,Booking__c>();
             List<Booking__c> cancelBookings = new List<Booking__c>();
             List<Booking__c> cancelTeacherCancellationBookings = new List<Booking__c>();
             Decimal availableUnits = 0;
@@ -1189,10 +1366,12 @@ public with sharing class OssiaCenterCalendarController {
            //System.debug('availableUnits'+availableUnits);
            //System.debug('cancelTeacherCancellationBookings'+cancelTeacherCancellationBookings);
            //System.debug('cancelBookings'+cancelBookings);
+           Booking__c bookObj = new Booking__c();
+       Booking__c newBook = new Booking__c();
             for(String bookingId : mapOfFifthBookings.keySet()){
-                Booking__c bookObj = mapOfFifthBookings.get(bookingId);
-                Booking__c newBook = new Booking__c();
-                
+                bookObj = mapOfFifthBookings.get(bookingId);
+                newBook = new Booking__c();
+
                 if(startTime != NULL && duration > 0){
                     bookObj.start_Time__c = startTime;
                     bookObj.end_Time__c = bookObj.start_Time__c.addMinutes(duration);
@@ -1223,7 +1402,7 @@ public with sharing class OssiaCenterCalendarController {
                                     bookingObj.Available_Make_up_Units__c = 0;
                                    
                                 }
-                                bookingsList.add(bookingObj);
+                                mapbookingsupdate.put(bookingObj.id,bookingObj);
                                 
                                 if(hoursToDeduct == 0){
                                     break;
@@ -1247,7 +1426,7 @@ public with sharing class OssiaCenterCalendarController {
                                     hoursToDeduct -= Integer.valueOf(bookingObj.Available_Make_up_Units__c);
                                     bookingObj.Available_Make_up_Units__c = 0;
                                 }
-                                bookingsList.add(bookingObj);
+                                mapbookingsupdate.put(bookingObj.id,bookingObj);
                                //System.debug('bookingObj-'+bookingObj);
                                 if(hoursToDeduct == 0){
                                     break;
@@ -1273,14 +1452,17 @@ public with sharing class OssiaCenterCalendarController {
                     bookObj.end_Time__c = bookObj.end_Time__c.addMinutes(timeDiff);
                 }
                 
-                bookingsList.add(bookObj);
-                bookingsList.add(newBook);
+            mapbookingsupdate.put(bookingId,bookObj);
+            bookingsinsertList.add(newBook);
                //System.debug('bookObj'+bookObj);
                //System.debug('newBook'+newBook);
             }
            //System.debug('bookingsList'+bookingsList);
-            if(bookingsList.size() > 0){
-                upsert bookingsList; 
+           if(bookingsinsertList.size() > 0){
+                upsert bookingsinsertList; 
+            }
+            if(mapbookingsupdate.size() > 0){
+                upsert mapbookingsupdate.values(); 
             }
            //System.debug('bookingsList'+bookingsList);
     }

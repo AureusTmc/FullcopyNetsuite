@@ -2,6 +2,8 @@
 Name        :        AureusCalendarControllerHelper
 Date        :        2019/03/23      
 Description :        This is a helper class for AureusCalendarController. 
+Test Class  :        AureusCalendarControllerTest2
+Component   :		 AureusCalendarCMP
 */
 public without Sharing class AureusCalendarControllerHelper{
     
@@ -996,6 +998,46 @@ parentList.add(new Account(Id = currentParent, Available_Make_up_Units__c = sumO
         }
         return bookingList;
     }
+
+    // added by nishi: 2-nov-2020: for creating adhoc booking for group lessons
+    public static List<Booking__c> createAppointmentForAdhocGroupLesson(Package__c packageObj, String teacherId, String studentId, String centerId, Integer recurring, 
+    String bookingDate, String parentId,String groupLessonId,String enrolmentId){
+        Date bookDate;
+        Time bookStartTime;
+        Time bookEndTime;
+        List<Booking__c> bookingList = new List<Booking__c>();
+        Booking__c bookingObj = new Booking__c();
+        if(String.isNotBlank(bookingDate) && packageObj != NULL && packageObj.Duration__c != 'Trial'){
+            bookDate = Date.valueOf(bookingDate.split('T')[0]);
+            bookStartTime = Time.newInstance(Integer.valueOf(bookingDate.split('T')[1].split(':')[0]), Integer.valueOf(bookingDate.split('T')[1].split(':')[1]), Integer.valueOf(bookingDate.split('T')[1].split(':')[2]), 0);
+            bookEndTime = bookStartTime;
+            bookEndTime = bookEndTime.addMinutes(Integer.valueOf(packageObj.Duration__c));
+        }
+        if(String.isNotBlank(teacherId) && String.isNotBlank(centerId) && String.isNotBlank(bookingDate) && recurring > 0 && packageObj != NULL && String.isNotBlank(studentId)){
+            for(integer i=1;i<=recurring;i++){
+                bookingObj = new Booking__c();
+                bookingObj.recordTypeId = Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get(ConstantsClass.groupLessonBookingRecordType).getRecordTypeId();
+                bookingObj.Center__c = centerId;
+                bookingObj.Group_Class__c = string.isNotBlank(groupLessonId) ? groupLessonId :null;
+                bookingObj.Package__c = packageObj.Id;
+                bookingObj.Student__c = studentId;
+                bookingObj.Teacher_Account__c = teacherId;
+                bookingObj.Booking_Date__c = bookDate;
+                bookingObj.Start_Time__c = bookStartTime;
+                bookingObj.End_Time__c = bookEndTime;
+                bookingObj.Type__c = ConstantsClass.typeAdhoc;
+                bookingObj.Status__c = ConstantsClass.statusScheduled;
+                // added by nishi: 18-Aug:2020: for manage enolment id in Adhoc bookings
+                if(string.isNotBlank(enrolmentId)){
+                    bookingObj.enrolment__c = enrolmentId;
+                }
+                bookingObj.Parent__c = String.isNotBlank(parentId)  ? parentId : null;
+                bookingList.add(bookingObj);
+                bookDate = bookDate.addDays(7);
+            }
+        }
+        return bookingList;
+    }
     
     public static Case createCase(String caseId, String bookingId, String origin){
         Case currentCase = new Case();
@@ -1760,25 +1802,27 @@ and booking date > 28 of month.
     *   This Method Will Fetch the desired the Fifth Lesson
     */
 
-   Public static List<Fifth_Lesson__c> fetchFifthLessson(Set<String> fifthLesson){
-       List<Fifth_Lesson__c> fifthLessons = new List<Fifth_Lesson__c>();
-       if(fifthLesson.size() > 0){
-           fifthLessons = [SELECT Id, Name, Booking_Date__c, Booking_Day__c, Center__r.Name, Duration__c,
-                           End_Time__c, Enrolment__c, Event_Color__c, Package__r.Name, Parent__r.FirstName, Parent__r.LastName, Parent__r.Stripe_Customer_Id__c, 
-                           Parent__r.PersonMobilePhone, Parent__r.PersonEmail, Parent__r.Available_Make_up_Units__c,
-                           //Start: added by nishi: 31-Jul-2020: if enrolment Lesson mode is Is center ther we added resource Id
-                           Enrolment__r.Lesson_Mode__c,  Enrolment__r.Resource__c,Center__r.Organisation__r.Name,Enrolment__r.Available_Make_up_mins__c,
-                           Enrolment__r.Center__r.Organisation__r.Tax_Rate__c,  Enrolment__r.Center__r.Organisation__r.Country__r.Currency_Code__c, 
-                           Enrolment__r.Center__r.Organisation__r.Stripe_Base_Url__c, Enrolment__r.Center__r.Organisation__r.Stripe_Secret_Key__c ,
-                           //end: added by nishi: 31-Jul-2020: if enrolment Lesson mode is Is center ther we added resource Id
-                           Start_Time__c, Student__r.FirstName, Student__r.LastName, Teacher_Account__r.FirstName,
-                           Teacher_Account__r.LastName, IsActive__c, Enrolment__r.center__c,  Enrolment__r.Package__r.Duration__c, 
-                           Enrolment__r.Center__r.Country__r.Tax_Rate__c,  Enrolment__r.Center__r.Country__r.Currency_Code__c, 
-                           Enrolment__r.Center__r.Country__r.Stripe_Base_Url__c, Enrolment__r.Center__r.Country__r.Stripe_Secret_Key__c 
-                           FROM Fifth_Lesson__c WHERE Id IN:fifthLesson];
-       }
-       return fifthLessons;
-   }
+    Public static List<Fifth_Lesson__c> fetchFifthLessson(Set<String> fifthLesson){
+        List<Fifth_Lesson__c> fifthLessons = new List<Fifth_Lesson__c>();
+        if(fifthLesson.size() > 0){
+            fifthLessons = [SELECT Id, Name, Booking_Date__c, Booking_Day__c, Center__r.Name, Duration__c,
+                            End_Time__c, Enrolment__c, Event_Color__c, Package__r.Name, Parent__r.FirstName, Parent__r.LastName, Parent__r.Stripe_Customer_Id__c, 
+                            Parent__r.PersonMobilePhone, Parent__r.PersonEmail, Parent__r.Available_Make_up_Units__c,
+                            Enrolment__r.package__r.Program__r.Instrument__c,Enrolment__r.package__r.Grade_new__c, //added by nishi: for ossia center we get adhoc packages accoding to enrolment grade and instrument
+                            //Start: added by nishi: 31-Jul-2020: if enrolment Lesson mode is Is center ther we added resource Id
+                            Enrolment__r.Lesson_Mode__c,  Enrolment__r.Resource__c,Center__r.Organisation__r.Name,Enrolment__r.Available_Make_up_mins__c,
+                            Enrolment__r.Center__r.Organisation__r.Tax_Rate__c,  Enrolment__r.Center__r.Organisation__r.Country__r.Currency_Code__c, 
+                            Enrolment__r.Center__r.Organisation__r.Stripe_Base_Url__c, Enrolment__r.Center__r.Organisation__r.Stripe_Secret_Key__c ,
+                            //end: added by nishi: 31-Jul-2020: if enrolment Lesson mode is Is center ther we added resource Id
+                            Start_Time__c, Student__r.FirstName, Student__r.LastName, Teacher_Account__r.FirstName,
+                            Teacher_Account__r.LastName, IsActive__c, Enrolment__r.center__c,  Enrolment__r.Package__r.Duration__c, 
+                            Enrolment__r.Center__r.Country__r.Tax_Rate__c,  Enrolment__r.Center__r.Country__r.Currency_Code__c, 
+                            Enrolment__r.Center__r.Country__r.Stripe_Base_Url__c, Enrolment__r.Center__r.Country__r.Stripe_Secret_Key__c 
+                            FROM Fifth_Lesson__c WHERE Id IN:fifthLesson];
+        }
+        return fifthLessons;
+    }
+
 
    /*
      *This Method will Clone the FifthLesson To Placeholder Booking

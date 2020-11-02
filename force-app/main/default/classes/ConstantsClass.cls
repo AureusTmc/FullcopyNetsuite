@@ -88,6 +88,7 @@ public class ConstantsClass {
     public static string recordTypeCenter = 'Centre'; 
     public static string typeBusy = 'Busy';
     public static string typeTrial = 'Trial';
+    public static string typeAdhocGroup = 'Adhoc'; // added by nishi: 2-Nov-2020: for group lesson adhoc package type
     public static string typeAdhoc = 'Ad-hoc';
     public static string typeMakeup = 'Make-up';
     public static string typePianoViewing = 'Piano Viewing'; //add by jatin: 20-jan-2020 : for show piano viewing type bookings
@@ -107,7 +108,7 @@ public class ConstantsClass {
     public static string calendarMinTime = '07:00:00';
     public static string teacherRecordType = 'Teacher'; 
     public static string teacherWorkingStatus = 'Working';
-   
+    public static Set<String> teacherPartTimeEngagementStatus = new Set<string> {'Commission'/*,'Part-Time'*/}; // added by nishi : 18-Sep-2020: for manage Commission type teacher in ossia organisation
     public static string teacherProfileName = '%Profile Image%';
     public static string makeupReasonOther = 'Other';
     public static string makeupAdminException = 'Admin/CM Exception';

@@ -2936,7 +2936,8 @@ newBookingWrapperObj.studentList = sObjList;
                 details.packageName = bookingList[0].Enrolment__r.Package__r.Name;
                 details.packageId = bookingList[0].Enrolment__r.Package__c;
                 details.isPackagePromotional = (bookingList[0].Enrolment__r.Package__r.Is_Promotion_Discount__c || 
-                bookingList[0].Enrolment__r.Package__r.Type_of_package__c == ConstantsClass.prePaymentType) ? true : false;
+                bookingList[0].Enrolment__r.Package__r.Type_of_package__c == ConstantsClass.prePaymentType ||
+                                                bookingList[0].Enrolment__r.Package__r.Type_of_package__c==ConstantsClass.PromoTypePayment) ? true : false;
                  if(String.isNotBlank(bookingList[0].Enrolment__c)){
                    //system.debug('bookingList[0].Enrolment__c'+bookingList[0].Enrolment__c);
                     List<Enrolment__c> enrollList = new List<Enrolment__c>([SELECT Id, Lesson_Day__c,Package_Process_Status__c,Center__r.Organisation__r.Name,
@@ -4601,8 +4602,10 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
         if(typeofpackage == ConstantsClass.prePaymentType || typeofpackage == ConstantsClass.PromoTypePayment){
             isPromotionalEnrolment = true;
         }
+        Decimal noOfMonths = isPromotionalEnrolment && String.isNotBlank(oldPackg.Promotion_period_In_months__c) ? Integer.valueOf(oldPackg.Promotion_period_In_months__c) : 1;
+        decimal oldpackageunitFee= isPromotionalEnrolment ? (oldPackg.Package_Fee__c/noOfMonths)/4 :oldPackg.Unit_Fee__c;                  
         if((typeOfSummary == 'upgrade' || typeOfSummary == 'downgrade') && newDateTime != NULL && String.isNotBlank(enrolmentId)){
-            List<Date> dates =  getMonthDates(newDateTime);//isPromotionalEnrolment ? getPromotinalMonthDates(newDateTime,nextBillDate) : getMonthDates(newDateTime);
+            List<Date> dates =  getMonthDates(newDateTime);
             List<Booking__c> listOfBookings = fetchBookingsForUpgrade(enrolmentId, dates);
             for(Booking__c objBooking : listOfBookings){
                 if(objBooking.Booking_Date__c >= newDateTime.date()){
@@ -4669,7 +4672,33 @@ countWithNewPackage +=1;
                         Decimal nextPackageUnitPrice =0;
                         // added by nishi: 20-Oct-2020: for now user also can upgrade enrolment process which type of package is promo and prepayment
                         if(isPromotionalEnrolment){
-                            Decimal noOfMonths = String.isNotBlank(oldPackg.Promotion_period_In_months__c) ? Integer.valueOf(oldPackg.Promotion_period_In_months__c) : 1;
+                            // added by nishi: 28-Oct-2020: if enrolment package is promitional then we show  invoice topup amount is current month to next billing date
+                           
+                            Map<String, List<Date>> mapOfDates = BillingUtility.getDateMap(newDateTime.date(),nextBillDate);
+                            decimal countWithPackage = 0;
+                            if(enrolmentList.size() > 0 && String.isNotBlank(enrolmentList[0].Lesson_Day__c) && mapOfDates.containsKey(enrolmentList[0].Lesson_Day__c)){
+                                List<Date> listOfDates = mapOfDates.get(enrolmentList[0].Lesson_Day__c);
+                                listOfBookings = fetchBookingsForUpgrade(enrolmentId, listOfDates);
+                                for(Booking__c objBooking : listOfBookings){
+                                    if(objBooking.Booking_Date__c >= newDateTime.date() && objBooking.Booking_Date__c < nextBillDate){
+                                        if(objBooking.Type__c == ConstantsClass.bookTypeRegular){
+                                            countWithNewPackage +=1;
+                                        }
+                                    }
+                                }
+                            }
+                            system.debug('@@countWithNewPackage'+countWithNewPackage);
+                            system.debug('@@oldpackageunitFee'+oldpackageunitFee);
+                            newPackageUnitPrice = (newPackg.Unit_Fee__c - oldpackageunitFee)*countWithNewPackage ;
+                            if(summary.taxRate>0){
+                                newPackageUnitPrice += (newPackageUnitPrice * (Decimal.valueOf(summary.taxRate)/100));
+                            }
+                            system.debug('@@newPackageUnitPrice'+newPackageUnitPrice);
+                            totalAmount = newPackageUnitPrice;
+                            totalAmount +=   depositeFee ;
+                            system.debug('@@totalAmount'+totalAmount);
+                            // added by nishi: 28-Oct-2020: if enrolment package is promitional then we show  invoice topup amount is current month to next billing date 
+
                             Decimal preUnitDiscountAmount = oldPackg.Promotion_Discount__c != null ?(((oldPackg.Promotion_Discount__c / noOfMonths)/4)*countWithNewPackage) :0;
                             Decimal gstDiscountAmount=0;
                             if(summary.taxRate>0){
@@ -4677,6 +4706,7 @@ countWithNewPackage +=1;
                             }
                             newPackageUnitPrice +=preUnitDiscountAmount;
                             totalAmount +=preUnitDiscountAmount;
+                            system.debug('@@@totalAmount'+totalAmount);
                         }else{
                             if(nextBillDate >= nextMonthDate && newDateTime.month() < nextMonthDate.addMonths(-1).month()){
                                 if(String.isNotBlank(enrolmentId)){
@@ -4717,8 +4747,8 @@ countWithNewPackage +=1;
                         }
                         // added by Nishi: 12-aug-2020: if next billing date is greater then next month then we create new invoice for adjuct new upgraded package unitfee 
                         summary.invoiceTopup = BillingUtility.roundOffAmount(totalAmount);
-                        system.debug('totalAmount'+totalAmount);
-                        system.debug('newPackageUnitPrice'+newPackageUnitPrice);
+                        system.debug('@@totalAmount'+totalAmount);
+                        system.debug('n@@ewPackageUnitPrice'+newPackageUnitPrice);
                         summary.invoiceDepositLessonTopup = BillingUtility.roundOffAmount(newPackageUnitPrice+nextPackageUnitPrice);
                 }else{
                     summary.invoiceTopup = depositeFee;
@@ -4737,7 +4767,7 @@ countWithNewPackage +=1;
                     mapOfDates = BillingUtility.getDateMap(firstDate,lastDate);
                 }else{
                     //2020-08-22 - 2020-08-31
-                    mapOfDates = BillingUtility.getDateMap(newDateTime.date(),lastDate);//isPromotionalEnrolment ? BillingUtility.getDateMap(newDateTime.date(),nextBillDate): BillingUtility.getDateMap(newDateTime.date(),lastDate);;
+                    mapOfDates = BillingUtility.getDateMap(newDateTime.date(),lastDate);
                 }
                //system.debug('newDateTime'+newDateTime); //2020-08-22
                //system.debug('firstDate'+firstDate);//2020-08-01
@@ -4809,7 +4839,6 @@ countWithNewPackage +=1;
                     Decimal preUnitDiscountAmount =0;
                       // added by nishi: 23-Oct-2020: for now user also can upgrade enrolment process which type of package is promo and prepayment
                     if(isPromotionalEnrolment){
-                        Decimal noOfMonths = String.isNotBlank(oldPackg.Promotion_period_In_months__c) ? Integer.valueOf(oldPackg.Promotion_period_In_months__c) : 1;
                         preUnitDiscountAmount = oldPackg.Promotion_Discount__c != null ?(((oldPackg.Promotion_Discount__c / noOfMonths)/4)*countWithNewPackage) :0;
                         Decimal gstDiscountAmount=0;
                         if(summary.taxRate>0){
@@ -4841,7 +4870,7 @@ countWithNewPackage +=1;
                         }
                     }
                      // added by Nishi: 12-aug-2020: if next billing date is greater then next month then we create new invoice for adjuct new upgraded package unitfee 
-                    //system.debug('countWithNewPackageDowngrade'+countWithNewPackageDowngrade);//1 
+                    system.debug('countWithNewPackageDowngrade'+countWithNewPackageDowngrade);//1 
                     if(summary.currentPackageDeposit == null){
                         summary.currentPackageDeposit = 0;
                     }
@@ -4861,7 +4890,7 @@ countWithNewPackage +=1;
                 //     }
                    // end:added by nishi: 19-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
                     
-                    summary.negativeInvoiceAmount = - (BillingUtility.roundOffAmount(countWithNewPackageDowngrade * oldPackg.Unit_Fee__c));
+                    summary.negativeInvoiceAmount = - (BillingUtility.roundOffAmount(countWithNewPackageDowngrade * oldpackageunitFee));
                     
                     if(countWithNextMonthPackageDowngrade > 0){
                         summary.negativeNextMonthInvoiceAmount =- (BillingUtility.roundOffAmount(countWithNextMonthPackageDowngrade * oldPackg.Unit_Fee__c)) ;
@@ -4878,7 +4907,7 @@ countWithNewPackage +=1;
                    //system.debug('summary.positiveFacilityInvoiceAmount'+summary.positiveFacilityInvoiceAmount);
 
                     newPackageUnitPrice = countWithNewPackageDowngrade * 
-                                        (newPackg.Unit_Fee__c - oldPackg.Unit_Fee__c);
+                                        (newPackg.Unit_Fee__c - oldpackageunitFee);
                     if(countWithNextMonthPackageDowngrade > 0){
                         newNextMonthPackageUnitPrice  =   countWithNextMonthPackageDowngrade *  (newPackg.Unit_Fee__c - oldPackg.Unit_Fee__c);   
                        // newNextMonthPackageUnitPrice += (BillingUtility.roundOffAmount(newPackg.Unit_Fee__c) / Integer.valueOf(newPackg.duration__c))*minutesOfFifthBooking; 
@@ -4944,7 +4973,7 @@ countWithNewPackage +=1;
         }
         ////system.debug('@@packageIds'+packageIds);
         if(packageIds.size() > 0){
-            packageList = [SELECT Id, Name, Deposit_Fee__c, duration__c, Unit_Fee__c, Location__r.Country__r.Tax_Rate__c  ,
+            packageList = [SELECT Id, Name, Deposit_Fee__c, duration__c, Unit_Fee__c, Location__r.Country__r.Tax_Rate__c  ,Package_Fee__c,
                              /*facility_Fee__c,*/Grade_New__c,Location__r.Organisation__r.Name,Location__r.Organisation__r.Tax_Rate__c,  
                              Is_Promotion_Discount__c,type_of_package__C, Package_after_Promotion__c, Promotion_period_In_months__c, Promotion_Discount__c
                             FROM Package__c 
@@ -5179,6 +5208,62 @@ countWithNewPackage +=1;
                 ORDER BY Name];
     }
     
+     // added by nishi: 28-oct-2020: if enrolment packages type is prepayement and user want to change enrolment then we show prepayment  packages not normal packages
+    @RemoteAction
+    public static List<Data> getPackagePromotionalAccordingToTeacher(String centerId, String teacherId, Integer duration,string bookingId){
+        List<Data> packageList = new List<Data>();
+        Data dt = new Data();
+        Set<String> instruments =  new Set<String>();       
+        String pkgLessRecId =  Schema.SObjectType.Package__c.getRecordTypeInfosByName().get(ConstantsClass.recordTypeLesson).getRecordTypeId(); 
+        if(String.isNotBlank(teacherId)){
+            List<Account> tchrList = [SELECT Id,Major_Instruments_Disciplines__c,Minor_Instruments_Disciplines__c 
+                                    FROM Account WHERE Id =:teacherId];
+            if(tchrList.size() > 0){        
+                
+                for(Account acc: tchrList){        
+                    
+                    if(acc.Major_Instruments_Disciplines__c != null){       
+                        for(String strIns : acc.Major_Instruments_Disciplines__c.split(';'))        
+                            instruments.add(strIns);        
+                    }       
+                    
+                    if(acc.Minor_Instruments_Disciplines__c != null){       
+                        for(String strIns : acc.Minor_Instruments_Disciplines__c.split(';'))        
+                            instruments.add(strIns);        
+                    }       
+                    
+                }
+            }
+            system.debug('instruments'+instruments);
+            system.debug('bookingId'+bookingId);
+            if(instruments.size() > 0 && String.isNotBlank(centerId) && String.isNotBlank(bookingId)){  
+                string enrolmentId = upgradeDowngradeController.getEnrolmentId(bookingId);
+                Enrolment__C objEnrolment = fetchEnrolment(enrolmentId);
+                system.debug('objEnrolment'+objEnrolment);
+                for(Package__c pkg : [SELECT Id, Name FROM Package__c 
+                                    WHERE Location__c =: centerId 
+                                    AND Program__r.Status__c =: ConstantsClass.activeStatus  
+                                    AND Program__r.Instrument__c IN: instruments       
+                                    AND Program__r.Billing__c != null AND Program__r.Scheduling__c != null 
+                                    AND Active__c = True 
+                                    AND (Type__c = 'Individual' OR Type__c = 'Home') 
+                                    AND RecordtypeId =: pkgLessRecId 
+                                    AND Duration__c =: String.valueOf(duration) 
+                                    AND Type_of_package__c =: objEnrolment.Package__r.Type_of_package__c
+                                    And Promotion_period_In_months__c =:objEnrolment.Package__r.Promotion_period_In_months__c
+                                    And Promotion_Discount__c =:objEnrolment.Package__r.Promotion_Discount__c
+                                    ORDER BY Program__r.Name]){
+                                                            dt = new Data();
+                                          dt.Id = pkg.Id;
+                                          dt.name = pkg.Name;
+                                          packageList.add(dt);
+                                      }    
+                                      system.debug('packageList'+packageList);
+            }
+        }
+        return packageList;
+    }
+
     @RemoteAction
     public static List<Data> getPackageAccordingToTeacher(String centerId, String teacherId, Integer duration){
         List<Data> packageList = new List<Data>();
@@ -5245,8 +5330,9 @@ countWithNewPackage +=1;
         List<Enrolment__c> enrolmentList = [SELECT Id, Effective_Date__c, Lesson_Day__c, Teacher__c, Teacher__r.Employee_Duty_Type__c, 
                                             Center__c, Student__c, Student__r.Name, Lesson_Start_time__c, Next_Lesson_Start_time__c,
                                             Package__c, Package__r.Duration__c,Parent__c, Center__r.Country__r.Tax_Rate__c, Center__r.Country__r.Currency_Code__c, 
-                                            Center__r.Country__r.Stripe_Secret_Key__c, Center__r.Country__r.Stripe_Base_Url__c,Center__r.Country__r.Id, 
-                                            Center__r.Organisation__c,
+                                            Center__r.Country__r.Stripe_Secret_Key__c, Center__r.Country__r.Stripe_Base_Url__c,Center__r.Country__r.Id,Center__r.Organisation__c,
+                                            // added by nishi: 28-Oct-2020: for if enrolment package type is Promotionl then we get Promotion detials 
+                                            Package__r.Promotion_period_In_months__c,Package__r.Promotion_Discount__c,Package__r.Type_of_package__c,Package__r.Package_Fee__c,
                                             Center__r.Organisation__r.Tax_Rate__c, Center__r.Organisation__r.Country__r.Currency_Code__c, 
                                             Center__r.Organisation__r.Stripe_Secret_Key__c, Center__r.Organisation__r.Stripe_Base_Url__c,Center__r.Organisation__r.Name, 
                                              (Select Id, Next_Bill_Date__c, Subscription__r.Parent__r.Stripe_Customer_Id__c,
@@ -5294,12 +5380,14 @@ countWithNewPackage +=1;
     public  static List<Date> getPromotinalMonthDates(DateTime effectiveDate,date nextbillingdate){
         List<Date> dates = new List<Date>();
         effectiveDate = DateTime.newInstance(effectiveDate.date().toStartOfMonth(), effectiveDate.time());
-        Integer currentMonth = nextbillingdate.month();
-        
+        Integer currentMonth = nextbillingdate.addMonths(-1).month();
+        system.debug('@@effectiveDate'+effectiveDate);
+        system.debug('@@currentMonth'+currentMonth);
         while(effectiveDate.month() == currentMonth){
             dates.add(effectiveDate.date());
             effectiveDate = effectiveDate.addDays(1);
         }
+        system.debug('@@dates'+dates);
         return dates;
     }
     
@@ -5829,19 +5917,19 @@ countWithNewPackage +=1;
         String enrolmentId;
     }
     public class AdhocLessonDetails{
-        String studentId;
-        String studentFirstName;
-        String studentLastName;
-        String packageId;
-        String packageName;
-        Integer units;
-        Double packageFee;
-        Double unitFee;
-        String centerName;
-        String duration;
-        String teacherId;
-        String teacherName;
-        Decimal gstRate;
+        public String studentId;
+        public String studentFirstName;
+        public String studentLastName;
+        public String packageId;
+        public String packageName;
+        public Integer units;
+        public Double packageFee;
+        public Double unitFee;
+        public String centerName;
+        public String duration;
+        public String teacherId;
+        public String teacherName;
+        public Decimal gstRate;
     }
     
     public class GradePackageDetails{

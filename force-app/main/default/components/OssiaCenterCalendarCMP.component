@@ -192,6 +192,50 @@
                 { escape: true }
             );
         }
+
+          // added by nishi: 3-Sep-2020: for manage Ossia group class makeup mins 
+          function ossiaGroupClassAdhocEnrolment(centerid,teacherId,groupClassId,studentId,isOssia){
+            $('#OssiaInstrumentSelect').val('');
+            $('#OssiaInstrumentSelect').empty();
+            $('#OssiaInstrumentSelect').attr('disabled', 'true');
+            $('#ossiaGroupClassInstrmentErrorMsg').text('');
+            $('#ossiaGroupClassInstrment').empty();
+            var instrumentStr = '<option value="">Select Insturment</option>';
+           console.log('centerid'+centerid);
+           console.log('teacherId'+teacherId);
+           console.log('groupClassId'+groupClassId);
+           console.log('studentId'+studentId);
+           console.log('isOssia'+isOssia);
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.OssiaCenterCalendarController.getOssiaGroupClassAdhocPackages}',
+                centerid,teacherId,groupClassId,studentId,isOssia, 
+                function (result, event) {
+                   console.log('result', result);
+                    if (result) {
+                        bookingData.packageId = result.packageId;
+                        $('#GroupMakupPackageLabel').html(result.packageName);
+                        if(isOssia){
+                            bookingData.classInstrument = result.classInstrument;
+                            $('#GroupMakupHoursLabel').html('0 min');
+                            if (result.listOfEnrolmentInstrumentWrapper && result.listOfEnrolmentInstrumentWrapper != null && result.listOfEnrolmentInstrumentWrapper != undefined && result.listOfEnrolmentInstrumentWrapper.length > 0) {
+                                $(result.listOfEnrolmentInstrumentWrapper).each(function (index, value) {
+                                    instrumentStr += '<option value="' + value.enrolmentId + ';' + value.makeupHours + ';' + value.instrument + '">[' + value.enrolmentName + '] - ' + value.instrument + '</option>';
+                                });
+                                $('#ossiaGroupClassInstrment').append(instrumentStr);
+                                $('#ossiaGroupClassInstrment').removeAttr('disabled');
+                            } else {
+                                $('#ossiaGroupClassInstrment').append(instrumentStr);
+                            }
+                        }else{
+                            $('#saveNewGroupMakupBooking').removeAttr('disabled');
+                            $('#GroupMakupHoursErrorMsg').text('');
+                        }
+                    }
+                },
+                { escape: true }
+            );
+        }
+
         // mange enrolment id and makeup min accroding to user selected enrolment 
         function  handleOssiaGroupclassMakeupMin(){
             var enrolInstrument = $('#ossiaGroupClassInstrment').val();
@@ -200,18 +244,21 @@
             $('#ossiaGroupClassInstrmentErrorMsg').text('');
             $('#GroupMakupHoursErrorMsg').text('');
             $('#saveNewGroupMakupBooking').attr('disabled', '');
+            var groupAppointmentType  = $('#saveNewGroupMakupBooking').attr('data-groupAppointmentType');
             if (enrolInstrument && enrolInstrument != '' && enrolInstrument != null && enrolInstrument != undefined && enrolInstrument.length > 0) {
                 bookingData.enrolementId = enrolInstrument.split(';')[0];
                 bookingData.availableHours = enrolInstrument.split(';')[1];
                 $('#GroupMakupHoursLabel').html(enrolInstrument.split(';')[1] + ' min');
                 $('#saveNewGroupMakupBooking').attr('data-enrolInstrument',enrolInstrument.split(';')[2]);
                 $('#saveNewGroupMakupBooking').removeAttr('disabled');
-                if (bookingData.availableHours < bookingData.duration) {
-                    $('#saveNewGroupMakupBooking').attr('disabled', '');
-                    $('#GroupMakupHoursErrorMsg').text('Insufficient Makup minutes');
-                } else {
-                    $('#saveNewGroupMakupBooking').removeAttr('disabled');
-                    $('#GroupMakupHoursErrorMsg').text('');
+                if(groupAppointmentType === 'MakeUp'){
+                    if (bookingData.availableHours < bookingData.duration) {
+                        $('#saveNewGroupMakupBooking').attr('disabled', '');
+                        $('#GroupMakupHoursErrorMsg').text('Insufficient Makup minutes');
+                    } else {
+                        $('#saveNewGroupMakupBooking').removeAttr('disabled');
+                        $('#GroupMakupHoursErrorMsg').text('');
+                    }
                 }
             } else {
                 bookingData.enrolementId ='';
@@ -708,7 +755,7 @@
                 );
             }
         }
-        function getOssiaChangeEnrolmentPackageByTeacher() {
+        function getOssiaChangeEnrolmentPackageByTeacher(isPackagePromotional) {
             $('#selectPackageEnrolUpdate').empty();
             $('#selectPackageEnrolUpdate').attr('disabled', 'true');
             $('#newPackageDurationOssiaEnrolUpdate').html('');
@@ -724,7 +771,7 @@
             if (teacherId != 'Select Teacher' && centerId && duration && booingid) {
                 Visualforce.remoting.Manager.invokeAction(
                     '{!$RemoteAction.OssiaCenterCalendarController.getPackageAccordingToOssiaTeacher}',
-                    centerId, teacherId, duration, booingid, enrolmentType,
+                    centerId, teacherId, duration, booingid, enrolmentType,isPackagePromotional,
                     function (result, event) {
                         var packageEnrol = '<option value="Select Package">Select an Option</option>';
                         $(result).each(function (index, value) {

@@ -259,7 +259,8 @@ public class ClassEditController {
                         if(String.isNotBlank(classObj.Id)){
                             UPDATE classObj;
                            //system.debug('classObj'+classObj);
-                            RescheduleForAllFutureGroupClassBookings allReschedule = new RescheduleForAllFutureGroupClassBookings(isDayChange, classObj, dateChange.date(), bookingObj.Booking_Date__c);
+                           //commented by nishi:29-Sep-2020
+                           RescheduleForAllFutureGroupClassBookings allReschedule = new RescheduleForAllFutureGroupClassBookings(isDayChange, classObj, dateChange.date(), bookingObj.Booking_Date__c);
                         }
                     }
                 }
@@ -1308,7 +1309,7 @@ public class ClassEditController {
     private static List<Booking__c> fetchAllBookingsForClass(String bookingId){
         String groupLessonBookingRecordType = Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get(ConstantsClass.groupLessonBookingRecordType).getRecordTypeId();
         //Set<String> statusSet = new Set<String>{ConstantsClass.pendingStatus, ConstantsClass.scheduledStatus};
-        Set<String> bookingTypeSet = new Set<String>{ConstantsClass.groupLessonTypeBooking, ConstantsClass.busyBookingType,ConstantsClass.typeMakeup,ConstantsClass.trialStatus};
+        Set<String> bookingTypeSet = new Set<String>{ConstantsClass.groupLessonTypeBooking, ConstantsClass.busyBookingType,ConstantsClass.typeAdhoc,ConstantsClass.typeMakeup,ConstantsClass.trialStatus};
         return [SELECT Id, Name, Student__r.Name, Parent__r.Name, Status__c ,Booking_Date__c,start_Time__c ,
                 Class__r.Instrument__c,Class__r.Class_Type__c,Type__c
                 FROM Booking__c WHERE RecordTypeId =:groupLessonBookingRecordType 
@@ -1502,5 +1503,207 @@ public class ClassEditController {
             this.start =start;
             this.bookingType = bookingType;
         }
+    }
+
+    // nishi: 2-Nov-2020: get group adhoc package list
+    @RemoteAction 
+    public static AureusCalendarController.AdhocLessonDetails  getGroupAdhocPackageDetail(String student, String packageId, String teacherId){
+        String recordTypeLesson = ConstantsClass.recordTypeLesson;
+        AureusCalendarController.AdhocLessonDetails adhocDetails = new AureusCalendarController.AdhocLessonDetails();
+        if(String.isNotBlank(packageId)){
+            for(Package__c packageObj : [SELECT Id, Name, RecordType.Name, Location__r.Name, Location__r.Country__r.Tax_Rate__c, Location__r.Organisation__r.Tax_Rate__c, 
+                                        of_Units__c, Package_Fee__c, Unit_Fee__c, Duration__c ,/*facility_Fee__c,*/Location__r.Organisation__r.Name
+                                        FROM Package__c WHERE RecordType.Name =: recordTypeLesson AND Id =: packageId]){
+                
+                adhocDetails.packageName = packageObj.Name; 
+                adhocDetails.packageId = packageObj.Id;
+                adhocDetails.packageFee = packageObj.Package_Fee__c;
+                adhocDetails.unitFee = packageObj.Unit_Fee__c ;
+                adhocDetails.units = Integer.valueOf(packageObj.of_Units__c);
+                adhocDetails.duration = packageObj.Duration__c;
+                //Start: added by nishi: 17-Aug-2020: for manage facility fee is ossia related centers 
+                if(String.isNotBlank(packageObj.Location__c)){
+                    adhocDetails.gstRate = packageObj.Location__r.Organisation__r.Tax_Rate__c;
+                    adhocDetails.centerName = packageObj.Location__r.Name;
+                }   
+                //End: added by nishi: 17-Aug-2020: for manage facility fee is ossia related centers
+                break;
+            }
+        }
+        if(String.isNotBlank(student)){
+            for(Account acc : [SELECT Id, FirstName, LastName, RecordType.Name FROM Account WHERE RecordType.Name = 'Customer' AND Id =: student]){
+                adhocDetails.studentId = acc.Id;
+                adhocDetails.studentFirstName = acc.FirstName;
+                adhocDetails.studentLastName = acc.LastName;
+                break;
+            }
+            
+        }
+        if(String.isNotBlank(teacherId)){
+            for(Account acc : [SELECT Id, FirstName, LastName, RecordType.Name FROM Account WHERE RecordType.Name = 'Teacher' AND Id =: teacherId]){
+                adhocDetails.teacherId = acc.Id;
+                adhocDetails.teacherName = acc.FirstName + ' ' +acc.LastName;
+                break;
+            }
+        }
+        return adhocDetails;
+    }   
+
+
+    @RemoteAction
+    public static Boolean createAdhocGroupClassBookings(String packageId, String centerId, String teacherId, String studentId, String recurring, String bookingDate,
+    String groupLessonId,String enrolmentId){
+        Country__c countryOfCentre = new Country__c();
+        Organisation__c organisationOfCentre = new Organisation__c();
+        Boolean isOssiaOrganization = false;
+        Boolean isSuccess;
+        Double totalAmount = 0;
+        string recordTypeCustomer = ConstantsClass.recordTypeCustomer;
+        string recordTypeCentre = ConstantsClass.centerRecTypeName;
+        String stripeId = '';
+        List<Booking__c> bookingList = new List<Booking__c>();
+        String parentId ;
+        List<Account> accList = new List<Account>();
+        if(String.isNotBlank(studentId) && String.isNotBlank(centerId)){
+            accList = new List<Account>([SELECT Id, Name, Parent__c, RecordType.Name ,  Also_a_Student__c, Stripe_Customer_Id__c, Parent__r.Stripe_Customer_Id__c, 
+                                         Country__c, Country__r.Id, Country__r.Tax_Rate__c, Country__r.Stripe_Base_Url__c, Country__r.Stripe_Secret_Key__c, 
+                                         Country__r.Currency_Code__c,Organisation__r.Name,Organisation__r.Id, Organisation__r.Tax_Rate__c, Organisation__r.Stripe_Base_Url__c,
+                                          Organisation__r.Stripe_Secret_Key__c, 
+                                         Organisation__r.country__r.Currency_Code__c
+                                          FROM Account 
+                                         WHERE (RecordType.Name =: recordTypeCustomer AND Id =: studentId) OR Id =: centerId]);
+        }
+        system.debug('accList'+accList);
+        if(accList.size() > 0){
+            for(account acc : accList){
+                if(acc.RecordType.Name == recordTypeCustomer){
+                    if(String.isNotBlank(acc.Parent__c) && acc.Also_a_Student__c == false){
+                        parentId = acc.Parent__c;
+                        stripeId = acc.Parent__r.Stripe_Customer_Id__c;
+                       system.debug('stripeId...'+stripeId);
+                    }else if(String.isBlank(acc.Parent__c) && acc.Also_a_Student__c == true){
+                        parentId = acc.Id;
+                        stripeId = acc.Stripe_Customer_Id__c;
+                        System.debug('parent stripeId...'+stripeId);
+                    }    
+                }else if(acc.RecordType.Name == recordTypeCentre){
+                    countryOfCentre = acc.Country__r;
+                    organisationOfCentre = acc.Organisation__r;
+                    if(string.isnotBlank(acc.Organisation__c) && string.isnotBlank(acc.Organisation__r.Name) && 
+                        acc.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name) ){
+                            isOssiaOrganization= true;
+                    }
+                }
+            }
+            
+        }
+        system.debug('organisationOfCentre'+organisationOfCentre);
+        List<Package__c> listOfPackage =[SELECT Name, Id, Unit_Fee__c, Duration__c//,facility_Fee__c
+                                         FROM Package__c
+                                         Where id =: packageId];
+                                         system.debug('listOfPackage'+listOfPackage);
+        Invoice__c objectOfInvoice = new Invoice__c(Status__c=ConstantsClass.dueStatus, Due_Date__c = system.today().AddDays(ConstantsClass.addInvoiceDueDays),
+                                                    Invoice_Date__c =system.today(), Parent_Account__c = parentId,Center__c=centerId);
+                                                    system.debug('objectOfInvoice'+objectOfInvoice);
+                                                   
+        if(listOfPackage.size() > 0){
+            system.debug('bookingDate'+bookingDate);
+            Double gstAdded = 0;
+            Date bookDate = Date.newInstance(Integer.valueOf(bookingDate.split('T')[0].split('-')[0]), Integer.valueOf(bookingDate.split('T')[0].split('-')[1]), Integer.valueOf(bookingDate.split('T')[0].split('-')[2]));
+            if(isOssiaOrganization){
+                 bookingList = AureusCalendarControllerHelper.createAppointmentForAdhocGroupLesson(listOfPackage[0], teacherId, studentId, centerId, Integer.valueOf(recurring), bookingDate,
+                                                                                  parentId,groupLessonId,enrolmentId); 
+            }else{
+                 bookingList = AureusCalendarControllerHelper.createAppointmentForAdhocGroupLesson(listOfPackage[0], teacherId, studentId, centerId, Integer.valueOf(recurring), bookingDate,
+                                                                                    parentId,groupLessonId,''); 
+            }
+                   
+            system.debug('bookingList'+bookingList);                                                            
+            Boolean isChecked = validateBookingIsAvailable(groupLessonId);
+            List<Invoice_Line_Item__c> listOfInvoiceLineItem = new List<Invoice_Line_Item__c>();
+            Stripe_Payment_Log__c iLog = new Stripe_Payment_Log__c();
+            Double packageFee =0;
+            for(Integer i = 0; i < bookingList.size(); i++){
+                packageFee =0;
+                packageFee = Double.valueOf(listOfPackage[0].unit_Fee__c);
+                totalAmount += BillingUtility.roundOffAmount(packageFee);
+                if(packageFee > 0 && countryOfCentre.Tax_Rate__c > 0){
+                    gstAdded += BillingUtility.roundOffAmount(packageFee) * (countryOfCentre.Tax_Rate__c / 100);
+                }
+                
+            }
+            if(totalAmount > 0 && gstAdded > 0){
+                totalAmount += gstAdded;
+            }
+            if(isChecked){
+                insert objectOfInvoice;
+                if(bookingList != null && bookingList.size() > 0){
+                    insert bookingList;
+                    if(objectOfInvoice.id != null){
+                        for(Integer i = 0; i < bookingList.size(); i++){
+                            Double amount = BillingUtility.roundOffAmount(listOfPackage[0].unit_Fee__c);
+                            Double taxAmount = 0;
+                            if(amount > 0 && countryOfCentre.Tax_Rate__c > 0){
+                                taxAmount = BillingUtility.roundOffAmount(amount * (countryOfCentre.Tax_Rate__c / 100));
+                            }
+                            listOfInvoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,
+                                                                            Amount__c=amount,
+                                                                            package__c=packageId, 
+                                                                            Booking__c = bookingList[i].Id, month__c = System.today(), 
+                                                                            GST_Amount__c = taxAmount));
+                        }
+                    }
+                    if(listOfInvoiceLineItem.size() > 0){
+                        insert listOfInvoiceLineItem;
+                    }
+                }
+            }
+            if(objectOfInvoice != NULL && totalAmount > 0 && String.isNotBlank(stripeId) && isChecked && String.isNotBlank(organisationOfCentre.Id)){
+                BillingUtility.StripeCharge objStripeCharge = new BillingUtility.StripeCharge();
+                objStripeCharge = AureusCalendarController.updateInvoice(objectOfInvoice, totalAmount, stripeId, organisationOfCentre.country__r.Currency_Code__c, organisationOfCentre.Stripe_Base_Url__c, organisationOfCentre.Stripe_Secret_Key__c);
+                system.debug('objStripeCharge'+objStripeCharge);  
+                if(objStripeCharge.statusCode == 200 && objStripeCharge.paid){
+                    
+                    isSuccess = true;
+                    system.debug('objectOfInvoice'+objectOfInvoice); 
+                    objectOfInvoice = [SELECT Id,Name,Parent_Account__c,Total_Amount__c ,status__c FROM Invoice__c WHERE Id=: objectOfInvoice.Id];
+                    objectOfInvoice.status__c = ConstantsClass.paidStatus;
+                    update objectOfInvoice;
+                    system.debug('listOfInvoiceLineItem'+listOfInvoiceLineItem); 
+                    if(objectOfInvoice != NULL && String.isNotBlank(objectOfInvoice.Id)){
+                        BillingUtility.createAttachment(new Set<String>{objectOfInvoice.Id});
+                        
+                    }
+                    Payment__c objPayment = BillingUtility.fillPayment(objectOfInvoice.Parent_Account__c,objectOfInvoice.Id,totalAmount,ConstantsClass.successStatus); 
+                    objPayment.Transaction_ID__c = objStripeCharge.Id;
+                    objPayment.Method_of_Payment__c = ConstantsClass.cardModeType;
+                    insert objPayment;
+                    system.debug('objPayment'+objPayment); 
+                    if(String.isNotBlank(organisationOfCentre.Id)){
+                        BillingUtility.updateCharge(objStripeCharge.Id,objectOfInvoice.Name, organisationOfCentre.Stripe_Base_Url__c, organisationOfCentre.Stripe_Secret_Key__c);    
+                    }
+                   // added by jatin: 31-Dec-2019 : for adhoc invoice to push on the sage
+                    SageIntacctIntegrationUtility.adhocInvoice(objectOfInvoice.id);
+
+                }else{
+                    isSuccess = false;
+                }
+            }else{
+                isSuccess = false;
+            }
+            
+        }
+        system.debug('isSuccess'+isSuccess); 
+        return isSuccess;
+    }
+    
+
+    public static boolean validateBookingIsAvailable(string grouplessonId){
+        Boolean isAvailableForBooking = false;
+        Booking__c bookObj =  fetchSelectedBookingDetails(grouplessonId);
+        if(string.isnotBlank(bookObj.Class__c) && bookObj.Class__r.Available_Capacity__c != null && bookObj.Class__r.Available_Capacity__c > 0){
+            isAvailableForBooking = true;
+        }
+        return isAvailableForBooking;
     }
 }
