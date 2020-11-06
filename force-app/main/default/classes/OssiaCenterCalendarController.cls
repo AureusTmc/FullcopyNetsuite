@@ -443,13 +443,15 @@ public with sharing class OssiaCenterCalendarController {
         Set<string> instrumentlist= new Set<String>();
         Package__c packageObj = new Package__c();
         if(String.isNotBlank(studentId) && string.isNotBlank(centerId)){
+            set<string> enrolmenttype = new Set<string>{ConstantsClass.enrolGroupType,ConstantsClass.enrolRegularStatus};
             List<Enrolment__c> enrolmentList = [SELECT Id,Name, Center__c, Parent__c,Center__r.Organisation__c,Center__r.Organisation__r.Name, 
                                                     Student__c, Teacher__c, Type__c, Stage__c ,Available_Make_up_mins__c,Instrument__c,Package__c,Package__r.name,
                                                     package__r.Grade_new__c,Package__r.Duration__c,Package__r.Program__r.Instrument__c
                                                     FROM Enrolment__c where 
                                                     Student__c =: studentId
                                                     AND Stage__c =:ConstantsClass.enroledStatus
-                                                    AND Type__c =: ConstantsClass.enrolGroupType
+                                                   AND Type__c In: enrolmenttype
+                                                    and Center__r.Organisation__r.Name = :System.Label.Ossia_Organisation_Name
                                                     ];
             for(Enrolment__c objEnrol: enrolmentList){
                                           
@@ -501,14 +503,14 @@ public with sharing class OssiaCenterCalendarController {
                     if(listOfclass != null && listOfclass.size() > 0){
                         Set<string> classInstrumentList= new Set<String>();
                         for(Ossia_Group_Grade_Package__c classObj : listOfclass ){
-                            if(string.isnotBlank(classObj.Class_Name__r.Grade__c) && classObj.Class_Name__r.Grade__c.split(';') != null && classObj.Class_Name__r.Grade__c.split(';').size() > 0){
+                            /*if(string.isnotBlank(classObj.Class_Name__r.Grade__c) && classObj.Class_Name__r.Grade__c.split(';') != null && classObj.Class_Name__r.Grade__c.split(';').size() > 0){
                                 gradeList.addAll(classObj.Class_Name__r.Grade__c.split(';'));
-                            }
+                            }*/
                             classInstrumentList.add(classObj.Package__r.Program__r.Instrument__c);
                         }
                         objEnrolmentWrapper.classInstrument = String.join(new List<String>(classInstrumentList),';') ; 
                     }  
-                    adhocPackageMap = fetchOssiaAdhocLessons(centerId,listOfclass[0].Package__r.Duration__c,enrolmentList[0].Package__r.Program__r.Instrument__c,gradeList);
+                    /*adhocPackageMap = fetchOssiaAdhocLessons(centerId,listOfclass[0].Package__r.Duration__c,new set<string>{enrolmentList[0].Package__r.Program__r.Instrument__c},gradeList);
                     if( string.isNotBlank(enrolmentList[0].package__r.Grade_new__c) && enrolmentList[0].package__r.Grade_new__c.split(';') != null &&  enrolmentList[0].package__r.Grade_new__c.split(';').size() >0){
                         for(string grade :enrolmentList[0].package__r.Grade_new__c.split(';')){
                             system.debug('grade'+grade);
@@ -519,8 +521,8 @@ public with sharing class OssiaCenterCalendarController {
                                 break;
                             }
                         }
-                    }
-                }else{
+                    }*/
+                }/*else{
                     List<class__c> classList = [select id,Package__r.Duration__c from class__C where id=:groupClassId];
                     adhocPackageMap = fetchAdhocLessons(centerId,classList[0].Package__r.Duration__c);
                     //added by nishi:22-Oct-2020:end: for ossia center we get adhoc packages accoding to enrolment grade and instrument
@@ -529,9 +531,9 @@ public with sharing class OssiaCenterCalendarController {
                         objEnrolmentWrapper.packageId = packageObj.id;
                         objEnrolmentWrapper.packageName = packageObj.name;
                     }
-                }
-                system.debug('adhocPackageMap'+adhocPackageMap);
-                system.debug('packageObj'+packageObj);
+                }*/
+                //system.debug('adhocPackageMap'+adhocPackageMap);
+                //system.debug('packageObj'+packageObj);
                
             }                                 
             return objEnrolmentWrapper;
@@ -539,7 +541,7 @@ public with sharing class OssiaCenterCalendarController {
         public static Map<String, Package__c> fetchAdhocLessons(string centerId,string duration){
             Map<String, Package__c> mapOfAdhocPackage = new Map<String, Package__c>();
             if(string.isNotBlank(centerId) && string.isNotBlank(duration)  ){
-                for(Package__c packageObj : [SELECT Id,name, Location__c, Duration__c, unit_Fee__c/*,facility_Fee__c*/ FROM Package__c 
+                for(Package__c packageObj : [SELECT Id,name, Location__c, Duration__c,Program__r.Instrument__c,Grade_new__c, unit_Fee__c/*,facility_Fee__c*/ FROM Package__c 
                                              WHERE Active__c = TRUE AND Type__c =: ConstantsClass.typeAdhocGroup AND Location__c =:centerId AND 
                                              Duration__c =:duration]){
                     mapOfAdhocPackage.put(packageObj.Location__c + '-' + packageObj.Duration__c, packageObj);
@@ -549,7 +551,7 @@ public with sharing class OssiaCenterCalendarController {
         }
         
         //added by nishi:22-Oct-2020: for ossia center we get adhoc packages accoding to enrolment grade and instrument
-        public static  Map<String, Package__c> fetchOssiaAdhocLessons(string centerId,string duration,string instrument,Set<string> gradeList){
+        public static  Map<String, Package__c> fetchOssiaAdhocLessons(string centerId,string duration,Set<string> instruments,Set<string> gradeList){
             Map<String, Package__c> mapOfAdhocPackage = new Map<String, Package__c>();
             if(string.isNotBlank(centerId) && string.isNotBlank(duration) ){
                 for(Package__c packageObj : [SELECT Id,name, Location__c, Duration__c, unit_Fee__c,Grade_new__c,Program__r.Instrument__c/*,facility_Fee__c*/ FROM Package__c 
@@ -557,7 +559,7 @@ public with sharing class OssiaCenterCalendarController {
                                              AND Type__c =: ConstantsClass.typeAdhocGroup 
                                              AND Location__c = :centerId 
                                              AND Duration__c =:duration
-                                             And Program__r.Instrument__c =: instrument]){
+                                             And Program__r.Instrument__c In: instruments]){
                                                 system.debug('packageObj.Grade_new__c'+packageObj.Grade_new__c);
                     if(string.isNotBlank(packageObj.Grade_new__c)){
                         for(String grade : packageObj.Grade_new__c.split(';')){

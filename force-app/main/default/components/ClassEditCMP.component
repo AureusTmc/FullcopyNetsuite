@@ -50,210 +50,218 @@
 
                         </ul>
 
-                        <div id="DetailsTab" class="slds-tabs--default__content slds-p-around_medium slds-hide" role="tabpanel" aria-labelledby="DetailsTabitem"
-                            style="height: 300px;overflow-y: auto;">
-                            <div class="slds-grid slds-wrap slds-m-top_small">
-                                <!-- center or teacher-->
-                                
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span>
-                                                <b>Location:</b>
-                                            </span>
-                                        </div>
-                                        <div class="slds-col slds-size_8-of-12">
-                                            <span>
-                                                <label id="LocationNameEditClass"></label>
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span>
-                                                <b>Teacher:</b>
-                                            </span>
-                                        </div>
-                                        <div class="slds-col slds-size_7-of-12">
-                                            <span>
-                                                <label id="TeacherNameEditClass"></label>
-                                            </span>
-                                        </div>
-                                    </div>
-                                
-                                     <!-- added by jatin: 18-dec-2019: for show class type-->
-                                     <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span>
-                                                <b>Class Type:</b>
-                                            </span>
-                                        </div>
-                                        <div class="slds-col slds-size_8-of-12">
-                                            <span>
-                                                <label id="ClassTypeEditLabel"></label>
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <!-- added by jatin: 18-dec-2019: for show class instrument-->
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small aureusGroupClassBookingDetail">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span>
-                                                <b>Class Instrument :</b>
-                                            </span>
-                                        </div>
-                                        <div class="slds-col slds-size_8-of-12">
-                                            <span>
-                                                <label id="ClassInstrumentEditLabel"></label>
-                                            </span>
-                                        </div>
-                                    </div>
-                                
-
-                                <!-- time or class type-->
-                                    <!-- added by jatin: 31-dec-2019: for show class start date -->
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span>
-                                                <b>Start Date:</b>
-                                            </span>
-                                        </div>
-                                        <div class="slds-col slds-size_8-of-12">
-                                            <span>
-                                                <label id="StartDateEditLabel"></label>
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span>
-                                                <b>Time:</b>
-                                            </span>
-                                        </div>
-                                        <div class="slds-col slds-size_8-of-12">
-                                            <span>
-                                                <label id="ClassTimeEditLabel"></label>
-                                            </span>
-                                        </div>
-                                    </div>
-                                
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small aureusGroupClassBookingDetail">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span>
-                                                <b>Package:</b>
-                                            </span>
-                                        </div>
-                                        <div class="slds-col slds-size_8-of-12">
-                                            <span>
-                                                <label id="ClassPackageEditSelect"></label>
-                                            </span>
-                                        </div>
-                                    </div>
+                        <div id="DetailsTab" class="slds-tabs--default__content  slds-hide" role="tabpanel" aria-labelledby="DetailsTabitem">
+                            <div class="slds-p-around_medium" style="height: 250px;overflow-y: auto;">
+                                <div class="slds-grid slds-wrap slds-m-top_small">
+                                    <!-- center or teacher-->
                                     
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span>
-                                                <b>Duration:</b>
-                                            </span>
-                                        </div>
-                                        <div class="slds-col slds-size_8-of-12">
-                                            <span>
-                                                <label id="ClassDurationEditLabel"></label>
-                                            </span>
-                                        </div>
-                                    </div>
-                                
-
-                                 <!-- Class Capacity or Package -->
-                                
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span>
-                                                <b>Class Capacity:</b>
-                                            </span>
-                                        </div>
-                                        <div class="slds-col slds-size_8-of-12">
-                                            <span>
-                                                <label id="ClassCapacityEditInput"></label>
-                                            </span>
-                                        </div>
-                                    </div>
-                                  
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span>
-                                                <b>Available Capacity:</b>
-                                            </span>
-                                        </div>
-                                        <div class="slds-col slds-size_8-of-12">
-                                            <span>
-                                                <label id="AvailableCapacityEditLabel"></label>
-                                            </span>
-                                        </div>
-                                    </div>
-                                
-                                <!--  added by jatin: 18-dec-2019: for show Minimum or Maximum Age-->
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span>
-                                                <b>Minimum Age:</b>
-                                            </span>
-                                        </div>
-                                        <div class="slds-col slds-size_8-of-12">
-                                            <span>
-                                                <label id="ClassMinimumAgeEditLabel"></label>
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span>
-                                                <b>Maximum Age:</b>
-                                            </span>
-                                        </div>
-                                        <div class="slds-col slds-size_8-of-12">
-                                            <span>
-                                                <label id="ClassMaximumAgeEditLabel"></label>
-                                            </span>
-                                        </div>
-                                    </div>
-                                
-                                <!-- time or class type-->
-                               
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small aureusGroupClassBookingDetail">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span>
-                                                <b>Price:</b>
-                                            </span>
-                                        </div>
-                                        <div class="slds-col slds-size_8-of-12">
-                                            <span>
-                                                <label id="ClassPriceEditLabel"></label>
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <!-- added by nishi: 2-Sep-2020: for manage ossia group lesson details in ossia case we show grade other wise we show package realed details -->
-                                    <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small ossiaGroupClassBookingDetail">
-                                        <div class="slds-col slds-size_4-of-12">
-                                            <span>
-                                                <b>Grade:</b>
-                                            </span>
-                                        </div>
-                                        <div class="slds-col slds-size_8-of-12 slds-grid slds-wrap">
-                                            <div class="slds-col slds-size_12-of-12">
+                                        <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
+                                            <div class="slds-col slds-size_4-of-12">
                                                 <span>
-                                                    <label id="ClassOssiaGradeEditLabel"></label>
+                                                    <b>Location:</b>
                                                 </span>
                                             </div>
-                                            <div class="slds-col slds-size_12-of-12">
-                                                <div>
-                                                    <a href="javascript:void(0);" id="showGroupClassGradeDetials">
-                                                        Grade Details 
-                                                    </a>
+                                            <div class="slds-col slds-size_8-of-12">
+                                                <span>
+                                                    <label id="LocationNameEditClass"></label>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
+                                            <div class="slds-col slds-size_4-of-12">
+                                                <span>
+                                                    <b>Teacher:</b>
+                                                </span>
+                                            </div>
+                                            <div class="slds-col slds-size_7-of-12">
+                                                <span>
+                                                    <label id="TeacherNameEditClass"></label>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    
+                                        <!-- added by jatin: 18-dec-2019: for show class type-->
+                                        <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
+                                            <div class="slds-col slds-size_4-of-12">
+                                                <span>
+                                                    <b>Class Type:</b>
+                                                </span>
+                                            </div>
+                                            <div class="slds-col slds-size_8-of-12">
+                                                <span>
+                                                    <label id="ClassTypeEditLabel"></label>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <!-- added by jatin: 18-dec-2019: for show class instrument-->
+                                        <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small aureusGroupClassBookingDetail">
+                                            <div class="slds-col slds-size_4-of-12">
+                                                <span>
+                                                    <b>Class Instrument :</b>
+                                                </span>
+                                            </div>
+                                            <div class="slds-col slds-size_8-of-12">
+                                                <span>
+                                                    <label id="ClassInstrumentEditLabel"></label>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    
+
+                                    <!-- time or class type-->
+                                        <!-- added by jatin: 31-dec-2019: for show class start date -->
+                                        <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
+                                            <div class="slds-col slds-size_4-of-12">
+                                                <span>
+                                                    <b>Start Date:</b>
+                                                </span>
+                                            </div>
+                                            <div class="slds-col slds-size_8-of-12">
+                                                <span>
+                                                    <label id="StartDateEditLabel"></label>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
+                                            <div class="slds-col slds-size_4-of-12">
+                                                <span>
+                                                    <b>Time:</b>
+                                                </span>
+                                            </div>
+                                            <div class="slds-col slds-size_8-of-12">
+                                                <span>
+                                                    <label id="ClassTimeEditLabel"></label>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    
+                                        <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small aureusGroupClassBookingDetail">
+                                            <div class="slds-col slds-size_4-of-12">
+                                                <span>
+                                                    <b>Package:</b>
+                                                </span>
+                                            </div>
+                                            <div class="slds-col slds-size_8-of-12">
+                                                <span>
+                                                    <label id="ClassPackageEditSelect"></label>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
+                                            <div class="slds-col slds-size_4-of-12">
+                                                <span>
+                                                    <b>Duration:</b>
+                                                </span>
+                                            </div>
+                                            <div class="slds-col slds-size_8-of-12">
+                                                <span>
+                                                    <label id="ClassDurationEditLabel"></label>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    
+
+                                    <!-- Class Capacity or Package -->
+                                    
+                                        <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
+                                            <div class="slds-col slds-size_4-of-12">
+                                                <span>
+                                                    <b>Class Capacity:</b>
+                                                </span>
+                                            </div>
+                                            <div class="slds-col slds-size_8-of-12">
+                                                <span>
+                                                    <label id="ClassCapacityEditInput"></label>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    
+                                        <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
+                                            <div class="slds-col slds-size_4-of-12">
+                                                <span>
+                                                    <b>Available Capacity:</b>
+                                                </span>
+                                            </div>
+                                            <div class="slds-col slds-size_8-of-12">
+                                                <span>
+                                                    <label id="AvailableCapacityEditLabel"></label>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    
+                                    <!--  added by jatin: 18-dec-2019: for show Minimum or Maximum Age-->
+                                        <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
+                                            <div class="slds-col slds-size_4-of-12">
+                                                <span>
+                                                    <b>Minimum Age:</b>
+                                                </span>
+                                            </div>
+                                            <div class="slds-col slds-size_8-of-12">
+                                                <span>
+                                                    <label id="ClassMinimumAgeEditLabel"></label>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small">
+                                            <div class="slds-col slds-size_4-of-12">
+                                                <span>
+                                                    <b>Maximum Age:</b>
+                                                </span>
+                                            </div>
+                                            <div class="slds-col slds-size_8-of-12">
+                                                <span>
+                                                    <label id="ClassMaximumAgeEditLabel"></label>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    
+                                    <!-- time or class type-->
+                                
+                                        <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small aureusGroupClassBookingDetail">
+                                            <div class="slds-col slds-size_4-of-12">
+                                                <span>
+                                                    <b>Price:</b>
+                                                </span>
+                                            </div>
+                                            <div class="slds-col slds-size_8-of-12">
+                                                <span>
+                                                    <label id="ClassPriceEditLabel"></label>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <!-- added by nishi: 2-Sep-2020: for manage ossia group lesson details in ossia case we show grade other wise we show package realed details -->
+                                        <div class="slds-col slds-size_6-of-12 slds-grid slds-m-top_small ossiaGroupClassBookingDetail">
+                                            <div class="slds-col slds-size_4-of-12">
+                                                <span>
+                                                    <b>Grade:</b>
+                                                </span>
+                                            </div>
+                                            <div class="slds-col slds-size_8-of-12 slds-grid slds-wrap">
+                                                <div class="slds-col slds-size_12-of-12">
+                                                    <span>
+                                                        <label id="ClassOssiaGradeEditLabel"></label>
+                                                    </span>
+                                                </div>
+                                                <div class="slds-col slds-size_12-of-12">
+                                                    <div>
+                                                        <a href="javascript:void(0);" id="showGroupClassGradeDetials">
+                                                            Grade Details 
+                                                        </a>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                <!-- added by nishi: 2-Sep-2020: for manage ossia group lesson details in ossia case we show grade other wise we show package realed details -->
+                                    <!-- added by nishi: 2-Sep-2020: for manage ossia group lesson details in ossia case we show grade other wise we show package realed details -->
+                                </div>
                             </div>
+                             <!-- added by nishi-3-Nov-2020: for Deactivate Group class-->
+                            <footer class="slds-modal__footer deactivateGroup" style="margin-bottom: -20px;">
+                                <button class="slds-button button-shadow slds-button_brand" aria-pressed="false" id="DeactivateGroupClass" title="Deactivate Class"
+                                    onclick="$('.confirmgroupModal').removeClass('slds-hide');$('#newGroupClassCMP').addClass('slds-hide'); return false;">Deactivate Class
+                                </button>
+                            </footer>
+                             <!-- added by nishi-3-Nov-2020: for Deactivate Group class-->
                         </div>
                         <div id="CustomersTab" class="slds-tabs--default__content slds-hide" role="tabpanel" aria-labelledby="CustomersTabitem">
 
@@ -295,8 +303,8 @@
                                     onclick="newGroupAppointmentPopup('MakeUp');return false;">Add Make-Up Booking
                                 </button>
                                 <!-- added by nishi::2-nov-2020:start: for manage makeup and adhoc bookings -->
-                                 <button class="slds-button button-shadow slds-button_brand" aria-pressed="false" id="AddhocCustomer" title="Add Ad-Hoc Customer"
-                                    onclick="newGroupAppointmentPopup('AdHoc');return false;">Add Ad-Hoc Booking
+                                 <button class="slds-button button-shadow slds-button_brand" aria-pressed="false" id="AddhocCustomer" title="Add AdHoc Customer"
+                                    onclick="newGroupAppointmentPopup('AdHoc');return false;">Add AdHoc Group Booking
                                 </button> 
                                 <!-- added by nishi:2-nov-2020:end: for manage makeup and adhoc bookings -->
                             </footer>
@@ -438,7 +446,7 @@
                                     </div>
                                 </div>
                             </div> 
-                            <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-right_large slds-m-top_medium ">
+                            <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-right_large slds-m-top_medium makeupPackage">
                                 <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
                                     <div class="slds-col slds-size_4-of-12">
                                         <label class="slds-form-element__label" for="GroupMakupPackageLabel">
@@ -451,7 +459,25 @@
                                         </div>
                                     </div>
                                 </div>
+                            </div> 
+                            <!-- added by nishi-3-Nov-2020: for show adhoc package list-->
+                            <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-right_large slds-m-top_medium adhocPackage">
+                                <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_4-of-12">
+                                        <label class="slds-form-element__label" for="ossiaGroupClassAdhocPackage">
+                                            <b>Package:</b>
+                                        </label>
+                                    </div>
+                                    <div class="slds-col slds-size_8-of-12">
+                                        <div class="slds-form-element__control" >
+                                            <select class="slds-select" id="ossiaGroupClassAdhocPackage" disabled="true"  onchange="handleOssiaGroupclassAdhocPackage(); return false;"> 
+                                            </select>
+                                            <label class="" id="GroupAdhocPackageErrorMsg" style="color:red;"></label>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>   
+                             <!-- added by nishi-3-Nov-2020: for show adhoc package list-->
                             <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-right_large slds-m-top_medium">
                                 <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
                                     <div class="slds-col slds-size_4-of-12">
@@ -484,7 +510,7 @@
                             <div class="slds-col slds-size_6-of-12 slds-grid slds-wrap slds-p-right_large slds-m-top_medium ossiaGroupClassMakeupBooking slds-hide">
                                 <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap">
                                     <div class="slds-col slds-size_4-of-12">
-                                        <label class="slds-form-element__label hyphens-none-fix" for="GroupMakupInstrumentLabel">
+                                        <label class="slds-form-element__label hyphens-none-fix" for="ossiaGroupClassInstrment">
                                             <b>Instrument:</b>
                                         </label>
                                     </div>
@@ -1436,8 +1462,25 @@
     </div>
     <!--added by nishi: 15-Sep-2020: adhoc group class bookings-->
 
-
-
+    <!-- added by nishi-3-Nov-2020: for confirmation Deactivate Group class or not-->
+    <div class="confirmgroupModal slds-hide" id="confirmgroupModal">
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container" style="width: 35%;">
+                <header class="slds-modal__header" style="background: #303a42; color: white;">
+                    <h2 id="confirmgroupHeader" class="slds-text-heading_medium slds-hyphenate">Deactivate Group Class</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="confirmGroupBody">
+                    This action will remove this and all future instance of this Group class. Are you sure?
+                </div>
+                <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_neutral revert" id="confirmgroupModalNo" onclick="$('.confirmgroupModal').addClass('slds-hide');$('#newGroupClassCMP').removeClass('slds-hide'); return false;">No</button>
+                    <button class="slds-button slds-button_brand yesClass" id="confirmgroupModalYes" onclick="DeactivateGroupClassLesson();return false;">Yes</button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </div>
+    <!-- added by nishi-3-Nov-2020: for confirmation Deactivate Group class or not-->
 
 
 
@@ -1642,12 +1685,90 @@
                 }
             );
         }
+
+        function handleOssiaGroupclassAdhocPackage(){
+            var adhocpackageId = $('#ossiaGroupClassAdhocPackage').val();
+            var groupAppointmentType  = $('#saveNewGroupMakupBooking').attr('data-groupAppointmentType');
+            if(groupAppointmentType != 'MakeUp'){
+                if (adhocpackageId && adhocpackageId != '' && adhocpackageId != null && adhocpackageId != undefined && adhocpackageId.length > 0) {
+                    bookingData.packageId =adhocpackageId.split(';')[0];
+                    console.log(bookingData.packageId);
+                    $('#saveNewGroupMakupBooking').removeAttr('disabled');
+                }else{
+                    $('#GroupAdhocPackageErrorMsg').text('Please Select Adhoc Package');
+                    $('#saveNewGroupMakupBooking').attr('disabled', '');
+                }
+            }
+        }
+
+        // added bu nishi:3-nov-2020: for deactive group class if any enrolled enrolment or regular booking found then user can not deactivate this group class  
+        function DeactivateGroupClassLesson(){
+            var dateOfAppointment = selectedStudentData.date;
+            var groupClassId = selectedStudentData.selgroupClassId;
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.ClassEditController.deactivateGroupClass}',
+                dateOfAppointment, groupClassId,
+                function (result, event) {
+                    console.log('result',result);
+                    if(result.errorCode === '200'){
+                        $('#toastMsg').html(result.errormessage);
+                        $('.toastclass').addClass('slds-theme_success');
+                        $('.toastclass').removeClass('slds-theme_error');
+                        toastLaunch();
+                        refreshCalendar();
+                    }else{
+                        $('#toastMsg').html(result.errormessage);
+                        $('.toastclass').removeClass('slds-theme_success');
+                        $('.toastclass').addClass('slds-theme_error');
+                        toastLaunch();
+                    }
+                    $('.confirmgroupModal').addClass('slds-hide');
+                    $('#newGroupClassCMP').addClass('slds-hide');
+                },
+                { escape: true }
+            );
+        }
+
+        function removeAddGroupClassAppoinment(){
+            $('#GroupMakupHoursErrorMsg').text('');
+            $('#GroupMakupStudentInput').val('');
+            $('#GroupMakupParentInput').val('');
+            $('#GroupMakupPhoneInput').val('');
+            $('#GroupAdhocPackageErrorMsg').text('');
+            $('#GroupMakupEmailInput').val('');
+            $('#ossiaGroupClassInstrment').val('');
+            $('#ossiaGroupClassInstrment').empty();
+            $('#ossiaGroupClassInstrmentErrorMsg').text('');
+            $('#GroupMakupHoursErrorMsg').text('');
+            $('#GroupMakupHoursLabel').html('');
+            $('#GroupMakupStudentSelectContainer').removeClass('slds-is-open');
+            $('#GroupMakupStudentSelectContainer').attr('aria-expanded', 'false');
+            $('#GroupMakupStudentSearchList').empty();
+            $('#GroupMakupParentInput').removeAttr('disabled');
+            $('#GroupMakupPhoneInput').removeAttr('disabled');
+            $('#GroupMakupEmailInput').removeAttr('disabled');
+            $('#GroupMakupParentInput').val('');
+            $('#GroupMakupPhoneInput').val('');
+            $('#GroupMakupEmailInput').val('');
+            $('#ossiaGroupClassInstrment').empty();
+        }
+
         var createGroupBookingResult = {};
        
          // @@jatin:19-dec-2019: for show add new makeup customers popup
          function newGroupAppointmentPopup(groupAppointmentType) {
             $('#newGroupClassCMP').addClass('slds-hide');
+            $('.adhocPackage').addClass('slds-hide');
+            $('.makeupPackage').addClass('slds-hide');
+            $('#ossiaGroupClassAdhocPackage').empty();
+            $('#ossiaGroupClassAdhocPackage').val('');
+            $('#GroupMakupCenterNameLabel').html('');
+            $('#GroupMakupDateLabel').html('');
+            $('#GroupMakupTimeLabel').html('');
+            $('#GroupMakupPackageLabel').html('');
+            $('#GroupMakupDurationLabel').html('');
             
+            removeAddGroupClassAppoinment();
             var centerid = selectedStudentData.centerId;
             var teacherid = selectedStudentData.teacherId;
             var dateOfAppointment = selectedStudentData.date;
@@ -1661,7 +1782,7 @@
             bookingData.isOssia =selectedStudentData.isOssia;
             bookingData.selgroupClassId = selectedStudentData.selgroupClassId;
             bookingData.selgroupClassName = selectedStudentData.selgroupClassName;
-            //bookingData.isRecurring = 'false';
+            bookingData.isRecurring = 'false';
             // added by nishi: 3-Sep-2020: for manage Ossia group class makeup mins 
             if(selectedStudentData.isOssia == true){
                // $('.aureusGroupClassMakeupBooking').addClass('slds-hide');
@@ -1672,7 +1793,7 @@
                 $('#GroupMakupPackageLabel').html(selectedStudentData.packageName);
             }
             // added by nishi: 3-Sep-2020: for manage Ossia group class makeup mins
-            $('#GroupMakupHoursErrorMsg').text('');
+           
             $('#GroupMakupCenterNameLabel').html(selectedStudentData.centerName);
             $('#saveNewGroupMakupBooking').attr('data-teacher', selectedStudentData.teacherName);
             $('#saveNewGroupMakupBooking').attr('data-date', dateOfAppointment);
@@ -1683,14 +1804,45 @@
             // added by nishi:start: for manage makeup and adhoc bookings
             if(groupAppointmentType == 'MakeUp'){
                 $('#newGroupMakupBookingDetailsHeader').html('Add Make-Up Booking');
+                $('.makeupPackage').removeClass('slds-hide');
+                $('.adhocPackage').addClass('slds-hide');
             }else{
-                $('#newGroupMakupBookingDetailsHeader').html('Add Ad-hoc Booking');
+                $('#newGroupMakupBookingDetailsHeader').html('Add Adhoc Group booking');
+                $('.adhocPackage').removeClass('slds-hide');
+                $('.makeupPackage').addClass('slds-hide');
             }
             // added by nishi:end: for manage makeup and adhoc bookings
             $('#saveNewGroupMakupBooking').attr('data-groupAppointmentType', groupAppointmentType);
             $('#GroupMakupDurationLabel').html(selectedStudentData.duration);  
+            var groupAppointmentType  = $('#saveNewGroupMakupBooking').attr('data-groupAppointmentType');
+            if(groupAppointmentType === 'AdHoc'){ 
+                getGroupAdhocPackagesList(selectedStudentData.centerId,selectedStudentData.selgroupClassId,selectedStudentData.isOssia);
+            }
         }
-           
+        
+        // nishi: 3-Nov-2020: for get Adhoc Group class Packages list If aureus organisation then we get package according to duration and center
+        // If ossia organisation then we get pacakges according to instrument, grade and duration
+        function getGroupAdhocPackagesList(centerid,groupClassid,isOssia){
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.ClassEditController.getGroupAdhocPackagesList}',
+                centerid, groupClassid,isOssia,
+                function (result, event) {
+                    console.log('result'+result);
+                    var adhocPackagesListOfEvent = JSON.parse(result.replace(/(&quot\;)/g, "\""));
+                    console.log('adhocPackagesListOfEvent'+adhocPackagesListOfEvent);
+                    var instrumentStr = '<option value="">Select Adhoc Package</option>';
+                    $('#ossiaGroupClassAdhocPackage').empty();
+                    $(adhocPackagesListOfEvent).each(function (index, value) {
+                        instrumentStr += '<option value="' + value.packageid + ';' + value.packageName + ';' + value.packageDuration + ';' + value.instrument+ ';' + value.gradeList + '">'+ value.packageName + '</option>';
+                    });
+                    $('#ossiaGroupClassAdhocPackage').append(instrumentStr);
+                    $('#ossiaGroupClassAdhocPackage').removeAttr('disabled');
+                    
+                },
+                { escape: true }
+            );
+
+        }
 
         $('#GroupMakupStudentInput').keyup(function () {
             var centerid = selectedStudentData.centerId;
@@ -1699,8 +1851,9 @@
             var groupAppointmentType  = $('#saveNewGroupMakupBooking').attr('data-groupAppointmentType');
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.ClassEditController.getGroupStudents}',
-                student_name, centerid,
+                student_name, centerid,groupAppointmentType,
                 function (result, event) {
+                    console.log('result'+result);
                     var ResultOfEvent = JSON.parse(result.replace(/(&quot\;)/g, "\""));
                     $(ResultOfEvent).each(function (index3, value3) {
                         studentListItem += '<li role="presentation" class="slds-listbox__item " id="' + value3.id + '"><div id="option' + (index3 + 1) + '" class="slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_has-meta GroupMakupstudent-list" role="option"><span class="slds-media__body">';
@@ -1712,17 +1865,9 @@
                     $('#GroupMakupStudentSearchList').append(studentListItem);
                     $('#GroupMakupStudentSelectContainer').addClass('slds-is-open');
                     $('#GroupMakupStudentSelectContainer').attr('aria-expanded', 'true');
+                   
                     if (ResultOfEvent.length == 0) {
-                        $('#GroupMakupStudentSelectContainer').removeClass('slds-is-open');
-                        $('#GroupMakupStudentSelectContainer').attr('aria-expanded', 'false');
-                        $('#GroupMakupStudentSearchList').empty();
-                        $('#GroupMakupParentInput').removeAttr('disabled');
-                        $('#GroupMakupPhoneInput').removeAttr('disabled');
-                        $('#GroupMakupEmailInput').removeAttr('disabled');
-                        $('#GroupMakupParentInput').val('');
-                        $('#GroupMakupPhoneInput').val('');
-                        $('#GroupMakupEmailInput').val('');
-                        $('#ossiaGroupClassInstrment').empty();
+                        removeAddGroupClassAppoinment();
                     }
 
                     $('.GroupMakupstudent-list').click(function () {
@@ -1773,8 +1918,9 @@
                                 }
                                 if(groupAppointmentType === 'AdHoc'){
                                     console.log('groupAppointmentType',groupAppointmentType);
-                                    ossiaGroupClassAdhocEnrolment(centerid,bookingData.teacherId,bookingData.selgroupClassId,value4.id,bookingData.isOssia);
-                                    if(!bookingData.isOssia){
+                                    if(bookingData.isOssia){
+                                        ossiaGroupClassAdhocEnrolment(centerid,bookingData.teacherId,bookingData.selgroupClassId,value4.id,bookingData.isOssia);
+                                    }else{
                                         $('#GroupMakupHoursLabel').html(value4.makeupHours + ' min');
                                         bookingData.availableHours = value4.makeupHours;
                                     }
@@ -2003,7 +2149,7 @@
         // @@jatin: 19-dec-2019: for create group lesson makeup booking
         function createGroupbooking(redirectCase) {
             var bookingDataStr = JSON.stringify(bookingData);
-          //console.log('bookingDataStr' + bookingDataStr);
+            //console.log('bookingDataStr' + bookingDataStr);
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.ClassEditController.createGroupbooking}',
                 bookingDataStr, redirectCase, caseId,
@@ -2085,16 +2231,18 @@
                     $('#saveNewGroupMakupBooking').attr('disabled', '');
                     errorFlag = true;           	
                 }	
-                var selectedInstrument = $('#saveNewGroupMakupBooking').attr('data-enrolInstrument');
-                var selectedTeacherInstrument = bookingData.classInstrument;
-               //console.log('selectedInstrument',selectedInstrument);
-               //console.log('selectedTeacherInstrument',selectedTeacherInstrument);
-                if(!(selectedInstrument && selectedInstrument != null && selectedInstrument != undefined && selectedInstrument.length > 0 &&	
-                    selectedTeacherInstrument && selectedTeacherInstrument != null && selectedTeacherInstrument != undefined && selectedTeacherInstrument.length > 0	
-                    && selectedTeacherInstrument.includes(selectedInstrument))){	
-                    $('#saveNewGroupMakupBooking').attr('disabled', '');
-                    $('#ossiaGroupClassInstrmentErrorMsg').text('Please Select the different Instrument.Current teacher skills do not match the instrument you have chosen.');	
-                    errorFlag = true;   	
+                if(groupAppointmentType === 'MakeUp'){
+                    var selectedInstrument = $('#saveNewGroupMakupBooking').attr('data-enrolInstrument');
+                    var selectedTeacherInstrument = bookingData.classInstrument;
+                //console.log('selectedInstrument',selectedInstrument);
+                //console.log('selectedTeacherInstrument',selectedTeacherInstrument);
+                    if(!(selectedInstrument && selectedInstrument != null && selectedInstrument != undefined && selectedInstrument.length > 0 &&	
+                        selectedTeacherInstrument && selectedTeacherInstrument != null && selectedTeacherInstrument != undefined && selectedTeacherInstrument.length > 0	
+                        && selectedTeacherInstrument.includes(selectedInstrument))){	
+                        $('#saveNewGroupMakupBooking').attr('disabled', '');
+                        $('#ossiaGroupClassInstrmentErrorMsg').text('Please Select the different Instrument.Current teacher skills do not match the instrument you have chosen.');	
+                        errorFlag = true;   	
+                    }
                 }
             }
             if(groupAppointmentType === 'MakeUp'){
@@ -2114,12 +2262,22 @@
                     $('#confirmModalNo').attr('data-origin', 'createGroupBooking');
                     $('#newGroupMakupBookingDetails').addClass('slds-hide');
                 }else{
+                    // create adhoc bookings 
+                    var adhocpackageId = $('#ossiaGroupClassAdhocPackage').val();
+                    if(!adhocpackageId || adhocpackageId == '' || adhocpackageId == undefined  ){	
+                        $('#GroupAdhocPackageErrorMsg').text('Please Select Adhoc Package');
+                        $('#saveNewGroupMakupBooking').attr('disabled', '');
+                        errorFlag = true;  
+                    }
                    //open adhoc payment summary model
-                   showAdhocGroupClassBookings(bookingData.studentId,bookingData.packageId,bookingData.date.split('T')[0], bookingData.date.split('T')[1],1);
+                   if(!errorFlag){
+                        showAdhocGroupClassBookings(bookingData.studentId,bookingData.packageId,bookingData.date.split('T')[0], bookingData.date.split('T')[1],1);
+                   }
                 }
             }
         }
 
+        // show adhoc group class  packages details popup 
         function showAdhocGroupClassBookings(student, package, dateOfAppointment, timeOfAppointment,recurring){
             $('#countOfClassBookingTableBody').empty();
             $('#newGroupMakupBookingDetails').addClass('slds-hide');
@@ -2130,7 +2288,7 @@
             console.log('getPackageDetail -dateOfAppointment',dateOfAppointment);     
             console.log('getPackageDetail -recurring',recurring); 
             console.log('getPackageDetail -selgroupClassId',bookingData.selgroupClassId);     
-            $('#newAdhocGroupClassDetailPopup').removeClass('slds-hide');
+            $('#newAdhocGroupClassDetailPopup').addClass('slds-hide');
            Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.ClassEditController.getGroupAdhocPackageDetail}',
                 student, package, teacherId, 
@@ -2154,7 +2312,7 @@
                                                                     'data-teacherId': result.teacherId,
                                                                     'data-studentId': result.studentId,
                                                                     'data-count': recurring,
-                                                                    'data-date': dateOfAppointment+'T'+fetchBookDetailsForScreen,
+                                                                    'data-date': dateOfAppointment+'T'+timeOfAppointment,
                                                                     'data-isOssia': bookingData.isOssia,
                                                                     'data-enrolementId' : bookingData.enrolementId});
                         var gstRate =0;
@@ -2190,6 +2348,8 @@
             );
         }
 
+        //nishi: 3-Nov-2020: In Aureus, Group ad-hoc booking should be created once the payment is successful whereas in Ossia, Group ad-hoc booking can be created even if the payment is failed.
+        // Failed payments can be collected via dunning process as an outstanding invoice
         function createAdhocGroupClassBookings(){
             $('#createAdhocGroupClassBookingBtn').attr('disabled', 'true');
             $('#createAdhocGroupClassBookingBtn').css('pointer-events', 'none');
@@ -2202,36 +2362,37 @@
             var groupLessonId =  $('#newGroupClassCMP').attr('data-groupclassid');
             var isossia = $('#createAdhocGroupClassBookingBtn').attr('data-isOssia');
             var enrolementId = $('#createAdhocGroupClassBookingBtn').attr('data-enrolementId');
-            console.log('packageId'+packageId);
-            console.log('teacherId'+teacherId);
-            console.log('studentId'+studentId);
-            console.log('recurring'+recurring);
-            console.log('bookDate'+bookDate);
-            console.log('center'+center);
-            console.log('groupLessonId'+groupLessonId);
-            console.log('isossia'+isossia);
-            console.log('enrolementId'+enrolementId);
+            // console.log('packageId'+packageId);
+            // console.log('teacherId'+teacherId);
+            // console.log('studentId'+studentId);
+            // console.log('recurring'+recurring);
+            // console.log('bookDate'+bookDate);
+            // console.log('center'+center);
+            // console.log('groupLessonId'+groupLessonId);
+            // console.log('isossia'+isossia);
+            // console.log('enrolementId'+enrolementId);
+            $('#newAdhocGroupClassDetailPopup').addClass('slds-hide');
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.ClassEditController.createAdhocGroupClassBookings}',
                 packageId,center,teacherId, studentId, recurring, bookDate,groupLessonId,enrolementId,
                 function(result, event){
                     console.log('@@@result', result);
                     if (event.status) {
+                        removeAddGroupClassAppoinment();
                         if(result){
-                            $('#newAdhocGroupClassDetailPopup').addClass('slds-hide');
                             $('#createAdhocGroupClassBookingBtn').removeAttr('disabled');
                             $('#createAdhocGroupClassBookingBtn').css('pointer-events', '');
-                            $('#toastMsg').html('Ad-hoc Bookings are successfully created...');
+                            $('#toastMsg').html('Adhoc Group Bookings are successfully created...');
                             toastLaunch();
                             refreshCalendar();
                         }else{
-                            $('#newAdhocGroupClassDetailPopup').addClass('slds-hide');
                             $('#createAdhocGroupClassBookingBtn').removeAttr('disabled');
                             $('#createAdhocGroupClassBookingBtn').css('pointer-events', '');
                             $('#toastMsg').html('Booking cannot be created...');
                             $('.toastclass').removeClass('slds-theme_success');
                             $('.toastclass').addClass('slds-theme_error');
                             toastLaunch();
+                            refreshCalendar();
                         }
                         
                     }
@@ -2828,6 +2989,7 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
             $('#NoShowClass').removeAttr('disabled');
             $('#completeClass').removeAttr('disabled');
             $('.groupReschdule').addClass('slds-hide');
+            $('.deactivateGroup').removeClass('slds-hide');
             $('#ClassHistory').removeClass('slds-hide');
             $('#showGroupClassGradeDetials').removeClass('slds-hide');
             $('#ClassCustomers').removeClass('slds-hide');
@@ -2881,9 +3043,10 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                         $('.aureusGroupClassBookingDetail').removeClass('slds-hide');
                         
                         if (result.bookObj.Id) {
-                          //console.log(result.bookObj);
+                          //console.log(result.bookObj.Class__r.Active__c);
                            // added by nishi: 2-Sep-2020: for manage ossia group lesson details in ossia case we show grade other wise we show package realed details 
                            selectedStudentData.isOssia =result.isOssia;
+                           $('#DeactivateGroupClass').attr('disabled', !(result.bookObj.Class__r.Active__c));
                             if(result.isOssia){
                                 $('.aureusGroupClassBookingDetail').addClass('slds-hide');
                                 $('.ossiaGroupClassBookingDetail').removeClass('slds-hide');
@@ -3273,6 +3436,7 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
         }
         function rescheduleGroupLesson(){
             $('.groupReschdule').removeClass('slds-hide');
+            $('.deactivateGroup').addClass('slds-hide');
             $('#newBookingDetailsHeader').html('');
             $('#confirmModal').addClass('slds-hide');
             $('#DetailsTab').removeClass('slds-hide');

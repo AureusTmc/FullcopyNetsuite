@@ -1,4 +1,5 @@
 <apex:page showHeader="false"  standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False" controller="SearchInstrumentRental_IpadCntrl" >
+    <!-- CH02 Karan Singh As Netsuite integration is used of Sage integration so changing slcd piano details -->
     <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">      
         <head>
             <title>Piano Rental Delivery Page</title>
@@ -29,7 +30,7 @@
             
                 .dropdown-content {
                     position: absolute;
-                    background:#fff;
+                    background:#fff; 
                     min-width: auto;
                     box-shadow: 0px 8px 16px 0px
                     rgba(0,0,0,0.2);
@@ -331,27 +332,27 @@
                                 <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
                                     <p class=""><strong>Brand</strong></p>
                                     <div class="box-info m-lg-right">
-                                        {!slcdPiano.brand}
+                                       <!--CH02 {!slcdPiano.brand} --> {!slcdPiano.brand}
                                     </div> 
                                 </div>
                                 
                                 <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
                                     <p class=""><strong>Model</strong></p>
                                     <div class="box-info" >
-                                        {!slcdPiano.modelNo}
+                                       <!--CH02 {!slcdPiano.modelNo} -->{!slcdPiano.model}
                                     </div> 
                                 </div>
                                 <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
                                     <p class=""><strong>Serial No.</strong></p>
                                     <div class="box-info m-lg-right">
-                                        {!slcdPiano.serNo}
+                                      <!--CH02  {!slcdPiano.serNo} -->{!slcdPiano.serialNumber}
                                     </div> 
                                 </div>
                                 
                                 <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
                                     <p class=""><strong>Rental/Sale Price(Gst Inc.)</strong></p>
                                     <div class="box-info" >
-                                        ${!slcdPiano.rentalPrice}/{!slcdPiano.salesPrice}
+                                     <!--CH02   ${!slcdPiano.rentalPrice}/{!slcdPiano.salesPrice} -->${!slcdPiano.monthlyRental}/{!slcdPiano.listPrice}
                                     </div> 
                                 </div>
                             </div>
@@ -656,7 +657,7 @@
 </button>
 </span>
 </div>
-
+ 
 </div> -->
                 
                 <p class="slds-m-vertical_small"><strong>Additional Delivery Comments</strong></p>

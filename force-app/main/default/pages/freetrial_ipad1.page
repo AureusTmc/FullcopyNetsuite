@@ -421,7 +421,7 @@ function myFunction() {
                     <apex:outputPanel rendered="{!!isSiteGuestUser}"> 
                         <p class=""><strong>Select Source</strong></p>
                         <div class="slds-grid slds-wrap date-list slds-p-bottom_small" >
-                            <div class="slds-size_12-of-12 slds-medium-size_1-of-2">
+                            <div class="slds-size_12-of-12 slds-medium-size_1-of-3">
                                 <div class="time-list m-lg-right">
                                     <div class="slds-form-element__control">
                                         <span class="slds-radio">
@@ -436,7 +436,7 @@ function myFunction() {
                                 </div>
                             </div>
                             
-                            <div class="slds-size_12-of-12 slds-medium-size_1-of-2">
+                            <div class="slds-size_12-of-12 slds-medium-size_1-of-3">
                                 <div class="time-list">
                                     <div class="slds-form-element__control">
                                         <span class="slds-radio">
@@ -449,7 +449,23 @@ function myFunction() {
                                         </span>
                                     </div>
                                 </div>
-                            </div>                    
+                            </div> 
+                            <!-- // Added By Ravi on 27 july 2020-->
+                            <div class="slds-size_12-of-12 slds-medium-size_1-of-3">
+                                <div class="time-list">
+                                    <div class="slds-form-element__control">
+                                        <span class="slds-radio">
+                                            <!--Juneid 17 Aug 2020 , Logic for ossia reflectio -->
+                                            <input type="radio" id="srcFacebookType" value="Facebook" name="srcType"  checked="" />
+                                            <label class="{!IF(org =='osia','slds-radio__label__osia','slds-radio__label')}"  for="srcFacebookType">
+                                                <span class="slds-radio_faux"></span>
+                                                <span class="slds-form-element__label">Facebook</span>
+                                            </label>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- End..Added By Ravi on 27 july 2020--> 
                         </div>
                     </apex:outputPanel>
                     

@@ -6,6 +6,13 @@
 //CH04 Karan Singh 22 Sep 2020 : Adding NetSuite API logger.
 //CH05 Karan Singh 24 Sep 2020 : showing the type of the instrument in the page and storing the type of the instrument in the enrolment which can be piano,keyboard etc
 //CH06 Karan Singh 25 Sep 2020 : Now will calculate the GST amount from selected piano location , as these location will be stored in our center(Account) record, center -> country(parent) -> taxrate will be applicable.
+//CH07 Karan Singh 9 Oct 2020 : Now migrating the Netsuite Integration Code to seprate Class 
+//CH08 Karan Singh 14 Oct 2020 : Now incase if the existing aureus student is selected for the piano rental, then we will use studentPrice instead of monthlyRental price from the api.
+//								adding the Delivery changes for Aureus Students
+//CH09 Karan Singh 16 Oct 2020 : Need to show both the Aureus / Non Aureus Student Price in the Rental Column in UI.
+//									After the Client Call, Tuning Fees should be zero for all the customer for the Instrument type -> Keyboard and Drum
+//		Karan Singh 19 Oct 2020 : Minimum commitment/rental termination date for existing aureus students for selected instruments
+ //nishi:-Nov-2020: for check active enrolment if we found any active enrolment then we added this  enrolment id in Related_Lesson_Enrolment field								
 public class SearchInstrumentRental_IpadCntrl {
     public String slcdCenter{get;set;}
     public String slcdEnrId{get;set;}
@@ -45,8 +52,13 @@ public class SearchInstrumentRental_IpadCntrl {
     public String apiKey {get;set;}
     public string stripeToken{get;set;}
     public String sessionId{get;set;}
-    
     public Boolean isAlreadyStripCstmr{get;set;}
+   
+    //nishi:-Nov-2020:start for check active enrolment if we found any active enrolment then we added this  enrolment id in Related_Lesson_Enrolment field								
+    public Boolean isAnyActiveEnrolment{get;set;}
+    public string activeEnrolmentId{get;set;}
+    //nishi:-Nov-2020:end: for check active enrolment if we found any active enrolment then we added this  enrolment id in Related_Lesson_Enrolment field								
+
     public String  cardNumber{get;set;}
     public String  cardType{get;set;}
     public String  cardImage{get;set;}
@@ -73,8 +85,8 @@ public class SearchInstrumentRental_IpadCntrl {
     //CH01 END 
     
     //CH02 
-    public List<NetSuiteProducts> netSuiteProducts{get;set;}
-    public NetSuiteProducts slcdPiano{get;set;}
+    public List<NetSuiteIntegrationUtility.NetSuiteProducts> netSuiteProducts{get;set;}
+    public NetSuiteIntegrationUtility.NetSuiteProducts slcdPiano{get;set;}
     public Boolean isExistingLessonEnrolment{get;set;} //17 sep 2020 as if slcd enrolment is an active lesson type enrolment then we will charge only one time rental amount not twice.
     //CH02 END
     //CH03
@@ -82,16 +94,37 @@ public class SearchInstrumentRental_IpadCntrl {
     String instrumentType {get;set;} //currently we are using for piano, but later it will used to show ohter instrument like drum,violin etc
     //CH03
     
+    //CH09 Start
+    public Set<String> setNoTuningFeeInstrument = new Set<String>();
+    public Set<String> setMinimumRental_Termination_InstrumentTypes = new Set<String>();
+    public Integer minimumCommitmentPeriod = 6; //Default Commintment period for the instrument
+    public Integer minimumRentalTerminationPeriod = 2;	//Default termination period for the instrument
+    //CH09 END
+    
     //public static 
     public SearchInstrumentRental_IpadCntrl(){
+        
+        //CH09 Start
+            if( String.isNotBlank( Label.Instrument_Type_for_the_Existing_Aureus_Students ) ){
+                
+                if( Label.Instrument_Type_for_the_Existing_Aureus_Students.contains(',') ){
+                    setNoTuningFeeInstrument.addAll( Label.Instrument_Type_for_the_Existing_Aureus_Students.split(',') );
+                }else{
+                    setNoTuningFeeInstrument.add( Label.Instrument_Type_for_the_Existing_Aureus_Students);
+                }
+            }
+        
+        //for now both the instrument are same for no tuning and minimum rental / termination date
+        setMinimumRental_Termination_InstrumentTypes.addAll(setNoTuningFeeInstrument);
+        //CH09 END
         
         //CH03
         gstAmount = 0;
         instrumentType = 'Piano';
         //CH03
         //CH02
-        netSuiteProducts = new List<NetSuiteProducts>();
-        slcdPiano = new NetSuiteProducts();
+        netSuiteProducts = new List<NetSuiteIntegrationUtility.NetSuiteProducts>();
+        slcdPiano = new NetSuiteIntegrationUtility.NetSuiteProducts();
         isExistingLessonEnrolment = false;
         //CH02
         //CH01 Karan Singh  
@@ -240,6 +273,7 @@ options.add(new SelectOption(str,str));*/
         cardImage     = '';
         fm.gstTaxPer  = 7;
         isAlreadyStripCstmr = false;
+        isAnyActiveEnrolment = false;
         cenOrgId  = '';
         if(String.isNotBlank(slcdEnrId)){
             String defStnAss = '';
@@ -254,12 +288,10 @@ options.add(new SelectOption(str,str));*/
                                           Teacher__c, Teacher__r.Name, Package__c, Package__r.Name, Trial_Date__c, Trial_Start_Time__c, Center__c, Center__r.Name, Standard_Accessories__c,
                                           Parent__r.Stripe_Customer_Id__c, Parent__r.Card_Number__c, Parent__r.Card_Type__c, Parent__r.Card_Image__c,Center__r.Country__r.name, Center__r.Country__c, Center__r.Organisation__c
                                           
-                                          //CH02 17 sep 2020 will work later on this
-                                          //   ,recordtype.name,Parent__r.Enroled__c
-                                          //CH02 END
-                                          //CH03 Karan for Calc GST Price as well
-                                          ,Center__r.Country__r.Tax_Rate__c
-                                          //CH03
+                                          /*CH03 Karan for Calc GST Price as well */ ,Center__r.Country__r.Tax_Rate__c
+                                          
+                                          /* CH09 : for the minimum rental commitmnet/ termination  */ ,Min_Commit_Dur_Inst_Rental__c, Min_Notice_Inst_Rental_Termination__c
+                                          
                                           FROM Enrolment__c 
                                           WHERE Id =: slcdEnrId];
             if(enrList.size() > 0){
@@ -284,9 +316,17 @@ options.add(new SelectOption(str,str));*/
                 parentAcc.BillingPostalCode  = enrList.get(0).Parent__r.BillingPostalCode;
                 parentAcc.BillingCountryCode = enrList.get(0).Parent__r.BillingCountryCode;
                 cenOrgId = enrList.get(0).Center__r.Organisation__c;
-                
                 slcdEnrolment = enrList.get(0);
-                
+                //6-nov-2020:nishi:for check active enrolment if we found any active enrolment then we added this  enrolment id in Related_Lesson_Enrolment field	
+                Map<String, string> mapOfParentActiveEnrolment = checkParentHasMultipleEnrolments(new set<string>{enrList.get(0).Parent__c});
+                if(mapOfParentActiveEnrolment != null && mapOfParentActiveEnrolment.size() > 0){
+                    isAnyActiveEnrolment = true;
+                    slcdEnrolment.Related_Lesson_Enrolment__c = mapOfParentActiveEnrolment.get(enrList.get(0).Parent__c);
+                    slcdEnrolment.Available_Tuning_Credit__c  = 2;
+                }else{
+                    slcdEnrolment.Available_Tuning_Credit__c  = 1;
+                }
+                //6-nov-2020:nishi:for check active enrolment if we found any active enrolment then we added this  enrolment id in Related_Lesson_Enrolment field	
                 slcdEnrolment.Standard_Accessories__c = defStnAss;
                 
                 if(String.isBlank(parentAcc.BillingCountryCode))
@@ -332,6 +372,22 @@ options.add(new SelectOption(str,str));*/
             }
         }
     }
+
+    //added by nishi:for check that the Parent Has other Enrolments or Not
+    public Map<String, string> checkParentHasMultipleEnrolments(Set<String> parentIds){
+        Map<String, string> mapOfParentActiveEnrolment = new Map<String, string>();
+        Boolean flag = false;
+        Set<String>  enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus,ConstantsClass.enrolGroupType};
+        for(Enrolment__c enrolObj : [SELECT Id, Parent__c FROM Enrolment__c
+                                        WHERE Parent__c IN :parentIds 
+                                        AND (Stage__c = :ConstantsClass.enroledStatus 
+                                                AND Type__c In: enrolTypes
+                                                AND (Package_Process_Type__c != :ConstantsClass.enrollmentProcessCancelType )
+                                            )]){
+            mapOfParentActiveEnrolment.put(enrolObj.Parent__c, enrolObj.id);
+        }
+        return mapOfParentActiveEnrolment;
+    }
     
     public PageReference nextBtnCmp1(){        
         return page.SearchInstrumentRental_Ipad2;
@@ -350,8 +406,42 @@ options.add(new SelectOption(str,str));*/
         fm.tuningFee = (Decimal.valueOf(Label.Tuning_Fee));
         fm.heatingRodInsFee = (Decimal.valueOf(Label.Heating_Rod_Installation_Fee));
         
+		//CH09 Start
+        if( setNoTuningFeeInstrument.contains( slcdPiano.inventoryType) ){
+             fm.tuningFee = 0;
+        }
+        
+        //setting the minimum rental termination and commitment date for the existing Aureus Students
+        if( setMinimumRental_Termination_InstrumentTypes.contains( slcdPiano.inventoryType ) && isAnyActiveEnrolment != null && isAnyActiveEnrolment /*commented by nishi: for check active enrolment isAlreadyStripCstmr != null && isAlreadyStripCstmr*/ ){
+            
+            if( String.isNotBlank( Label.Min_Notice_Period_for_Instrument_Rental_Termination_For_Aureus_Students )) {
+                
+                minimumRentalTerminationPeriod =  Integer.valueOf( Label.Min_Notice_Period_for_Instrument_Rental_Termination_For_Aureus_Students );
+            }else{
+                
+                minimumRentalTerminationPeriod = 2;
+            }
+            if( String.isNotBlank( Label.Min_Commitment_Duration_for_Instrument_Rental_For_Aureus_Students )) {
+            
+                minimumCommitmentPeriod = Integer.valueOf( Label.Min_Commitment_Duration_for_Instrument_Rental_For_Aureus_Students );  
+            }else{
+                
+                minimumCommitmentPeriod = 6;
+            }
+        }//end of checking the exisitng student creteria
+        //CH09 END         
+        
+        //CH08 : for Aureus Students Delivery fees
+        if(/*commented by nishi: for check active enrolment isAlreadyStripCstmr != null && isAlreadyStripCstmr*/ isAnyActiveEnrolment != null && isAnyActiveEnrolment  && String.isNotBlank( Label.Delivery_Charges_for_Aureus_Students )){
+             fm.deliCharges = (Decimal.valueOf(Label.Delivery_Charges_for_Aureus_Students));
+            
+            //CH09 Start : Chainging the monthly rental for aureus students
+            slcdPiano.monthlyRental = slcdPiano.studentPrice;
+            //CH09
+        }
+        //CH08 END
         //Start: nishi: 27-Jul-2020: Existing Student – one month (with any active enrolment) ; others – two months
-        if(isAlreadyStripCstmr != null && isAlreadyStripCstmr){ 
+        if(isAnyActiveEnrolment != null && isAnyActiveEnrolment){ //commented by nishi: for check active enrolment if(isAlreadyStripCstmr != null && isAlreadyStripCstmr){ 
             //if(isExistingLessonEnrolment != null && isExistingLessonEnrolment){// 17 sep 2020 will work later on this CH02 Karan :as 17 sep 2020 , now checking if the selected enrolment is existing active/enrolled enrolment of type lesson.
             //CH02 
             //fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Piano_Rental_Deposit_Fee)); CH02 Karan 17 Sep 2020 :use piano Deposit fee only instead Label as now we are getting rental amount of piano from netSuite
@@ -864,6 +954,7 @@ rw.errorMsg = 'Unknown error occured. Please contact your admin.';
         system.debug('slcdEnrolment -> '+ slcdEnrolment);
         if( string.isBlank(slcdEnrolment.id)){
            isAlreadyStripCstmr = false;
+           isAnyActiveEnrolment = false;
             parentAcc.Centre_Name__c = slcdCenter;
             parentAcc.Phone =  PersonMobilePhoneCustom;
             system.debug('PersonMobilePhoneCustom -> '+ PersonMobilePhoneCustom);
@@ -914,6 +1005,7 @@ rw.errorMsg = 'Unknown error occured. Please contact your admin.';
                         countryCurrencyCode = ConstantsClass.currencyCode;
                 }
             }
+            slcdEnrolment = new Enrolment__c();
             List<Enrolment__c> enrList = [SELECT Id, Name, Parent__c, Parent__r.FirstName, Parent__r.LastName, Parent__r.PersonEmail, Model__c, Serial_Number__c,
                                           Rental_price_per_month__c 
                                           FROM Enrolment__c WHERE Parent__c =: parentAcc.Id and stage__c = null and RecordType.Name ='Instrument Rental'];  
@@ -927,6 +1019,16 @@ rw.errorMsg = 'Unknown error occured. Please contact your admin.';
             slcdEnrolment.RecordTypeId  = enrInsRenRecId;
             slcdEnrolment.Type__c       = 'Instrument';
             slcdEnrolment.Center__c = slcdCenter;
+            //6-nov-2020:nishi:for check active enrolment if we found any active enrolment then we added this  enrolment id in Related_Lesson_Enrolment field	
+            Map<String, string> mapOfParentActiveEnrolment = checkParentHasMultipleEnrolments(new set<string>{parentAcc.Id});
+            if(mapOfParentActiveEnrolment != null && mapOfParentActiveEnrolment.size() > 0){
+                isAnyActiveEnrolment = true;
+                slcdEnrolment.Related_Lesson_Enrolment__c = mapOfParentActiveEnrolment.get(parentAcc.Id);
+                slcdEnrolment.Available_Tuning_Credit__c  = 2;
+            }else{
+                slcdEnrolment.Available_Tuning_Credit__c  = 1;
+            }
+            //6-nov-2020:nishi:for check active enrolment if we found any active enrolment then we added this  enrolment id in Related_Lesson_Enrolment field	
             upsert slcdEnrolment;
             /*end: added by nishi:23-Sep-2020 for insert parent and student id */   
         }
@@ -1114,6 +1216,14 @@ tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Selling__c', ''+(slcdPia
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Delivery__c', ''+(fm.deliCharges!=null ? fm.deliCharges : 0)));
             tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Selling__c', ''+(slcdPiano.listPrice !=null ? Decimal.valueOf(slcdPiano.listPrice)  : 0)));
             
+            //CH09 Start : Adding the instrument type, minimum Rental terminate date, ,minimum commitment date for existing students
+            
+            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Instrument_Type__c', slcdPiano.inventoryType));
+            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Min_Commit_Dur_Inst_Rental__c', '' + minimumCommitmentPeriod ));
+            tokens.add(new DocumentWrapperForPianoAgreement.Tokens('Min_Notice_Inst_Rental_Termination__c', '' + minimumRentalTerminationPeriod ));
+            
+            //CH09 End
+            
             //CH02 END
             ///added by nishi: 2-Oct-2020: for if enrolment not exist then we get deatils to parent account;
             if(string.isBlank(enrolmentObj.id)){ 
@@ -1245,7 +1355,7 @@ System.debug('@@@jsonBody'+jsonBody);
             isError = true;
             return null;
         }
-        HTTPResponse resp = sendNetSuiteRequest( objNetSuiteCred,'{"serialNumber": "'+slcdPiano.serialNumber  + '","productId": "'+slcdPiano.productId+'"}' ,'saveAndCompleteProcess() :Inventory Search');
+        HTTPResponse resp = NetSuiteIntegrationUtility.sendNetSuiteRequest( objNetSuiteCred,'{"serialNumber": "'+slcdPiano.serialNumber  + '","productId": "'+slcdPiano.productId+'"}' ,'saveAndCompleteProcess() :Inventory Search');
         //when the selected piano is not avaiable in the inventory
         if(resp.getBody().contains('[]')){
             
@@ -1393,6 +1503,12 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                         slcdEnrolment.Instrument_Type__c = slcdPiano.inventoryType;
                         //CH05 END
                         //CH03
+                        
+                        //CH09 Start : updating the period as per existing customer/ new customer.
+                        slcdEnrolment.Min_Commit_Dur_Inst_Rental__c = minimumCommitmentPeriod;
+                        slcdEnrolment.Min_Notice_Inst_Rental_Termination__c = minimumRentalTerminationPeriod;
+                        //CH09 End
+                        
                         //update slcdEnrolment;// commented by nishi:23-Sep-2020: according to  new requirement we update or insert customer details
                         upsert slcdEnrolment;
                         //Mark as complete booking which created trail earlier
@@ -1552,7 +1668,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                         pageRef.getParameters().put('scId', sc.id);
                         
                         //CH02 Karan 17 sep 2020 updating the NetSuite Inventory
-                        SearchInstrumentRental_IpadCntrl.pushDataToNetsuite( slcdEnrolment.Name,slcdPiano.serialNumber, slcdPiano.productId);
+                       // SearchInstrumentRental_IpadCntrl.pushDataToNetsuite( slcdEnrolment.Name,slcdPiano.serialNumber, slcdPiano.productId);
                         //CH02 END
                         return pageRef.setRedirect(true);
                     }else{
@@ -1811,127 +1927,39 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
     //CH02
     //For reference -> https://gist.github.com/smaeda-ks/dc5cdd50956e63bdae11314612389a07,https://stackoverflow.com/questions/15271508/netsuite-oauth-implemenation,https://github.com/metadaddy/sfdc-oauth-playground/blob/master/OAuth/src/classes/OAuth.cls
     //CH04 22 Sep 2020 : Adding method name in the paramater
-    public static HTTPResponse sendNetSuiteRequest( NetSuite_Integration_Creds__c objNetSuiteCred, String jsonRequestBody, String methodName ){
+    //CH07 this method is shifted to NetSuiteIntegrationUtility.apxc
+    //public static HTTPResponse sendNetSuiteRequest( NetSuite_Integration_Creds__c objNetSuiteCred, String jsonRequestBody, String methodName ){
         
-        Integer noOfApiCallout = 1;
-        HttpRequest req;
-        HTTPResponse resp;
-        
-        //CH04 Start
-        Datetime requestDatetime;
-        Datetime responseDatetime;
-        //CH04 END
-        //doing this as there are cases where at first attmpt we get 403 error
-        do{
-            requestDatetime = DateTime.now();//CH04 
-            
-            String nonce = String.valueOf(Crypto.getRandomLong());
-            String timestamp = String.valueOf(DateTime.now().getTime() / 1000);
-            
-            String url ='deploy=' +objNetSuiteCred.deploy__c+ '&';
-            url += 'oauth_consumer_key='+ objNetSuiteCred.Consumer_Key__c +'&';
-            url += 'oauth_nonce=' + nonce + '&';
-            url += 'oauth_signature_method=' + objNetSuiteCred.Signature_Method__c + '&';
-            url += 'oauth_timestamp=' + timestamp + '&';
-            url += 'oauth_token='+ objNetSuiteCred.Access_Token__c +'&';
-            url += 'oauth_version='+objNetSuiteCred.Version__c+'&';
-            url += 'script=' + objNetSuiteCred.script__c;
-            
-            String encodeUrl = EncodingUtil.urlEncode( url, 'UTF-8');
-            string encodeUrl2 = objNetSuiteCred.Method__c +'&'+EncodingUtil.urlEncode( objNetSuiteCred.Endpoint__c, 'UTF-8') + '&' + encodeUrl;
-            Blob blobSignature = Crypto.generateMac(objNetSuiteCred.Crypto_Class_Encrypt_Method__c, Blob.valueOf(encodeUrl2), Blob.valueOf(objNetSuiteCred.Consumer_Secret__c +'&'+ objNetSuiteCred.Token_Secret__c ));
-            
-            String signature = EncodingUtil.Base64Encode( blobSignature );
-            
-            String authHeader = 'OAuth realm="' + objNetSuiteCred.Realm__c + '",';
-            authHeader += 'oauth_consumer_key="' + objNetSuiteCred.Consumer_Key__c + '",';
-            authHeader += 'oauth_token="' + objNetSuiteCred.Access_Token__c + '",';
-            authHeader += 'oauth_signature_method="'+ objNetSuiteCred.Signature_Method__c +'",';
-            authHeader += 'oauth_timestamp="' + timestamp + '",';
-            authHeader += 'oauth_nonce="' + nonce + '",';
-            authHeader += 'oauth_version="'+ objNetSuiteCred.Version__c +'",';
-            authHeader += 'oauth_signature="' + signature + '"';
-            
-            req = new HttpRequest();
-            req.setEndpoint( objNetSuiteCred.Endpoint__c + '?script='+ objNetSuiteCred.script__c +'&deploy='+objNetSuiteCred.deploy__c );
-            req.setMethod( objNetSuiteCred.Method__c );
-            req.setHeader('Content-Type', objNetSuiteCred.Content_Type__c );
-            req.setHeader('Authorization', authHeader);
-            req.setBody( jsonRequestBody );
-            req.setTimeout(60000);
-            Http h = new Http();
-            system.debug(' --> ' + req.getHeader('Authorization'));
-            
-            resp = new HTTPResponse();
-            
-            if( !Test.isRunningTest() ){
-                resp = h.send(req);
-            }
-            else{
-                resp.setStatusCode( 200 );
-                if( methodName == 'pushDataToNetsuite() :  Convert Item to Fixed Asset' ){
-                    
-                    resp.setBody( '{"error" : {"code" : "INVALID_LOGIN_ATTEMPT", "message" : "Invalid login attempt."}}' );
-                }else{
-                    resp.setBody( '[{"serialNumber": "123","item": "1234","location": "Test Location","status": "New","inventoryType": "Piano","monthlyRental": "62","listPrice": "66.66","model": "123","productId": "Serialized Item001","brand": "xyz"}]' );
-                }
-                
-            }
-            /*system.debug('resp->> ' + resp);system.debug('resp->> ' + resp.getBody());system.debug('resp->> ' + req);system.debug('req.getBody->> ' + req.getBody());system.debug('req.getEndpoint->> ' + req.getEndpoint());system.debug('req.getHeader->> ' + req.getHeader('Authorization'));system.debug('req.getHeader->> ' + req.getHeader('Content-Type'));system.debug('req.getMethod->> ' + req.getMethod());*/
-            
-            noOfApiCallout++;
-        }while( resp.getStatusCode() != 200 && noOfApiCallout <= objNetSuiteCred.Maximum_API_Retry_Count__c );
-        
-        system.debug('noOfApiCallout --> '+ noOfApiCallout);
-        system.debug('resp->> ' + resp);
-        system.debug('resp->> ' + resp.getBody());  //resp->> {"error" : {"code" : "INVALID_LOGIN_ATTEMPT", "message" : "Invalid login attempt."}}
-        
-        //CH04 Start
-        responseDatetime = DateTime.now();
-        
-        if( objNetSuiteCred.Enable_Logging__c){
-            
-            try{
-                NetSuite_API_Logger__c objNetSUiteLogger = new NetSuite_API_Logger__c();
-                objNetSUiteLogger.Class_and_Method_Name__c = ' SearchInstrumentRental_IpadCntrl : '+ methodName;
-                objNetSUiteLogger.Request__c =  req.getBody().length() > 131070 ? req.getBody().left(131070) : req.getBody();
-                objNetSUiteLogger.Request_Header__c = req.getHeader( 'Authorization' ).length() > 131070 ? req.getHeader( 'Authorization' ).left(131070) : req.getHeader( 'Authorization' );
-                objNetSUiteLogger.Request_Time__c = requestDatetime;
-                objNetSUiteLogger.Response__c = resp.getBody().length() > 131070 ? resp.getBody().left(131070) : resp.getBody();
-                objNetSUiteLogger.Response_Time__c = responseDatetime;
-                objNetSUiteLogger.Status_Code__c = resp.getStatusCode();
-                objNetSUiteLogger.Request_URL__c = req.getEndpoint().length() > 131070 ? req.getEndpoint().left(131070) : req.getEndpoint();
-                
-                //since we need to call NetSUite API, w/o future dml, it will give You have uncommitted work pending. Please commit or rollback before calling out error 
-                if( !Test.isRunningTest() && methodName != 'saveAndCompleteProcess() :Inventory Search')
-                    insert objNetSUiteLogger; 
-                  system.debug('objNetSUiteLogger Id -> ' + objNetSUiteLogger.id);
-                
-            }Catch ( Exception objExp ){
-                system.debug(' Error -> ' + objExp.getMessage() + ' -> Line Number -> ' + objExp.getLineNumber());
-            }
-        }
-        //Ch04 ENd
-        return resp;
-    }
-    
     //this will call the netsuite inventorty products
     public void getProducts1(){
         
+        system.debug(' isAlreadyStripCstmr ->> ' + isAlreadyStripCstmr );
         NetSuite_Integration_Creds__c objNetSuiteCred = NetSuite_Integration_Creds__c.getValues('Aureus Inventory Search');
         
         if( objNetSuiteCred == null ){
             return;
         }
-        HTTPResponse resp = sendNetSuiteRequest( objNetSuiteCred,'{"type": "'+ instrumentType +'"}', 'getProducts1() : Inventory Search' );
+
+		//CH08 Start        
+         //'{"type": "'+ instrumentType +'"}' for production
+        //{ "location": "test location"}  for sandbox
+        String requestBody = '{"type": "'+ instrumentType +'"}';
+        if( String.isNotBlank( objNetSuiteCred.Sample_Request__c ) ){
+            requestBody = objNetSuiteCred.Sample_Request__c;
+        }
+        HTTPResponse resp = NetSuiteIntegrationUtility.sendNetSuiteRequest( objNetSuiteCred,requestBody, 'getProducts1() : Inventory Search' );
+       
+        //Before CH08 HTTPResponse resp = NetSuiteIntegrationUtility.sendNetSuiteRequest( objNetSuiteCred,'{"type": "'+ instrumentType +'"}', 'getProducts1() : Inventory Search' );
+        //CH08 End
         
         //checking some params so that it is ensure it doesnot contains any error json
         if( resp.getBody().contains( 'serialNumber' ) && resp.getBody().contains( 'item' ) && resp.getBody().contains( 'location' ) && resp.getBody().contains( 'inventoryType' )){
             
-            netSuiteProducts = ( List<NetSuiteProducts>  )JSON.deserialize(resp.getBody(), List<NetSuiteProducts>.class);
-            
+            netSuiteProducts = ( List<NetSuiteIntegrationUtility.NetSuiteProducts>  )JSON.deserialize(resp.getBody(), List<NetSuiteIntegrationUtility.NetSuiteProducts>.class);
+            //system.debug('netSuiteProducts'+netSuiteProducts);
             for( Integer index = 0; index < netSuiteProducts.size(); index++ ){
-                
+                // system.debug('netSuiteProducts itme -->'+netSuiteProducts[ index ].item);
+                // system.debug('netSuiteProducts productId -->'+netSuiteProducts[ index ].productId);
                 netSuiteProducts[ index ].srNo = index + 1;
                 system.debug(' -->  ' + netSuiteProducts[ index ] );
                 
@@ -1941,6 +1969,14 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                 if( String.isBlank(netSuiteProducts[ index ].monthlyRental) ){
                     netSuiteProducts[ index ].monthlyRental = '0';
                 }
+                
+                //CH08 : reseting the value if the api doesnot retrun any value
+                
+                if( String.isBlank(netSuiteProducts[ index ].studentPrice) ){
+                    netSuiteProducts[ index ].studentPrice = '0';
+                }
+                //CH08 END
+
             }//end of for Loop
         }//end of response check
     }//end of getProducts1
@@ -1949,13 +1985,13 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
     public static void pushDataToNetsuite( String enrolName, string serialNo, string productId ){
         
         NetSuite_Integration_Creds__c objNetSuiteCred = NetSuite_Integration_Creds__c.getValues('Convert Item to Fixed Asset');
-        HTTPResponse resp = sendNetSuiteRequest( objNetSuiteCred,'{"serialNumber": "'+serialNo+'","productId" : "'+productId+'"}' ,'pushDataToNetsuite() :  Convert Item to Fixed Asset');
+        HTTPResponse resp = NetSuiteIntegrationUtility.sendNetSuiteRequest( objNetSuiteCred,'{"serialNumber": "'+serialNo+'","productId" : "'+productId+'"}' ,'pushDataToNetsuite() :  Convert Item to Fixed Asset');
         //String s1 = '{"error": {"code": "USER_ERROR","message": "serialNumber is required.","request_datetime": "11/09/2020 11:43:48 am"}}';
         
         //send email in case of error only
         if( resp.getBody().contains('"error"') ){
             
-            SearchInstrumentRental_IpadCntrl.NetSuiteError error = ( SearchInstrumentRental_IpadCntrl.NetSuiteError )JSON.deserialize( resp.getBody() ,SearchInstrumentRental_IpadCntrl.NetSuiteError.class);
+            NetSuiteIntegrationUtility.NetSuiteError error = ( NetSuiteIntegrationUtility.NetSuiteError )JSON.deserialize( resp.getBody() ,NetSuiteIntegrationUtility.NetSuiteError.class);
             
             Messaging.SingleEmailMessage objOutGoingEmail =  new Messaging.SingleEmailMessage();
             objOutGoingEmail.setToAddresses(new list< String >{ 'aureus@techmatrixconsulting.com'});
@@ -2037,42 +2073,6 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
     }
     
     //CH02
-    public class NetSuiteProducts{
-        
-        public Integer srNo{get;set;}
-        public String serialNumber {get;set;}
-        public String item {get;set;}
-        public String location {get;set;}
-        public String status {get;set;}
-        public String inventoryType {get;set;}
-        public String monthlyRental {get;set;}
-        public String listPrice {get;set;}
-        public String model {get;set;}
-        public String productId {get;set;}
-        public String brand {get;set;}
-        
-        public NetSuiteProducts(){
-            serialNumber = '';
-            item = '';
-            location = '';
-            status = '';
-            inventoryType = '';
-            monthlyRental = '';
-            listPrice = '';
-            model = '';
-            productId = '';
-            brand = '';
-            
-        }
-    }
-    public class NetSuiteError{
-        
-        public NetSuiteErrorCode error {get;set;}
-    }
-    public class NetSuiteErrorCode{
-        public String code{get;set;}
-        public String message{get;set;}
-        public String request_datetime{get;set;}
-    }
+    //CH07 move the code to the NetSuiteIntegrationUtility.apxc
     //CH02 END
 }

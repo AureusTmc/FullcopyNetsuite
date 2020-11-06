@@ -212,8 +212,8 @@
                 function (result, event) {
                    console.log('result', result);
                     if (result) {
-                        bookingData.packageId = result.packageId;
-                        $('#GroupMakupPackageLabel').html(result.packageName);
+                        // bookingData.packageId = result.packageId;
+                        // $('#GroupMakupPackageLabel').html(result.packageName);
                         if(isOssia){
                             bookingData.classInstrument = result.classInstrument;
                             $('#GroupMakupHoursLabel').html('0 min');
@@ -737,10 +737,11 @@
            //console.log('duration',duration);
            //console.log('enrolmentType',enrolmentType);
            //console.log('booingid',booingid);
+           var isPackagePromotional = $('#confirmModalYes').attr('data-isPackagePromotional');
             if (teacherId != 'Select Teacher' && centerId && duration && booingid) {
                 Visualforce.remoting.Manager.invokeAction(
                     '{!$RemoteAction.OssiaCenterCalendarController.getPackageAccordingToOssiaTeacher}',
-                    centerId, teacherId, duration, booingid, enrolmentType,
+                    centerId, teacherId, duration, booingid, enrolmentType,isPackagePromotional,
                     function (result, event) {
                        //console.log('result',result);
                         var packageEnrol = '<option value="Select Package">Select an Option</option>';
@@ -917,6 +918,12 @@
                             $('#confirmModalYes').attr('data-negativeNextMonthInvoiceAmount', result.negativeNextMonthInvoiceAmount.toFixed(2));
                         }
                         //end: added by nishi: 26-Aug-2020: for is next month is differce and differce is greater then 0 then we manage Invoice
+                         // added by nishi: 23-Oct-2020: for now user also can upgrade enrolment process which type of package is promo and prepayment
+                         if('negativeInvoiceDiscountAmount' in result){
+                            $('#confirmModalYes').attr('data-negativeInvoiceDiscountAmount', result.negativeInvoiceDiscountAmount.toFixed(2));
+                        }
+                         // added by nishi: 23-Oct-2020: for now user also can upgrade enrolment process which type of package is promo and prepayment
+                       
                         // if('positiveFacilityInvoiceAmount' in result){
                         //     $('#confirmModalYes').attr('data-positiveFacilityInvoiceAmount', result.positiveFacilityInvoiceAmount.toFixed(2));
                         // }
@@ -1189,6 +1196,9 @@
             casevalues.positiveNextMonthInvoiceAmount = $('#confirmModalYes').attr('data-positiveNextMonthInvoiceAmount');
             casevalues.negativeNextMonthInvoiceAmount = $('#confirmModalYes').attr('data-negativeNextMonthInvoiceAmount');
             //start: added by nishi: 17-Aug-2020: for next month invoice is differce and differce is greater then 0 then we manage Invoice
+            // added by nishi: 23-Oct-2020:start: for now user also can upgrade enrolment process which type of package is promo and prepayment
+            casevalues.negativeInvoiceDiscountAmount = $('#confirmModalYes').attr('data-negativeInvoiceDiscountAmount'); 
+            // added by nishi: 23-Oct-2020: end:for now user also can upgrade enrolment process which type of package is promo and prepayment
 
             //start: added by nishi: 17-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
             // casevalues.facilityFee = $('#confirmModalYes').attr('data-facilityCharge'); //added by nishi:19_aug-2020: for manage Facility Fee

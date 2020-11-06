@@ -1,5 +1,8 @@
 <apex:page id="pg" showHeader="false" controller="SearchInstrumentRental_IpadCntrl"  standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False"  action="{!getProducts1}"><!-- CH02 action="{!getProducts1}" -->
    <!-- CH02 Karan Singh As Netsuite integration is used of Sage integration so changing the fetch piano list and slcd piano details -->
+    <!-- CH05 Karan Singh 24 Sep 2020 : showing the type of the instrument in the page and storing the type of the instrument in the enrolment which can be piano,keyboard etc -->
+    <!-- CH06 Karan Singh 24 Sep 2020 : Making the data table optimized for the Ipad -->
+    <!-- CH09 Karan Singh 16 Oct 2020 : Need to show both the Aureus / Non Aureus Student Price in the Rental Column in UI. -->
     <head> 
         <title>Aureus Academy</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0"/>
@@ -134,7 +137,15 @@
             table.dataTable.stripe tbody tr.odd, table.dataTable.display tbody tr.odd, table.dataTable.display tbody tr.odd > .sorting_1, table.dataTable.order-column.stripe tbody tr.odd > .sorting_1, table.dataTable.display tbody tr.even > .sorting_1, table.dataTable.order-column.stripe tbody tr.even > .sorting_1   {
                 background-color: #fff;
             }
-        </style>
+            /*Reena on 06/10/2020*/
+            
+             table.dataTable {table-layout: fixed;white-space: word-wrap: break-word;}
+            table.dataTable tr td{
+            word-break: break-word;
+            }
+            table.dataTable tr td,table.dataTable tr th{white-space: normal !important;}
+            .slds-table_cell-buffer tr > th:first-child, .slds-table_cell-buffer tr > td:first-child {padding-left:15px;}
+        </style> 
         
         <script>
             $(document).ready(function() {      
@@ -148,17 +159,31 @@
         
             j$ = jQuery.noConflict();
             j$(document).ready( function () {
-                var accTable = j$('[id$="accTable"]').DataTable({
+                var accTable = j$('[id$="accTable"]').removeAttr('width').DataTable({
                     "pageLength": 10, //"pageLength": 30, CH02 showing only 10 results  
                 "bInfo" : false,
+                responsive: true,
                  "lengthChange": false,
                 "language": {
                     "search": "_INPUT_",
                     "searchPlaceholder": "Search Brand, Model, Serial No., or Type"
-                }
+                },
+                    //CH06 Start
+                columnDefs: [
+            { width: 10, targets: 0},{ width: 27, targets: 1},{ width: 60, targets: 2},{ width: 60, targets: 3},{ width: 60, targets: 5}
+        ],//CH06 END
+        fixedColumns: true
                     
                 });
+                
+                //CH06 Start - making the search box width as for the ipad
+                var addressTableFilter = document.getElementById('accTable_filter');    
+                console.log(addressTableFilter);
+                addressTableFilter.firstChild.getElementsByTagName('input')[0].style.width = "500px";
+                //CH06 END
             });
+        
+        
         
             function prcToRentalOnclick(prcType){
                 //var slcdPiano = $("input[name='slcdPianoOptions']:checked").val();
@@ -166,9 +191,9 @@
                 
                 if(!checkErr){
                     if(prcType=='Rent')
-                    	prcToRental();
+                        prcToRental();
                     else if(prcType=='Sell')
-                    	prcToSell();
+                        prcToSell();
                 }
             }
         
@@ -185,7 +210,20 @@
                         isErr = true;
                     }
                 });
+                var emailVal = $('[id$=emailtxt]').val();                   
+                var reg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;                    
+                if (reg.test(emailVal) == false){
+                    $('[id$=emailtxt]').after('<div class="slds-form-element__help errortxt" style="color:#F44336">Invalid email address.</div>');
+                    isErr = true;  
+                }
                 
+                if(!isErr){
+                    var concatePhoneNo = '+' + $('[class$=btn-cc]').html().match(/\d+/);
+                    concatePhoneNo += $('[id$=phoneNumber]').val();
+                    console.log(concatePhoneNo);
+                     $('[id$=phoneCstmId]').val(concatePhoneNo);
+                }   
+
                 if(isErr){
                     $('.cmpErrDiv').removeClass('slds-hide');
                     $('.contentErrorDiv').html('Please fill all mandatory fields.');
@@ -299,10 +337,11 @@
                 <table id="accTable" class="display slds-table slds-table_cell-buffer slds-table_bordered" style="background-color:#fff;" >
                     <thead>
                         <tr class="slds-line-height_reset">
-                            <th scope="col"></th>
+                            <th scope="col"></th> 
                             <th scope="col">No.</th>
                             <th scope="col">Brand</th>
                             <th scope="col">Model</th>
+                            <th scope="col">Type</th> <!-- CH05 added new column -->
                             <th scope="col">Serial No.</th>
                             <th scope="col">Location</th>
                             <th scope="col">Rental</th>
@@ -337,10 +376,11 @@
                                 -->
                                 <td>{!net.srNo}</td>
                                 <td>{!net.brand}</td>
-                                <td>{!net.model}</td>
+                                <td><p>{!net.model}</p></td>
+                                <td>{!net.inventoryType}</td><!-- CH05 added new column -->
                                 <td>{!net.serialNumber}</td>
                                 <td>{!net.location}</td>
-                                <td>{!net.monthlyRental}</td>
+                                <td>{!net.studentPrice}&nbsp;/&nbsp;{!net.monthlyRental}</td> <!-- CH09 now will show both the fields : <td>{!net.monthlyRental}</td> -->
                                 <td>{!net.listPrice}</td>
                                 <td>{!net.status}</td>
                             </tr>

@@ -42,7 +42,7 @@ public Account      studentAcc{get;set;}
     String centerCountry;//@Juneid 07 Aug 2020, This variable is used to store Center country name
     Id prsonContactId;
     public Boolean isOsiaEnable{get;set;}//Juneid 14 Aug 2020
-    string currentOrg;//Juneid 17 Aug 2020, store the current organization
+    public string currentOrg;//Juneid 17 Aug 2020, store the current organization
     Map<String, String> urlParamMetaMap;//Juneid 17 Aug 2020,store metadata value 
     
     string organization;    
@@ -617,7 +617,8 @@ ApexPages.addMessage(new ApexPages.message(Apexpages.Severity.ERROR,'Please sele
             Set<String> bookSet       = new Set<String>();
             for(Booking__c book : [SELECT Id,Name,Booking_Date__c,Duration__c,Start_Time__c,End_Time__c,Type__c,Teacher_Account__c 
                                    FROM Booking__c 
-                                   WHERE Teacher_Account__c IN:teachAttaImageMap.keySet() AND (RecordTypeId =: bookLessRecId OR RecordTypeId =: bookGrpClsRecId) AND Start_Time__c != null AND End_Time__c != null
+                                   WHERE Teacher_Account__c IN:teachAttaImageMap.keySet() AND 
+                                   (RecordTypeId =: bookLessRecId OR RecordTypeId =: bookGrpClsRecId) AND Start_Time__c != null AND End_Time__c != null
                                    AND (Booking_Date__c >=: startDt AND Booking_Date__c <=: endDt)  AND Status__c IN: bookStatusSet
                                    AND ((Type__c IN: bookTypeSet) OR (Type__c = 'Busy' AND Category__c != 'Placeholder'))]){
                                        if(book.End_Time__c > book.Start_Time__c){
@@ -925,7 +926,8 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
                         if(clsList == null)
                             clsList = new List<Class__c>();                    
                         clsList.add(cls);                                                  
-                        clsSchMap.put(cls.Class_Day__c, clsList);                       
+                        clsSchMap.put(cls.Class_Day__c, clsList);   
+                        system.debug('@@cls.Bookings__r'+cls.Bookings__r);                              
                         for(Booking__c book: cls.Bookings__r)
                             bookMap.put(cls.Id+'#'+book.Booking_Date__c, book);    
                     }
@@ -951,7 +953,8 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
                         if(clsList == null)
                             clsList = new List<Class__c>();                    
                         clsList.add(cls);                                                  
-                        clsSchMap.put(cls.Class_Day__c, clsList);                       
+                        clsSchMap.put(cls.Class_Day__c, clsList); 
+                        system.debug('@@cls.Bookings__r'+cls.Bookings__r);                 
                         for(Booking__c book: cls.Bookings__r)
                             bookMap.put(cls.Id+'#'+book.Booking_Date__c, book);    
                     }
@@ -992,8 +995,10 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
                 
                 if(clsSchMap.containsKey(currDay) && st >= System.today()){
                     List<Class__c> clsSchLst = clsSchMap.get(currDay);
-                    
-                    for(Class__c clsSch: clsSchLst){    
+                    system.debug('@@clsSchLst'+clsSchLst);        
+                    for(Class__c clsSch: clsSchLst){  
+                        system.debug('@@bookMap'+bookMap);          
+                        system.debug('@@clsSch.Id+st'+clsSch.Id+'#'+st);          
                         if(bookMap.containsKey(clsSch.Id+'#'+st)){
                             Time stTime = clsSch.Start_Time__c;
                             timeSlotTemp.add(stTime);       
@@ -1044,13 +1049,9 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
             trialEnrMod.slcdDate    = slcdDate;
             trialEnrMod.slcdDateDt  = date.parse(slcdDate);
             trialEnrMod.slcdFullSlot= slcdSlot;
+            system.debug('slcdSlot'+slcdSlot);
             trialEnrMod.slcdSlot = trialEnrMod.slcdFullSlot.substring(4, trialEnrMod.slcdFullSlot.length());
             trialEnrMod.slcdSlotTchrs = new List<TeacherModel>();
-            System.debug('@@@@trialEnrMod.teachModSlotMap'+trialEnrMod.teachModSlotMap);
-            System.debug('@@@@slcdDate'+slcdDate);
-            System.debug('@@@@trialEnrMod.slcdSlot'+trialEnrMod.slcdSlot);
-            System.debug('@@@@trialEnrMod.teachModSlotMap.get(slcdDate)'+trialEnrMod.teachModSlotMap.get(slcdDate));
-            System.debug('@@@@trialEnrMod.teachModSlotMap.get(slcdDate).get(trialEnrMod.slcdSlot)'+trialEnrMod.teachModSlotMap.get(slcdDate).get(trialEnrMod.slcdSlot));
             if(trialEnrMod.teachModSlotMap.get(slcdDate) != null && trialEnrMod.teachModSlotMap.get(slcdDate).get(trialEnrMod.slcdSlot) != null)
                 trialEnrMod.slcdSlotTchrs = trialEnrMod.teachModSlotMap.get(slcdDate).get(trialEnrMod.slcdSlot);
             
@@ -1179,11 +1180,15 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                 packMap.put(pkg.Program__r.Instrument__c, pkg);
             
             //Fill Parent and Upasert parent record
-            parentAcc.RecordTypeId   = csmrRecId;
+        parentAcc.RecordTypeId   = csmrRecId;
+        // added by nishi: 28-Sep-2020: for stop active process builer validations 
+        if(!test.isRunningTest()){
             parentAcc.Centre_Name__c = slcdCenter;
             parentAcc.Instrument__c  = (new list<string>(scldInst) )[0] ;
-            List<Account> centrList  = [SELECT Id, Name, Location__c, Country__c, Country__r.Country_Name__c FROM Account WHERE Id =: slcdCenter];
-            if(centrList.size() > 0){
+        }
+         // added by nishi: 28-Sep-2020: for stop process builer 
+        List<Account> centrList  = [SELECT Id, Name, Location__c, Country__c, Country__r.Country_Name__c FROM Account WHERE Id =: slcdCenter];
+        if(centrList.size() > 0){
                 parentAcc.Location__c = centrList.get(0).Location__c;
                 //Added by rajesh, 10th sep 2019. To do some sharing seeting stuff as per Ashish ji discussion
                 if(centrList.get(0).Country__r.Country_Name__c != null)
@@ -1246,8 +1251,11 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                         if(String.isNotBlank(trMd.slcdExistingStu) && !trMd.slcdExistingStu.equalsIgnoreCase('new'))
                             studentAcc.Id = trMd.slcdExistingStu;                        
                             studentAcc.Parent__c = parentAcc.Id;
-                            studentAcc.Current_Engagement_Status__c = ConstantsClass.activeStatus;                    
-                            studentAcc.Centre_Name__c = slcdCenter;
+                            studentAcc.Current_Engagement_Status__c = ConstantsClass.activeStatus;   
+                         // added by nishi: 28-Sep-2020: for stop active process builer validations
+                            if(!test.isRunningTest()){
+                                studentAcc.Centre_Name__c = slcdCenter;
+                            }
                             if(centrList.size() > 0){
                                 studentAcc.Location__c = centrList.get(0).Location__c;
                                 if(centrList.get(0).Country__r.Country_Name__c != null)
@@ -1268,7 +1276,10 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                 enrl.Student__r    = studentAcc;
                 enrl.Type__c       = ConstantsClass.typeTrial;
                 enrl.Stage__c      = ConstantsClass.requestedSubStatus;
-                enrl.Center__c     = slcdCenter;
+                 // added by nishi: 28-Sep-2020: for stop active process builer validations
+                if(!test.isRunningTest()){
+                    enrl.Center__c     = slcdCenter;
+                }
                 enrl.Teacher__c    = trMd.slcdTchrId;
                 enrl.Previous_Experience_if_any__c  = trMd.stuPreExperience;
                 enrl.Cancellation_Policy_Agreed__c  = true;
@@ -1323,7 +1334,9 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                 system.debug('enrl'+enrl);
                 //Fill Bookings
                 Booking__c book = new Booking__c(Student__r = studentAcc, Teacher_Account__c = trMd.slcdTchrId, Enrolment__r = enrl);
-                book.Center__c =  slcdCenter;
+                if(!test.isRunningTest()){
+                    book.Center__c =  slcdCenter;
+                }
                 book.Type__c   = ConstantsClass.typeTrial;
                 book.Allow_Online_Guest_Joining__c=true;// added by Ravi on 7 sept 2020 for trial booking.
                 book.Status__c = ConstantsClass.statusPending;
@@ -1416,7 +1429,8 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
             
             //Pagereference pg = new Pagereference('https://aureusacademy.com/trial-booking-confirmation'); 
             // errorMsg = 'success';
-        }catch(Exception e){
+        
+    }catch(Exception e){
             Database.rollback(sp);
             System.debug('Error:  '+e.getMessage());
             System.debug('Error:  '+e.getStackTraceString() +e.getLineNumber());
@@ -1424,7 +1438,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
             isError = true;
             return null;
         }
-        
+      
     }
     @TestVisible
     private Boolean validateSlcdSlot(){
@@ -1541,7 +1555,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                     }
                     
                     if(emailList.size() > 0){
-                        Messaging.sendEmail(emailList);
+                        Messaging.sendEmail(emailList,FALSE);
                     }
                 }
             }

@@ -117,7 +117,7 @@
             </apex:actionStatus> 
             
             <div class="main-content">
-                <div class="slds-grid slds-wrap slds-grid--align-center">
+                <div class="slds-grid slds-wrap slds-grid--align-center" style="margin: 80px 0;">
                     <div class="slds-col content-box">            
                         <div class="header slds-col"><div class="slds-col"><a href="#" class="logo">
                             <!-- <img src="https://aureusacademy.com/wp-content/uploads/2017/03/cropped-Aureus-Logo-Small.png"/> -->
@@ -180,12 +180,12 @@
         display:none;
         }
         body{
-        background-image: url("{!$Resource.img2}") !important;
+        /*background-image: url("{!$Resource.img2}") !important;*/
         background-size:contain !important;
         background-repeat:no-repeat !important;
         background-position:left !important;
-        background-color: #f3613c !important;
-        
+        /*background-color: #f3613c !important;*/
+        background-color: #f6f9fc !important;
         /*Added for background image set 13th May 2019 */
         background-position: center !important;
         background-repeat: no-repeat !important;

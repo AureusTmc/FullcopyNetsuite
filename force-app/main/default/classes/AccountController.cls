@@ -159,7 +159,8 @@ public class AccountController {
             }else{
              	dateFilter='LAST_N_DAYS:0';   
             }
-            string str='SELECT Id,Student__r.Name,Parent__r.Name,Enrolment_Created_Date__c,Teacher__r.Name,Package__r.Name,Lessons_Start_Date__c,Lesson_Start_time__c FROM Enrolment__c WHERE  Center__c =:searchKey  AND DAY_ONLY(Enrolment_Created_Date__c)='+ dateFilter +' And Type__c= \'Regular\' AND Stage__c=\'Enrolled\' ORDER BY Lessons_Start_Date__c DESC';
+            set<string> enrolmenttypes = new set<string>{'Regular','Group'};
+            string str='SELECT Id,Student__r.Name,Parent__r.Name,Enrolment_Created_Date__c,Teacher__r.Name,Package__r.Name,Lessons_Start_Date__c,Lesson_Start_time__c FROM Enrolment__c WHERE  Center__c =:searchKey  AND DAY_ONLY(Enrolment_Created_Date__c)='+ dateFilter +' And Type__c IN: enrolmenttypes AND Stage__c=\'Enrolled\' ORDER BY Lessons_Start_Date__c DESC';
             
             list<Enrolment__c> regEnr = Database.query(str);
             if(regEnr.size() >0){

@@ -421,6 +421,7 @@ public class EnrolmentProcessForClassCtrl {
         //Promotional fees discount calcuation
         fm.pkgFeesPromtnalDis  = 0;
         fm.prmtnalPkgInMonth   = 0;
+        fm.isPromitionalPackage = false; // added by nishi:5-Nov-2020for check selected package is promotional or not
         if(enr.package__r.Is_Promotion_Discount__c && String.isNotBlank(enr.package__r.Promotion_period_In_months__c)){ 
             fm.pkgFeesPromtnalDis  = enr.package__r.Promotion_Discount__c;
             fm.prmtnalPkgInMonth   = 0;                        
@@ -552,7 +553,7 @@ public class EnrolmentProcessForClassCtrl {
                     tempTotAmt = (tempPrgFee-((prgDisFeeForSingleLess*countDtforMonth))); 
                     tempPrgFeegstTax = BillingUtility.roundOffAmount((tempPrgFee > 0 && gstTaxPer> 0) ? ((tempPrgFee * gstTaxPer) / 100):0);
                     if(discount != 0){
-                        discountgstTax= BillingUtility.roundOffAmount((discount != 0 && gstTaxPer> 0) ? ((discount * gstTaxPer) / 100):0);
+                        discountgstTax= BillingUtility.roundOffAmount((discount != 0 && gstTaxPer != null && gstTaxPer> 0) ? ((discount * gstTaxPer) / 100):0);
                     }
                     fm.gstAmount += tempPrgFeegstTax-discountgstTax;
                     //fm.gstAmount += BillingUtility.roundOffAmount((tempTotAmt > 0 && gstTaxPer> 0) ? ((tempTotAmt * gstTaxPer) / 100):0);
@@ -572,18 +573,23 @@ public class EnrolmentProcessForClassCtrl {
                 
                 //Added by Rajesh on 21st oct 2019. calcuate individual gst amount for the line items
                 //Update by Rajesh on 25th nov 2019. add rounding due to solve 2decimal problem with this 'tempPrgFee'
-                tempTotAmt = (tempPrgFee-(prgDisFeeForSingleLess*countDtforMonth)); 
+                tempTotAmt = (tempPrgFee-(prgDisFeeForSingleLess*countDtforMonth));
+                // added by nishi:start: 21-Sep-2020 : manage discount gst amount
                 decimal discount = prgDisFeeForSingleLess*countDtforMonth;
                 decimal discountgstTax = 0;
-                if(discount != 0){
-                        discountgstTax = BillingUtility.roundOffAmount((discount != 0 && gstTaxPer != 0) ? ((discount * gstTaxPer) / 100):0);
+                if(discount != null && discount != 0 ){
+                        discountgstTax = BillingUtility.roundOffAmount((discount != 0 && gstTaxPer != null && gstTaxPer > 0) ? ((discount * gstTaxPer) / 100):0);
                 }
                 fm.gstAmount += tempPrgFeegstTax-discountgstTax;
+                // added by nishi: 21-Sep-2020 : end:manage discount gst amount
                 //fm.gstAmount += BillingUtility.roundOffAmount((tempTotAmt > 0 && gstTaxPer > 0) ? ((tempTotAmt * gstTaxPer) / 100):0);
             }
             
             fm.prgFees = totPrgFee;
             fm.pkgFeesPromtnalDis = BillingUtility.roundOffAmount(totDiscount);
+            fm.isPromitionalPackage = true;// added by nishi:5-Nov-2020 for check selected package is promotional or not
+            fm.listOfpromotinalPackages = getlistOfpromotinalPackages(fm,enr,promPerEndDate);
+            system.debug('fm.listOfpromotinalPackages'+fm.listOfpromotinalPackages);
         }else{//Added by Rajesh on 21st oct 2019. calcuate individual gst amount for the line items
             fm.gstAmount += BillingUtility.roundOffAmount((fm.prgFees > 0 && gstTaxPer > 0) ? ((fm.prgFees * gstTaxPer) / 100):0);
              // Decimal amount = fm.facilityFee > 0 ? BillingUtility.roundOffAmount(fm.facilityFee) : 0;
@@ -619,7 +625,7 @@ public class EnrolmentProcessForClassCtrl {
         fm.prgFees = BillingUtility.roundOffAmount(fm.prgFees);
         fm.regiFees = BillingUtility.roundOffAmount(fm.regiFees);*/
         //@Juneid 06 Aug 2020, Applying Refferel Discount 
-        if((String.isNotBlank(enr.Referral_code_used__c) && checkOsiaForRefrel(enr.Center__r.Organisation__r.name) ==true)){ ///&& enr.Package__r.Type_of_package__c =='Normal'
+        if((String.isNotBlank(enr.Referral_code_used__c) && checkOsiaForRefrel(enr.Center__r.Organisation__r.name) ==true )){ ///&& enr.Package__r.Type_of_package__c =='Normal'
             //@Juneid 05 Aug 2020 ,Give Reffrel Discount
             if(enrolCount == 1){
                 //@Juneid, 05 Aug 2020 Refrel Discount Calculation country wise
@@ -629,6 +635,8 @@ public class EnrolmentProcessForClassCtrl {
                     fm.refrelDiscountName = countryWiseRfrelDiscount[0].Name;
                     enr.Referee_discount_amount__c = countryWiseRfrelDiscount[0].Discount_Amount_Referee__c;
                     enr.Referrer_discount_amount__c = countryWiseRfrelDiscount[0].Discount_Amount_Referrer__c;
+                        // added by nishi: 25-Sep-2020 : manage discount gst amount for referee
+                    fm.gstAmount += -BillingUtility.roundOffAmount((countryWiseRfrelDiscount[0].Discount_Amount_Referee__c > 0 && gstTaxPer > 0) ? ((countryWiseRfrelDiscount[0].Discount_Amount_Referee__c * gstTaxPer) / 100):0);
                     }
                     /*start: nishi: 23-Sep-2020: we create credit memo  if student selected package is promo then we are not give discout to student but we give discount to refreer customer */
                     else{
@@ -646,18 +654,65 @@ public class EnrolmentProcessForClassCtrl {
         
         return fm;
     }
+
+    // added by nishi:5-Nov-2020 for check selected package is promotional or not
+    private List<promotinalPackagesDetails>  getlistOfpromotinalPackages(FeeModel fm,enrolment__c enr,date promPerEndDate){
+        List<promotinalPackagesDetails> listOfpromotinalPackages = new List<promotinalPackagesDetails>();
+        promotinalPackagesDetails objpromotinalPackagesDetails = new promotinalPackagesDetails();
+        if(fm.pkgFeesPromtnalDis > 0 && fm.prmtnalPkgInMonth > 0 && fm.proNoOfLess >0){
+            // Decimal prgFeeForSingleLess = fm.prgFees/fm.proNoOfLess;
+            Decimal prgFeeForSingleLess = fm.actPkgFee/fm.proNoOfLess;
+            Decimal prgDisFeeForSingleLess = 0;
+            if(fm.pkgFeesPromtnalDis > 0){
+                //prgDisFeeForSingleLess = fm.pkgFeesPromtnalDis/fm.proNoOfLess;
+                prgDisFeeForSingleLess = fm.actDiscount/fm.proNoOfLess;
+            }
+            Date stDt = enr.Lessons_Start_Date__c;
+            decimal tempTotAmt =0;
+            date currLesDt = null;
+            Integer countDtforMonth = 0;
+            while(stDt<=promPerEndDate){
+                if(currLesDt == null)
+                    currLesDt = stDt;
+                
+                if(currLesDt.month() == stDt.month()){
+                    if(countDtforMonth < 4){
+                        countDtforMonth = countDtforMonth+1;
+                    }
+                }else{
+                    Decimal tempPrgFee = prgFeeForSingleLess*countDtforMonth;
+                    listOfpromotinalPackages.add(new promotinalPackagesDetails(currLesDt,BillingUtility.roundOffAmount(tempPrgFee),enr.Package__r.Name,false));
+                    if(prgDisFeeForSingleLess >0){
+                        tempTotAmt = (prgDisFeeForSingleLess*countDtforMonth) ; 
+                        listOfpromotinalPackages.add(new promotinalPackagesDetails(currLesDt,BillingUtility.roundOffAmount(tempTotAmt),enr.Package__r.Name+' (Discount)',true));
+                    }
+                    currLesDt = stDt;
+                    countDtforMonth = 1;
+                }                                            
+                stDt = stDt.addDays(7);
+            }
+            
+            if(countDtforMonth > 0){
+                Decimal tempPrgFee = prgFeeForSingleLess*countDtforMonth;
+                listOfpromotinalPackages.add(new promotinalPackagesDetails(currLesDt,BillingUtility.roundOffAmount(tempPrgFee),enr.Package__r.Name,false));
+                if(prgDisFeeForSingleLess > 0){
+                    tempTotAmt = (prgDisFeeForSingleLess*countDtforMonth); 
+                    listOfpromotinalPackages.add(new promotinalPackagesDetails(currLesDt,BillingUtility.roundOffAmount(tempTotAmt),enr.Package__r.Name+' (Discount)',true));
+                }
+            }
+        }
+        return listOfpromotinalPackages;
+    }
     
     private BillingDetails fetchBillDetails(List<FeeModel> feeModelList, Integer gstTaxPer){
         BillingDetails billDetails = new BillingDetails();
-       
+       Decimal refrelDiscounttax = 0;
         for(FeeModel fm: feeModelList){    
 //@Juneid 05,Aug 2020,Calculation for For Deduct the Refrel discount amount
             //@Juneid 18 Aug 2020, Facility fees add
-           Decimal totTemp = ((fm.regiFees + fm.prgFees) /*+  (fm.facilityFee > 0 ? fm.facilityFee : 0)*/ - (fm.refrelDiscount !=null ? fm.refrelDiscount : 0));
-         
-            
+           Decimal totTemp = ((fm.regiFees + fm.prgFees) /*+  (fm.facilityFee > 0 ? fm.facilityFee : 0)*/ );//commented bu nishi : 25-Sep-2020: for now we created different line for discount- (fm.refrelDiscount !=null ? fm.refrelDiscount : 0));
             billDetails.feesTot += (totTemp);
-            billDetails.disTot  +=  (fm.regiFeesDis + fm.pkgFeesPromtnalDis );
+            billDetails.disTot  +=  (fm.regiFeesDis + fm.pkgFeesPromtnalDis +(fm.refrelDiscount !=null ? fm.refrelDiscount : 0));
             billDetails.depositTot +=(fm.depFees != null ? fm.depFees : 0);
             //Added by Rajesh on 21st oct 2019. calcuate individual gst amount for the line items
             billDetails.gstTot += (fm.gstAmount);
@@ -665,7 +720,9 @@ public class EnrolmentProcessForClassCtrl {
             
             //billDetails.gstTot +=fm.facilityGst;
         }
-        
+        system.debug('refrelDiscounttax'+refrelDiscounttax);
+        system.debug('billDetails.gstTot'+billDetails.gstTot);
+        system.debug('billDetails.gstTot'+(billDetails.gstTot+refrelDiscounttax));
         //Gst
       /*  Integer gstTaxPer = ConstantsClass.defGST;
         try{
@@ -1696,7 +1753,7 @@ public class EnrolmentProcessForClassCtrl {
                                     objCreditLineItem.Package__c =  enr.Package__c;
                                     objCreditLineItem.Enrolment__c =  enr.Id;
                                    // objCreditLineItem.Invoice_Line_Item__r = invLnItm;
-                                    objCreditLineItem.Is_Discount__c = false;
+                                    objCreditLineItem.Is_Discount__c = true;
                                     objCreditLineItem.Month__c =  enr.Lessons_Start_Date__c;
                                     objCreditLineItem.Remarks__c = 'Referral Discount (Customer: '+ enr.parent__r.name +'-'+ enr.Name +')';
                                     listOfCreditmemolineitem.add(objCreditLineItem);
@@ -1729,7 +1786,7 @@ public class EnrolmentProcessForClassCtrl {
                                    objCreditLineItem.Package__c =  enr.Package__c;
                                    objCreditLineItem.Enrolment__c =  enr.Id;
                                    //objCreditLineItem.Invoice_Line_Item__r = invLnItm;
-                                   objCreditLineItem.Is_Discount__c = false;
+                                   objCreditLineItem.Is_Discount__c = true;
                                    objCreditLineItem.Month__c =  enr.Lessons_Start_Date__c;
                                    objCreditLineItem.Remarks__c = 'Referral Discount';
                                    listOfCreditmemolineitem.add(objCreditLineItem);
@@ -2196,6 +2253,7 @@ public class EnrolmentProcessForClassCtrl {
             createPlaceholderForCampFifthLsn(campFifthLsnCanList);
         }
     }
+    @testVisible
     private static void bookingsCancellationProcess(List<Booking__c> bookingList){
        /* List<Booking__c> bookingList = [SELECT Id, Name, Status__c, Type__c, Center__c,
                                                Booking_Date__c, Makeup_Reason__c, Teacher_Account__c, 
@@ -2223,10 +2281,12 @@ public class EnrolmentProcessForClassCtrl {
         for(Case c : caseList)
             csIds.add(c.Id);
         //@Juneid 26 Aug 2020, Org wise Email
-        if(caseList[0].Centre_Name__r.Organisation__r.name  == Label.Ossia_Organisation_Name) {
-            AureusUtility.sendOssiaCaseEmail(csIds);
-        }else{
-               AureusUtility.sendCaseEmail(csIds);    
+        if(csIds != null && csIds.size()> 0){
+            if(caseList[0].Centre_Name__r.Organisation__r.name  == Label.Ossia_Organisation_Name) {
+                AureusUtility.sendOssiaCaseEmail(csIds);
+            }else{
+                AureusUtility.sendCaseEmail(csIds);    
+            }
         }
      
     }
@@ -2297,7 +2357,7 @@ public class EnrolmentProcessForClassCtrl {
         }
         return placeholderList;
     }
-    
+    @TestVisible
     private static void createPlaceholderForFifthLsn(List<Fifth_Lesson__c> fifthLsnObjList){
         
         List<Booking__c> placeholderList = new List<Booking__c>();
@@ -2468,7 +2528,11 @@ public class EnrolmentProcessForClassCtrl {
                 enrList.add(enrl);
             }      
             update enrList;
-            
+            enrList  = [SELECT Id, Parent__r.Name, Student__r.Name, Center__c, Teacher__c, Package__c, Package__r.Duration__C, Package__r.Program__r.Instrument__c,Field_1__c,
+                        Parent__r.Also_a_Student__c, Student__c,  Parent__c, Trial_Date__c,  Trial_Start_Time__c, Center__r.Travel_Time__c, Lessons_Start_Date__c, Lesson_Start_Time__c ,
+                        Parent__r.personContactId, Center__r.Location__c, Type__c,class__C
+                        FROM Enrolment__c  
+                        WHERE  Id IN: enrList];
             //For aureus home centers 
             Set<String> centSet = new Set<String>();
             Set<String> tchrSet = new Set<String>();
@@ -2515,11 +2579,6 @@ public class EnrolmentProcessForClassCtrl {
                 }
             }
             
-            enrList  = [SELECT Id, Parent__r.Name, Student__r.Name, Center__c, Teacher__c, Package__c, Package__r.Duration__C, Package__r.Program__r.Instrument__c,Field_1__c,
-                                        Parent__r.Also_a_Student__c, Student__c,  Parent__c, Trial_Date__c,  Trial_Start_Time__c, Center__r.Travel_Time__c, Lessons_Start_Date__c, Lesson_Start_Time__c ,
-                                        Parent__r.personContactId, Center__r.Location__c, Type__c
-                                        FROM Enrolment__c  
-                                        WHERE  Id IN: enrList];
             
             List<Booking__c> bookLstForDel = [SELECT Id,Name FROM Booking__c WHERE Status__c = 'Blocked' AND Enrolment__c IN: enrList];
             if(bookLstForDel.size() > 0)
@@ -2741,7 +2800,7 @@ public class EnrolmentProcessForClassCtrl {
              system.debug('EEEEEEEEEEE-->'+emailList);
             if(emailList.size() > 0){
                 system.debug('EEEEEEEEEEE-->'+emailList);
-                Messaging.sendEmail(emailList);
+                Messaging.sendEmail(emailList,false);
             }
         }
     }
@@ -2974,7 +3033,7 @@ public class EnrolmentProcessForClassCtrl {
                     emailList.add(refrenceMail); 
                 }
                 if(emailList.size() > 0){
-                    Messaging.sendEmail(emailList);
+                    Messaging.sendEmail(emailList,false);
                 }
             }
         }
@@ -3038,7 +3097,9 @@ public class EnrolmentProcessForClassCtrl {
         public Decimal prgFees{get;set;}
         public Decimal pkgFeesPromtnalDis{get;set;}
         public Decimal regiFees{get;set;}
-        public Decimal regiFeesDis{get;set;}      
+        public Decimal regiFeesDis{get;set;}    
+        Public List<promotinalPackagesDetails> listOfpromotinalPackages{get;set;}  
+        public Boolean isPromitionalPackage{get;set;}
  //@Juneid 05 Aug 2020,Use For Refrel Discount
         public Decimal refrelDiscount{get;set;}
         public Decimal refreeDiscount{get;set;}
@@ -3068,8 +3129,31 @@ public class EnrolmentProcessForClassCtrl {
            // facilityGst = 0;
             refrelDiscountName ='';
             refreeDiscount =0;
+            listOfpromotinalPackages = new List<promotinalPackagesDetails>();
+            isPromitionalPackage = false;
         }
     }
+
+    // added by nishi:5-Nov-2020: for show promotinal pacakges details seperatly
+    public class promotinalPackagesDetails{
+        Public Date invoiceDate{get;set;}
+        public Decimal amount{get;set;}
+        public String packageName{get;set;}
+        public Boolean isDiscount{get;set;}
+        public promotinalPackagesDetails(Date invDate,Decimal amount,String packageName,Boolean isDiscount){
+            this.invoiceDate = invDate;
+            this.amount = amount;
+            this.packageName = packageName;
+            this.isDiscount = isDiscount;
+        }
+        public promotinalPackagesDetails(){
+            this.invoiceDate = null;
+            this.amount = 0;
+            this.packageName = '';
+            this.isDiscount = false;
+        }
+    }
+
     
     public Class BillingDetails{
         public Decimal disTot{get;set;}
