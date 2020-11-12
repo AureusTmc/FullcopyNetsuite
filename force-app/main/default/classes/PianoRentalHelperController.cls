@@ -22,6 +22,7 @@ public class PianoRentalHelperController {
                     Selling_price__c,Delivery_Charges__c,Parent__r.PersonMobilePhone,Parent__r.PersonEmail,
                     Final_Delivery_Timeslot__c,Parent__r.FirstName, Parent__r.LastName,Parent__r.BillingStreet,
                     Parent__r.BillingCity, Parent__r.BillingCountry,Parent__r.Phone,Parent__r.id,Parent_Email__c,
+                    Min_Notice_Inst_Rental_Termination__c,Min_Commit_Dur_Inst_Rental__c,// added by nishi: 12-Nov-2020 : for get piano Terminating months
                     (SELECT Id,Subscription__c,Status__c,Subscription__r.Next_Bill_Date__c,Subscription__r.Subscription_Start_Date__c,Subscription__r.Parent__c,Subscription__r.Center__c,
                     Subscription_Expiry_Date__c,Subscription__r.Parent__r.Stripe_Customer_Id__c, Amount__c,Next_Bill_Date__c,Subscription_Start_Date__c,Subscription__r.Subscription_End_Date__c
                     FROM Subscription_Line_Items__r 
@@ -34,7 +35,8 @@ public class PianoRentalHelperController {
     public static List<User> getPackerAndRemoverUser(){
         return [SELECT  Id, FirstName, LastName, Name, Email 
                 FROM User 
-                Where Name='Packers and Movers'];
+                Where Name=:System.Label.Packers_and_Movers_User_Name];
+                //commented by nishi: 18-sep-2020: for admin can set Packers and Movers user name Where Name='Packers and Movers'];
     } 
    	
     // current month invoice according to given status or enrolment id

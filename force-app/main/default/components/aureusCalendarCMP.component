@@ -2147,7 +2147,16 @@ Enrol now
                                         <span class="slds-assistive-text">Change Class</span>
                                     </button>
                                     <!--3-jan-2020 : END:  For add Upgrade enrollment buttons in Group class  --> 
-
+                                      <!-- //@Nishi on 12-Nov-2020 to check An advance invoice is generated Change Or Package_Process_Status__c is Pending
+                                    // then we disable Change Centre Button This button should be accessible to only a limited users. -->
+                                    <button class="slds-col slds-button slds-button_icon slds-button_icon-border-filled button-shadow slds-button-group-width" title="Change Centre" aria-pressed="false" id="updateCentreGroupBtn" onclick="upgradeEnrolmentGroupUpgrade('GroupToChangeCenter');return false;">Change Centre
+                                        <svg class="slds-button__icon" aria-hidden="true">
+                                            <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#edit')}" />
+                                        </svg>
+                                        <span class="slds-assistive-text">Change Centre</span>
+                                    </button>
+                                    <!-- //@Nishi on 12-Nov-2020 to check An advance invoice is generated Change Or Package_Process_Status__c is Pending
+                                    // then we disable Change Centre Button This button should be accessible to only a limited users.-->
                                     <button class="slds-col slds-button slds-button_icon slds-button_icon-border-filled button-shadow slds-button-group-width" title="Pre Payment" aria-pressed="false" onclick="showPrePaymentModal();return false;" id="prePaymentId">Pre Payment
                                         <svg class="slds-button__icon" aria-hidden="true">
                                             <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#moneybag')}" />
@@ -5281,6 +5290,28 @@ Enrol now
            
             //console.log('comfirmyes found');
             updateGroupClassToSamePackageOfCustomer(bookingId, effectiveDate, newPackageId, oldPackageId,newTeacher,oldTeacher, timeSlot, caseId, 'true',  oldClass,newClass);
+        }//@Nishi:12-Nov-2020 : for manage change Center group class to same other class bookings 
+        else if(origin == 'ChangeCenterGroupClass'){
+            //console.log('comfirmyes found');
+            $('#confirmModalYes').css('pointer-events','none');
+            $('#confirmModalYes').attr('disabled');
+            $('#confirmModalNo').css('pointer-events','none');
+            $('#confirmModalNo').attr('disabled');
+            var bookingId, effectiveDate, newPackageId, oldPackageId, timeSlot,oldTeacher,newTeacher,newCenterId,oldCenterId, casevalues = {};
+            bookingId = $('#confirmModalYes').attr('data-id');
+            effectiveDate = $('#confirmModalYes').attr('data-date');
+            newPackageId = $('#confirmModalYes').attr('data-newPackage');
+            oldPackageId = $('#confirmModalYes').attr('data-oldPackage');
+            timeSlot = $('#confirmModalYes').attr('data-timeslot');
+            oldClass = $('#confirmModalYes').attr('data-oldClass');
+            newClass = $('#confirmModalYes').attr('data-newclass');
+            oldTeacher = $('#confirmModalYes').attr('data-oldTeacherId');
+            newTeacher = $('#confirmModalYes').attr('data-newTeacherId');
+            newCenterId = $('#confirmModalYes').attr('data-newCenterId');
+            oldCenterId = $('#confirmModalYes').attr('data-oldCenterId');
+           
+            //console.log('comfirmyes found');
+            ChangeCenterGroupToSamePackageOfCustomer(bookingId, effectiveDate, newPackageId, oldPackageId,newTeacher,oldTeacher, timeSlot, caseId, 'true',  oldClass,newClass,oldCenterId,newCenterId);
         }
         ////////@jatin:24-Dec-2019 : for manage upgrade class to individual class 
         else if(origin == 'upgradeToIndividualClass'){
@@ -8266,6 +8297,7 @@ Enrol now
                         //9-Dec-2019 : @@jatin  :for Change Enrollement Enhancement This button should be accessible to only a limited users
                         $('#updateEnrolmentBtn').addClass('slds-hide');
                         $('#updateCentreEnrolmentBtn').addClass('slds-hide');
+                        $('#updateCentreGroupBtn').addClass('slds-hide'); //added by nishi: 12-Nov-2020:  change center for group class 
                         $('#updateEnrolmentAdminBtn').removeAttr('disabled');
                         $('#updateEnrolmentAdminBtn').addClass('slds-hide');
                         var bookingId = $('#advanceOptionsBtn').attr('data-id');
@@ -8320,6 +8352,17 @@ Enrol now
                                             $('#upgradeEnrolmentGroupToIndividualBtn').removeClass('slds-hide');
                                             $('#upgradeEnrolmentGroupToSameClassBtn').removeClass('slds-hide');
                                             $('#upgradeEnrolmentGroupToHigherPackageBtn').removeClass('slds-hide');
+                                               
+                                             //@Nishi on 12-Nov-2020 to check An advance invoice is generated Change Or Package_Process_Status__c is Pending
+                                            // then we disable Change Centre Button for group class
+                                            if(result.isChangeEnrolmentCentre){
+                                                $('#updateCentreGroupBtn').attr('disabled',result.isEnableChangeCentre); 
+                                                $('#updateCentreGroupBtn').removeClass('slds-hide');
+                                                var arr = result.startDate.split('-');
+                                                
+                                            }
+                                            //@Nishi on 12-Nov-2020 to check An advance invoice is generated Change Or Package_Process_Status__c is Pending
+                                            // then we disable Change Centre Button   
                                         }else{
                                             
                                              //9-Dec-2019 : @@jatin  :for Change Enrollement Enhancement This button should be 
@@ -10608,7 +10651,7 @@ Enrol now
                     //New timeslot should also include non-working timeslots starting 8:00 AM to 8:00 PM 
                     //for all working days and all non-working days
                     function getTimeSlotsAccordinglyToChangeEnrolSpecificUsers(centerId, teacherId, selectedPackage, enrolmentId, dtObj){
-                       //console.log('getTimeSlotsAccordinglyToSpecificUsers',dtObj);
+                       console.log('getTimeSlotsAccordinglyToSpecificUsers',dtObj);
                         Visualforce.remoting.Manager.invokeAction(
                             '{!$RemoteAction.AureusCalendarController.getTimeSlotsAccordinglyToChangeEnrolSpecificUsers}',
                             centerId, teacherId, selectedPackage, enrolmentId, dtObj.format('YYYY-MM-DD'), 
@@ -10628,17 +10671,17 @@ Enrol now
                     
 
                     function getTimeSlotsAccordingly(grade,centerId, teacherId, selectedPackage, enrolmentId, dtObj){
-                       //console.log('grade',grade);
-                       //console.log('centerId',centerId);
-                       //console.log('teacherId',teacherId);
-                       //console.log('selectedPackage',selectedPackage);
-                       //console.log('enrolmentId',enrolmentId);
-                       //console.log('dtObj',dtObj);
+                       console.log('grade',grade);
+                       console.log('centerId',centerId);
+                       console.log('teacherId',teacherId);
+                       console.log('selectedPackage',selectedPackage);
+                       console.log('enrolmentId',enrolmentId);
+                       console.log('dtObj',dtObj);
                         Visualforce.remoting.Manager.invokeAction(
                             '{!$RemoteAction.AureusCalendarController.getTimeSlotsAccordingly}',
                             centerId, teacherId, selectedPackage, enrolmentId, dtObj.format('YYYY-MM-DD'), 
                             function(result, event){
-                              //console.log('result',result);
+                              console.log('result',result);
                                 var availSlots = '';
                                 $(result).each(function(index, value){
                                     availSlots += '<option value="'+value+'">'+value+'</option>';   

@@ -258,7 +258,7 @@
                              <!-- added by nishi-3-Nov-2020: for Deactivate Group class-->
                             <footer class="slds-modal__footer deactivateGroup" style="margin-bottom: -20px;">
                                 <button class="slds-button button-shadow slds-button_brand" aria-pressed="false" id="DeactivateGroupClass" title="Deactivate Class"
-                                    onclick="$('.confirmgroupModal').removeClass('slds-hide');$('#newGroupClassCMP').addClass('slds-hide'); return false;">Deactivate Class
+                                    onclick="DeactiveGroupclassConfirmation(); return false;">Deactivate Class
                                 </button>
                             </footer>
                              <!-- added by nishi-3-Nov-2020: for Deactivate Group class-->
@@ -331,7 +331,7 @@
     <div class="slds-hide" id="newGroupMakupBookingDetails">
         <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1"
             class="slds-modal slds-fade-in-open">
-            <div class="slds-modal__container" style="padding: 10px;">
+            <div class="slds-modal__container" style="padding: 10px;max-width: 50rem;">
                 <header class="slds-modal__header" style="background: #303a42; color: white;">
                     <h2 id="newGroupMakupBookingDetailsHeader" class="slds-text-heading_medium slds-hyphenate">Add Make-Up Booking</h2>
                     <a href="javascript:void(0);" class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close"
@@ -353,7 +353,7 @@
                                         </label>
                                     </div>
                                     <div class="slds-col slds-size_8-of-12">
-                                        <div class="slds-form-element__control" style="top: 3px;padding-left:10px;">
+                                        <div class="slds-form-element__control" ><!--style="top: 3px;padding-left:10px;"-->
                                             <label id="GroupMakupCenterNameLabel"></label>
                                         </div>
                                     </div>
@@ -708,7 +708,28 @@
                                 </div>
                             </div>
                         </div>
-
+                        <!--12-Nov-2020: nishi: for show change center detials-->
+                        <div class="slds-form__row slds-hide" id="ChangeCenterSummary">
+                            <!--Previous Center Name-->
+                            <div class="slds-form__item" role="listitem">
+                                <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                    <span class="slds-form-element__label">Previous Centre:</span>
+                                    <div class="slds-form-element__control" id="oldCenterNameupgradeToIndividualSummary">
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                            <!--Current Center Name-->
+                            <div class="slds-form__item" role="listitem">
+                                <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                    <span class="slds-form-element__label">New Centre:</span>
+                                    <div class="slds-form-element__control" id="newCenterNameupgradeToIndividualSummary">
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!--12-Nov-2020: nishi: for show change center detials-->
                         <div class="slds-form__row">
                             <!--Previous Package Name-->
                             <div class="slds-form__item" role="listitem">
@@ -898,82 +919,121 @@
                     </a>
                 </header>
                 <div class="slds-modal__content slds-p-around_medium" id="enrolmentUpdateGroupPopupBody">
-                    <div class="slds-col slds-size_1-of-1">
-                        <div class="slds-grid slds-gutters">
-                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                    <div class="slds-col slds-size_12-of-12 slds-grid slds-wrap ">
+                            <div class="slds-col slds-size_1-of-2 slds-grid slds-wrap slds-p-around_x-small enrolmentWithChangeCenter">
+                                <span class="slds-form-element__label slds-col slds-size_1-of-2"><b>Current Center:</b></span>
+                                <span id="currentCenterEnrolGroupUpdate" class="slds-col slds-size_1-of-2"></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-grid slds-wrap slds-p-around_x-small">
                                 <span class="slds-form-element__label slds-col slds-size_1-of-2"><b>Current Teacher:</b></span>
                                 <span id="currentTeacherEnrolGroupUpdate" class="slds-col slds-size_1-of-2"></span>
                             </div>
-                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                            <div class="slds-col slds-size_1-of-2 slds-grid slds-wrap slds-p-around_x-small">
                                 <span class="slds-form-element__label slds-col slds-size_1-of-2"><b>Current Date And Time:</b></span>
                                 <span id="currentDateTimeEnrolGroupUpdate" class="slds-col slds-size_1-of-2"></span>
                             </div>
-                        </div>
-                        <div class="slds-grid slds-gutters margin-top5px" style="margin-top: 20px;">
-                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                        
+                            <div class="slds-col slds-size_1-of-2 slds-grid slds-wrap slds-p-around_x-small">
                                 <span class="slds-form-element__label slds-col slds-size_1-of-2"><b>Current package: </b></span>
                                 <span id="currentPackageEnrolGroupUpdate" class="slds-col slds-size_1-of-2"></span>
                             </div>
-                            <div class="slds-col slds-size_1-of-2 slds-grid">
-                                <span class="slds-form-element__label slds-col slds-size_1-of-2"><b>Select Teacher: </b></span>
-                                <select class="slds-select slds-col slds-size_1-of-2" id="selectTeacherEnrolGroupUpdate" onchange="getUpgradePackageByTeacher();createNewEffectiveGroupDates();availTimeGroupSlots();return false;">      
-                                </select>
+                            <div class="slds-col slds-size_1-of-2 slds-grid slds-wrap slds-p-around_x-small enrolmentWithChangeCenter">
+                                <div class="slds-col slds-size_1-of-1 slds-grid slds-wrap">
+                                    <span class="slds-form-element__label slds-col slds-size_1-of-2"><b>Select Center: </b></span>
+                                    <select class="slds-select slds-col slds-size_1-of-2" id="selectCenterEnrolGroupUpdate" onchange="getSelectedGroupChangeCenterTeacher();return false;">      
+                                    </select>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-grid slds-wrap">
+                                    <div  class="slds-col slds-size_1-of-2" style="color:red;"></div>
+                                    <div id="centerSelectGroupErrorMsg" class="slds-col slds-size_1-of-2" style="color:red;margin-left: 35px;"></div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="slds-grid slds-gutters">
-                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                            <div class="slds-col slds-size_1-of-2 slds-grid slds-wrap slds-p-around_x-small">
+                                <div class="slds-col slds-size_1-of-1 slds-grid slds-wrap">
+                                    <span class="slds-form-element__label slds-col slds-size_1-of-2"><b>Select Teacher: </b></span>
+                                    <select class="slds-select slds-col slds-size_1-of-2" id="selectTeacherEnrolGroupUpdate" onchange="getUpgradePackageByTeacher();createNewEffectiveGroupDates();availTimeGroupSlots();return false;">      
+                                    </select>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-grid slds-wrap">
+                                    <div  class="slds-col slds-size_1-of-2" style="color:red;"></div>
+                                    <div id="teacherSelectGroupErrorMsg" class="slds-col slds-size_1-of-2" style="color:red;margin-left: 35px;"></div>
+                                </div>
                             </div>
-                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                       
+                            <!-- <div class="slds-col slds-size_1-of-2 slds-grid slds-wrap">
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-grid slds-wrap">
                                 <label  class="slds-col slds-size_1-of-3" style="color:red;"></label>
                                 <label id="teacherSelectGroupErrorMsg" class="slds-col slds-size_2-of-3" style="color:red;margin-left: 35px;"></label>
+                            </div> -->
+                       
+                            <div class="slds-col slds-size_1-of-2  slds-grid slds-wrap  slds-p-around_x-small">
+                                <div class="slds-col slds-size_1-of-1 slds-grid slds-wrap">
+                                    <span class="slds-form-element__label slds-col slds-size_1-of-2"><b>Select Package: </b></span>
+                                    <select class="slds-select slds-col slds-size_1-of-2" id="selectPackageEnrolGroupUpdate" data-toggle="tooltip" data-placement="top" title="" onchange="changePackageGroup(); return false;"  disabled="true" onclick="createNewEffectiveGroupDates();availTimeGroupSlots();return false;">      
+                                    </select>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-grid slds-wrap">
+                                    <div  class="slds-col slds-size_1-of-2" style="color:red;"></div>
+                                    <div id="packageSelectGroupErrorMsg" class="slds-col slds-size_1-of-2" style="color:red;margin-left: 35px;"></div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="slds-grid slds-gutters margin-top5px" style="margin-top: 20px;">
-                            <div class="slds-col slds-size_1-of-2  slds-grid">
-                                <span class="slds-form-element__label slds-col slds-size_1-of-2"><b>Select Package: </b></span>
-                                <select class="slds-select slds-col slds-size_1-of-2" id="selectPackageEnrolGroupUpdate" data-toggle="tooltip" data-placement="top" title="" onchange="changePackageGroup(); return false;"  disabled="true" onclick="createNewEffectiveGroupDates();availTimeGroupSlots();return false;">      
-                                </select>
+                            <div class="slds-col slds-size_1-of-2 slds-grid slds-wrap slds-p-around_x-small enrolmentWithoutChangeCenter">
+                                <div class="slds-col slds-size_1-of-1 slds-grid slds-wrap">
+                                    <span class="slds-form-element__label slds-col slds-size_1-of-2"><b>Select Current Effective Date: </b></span>
+                                    <!--<input class="slds-input" id="selectEffectiveDateEnrolUpdate" onchange="availTimeSlots('update');return false;" style="width: 174px;"/>-->
+                                    <select class="slds-select slds-col slds-size_1-of-2" id="selectEffectiveDateEnrolGroupUpdate" onchange="createNewEffectiveGroupDates();return false;">      
+                                    </select>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-grid slds-wrap">
+                                    <div  class="slds-col slds-size_1-of-2" style="color:red;"></div>
+                                    <div id="effectiveDateGroupErrorMsg" class="slds-col slds-size_1-of-2" style="color:red;margin-left: 35px;"></div>
+                                </div>
                             </div>
-                            <div class="slds-col slds-size_1-of-2 slds-grid">
-                                <span class="slds-form-element__label slds-col slds-size_1-of-2"><b>Select Current Effective Date: </b></span>
-                                <!--<input class="slds-input" id="selectEffectiveDateEnrolUpdate" onchange="availTimeSlots('update');return false;" style="width: 174px;"/>-->
-                                <select class="slds-select slds-col slds-size_1-of-2" id="selectEffectiveDateEnrolGroupUpdate" onchange="createNewEffectiveGroupDates();return false;">      
-                                </select>
-                            </div>
-                        </div>
-                        <div class="slds-grid slds-gutters ">
-                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                        
+                            <!-- <div class="slds-col slds-size_1-of-2 slds-grid slds-wrap margin-top5px" style="margin-top: 20px;">
                                 <label  class="slds-col slds-size_1-of-3" style="color:red;"></label>
                                 <label id="packageSelectGroupErrorMsg" class="slds-col slds-size_2-of-3" style="color:red;margin-left: 35px;"></label>
                             </div>
-                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                            <div class="slds-col slds-size_1-of-2 slds-grid slds-wrap slds-p-around_x-small">
                                 <label  class="slds-col slds-size_1-of-3" style="color:red;"></label>
                                 <label id="effectiveDateGroupErrorMsg" class="slds-col slds-size_2-of-3" style="color:red;margin-left: 35px;"></label>
+                            </div> -->
+                       
+                            <div class="slds-col slds-size_1-of-2 slds-grid slds-wrap slds-p-around_x-small ">
+                                <div class="slds-col slds-size_1-of-1 slds-grid slds-wrap">
+                                    <span class="slds-form-element__label slds-col slds-size_1-of-2 "><b>Select New Effective Date: </b></span>
+                                    <!--<input class="slds-input" id="selectEffectiveDateEnrolUpdate" onchange="availTimeSlots('update');return false;" style="width: 174px;"/>-->
+                                    <select class="slds-select slds-col slds-size_1-of-2 " id="selectNewEffectiveDateEnrolGroupUpdate"  onchange="availTimeGroupSlots();return false;">      
+                                    </select>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-grid slds-wrap">
+                                    <div  class="slds-col slds-size_1-of-2" style="color:red;"></div>
+                                    <div id="newEffectiveDateGroupErrorMsg" class="slds-col slds-size_1-of-2" style="color:red;margin-left: 35px;"></div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="slds-grid slds-gutters margin-top5px" style="margin-top: 20px;">
-                            <div class="slds-col slds-size_1-of-2 slds-grid">
-                                <span class="slds-form-element__label slds-col slds-size_1-of-2 "><b>Select New Effective Date: </b></span>
-                                <!--<input class="slds-input" id="selectEffectiveDateEnrolUpdate" onchange="availTimeSlots('update');return false;" style="width: 174px;"/>-->
-                                <select class="slds-select slds-col slds-size_1-of-2 " id="selectNewEffectiveDateEnrolGroupUpdate"  onchange="availTimeGroupSlots();return false;">      
-                                </select>
+                            
+                            <div class="slds-col slds-size_1-of-2 slds-grid slds-wrap slds-p-around_x-small">
+                                <div class="slds-col slds-size_1-of-1 slds-grid slds-wrap">
+                                    <span class="slds-form-element__label slds-col slds-size_1-of-2"><b>Select TimeSlot: </b></span>
+                                    <select class="slds-select slds-col slds-size_1-of-2" id="availableTimeSlotsUpdateEnrolmentGroup" disabled="true">      
+                                    </select>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 slds-grid slds-wrap">
+                                    <div  class="slds-col slds-size_1-of-2" style="color:red;"></div>
+                                    <div id="timeSlotGroupErrorMsg" class="slds-col slds-size_1-of-2" style="color:red;margin-left: 35px;"></div>
+                                </div>
                             </div>
-                            <div class="slds-col slds-size_1-of-2 slds-grid">
-                                <span class="slds-form-element__label slds-col slds-size_1-of-2"><b>Select TimeSlot: </b></span>
-                                <select class="slds-select slds-col slds-size_1-of-2" id="availableTimeSlotsUpdateEnrolmentGroup" disabled="true">      
-                                </select>
-                            </div>
-                        </div>
-                        <div class="slds-grid slds-gutters ">
-                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                        
+                            <!-- <div class="slds-col slds-size_1-of-2 slds-grid slds-wrap">
                                 <label  class="slds-col slds-size_1-of-3" style="color:red;"></label>
                                 <label id="newEffectiveDateGroupErrorMsg" class="slds-col slds-size_2-of-3" style="color:red;margin-left: 35px;"></label>
                             </div>
-                            <div class="slds-col slds-size_1-of-2 slds-grid">
+                            <div class="slds-col slds-size_1-of-2 slds-grid slds-wrap">
                                 <label  class="slds-col slds-size_1-of-3" style="color:red;"></label>
                                 <label id="timeSlotGroupErrorMsg" class="slds-col slds-size_2-of-3" style="color:red;margin-left: 35px;"></label>
-                            </div>
-                        </div>
+                            </div> -->
+                        
                     </div>
                     
                 </div>  
@@ -1729,9 +1789,30 @@
             );
         }
 
+        function DeactiveGroupclassConfirmation(){
+            var dateOfAppointment = selectedStudentData.date;
+            var groupClassId = selectedStudentData.selgroupClassId;
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.ClassEditController.DeactiveGroupclassConfirmation}',
+                dateOfAppointment, groupClassId,
+                function (result, event) {
+                    console.log('result',result);
+                    if(result.errorCode === '200'){
+                        $('.confirmgroupModal').removeClass('slds-hide');$('#newGroupClassCMP').addClass('slds-hide');
+                    }else{
+                        $('#toastMsg').html(result.errormessage);
+                        $('.toastclass').removeClass('slds-theme_success');
+                        $('.toastclass').addClass('slds-theme_error');
+                        toastLaunch();
+                    }
+                },
+                { escape: true }
+            );
+        }
+
         function removeAddGroupClassAppoinment(){
             $('#GroupMakupHoursErrorMsg').text('');
-            $('#GroupMakupStudentInput').val('');
+            //$('#GroupMakupStudentInput').val('');
             $('#GroupMakupParentInput').val('');
             $('#GroupMakupPhoneInput').val('');
             $('#GroupAdhocPackageErrorMsg').text('');
@@ -1767,7 +1848,7 @@
             $('#GroupMakupTimeLabel').html('');
             $('#GroupMakupPackageLabel').html('');
             $('#GroupMakupDurationLabel').html('');
-            
+            $('#GroupMakupStudentInput').val('');
             removeAddGroupClassAppoinment();
             var centerid = selectedStudentData.centerId;
             var teacherid = selectedStudentData.teacherId;
@@ -1849,9 +1930,11 @@
             var student_name = $(this).val();
             var studentListItem = '';
             var groupAppointmentType  = $('#saveNewGroupMakupBooking').attr('data-groupAppointmentType');
+            var isOssia =bookingData.isOssia;
+            console.log('bookingData.isOssia'+bookingData.isOssia);
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.ClassEditController.getGroupStudents}',
-                student_name, centerid,groupAppointmentType,
+                student_name, centerid,groupAppointmentType,isOssia,
                 function (result, event) {
                     console.log('result'+result);
                     var ResultOfEvent = JSON.parse(result.replace(/(&quot\;)/g, "\""));
@@ -1990,10 +2073,14 @@
             $('#currentPackageEnrolGroupUpdate').html('');
             $('#selectTeacherEnrolGroupUpdate').empty();
             $('#selectPackageEnrolGroupUpdate').empty();
+            $('#selectNewEffectiveDateEnrolGroupUpdate').empty();
+            $('#selectCenterEnrolGroupUpdate').empty();
             $("#selectPackageEnrolGroupUpdate").attr('title',  '');
             $('#selectPackageEnrolGroupUpdate').attr('disabled', 'true');
             $('#advanceOptionPopup').addClass('slds-hide');
             $('#selectEffectiveDateEnrolGroupUpdate').empty();
+            $('.enrolmentWithChangeCenter').addClass('slds-hide');
+            $('.enrolmentWithoutChangeCenter').addClass('slds-hide');
             var enrolmentId = $('#updateEnrolmentBtn').attr('data-enrol');
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.ClassEditController.getGroupLessonEnrolmentUpdateDetails}',
@@ -2005,6 +2092,11 @@
                         $('#enrolmentUpdatePopupGroupHeader').html('Upgrade to Individual Package');
                     }else if(grade=='GroupToSameClass'){
                         $('#enrolmentUpdatePopupGroupHeader').html('Change Class');
+                    }else if(grade=='GroupToChangeCenter'){
+                        $('#enrolmentUpdatePopupGroupHeader').html('Change Centre');
+                        $('#currentCenterEnrolGroupUpdate').html(result.center);
+                        $('#enrolmentWithChangeCenter').removeClass('slds-hide');
+                        $('#enrolmentWithoutChangeCenter').addClass('slds-hide');
                     }
                     $('#updateEnrolmentonGroupClick').attr({                        
                             'data-duration': result.duration,
@@ -2016,41 +2108,83 @@
                             'data-enrolDay': result.currentWeekDay,
                             'data-groupUpgrade':grade                
                         });
-                    $('#currentTeacherEnrolGroupUpdate').html(result.currentTeacher);
+                    $('#currentTeacherEnrolGroupUpdate').html(result.currentTeacher);    
                     $('#currentTeacherEnrolGroupUpdate').attr('data-currentTeacherId',result.currentTeacherId);
                     $('#currentDateTimeEnrolGroupUpdate').html(result.currentDayTimeSlot);
                     $('#currentPackageEnrolGroupUpdate').html(result.currentPackage);
                     $('#currentPackageEnrolGroupUpdate').attr('data-currentPackageId',result.currentPackageId);
                     $('#selectTeacherEnrolGroupUpdate').attr({'data-duration': result.duration, 'data-center': result.center,'data-groupUpgrade':grade});
-                    if('teachers' in result){
-                        var teachersEnrol = '<option>Select Teacher</option>';
-                        $(result.teachers).each(function(index, value){
-                            teachersEnrol += '<option value="'+value.Id+'">'+value.Name+'</option>';
-                        });
-                        $('#selectTeacherEnrolGroupUpdate').append(teachersEnrol);
-                    }
-                    $('#enrolmentUpdateGroupPopup').removeClass('slds-hide');   
-                    var weekDatesList = getWeekDayDates(result.currentWeekDay, 1, 4);
-                    if(weekDatesList.length > 0){
-                        var effectiveDateStr = '<option>Select Effective Date</option>';
-                        $(weekDatesList).each(function(index, value){
-                            effectiveDateStr += '<option value="'+value.value+'">'+value.label+'</option>';
-                        });
-                        $('#selectEffectiveDateEnrolGroupUpdate').append(effectiveDateStr);
-                        $('#selectNewEffectiveDateEnrolGroupUpdate').val('');
-                        $('#selectNewEffectiveDateEnrolGroupUpdate').empty();
-                        $('#selectNewEffectiveDateEnrolGroupUpdate').attr('disabled', 'true');
+                     if(grade=='GroupToChangeCenter'){
+                        $('#enrolmentUpdatePopupGroupHeader').html('Change Centre');
+                        $('#currentCenterEnrolGroupUpdate').html(result.centerName);
+                        $('#currentCenterEnrolGroupUpdate').attr('data-currentcenterrId',result.center);
+                        $('.enrolmentWithChangeCenter').removeClass('slds-hide');
+                        $('.enrolmentWithoutChangeCenter').addClass('slds-hide');
+                        
+                        var weekDatesList = [];
+                        var effectiveDate = moment();
+                        for (var startday = 1; startday <= 7; startday++) {
+                            var day = new Date(effectiveDate.year(), parseInt(effectiveDate.month()) + 1, startday);
+                            var startedDate = new moment(day);
+                            //if (startedDate.format('ddd') == week) {
+                                newEffectiveDayObj = {};
+                                newEffectiveDayObj.value = startedDate.format('MM/DD/YYYY');
+                                newEffectiveDayObj.label = startedDate.format('ddd, MMM DD YYYY');
+                                weekDatesList.push(newEffectiveDayObj);
+                        // }
+                        }
+                        if(weekDatesList.length > 0){
+                            var effectiveDateStr = '<option>Select Effective Date</option>';
+                            $(weekDatesList).each(function (index, value) {
+                                effectiveDateStr += '<option value="' + value.value + '">' + value.label + '</option>';
+                            });
+                            $('#selectNewEffectiveDateEnrolGroupUpdate').append(effectiveDateStr);
+                        }
+                        
+                        if ('centers' in result) {
+                            var centerEnrol = '<option>Select Centre</option>';
+                            $(result.centers).each(function (index, value) {
+                                centerEnrol += '<option value="' + value.Id + '">' + value.Name + '</option>';
+                            });
+                            $('#selectCenterEnrolGroupUpdate').append(centerEnrol);
+                            
+                        }
+                        $('#selectTeacherEnrolGroupUpdate').empty();
+                    }else{
+                        $('.enrolmentWithChangeCenter').addClass('slds-hide');
+                         $('.enrolmentWithoutChangeCenter').removeClass('slds-hide');
+                        if('teachers' in result){
+                            var teachersEnrol = '<option>Select Teacher</option>';
+                            $(result.teachers).each(function(index, value){
+                                teachersEnrol += '<option value="'+value.Id+'">'+value.Name+'</option>';
+                            });
+                            $('#selectTeacherEnrolGroupUpdate').append(teachersEnrol);
+                        }
+                        $('#enrolmentUpdateGroupPopup').removeClass('slds-hide');   
+                        var weekDatesList = getWeekDayDates(result.currentWeekDay, 1, 4);
+                        if(weekDatesList.length > 0){
+                            var effectiveDateStr = '<option>Select Effective Date</option>';
+                            $(weekDatesList).each(function(index, value){
+                                effectiveDateStr += '<option value="'+value.value+'">'+value.label+'</option>';
+                            });
+                            $('#selectEffectiveDateEnrolGroupUpdate').append(effectiveDateStr);
+                            $('#selectNewEffectiveDateEnrolGroupUpdate').val('');
+                            $('#selectNewEffectiveDateEnrolGroupUpdate').empty();
+                            $('#selectNewEffectiveDateEnrolGroupUpdate').attr('disabled', 'true');
 
-                        $('#availableTimeSlotsUpdateEnrolmentGroup').val('');
-                        $('#availableTimeSlotsUpdateEnrolmentGroup').empty();
-                        $('#availableTimeSlotsUpdateEnrolmentGroup').attr('disabled', 'true');
+                            $('#availableTimeSlotsUpdateEnrolmentGroup').val('');
+                            $('#availableTimeSlotsUpdateEnrolmentGroup').empty();
+                            $('#availableTimeSlotsUpdateEnrolmentGroup').attr('disabled', 'true');
+                        }
                     }
+                    $('#enrolmentUpdateGroupPopup').removeClass('slds-hide'); 
                 }
             );
         }
         function updateEnrolmentGroupClick(){
             var grade = $('#updateEnrolmentonGroupClick').attr('data-groupUpgrade');
             $('#teacherSelectGroupErrorMsg').html('');
+            $('#centerSelectGroupErrorMsg').html('');
             $('#packageSelectGroupErrorMsg').html('');
             $('#newEffectiveDateGroupErrorMsg').html('');
             $('#effectiveDateGroupErrorMsg').html('');
@@ -2062,18 +2196,20 @@
             $('#confirmUpgradeEnrolment').addClass('slds-hide');
             $('#confirmGroupClassEnrolment').addClass('slds-hide');
             var errorFlag = false;
-            var enrolmentId, newPackage, newTeacher, newTime,newEffectiveDate, 
+            var newcenter,enrolmentId, newPackage, newTeacher, newTime,newEffectiveDate, 
                     currentEffectiveDate, oldTeacher, oldPackage, oldTime, newPackageName, oldPackageName,
-                    newclass,oldclass;
+                    newclass,oldclass,oldCenter;
             enrolmentId = $('#updateEnrolmentonGroupClick').attr('data-enrol');
             newPackage = $('#selectPackageEnrolGroupUpdate').val();
             newTeacher = $('#selectTeacherEnrolGroupUpdate').val();
+            newcenter = $('#selectCenterEnrolGroupUpdate').val();
             currentEffectiveDate = $('#selectEffectiveDateEnrolGroupUpdate').val();
             //currentEffectiveDate = (newdate.split('T')[0].split('-')[1]+'/'+newdate.split('T')[0].split('-')[2]+'/'+newdate.split('T')[0].split('-')[0]);;
            //console.log('currentEffectiveDate'+currentEffectiveDate);
             newEffectiveDate = $('#selectNewEffectiveDateEnrolGroupUpdate').val();
             newTime = $('#availableTimeSlotsUpdateEnrolmentGroup').val();
             oldTeacher = $('#updateEnrolmentonGroupClick').attr('data-currentTeacherId');
+            oldCenter = $('#currentCenterEnrolGroupUpdate').attr('data-currentcenterrId');
             oldPackage = $('#updateEnrolmentonGroupClick').attr('data-currentPackageId');
             oldTime = $('#currentDateTimeEnrolGroupUpdate').text().split('@')[1];
             oldclass = $('#updateEnrolmentonGroupClick').attr('data-classId');
@@ -2089,46 +2225,57 @@
                 $('#teacherSelectGroupErrorMsg').html('Please Select the Teacher...');
                 errorFlag = true;
             }
-            if (!newEffectiveDate || newEffectiveDate == 'Select Effective Date') {
-                $('#newEffectiveDateGroupErrorMsg').html('Please Select Date...');
-                errorFlag = true;
+            if(grade =='GroupToChangeCenter'){
+                if ( !newcenter || newcenter == 'Select Centre') {
+                    $('#centerSelectGroupErrorMsg').html('Please Select the Centre...');
+                    errorFlag = true;
+                }
+                currentEffectiveDate = $('#UpgradeToIndividualEnrolClassSummary').attr('data-effectiveDate').split('T')[0];
+            }else{
+                if (!currentEffectiveDate || currentEffectiveDate == 'Select Effective Date') {
+                    $('#effectiveDateGroupErrorMsg').html('Please Select Date...');
+                    errorFlag = true;
+                }
             }
-            if (!currentEffectiveDate || currentEffectiveDate == 'Select Effective Date') {
-                $('#effectiveDateGroupErrorMsg').html('Please Select Date...');
-                errorFlag = true;
+            if (!newEffectiveDate || newEffectiveDate == 'Select Effective Date') {
+                    $('#newEffectiveDateGroupErrorMsg').html('Please Select Date...');
+                    errorFlag = true;
             }
             if (!newTime || newTime == 'Select Time Slot') {
                 $('#timeSlotGroupErrorMsg').html('Please Select Time Slot...');
                 errorFlag = true;
             }
-            if (enrolmentId && (newPackage && newPackage != 'Select Package')
-                && (newTeacher && newTeacher != 'Select Teacher')
-                && (currentEffectiveDate && currentEffectiveDate != 'Select Effective Date')
-                && (newEffectiveDate && newEffectiveDate != 'Select Effective Date')
-                && (newTime && newTime != 'Select Time Slot') && !errorFlag && grade) {
+            if (enrolmentId &&!errorFlag && grade) {
             
                 if(grade =='GroupToHigherPackage'){
                     newTime = $('#availableTimeSlotsUpdateEnrolmentGroup').val().split('-')[1];
                     newclass= $('#availableTimeSlotsUpdateEnrolmentGroup').val().split('-')[0];
                     UpgradeToIndividualEnrolClassSummary(newEffectiveDate, oldPackage, newPackage, currentEffectiveDate,
-                                        newTime,oldTime,newclass,oldclass, enrolmentId, grade,oldTeacher,newTeacher);
+                                        newTime,oldTime,newclass,oldclass, enrolmentId, grade,oldTeacher,newTeacher,'','');
                 }else if(grade =='GroupToIndividual'){
                     newTime = $('#availableTimeSlotsUpdateEnrolmentGroup').val();
                     UpgradeToIndividualEnrolClassSummary(newEffectiveDate, oldPackage, newPackage, currentEffectiveDate,
-                                        newTime,oldTime,'','', enrolmentId, grade,oldTeacher,newTeacher);
+                                        newTime,oldTime,'','', enrolmentId, grade,oldTeacher,newTeacher,'','');
                 }else if(grade =='GroupToSameClass'){
                     newTime = $('#availableTimeSlotsUpdateEnrolmentGroup').val().split('-')[1];
                     newclass= $('#availableTimeSlotsUpdateEnrolmentGroup').val().split('-')[0];
                     UpgradeToIndividualEnrolClassSummary(newEffectiveDate, oldPackage, newPackage, currentEffectiveDate,
-                                        newTime,oldTime,newclass,oldclass, enrolmentId, grade,oldTeacher,newTeacher);
+                                        newTime,oldTime,newclass,oldclass, enrolmentId, grade,oldTeacher,newTeacher,'','');
+                }else if(grade =='GroupToChangeCenter'){
+                    newTime = $('#availableTimeSlotsUpdateEnrolmentGroup').val().split('-')[1];
+                    newclass= $('#availableTimeSlotsUpdateEnrolmentGroup').val().split('-')[0];
+                    UpgradeToIndividualEnrolClassSummary(newEffectiveDate, oldPackage, newPackage,currentEffectiveDate ,
+                                        newTime,oldTime,newclass,oldclass, enrolmentId, grade,oldTeacher,newTeacher,newcenter,oldCenter);
                 }
                 
                 
             }   
         }
+         
+        
         // @@Jatin:19-dec-2019: upgrade group lesson to individual enrollement summary page show
         function UpgradeToIndividualEnrolClassSummary(newEffectiveDate, oldPackage, newPackage, currentEffectiveDate,
-                                            newTime,oldTime,newclass,oldclass, enrolmentId, grade,oldTeacher,newTeacher) {
+                                            newTime,oldTime,newclass,oldclass, enrolmentId, grade,oldTeacher,newTeacher,newcenter,oldCenter) {
                 $('#updateEnrolmentonGroupClick').removeAttr('disabled');
                 $('#enrolmentUpdateGroupPopup').addClass('slds-hide');
                 $('#updateEnrolmentonClickNo').addClass('slds-hide');
@@ -2142,7 +2289,7 @@
                                           newEffectiveDate,currentEffectiveDate,newTime,oldTime);*/
                     // @@jatin: 23-dec-2019: for get Summary
                 getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackage, newPackage,newTime,oldTime,enrolmentId,
-                                                    currentEffectiveDate,grade,oldclass,newclass,oldTeacher,newTeacher);
+                                                    currentEffectiveDate,grade,oldclass,newclass,oldTeacher,newTeacher,newcenter,oldCenter);
             
         }
        
@@ -2317,15 +2464,14 @@
                                                                     'data-enrolementId' : bookingData.enrolementId});
                         var gstRate =0;
                         for(var i=1; i<=recurring; i++){
-                            var unitfee = result.unitFee.toFixed(2);
+                            var unitfee = parseFloat(result.packageFee);
                             console.log('unitfee',unitfee);
-                            total += parseFloat(unitfee);
+                            total += parseFloat(unitfee.toFixed(2));
 
-                            trRow += '<tr class="slds-hint-parent"><td data-label="Sr.No"><div class="slds-truncate" title="Sr.No">'+i+'</div></td><td data-label="Package Name"><div class="slds-truncate" title="Package Name">'+result.packageName+'</div></td><td data-label="Package Time"><div class="slds-truncate" title="Package Time">'+formmatedTime+'</div></td><td data-label="Package Price"><div class="slds-truncate" title="Package Price">$'+result.unitFee.toFixed(2)+'</div></td></tr>';
+                            trRow += '<tr class="slds-hint-parent"><td data-label="Sr.No"><div class="slds-truncate" title="Sr.No">'+i+'</div></td><td data-label="Package Name"><div class="slds-truncate" title="Package Name">'+result.packageName+'</div></td><td data-label="Package Time"><div class="slds-truncate" title="Package Time">'+formmatedTime+'</div></td><td data-label="Package Price"><div class="slds-truncate" title="Package Price">$'+parseFloat(unitfee).toFixed(2)+'</div></td></tr>';
                             if(result.gstRate > 0){
-                                gstRate += parseFloat((parseFloat(result.unitFee.toFixed(2)) * parseFloat(result.gstRate.toFixed(2)) / 100).toFixed(2));
+                                gstRate += parseFloat((parseFloat(result.unitFee) * parseFloat(result.gstRate) / 100).toFixed(2));
                                 console.log('GSTrate'+gstRate);
-                                
                             }
                             console.log('@@gstRate'+gstRate);
                         }
@@ -2343,6 +2489,8 @@
                         $('#countOfClassBookingTableBody').append(trRow);
                         $('#newGroupMakupBookingDetails').addClass('slds-hide');
                         $('#newAdhocGroupClassDetailPopup').removeClass('slds-hide');
+                        $('#createAdhocGroupClassBookingBtn').removeAttr('disabled');
+                        $('#createAdhocGroupClassBookingBtn').css('pointer-events', '');
                     }
                 }
             );
@@ -2361,7 +2509,10 @@
             var center = $('#createAdhocGroupClassBookingBtn').attr('data-centerId');
             var groupLessonId =  $('#newGroupClassCMP').attr('data-groupclassid');
             var isossia = $('#createAdhocGroupClassBookingBtn').attr('data-isOssia');
-            var enrolementId = $('#createAdhocGroupClassBookingBtn').attr('data-enrolementId');
+            var enrolementId = '';
+            if(isossia ==='true'){
+                $('#createAdhocGroupClassBookingBtn').attr('data-enrolementId');
+            }
             // console.log('packageId'+packageId);
             // console.log('teacherId'+teacherId);
             // console.log('studentId'+studentId);
@@ -2493,8 +2644,70 @@
                 submitUpgradeGroupToHigherPackage();
             }else if(grade =='GroupToSameClass'){
                 submitUpdateToSameGroup();
+            }else if(grade =='GroupToChangeCenter'){
+                submitChangeCenterSameGroup();
             }
 
+        }
+
+        //@@nishi 12-nov-2019: change center group  class To same package prise class bookings
+        function submitChangeCenterSameGroup(){
+            var grade = $('#updateEnrolmentonGroupClick').attr('data-groupUpgrade');
+            var error = false;
+            var bookingId = $('#updateEnrolmentonGroupClick').attr('data-id');
+            var oldPackageId = $('#updateEnrolmentonGroupClick').attr('data-currentPackageId');
+            var newPackageId = $('#selectPackageEnrolGroupUpdate').val();
+            var effectiveDate = $('#selectNewEffectiveDateEnrolGroupUpdate').val();
+            var availableTimeSlot = $('#availableTimeSlotsUpdateEnrolmentGroup').val().split('-')[1];
+            var enrolmentId = $('#updateEnrolmentonGroupClick').attr('data-enrol');
+            var newTeacherId = $('#selectTeacherEnrolGroupUpdate').val();
+            var oldTeacherId = $('#updateEnrolmentonGroupClick').attr('data-currentTeacherid');
+            var oldClassId = $('#updateEnrolmentonGroupClick').attr('data-classid');
+            var newClassId = $('#updateEnrolmentonGroupClick').attr('data-newclass');
+            var newCenterId = $('#updateEnrolmentonGroupClick').attr('data-newcentreid');
+            var oldCenterId= $('#updateEnrolmentonGroupClick').attr('data-center');
+            var today = moment();
+            if (bookingId && oldPackageId && oldClassId && newClassId && oldTeacherId && oldCenterId) {
+                if (newPackageId == "Select an Option") {
+                    error = true;
+                }
+                if (!effectiveDate) {
+                    error = true;
+                } else {
+                    var effectiveDateMoment = moment();
+                    effectiveDateMoment.year(effectiveDate.split('/')[2]).month(effectiveDate.split('/')[0] - 1).date(effectiveDate.split('/')[1]);
+                    if (today.diff(effectiveDateMoment) > 0) {
+                        // $('#effectiveDateError').html('Select Future effective date....');
+                        error = true;
+                    }
+                }
+                if (availableTimeSlot == "Select Time Slot") {
+                    error = true;
+                }
+                if (newTeacherId == "Select Teacher") {
+                    error = true;
+                }
+                
+                if (!error) {
+                    $('#upgradeGroupClassSummaryModal').addClass('slds-hide');
+                    $('#confirmUpgradeClassEnrolment').css('pointer-events', 'none');
+                    $('#confirmUpgradeClassEnrolment').attr('disabled', 'true');
+                    //console.log('submitUpgradeClassPackageRequest found all details');
+                    $('#confirmModalYes').attr({ 'data-origin': 'ChangeCenterGroupClass',
+                                                'data-id': bookingId, 
+                                                'data-date': effectiveDate, 
+                                                'data-newPackage': newPackageId, 
+                                                'data-oldPackage': oldPackageId, 
+                                                'data-oldTeacherId': oldTeacherId,
+                                                'data-newTeacherId': newTeacherId,
+                                                'data-timeslot': availableTimeSlot, 
+                                                'data-oldClass': oldClassId,
+                                                'data-newclass': newClassId,
+                                                'data-newCenterId': newCenterId,
+                                                'data-oldCenterId': oldCenterId});
+                    $('#confirmModalYes').trigger('click');
+                }
+            }
         }
         //@@jatin 4-jan-2019: Update group  class To same package prise class bookings
         function submitUpdateToSameGroup(){
@@ -2510,7 +2723,7 @@
             var oldClassId = $('#updateEnrolmentonGroupClick').attr('data-classid');
             var newClassId = $('#updateEnrolmentonGroupClick').attr('data-newclass');
             var today = moment();
-            if (bookingId && oldPackageId && oldClassId && newClassId,oldTeacherId) {
+            if (bookingId && oldPackageId && oldClassId && newClassId&&oldTeacherId) {
                 if (newPackageId == "Select an Option") {
                     error = true;
                 }
@@ -2686,6 +2899,34 @@
             );
         }
 
+        //@nishi:12-nov-2020 : for manage change center group class bookings 
+        function ChangeCenterGroupToSamePackageOfCustomer(bookingId, effectiveDate, newPackageId, oldPackageId,newTeacher,
+                                            oldTeacher, timeSlot, caseId, caseRedirect, oldClass,newClass,oldCenterId,newCenterId){
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.ClassEditController.ChangeCenterGroupToSamePackageOfCustomer}',
+                bookingId, effectiveDate, newPackageId, oldPackageId, timeSlot, caseId, caseRedirect,oldClass,newClass,newTeacher,oldCenterId,newCenterId,
+                function(result, event){
+                    refreshCalendar();
+                    $('#confirmModalYes').css('pointer-events','auto');
+                    $('#confirmModalYes').removeAttr('disabled');
+                    $('#confirmModalNo').css('pointer-events','auto');
+                    $('#confirmModalNo').removeAttr('disabled');
+                    //console.log('result'+result);
+                    if(result && result!='error'){                       
+                        $('#confirmModal').addClass('slds-hide');
+                        redirectToCaseRecord(result);  
+                    }else{
+                        $('#upgradeGroupClassSummaryModal').addClass('slds-hide');
+                        $('#toastMsg').html('Request failure!<br/>Please try again....');
+                        $('.toastclass').removeClass('slds-theme_success');
+                        $('.toastclass').addClass('slds-theme_error');
+                        toastLaunch();
+                    }
+                   
+                }
+            );
+        }
+
         //@jatin : 29-Nov-2019 : Upgrade Class Subscriptions
         function showUpgradeClassSummary(grade) {
             var bookingId = $('#submitUpgradeClassRequest').attr('data-id');
@@ -2745,16 +2986,17 @@
                 if (!error) {
                     $('#upgradeBookingclass').addClass('slds-hide');
                     $('#gradeClassSubscriptionPopup').addClass('slds-hide');
+                    var currentEffectiveDate = $('#UpgradeToIndividualEnrolClassSummary').attr('data-effectiveDate').split('T')[0];
                     getUpgradeGroupClassPackageSummary(effectiveDate, oldPackageId, newPackageId, availableTimeSlots,
-                                                     enrolmentId, grade, oldClassId, newClassId,'','');
+                                                     enrolmentId,currentEffectiveDate, grade, oldClassId, newClassId,'','','','');
                 }
             }
         }
    
 function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, newPackageId,availableTimeSlots,oldavailableTimeSlots, enrolmentId,
-                                                currentEffectiveDate,grade,oldClass,newClass,oldTeacher,newTeacher){
+                                                currentEffectiveDate,grade,oldClass,newClass,oldTeacher,newTeacher,newcenter,oldCenter){
     /*jatin:24-dec-2019: for upgrade to individual booking manage button */
-    
+    $('#ChangeCenterSummary').addClass('slds-hide');
     $('#upgradeBookingclass').addClass('slds-hide');
     $('#upgradeToIndividualTeacher').addClass('slds-hide');
         var newEffectiveDateObj = moment();
@@ -2762,17 +3004,24 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
             newEffectiveDateObj.year(newEffectiveDate.split('/')[2]).month(newEffectiveDate.split('/')[0] - 1).date(newEffectiveDate.split('/')[1]);
         }
         var currentEffectiveDateObj = moment();
-        if(currentEffectiveDate){
-            currentEffectiveDateObj.year(currentEffectiveDate.split('/')[2]).month(currentEffectiveDate.split('/')[0] - 1).date(currentEffectiveDate.split('/')[1]);
+        if(currentEffectiveDate ){
+            if(grade == 'GroupToChangeCenter' || grade == 'upgrade class'){
+                currentEffectiveDateObj=moment(currentEffectiveDate);
+                console.log('currentEffectiveDate'+currentEffectiveDate);
+            }else{
+                currentEffectiveDateObj.year(currentEffectiveDate.split('/')[2]).month(currentEffectiveDate.split('/')[0] - 1).date(currentEffectiveDate.split('/')[1]);
+            }
         }
+        console.log('currentEffectiveDateObj'+currentEffectiveDateObj);
+        console.log('newcenter'+newcenter);
+        console.log('oldCenter'+oldCenter);
+        console.log('newEffectiveDateObj'+newEffectiveDateObj);
         Visualforce.remoting.Manager.invokeAction(
             '{!$RemoteAction.ClassEditController.getUpgradeGroupClassPackageSummary}',
             oldPackageId, newPackageId, currentEffectiveDateObj.format('YYYY-MM-DD'),newEffectiveDateObj.format('YYYY-MM-DD'),
-             availableTimeSlots, oldavailableTimeSlots,
-            enrolmentId, grade,newTeacher,oldTeacher,
-            oldClass,newClass,
+             availableTimeSlots, oldavailableTimeSlots,enrolmentId, grade,newTeacher,oldTeacher,oldClass,newClass,newcenter,oldCenter,
             function(result, event){
-               //console.log(result);
+               console.log(result);
                 if(grade == 'upgrade class'){
                     // $('#gradeClassSubscriptionPopup').addClass('slds-hide');
                     $('#upgradeGroupClassSummaryHeader').html('Upgrade Class Summary');
@@ -2854,13 +3103,23 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                         $('#confirmModalYes').attr('data-previousClass', result.oldClassId);
                     }
                 }/*jatin:4-Jan-2020: for upgrade to group booking then show teacher details div */
-                else if(grade == 'GroupToSameClass'){
+                else if(grade == 'GroupToSameClass' || grade == 'GroupToChangeCenter'){
                     $('#upgradeGroupClassSummaryHeader').html('Change Class Summary');
                     $('#confirmUpgradeClassEnrolment').html('CONFIRM CHANGE CLASS');
                     $('#confirmUpgradeClassEnrolment').css('pointer-events', 'auto');
                     $('#confirmUpgradeClassEnrolment').removeAttr('disabled');
                     $('#upgradeToIndividualTeacher').removeClass('slds-hide');
-                    
+                    if(grade == 'GroupToChangeCenter'){
+                        $('#ChangeCenterSummary').removeClass('slds-hide');
+                        if('newCenterName' in result){
+                            $('#newCenterNameupgradeToIndividualSummary').html(result.newCenterName);
+                            $('#confirmModalYes').attr('data-newcenter', result.newCenterId);
+                        }
+                        if('oldCenterName' in result){
+                            $('#oldCenterNameupgradeToIndividualSummary').html(result.oldCenterName);
+                            $('#confirmModalYes').attr('data-previousCenter', result.oldCenterId);
+                        }
+                    }
                     if('newTeacherName' in result){
                         $('#newTeacherNameupgradeToIndividualSummary').html(result.newTeacherName);
                         $('#confirmModalYes').attr('data-newTeacher', result.newTeacherId);
@@ -3276,56 +3535,58 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
             var teacherId = $('#selectTeacherEnrolGroupUpdate').val();
             var packageId = $('#selectPackageEnrolGroupUpdate').val();
             var centerId = $('#selectTeacherEnrolGroupUpdate').attr('data-center');
-            $('#selectNewEffectiveDateEnroGroupUpdate').empty();
             var selectDate = '<option value="">Select Effective Date</option>';
             var grade = $('#updateEnrolmentonGroupClick').attr('data-groupUpgrade');
-            if(effectiveDate && teacherId && effectiveDate != 'Select Effective Date' && teacherId != 'Select Teacher' ){
-                $('#selectNewEffectiveDateEnrolGroupUpdate').removeAttr('disabled'); 
-                $('#selectNewEffectiveDateEnrolGroupUpdate').empty();
-                if(grade =='GroupToIndividual'){
-                    if(teacherId != 'Select Teacher' && centerId){
-                        getNewEffectiveDate(effectiveDate,centerId,teacherId,grade); 
-                    }
-                }else{
-                    if(packageId && packageId != 'Select Package'){
-                       //console.log('packageId',packageId);
-                       //console.log('teacherId',teacherId);
-                        $('#selectNewEffectiveDateEnrolGroupUpdate').removeAttr('disabled'); 
-                        var geteffectiveDay = effectiveDate.split('/')[1];
-                        var newEffectiveDayList = [];
-                        var startedDate = new moment();
-                        $('#selectNewEffectiveDateEnrolGroupUpdate').empty();
-                        var weekdays = [];
+            if(grade !='GroupToChangeCenter'){
+            $('#selectNewEffectiveDateEnroGroupUpdate').empty();
+                if(effectiveDate && teacherId && effectiveDate != 'Select Effective Date' && teacherId != 'Select Teacher' ){
+                    $('#selectNewEffectiveDateEnrolGroupUpdate').removeAttr('disabled'); 
+                    $('#selectNewEffectiveDateEnrolGroupUpdate').empty();
+                    if(grade =='GroupToIndividual'){
                         if(teacherId != 'Select Teacher' && centerId){
-                            Visualforce.remoting.Manager.invokeAction(
-                                '{!$RemoteAction.ClassEditController.getNewEffectiveGroupDateSlots}',
-                                packageId, teacherId,
-                                function(result, event){
-                                   //console.log('result',result);
-                                    for (i = 0; i < result.length; i++) {
-                                        weekdays.push(result[i]);
-                                    }
-                                    var newEffectiveDayList = [];
-                                    if(weekdays.length > 0 ){
-                                        newEffectiveDayList = getNewEffectiveDaysWeekdays(effectiveDate,weekdays);
-                                    }
-                                   //console.log('newEffectiveDayList'+newEffectiveDayList);
-                                    $(newEffectiveDayList).each(function(inex, value){
-                                        selectDate += '<option value="'+value.value+'">'+value.label+'</option>';
-                                    });
-                                    //console.log('selectDate'+selectDate);
-                                    $('#selectNewEffectiveDateEnrolGroupUpdate').append(selectDate);
-                                }
-                            );
+                            getNewEffectiveDate(effectiveDate,centerId,teacherId,grade); 
                         }
                     }else{
-                        $('#selectNewEffectiveDateEnrolGroupUpdate').attr('disabled', 'true'); 
-                        $('#selectNewEffectiveDateEnrolGroupUpdate').append(selectDate);
+                        if(packageId && packageId != 'Select Package'){
+                        //console.log('packageId',packageId);
+                        //console.log('teacherId',teacherId);
+                            $('#selectNewEffectiveDateEnrolGroupUpdate').removeAttr('disabled'); 
+                            var geteffectiveDay = effectiveDate.split('/')[1];
+                            var newEffectiveDayList = [];
+                            var startedDate = new moment();
+                            $('#selectNewEffectiveDateEnrolGroupUpdate').empty();
+                            var weekdays = [];
+                            if(teacherId != 'Select Teacher' && centerId){
+                                Visualforce.remoting.Manager.invokeAction(
+                                    '{!$RemoteAction.ClassEditController.getNewEffectiveGroupDateSlots}',
+                                    packageId, teacherId,
+                                    function(result, event){
+                                    //console.log('result',result);
+                                        for (i = 0; i < result.length; i++) {
+                                            weekdays.push(result[i]);
+                                        }
+                                        var newEffectiveDayList = [];
+                                        if(weekdays.length > 0 ){
+                                            newEffectiveDayList = getNewEffectiveDaysWeekdays(effectiveDate,weekdays);
+                                        }
+                                    //console.log('newEffectiveDayList'+newEffectiveDayList);
+                                        $(newEffectiveDayList).each(function(inex, value){
+                                            selectDate += '<option value="'+value.value+'">'+value.label+'</option>';
+                                        });
+                                        //console.log('selectDate'+selectDate);
+                                        $('#selectNewEffectiveDateEnrolGroupUpdate').append(selectDate);
+                                    }
+                                );
+                            }
+                        }else{
+                            $('#selectNewEffectiveDateEnrolGroupUpdate').attr('disabled', 'true'); 
+                            $('#selectNewEffectiveDateEnrolGroupUpdate').append(selectDate);
+                        }
                     }
+                }else{
+                    $('#selectNewEffectiveDateEnrolGroupUpdate').attr('disabled', 'true'); 
+                    $('#selectNewEffectiveDateEnrolGroupUpdate').append(selectDate);
                 }
-            }else{
-                $('#selectNewEffectiveDateEnrolGroupUpdate').attr('disabled', 'true'); 
-                $('#selectNewEffectiveDateEnrolGroupUpdate').append(selectDate);
             }
         }
 
@@ -3418,7 +3679,7 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                     $(result).each(function(index, value){
                         availSlots += '<option value="'+value+'">'+value.split('-')[1]+'</option>';   
                     });
-                    if(grade == 'GroupToSameClass'  || grade == 'GroupToHigherPackage'){
+                    if(grade == 'GroupToChangeCenter' || grade == 'GroupToSameClass'  || grade == 'GroupToHigherPackage'){
                         $('#availableTimeSlotsUpdateEnrolmentGroup').append(availSlots);
                         $('#availableTimeSlotsUpdateEnrolmentGroup').removeAttr('disabled');
                     }

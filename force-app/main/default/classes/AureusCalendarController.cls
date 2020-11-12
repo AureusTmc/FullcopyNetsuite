@@ -4228,24 +4228,25 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
         if(String.isNotBlank(upgradePackage)){
             newPackageList = [SELECT Id, Duration__c FROM Package__c WHERE Id =: upgradePackage];
         }
-      //system.debug('@availTimeslots'+availTimeslots);
+        system.debug('@availTimeslots'+availTimeslots);
         if(availTimeSlots.size() > 0 && String.isNotBlank(enrolmentId)){
             bookingTimeSlots = getScheduledBookingSlots(enrolmentId, effectiveDate.date(), centerId, teacherId);
         }
-      //system.debug('@bookingTimeSlots'+bookingTimeSlots);
+       system.debug('@bookingTimeSlots'+bookingTimeSlots);
         if(bookingTimeSlots != Null && bookingTimeSlots.size() > 0){
             for(String currentValue : bookingTimeSlots){
+                system.debug('@currentValue'+currentValue);
                 if(availTimeslots.contains(currentValue)){
                     availTimeslots.remove(availTimeslots.indexOf(currentValue));    
                 }
             }
         }
-      //system.debug('@availTimeslots'+availTimeslots);
+        system.debug('@availTimeslots'+availTimeslots);
         // @@jatin:2Jan-2020: for get Group class bookings time slots
         if(availTimeSlots.size() > 0  && String.isNotBlank(enrolmentId)){
             groupClassTimeSlots = fetchSelectedGroupClassTimeSlots(effectiveDate.date(), centerId, teacherId);
         }
-      //system.debug('@groupClassTimeSlots'+groupClassTimeSlots);
+        system.debug('@groupClassTimeSlots'+groupClassTimeSlots);
         if(groupClassTimeSlots != Null && groupClassTimeSlots.size() > 0){
             for(String currentValue : groupClassTimeSlots){
                 if(availTimeslots.contains(currentValue)){
@@ -4253,11 +4254,11 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
                 }
             }
         }
-      //system.debug('@availTimeslots'+availTimeslots);
+      system.debug('@availTimeslots'+availTimeslots);
         if(availTimeSlots.size() > 0  && String.isNotBlank(enrolmentId)){
             fifthLessonTimeSlots = fetchSelectedFifthLessons(effectiveDate.date(), centerId, teacherId, enrolmentId);
         }
-       //system.debug('@fifthLessonTimeSlots'+fifthLessonTimeSlots);
+       system.debug('@fifthLessonTimeSlots'+fifthLessonTimeSlots);
         if(fifthLessonTimeSlots != Null && fifthLessonTimeSlots.size() > 0){
             for(String currentValue : fifthLessonTimeSlots){
                 if(availTimeslots.contains(currentValue)){
@@ -4265,12 +4266,12 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
                 }
             }
         }
-       //system.debug('@availTimeslots'+availTimeslots);
-       //system.debug('@newPackageList'+newPackageList);
+       system.debug('@availTimeslots'+availTimeslots);
+       system.debug('@newPackageList'+newPackageList);
         if(availTimeSlots != null && availTimeSlots.size() > 0 && newPackageList.size() > 0){
             unOrderedTimeSlots  = removeUnselectableSlots(availTimeSlots, Integer.valueOf(newPackageList[0].Duration__c));
         }
-      //system.debug('@unOrderedTimeSlots'+unOrderedTimeSlots);
+      system.debug('@unOrderedTimeSlots'+unOrderedTimeSlots);
         if(unOrderedTimeSlots != Null && unOrderedTimeSlots.size() > 0){
             for(String currentValue : unOrderedTimeSlots){
                 if(availTimeslots.contains(currentValue)){
@@ -4278,7 +4279,7 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
                 }
             }
         }
-      //system.debug('availTimeSlots'+availTimeSlots);
+      system.debug('availTimeSlots'+availTimeSlots);
         return availTimeSlots;
     }
 
@@ -4358,7 +4359,7 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
         if(String.isNotBlank(teacherId) && String.isNotBlank(centerId) && effectiveDate != NULL){
             availTimeSlots = getTeacherWorkingHourTimeSlotList(teacherId, centerId, effectiveDate.format('EEE'));
         }
-       //system.debug('availTimeSlots'+availTimeSlots);
+       system.debug('availTimeSlots'+availTimeSlots);
         return  getAvailTimeSlots( centerId,  teacherId,  upgradePackage,  enrolmentId, 
                                                     effectiveDate,availTimeSlots);
        
@@ -4386,7 +4387,7 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
         dt.add(bookingsDate);
         List<Booking__c> bookingList = getBookingsOnSelectedDates(centerId, teacherId, dt, enrolmentId, false);
         for(Booking__c obj : bookingList){
-           //system.debug('@@@BookingObj '+obj.start_Time__c + '- '+obj.Id);
+           system.debug('@@@BookingObj '+obj.start_Time__c + '- '+obj.Id);
         }
         
         Set<String> bookingSlots = new Set<String>();
@@ -4661,7 +4662,7 @@ countWithNewPackage +=1;
                 //system.debug('newPackageUnitPrice'+newPackageUnitPrice);
                 totalAmount +=   depositeFee ;
                //system.debug('totalAmount - '+totalAmount);
-                if(newDateTime <= nextBillDate){
+                if(newDateTime < nextBillDate){
                     ////system.debug('totalAmount'+totalAmount);
                       // added by Nishi: 12-aug-2020: if next billing date is greater then next month then we create new invoice for adjuct new upgraded package unitfee 
                         //  ex: 12-Aug-2020 effective date and next Billing date 01-Oct-2020 

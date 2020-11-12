@@ -538,10 +538,10 @@ public with sharing class OssiaCenterCalendarController {
             }                                 
             return objEnrolmentWrapper;
         }
-        public static Map<String, Package__c> fetchAdhocLessons(string centerId,string duration){
+        /*public static Map<String, Package__c> fetchAdhocLessons(string centerId,string duration){
             Map<String, Package__c> mapOfAdhocPackage = new Map<String, Package__c>();
             if(string.isNotBlank(centerId) && string.isNotBlank(duration)  ){
-                for(Package__c packageObj : [SELECT Id,name, Location__c, Duration__c,Program__r.Instrument__c,Grade_new__c, unit_Fee__c/*,facility_Fee__c*/ FROM Package__c 
+                for(Package__c packageObj : [SELECT Id,name, Location__c, Duration__c,Program__r.Instrument__c,Grade_new__c, unit_Fee__c FROM Package__c 
                                              WHERE Active__c = TRUE AND Type__c =: ConstantsClass.typeAdhocGroup AND Location__c =:centerId AND 
                                              Duration__c =:duration]){
                     mapOfAdhocPackage.put(packageObj.Location__c + '-' + packageObj.Duration__c, packageObj);
@@ -554,7 +554,7 @@ public with sharing class OssiaCenterCalendarController {
         public static  Map<String, Package__c> fetchOssiaAdhocLessons(string centerId,string duration,Set<string> instruments,Set<string> gradeList){
             Map<String, Package__c> mapOfAdhocPackage = new Map<String, Package__c>();
             if(string.isNotBlank(centerId) && string.isNotBlank(duration) ){
-                for(Package__c packageObj : [SELECT Id,name, Location__c, Duration__c, unit_Fee__c,Grade_new__c,Program__r.Instrument__c/*,facility_Fee__c*/ FROM Package__c 
+                for(Package__c packageObj : [SELECT Id,name, Location__c, Duration__c, unit_Fee__c,Grade_new__c,Program__r.Instrument__c FROM Package__c 
                                              WHERE Active__c = TRUE 
                                              AND Type__c =: ConstantsClass.typeAdhocGroup 
                                              AND Location__c = :centerId 
@@ -574,7 +574,7 @@ public with sharing class OssiaCenterCalendarController {
             system.debug('mapOfAdhocPackage'+mapOfAdhocPackage);
             return mapOfAdhocPackage;
         }
-
+*/
         // 21-Sep-2020: nsihi: for get time slots according to selected teacher,package, effective dates 
         public static List<Booking__c> getGroupClassOssiaBookingsOnSelectedDates(String centerId, String teacherId,string selectedPackage, Set<Date> dates){
             String groupBookingRecordType = ConstantsClass.groupBookingRecordType;
@@ -594,7 +594,7 @@ public with sharing class OssiaCenterCalendarController {
             }
             if(classIds != null && classIds.size() > 0){
                 String queryStr = 'SELECT Id, Name,Class__C, start_Time__c, End_Time__c, status__c, type__c, RecordType.Name, Center__c, Teacher_Account__c, Booking_Date__c FROM Booking__c';
-                queryStr += ' WHERE RecordType.Name =: groupBookingRecordType AND Start_Time__c != NULL AND End_Time__c != NULL AND Class__C != null';
+                queryStr += ' WHERE RecordType.Name =: groupBookingRecordType AND Start_Time__c != NULL AND End_Time__c != NULL AND Class__C != null and Class__r.Is_Makeup_Class__c = false';
                 if(String.isNotBlank(centerId)){
                     queryStr += ' AND Center__c =: centerId';
                 }
@@ -1741,7 +1741,7 @@ public with sharing class OssiaCenterCalendarController {
              if(enrolSummary.containsKey('currentCenterName')){
                 summary.oldCenterName = enrolSummary.get('currentCenterName');
             }
-            if(enrolSummary.containsKey('currentTeacherId')){
+            if(enrolSummary.containsKey('currentCenter')){
                 summary.oldCenterId = enrolSummary.get('currentCenter');
             }
              if(enrolSummary.containsKey('currentTeacher')){

@@ -1257,6 +1257,30 @@
                     });
             }
         }
+
+        function getSelectedGroupChangeCenterTeacher() {
+            var centreid = $('#selectCenterEnrolGroupUpdate').val();
+            $('#selectTeacherEnrolGroupUpdate').empty();
+            $('#selectTeacherEnrolGroupUpdate').attr('disabled', 'true');
+            $('#selectPackageEnrolGroupUpdate').empty();
+            $('#availableTimeSlotsUpdateEnrolmentGroup').empty();
+            $('#updateEnrolmentonGroupClick').removeAttr('data-newCentreId');
+            var teacherStr = '<option value="">Select Teacher</option>';
+            if (centreid && centreid != null && centreid != undefined && centreid != 'Select Centre') {
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.OssiaCenterCalendarController.getListOfTeacher}',
+                    centreid,
+                    function (result, event) {
+                       //console.log('result', result);
+                        $(result).each(function (index, value) {
+                            teacherStr += '<option value="' + value.Id + '">' + value.Name + '</option>';
+                        });
+                        $('#selectTeacherEnrolGroupUpdate').append(teacherStr);
+                        $('#selectTeacherEnrolGroupUpdate').removeAttr('disabled');
+                        $('#updateEnrolmentonGroupClick').attr('data-newCentreId', centreid);
+                    });
+            }
+        }
         function getCenterPackageByTeacher() {
             $('#selectPackageEnrolCenterUpdate').empty();
             $('#selectPackageEnrolCenterUpdate').attr('disabled', 'true');
@@ -1271,11 +1295,12 @@
             var centerId = $('#selectCentreEnrolCenterUpdate').val();
             var enrolmentType = $('#CenterUpdateEnrolmentonClick').attr('data-enrolmentType');
             var booingid = $('#CenterUpdateEnrolmentonClick').attr('data-id');
+            var isPackagePromotional = $('#confirmModalYes').attr('data-isPackagePromotional');
             if (teacherId != 'Select Teacher' && centerId && duration && booingid) {
                 $('#CenterUpdateEnrolmentonClick').attr('data-newTeacherId', teacherId);
                 Visualforce.remoting.Manager.invokeAction(
                     '{!$RemoteAction.OssiaCenterCalendarController.getPackageAccordingToOssiaTeacher}',
-                    centerId, teacherId, duration, booingid, enrolmentType,
+                    centerId, teacherId, duration, booingid, enrolmentType,isPackagePromotional,
                     function (result, event) {
                         var packageEnrol = '<option value="Select Package">Select an Option</option>';
                         $(result).each(function (index, value) {

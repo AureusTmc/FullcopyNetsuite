@@ -25,7 +25,7 @@ public class AureusUtility{
         Messaging.SingleEmailMessage mail = new  Messaging.SingleEmailMessage();  //Messaging.renderStoredEmailTemplate(templateId, whatId, relatedId);
         mail.setTemplateId(templateId);
         mail.setWhatId(relatedId);
-        mail.setTargetObjectId(FifthBookingReminderBatch);
+        mail.setTargetObjectId(whatId);
         mail.saveAsActivity = true;
         if(String.isNotBlank(location) && mapOfOrgWide.containsKey(location)){
             mail.setOrgWideEmailAddressId(mapOfOrgWide.get(location).Id);

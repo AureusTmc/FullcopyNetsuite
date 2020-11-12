@@ -339,62 +339,159 @@ public class ClassEditController {
     }
     //@@jatin:17-Dec-2019:get All Group type students for manage available group lesson min.
     @RemoteAction
-    public static String getGroupStudents(String studentName,string centerId){
+    public static String getGroupStudents(String studentName,string centerId,string groupAppointmentType,Boolean isOssia){
         string recordTypeCustomer = ConstantsClass.recordTypeCustomer;
         Map<Id, Integer> parentMakeupHours = new Map<Id, Integer>();
         List<Account> accList = new List<Account>();
         List<AureusCalendarController.Students> sObjList = new List<AureusCalendarController.Students>();
         AureusCalendarController.Students sObj = new AureusCalendarController.Students();
         List<String> listOfEnrolmentStudents = new List<String>(); 
-        For(Enrolment__c objEnrolment :[Select Id,Student__c 
-                                                From Enrolment__c
-                                                Where Class__C != Null
-                                                And type__c =: ConstantsClass.enrolGroupType]){
-            listOfEnrolmentStudents.add(objEnrolment.Student__c);
-        }
-       //system.debug('!!!listOfEnrolmentStudents'+listOfEnrolmentStudents);
-       //system.debug('!!!studentName'+studentName);
-        if(listOfEnrolmentStudents!= null && listOfEnrolmentStudents.size() > 0){
-            accList = [SELECT Id, Name, RecordType.Name, available_Make_up_mins_For_Group__c, Also_a_Student__c, Parent__c, 
-                        Parent__r.available_Make_up_mins_For_Group__c, Parent__r.Name, PersonEmail, Parent__r.PersonEmail, PersonMobilePhone ,
-                        Parent__r.PersonMobilePhone FROM
-                        Account 
-                        WHERE RecordType.Name =:recordTypeCustomer 
-                        AND ((Also_a_Student__c = true AND Parent__c = NULL)
-                        OR (Parent__c != NULL AND Also_a_Student__c = false)) 
-                        AND Id IN :listOfEnrolmentStudents
-                        AND (Name LIKE :'%'+studentName+'%')
-                        AND Centre_Name__c=:centerId LIMIT 10];
-           //system.debug('!!!accList'+accList);
-            if(accList != null && accList.size() >0 ){
-                for(Account acc : accList){
-                    sObj = new AureusCalendarController.Students();
-                    sObj.id = acc.Id;
-                    sObj.label = acc.Name;
-                    
-                    if(acc.Also_a_Student__c && String.isBlank(acc.Parent__c)){
-                        sObj.parentId = '';
-                        sObj.parentName = '';
-                        sObj.email = acc.PersonEmail;
-                        sObj.phone = acc.PersonMobilePhone;
-                        sObj.makeupHours = Integer.valueOf(acc.available_Make_up_mins_For_Group__c);
-                    }else if(acc.Also_a_Student__c == false && String.isNotBlank(acc.Parent__c)){
-                        sObj.parentId = acc.Parent__c;
-                        sObj.parentName = acc.Parent__r.Name;
-                        sObj.email = acc.Parent__r.PersonEmail;
-                        sObj.phone = acc.Parent__r.PersonMobilePhone;
-                        sObj.makeupHours = Integer.valueOf(acc.Parent__r.available_Make_up_mins_For_Group__c);
+         system.debug('!!!groupAppointmentType'+groupAppointmentType);
+        system.debug('!!!studentName'+studentName);
+        system.debug('!!!centerId'+centerId);
+        if(groupAppointmentType.equalsIgnoreCase('MakeUp') || isOssia){
+            For(Enrolment__c objEnrolment :[Select Id,Student__c 
+                                                    From Enrolment__c
+                                                    Where Class__C != Null
+                                                    And type__c =: ConstantsClass.enrolGroupType]){
+                listOfEnrolmentStudents.add(objEnrolment.Student__c);
+            }
+      
+            if(listOfEnrolmentStudents!= null && listOfEnrolmentStudents.size() > 0){
+                accList = [SELECT Id, Name, RecordType.Name, available_Make_up_mins_For_Group__c, Also_a_Student__c, Parent__c, 
+                            Parent__r.available_Make_up_mins_For_Group__c, Parent__r.Name, PersonEmail, Parent__r.PersonEmail, PersonMobilePhone ,
+                            Parent__r.PersonMobilePhone FROM
+                            Account 
+                            WHERE RecordType.Name =:recordTypeCustomer 
+                            AND ((Also_a_Student__c = true AND Parent__c = NULL)
+                            OR (Parent__c != NULL AND Also_a_Student__c = false)) 
+                            AND Id IN :listOfEnrolmentStudents
+                            AND (Name LIKE :'%'+studentName+'%')
+                            /*AND Centre_Name__c=:centerId*/ LIMIT 10];
+            //system.debug('!!!accList'+accList);
+                if(accList != null && accList.size() >0 ){
+                    for(Account acc : accList){
+                        sObj = new AureusCalendarController.Students();
+                        sObj.id = acc.Id;
+                        sObj.label = acc.Name;
+                        
+                        if(acc.Also_a_Student__c && String.isBlank(acc.Parent__c)){
+                            sObj.parentId = '';
+                            sObj.parentName = '';
+                            sObj.email = acc.PersonEmail;
+                            sObj.phone = acc.PersonMobilePhone;
+                            sObj.makeupHours = Integer.valueOf(acc.available_Make_up_mins_For_Group__c);
+                        }else if(acc.Also_a_Student__c == false && String.isNotBlank(acc.Parent__c)){
+                            sObj.parentId = acc.Parent__c;
+                            sObj.parentName = acc.Parent__r.Name;
+                            sObj.email = acc.Parent__r.PersonEmail;
+                            sObj.phone = acc.Parent__r.PersonMobilePhone;
+                            sObj.makeupHours = Integer.valueOf(acc.Parent__r.available_Make_up_mins_For_Group__c);
+                        }
+                        if(sObj.makeupHours == NULL){
+                            sObj.makeupHours = 0;
+                        }
+                        sObjList.add(sObj);
                     }
-                    if(sObj.makeupHours == NULL){
-                        sObj.makeupHours = 0;
-                    }
-                    sObjList.add(sObj);
                 }
             }
+            return JSON.serialize(sObjList);
+        }else{
+        return AureusCalendarController.getStudents(studentName);
         }
-         return JSON.serialize(sObjList);
+        
     }
 
+    // nishi: 3-Nov-2020: for get Adhoc Group class Packages list If aureus organisation then we get package according to duration and center
+    // If ossia organisation then we get pacakges according to instrument, grade and duration 
+    @RemoteAction
+    public static String getGroupAdhocPackagesList(string centerId,string groupClassid,Boolean isOssia){
+        List<AdhocPackages> listOfAdhocPackages = new List<AdhocPackages>();
+        AdhocPackages objAdhocPackages = new AdhocPackages();
+        Map<String, Package__c> adhocPackageMap = new Map<String, Package__c>();
+        if(string.isnotBlank(groupClassid)){
+            Map<string,string> mapOfgradeInstruments = new Map<string,string>();
+            if(isOssia){
+                Set<string> gradeList = new Set<string>();
+                Set<string> classInstrumentList= new Set<String>();
+                List<Ossia_Group_Grade_Package__c> listOfclass =  [SELECT Class_Name__c, Package__c,Package__r.Duration__c,Package__r.name,  Name, Id ,
+                                                                    Package__r.Program__r.Instrument__c,Class_Name__r.Grade__c
+                                                                    FROM Ossia_Group_Grade_Package__c
+                                                                    Where Class_Name__c =:groupClassId];
+                if(listOfclass != null && listOfclass.size() > 0){
+                    for(Ossia_Group_Grade_Package__c classObj : listOfclass ){
+                        objAdhocPackages = new AdhocPackages();
+                        objAdhocPackages.packageid = classObj.Package__c;
+                        objAdhocPackages.packageName = classObj.Package__r.Name;
+                        objAdhocPackages.packageDuration = classObj.Package__r.Duration__c;
+                        objAdhocPackages.gradeList= classObj.Name;
+                        objAdhocPackages.instrument= classObj.Package__r.Program__r.Instrument__c;
+                        listOfAdhocPackages.add(objAdhocPackages);
+                        /*commented by nishi: 5-Nov-2020:Packages defined in group class can be used instead of adhoc packages
+                        if(string.isnotBlank(classObj.Class_Name__r.Grade__c) && classObj.Class_Name__r.Grade__c.split(';') != null && classObj.Class_Name__r.Grade__c.split(';').size() > 0){
+                            gradeList.addAll(classObj.Class_Name__r.Grade__c.split(';'));
+                        }
+                        Set<string> grades = new Set<string>();
+                        if(mapOfgradeInstruments.containsKey(classObj.Package__r.Program__r.Instrument__c)){
+                            string gradeValue = mapOfgradeInstruments.get(classObj.Package__r.Program__r.Instrument__c);
+                            grades.addAll(gradeValue.split('-'));
+                        }
+                        grades.addAll(classObj.Class_Name__r.Grade__c.split(';'));
+                        mapOfgradeInstruments.put(classObj.Package__r.Program__r.Instrument__c,String.join(new list<string>(grades), '-'));*/
+                    }
+                }  
+                /*commented by nishi: 5-Nov-2020:Packages defined in group class can be used instead of adhoc packages
+                system.debug('mapOfgradeInstruments'+mapOfgradeInstruments);
+                system.debug('gradeList'+gradeList);
+                if(listOfclass != null && listOfclass.size() > 0){
+                	adhocPackageMap = OssiaCenterCalendarController.fetchOssiaAdhocLessons(centerId,listOfclass[0].Package__r.Duration__c,mapOfgradeInstruments.keySet(),gradeList);
+                }*/
+            }else{
+                List<class__c> classList = [select id,Package__c,Package__r.Duration__c,Package__r.name,Package__r.Program__r.Instrument__c from class__C where id=:groupClassId];
+                if(classList != null && classList.size() > 0){
+                    for(class__C classObj : classList ){
+                        objAdhocPackages = new AdhocPackages();
+                        objAdhocPackages.packageid = classObj.Package__c;
+                        objAdhocPackages.packageName = classObj.Package__r.Name;
+                        objAdhocPackages.packageDuration = classObj.Package__r.Duration__c;
+                        objAdhocPackages.gradeList= '';
+                        objAdhocPackages.instrument= classObj.Package__r.Program__r.Instrument__c;
+                        listOfAdhocPackages.add(objAdhocPackages);
+                    }
+                    //commented by nishi: 5-Nov-2020:Packages defined in group class can be used instead of adhoc packages
+                	//adhocPackageMap = OssiaCenterCalendarController.fetchAdhocLessons(centerId,classList[0].Package__r.Duration__c);
+                }
+            }
+            /*commented by nishi: 5-Nov-2020:Packages defined in group class can be used instead of adhoc packages
+            system.debug('adhocPackageMap'+adhocPackageMap);
+            if(adhocPackageMap != null && adhocPackageMap.size() > 0){
+                Set<string> packageIds = new Set<string>();
+                for(Package__c objPackage  : adhocPackageMap.values()){
+                    if(!packageIds.contains(objPackage.id)){
+                        objAdhocPackages = new AdhocPackages();
+                        objAdhocPackages.packageid = objPackage.id;
+                        objAdhocPackages.packageName = objPackage.Name;
+                        objAdhocPackages.packageDuration = objPackage.Duration__c;
+                        objAdhocPackages.gradeList= mapOfgradeInstruments != null && mapOfgradeInstruments.size() > 0 && mapOfgradeInstruments.containsKey(objPackage.Program__r.Instrument__c) ? mapOfgradeInstruments.get(objPackage.Program__r.Instrument__c) :'' ;
+                        objAdhocPackages.instrument= objPackage.Program__r.Instrument__c;
+                        listOfAdhocPackages.add(objAdhocPackages);
+                        packageIds.add(objPackage.id);
+                    }
+                }
+            }*/
+        }
+        system.debug('listOfAdhocPackages'+listOfAdhocPackages);
+         return JSON.serialize(listOfAdhocPackages);
+    }
+
+   
+    public class AdhocPackages{
+        Public string packageid;
+        Public string packageName;
+        Public string packageDuration;
+        Public string gradeList;
+        Public string instrument;
+    }
 
     //@@jatin: 2-dec-2019: getLastLessonDate method is use for getting last date of lesson on selecting the withdraw end Date.
         
@@ -652,6 +749,24 @@ public class ClassEditController {
                                                      return caseIdToReturn;
     }
 
+      //@jatin:12-Nov-2020 : for manage Change center group class to same other class bookings  
+      @RemoteAction
+      public static String ChangeCenterGroupToSamePackageOfCustomer(String bookingId, String effectiveDateStr, String newPackageId, 
+                                                   String oldPackageId, String timeSlot, String myCaseId, String caseRedirect, 
+                                                   string oldClassId,String newClassId,string newTeacherId,String oldCenterId,string newCenterId){
+                                                       String caseIdToReturn;
+                                                       if(String.isNotBlank(bookingId) && String.isNotBlank(effectiveDateStr) && String.isNotBlank(newPackageId) && 
+                                                          String.isNotBlank(oldPackageId) && String.isNotBlank(timeSlot)&& String.isNotBlank(oldClassId) && String.isNotBlank(newClassId)
+                                                          && String.isNotBlank(newTeacherId) && String.isNotBlank(oldCenterId) && String.isNotBlank(newCenterId)  ){
+                                                              IAdvanceAction upgradePackageObj;
+                                                              upgradePackageObj = new ChangeCenterClassProcessController(bookingId, effectiveDateStr, newPackageId, 
+                                                                                                                                  oldPackageId,newTeacherId, timeSlot, myCaseId, caseRedirect, 
+                                                                                                                                  oldClassId, newClassId,oldCenterId,newCenterId);
+                                                              caseIdToReturn = upgradePackageObj.initProcess();
+                                                       }
+                                                       return caseIdToReturn;
+      }
+
     //@jatin:24-Dec-2019 : for manage upgrade To Individual Class Of Customer bookings  
     @RemoteAction
     public static String upgradeToIndividualClassOfCustomer(String bookingId, String effectiveDateStr, String newPackageId, 
@@ -676,7 +791,8 @@ public class ClassEditController {
                                                                                      String availTimeSlots, String oldavailableTimeSlots,
                                                                                     String enrolmentId, String typeOfSummary,
                                                                                     string newTeacher,string oldTeacher,
-                                                                                    String oldClassId,string newClassId){
+                                                                                    String oldClassId,string newClassId,
+                                                                                    String newcenter,string oldCenter){
         Map<String, String> enrolSummary = new Map<String, String>();
         DateTime newDateTime;
         DateTime currentDateTime;
@@ -689,7 +805,7 @@ public class ClassEditController {
         Set<id> setOfClassIds = new Set<Id>();
                                                                                        //system.debug('!!oldClassId'+oldClassId);
                                                                                        //system.debug('!!newClassId'+newClassId);
-        if(String.isNotBlank(oldClassId) && String.isNotBlank(newClassId) &&   (typeOfSummary == 'GroupToHigherPackage' || typeOfSummary == 'GroupToSameClass' )){
+        if(String.isNotBlank(oldClassId) && String.isNotBlank(newClassId) &&   (typeOfSummary == 'GroupToHigherPackage' || typeOfSummary == 'GroupToSameClass' || typeOfSummary == 'GroupToChangeCenter' )){
             setOfClassIds.add(oldClassId);
             setOfClassIds.add(newClassId);
         }
@@ -702,6 +818,9 @@ public class ClassEditController {
          /*jatin:24-dec-2019: for upgrade to individual booking add teachers  */
         if(string.isNotBlank(newTeacher) && string.isNotBlank(oldTeacher) ){
             set<String> teacherIds = new Set<String>{newTeacher,oldTeacher};
+            if(string.isNotBlank(newcenter) && typeOfSummary == 'GroupToChangeCenter'){
+                teacherIds.add(newcenter);
+            }
             Map<String,Account> mapOfAccount = New Map<String,Account>([Select id,Name from Account where Id in :teacherIds]);
             if(mapOfAccount.containsKey(newTeacher)){
                 summary.newTeacherName = mapOfAccount.get(newTeacher).Name;
@@ -711,10 +830,14 @@ public class ClassEditController {
                 summary.oldTeacherName = mapOfAccount.get(oldTeacher).Name;
                 summary.oldTeacherId = mapOfAccount.get(oldTeacher).Id;
             }
+            if(mapOfAccount.containsKey(newcenter) && typeOfSummary == 'GroupToChangeCenter'){
+                summary.newCenterName = mapOfAccount.get(newcenter).Name;
+                summary.newCenterId = mapOfAccount.get(newcenter).Id;
+            }
             
         }
         // @jatin 28-Nov-2019 : added new and old class details
-        if(setOfClassIds != null && setOfClassIds.size() >0 &&  (typeOfSummary == 'GroupToHigherPackage' || typeOfSummary == 'GroupToSameClass' )){
+        if(setOfClassIds != null && setOfClassIds.size() >0 &&  (typeOfSummary == 'GroupToHigherPackage' || typeOfSummary == 'GroupToSameClass'|| typeOfSummary == 'GroupToChangeCenter' )){
             map<id,Class__c> mapOfClasses = new Map<Id,class__c>([Select id, name from Class__c where id in:setOfClassIds]);
             if(mapOfClasses != null && mapOfClasses.size() >0 ){
                 if(mapOfClasses.containsKey(newClassId)){
@@ -730,6 +853,12 @@ public class ClassEditController {
         if(String.isNotBlank(enrolmentId)){
             summary.currentPackageDeposit = AureusCalendarController.getDepositFromFile(enrolmentId);
             enrolSummary = AureusCalendarController.getEnrolmentDetailsUpgradeDowngrade(enrolmentId);
+            if(enrolSummary.containsKey('currentCenterName')){
+                summary.oldCenterName = enrolSummary.get('currentCenterName');
+            }
+            if(enrolSummary.containsKey('currentCenter')){
+                summary.oldCenterId = enrolSummary.get('currentCenter');
+            }
            if(enrolSummary.containsKey('currentTeacher')){
                 summary.oldTeacherName = enrolSummary.get('currentTeacher');
             }
@@ -831,7 +960,7 @@ public class ClassEditController {
             }
             
         }
-        //system.debug('@@summary'+summary);
+        system.debug('@@summary'+summary);
         return summary;
     }
     public  static List<Booking__c> fetchBookingsForUpgrade(String enrolmentId, List<Date> dates){
@@ -880,6 +1009,22 @@ public class ClassEditController {
             
             if(enrolDetails.containsKey('currentCenter')){
                 enrolEdit.center = enrolDetails.get('currentCenter');
+                  //start: added by nishi: 12-Nov-2020: for get All center accoding to organisation
+                  enrolEdit.centerName = enrolDetails.get('currentCenterName');
+                  enrolEdit.centers = new List<AureusCalendarController.Data>();
+                 List<AureusCalendarController.Data> multipleCentersData = new List<AureusCalendarController.Data>();
+                 AureusCalendarController.Data centerdata = new AureusCalendarController.Data();
+                 List<Account> centers = AureusCalendarController.getOrganisationRelatedCenters(enrolDetails.get('currentOrganisation'));
+                 for(Account center : centers){
+                     centerdata = new AureusCalendarController.Data();
+                     centerdata.Id = center.Id;
+                     centerdata.name = center.Name;
+                     multipleCentersData.add(centerdata); 
+                 }    
+                 if(multipleCentersData.size() > 0){
+                     enrolEdit.centers = multipleCentersData;
+                 }
+                  //end added by nishi: 12-Nov-2020: for get All center accoding to organisation
                 enrolEdit.teachers = new List<AureusCalendarController.Data>();
                 List<AureusCalendarController.Data> multipleData = new List<AureusCalendarController.Data>();
                 AureusCalendarController.Data data = new AureusCalendarController.Data();
@@ -1084,7 +1229,7 @@ public class ClassEditController {
                    query  += ' ORDER BY Program__r.Name';
                   //system.debug('@@query'+Database.query(query));
                     listOfPackage = Database.query(query);
-                }else if(grade.equalsIgnoreCase('GroupToSameClass') && bookingList != null && bookingList.size() > 0 ){
+                }else if((grade.equalsIgnoreCase('GroupToChangeCenter') || grade.equalsIgnoreCase('GroupToSameClass')) && bookingList != null && bookingList.size() > 0 ){
                    decimal packageFee = bookingList[0].enrolment__r.Package__r.Package_Fee__c;
                    packageType =  new Set<String>{ConstantsClass.packageTypeGroup};
                    query  += ' AND Type__c In: packageType ';
@@ -1103,7 +1248,7 @@ public class ClassEditController {
                     
                 }
                 // jatin:7-jan-2020 : show package according to active classes  
-                if(grade.equalsIgnoreCase('GroupToHigherPackage') || grade.equalsIgnoreCase('GroupToSameClass') ){
+                if(grade.equalsIgnoreCase('GroupToHigherPackage') || grade.equalsIgnoreCase('GroupToSameClass') || grade.equalsIgnoreCase('GroupToChangeCenter') ){
                     map<id,Package__c> mapOfpackages = New map<id,Package__c>();
                     map<id,Package__c> mapOfGroupClassPackage = New map<id,Package__c>();
                     for(Package__c pkg :  listOfPackage){
@@ -1167,7 +1312,7 @@ public class ClassEditController {
         for(Booking__c bookObj : [SELECT Id, Name, Center__r.Name, Teacher_Account__r.Name, Duration__c, Start_Time__c, 
                                     Booking_Date__c, Package__r.Name, Package__r.Duration__C,Class__r.Instrument__c,
                                     Class__r.Class_Type__c,Class__r.Maximum_age__c,Class__r.Minimum_age__c,
-                                    Class__r.Class_Start_Date__c,Resource__r.Name, 
+                                    Class__r.Class_Start_Date__c,Resource__r.Name, Class__r.Active__c,
                                    Class__c,Package__r.Package_Fee__c, Class__r.Start_Time__c,Class__r.Total_Capacity__c,
                                    Class__r.Name, Class__r.Available_Capacity__c ,
                                    Class__r.Centre_Name__r.Organisation__r.Name,Class__r.grade__c,Class__r.Duration__c // added by nishi: 2-sep-2020 : for get class grade and organisation 
@@ -1191,18 +1336,18 @@ public class ClassEditController {
         String parentId;
         Date bookDate;
         if(String.isNotBlank(bookingJson)){
-           //system.debug('@@bookingJson'+bookingJson);
+           system.debug('@@bookingJson'+bookingJson);
             bookingMap = (Map<String, Object>)JSON.deserializeUntyped(bookingJson);
-           //system.debug('@@bookingMap'+bookingMap);
-           //system.debug('@@redirectCase'+redirectCase);
-           //system.debug('@@caseId'+caseId);
+           system.debug('@@bookingMap'+bookingMap);
+           system.debug('@@redirectCase'+redirectCase);
+           system.debug('@@caseId'+caseId);
             if(bookingMap.containsKey('date')){
                 String bd = String.valueOf(bookingMap.get('date'));
                 if(String.isNotBlank(bd)){                   
                     bookingDateTime = DateTime.newInstance(Integer.valueOf(bd.split('T')[0].split('-')[0]), Integer.valueOf(bd.split('T')[0].split('-')[1]), Integer.valueOf(bd.split('T')[0].split('-')[2]), Integer.valueOf(bd.split('T')[1].split(':')[0]), Integer.valueOf(bd.split('T')[1].split(':')[1]), 0);
                     bookDate = Date.newInstance(Integer.valueOf(bd.split('T')[0].split('-')[0]), Integer.valueOf(bd.split('T')[0].split('-')[1]), Integer.valueOf(bd.split('T')[0].split('-')[2]));
                 }
-               //system.debug('bookingDateTime'+bookDate);
+               system.debug('bookingDateTime'+bookDate);
                 
             }
             if(bookingMap.containsKey('isRecurring')){
@@ -1251,13 +1396,18 @@ public class ClassEditController {
                     bookingObj.Parent__c = parentId;
                     
                     Boolean isChecked = AureusCalendarController.validateBookingTime(bookingObj.Teacher_Account__c,bookDate,bookingObj.End_Time__c);
-                   //system.debug('@@@isChecked'+isChecked);
-                   //system.debug('@@@bookingObj'+bookingObj);
+                    string selgroupClassId = bookingMap.containsKey('selgroupClassId') ? String.valueOf(bookingMap.get('selgroupClassId')) : '';
+                    if(string.isNotBlank(selgroupClassId) && isChecked ){
+                       // isChecked = validateBookingIsAvailable(selgroupClassId);
+                    }
+                   system.debug('@@@isChecked'+isChecked);
+                   system.debug('@@@bookingObj'+bookingObj);
                     Database.SaveResult saveResult;
                     if(isChecked){
                         saveResult = Database.insert(bookingObj, false);
                     }
-                    if(isChecked == False && saveResult == null){//&& !saveResult.isSuccess()
+                    system.debug('saveResult'+saveResult);
+                    if(isChecked == False && saveResult == null){
                         isError = true;
                         objResult.msg = 'error';
                     }else{
@@ -1448,7 +1598,7 @@ public class ClassEditController {
        
         String weekDay;
         String queryStr = 'SELECT Id, Name,Class__C, start_Time__c, End_Time__c, status__c, type__c, RecordType.Name, Center__c, Teacher_Account__c, Booking_Date__c FROM Booking__c';
-        queryStr += ' WHERE RecordType.Name =: groupBookingRecordType AND Start_Time__c != NULL AND End_Time__c != NULL AND Class__C != null';
+        queryStr += ' WHERE RecordType.Name =: groupBookingRecordType AND Start_Time__c != NULL AND End_Time__c != NULL AND Class__C != null and Class__r.Is_Makeup_Class__c = false';
         if(String.isNotBlank(centerId)){
             queryStr += ' AND Center__c =: centerId';
         }
@@ -1517,7 +1667,7 @@ public class ClassEditController {
                 
                 adhocDetails.packageName = packageObj.Name; 
                 adhocDetails.packageId = packageObj.Id;
-                adhocDetails.packageFee = packageObj.Package_Fee__c;
+                adhocDetails.packageFee = BillingUtility.roundOffAmount(packageObj.Unit_Fee__c);//packageObj.Package_Fee__c;
                 adhocDetails.unitFee = packageObj.Unit_Fee__c ;
                 adhocDetails.units = Integer.valueOf(packageObj.of_Units__c);
                 adhocDetails.duration = packageObj.Duration__c;
@@ -1549,10 +1699,10 @@ public class ClassEditController {
         return adhocDetails;
     }   
 
-
+    //nishi: 3-Nov-2020: In Aureus, Group ad-hoc booking should be created once the payment is successful whereas in Ossia, Group ad-hoc booking can be created even if the payment is failed.
+    // Failed payments can be collected via dunning process as an outstanding invoice
     @RemoteAction
-    public static Boolean createAdhocGroupClassBookings(String packageId, String centerId, String teacherId, String studentId, String recurring, String bookingDate,
-    String groupLessonId,String enrolmentId){
+    public static Boolean createAdhocGroupClassBookings(String packageId, String centerId, String teacherId, String studentId, String recurring, String bookingDate,  String groupLessonId,String enrolmentId){
         Country__c countryOfCentre = new Country__c();
         Organisation__c organisationOfCentre = new Organisation__c();
         Boolean isOssiaOrganization = false;
@@ -1568,9 +1718,9 @@ public class ClassEditController {
             accList = new List<Account>([SELECT Id, Name, Parent__c, RecordType.Name ,  Also_a_Student__c, Stripe_Customer_Id__c, Parent__r.Stripe_Customer_Id__c, 
                                          Country__c, Country__r.Id, Country__r.Tax_Rate__c, Country__r.Stripe_Base_Url__c, Country__r.Stripe_Secret_Key__c, 
                                          Country__r.Currency_Code__c,Organisation__r.Name,Organisation__r.Id, Organisation__r.Tax_Rate__c, Organisation__r.Stripe_Base_Url__c,
-                                          Organisation__r.Stripe_Secret_Key__c, 
+                                         Organisation__r.Stripe_Secret_Key__c, 
                                          Organisation__r.country__r.Currency_Code__c
-                                          FROM Account 
+                                         FROM Account 
                                          WHERE (RecordType.Name =: recordTypeCustomer AND Id =: studentId) OR Id =: centerId]);
         }
         system.debug('accList'+accList);
@@ -1580,7 +1730,7 @@ public class ClassEditController {
                     if(String.isNotBlank(acc.Parent__c) && acc.Also_a_Student__c == false){
                         parentId = acc.Parent__c;
                         stripeId = acc.Parent__r.Stripe_Customer_Id__c;
-                       system.debug('stripeId...'+stripeId);
+                        system.debug('stripeId...'+stripeId);
                     }else if(String.isBlank(acc.Parent__c) && acc.Also_a_Student__c == true){
                         parentId = acc.Id;
                         stripeId = acc.Stripe_Customer_Id__c;
@@ -1590,9 +1740,9 @@ public class ClassEditController {
                     countryOfCentre = acc.Country__r;
                     organisationOfCentre = acc.Organisation__r;
                     if(string.isnotBlank(acc.Organisation__c) && string.isnotBlank(acc.Organisation__r.Name) && 
-                        acc.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name) ){
-                            isOssiaOrganization= true;
-                    }
+                       acc.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name) ){
+                           isOssiaOrganization= true;
+                       }
                 }
             }
             
@@ -1601,79 +1751,75 @@ public class ClassEditController {
         List<Package__c> listOfPackage =[SELECT Name, Id, Unit_Fee__c, Duration__c//,facility_Fee__c
                                          FROM Package__c
                                          Where id =: packageId];
-                                         system.debug('listOfPackage'+listOfPackage);
+        system.debug('listOfPackage'+listOfPackage);
         Invoice__c objectOfInvoice = new Invoice__c(Status__c=ConstantsClass.dueStatus, Due_Date__c = system.today().AddDays(ConstantsClass.addInvoiceDueDays),
                                                     Invoice_Date__c =system.today(), Parent_Account__c = parentId,Center__c=centerId);
-                                                    system.debug('objectOfInvoice'+objectOfInvoice);
-                                                   
+        system.debug('objectOfInvoice'+objectOfInvoice);
+        
         if(listOfPackage.size() > 0){
             system.debug('bookingDate'+bookingDate);
             Double gstAdded = 0;
             Date bookDate = Date.newInstance(Integer.valueOf(bookingDate.split('T')[0].split('-')[0]), Integer.valueOf(bookingDate.split('T')[0].split('-')[1]), Integer.valueOf(bookingDate.split('T')[0].split('-')[2]));
             if(isOssiaOrganization){
-                 bookingList = AureusCalendarControllerHelper.createAppointmentForAdhocGroupLesson(listOfPackage[0], teacherId, studentId, centerId, Integer.valueOf(recurring), bookingDate,
-                                                                                  parentId,groupLessonId,enrolmentId); 
+                bookingList = AureusCalendarControllerHelper.createAppointmentForAdhocGroupLesson(listOfPackage[0], teacherId, studentId, centerId, Integer.valueOf(recurring), bookingDate,
+                                                                                                  parentId,groupLessonId,enrolmentId); 
             }else{
-                 bookingList = AureusCalendarControllerHelper.createAppointmentForAdhocGroupLesson(listOfPackage[0], teacherId, studentId, centerId, Integer.valueOf(recurring), bookingDate,
-                                                                                    parentId,groupLessonId,''); 
+                bookingList = AureusCalendarControllerHelper.createAppointmentForAdhocGroupLesson(listOfPackage[0], teacherId, studentId, centerId, Integer.valueOf(recurring), bookingDate,
+                                                                                                  parentId,groupLessonId,''); 
             }
-                   
+            
             system.debug('bookingList'+bookingList);                                                            
-            Boolean isChecked = validateBookingIsAvailable(groupLessonId);
+            Boolean isChecked = bookingList != null && bookingList.size() > 0 ?AureusCalendarController.validateBookingTime(teacherId,bookDate,bookingList[0].End_Time__c) :true;
+            if(string.isNotBlank(groupLessonId) && isChecked ){
+                //isChecked = validateBookingIsAvailable(groupLessonId);
+            }
             List<Invoice_Line_Item__c> listOfInvoiceLineItem = new List<Invoice_Line_Item__c>();
             Stripe_Payment_Log__c iLog = new Stripe_Payment_Log__c();
             Double packageFee =0;
             for(Integer i = 0; i < bookingList.size(); i++){
                 packageFee =0;
-                packageFee = Double.valueOf(listOfPackage[0].unit_Fee__c);
+                packageFee = listOfPackage[0].unit_Fee__c;
                 totalAmount += BillingUtility.roundOffAmount(packageFee);
                 if(packageFee > 0 && countryOfCentre.Tax_Rate__c > 0){
-                    gstAdded += BillingUtility.roundOffAmount(packageFee) * (countryOfCentre.Tax_Rate__c / 100);
+                    gstAdded += BillingUtility.roundOffAmount(packageFee * (countryOfCentre.Tax_Rate__c / 100));
                 }
                 
             }
             if(totalAmount > 0 && gstAdded > 0){
                 totalAmount += gstAdded;
             }
-            if(isChecked){
-                insert objectOfInvoice;
-                if(bookingList != null && bookingList.size() > 0){
-                    insert bookingList;
-                    if(objectOfInvoice.id != null){
-                        for(Integer i = 0; i < bookingList.size(); i++){
-                            Double amount = BillingUtility.roundOffAmount(listOfPackage[0].unit_Fee__c);
-                            Double taxAmount = 0;
-                            if(amount > 0 && countryOfCentre.Tax_Rate__c > 0){
-                                taxAmount = BillingUtility.roundOffAmount(amount * (countryOfCentre.Tax_Rate__c / 100));
-                            }
-                            listOfInvoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,
-                                                                            Amount__c=amount,
-                                                                            package__c=packageId, 
-                                                                            Booking__c = bookingList[i].Id, month__c = System.today(), 
-                                                                            GST_Amount__c = taxAmount));
-                        }
-                    }
-                    if(listOfInvoiceLineItem.size() > 0){
-                        insert listOfInvoiceLineItem;
-                    }
-                }
-            }
+            
             if(objectOfInvoice != NULL && totalAmount > 0 && String.isNotBlank(stripeId) && isChecked && String.isNotBlank(organisationOfCentre.Id)){
                 BillingUtility.StripeCharge objStripeCharge = new BillingUtility.StripeCharge();
                 objStripeCharge = AureusCalendarController.updateInvoice(objectOfInvoice, totalAmount, stripeId, organisationOfCentre.country__r.Currency_Code__c, organisationOfCentre.Stripe_Base_Url__c, organisationOfCentre.Stripe_Secret_Key__c);
                 system.debug('objStripeCharge'+objStripeCharge);  
                 if(objStripeCharge.statusCode == 200 && objStripeCharge.paid){
-                    
+                    objectOfInvoice.status__c = ConstantsClass.paidStatus;
+                    insert objectOfInvoice;
+                    if(bookingList != null && bookingList.size() > 0){
+                        insert bookingList;
+                        if(objectOfInvoice.id != null){
+                            for(Integer i = 0; i < bookingList.size(); i++){
+                                Double amount = listOfPackage[0].unit_Fee__c;
+                                Double taxAmount = 0;
+                                if(amount > 0 && countryOfCentre.Tax_Rate__c > 0){
+                                    taxAmount = BillingUtility.roundOffAmount(amount * (countryOfCentre.Tax_Rate__c / 100));
+                                }
+                                listOfInvoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,
+                                                                                   Amount__c= BillingUtility.roundOffAmount(amount),
+                                                                                   package__c=packageId, 
+                                                                                   Booking__c = bookingList[i].Id, month__c = System.today(), 
+                                                                                   GST_Amount__c = taxAmount));
+                            }
+                        }
+                        if(listOfInvoiceLineItem.size() > 0){
+                            insert listOfInvoiceLineItem;
+                        }
+                    }
                     isSuccess = true;
                     system.debug('objectOfInvoice'+objectOfInvoice); 
                     objectOfInvoice = [SELECT Id,Name,Parent_Account__c,Total_Amount__c ,status__c FROM Invoice__c WHERE Id=: objectOfInvoice.Id];
-                    objectOfInvoice.status__c = ConstantsClass.paidStatus;
-                    update objectOfInvoice;
                     system.debug('listOfInvoiceLineItem'+listOfInvoiceLineItem); 
-                    if(objectOfInvoice != NULL && String.isNotBlank(objectOfInvoice.Id)){
-                        BillingUtility.createAttachment(new Set<String>{objectOfInvoice.Id});
-                        
-                    }
                     Payment__c objPayment = BillingUtility.fillPayment(objectOfInvoice.Parent_Account__c,objectOfInvoice.Id,totalAmount,ConstantsClass.successStatus); 
                     objPayment.Transaction_ID__c = objStripeCharge.Id;
                     objPayment.Method_of_Payment__c = ConstantsClass.cardModeType;
@@ -1682,15 +1828,52 @@ public class ClassEditController {
                     if(String.isNotBlank(organisationOfCentre.Id)){
                         BillingUtility.updateCharge(objStripeCharge.Id,objectOfInvoice.Name, organisationOfCentre.Stripe_Base_Url__c, organisationOfCentre.Stripe_Secret_Key__c);    
                     }
-                   // added by jatin: 31-Dec-2019 : for adhoc invoice to push on the sage
-                    SageIntacctIntegrationUtility.adhocInvoice(objectOfInvoice.id);
-
+                    if(objectOfInvoice != NULL && String.isNotBlank(objectOfInvoice.Id)){
+                        BillingUtility.createAttachment(new Set<String>{objectOfInvoice.Id});
+                        // added : for adhoc invoice to push on the sage
+                        SageIntacctIntegrationUtility.adhocInvoice(objectOfInvoice.id);
+                    }
+                    
                 }else{
-                    isSuccess = false;
+                    if(isOssiaOrganization){
+                        insert objectOfInvoice;
+                        if(bookingList != null && bookingList.size() > 0){
+                            insert bookingList;
+                            if(objectOfInvoice.id != null){
+                                for(Integer i = 0; i < bookingList.size(); i++){
+                                    Double amount =listOfPackage[0].unit_Fee__c;
+                                    Double taxAmount = 0;
+                                    if(amount > 0 && countryOfCentre.Tax_Rate__c > 0){
+                                        taxAmount = BillingUtility.roundOffAmount(amount * (countryOfCentre.Tax_Rate__c / 100));
+                                    }
+                                    listOfInvoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,
+                                                                                       Amount__c=BillingUtility.roundOffAmount(amount),
+                                                                                       package__c=packageId, 
+                                                                                       Booking__c = bookingList[i].Id, month__c = System.today(), 
+                                                                                       GST_Amount__c = taxAmount));
+                                }
+                            }
+                            if(listOfInvoiceLineItem.size() > 0){
+                                insert listOfInvoiceLineItem;
+                            }
+                        }
+                        if(objectOfInvoice != NULL && String.isNotBlank(objectOfInvoice.Id)){
+                            BillingUtility.createAttachment(new Set<String>{objectOfInvoice.Id});
+                            // added : for adhoc invoice to push on the sage
+                            SageIntacctIntegrationUtility.adhocInvoice(objectOfInvoice.id);
+                        }
+                        isSuccess = true;
+                    }else{
+                        isSuccess = false;
+                    }
                 }
+                
             }else{
                 isSuccess = false;
             }
+            
+            
+            
             
         }
         system.debug('isSuccess'+isSuccess); 
@@ -1705,5 +1888,118 @@ public class ClassEditController {
             isAvailableForBooking = true;
         }
         return isAvailableForBooking;
+    }
+
+    public class deactivegroupClassLesson{
+        public string errorCode;
+        public string errormessage;
+        public map<id,booking__c> mapOfDeleteBooking;
+        public deactivegroupClassLesson(string errorCode,string errormessage){
+            this.errorCode = errorCode;
+            this.errormessage = errormessage;
+            this.mapOfDeleteBooking = new map<id,booking__c>();
+        }
+        public deactivegroupClassLesson(string errorCode,string errormessage, map<id,booking__c> mapOfDeleteBooking){
+            this.errorCode = errorCode;
+            this.errormessage = errormessage;
+            this.mapOfDeleteBooking = new map<id,booking__c>();
+            this.mapOfDeleteBooking.putAll(mapOfDeleteBooking);
+        }
+    }
+    /* nishi: 3-Nov-2020: Deactivating a group class for Aureus and Ossia [New requirement] ------------------
+        1. All existing enrolment are already withdrawn
+        2. System should allow deactivation of the class and remove all future class instances.
+    */
+    @RemoteAction
+    public static deactivegroupClassLesson deactivateGroupClass(string dateOfAppointment,string groupClassId){
+        if(string.isnotBlank(dateOfAppointment) && string.isnotBlank(groupClassId)){
+            try{
+                DateTime dateChange = DateTime.newInstance(Date.valueOf(dateOfAppointment.split('T')[0]), Time.newInstance(0, 0, 0, 0));
+                deactivegroupClassLesson objdeactivegroupClassLesson  = DeactiveGroupclassConfirmation(dateOfAppointment,groupClassId);
+                if(objdeactivegroupClassLesson.errorCode == '200'){
+                    map<id,booking__c> mapOfDeleteBooking = objdeactivegroupClassLesson.mapOfDeleteBooking;
+                    if(mapOfDeleteBooking != null && mapOfDeleteBooking.size() > 0){
+                            delete mapOfDeleteBooking.values();
+                    }
+                    class__c objclass = new class__c(id=groupClassId,Active__c = false,Class_End_Date__c=dateChange.date());     
+                    update objclass;  
+                }
+                return objdeactivegroupClassLesson;
+            }catch(exception e){
+                return new deactivegroupClassLesson('400',e.getMessage());
+            }
+        }
+        return new deactivegroupClassLesson('400','Group Class Id not Found');
+    }
+
+    @RemoteAction
+    public static deactivegroupClassLesson DeactiveGroupclassConfirmation(string dateOfAppointment,string groupClassId){
+        if(string.isnotBlank(dateOfAppointment) && string.isnotBlank(groupClassId)){
+            DateTime dateChange = DateTime.newInstance(Date.valueOf(dateOfAppointment.split('T')[0]), Time.newInstance(0, 0, 0, 0));
+            Boolean getActiveEnrolment = getAnyActiveEnrolmentIsExist(groupClassId,dateChange.date());
+            if(getActiveEnrolment){
+                return new deactivegroupClassLesson('400','There are some Active Enrolment found in this class. Please ensure that all enrolments are cancelled before deactivating this class.');
+            }else{
+                map<id,booking__c> mapOfDeleteBooking = new Map<Id,booking__c>([Select id 
+                                                                                from Booking__c 
+                                                                                where Class__c =:groupClassId 
+                                                                                and Booking_Date__c >=:dateChange.date()]);
+                if(mapOfDeleteBooking != null && mapOfDeleteBooking.size() > 0){
+                    List<booking__c> listOfgrouplesson = fetchAllBookingsForClass(mapOfDeleteBooking.keyset());
+                    if(listOfgrouplesson != null && listOfgrouplesson.size() > 0){
+                        return new deactivegroupClassLesson('400','There are some scheduled bookings found in this class. Please ensure that all future bookings and enrolments are cancelled before deactivating this class.');
+                    }else{
+                        return new deactivegroupClassLesson('200','Deactivated Group Class successfully...',mapOfDeleteBooking); 
+                    }
+                }
+                return new deactivegroupClassLesson('200','Deactivated Group Class successfully...'); 
+            }
+        }
+        return new deactivegroupClassLesson('400','Group Class Id not Found');
+    }
+
+    private static List<Booking__c> fetchAllBookingsForClass(Set<Id> bookingIds){
+        String groupLessonBookingRecordType = Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get(ConstantsClass.groupLessonBookingRecordType).getRecordTypeId();
+        //Set<String> statusSet = new Set<String>{ConstantsClass.pendingStatus, ConstantsClass.scheduledStatus};
+        Set<String> bookingTypeSet = new Set<String>{ConstantsClass.groupLessonTypeBooking, ConstantsClass.busyBookingType,ConstantsClass.typeAdhoc,ConstantsClass.typeMakeup,ConstantsClass.trialStatus};
+        return [SELECT Id, Name, Student__r.Name, Parent__r.Name, Status__c ,Booking_Date__c,start_Time__c ,
+                Class__r.Instrument__c,Class__r.Class_Type__c,Type__c
+                FROM Booking__c WHERE RecordTypeId =:groupLessonBookingRecordType 
+                AND Group_Class__c In: bookingIds
+                AND Status__c !=: ConstantsClass.statusCanceled
+                AND Type__c In:bookingTypeSet];
+    }
+
+    // check Active enrolment is exist or not
+    public static Boolean getAnyActiveEnrolmentIsExist(String groupClassId,date deactivateDate){
+        Boolean anyActiveEnrolmentIsExist = true;
+        String cancelStatus = ConstantsClass.enrollmentStageCancelled;
+        List<Enrolment__c> enrolList = [SELECT Id, Package_Process_Type__c, Package_Process_Status__c, 
+                                        Effective_Date__c  
+                                        FROM Enrolment__c 
+                                        WHERE class__c =: groupClassId 
+                                        AND Stage__c = :ConstantsClass.enroledStatus
+                                        AND Type__c = :ConstantsClass.enrolGroupType];
+                                        system.debug('enrolList'+enrolList);
+        if(enrolList != null && enrolList.size() > 0){
+            Integer count = 0;
+            for(Enrolment__c enrolObj : enrolList){
+                system.debug('enrolObj.Package_Process_Type__c '+enrolObj.Package_Process_Type__c );
+                system.debug('enrolObj.Effective_Date__c '+enrolObj.Effective_Date__c );
+                system.debug('deactivateDate'+deactivateDate );
+                if((enrolObj.Package_Process_Type__c == ConstantsClass.enrollmentProcessCancelType && enrolObj.Effective_Date__c < deactivateDate)){
+                    count += 1;   
+                }
+            }
+            system.debug('count'+count );
+            if(count == enrolList.size()){
+                anyActiveEnrolmentIsExist = false;
+            }
+        }else{
+            anyActiveEnrolmentIsExist = false;
+        }
+        system.debug('anyActiveEnrolmentIsExist'+anyActiveEnrolmentIsExist);
+        return anyActiveEnrolmentIsExist;
+        
     }
 }
