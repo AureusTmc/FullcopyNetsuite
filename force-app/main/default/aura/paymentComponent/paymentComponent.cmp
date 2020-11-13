@@ -17,7 +17,7 @@
     <aura:attribute name="isDueInvoice" type="boolean" default="true" />
     <aura:attribute name="chkValue" type="boolean" default="false" />
     <aura:attribute name="isEnabled" type="boolean" default="false" />
-    
+    <aura:attribute name="isUseCreditMemoOnly" type="boolean" default="false" /><!--added by nishi: 13-Nov-2020:for ossia user they use only credit memo not pay a cash amount-->
     
     
     <!--Use aura:if tag to display/hide popup based on isModalOpen value-->
@@ -50,8 +50,9 @@
                     
                     <!--Modal/Popup Box Footer Starts here-->
                     <footer class="slds-modal__footer">
-                        <lightning:button variant="neutral" label="Cancel"  onclick="{!c.closeModel}"  title="Cancel"
-                                          />
+                        <lightning:button variant="neutral" label="Cancel"  onclick="{!c.closeModel}"  title="Cancel"/>
+                        <!-- added by nishi: 13-Nov-2020: for ossia user they use only credit memo not pay a cash amount-->
+                        <lightning:button variant="brand" disabled="{!!v.chkValue}" label="Apply Credit Memo Only" title="Apply Credit Memo Only" onclick="{!c.handelCreditMemoSave}" />
                         <lightning:button variant="brand" label="Save" title="Save" onclick="{!c.handelSave}" />
                     </footer>
                 </div>
@@ -106,10 +107,17 @@
                                             alternativeText="close" variant="bare-inverse" class="slds-modal__close" />
                 </header>
                 <!--Modal/Popup Box Body Starts here-->
-                <div class="slds-modal__content slds-p-around_medium time-list" id="modal-content-id-2"
-                        style="text-align: center;">
-                    <span style="color:firebrick;font-weight:bold;"> Did you received the amount?</span>
+                <div class="slds-modal__content slds-p-around_medium time-list" id="modal-content-id-2" style="text-align: center;">
+                    <!-- added by nishi: 13-nov-2020: for ossia user want to use credit memo amount not used other options-->
+                    <aura:if isTrue="{!v.isUseCreditMemoOnly}">
+                            <span style="color:firebrick;font-weight:bold;"> Did the customer only use the credit memo amount?</span>
+                        <aura:set attribute="else">
+                                <span style="color:firebrick;font-weight:bold;"> Did you received the amount?</span>
+                        </aura:set>
+                    </aura:if> 
+                    <!-- added by nishi: 13-nov-2020: for ossia user want to use credit memo amount not used other options-->
                 </div>
+                        
                 <!--Modal/Popup Box Footer Starts here-->
                 <footer class="slds-modal__footer">
                     <lightning:button variant="neutral" label="Cancel" title="Cancel"

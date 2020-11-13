@@ -8352,7 +8352,7 @@ Enrol now
                                             $('#upgradeEnrolmentGroupToIndividualBtn').removeClass('slds-hide');
                                             $('#upgradeEnrolmentGroupToSameClassBtn').removeClass('slds-hide');
                                             $('#upgradeEnrolmentGroupToHigherPackageBtn').removeClass('slds-hide');
-                                               
+                                            $('#cancelSubscriptionBtn').removeClass('slds-hide');   
                                              //@Nishi on 12-Nov-2020 to check An advance invoice is generated Change Or Package_Process_Status__c is Pending
                                             // then we disable Change Centre Button for group class
                                             if(result.isChangeEnrolmentCentre){

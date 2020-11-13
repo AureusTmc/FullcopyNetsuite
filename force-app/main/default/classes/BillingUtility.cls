@@ -127,10 +127,46 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
             //adjustDeposit(invoices, invIds, parentIds, firstDate, lastDate, mapOfParentEnrolmentLastDate); //commented by nishi: 16-Sep-2020 : for new requirement we adjust pending credit memo not payment
            // adjustCreditMemoDeposit(invoices, invIds, parentIds, firstDate, lastDate, mapOfParentEnrolmentLastDate,true);
              adjustCreditMemoDeposit( invIds, parentIds, firstDate, lastDate, true);
+             sendEmailsForOssiaNonStripeCustomers(invIds);
         }
         return invIds;
     }
     
+    // added by nishi: 13-nov-2020: for send email if customer is belongs to Ossia organisation and Non stripe customers  
+    @future(callout=true)
+    public static void sendEmailsForOssiaNonStripeCustomers(Set<string> setOfInvIds){
+        if(setOfInvIds != null && setOfInvIds.size() > 0){
+            Map<string,Invoice__c> mapOfinvoice = new Map<string,Invoice__c>();                                            
+            List<Messaging.SingleEmailMessage> sendSingleEmailMessage = new List<Messaging.SingleEmailMessage>();
+            for(Invoice__c invObject : [SELECT Id,Name,Center__r.Organisation__r.name, Parent_Account__r.Centre_Name__r.Organisation__r.Tax_Rate__c,
+                                    Parent_Account__r.Centre_Name__r.Location__c,Parent_Account__r.PersonContactId, 
+                                    Parent_Account__r.Stripe_Customer_Id__c,Parent_Account__r.Card_Number__c,Parent_Account__r.Card_Type__c
+                                    FROM Invoice__c WHERE Id IN : setOfInvIds
+                                    And status__c =: constantsClass.dueStatus
+                                    And Center__r.Organisation__r.name =: System.Label.Ossia_Organisation_Name]){
+                if(string.isBlank(invObject.Parent_Account__r.Stripe_Customer_Id__c) && string.isBlank(invObject.Parent_Account__r.Card_Number__c) && string.isBlank(invObject.Parent_Account__r.Card_Type__c)){
+                    mapOfinvoice.put(invObject.id,invObject);
+                }
+            }
+            map<string,Attachment> mapOfInvoiceAttachment  = PianoRentalHelperController.createInvoiceAttachment(mapOfinvoice.values());
+            Map<string,map<String ,Blob>> mapOfInvoiceBlobList = new Map<string,map<String ,Blob>>();
+            map<String ,Blob> mapOfInvoiceBlob = new map<String ,Blob>();
+            for(string invoiceid : mapOfInvoiceAttachment.keySet()){
+                if(mapOfinvoice.containsKey(invoiceid)){
+                    mapOfInvoiceBlob = new map<String ,Blob>();
+                    if(mapOfInvoiceBlobList.containsKey(invoiceid)){
+                        mapOfInvoiceBlob = mapOfInvoiceBlobList.get(invoiceid);
+                    }
+                    mapOfInvoiceBlob.put(mapOfinvoice.get(invoiceid).Name+'.pdf',mapOfInvoiceAttachment.get(invoiceid).body);
+                    mapOfInvoiceBlobList.put(invoiceid,mapOfInvoiceBlob);
+                }
+            }
+            if(mapOfInvoiceBlobList != null && mapOfInvoiceBlobList.size() > 0){
+                PianoRentalHelperController.sendEmailWithInvoiceAttachment(mapOfInvoiceBlobList, mapOfinvoice.values(),'Ossia Invoice Generation For Ossia Non Stripe Customers');
+            }
+        }
+
+    }
     //@ 22-05-2019 this method is used for adjusting credit notes on the parent.
     private static void adjustDiscounts(List<Invoice__c> listOfInv,Set<String> setOfInvIds,Date invDate){
         Map<String,Invoice__c> mapOfParentInv = new Map<String,Invoice__c>();

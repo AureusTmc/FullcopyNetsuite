@@ -205,8 +205,8 @@
                                         <aura:if isTrue="{!v.showList}">
                                             <lightning:button variant="brand" label="Generate Next Month Invoice" disabled="{!v.showNextInvoice}"
                                                 title="Generate Next Month Invoice" onclick="{!c.generateNewInvoice}"  />
-                                            <lightning:button variant="brand" label="Generate Next Month Only Invoice" disabled="{!v.showNextInvoice}"
-                                                title="Generate Next Month Only Invoice" onclick="{!c.generateNewonlyInvoice}"  />
+                                            <lightning:button variant="brand" label="Generate Invoice Only" disabled="{!v.showNextInvoice}"
+                                                title="Generate Invoice Only" onclick="{!c.generateNewonlyInvoice}"  />
                                         </aura:if>
                                     </footer>
                                 </div>

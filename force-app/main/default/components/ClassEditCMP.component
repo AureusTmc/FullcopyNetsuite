@@ -940,7 +940,7 @@
                             <div class="slds-col slds-size_1-of-2 slds-grid slds-wrap slds-p-around_x-small enrolmentWithChangeCenter">
                                 <div class="slds-col slds-size_1-of-1 slds-grid slds-wrap">
                                     <span class="slds-form-element__label slds-col slds-size_1-of-2"><b>Select Center: </b></span>
-                                    <select class="slds-select slds-col slds-size_1-of-2" id="selectCenterEnrolGroupUpdate" onchange="getSelectedGroupChangeCenterTeacher();return false;">      
+                                    <select class="slds-select slds-col slds-size_1-of-2" id="selectCenterEnrolGroupUpdate" onchange="getSelectedGroupChangeCenterTeacher();getUpgradePackageByTeacher();return false;">      
                                     </select>
                                 </div>
                                 <div class="slds-col slds-size_1-of-1 slds-grid slds-wrap">
@@ -2044,6 +2044,10 @@
            //console.log('centerId',centerId);
            //console.log('teacherId',teacherId);
            //console.log('grade',grade);
+           var grade =$('#updateEnrolmentonGroupClick').attr('data-groupUpgrade');
+            if(grade == 'GroupToChangeCenter'){
+                    centerId = $('#selectCenterEnrolGroupUpdate').val();
+            }
             if (teacherId != 'Select Teacher' && centerId && bookingId) {
                 Visualforce.remoting.Manager.invokeAction(
                     '{!$RemoteAction.ClassEditController.getUpgradePackageAccordingToTeacher}',
@@ -3615,7 +3619,7 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
             }
             if ((effectiveDate && effectiveDate != 'Select Effective Date') &&
                 ((selectedPackage != 'Select an Option' && selectedPackage) && selectedPackage != 'Downgrade Subscription' && selectedPackage != 'Select Package')
-                && centerId && (teacherId && teacherId != 'Select Teacher') && enrolmentId) {
+                && (!centerId && centerId == 'Select Centre') && (teacherId && teacherId != 'Select Teacher') && enrolmentId) {
                 if (dtObj) {
                     if (!weekDayError) {
                         if (grade == 'class upgrade') {
@@ -3639,13 +3643,17 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
             if(grade =='GroupToIndividual'){
                 availTimeSlots(grade);
             }else{
+                var grade =$('#updateEnrolmentonGroupClick').attr('data-groupUpgrade');
+                if(grade == 'GroupToChangeCenter'){
+                    centerId = $('#selectCenterEnrolGroupUpdate').val();
+                }
                 $('#availableTimeSlotsUpdateEnrolmentGroup').attr('disabled', 'true');
                 $('#availableTimeSlotsUpdateEnrolmentGroup').empty();
                 $('#availableTimeSlotsUpdateEnrolmentGroup').append('<option>Select Time Slot</option>');
                 if(effectiveDate && effectiveDate != 'Select Effective Date'){
                     dtObj.year(effectiveDate.split('/')[2]).month(effectiveDate.split('/')[0] - 1).date(effectiveDate.split('/')[1]);
                 }
-                if((!effectiveDate && effectiveDate == 'Select Effective Date') || (selectedPackage == 'Select Package' || !selectedPackage)  || teacherId == 'Select Teacher'){
+                if((!centerId && centerId == 'Select Centre') && (!effectiveDate && effectiveDate == 'Select Effective Date') || (selectedPackage == 'Select Package' || !selectedPackage)  || teacherId == 'Select Teacher'){
                     $('#availableTimeSlotsUpdateEnrolmentGroup').attr('disabled', 'true');
                 }
                 if((effectiveDate && effectiveDate != 'Select Effective Date') && 

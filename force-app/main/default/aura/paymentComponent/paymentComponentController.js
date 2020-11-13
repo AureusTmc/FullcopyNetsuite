@@ -77,29 +77,22 @@
     },
     //@Juneid Method for Save On confirmatio of payment
     handelSave: function (component, event) {
+        component.set("v.isUseCreditMemoOnly", false);
         console.log('chkValue-->'+component.get("v.chkValue"));
         let recordId = component.get("v.recordId");
         let paymentType = component.find("mygroup").get("v.value");
-        let invoiceAmount =  component.get("v.invoiceAmount");
         if(paymentType== 'Cash' || paymentType== 'Offline card' ||paymentType=='NETS'){
             component.set("v.selectedOption", paymentType);
-            if(invoiceAmount <=0){
-                var toastEvent = $A.get("e.force:showToast");
-                toastEvent.setParams({
-                    title : 'error',
-                    message: 'Invoice amount is '+invoiceAmount+'. So we not get this Amount.',            
-                    duration:' 5000',
-                    key: 'info_alt',
-                    type: 'error',
-                    mode: 'pester'
-                });
-                toastEvent.fire();
-            }else{
-                $A.enqueueAction(component.get('c.closeModel'));
-                component.set("v.openPopUp", true);
-            }
+            $A.enqueueAction(component.get('c.closeModel'));
+            component.set("v.openPopUp", true);
         }
         
+    },
+    // added condition nishi:13-nov-2020: for  if user use only credit memo amount not use other options
+    handelCreditMemoSave : function (component, event) {
+        component.set("v.isUseCreditMemoOnly", true);
+        $A.enqueueAction(component.get('c.closeModel'));
+        component.set("v.openPopUp", true);
     },
     //@Juneid method for genrate payment
     saveGeneratePaymet:function (component, event) {
@@ -108,13 +101,15 @@
             let recordId = component.get("v.recordId");
             let trnsactionId = component.get("v.inputValue");
             let currentCreditAmount = component.get("v.creditAmount");
+            let isUseCreditMemoOnly = component.get("v.isUseCreditMemoOnly");// added condition nishi:13-nov-2020: for  if user use only credit memo amount not use other options
             console.log(isCreditCheck, recordId, trnsactionId, currentCreditAmount);
             let param = {
                 selectedMethod : component.get('v.selectedOption'),
                 recordId : recordId, 
                 transacId : trnsactionId,
                 isCreditAmnt : isCreditCheck, 
-                currentCreditAmounts : currentCreditAmount 
+                currentCreditAmounts : currentCreditAmount,
+                isUseCreditMemoOnly:isUseCreditMemoOnly // added condition nishi:13-nov-2020: for  if user use only credit memo amount not use other options
             };
             console.log('param',param);
             var createPayment = component.get("c.createPayment"); 

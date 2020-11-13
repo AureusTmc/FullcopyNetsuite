@@ -85,7 +85,7 @@ public class PaymentComponentController {
     }    */
     //@Juneid 21 Aug 2020, This method is used to manage Payment as credit calculation on invoice
     @AuraEnabled
-    public static invoiceWrapper  createPayment( String selectedMethod, String recordId, String transacId, Boolean isCreditAmnt, Decimal currentCreditAmounts){
+    public static invoiceWrapper  createPayment( String selectedMethod, String recordId, String transacId, Boolean isCreditAmnt, Decimal currentCreditAmounts,Boolean isUseCreditMemoOnly){
         system.debug('method call-->'+selectedMethod+ recordId+transacId);
         if( String.isNotBlank(selectedMethod) && String.isNotBlank(recordId) && String.isNotBlank(transacId)){
             try{  
@@ -93,13 +93,14 @@ public class PaymentComponentController {
                 //Getting recordtype Id
                 String payCredRecId  =  Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get('Payment As Credit').getRecordTypeId();
                 String paySuccesRecId  =  Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get('Payment Transaction').getRecordTypeId();
-                
+                List<Messaging.SingleEmailMessage> sendSingleEmailMessage = new List<Messaging.SingleEmailMessage>();
                 //Fetching current invoice Values
                 List<Invoice__c> invoiceList = new List<Invoice__c>();
                 Map<String, Date> mapOfParentEnrolmentLastDate = new Map<String, Date>();
                 for(Invoice__c invoiceObj : [SELECT Id, Name,Parent_Account__c,Total_Amount__c, Remarks__c,Invoice_Date__c,Parent_Account__r.Centre_Name__c,
                                                 Center__r.Country__r.Tax_Rate__c,Credit_Memo_Amount__c,Balance_Amount__c,
                                                 Parent_Account__r.Total_Payment_Credit_Available__c,
+                                                Center__r.Organisation__r.Name,Parent_Account__r.Centre_Name__r.Location__c,Parent_Account__r.PersonContactId, // added by nishi: 13-nov-2020: for send Payment confiramtion email 
                                                 Total_Invoice_Amount__c,Status__c,Parent_Account__r.Total_Credit_Memo_Available__c,
                                                 (SELECT Id, Enrolment__r.id,Enrolment__r.Package_Process_Type__c ,
                                                     Enrolment__r.Effective_Date__c ,Package__c
@@ -121,6 +122,12 @@ public class PaymentComponentController {
                 if(invoiceList.size() > 0 ){
                     payment__c objpayment = new payment__c();
                     Invoice__c invoice = invoiceList[0];
+                    boolean isOssia = false;
+                    if(string.isNotBlank(invoiceList[0].Center__c) && string.isNotBlank(invoiceList[0].Center__r.Organisation__c)&&
+                        string.isNotBlank(invoiceList[0].Center__r.Organisation__r.Name) 
+                        && invoiceList[0].Center__r.Organisation__r.Name ==System.Label.Ossia_Organisation_Name ){
+                        isOssia=true;
+                    }
                     List<Credit_Memo__c> creditMemosToUpsert  = new List<Credit_Memo__c>();//To update and create paymet of crdit
                     Map<String, Credit_Memo__c> mapOfCreditMemos = new Map<String, Credit_Memo__c>();
                     Decimal accumulatedCreditMemoAmount = invoice.Parent_Account__r.Total_Credit_Memo_Available__c != null ?invoice.Parent_Account__r.Total_Credit_Memo_Available__c : 0;
@@ -137,27 +144,36 @@ public class PaymentComponentController {
                                 if(accumulatedCreditMemoAmount<invoiceTotalAmount){
                                     diffrenceAmount =  invoiceList[0].Balance_Amount__c - accumulatedCreditMemoAmount;
                                 }
-                                if(diffrenceAmount >0){
+                                if(diffrenceAmount >0 && !isUseCreditMemoOnly){// added condition nishi:13-nov-2020: for  if user use only credit memo amount not use other options
                                     //Create new payment credit for remaning amount
                                     objpayment = createpaymentrecord(diffrenceAmount,selectedMethod,invoiceList[0].Id,transacId,paySuccesRecId,invoiceList[0].Parent_Account__c);
                                     paymentsToUpsert.add(objpayment); 
-                                    invoiceList[0].Status__c ='Paid';  
+                                    invoiceList[0].Status__c ='Paid'; 
+                                    // added by nishi: 13-nov-2020: for send Payment confiramtion email 
+                                    sendSingleEmailMessage.addAll(sendEmailConfirmation(invoiceList[0],isOssia));
                                 }
-                                
                             }else{
                                 return new invoiceWrapper(400,'Pending Credit Memo Record Not Found');
                             }
                         }else{//If customer dont want to pay with credit amount 
-                            objpayment = createpaymentrecord(invoiceList[0].Balance_Amount__c,selectedMethod,invoiceList[0].Id,transacId,paySuccesRecId,invoiceList[0].Parent_Account__c);
-                            paymentsToUpsert.add(objpayment);
-                            invoiceList[0].Status__c ='Paid';
+                            if(!isUseCreditMemoOnly){// added condition nishi:13-nov-2020: for  if user use only credit memo amount not use other options
+                                objpayment = createpaymentrecord(invoiceList[0].Balance_Amount__c,selectedMethod,invoiceList[0].Id,transacId,paySuccesRecId,invoiceList[0].Parent_Account__c);
+                                paymentsToUpsert.add(objpayment);
+                                invoiceList[0].Status__c ='Paid';
+                                // added by nishi: 13-nov-2020: for send Payment confiramtion email
+                                sendSingleEmailMessage.addAll(sendEmailConfirmation(invoiceList[0],isOssia));
+                            }
                         }
                     }
                     // for if payment is credit record not found then we insert new payment record with full amount
                     else{
-                        objpayment = createpaymentrecord(invoiceList[0].Balance_Amount__c,selectedMethod,invoiceList[0].Id,transacId,paySuccesRecId,invoiceList[0].Parent_Account__c);
-                        paymentsToUpsert.add(objpayment);
-                        invoiceList[0].Status__c ='Paid';
+                        if(!isUseCreditMemoOnly){// added condition nishi:13-nov-2020: for  if user use only credit memo amount not use other options
+                            objpayment = createpaymentrecord(invoiceList[0].Balance_Amount__c,selectedMethod,invoiceList[0].Id,transacId,paySuccesRecId,invoiceList[0].Parent_Account__c);
+                            paymentsToUpsert.add(objpayment);
+                            invoiceList[0].Status__c ='Paid';
+                            // added by nishi: 13-nov-2020: for send Payment confiramtion email
+                            sendSingleEmailMessage.addAll(sendEmailConfirmation(invoiceList[0],isOssia));
+                        }
                     }
                     if(creditMemosToUpsert.size()> 0 ){
                         upsert creditMemosToUpsert;
@@ -174,9 +190,48 @@ public class PaymentComponentController {
                 system.debug('error'+e.getStackTraceString()+'-'+e.getMessage());
                 return new invoiceWrapper(400,e.getMessage());
             }
-            return new invoiceWrapper(200,'Paid Invoice Amount Sucessfully');
+            // added condition nishi:13-nov-2020: for if user use only credit memo amount not use other options
+            if(isUseCreditMemoOnly){
+                return new invoiceWrapper(200,'Credit Memo Amount Used Sucessfully');
+            }else{
+                return new invoiceWrapper(200,'Paid Invoice Amount Sucessfully');
+            }
+            // added condition nishi:13-nov-2020: for  if user use only credit memo amount not use other options
         }
         return new invoiceWrapper(400,'Some Internal Issue Found.');
+    }
+
+    // added by nishi: 13-nov-2020: for send Payment confiramtion email accoding to organisation
+    public static List<Messaging.SingleEmailMessage> sendEmailConfirmation(invoice__c invObject,Boolean isOssiOrganisation){
+        Map<String,EmailTemplate> mapOfEmailTemplate = new Map<String,EmailTemplate>();
+        Set<String> paymentConfirmationEmails=new Set<string>{'Payment_Collection_Via_Pay_At_Center','Ossia_Payment_Collection_Via_Pay_At_Center'};
+               
+        for(EmailTemplate objEmailTemplate: [SELECT Id, Name ,DeveloperName
+                                    FROM EmailTemplate 
+                                    WHERE DeveloperName In:paymentConfirmationEmails]){
+                                        mapOfEmailTemplate.put(objEmailTemplate.DeveloperName,objEmailTemplate);
+                                    }
+        List<Messaging.SingleEmailMessage> sendSingleEmailMessage = new List<Messaging.SingleEmailMessage>();
+        if(mapOfEmailTemplate != null && mapOfEmailTemplate.size() > 0 ){
+            string centerId,personContactId;
+            if(invObject.Parent_Account__r != null && invObject.Parent_Account__r.Centre_Name__r != null &&
+            string.isNotBlank(invObject.Parent_Account__r.Centre_Name__r.Location__c) ){
+                centerId = invObject.Parent_Account__r.Centre_Name__r.Location__c;
+            }
+            if(invObject.Parent_Account__r != null && string.isNotBlank(invObject.Parent_Account__r.PersonContactId)){
+                personContactId = invObject.Parent_Account__r.PersonContactId;
+            }
+            if(isOssiOrganisation){
+                if(mapOfEmailTemplate.containsKey('Ossia_Payment_Collection_Failed')){
+                    sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(mapOfEmailTemplate.get('Ossia_Payment_Collection_Failed').Id,personContactId,invObject.id,centerId));
+                }
+            }else{
+                if(mapOfEmailTemplate.containsKey('Payment_Collection_Failed')){
+                    sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(mapOfEmailTemplate.get('Payment_Collection_Failed').Id,personContactId,invObject.id,centerId));
+                }   
+            }
+        }
+        return sendSingleEmailMessage;
     }
     
 

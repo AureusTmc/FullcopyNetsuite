@@ -1,7 +1,26 @@
-<apex:page controller="payNowDetailController" showHeader="false" standardStylesheets="true" sidebar="false" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False">
+<apex:page id="pg" controller="payNowDetailController" showHeader="false" standardStylesheets="true" sidebar="false" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False">
     <head>
+        <title>Aureus Academy – Make Payment</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0"/>
-        <apex:slds />
+         <!-- 13-Nov-2020: nishi: added stripe and jquery files -->
+           <!--<apex:slds /> -->
+         <!-- IntlInputPhone CSS -->
+        <apex:stylesheet value="{!URLFOR($Resource.IntlInputPhone, '/css/intlInputPhone.min.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}"/>
+        <!-- Updated by Rajesh, 31st July 2019: To Solve increase field length when click in inputfield in mobile devices-->
+        <!--<meta name="viewport" content="width=device-width, initial-scale=1.0"/>-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0"/>
+        <apex:stylesheet value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.css')}"/>
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous" />
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery/jquery.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.js')}"/>
+        <!-- IntlInputPhone JS -->
+        <apex:includeScript value="{!URLFOR($Resource.IntlInputPhone, '/js/intlInputPhone.min.js')}"/>
+        
+        <!--<script src="https://checkout.stripe.com/checkout.js"></script>        -->
+        <script src="https://js.stripe.com/v3/"></script>
+        <!-- 13-Nov-2020: nishi: added stripe and jquery files -->
+       
         <script>
         function PaymentOption(){
             PaymntOption();
@@ -11,7 +30,19 @@
         
         function closePopup(){
             window.close();
+            location.reload(true);
             
+        }
+        function oneTimePaymentOption(){
+            $('#makepayment').addClass('slds-hide');
+            $('#onetimecardDetails').removeClass('slds-hide');
+            $('#firstCmpId').addClass('slds-hide');
+            
+        }
+        function PreviousOption(){
+            $('#makepayment').removeClass('slds-hide');
+            $('#onetimecardDetails').addClass('slds-hide');
+            $('#firstCmpId').removeClass('slds-hide');
         }
         </script>
         <style>
@@ -116,7 +147,7 @@
                 </apex:facet>
             </apex:actionStatus> 
             
-            <div class="main-content">
+            <div class="main-content" id="makepayment">
                 <div class="slds-grid slds-wrap slds-grid--align-center" style="margin: 80px 0;">
                     <div class="slds-col content-box">            
                         <div class="header slds-col"><div class="slds-col"><a href="#" class="logo">
@@ -129,8 +160,8 @@
                                 <span class="main-title">Make Payment</span>
                             </div>
                         </div>
-                        <!-- By Ravi --->
-                        <div class="slds-form-element">
+                        <!-- By Ravi -->
+                        <div class="slds-form-element" >
                             <div class="slds-grid slds-wrap slds-p-horizontal_medium">
                                 <div class="slds-col dark-bg billig-info slds-grid">
                                     <ul class="slds-grid slds-wrap slds-size_1-of-1">
@@ -140,19 +171,26 @@
                                             <div><strong>Invoice ID</strong>{!InvObj.Name}</div></li>
                                         
                                         <li class="slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
-                                            <div style="line-height: 28px;"><strong>Total Outstanding Balance</strong>&nbsp;<span id="cntrName">${!InvObj.Balance_Amount__c}</span> </div></li>
-                                        
+                                            <div style="line-height: 28px;"><strong>Total Outstanding Balance</strong>&nbsp;<span id="cntrName">${!InvObj.Balance_Amount__c}</span> </div>
+                                        </li>
                                         <li class="slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
                                             <div><strong>Pay Using Existing Card</strong>
-                                                <apex:outputText value="{!InvObj.Parent_Account__r.Card_Image__c}" escape="false"/>{!'X'+InvObj.Parent_Account__r.Card_Number__c} 
-                                            </div></li>
+                                                <!-- added outputPanel by nishi:13-Nov:2020: if user is stripe customer then we show card detials-->
+                                                <apex:outputPanel rendered="{!isAlreadyStripCstmr}">
+                                                    <apex:outputText value="{!InvObj.Parent_Account__r.Card_Image__c}" escape="false"/>{!'X'+InvObj.Parent_Account__r.Card_Number__c} 
+                                                </apex:outputPanel>
+                                                <!-- added outputPanel by nishi:13-Nov:2020: if user is stripe customer then we show card detials-->
+                                            </div>
+                                        </li>
+                                        
                                         <li class="slds-size_1-of-1 slds-medium-size_6-of-12 slds-p-horizontal_medium">
                                             <div><strong>Payment Option</strong>
                                                 <a href="/apex/UpdateCustomerCardforPortal?id={!InvObj.Parent_Account__c}" ><span >
                                                     Change Credit Card
                                                     </span>
                                                 </a>
-                                            </div></li>
+                                            </div>
+                                        </li>
                                     </ul>
                                 </div>
                             </div>
@@ -165,15 +203,183 @@
                                     <div class="slds-form-element">
                                         <a class="slds-button custom-btn" onclick="PaymentOption();">Pay Now</a>
                                     </div>
+                                     <!-- added outputPanel by nishi:13-Nov:2020: if user is stripe customer then we show card detials-->
+                                     <apex:outputPanel rendered="{!!isAlreadyStripCstmr && isOssia}">
+                                        <div class="slds-form-element">
+                                            <a class="slds-button custom-btn" onclick="oneTimePaymentOption();">One Time Payment</a>
+                                        </div>
+                                    </apex:outputPanel>
                                 </apex:outputPanel>
                             </div>
                         </div>
+                        <!-- By Ravi -->
                     </div>
                 </div>
             </div>
             <apex:actionFunction name="PaymntOption" action="{!callPaymentGate}"   status="spinner"  reRender="tstpopup">
             </apex:actionFunction>
+            <apex:actionFunction name="paywithonetimeStripe"  action="{!paywithonetimeStripe}" status="spinner" oncomplete="PreviousOption();" reRender="tstpopup">
+                <apex:param name="arg1" value="" assignTo="{!stripeToken}"/>
+            </apex:actionFunction>    
         </apex:form>
+        <!-- added by nishi: 13-Nov-2020: for if user is not stripe customer then they use one time strip payment--> 
+        <div class="main-content  slds-hide" id="onetimecardDetails">
+            <div class="slds-grid slds-wrap slds-grid--align-center" style="margin: 80px 0;">
+                <div class="slds-col content-box">            
+                    <div class="header slds-col"><div class="slds-col">
+                        <a href="#" class="logo">
+                        <!-- <img src="https://aureusacademy.com/wp-content/uploads/2017/03/cropped-Aureus-Logo-Small.png"/> -->
+                        <apex:image url="{!iF(isOssia,$Resource.Osia_Logo,$Resource.Aureus_logo_png)}" />
+                
+                        </a>
+                    </div>
+                        <div class="slds-col ">
+                            <span class="main-title">Make Payment</span>
+                        </div>
+                    </div>
+                    <div class="slds-form-element" >
+                        <div class="slds-grid slds-wrap slds-p-horizontal_medium">
+                            <div class="slds-col dark-bg billig-info slds-grid">
+                                <form method="post" id="payment-form" style="display: contents;">
+                                    <div class="slds-p-around_x-small slds-col slds-size_1-of-1 slds-p-horizontal_medium"  style="background-color: #f2f2f2;">
+                                        <p><b>Card Detail</b></p>
+                                        <div id="card-element">
+                                        </div>
+                                        <div id="card-errors" role="alert"></div>
+                                        <div class="firstCmpcls" >
+                                            <div class="content-body slds-col">
+                                                <div class="slds-form-element">
+                                                    <button id="payBtn" class="prev-btn slds-button slds-button_neutral custom-btn" onclick="PreviousOption();" >
+                                                        <span class="slds-icon_container slds-icon-utility-announcement" title="Go to Back">
+                                                            <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
+                                                                <use fill="White" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#chevronleft')}" />
+                                                            </svg>
+                                                        </span>
+                                                        Back
+                                                    </button>
+                                                </div>
+                                                <div class="slds-form-element">
+                                                    <button id="payBtn" class="slds-button slds-button_neutral custom-btn" onclick="onetimepaymentcard();" >
+                                                        Pay Now
+                                                        <span class="slds-icon_container slds-icon-utility-announcement" title="One Time Payment">
+                                                            <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
+                                                                <use fill="White" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#chevronright')}" />
+                                                            </svg>
+                                                        </span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <script>
+                        var stripe = Stripe('{!apiKey}');
+                        
+                        var elements = stripe.elements();
+                        var style = {
+                        base: {
+                            color: '#32325d',
+                            fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                            fontSmoothing: 'antialiased',
+                            fontSize: '16px',
+                            '::placeholder': {
+                            color: '#aab7c4'
+                            }
+                        },
+                        invalid: {
+                            color: '#fa755a',
+                            iconColor: '#fa755a'
+                        }
+                        };
+                        var card = elements.create('card', {style: style,hidePostalCode:true});
+                        card.mount('#card-element');
+                        card.addEventListener('change', function(event) {
+                        var displayError = document.getElementById('card-errors');
+                        if (event.error) {
+                            console.log(event.error);
+                            displayError.textContent = event.error.message;
+                        } else {
+                            displayError.textContent = '';
+                        }
+                        });
+                        function onetimepaymentcard(){
+                            // Handle form submission.
+                            var form = document.getElementById('payment-form');
+                            form.addEventListener('submit', function(event) {
+                                event.preventDefault();
+                                
+                                // for disable pay button on submit button
+                                disablePayBtn(true);
+                                
+                                stripe.createToken(card).then(function(result) {
+                                    console.log('result token ',result);
+                                
+                                    if (result.error) {
+                                        var errorElement = document.getElementById('card-errors');
+                                        errorElement.textContent = result.error.message;
+                                        // for enable pay button if any card error 
+                                        disablePayBtn(false);
+                                    } else {
+                                        stripeTokenHandler(result.token);
+                                    }
+                                });
+                            
+                            });
+                        }
+                        function stripeTokenHandler(token){
+                            var form = document.getElementById('payment-form');
+                            var hiddenInput = document.createElement('input');
+                            hiddenInput.setAttribute('type', 'hidden');
+                            hiddenInput.setAttribute('name', 'stripeToken');
+                            hiddenInput.setAttribute('value', token.id);
+                            form.appendChild(hiddenInput);
+                            console.log(token.card.id); 
+                            
+                            var checkErr = checkErrorOnSummaryPage();
+                        
+                            if(!checkErr){
+                                //for disable pay button if no error on page validation 
+                                disablePayBtn(true);
+                                console.log('token.id'+token.id);
+                                paywithonetimeStripe(token.id);
+                            }else{
+                                //for enable pay button if any error 
+                                disablePayBtn(false);
+                            }
+                        }
+                        
+                        function checkErrorOnSummaryPage(){
+                            var isErr = false;
+                            $('.inputchk').each(function(){
+                                
+                                if(!$(this).prop('checked')){
+                                    $(this).parent().parent().parent().addClass('slds-has-error');
+                                    $(this).parent().parent().next().removeClass('slds-hide');
+                                    isErr = true;        
+                                }else{
+                                    $(this).parent().parent().parent().removeClass('slds-has-error');
+                                    $(this).parent().parent().next().addClass('slds-hide');
+                                }
+                            });
+                            return isErr;
+                        }
+                    
+                        //for enable/disable pay button for stop double click
+                        function disablePayBtn(isDisable){
+                            if(isDisable)
+                                $('#payBtn').css('pointer-events', 'none');
+                            else
+                                $('#payBtn').css('pointer-events', '');
+                        }
+                    </script>        
+                </div>
+            </div>
+        </div>                        
+         <!-- added by nishi: 13-Nov-2020: for if user is not stripe customer then they use one time strip payment-->
     </body>
     <style>
         .dateFormat{
