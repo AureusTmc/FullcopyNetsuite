@@ -125,11 +125,73 @@ public  without sharing class TerminateRentalSummaryController {
                 List<Payment__c> paymentList = new  List<Payment__c>();
                 Decimal refundAmount = AureusCalendarController.getDepositFromFile(objEnrolment.id);
                 system.debug('@@@refundAmount'+refundAmount);
+                 //added by nishi: 17-Nov-2020 : start:for new requirement Create a Credit Memo record with the status pending instead of the refund record.
+                Credit_Memo__c  objCreditMemo = new     Credit_Memo__c();
+                map<string,Credit_Memo__c> newPendingCreditMemos = new map<string,Credit_Memo__c>();
+                map<string,List<Credit_memo_line_item__c>> mapOfCreditmemolineitem = new map<string,List<Credit_memo_line_item__c>>();
+                Credit_memo_line_item__c objCreditLineItem = new  Credit_memo_line_item__c();    
+                map<String,Invoice_Line_Item__c> updateInvoiceLineItem = new map<String,Invoice_Line_Item__c>();
+                List<Credit_memo_line_item__c> listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
                 if(refundAmount  != null && refundAmount > 0){
-                    Payment__c objPay = new Payment__c();
+                    Map<String, Payment__c> mapOfInvoicePayments = new Map<String, Payment__c>();
+                    List<Id> invoiceIds = NEW List<Id>();
+                    Map<Id,Invoice_Line_Item__c> invoicemap = NEW Map<Id,Invoice_Line_Item__c>();
+                    for(Invoice_Line_Item__c lineItem : [SELECT Id, Invoice__c, Amount__c, Invoice__r.Parent_Account__c, Subscription_Line_Item__r.Next_Bill_Date__c ,Package__c,
+                                                        Credit_Memo_Amount__c,Credit_Memo_tax__c
+                                                        FROM Invoice_Line_Item__c 
+                                                        WHERE Enrolment__c =: objEnrolment.id 
+                                                        AND Is_Deposit__c = true 
+                                                        AND Subscription_Line_Item__c != NULL]){
+                                                            invoiceIds.add(lineItem.Invoice__c);
+                                                            invoicemap.put(lineItem.Invoice__c,lineItem);
+                                                            updateInvoiceLineItem.put(lineItem.id,lineItem);
+                                                        }
+                        for(Payment__c payment : [SELECT Id, Transaction_ID__c, Invoice__c  ,Method_of_Payment__c 
+                                                FROM Payment__c 
+                                                WHERE Invoice__c In: invoiceIds AND 
+                                                RecordType.Name =:ConstantsClass.paymentTransactionRecType]){
+                                                   if(string.isNotBlank(payment.Transaction_ID__c)){
+                                                        mapOfInvoicePayments.put(payment.Invoice__c, payment);
+                                                    }
+                                                }
+                    objCreditMemo = BillingUtility.createCreditMemoRec(objEnrolment.Parent__c,objEnrolment.center__c, null,  pickupRequestEndDateObj,'Refund Deposit');
+                    objCreditLineItem = BillingUtility.createCreditMemoLineRec(Math.abs(refundAmount),null,null,
+                    objEnrolment.id,null,'Refund Deposit',pickupRequestEndDateObj);
+                    objCreditLineItem.Is_Deposit__c = true;
+                    if(mapOfInvoicePayments != null && mapOfInvoicePayments.size() > 0){
+                        for( string invoiceId : mapOfInvoicePayments.keyset()){
+                            if(mapOfInvoicePayments.containsKey(invoiceId)){
+                                objCreditMemo.Payment_Method__c =   mapOfInvoicePayments.get(invoiceId).Method_of_Payment__c; 
+                                objCreditMemo.From_Invoice__c = invoiceId;
+                                objCreditLineItem.Package__c = invoicemap.get(invoiceId).Package__c;
+                                objCreditLineItem.Invoice_Line_Item__c = invoicemap.get(invoiceId).Id;
+                            }
+                        }
+                    }
+                    listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
+                    listOfCreditmemolineitem.add(objCreditLineItem);           
+                    system.debug('objCreditLineItem'+objCreditLineItem);                                         
+                    mapOfCreditmemolineitem.put('Refund Deposit',listOfCreditmemolineitem);
+                    system.debug('objCreditMemo'+objCreditMemo);  
+                    newPendingCreditMemos.put('Refund Deposit',objCreditMemo);
+                    //added by Nishi: 17-Nov-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
+                    if(string.isNotBlank(objCreditLineItem.Invoice_Line_Item__c)){
+                        decimal invoicelineItemCreditAmount=0;
+                        decimal invoicelineItemCreditGst=0;
+                        
+                        if(updateInvoiceLineItem.containskey(objCreditLineItem.Invoice_Line_Item__c)){
+                            invoicelineItemCreditAmount =  updateInvoiceLineItem.get(objCreditLineItem.Invoice_Line_Item__c).Credit_Memo_Amount__c != null ? updateInvoiceLineItem.get(objCreditLineItem.Invoice_Line_Item__c).Credit_Memo_Amount__c : 0;
+                            invoicelineItemCreditGst = updateInvoiceLineItem.get(objCreditLineItem.Invoice_Line_Item__c).Credit_Memo_tax__c !=null ?updateInvoiceLineItem.get(objCreditLineItem.Invoice_Line_Item__c).Credit_Memo_tax__c : 0;
+                        }
+                        updateInvoiceLineItem.put(objCreditLineItem.Invoice_Line_Item__c,new Invoice_Line_Item__c(id=objCreditLineItem.Invoice_Line_Item__c,Credit_Memo_Amount__c =invoicelineItemCreditAmount+Math.abs(refundAmount),Credit_Memo_tax__c=invoicelineItemCreditGst));
+                    }
+                     //added by nishi: 17-Nov-2020 :end: start:for new requirement Create a Credit Memo record with the status pending instead of the refund record.
+
                     //String chargeId =  AureusCalendarController.fetchCurrentMonthPaymentEntry(objEnrolment,pickupRequestEndDateObj);
                     //System.debug('chargeId'+chargeId);
                     //if(String.isNotBlank(chargeId)){
+                       //Commented by nishi: 17-Nov-2020 : start:for new requirement Create a Credit Memo record with the status pending instead of the refund record.
+                       /* Payment__c objPay = new Payment__c();
                         objPay.RecordTypeId =  refundRecType ;
                         objPay.Payment_Date__c = pickupRequestEndDateObj;
                         objPay.Payment_Status__c = ConstantsClass.paymentPendingStatus;
@@ -137,7 +199,8 @@ public  without sharing class TerminateRentalSummaryController {
                         objPay.Parent_Account__c = objEnrolment.Parent__c;
                        // objPay.Transaction_ID__c = chargeId;
                         objPay.last_lesson_date__c = pickupRequestEndDateObj;
-                        paymentList.add(objPay); 
+                        paymentList.add(objPay); */
+                         //added by nishi: 17-Nov-2020 : start:for new requirement Create a Credit Memo record with the status pending instead of the refund record.
                     /*}else{
                         return 'Charge Id not found';
                     }*/
@@ -146,6 +209,29 @@ public  without sharing class TerminateRentalSummaryController {
                 if(paymentList.size() > 0){
                     insert paymentList;
                 }
+                //added by nishi: 17-Nov-2020 : start:for new requirement Create a Credit Memo record with the status pending instead of the refund record.
+                if(newPendingCreditMemos.size() > 0){
+                    Insert newPendingCreditMemos.values();  
+                    system.debug('newPendingCreditMemos'+newPendingCreditMemos);
+                    system.debug('mapOfCreditmemolineitem'+mapOfCreditmemolineitem);
+                    List<Credit_memo_line_item__c> listOfnewCreditmemolineitem = new list<Credit_memo_line_item__c>();
+                    for(string creditMemoRemark : newPendingCreditMemos.keyset()){
+                        if(mapOfCreditmemolineitem.containskey(creditMemoRemark)){
+                            for(Credit_memo_line_item__c creditLineItemobj: mapOfCreditmemolineitem.get(creditMemoRemark)){
+                                creditLineItemobj.Credit_Memo_Number__c = newPendingCreditMemos.get(creditMemoRemark).id;
+                                listOfnewCreditmemolineitem.add(creditLineItemobj);
+                            }
+                        }
+                    } 
+                    if(listOfnewCreditmemolineitem != null && listOfnewCreditmemolineitem.size() > 0){
+                        insert listOfnewCreditmemolineitem;
+                    }
+                                            
+                }
+                if(updateInvoiceLineItem != null && updateInvoiceLineItem.size() > 0){
+                    update updateInvoiceLineItem.values();
+                }
+                //added by nishi: 17-Nov-2020 : start:for new requirement Create a Credit Memo record with the status pending instead of the refund record.
                 system.debug('@@@paymentList'+paymentList);
             }
         }catch(exception e){

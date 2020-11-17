@@ -61,7 +61,7 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
     }
     
     //method is used in creating invoice for subscription
-    public static Set<string> createInvoiceFromSubscription(List<Subscription__c> subscriptions, String invId,Date invDate){
+    public static Set<string> createInvoiceFromSubscription(List<Subscription__c> subscriptions, String invId,Date invDate,boolean isNextMonthInvoice){
         List<Invoice__c> invList = new List<Invoice__c>();
        //system.debug('@@@subscriptions'+subscriptions.size());
        //system.debug('@@invId'+invId);
@@ -85,9 +85,9 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
             if(sub.Subscription_Line_Items__r.size() > 0){
                 Invoice__c inv = fillInvoice(sub.Id,sub.Parent__c,constantsClass.dueStatus);   //new Invoice__c();
                 inv.Center__c = sub.Center__c;
-                inv.Invoice_Date__c = invDate;
+                inv.Invoice_Date__c = isNextMonthInvoice ? System.today() :invDate; //commented by nishi: 17-Nov-2020: for Invoice date set to the date when invoice was generated.
                //system.debug('@@sub'+sub);
-                inv.Due_Date__c = invDate.addDays(Integer.valueOf(Label.Invoice_Due_Day));
+                inv.Due_Date__c =  isNextMonthInvoice ? System.today() : invDate.addDays(Integer.valueOf(Label.Invoice_Due_Day));
                 inv.invoice_type__c = 'Recurring';
                 mapOfSubInvoice.put(sub, inv);   
                 // fill parentIds set, used in subsequent process i.e. adjustDeposit
@@ -127,13 +127,13 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
             //adjustDeposit(invoices, invIds, parentIds, firstDate, lastDate, mapOfParentEnrolmentLastDate); //commented by nishi: 16-Sep-2020 : for new requirement we adjust pending credit memo not payment
            // adjustCreditMemoDeposit(invoices, invIds, parentIds, firstDate, lastDate, mapOfParentEnrolmentLastDate,true);
              adjustCreditMemoDeposit( invIds, parentIds, firstDate, lastDate, true);
-             sendEmailsForOssiaNonStripeCustomers(invIds);
+            //sendEmailsForOssiaNonStripeCustomers(invIds);
         }
         return invIds;
     }
     
     // added by nishi: 13-nov-2020: for send email if customer is belongs to Ossia organisation and Non stripe customers  
-    @future(callout=true)
+   /* @future(callout=true)
     public static void sendEmailsForOssiaNonStripeCustomers(Set<string> setOfInvIds){
         if(setOfInvIds != null && setOfInvIds.size() > 0){
             Map<string,Invoice__c> mapOfinvoice = new Map<string,Invoice__c>();                                            
@@ -166,7 +166,7 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
             }
         }
 
-    }
+    }*/
     //@ 22-05-2019 this method is used for adjusting credit notes on the parent.
     private static void adjustDiscounts(List<Invoice__c> listOfInv,Set<String> setOfInvIds,Date invDate){
         Map<String,Invoice__c> mapOfParentInv = new Map<String,Invoice__c>();

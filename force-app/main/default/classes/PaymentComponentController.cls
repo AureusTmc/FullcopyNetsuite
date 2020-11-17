@@ -128,7 +128,7 @@ public class PaymentComponentController {
                         && invoiceList[0].Center__r.Organisation__r.Name ==System.Label.Ossia_Organisation_Name ){
                         isOssia=true;
                     }
-                    List<Credit_Memo__c> creditMemosToUpsert  = new List<Credit_Memo__c>();//To update and create paymet of crdit
+                    //List<Credit_Memo__c> creditMemosToUpsert  = new List<Credit_Memo__c>();//To update and create paymet of crdit
                     Map<String, Credit_Memo__c> mapOfCreditMemos = new Map<String, Credit_Memo__c>();
                     Decimal accumulatedCreditMemoAmount = invoice.Parent_Account__r.Total_Credit_Memo_Available__c != null ?invoice.Parent_Account__r.Total_Credit_Memo_Available__c : 0;
                             
@@ -175,9 +175,10 @@ public class PaymentComponentController {
                             sendSingleEmailMessage.addAll(sendEmailConfirmation(invoiceList[0],isOssia));
                         }
                     }
-                    if(creditMemosToUpsert.size()> 0 ){
+                    /*if(creditMemosToUpsert.size()> 0 ){
                         upsert creditMemosToUpsert;
-                    }
+                    }*/
+                    system.debug('paymentsToUpsert-->'+paymentsToUpsert);
                     if(paymentsToUpsert.size() > 0)
                         UPSERT paymentsToUpsert;
                     if(invoiceList.size() > 0)

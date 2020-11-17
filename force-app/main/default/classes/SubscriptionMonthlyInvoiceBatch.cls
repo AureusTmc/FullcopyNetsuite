@@ -62,7 +62,7 @@ global class SubscriptionMonthlyInvoiceBatch implements Database.Batchable<sObje
             monthInvoiceSavePoint = Database.setSavepoint();
             // 12-Nov-2019 : Commented by Jatin : for get current updated invoices 
             //invIds.addAll(BillingUtility.createInvoiceFromSubscription(subscriptions,NuLL,today));
-            Set<string> invoiceIds  = BillingUtility.createInvoiceFromSubscription(subscriptions,NuLL,today);
+            Set<string> invoiceIds  = BillingUtility.createInvoiceFromSubscription(subscriptions,NuLL,today,false);
             invIds.addAll(invoiceIds);
             system.debug('invoiceIds'+invoiceIds);
             // 12-Nov-2019 : Jatin: get current updated invoices ids then get related enrollments 

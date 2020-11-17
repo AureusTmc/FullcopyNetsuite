@@ -150,7 +150,7 @@ public with sharing class InvoiceGeneraterController {
                             nextBillingDate = listOfSub[0].Next_Bill_Date__c;
                         }
                         //14-Aug-2020:Nishi:If any person monthly billing not created for any further reason then we create that month billing 
-                        Set<string> invoiceIds = BillingUtility.createInvoiceFromSubscription(listOfSub,NULL,nextBillingDate);
+                        Set<string> invoiceIds = BillingUtility.createInvoiceFromSubscription(listOfSub,NULL,nextBillingDate,true);
                         Set<String> enrolmentIds = new Set<String>();
                         enrolmentIds.addAll(BillingUtility.getInvoiceLineItemEnrollmentIds(invoiceIds));
                         if(enrolmentIds != NULL && enrolmentIds.size() > 0){
