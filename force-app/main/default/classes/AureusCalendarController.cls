@@ -1274,7 +1274,7 @@ ed.teacherAttachmentId = attachList[0].Id;
         Country__c countryOfCentre = new Country__c();
         Organisation__c organisationOfCentre = new Organisation__c();
         Boolean isOssiaOrganization = false;
-        Boolean isSuccess;
+        Boolean isSuccess = false;
         Double totalAmount = 0;
         string recordTypeCustomer = ConstantsClass.recordTypeCustomer;
         string recordTypeCentre = ConstantsClass.centerRecTypeName;
@@ -1322,7 +1322,7 @@ ed.teacherAttachmentId = attachList[0].Id;
                                          FROM Package__c
                                          Where id =: packageId];
         
-        Invoice__c objectOfInvoice = new Invoice__c(Status__c=ConstantsClass.paidStatus, Due_Date__c = system.today().AddDays(ConstantsClass.addInvoiceDueDays),
+        Invoice__c objectOfInvoice = new Invoice__c(Status__c=ConstantsClass.dueStatus, Due_Date__c = system.today().AddDays(ConstantsClass.addInvoiceDueDays),
                                                     Invoice_Date__c =system.today(), Parent_Account__c = parentId,Center__c=centerId);
         //insert objectOfInvoice;
         if(listOfPackage.size() > 0){
@@ -1368,88 +1368,118 @@ ed.teacherAttachmentId = attachList[0].Id;
                 totalAmount = BillingUtility.roundOffAmount(totalAmount);
             }*/
            ////system.debug('@@@totalAmount roundoff '+totalAmount);
-            if(objectOfInvoice != NULL && totalAmount > 0 && String.isNotBlank(stripeId) && isChecked && String.isNotBlank(organisationOfCentre.Id)){
-                BillingUtility.StripeCharge objStripeCharge = new BillingUtility.StripeCharge();
-                 //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
-                //objStripeCharge = updateInvoice(objectOfInvoice, totalAmount, stripeId, countryOfCentre.Currency_Code__c, organisationOfCentre.Stripe_Base_Url__c, countryOfCentre.Stripe_Secret_Key__c);
-                 //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
-                                
-                objStripeCharge = updateInvoice(objectOfInvoice, totalAmount, stripeId, organisationOfCentre.country__r.Currency_Code__c, organisationOfCentre.Stripe_Base_Url__c, organisationOfCentre.Stripe_Secret_Key__c);
-                
-                if(objStripeCharge.statusCode == 200 && objStripeCharge.paid && bookingList.size() > 0){
+            if(objectOfInvoice != NULL && totalAmount > 0 &&  isChecked && String.isNotBlank(organisationOfCentre.Id)){
+                if(String.isNotBlank(stripeId)){
+                    BillingUtility.StripeCharge objStripeCharge = new BillingUtility.StripeCharge();
+                    //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+                    //objStripeCharge = updateInvoice(objectOfInvoice, totalAmount, stripeId, countryOfCentre.Currency_Code__c, organisationOfCentre.Stripe_Base_Url__c, countryOfCentre.Stripe_Secret_Key__c);
+                    //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+                                    
+                    objStripeCharge = updateInvoice(objectOfInvoice, totalAmount, stripeId, organisationOfCentre.country__r.Currency_Code__c, organisationOfCentre.Stripe_Base_Url__c, organisationOfCentre.Stripe_Secret_Key__c);
                     
-                    isSuccess = true;
-                    insert bookingList;
-                    insert objectOfInvoice;
-                    
-                    objectOfInvoice = [SELECT Id,Name,Parent_Account__c,Total_Amount__c FROM Invoice__c WHERE Id=: objectOfInvoice.Id];
-                    if(objectOfInvoice.id != null){
-                        for(Integer i = 0; i < bookingList.size(); i++){
-                            Double amount = BillingUtility.roundOffAmount(listOfPackage[0].unit_Fee__c);
-                            Double taxAmount = 0;
-                            if(amount > 0 && countryOfCentre.Tax_Rate__c > 0){
-                                taxAmount = BillingUtility.roundOffAmount(amount * (countryOfCentre.Tax_Rate__c / 100));
-                            }
-                            listOfInvoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,
-                                                                               Amount__c=amount,
-                                                                               package__c=packageId, 
-                                                                               Booking__c = bookingList[i].Id, month__c = System.today(), 
-                                                                               GST_Amount__c = taxAmount));
-                            
-                            //start: added by nishi:17-aug-2020: for if ossia Adhoc booking created then we added facility_Fee__c with unitfee
-                            // Double facilityAmount = 0;
-                            // Double facilitytaxAmount = 0;
-                            // if(isOssiaOrganization){
-                            //     facilityAmount = BillingUtility.roundOffAmount(listOfPackage[0].facility_Fee__c/4);
-                            //     if(facilityAmount > 0 && countryOfCentre.Tax_Rate__c > 0){
-                            //         facilitytaxAmount = BillingUtility.roundOffAmount(facilityAmount * (countryOfCentre.Tax_Rate__c / 100));
-                            //     }
-                                
+                    if(objStripeCharge.statusCode == 200 && objStripeCharge.paid && bookingList.size() > 0){
+                        objectOfInvoice.status__c = ConstantsClass.paidStatus;
+                        string invoiceId = createDueInvoice(objectOfInvoice,bookingList,listOfPackage,countryOfCentre.Tax_Rate__c);
+                        if(String.isNotBlank(invoiceId)){
+                            isSuccess = true;
+                            objectOfInvoice = [SELECT Id,Name,Parent_Account__c,Total_Amount__c FROM Invoice__c WHERE Id=: invoiceId];
+                            BillingUtility.createAttachment(new Set<String>{objectOfInvoice.Id});
+                            Payment__c objPayment = BillingUtility.fillPayment(objectOfInvoice.Parent_Account__c,objectOfInvoice.Id,totalAmount,ConstantsClass.successStatus); 
+                            objPayment.Transaction_ID__c = objStripeCharge.Id;
+                            objPayment.Method_of_Payment__c = ConstantsClass.cardModeType;
+                            insert objPayment;
+                            //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+                            // if(String.isNotBlank(countryOfCentre.Id)){
+                            //     BillingUtility.updateCharge(objStripeCharge.Id,objectOfInvoice.Name, countryOfCentre.Stripe_Base_Url__c, countryOfCentre.Stripe_Secret_Key__c);    
                             // }
-                            // if(facilityAmount >0){
-                            //     listOfInvoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,
-                            //             Amount__c=facilityAmount,
-                            //             package__c=packageId, 
-                            //             Booking__c = bookingList[i].Id, month__c = System.today(), 
-                            //             GST_Amount__c = facilitytaxAmount,
-                            //             Remarks__c = 'Facility Fee'));   
-                            // }     
-                            //end: added by nishi:17-aug-2020: for if ossia Adhoc booking created then we added facility_Fee__c with unitfee                                                                       
+                            //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
+                            if(String.isNotBlank(organisationOfCentre.Id)){
+                                BillingUtility.updateCharge(objStripeCharge.Id,objectOfInvoice.Name, organisationOfCentre.Stripe_Base_Url__c, organisationOfCentre.Stripe_Secret_Key__c);    
+                            }
+
+                            // added by jatin: 31-Dec-2019 : for adhoc invoice to push on the sage
+                            SageIntacctIntegrationUtility.adhocInvoice(objectOfInvoice.id);
                         }
+                    }else{
+                        isSuccess = false;
+                            //if ossia organisation adhoc should be allowed and invoice should be still generated even if the card is failed
+                        if(isOssiaOrganization){
+                            string invoiceId = createDueInvoice(objectOfInvoice,bookingList,listOfPackage,countryOfCentre.Tax_Rate__c);
+                            if(String.isNotBlank(invoiceId)){
+                                BillingUtility.createAttachment(new Set<String>{invoiceId});
+                                // added : for adhoc invoice to push on the sage
+                                SageIntacctIntegrationUtility.adhocInvoice(invoiceId);
+                            }
+                            isSuccess = true;
+                        }
+                           //if ossia organisation adhoc should be allowed and invoice should be still generated even if the card is failed
                     }
-                    if(listOfInvoiceLineItem.size() > 0){
-                        insert listOfInvoiceLineItem;
-                    }
-                    if(objectOfInvoice != NULL && String.isNotBlank(objectOfInvoice.Id)){
-                        BillingUtility.createAttachment(new Set<String>{objectOfInvoice.Id});
-                        
-                    }
-                    Payment__c objPayment = BillingUtility.fillPayment(objectOfInvoice.Parent_Account__c,objectOfInvoice.Id,totalAmount,ConstantsClass.successStatus); 
-                    objPayment.Transaction_ID__c = objStripeCharge.Id;
-                    objPayment.Method_of_Payment__c = ConstantsClass.cardModeType;
-                    insert objPayment;
-                     //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
-                    // if(String.isNotBlank(countryOfCentre.Id)){
-                    //     BillingUtility.updateCharge(objStripeCharge.Id,objectOfInvoice.Name, countryOfCentre.Stripe_Base_Url__c, countryOfCentre.Stripe_Secret_Key__c);    
-                    // }
-                     //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
-                    if(String.isNotBlank(organisationOfCentre.Id)){
-                        BillingUtility.updateCharge(objStripeCharge.Id,objectOfInvoice.Name, organisationOfCentre.Stripe_Base_Url__c, organisationOfCentre.Stripe_Secret_Key__c);    
-                    }
-
-                    // added by jatin: 31-Dec-2019 : for adhoc invoice to push on the sage
-                    SageIntacctIntegrationUtility.adhocInvoice(objectOfInvoice.id);
-
                 }else{
                     isSuccess = false;
+                     //19-Nov-2020:Send email with invoice attachment for if ossia organisation customers without card on file
+                     if(isOssiaOrganization){
+                        string invoiceId = createDueInvoice(objectOfInvoice,bookingList,listOfPackage,countryOfCentre.Tax_Rate__c);
+                        if(String.isNotBlank(invoiceId)){
+                            // added : for adhoc invoice to push on the sage
+                            SageIntacctIntegrationUtility.adhocInvoice(invoiceId);
+                            BillingUtility.sendEmailsForOssiaNonStripeCustomers(new Set<string>{invoiceId});
+                        }
+                        isSuccess = true;
+                    }
+                    //19-Nov-2020:Send email with invoice attachment for if ossia organisation customers without card on file
                 }
             }else{
                 isSuccess = false;
             }
-            
         }
         return isSuccess;
     }
+
+    public static string createDueInvoice(invoice__c objectOfInvoice,List<Booking__c> bookingList,List<Package__c> listOfPackage,Decimal taxRate){
+        insert objectOfInvoice;
+        if(bookingList != null && bookingList.size() > 0){
+            insert bookingList;
+            List<Invoice_Line_Item__c> listOfInvoiceLineItem = new List<Invoice_Line_Item__c>();
+            if(objectOfInvoice.id != null){
+                for(Integer i = 0; i < bookingList.size(); i++){
+                    Double amount =listOfPackage[0].unit_Fee__c;
+                    Double taxAmount = 0;
+                    if(amount > 0 && taxRate > 0){
+                        taxAmount = BillingUtility.roundOffAmount(amount * (taxRate / 100));
+                    }
+                    listOfInvoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,
+                                                                    Amount__c=BillingUtility.roundOffAmount(amount),
+                                                                    package__c=listOfPackage[0].id, 
+                                                                    Booking__c = bookingList[i].Id, month__c = System.today(), 
+                                                                    GST_Amount__c = taxAmount));
+                     //start: added by nishi:17-aug-2020: for if ossia Adhoc booking created then we added facility_Fee__c with unitfee
+                    // Double facilityAmount = 0;
+                    // Double facilitytaxAmount = 0;
+                    // if(isOssiaOrganization){
+                    //     facilityAmount = BillingUtility.roundOffAmount(listOfPackage[0].facility_Fee__c/4);
+                    //     if(facilityAmount > 0 && countryOfCentre.Tax_Rate__c > 0){
+                    //         facilitytaxAmount = BillingUtility.roundOffAmount(facilityAmount * (countryOfCentre.Tax_Rate__c / 100));
+                    //     }
+                        
+                    // }
+                    // if(facilityAmount >0){
+                    //     listOfInvoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,
+                    //             Amount__c=facilityAmount,
+                    //             package__c=packageId, 
+                    //             Booking__c = bookingList[i].Id, month__c = System.today(), 
+                    //             GST_Amount__c = facilitytaxAmount,
+                    //             Remarks__c = 'Facility Fee'));   
+                    // }     
+                    //end: added by nishi:17-aug-2020: for if ossia Adhoc booking created then we added facility_Fee__c with unitfee                                                                        
+                }
+            }
+            if(listOfInvoiceLineItem.size() > 0){
+                insert listOfInvoiceLineItem;
+            }
+            return objectOfInvoice.id;
+        }
+        return '';
+    } 
     
     Public static BillingUtility.StripeCharge updateInvoice(Invoice__c invoice, Decimal total, String stripeId, String currencyCode,String baseUrl, String apiKey){
         BillingUtility.StripeCharge objStripeCharge = new BillingUtility.StripeCharge();

@@ -188,7 +188,7 @@ public class UpgradeDowngradeController{
         // }
       
         //end: added by nishi:17-aug-2020: for if ossia Adhoc booking created then we added facility_Fee__c with unitfee
-        String stripeId = objSubLineItem.Subscription__r.Parent__r.Stripe_Customer_Id__c;
+        String stripeId = string.isNotBlank(objSubLineItem.Subscription__r.Parent__r.Stripe_Customer_Id__c) ? objSubLineItem.Subscription__r.Parent__r.Stripe_Customer_Id__c:'';
       
         //Summary Details for case for upgrade package.....
         upgradePackageCaseDetails.depositAmount = BillingUtility.roundOffAmount(depositeFee);
@@ -270,7 +270,7 @@ public class UpgradeDowngradeController{
         system.debug('invoiceAdjustmentMap'+invoiceAdjustmentMap);
         system.debug('totalAmount'+totalAmount);
         system.debug('depositeFee'+depositeFee);
-        if(String.isNotBlank(stripeId) && totalAmount > 0){
+        if(totalAmount > 0){
             /*if(isPromotionalEnrolment){
                 upgradePackageCaseDetails = invoiceForupgradePromotionalPackages( upgradePackageCaseDetails, enrolmentObj,
                                                 stripeId,   currencyCode, baseUrl, apiKey, objSubLineItem , depositeFee,
@@ -278,7 +278,8 @@ public class UpgradeDowngradeController{
             }else{*/    
                     upgradePackageCaseDetails = invoiceForupgradePackages( upgradePackageCaseDetails, enrolmentObj,
                                                 stripeId,   currencyCode, baseUrl, apiKey, objSubLineItem , depositeFee,
-                                                oldPackg,  newPackg,  effectDate,  timeslot,  taxRate, newTeacherId, invoiceAdjustmentMap,BillingUtility.roundOffAmount(totalAmount),isPromotionalEnrolment);
+                                                oldPackg,  newPackg,  effectDate,  timeslot,  taxRate, newTeacherId, invoiceAdjustmentMap,
+                                                BillingUtility.roundOffAmount(totalAmount),isPromotionalEnrolment,isOssiaOrganization);
             //}
             if(upgradePackageCaseDetails.isSuccess){
                 if(totalWithNoGST >0){
@@ -359,43 +360,67 @@ public class UpgradeDowngradeController{
     public static UpgradeEnrolmentProcessController.UpgradeCaseCreation  createChargeForCustomer(UpgradeEnrolmentProcessController.UpgradeCaseCreation upgradePackageCaseDetails,enrolment__c enrolmentObj,
                                                         String stripeId,string currencyCode,string baseUrl,string apiKey,Subscription_Line_Item__c objSubLineItem ,Decimal depositeFee,
                                                         Package__c oldPackg, Package__c newPackg, Date effectDate, Time timeslot, Decimal taxRate,string newTeacherId,
-                                                        Map<string,Decimal> invoiceAdjustmentMap,Decimal totalAmount,Boolean isPromotionalEnrolment, List<Invoice__c> listOfInvoice){
+                                                        Map<string,Decimal> invoiceAdjustmentMap,Decimal totalAmount,Boolean isPromotionalEnrolment, List<Invoice__c> listOfInvoice,Boolean isossiaOrganisation){
             Payment__c objPayment = new Payment__c();
             Invoice__c objInvoice = new Invoice__c();
             if(totalAmount > 0){
-                BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId,totalAmount, currencyCode, baseUrl, apiKey); 
-                if(chargeResponse.statusCode == 200 && chargeResponse.paid){
-                    Map<String,List<Credit_Memo__c>>  mapOfParentCreditMemo = createCreditMemoForCurrentMonthUpgradeProcess(listOfInvoice,invoiceAdjustmentMap,enrolmentObj,effectDate,objSubLineItem, taxRate, isPromotionalEnrolment,oldPackg.id);
-                    upgradePackageCaseDetails =  createUpgradedAmountInvoice(listOfInvoice,objSubLineItem, depositeFee,oldPackg,  newPackg,  effectDate,  taxRate, newTeacherId, enrolmentObj,mapOfParentCreditMemo,upgradePackageCaseDetails,invoiceAdjustmentMap,isPromotionalEnrolment);
-                    //commented by nishi: 28-oct-2020:for change requirement now we create one credit memo and adjust into upgraded invoice
-                    /*if(isPromotionalEnrolment){
-                        List<Credit_Memo__c> mapOfParentPrepaymentCreditMemo =createCreditMemoForPrepaymentInvoice(listOfInvoice,enrolmentObj, effectDate);
-                        adjustPendingCreditMemoDeposit(enrolmentObj,effectDate,upgradePackageCaseDetails.invoiceId,mapOfParentPrepaymentCreditMemo,false);
-                    }*/
-                    if(string.isNotBlank(upgradePackageCaseDetails.invoiceId)){
-                        objInvoice = [SELECT Id,Name,Total_Amount__c,Balance_Amount__c,Status__c, Parent_Account__c FROM Invoice__c WHERE Id =:upgradePackageCaseDetails.invoiceId];
-                        objInvoice.Status__c = constantsClass.paidStatus;
-                        update objInvoice;
-                    }
-                    upgradePackageCaseDetails.isSuccess = true;
-                    system.debug('@@@objInvoice '+objInvoice);
-                    if(!Test.isRunningTest() && String.isNotBlank(baseUrl) && String.isNotBlank(apiKey)){
-                        BillingUtility.updateCharge(chargeResponse.Id,objInvoice.Name, baseUrl, apiKey);                    
-                    }
-                    objPayment = BillingUtility.fillPayment(objInvoice.Parent_Account__c,objInvoice.Id,totalAmount,ConstantsClass.successStatus);
-                    objPayment.Transaction_ID__c = chargeResponse.Id;
-                    objPayment.Method_of_Payment__c = ConstantsClass.cardModeType;
-                    INSERT objPayment; 
-                    system.debug('@@@objPayment '+objPayment);
-                    if(objInvoice != NULL){
-                        BillingUtility.createAttachment(new Set<String>{objInvoice.Id});
-                    }
-                    system.debug('@@@upgradePackageCaseDetails.enrolObj '+upgradePackageCaseDetails.enrolObj );
-                    if(String.isNotBlank(objPayment.id) && String.isNotBlank(objInvoice.id)){
-                        SageIntacctIntegrationUtility.packageUpgrade(objInvoice.Id, objPayment.Id);
-                    }
+                if(string.isNotBlank(stripeId)){
+                    BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId,totalAmount, currencyCode, baseUrl, apiKey); 
+                    if(chargeResponse.statusCode == 200 && chargeResponse.paid){
+                        Map<String,List<Credit_Memo__c>>  mapOfParentCreditMemo = createCreditMemoForCurrentMonthUpgradeProcess(listOfInvoice,invoiceAdjustmentMap,enrolmentObj,effectDate,objSubLineItem, taxRate, isPromotionalEnrolment,oldPackg.id);
+                        upgradePackageCaseDetails =  createUpgradedAmountInvoice(listOfInvoice,objSubLineItem, depositeFee,oldPackg,  newPackg,  effectDate,  taxRate, newTeacherId, enrolmentObj,mapOfParentCreditMemo,upgradePackageCaseDetails,invoiceAdjustmentMap,isPromotionalEnrolment);
+                        //commented by nishi: 28-oct-2020:for change requirement now we create one credit memo and adjust into upgraded invoice
+                        /*if(isPromotionalEnrolment){
+                            List<Credit_Memo__c> mapOfParentPrepaymentCreditMemo =createCreditMemoForPrepaymentInvoice(listOfInvoice,enrolmentObj, effectDate);
+                            adjustPendingCreditMemoDeposit(enrolmentObj,effectDate,upgradePackageCaseDetails.invoiceId,mapOfParentPrepaymentCreditMemo,false);
+                        }*/
+                        if(string.isNotBlank(upgradePackageCaseDetails.invoiceId)){
+                            objInvoice = [SELECT Id,Name,Total_Amount__c,Balance_Amount__c,Status__c, Parent_Account__c FROM Invoice__c WHERE Id =:upgradePackageCaseDetails.invoiceId];
+                            objInvoice.Status__c = constantsClass.paidStatus;
+                            update objInvoice;
+                        }
+                        upgradePackageCaseDetails.isSuccess = true;
+                        system.debug('@@@objInvoice '+objInvoice);
+                        if(!Test.isRunningTest() && String.isNotBlank(baseUrl) && String.isNotBlank(apiKey)){
+                            BillingUtility.updateCharge(chargeResponse.Id,objInvoice.Name, baseUrl, apiKey);                    
+                        }
+                        objPayment = BillingUtility.fillPayment(objInvoice.Parent_Account__c,objInvoice.Id,totalAmount,ConstantsClass.successStatus);
+                        objPayment.Transaction_ID__c = chargeResponse.Id;
+                        objPayment.Method_of_Payment__c = ConstantsClass.cardModeType;
+                        INSERT objPayment; 
+                        system.debug('@@@objPayment '+objPayment);
+                        if(objInvoice != NULL){
+                            BillingUtility.createAttachment(new Set<String>{objInvoice.Id});
+                        }
+                        system.debug('@@@upgradePackageCaseDetails.enrolObj '+upgradePackageCaseDetails.enrolObj );
+                        if(String.isNotBlank(objPayment.id) && String.isNotBlank(objInvoice.id)){
+                            SageIntacctIntegrationUtility.packageUpgrade(objInvoice.Id, objPayment.Id);
+                        }
+                    }else{
+                        upgradePackageCaseDetails.isSuccess = false;
+                        if(isossiaOrganisation){
+                            Map<String,List<Credit_Memo__c>>  mapOfParentCreditMemo = createCreditMemoForCurrentMonthUpgradeProcess(listOfInvoice,invoiceAdjustmentMap,enrolmentObj,effectDate,objSubLineItem, taxRate, isPromotionalEnrolment,oldPackg.id);
+                            upgradePackageCaseDetails =  createUpgradedAmountInvoice(listOfInvoice,objSubLineItem, depositeFee,oldPackg,  newPackg,  effectDate,  taxRate, newTeacherId, enrolmentObj,mapOfParentCreditMemo,upgradePackageCaseDetails,invoiceAdjustmentMap,isPromotionalEnrolment);
+                            if(string.isNotBlank(upgradePackageCaseDetails.invoiceId)){
+                                upgradePackageCaseDetails.isSuccess = true;
+                            }
+                            if(objInvoice != NULL){
+                                BillingUtility.createAttachment(new Set<String>{objInvoice.Id});
+                            }
+                        }
+                    } 
                 }else{
                     upgradePackageCaseDetails.isSuccess = false;
+                     //19-Nov-2020:Send email with invoice attachment for if ossia organisation customers without card on file
+                    if(isossiaOrganisation){
+                        Map<String,List<Credit_Memo__c>>  mapOfParentCreditMemo = createCreditMemoForCurrentMonthUpgradeProcess(listOfInvoice,invoiceAdjustmentMap,enrolmentObj,effectDate,objSubLineItem, taxRate, isPromotionalEnrolment,oldPackg.id);
+                        upgradePackageCaseDetails =  createUpgradedAmountInvoice(listOfInvoice,objSubLineItem, depositeFee,oldPackg,  newPackg,  effectDate,  taxRate, newTeacherId, enrolmentObj,mapOfParentCreditMemo,upgradePackageCaseDetails,invoiceAdjustmentMap,isPromotionalEnrolment);
+                        if(string.isNotBlank(upgradePackageCaseDetails.invoiceId)){
+                            upgradePackageCaseDetails.isSuccess = true;
+                            BillingUtility.sendEmailsForOssiaNonStripeCustomers(new Set<string>{upgradePackageCaseDetails.invoiceId});
+                        }
+                    }
+                     //19-Nov-2020:Send email with invoice attachment for if ossia organisation customers without card on file
                 } 
             }else{
                 upgradePackageCaseDetails.isSuccess = false;
@@ -713,7 +738,7 @@ public static Map<String,List<Credit_Memo__c>> createCreditMemoForPrepaymentInvo
     public static UpgradeEnrolmentProcessController.UpgradeCaseCreation invoiceForupgradePackages(UpgradeEnrolmentProcessController.UpgradeCaseCreation upgradePackageCaseDetails,enrolment__c objEnrol,
                                                                         String stripeId, string currencyCode,string baseUrl,string apiKey,Subscription_Line_Item__c objSubLineItem ,Decimal depositeFee,
                                                                         Package__c oldPackg, Package__c newPackg, Date effectDate, Time timeslot, Decimal taxRate,string newTeacherId,
-                                                                        Map<string,Decimal> invoiceAdjustmentMap,Decimal totalAmount,boolean isPromotionalEnrolment){
+                                                                        Map<string,Decimal> invoiceAdjustmentMap,Decimal totalAmount,boolean isPromotionalEnrolment, boolean isOssiaOrganization){
          // added by nishi: 24-oct-2020:  We have created a new invoice for additional deposits and full lesson fees for the enhanced package for the remaining period in the current invoice. we create a credit memo for  the previous package for the remaining period
         // and then adjust this credit memo to the newly upgraded package invoice And the remaining invoice amount we charged via Stripe.                                                                
             List<Invoice__c> listOfInvoice = isPromotionalEnrolment ? getInvoiceDetails(objEnrol,effectDate.addmonths(1),objSubLineItem) : new  List<Invoice__c>();
@@ -721,7 +746,7 @@ public static Map<String,List<Credit_Memo__c>> createCreditMemoForPrepaymentInvo
             if(totalAmount > 0){
                 upgradePackageCaseDetails= createChargeForCustomer(upgradePackageCaseDetails, objEnrol,
                                         stripeId,   currencyCode, baseUrl, apiKey, objSubLineItem , depositeFee,
-                                        oldPackg,  newPackg,  effectDate,  timeslot,  taxRate, newTeacherId, invoiceAdjustmentMap,totalAmount,isPromotionalEnrolment,listOfInvoice);
+                                        oldPackg,  newPackg,  effectDate,  timeslot,  taxRate, newTeacherId, invoiceAdjustmentMap,totalAmount,isPromotionalEnrolment,listOfInvoice,isOssiaOrganization);
                 if(upgradePackageCaseDetails.isSuccess){
                     upgradePackageCaseDetails.enrolObj = updateEnrollment(objEnrol.id, newPackg.Id, timeslot, effectDate,newTeacherId);
                     upgradePackageCaseDetails.enrolObj = fetchEnrolment(objEnrol.id);

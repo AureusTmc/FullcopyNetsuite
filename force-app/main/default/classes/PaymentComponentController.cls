@@ -175,17 +175,25 @@ public class PaymentComponentController {
                             sendSingleEmailMessage.addAll(sendEmailConfirmation(invoiceList[0],isOssia));
                         }
                     }
+
                     /*if(creditMemosToUpsert.size()> 0 ){
                         upsert creditMemosToUpsert;
                     }*/
+
                     system.debug('paymentsToUpsert-->'+paymentsToUpsert);
                     if(paymentsToUpsert.size() > 0)
                         UPSERT paymentsToUpsert;
                     if(invoiceList.size() > 0)
                         update  invoiceList[0];
                     system.debug('paymentsToUpsert-->'+paymentsToUpsert);
-                    
-                system.debug('paymentsToUpsert-->'+paymentsToUpsert);
+                    //for send Payment confiramtion email accoding to organisation
+                    Messaging.SendEmailResult[] results = Messaging.sendEmail(sendSingleEmailMessage,FALSE);
+                    if (results[0].success) {
+                        return new invoiceWrapper(200,'Credit Memo Amount Used Sucessfully');
+                    } else {
+                        return new invoiceWrapper(200,'Credit Memo Amount Used Sucessfully. But Some Internal Issue Email Not Send');
+                    }
+                    //for send Payment confiramtion email accoding to organisation
                 }
             }catch(Exception e){
                 system.debug('error'+e.getStackTraceString()+'-'+e.getMessage());
@@ -223,12 +231,12 @@ public class PaymentComponentController {
                 personContactId = invObject.Parent_Account__r.PersonContactId;
             }
             if(isOssiOrganisation){
-                if(mapOfEmailTemplate.containsKey('Ossia_Payment_Collection_Failed')){
-                    sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(mapOfEmailTemplate.get('Ossia_Payment_Collection_Failed').Id,personContactId,invObject.id,centerId));
+                if(mapOfEmailTemplate.containsKey('Ossia_Payment_Collection_Via_Pay_At_Center')){
+                    sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(mapOfEmailTemplate.get('Ossia_Payment_Collection_Via_Pay_At_Center').Id,personContactId,invObject.id,centerId));
                 }
             }else{
-                if(mapOfEmailTemplate.containsKey('Payment_Collection_Failed')){
-                    sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(mapOfEmailTemplate.get('Payment_Collection_Failed').Id,personContactId,invObject.id,centerId));
+                if(mapOfEmailTemplate.containsKey('Payment_Collection_Via_Pay_At_Center')){
+                    sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(mapOfEmailTemplate.get('Payment_Collection_Via_Pay_At_Center').Id,personContactId,invObject.id,centerId));
                 }   
             }
         }

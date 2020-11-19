@@ -1741,7 +1741,7 @@ public with sharing class OssiaCenterCalendarController {
              if(enrolSummary.containsKey('currentCenterName')){
                 summary.oldCenterName = enrolSummary.get('currentCenterName');
             }
-            if(enrolSummary.containsKey('currentCenter')){
+            if(enrolSummary.containsKey('currentTeacherId')){
                 summary.oldCenterId = enrolSummary.get('currentCenter');
             }
              if(enrolSummary.containsKey('currentTeacher')){

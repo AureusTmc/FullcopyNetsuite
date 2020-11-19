@@ -1729,11 +1729,11 @@ public class ClassEditController {
                 if(acc.RecordType.Name == recordTypeCustomer){
                     if(String.isNotBlank(acc.Parent__c) && acc.Also_a_Student__c == false){
                         parentId = acc.Parent__c;
-                        stripeId = acc.Parent__r.Stripe_Customer_Id__c;
+                        stripeId = string.isNotBlank(acc.Parent__r.Stripe_Customer_Id__c)?acc.Parent__r.Stripe_Customer_Id__c:'';
                         system.debug('stripeId...'+stripeId);
                     }else if(String.isBlank(acc.Parent__c) && acc.Also_a_Student__c == true){
                         parentId = acc.Id;
-                        stripeId = acc.Stripe_Customer_Id__c;
+                        stripeId = string.isNotBlank(acc.Stripe_Customer_Id__c)?acc.Stripe_Customer_Id__c:'';
                         System.debug('parent stripeId...'+stripeId);
                     }    
                 }else if(acc.RecordType.Name == recordTypeCentre){
@@ -1789,89 +1789,65 @@ public class ClassEditController {
                 totalAmount += gstAdded;
             }
             
-            if(objectOfInvoice != NULL && totalAmount > 0 && String.isNotBlank(stripeId) && isChecked && String.isNotBlank(organisationOfCentre.Id)){
-                BillingUtility.StripeCharge objStripeCharge = new BillingUtility.StripeCharge();
-                objStripeCharge = AureusCalendarController.updateInvoice(objectOfInvoice, totalAmount, stripeId, organisationOfCentre.country__r.Currency_Code__c, organisationOfCentre.Stripe_Base_Url__c, organisationOfCentre.Stripe_Secret_Key__c);
-                system.debug('objStripeCharge'+objStripeCharge);  
-                if(objStripeCharge.statusCode == 200 && objStripeCharge.paid){
-                    objectOfInvoice.status__c = ConstantsClass.paidStatus;
-                    insert objectOfInvoice;
-                    if(bookingList != null && bookingList.size() > 0){
-                        insert bookingList;
-                        if(objectOfInvoice.id != null){
-                            for(Integer i = 0; i < bookingList.size(); i++){
-                                Double amount = listOfPackage[0].unit_Fee__c;
-                                Double taxAmount = 0;
-                                if(amount > 0 && countryOfCentre.Tax_Rate__c > 0){
-                                    taxAmount = BillingUtility.roundOffAmount(amount * (countryOfCentre.Tax_Rate__c / 100));
-                                }
-                                listOfInvoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,
-                                                                                   Amount__c= BillingUtility.roundOffAmount(amount),
-                                                                                   package__c=packageId, 
-                                                                                   Booking__c = bookingList[i].Id, month__c = System.today(), 
-                                                                                   GST_Amount__c = taxAmount));
+            if(objectOfInvoice != NULL && totalAmount > 0 && isChecked && String.isNotBlank(organisationOfCentre.Id)){
+                if(String.isNotBlank(stripeId)){ 
+                    BillingUtility.StripeCharge objStripeCharge = new BillingUtility.StripeCharge();
+                    objStripeCharge = AureusCalendarController.updateInvoice(objectOfInvoice, totalAmount, stripeId, organisationOfCentre.country__r.Currency_Code__c, organisationOfCentre.Stripe_Base_Url__c, organisationOfCentre.Stripe_Secret_Key__c);
+                    system.debug('objStripeCharge'+objStripeCharge);  
+                    if(objStripeCharge.statusCode == 200 && objStripeCharge.paid){
+                        objectOfInvoice.status__c = ConstantsClass.paidStatus;
+                        string invoiceId = AureusCalendarController.createDueInvoice(objectOfInvoice,bookingList,listOfPackage,countryOfCentre.Tax_Rate__c);
+                        if(String.isNotBlank(invoiceId)){
+                            isSuccess = true;
+                            system.debug('objectOfInvoice'+objectOfInvoice); 
+                            objectOfInvoice = [SELECT Id,Name,Parent_Account__c,Total_Amount__c ,status__c FROM Invoice__c WHERE Id=: objectOfInvoice.Id];
+                            system.debug('listOfInvoiceLineItem'+listOfInvoiceLineItem); 
+                            Payment__c objPayment = BillingUtility.fillPayment(objectOfInvoice.Parent_Account__c,objectOfInvoice.Id,totalAmount,ConstantsClass.successStatus); 
+                            objPayment.Transaction_ID__c = objStripeCharge.Id;
+                            objPayment.Method_of_Payment__c = ConstantsClass.cardModeType;
+                            insert objPayment;
+                            system.debug('objPayment'+objPayment); 
+                            if(String.isNotBlank(organisationOfCentre.Id)){
+                                BillingUtility.updateCharge(objStripeCharge.Id,objectOfInvoice.Name, organisationOfCentre.Stripe_Base_Url__c, organisationOfCentre.Stripe_Secret_Key__c);    
+                            }
+                            if(objectOfInvoice != NULL && String.isNotBlank(objectOfInvoice.Id)){
+                                BillingUtility.createAttachment(new Set<String>{objectOfInvoice.Id});
+                                // added : for adhoc invoice to push on the sage
+                                SageIntacctIntegrationUtility.adhocInvoice(objectOfInvoice.id);
                             }
                         }
-                        if(listOfInvoiceLineItem.size() > 0){
-                            insert listOfInvoiceLineItem;
+                    }else{
+                        isSuccess = false;
+                            //if ossia organisation adhoc should be allowed and invoice should be still generated even if the card is failed
+                        if(isOssiaOrganization){
+                            string invoiceId = AureusCalendarController.createDueInvoice(objectOfInvoice,bookingList,listOfPackage,countryOfCentre.Tax_Rate__c);
+                            if(String.isNotBlank(invoiceId)){
+                                BillingUtility.createAttachment(new Set<String>{invoiceId});
+                                // added : for adhoc invoice to push on the sage
+                                SageIntacctIntegrationUtility.adhocInvoice(invoiceId);
+                            }
+                            isSuccess = true;
                         }
-                    }
-                    isSuccess = true;
-                    system.debug('objectOfInvoice'+objectOfInvoice); 
-                    objectOfInvoice = [SELECT Id,Name,Parent_Account__c,Total_Amount__c ,status__c FROM Invoice__c WHERE Id=: objectOfInvoice.Id];
-                    system.debug('listOfInvoiceLineItem'+listOfInvoiceLineItem); 
-                    Payment__c objPayment = BillingUtility.fillPayment(objectOfInvoice.Parent_Account__c,objectOfInvoice.Id,totalAmount,ConstantsClass.successStatus); 
-                    objPayment.Transaction_ID__c = objStripeCharge.Id;
-                    objPayment.Method_of_Payment__c = ConstantsClass.cardModeType;
-                    insert objPayment;
-                    system.debug('objPayment'+objPayment); 
-                    if(String.isNotBlank(organisationOfCentre.Id)){
-                        BillingUtility.updateCharge(objStripeCharge.Id,objectOfInvoice.Name, organisationOfCentre.Stripe_Base_Url__c, organisationOfCentre.Stripe_Secret_Key__c);    
-                    }
-                    if(objectOfInvoice != NULL && String.isNotBlank(objectOfInvoice.Id)){
-                        BillingUtility.createAttachment(new Set<String>{objectOfInvoice.Id});
-                        // added : for adhoc invoice to push on the sage
-                        SageIntacctIntegrationUtility.adhocInvoice(objectOfInvoice.id);
+                         //if ossia organisation adhoc should be allowed and invoice should be still generated even if the card is failed
                     }
                     
                 }else{
+                    isSuccess = false;
+                    //19-Nov-2020:Send email with invoice attachment for if ossia organisation customers without card on file
                     if(isOssiaOrganization){
-                        insert objectOfInvoice;
-                        if(bookingList != null && bookingList.size() > 0){
-                            insert bookingList;
-                            if(objectOfInvoice.id != null){
-                                for(Integer i = 0; i < bookingList.size(); i++){
-                                    Double amount =listOfPackage[0].unit_Fee__c;
-                                    Double taxAmount = 0;
-                                    if(amount > 0 && countryOfCentre.Tax_Rate__c > 0){
-                                        taxAmount = BillingUtility.roundOffAmount(amount * (countryOfCentre.Tax_Rate__c / 100));
-                                    }
-                                    listOfInvoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,
-                                                                                       Amount__c=BillingUtility.roundOffAmount(amount),
-                                                                                       package__c=packageId, 
-                                                                                       Booking__c = bookingList[i].Id, month__c = System.today(), 
-                                                                                       GST_Amount__c = taxAmount));
-                                }
-                            }
-                            if(listOfInvoiceLineItem.size() > 0){
-                                insert listOfInvoiceLineItem;
-                            }
-                        }
-                        if(objectOfInvoice != NULL && String.isNotBlank(objectOfInvoice.Id)){
-                            BillingUtility.createAttachment(new Set<String>{objectOfInvoice.Id});
+                        string invoiceId = AureusCalendarController.createDueInvoice(objectOfInvoice,bookingList,listOfPackage,countryOfCentre.Tax_Rate__c);
+                        if(String.isNotBlank(invoiceId)){
                             // added : for adhoc invoice to push on the sage
-                            SageIntacctIntegrationUtility.adhocInvoice(objectOfInvoice.id);
+                            SageIntacctIntegrationUtility.adhocInvoice(invoiceId);
+                            BillingUtility.sendEmailsForOssiaNonStripeCustomers(new Set<string>{invoiceId});
                         }
                         isSuccess = true;
-                    }else{
-                        isSuccess = false;
                     }
+                    //19-Nov-2020:Send email with invoice attachment for if ossia organisation customers without card on file
                 }
-                
             }else{
                 isSuccess = false;
             }
-            
             
             
             
@@ -1879,6 +1855,8 @@ public class ClassEditController {
         system.debug('isSuccess'+isSuccess); 
         return isSuccess;
     }
+
+    
     
 
     public static boolean validateBookingIsAvailable(string grouplessonId){
