@@ -2809,8 +2809,17 @@ public class EnrolmentProcessForClassCtrl {
     Public void signAgreement(){
         documentDetails = new PandaDocUtility.CreateDocument();
         if(String.isNotBlank(enrolDetails.parent.id)){
-            String body = fillCreateDocumentWrapper(enrolDetails);  
-            documentDetails = PandaDocUtility.createDocument(body);   
+            String body ='';
+            // added by nishi: 23-Nov-2020: for aureus Panda doc template is changed
+            if(isOssia){
+                body = fillCreateDocumentWrapper(enrolDetails);  
+            }else{
+                body = fillCreateAureusDocumentWrapper(enrolDetails);  
+            }
+
+            if(string.isnotBlank(body)){
+                documentDetails = PandaDocUtility.createDocument(body); 
+            }  
         }  
          
     }
@@ -2862,7 +2871,77 @@ public class EnrolmentProcessForClassCtrl {
             }
         }
     }
-    
+    // added by nishi: 23-Nov-2020: for Aureus student panda doc template is changes now
+    private String fillCreateAureusDocumentWrapper(EnrolDetails enrolDetail){        
+        String jsonBody = '';       
+        DocumentWrapper.Fields field;    
+        DocumentWrapper.Parent_Guardian_Name parent_GuardianName;
+        DocumentWrapper.Parent_Guardian_Name enrolmentdate;       
+        DocumentWrapper.recipients recipient = new DocumentWrapper.recipients();  
+        DocumentWrapper.Tokens token = new DocumentWrapper.Tokens();        
+        List<DocumentWrapper.Rows> rows = new List<DocumentWrapper.Rows>();     
+        List<DocumentWrapper.Sections> sections = new List<DocumentWrapper.Sections>();     
+        List<DocumentWrapper.PricingTable> pricingTables = new List<DocumentWrapper.PricingTable>();        
+        DocumentWrapper.CreateDocument createDocWrapper = new DocumentWrapper.CreateDocument();     
+                
+        createDocWrapper.template_uuid = templateId;   
+        createDocWrapper.folder_uuid = folderId;
+        if(String.isNotBlank(enrolDetail.parent.Id)){       
+            createDocWrapper.metadata.salesforceAccount_id = enrolDetail.parent.Id;     
+            recipient.first_name = enrolDetail.parent.firstName;        
+            recipient.last_name = enrolDetail.parent.lastName;      
+            recipient.email = enrolDetail.parent.email;     
+            parent_GuardianName =  new DocumentWrapper.Parent_Guardian_Name(enrolDetail.parent.firstName +' '+enrolDetail.parent.lastName, 'Parent Name');  
+            enrolmentdate =  new DocumentWrapper.Parent_Guardian_Name(system.now().format('dd-MM-yyyy'), 'Enrolment Date');
+            createDocWrapper.fields = new DocumentWrapper.CustomField(parent_GuardianName,enrolmentdate);       
+            recipient.role = 'Client';  
+            token.name='Parent Name';
+            token.value=enrolDetail.parent.firstName +' '+enrolDetail.parent.lastName;
+            createDocWrapper.tokens = new List<DocumentWrapper.Tokens>();       
+            createDocWrapper.tokens.add(token);      
+
+            createDocWrapper.recipients = new List<DocumentWrapper.Recipients>();       
+            createDocWrapper.recipients.add(recipient);     
+        }       
+        if(enrolDetail.enrolments.size() > 0){      
+            DateTime enrolmentDateTime;     
+            createDocWrapper.name = '';     
+            DocumentWrapper.Rows row;  
+            for(Enrolment__c enrolmentObj:[SELECT Id, Name, Lessons_Start_Date__c, Lesson_Start_time__c, Student__r.FirstName, Student__r.LastName, Package__r.Name 
+                                           FROM Enrolment__c WHERE Id IN: enrolDetail.enrolments.keySet()]){
+                enrolmentDateTime = DateTime.newInstance(enrolmentObj.Lessons_Start_Date__c, enrolmentObj.Lesson_Start_time__c);  
+                createDocWrapper.name += enrolmentObj.name + '-';       
+                row = new DocumentWrapper.Rows(new DocumentWrapper.Data(enrolmentObj.Student__r.FirstName + ' ' + enrolmentObj.Student__r.LastName), 
+                                                new DocumentWrapper.CustomFields(enrolmentObj.Package__r.Name, enrolmentDateTime.format('EEE @ hh:mm a'),  enrolmentDateTime.format('dd-MM-yyyy'),
+                                                                                enrolmentObj.Package__r.Name, enrolmentDateTime.format('EEE @ hh:mm a'),  enrolmentDateTime.format('dd-MM-yyyy')));      
+                rows.add(row);   
+            }    
+                
+            sections.add(new DocumentWrapper.Sections('Sample Title', rows));       
+            pricingTables.add(new DocumentWrapper.PricingTable('PricingTable1', sections));     
+            createDocWrapper.pricing_tables = new List<DocumentWrapper.PricingTable>();     
+            createDocWrapper.pricing_tables = pricingTables;        
+            createDocWrapper.name += 'StudentPolicy';       
+                    
+        }       
+                
+        if(String.isNotBlank(createDocWrapper.name)){       
+            jsonBody = JSON.Serialize(createDocWrapper).replaceAll('pandadoc_Default_Section_XYZ','default');   
+            jsonBody = jsonBody.replaceAll('pandadoc_Currency_Code_XYZ','currency'); 
+            jsonBody = jsonBody.replaceAll('parentGuardianName','Parent/Guardian Name'); 
+            jsonBody = jsonBody.replaceAll('Selectdate','Select date');     
+            System.debug('createDocWrapper '+createDocWrapper);     
+            System.debug('createDocWrapper '+createDocWrapper.metadata);        
+            jsonBody = jsonBody.replaceAll('salesforceAccount_id','salesforce.account_id');     
+            JSONBody = jsonBody;        
+        }       
+                
+        System.debug('@@@jsonBody'+jsonBody);       
+                
+            
+                
+        return jsonBody;        
+    } 
     private String fillCreateDocumentWrapper(EnrolDetails enrolDetail){        
         String jsonBody = '';       
         DocumentWrapper.Fields field;       

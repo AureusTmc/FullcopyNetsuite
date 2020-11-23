@@ -8355,12 +8355,13 @@ Enrol now
                                             $('#cancelSubscriptionBtn').removeClass('slds-hide');   
                                              //@Nishi on 12-Nov-2020 to check An advance invoice is generated Change Or Package_Process_Status__c is Pending
                                             // then we disable Change Centre Button for group class
+                                            /*commmented by nishi:23-Nov-2020: for deployment of the Ossia enhancements not include anything from Enhancements part -2 
                                             if(result.isChangeEnrolmentCentre){
                                                 $('#updateCentreGroupBtn').attr('disabled',result.isEnableChangeCentre); 
                                                 $('#updateCentreGroupBtn').removeClass('slds-hide');
                                                 var arr = result.startDate.split('-');
                                                 
-                                            }
+                                            }commmented by nishi:23-Nov-2020: for deployment of the Ossia enhancements not include anything from Enhancements part -2 */
                                             //@Nishi on 12-Nov-2020 to check An advance invoice is generated Change Or Package_Process_Status__c is Pending
                                             // then we disable Change Centre Button   
                                         }else{
