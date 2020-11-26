@@ -381,9 +381,11 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                             listOfPayments.add(objPayment);
                         }
                     }
+                     /*Commented by nishi:26-nov-2020 for deploye invoice date changes
                     if(isOssiaNonStripeCustomer){
                         BillingUtility.sendEmailsForOssiaNonStripeCustomers(new Set<string>{objInvoice.Id});
                     }
+                    */
                 }
             }
         }else if(depositAmount <= 0){
@@ -499,22 +501,30 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                             }
                         }
                     }else{
-                        if(invoiceobj.invoice_type__c == 'Recurring'){
-                            string invoiceMonth ='';
-                            if(invoiceobj.Invoice_Date__c.month() == lastLessonDateObj.month())
-                                invoiceMonth = 'Current';
-                            if(nextBillDate >= nextMonthDate && lastLessonDateObj.month() < nextMonthDate.addMonths(-1).month() && invoiceobj.Invoice_Date__c.month() == nextMonthDate.addMonths(-1).month() )
-                                invoiceMonth = 'Next Month';
-                            system.debug('invoiceMonth'+invoiceMonth);
-                            if(string.isnotBlank(invoiceMonth)){
-                                mapofinvoice.put(invoiceMonth,invoiceobj);
+                         if(invoiceobj.invoice_type__c == 'Recurring'){
+                        //    string invoiceMonth ='';
+                        //     if(invoiceobj.Invoice_Date__c.month() == lastLessonDateObj.month())
+                        //         invoiceMonth = 'Current';
+                        //     if(nextBillDate >= nextMonthDate && lastLessonDateObj.month() < nextMonthDate.addMonths(-1).month() && invoiceobj.Invoice_Date__c.month() == nextMonthDate.addMonths(-1).month() )
+                        //         invoiceMonth = 'Next Month';
+                        //     system.debug('invoiceMonth'+invoiceMonth);
+                        //     if(string.isnotBlank(invoiceMonth)){
+                        //         mapofinvoice.put(invoiceMonth,invoiceobj);
                                 for(Invoice_line_item__c objlineitem: invoiceobj.Invoice_line_items__r){
-                                    updateInvoiceLineItem.put(objlineitem.id,objlineitem);
-                                    system.debug('objlineitem'+objlineitem);
-                                    if(!objlineitem.Is_Discount__c)
-                                        mapofinvoicelineitem.put(invoiceMonth,objlineitem);
+                                    string invoiceMonth ='';
+                                    if(objlineitem.month__c.month() == effectiveDate.month())
+                                        invoiceMonth = 'Current';
+                                    if(nextBillDate >= nextMonthDate && effectiveDate.month() < nextMonthDate.addMonths(-1).month() && objlineitem.month__c.month() == nextMonthDate.addMonths(-1).month() )
+                                       invoiceMonth = 'Next Month';
+                                    if(string.isnotBlank(invoiceMonth)){
+                                       mapofinvoice.put(invoiceMonth,invoiceobj);
+                                        updateInvoiceLineItem.put(objlineitem.id,objlineitem);
+                                        system.debug('objlineitem'+objlineitem);
+                                        if(!objlineitem.Is_Discount__c)
+                                            mapofinvoicelineitem.put(invoiceMonth,objlineitem);
+                                    }
                                 }
-                            }
+                            //}
                         }
                     }
                 }

@@ -3535,7 +3535,8 @@ Selected by the user from the calendar UI.
                                                 Month__C >=: firstDate AND Month__C <=: lastDate 
                                                 //commented by nishi: 20-Aug-2020: Createddate >=: firstDate AND createddate <=: lastDate 
                                                 AND Booking__c = NULL)
-                                         AND Invoice_Date__c >=: firstDate AND Invoice_Date__c <=: lastDate AND Status__c = 'Paid' 
+                                         //AND Invoice_Date__c >=: firstDate 
+                                         AND Invoice_Date__c <=: lastDate AND Status__c = 'Paid' 
                                          Order By total_amount__c ];
                                         //system.debug('listOfInvoice'+listOfInvoice);
         if(listOfInvoice.size()>0){
@@ -4045,7 +4046,7 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
         return [SELECT Booking_Date__c,Type__c FROM Booking__c 
                 WHERE Enrolment__c=: enrolId 
                 AND Booking_Date__c >=: lastLessonDateObj 
-                AND Booking_Date__c <=: nextBillingDate
+                AND Booking_Date__c <: nextBillingDate
                 AND (Type__c='Regular' or Type__c ='Ad-hoc') 
                 and (Status__c = :ConstantsClass.statusScheduled OR Status__c = :ConstantsClass.statusPending)];
     }   

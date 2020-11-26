@@ -412,6 +412,7 @@ public class UpgradeDowngradeController{
                 }else{
                     upgradePackageCaseDetails.isSuccess = false;
                      //19-Nov-2020:Send email with invoice attachment for if ossia organisation customers without card on file
+                    /*Commented by nishi:26-nov-2020 for deploye invoice date changes
                     if(isossiaOrganisation){
                         Map<String,List<Credit_Memo__c>>  mapOfParentCreditMemo = createCreditMemoForCurrentMonthUpgradeProcess(listOfInvoice,invoiceAdjustmentMap,enrolmentObj,effectDate,objSubLineItem, taxRate, isPromotionalEnrolment,oldPackg.id);
                         upgradePackageCaseDetails =  createUpgradedAmountInvoice(listOfInvoice,objSubLineItem, depositeFee,oldPackg,  newPackg,  effectDate,  taxRate, newTeacherId, enrolmentObj,mapOfParentCreditMemo,upgradePackageCaseDetails,invoiceAdjustmentMap,isPromotionalEnrolment);
@@ -419,7 +420,7 @@ public class UpgradeDowngradeController{
                             upgradePackageCaseDetails.isSuccess = true;
                             BillingUtility.sendEmailsForOssiaNonStripeCustomers(new Set<string>{upgradePackageCaseDetails.invoiceId});
                         }
-                    }
+                    }*/
                      //19-Nov-2020:Send email with invoice attachment for if ossia organisation customers without card on file
                 } 
             }else{
@@ -544,7 +545,7 @@ public class UpgradeDowngradeController{
                 }
             }
         }        
-        BillingUtility.adjustPendingCreditMemoDeposit(invoiceList, new Set<String>{invoiceId}, new Set<String>{enrolmentObj.Parent__c},mapOfParentEnrolmentLastDate,getTotalAmount,mapOfParentCreditMemo,new Map<String, Boolean>());
+        BillingUtility.adjustPendingCreditMemoDeposit(invoiceList, new Set<String>{invoiceId}, new Set<String>{enrolmentObj.Parent__c},mapOfParentEnrolmentLastDate,getTotalAmount,mapOfParentCreditMemo,new Map<String, Boolean>{enrolmentObj.Parent__c=>true});
     }
 
      //added by nishi: 23-oct-2020: if enrolment package type is prepayament and promo and Promotion_Discount__c found then we calculate discount amount for regular booking  and create crdit memo  all prepayement effective months then adjusted into next monthbilling
@@ -792,21 +793,30 @@ public static Map<String,List<Credit_Memo__c>> createCreditMemoForPrepaymentInvo
                 }
             }else{
                 if(invoiceobj.invoice_type__c == 'Recurring'){
-                    string invoiceMonth ='';
-                    if(invoiceobj.Invoice_Date__c.month() == effectiveDate.month())
-                        invoiceMonth = 'Current';
-                    if(nextBillDate >= nextMonthDate && effectiveDate.month() < nextMonthDate.addMonths(-1).month() && invoiceobj.Invoice_Date__c.month() == nextMonthDate.addMonths(-1).month() )
-                        invoiceMonth = 'Next Month';
-                    system.debug('invoiceMonth'+invoiceMonth);
-                    if(string.isnotBlank(invoiceMonth)){
-                        mapofinvoice.put(invoiceMonth,invoiceobj);
+                    //string invoiceMonth ='';
+                    // if(invoiceobj.Invoice_Date__c.month() == effectiveDate.month())
+                    //     invoiceMonth = 'Current';
+                    // if(nextBillDate >= nextMonthDate && effectiveDate.month() < nextMonthDate.addMonths(-1).month() && invoiceobj.Invoice_Date__c.month() == nextMonthDate.addMonths(-1).month() )
+                    //     invoiceMonth = 'Next Month';
+                    // system.debug('invoiceMonth'+invoiceMonth);
+                    // if(string.isnotBlank(invoiceMonth)){
+                    //     mapofinvoice.put(invoiceMonth,invoiceobj);
                         for(Invoice_line_item__c objlineitem: invoiceobj.Invoice_line_items__r){
-                            updateInvoiceLineItem.put(objlineitem.id,objlineitem);
-                            system.debug('objlineitem'+objlineitem);
-                            if(!objlineitem.Is_Discount__c)
-                                mapofinvoicelineitem.put(invoiceMonth,objlineitem);
+                            string invoiceMonth ='';
+                            if(objlineitem.month__c.month() == effectiveDate.month())
+                             invoiceMonth = 'Current';
+                            if(nextBillDate >= nextMonthDate && effectiveDate.month() < nextMonthDate.addMonths(-1).month() && objlineitem.month__c.month() == nextMonthDate.addMonths(-1).month() )
+                                invoiceMonth = 'Next Month';
+                            if(string.isnotBlank(invoiceMonth)){
+                                mapofinvoice.put(invoiceMonth,invoiceobj);
+                                updateInvoiceLineItem.put(objlineitem.id,objlineitem);
+                                system.debug('objlineitem'+objlineitem);
+                                if(!objlineitem.Is_Discount__c)
+                                    mapofinvoicelineitem.put(invoiceMonth,objlineitem);
+                            }
+                            
                         }
-                    }
+                    //}
                 }
             }
             

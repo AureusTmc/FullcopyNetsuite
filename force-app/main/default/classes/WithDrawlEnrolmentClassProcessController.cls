@@ -16,96 +16,104 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
     public WithDrawlEnrolmentClassProcessController(String bookingId, String endDate, String lastLessonDate, 
                                                 String myCase, String redirectCase) {
         this.bookingId = bookingId;
-        if(String.isNotBlank(endDate)){
-            this.endDate = Date.valueOf(endDate);
-        }
-        if(String.isNotBlank(lastLessonDate)){
-            this.lastLessonDate = Date.valueOf(lastLessonDate);
-        }
-        this.myCase =myCase;
-        this.redirectCase =redirectCase;
-        enrolObj = new Enrolment__c();
-        bookingListToDelete = new List<Booking__c>();
-    }
+                                                    if(String.isNotBlank(endDate)){
+                                                        this.endDate = Date.valueOf(endDate);
+                                                    }
+                                                    if(String.isNotBlank(lastLessonDate)){
+                                                        this.lastLessonDate = Date.valueOf(lastLessonDate);
+                                                    }
+                                                    this.myCase =myCase;
+                                                    this.redirectCase =redirectCase;
+                                                    enrolObj = new Enrolment__c();
+                                                    bookingListToDelete = new List<Booking__c>();
+                                                }
     //Init Method where all the process gets Start...
     Public String initProcess(){
         Boolean isSuccess = true;
         String caseIdToReturn;
-        Country__c countryObj = new Country__c();
-        string enrollmentId;
-        if(String.isNotBlank(bookingId)){
-            enrolObj = AdvanceActionsHelper.fetchEnrolmentDetailsFromBooking(bookingId);
-            if(String.isNotBlank(enrolObj.Center__r.Country__r.Id)){
-            countryObj = enrolObj.Center__r.Country__r;
-        }
-             enrollmentId = enrolObj.Id;
-        }
-        date nextBillDate =   AdvanceActionsHelper.fetchNextBillDateFromEnrolment(enrolObj);
-       //system.debug('@@@enrolmentObj.id'+enrolObj.id);
-        Enrolment__c enroll = new Enrolment__c();
-         if(String.isNotBlank(enrollmentId) && endDate != NULL && lastLessonDate  != NULL){
-            enroll.Id = enrollmentId;
-            enroll = AdvanceActionsHelper.initEnroll(enroll);
-            enroll.Package_Process_Type__c = ConstantsClass.enrollmentProcessCancelType;
-            enroll.Effective_Date__c = lastLessonDate;
-            enroll.Package_Process_Request_Date__c = System.today();
-            enroll.Notice_Period_Start_Date__c = endDate.addDays(-30);
-            enroll.Notice_Period_End_Date__c = endDate;
-            enroll.Advance_Action_Requested_By__c = Userinfo.getUserId();
-            if(lastLessonDate >= nextBillDate){
-                enroll.Package_Process_Status__c = ConstantsClass.enrollmentProcessPendingStatus;
+        Savepoint withdrawalSavePoint;
+        try{
+            withdrawalSavePoint = Database.setSavepoint();
+            Country__c countryObj = new Country__c();
+            string enrollmentId;
+            if(String.isNotBlank(bookingId)){
+                enrolObj = AdvanceActionsHelper.fetchEnrolmentDetailsFromBooking(bookingId);
+                if(String.isNotBlank(enrolObj.Center__r.Country__r.Id)){
+                    countryObj = enrolObj.Center__r.Country__r;
+                }
+                enrollmentId = enrolObj.Id;
+            }
+            date nextBillDate =   AdvanceActionsHelper.fetchNextBillDateFromEnrolment(enrolObj);
+            //system.debug('@@@enrolmentObj.id'+enrolObj.id);
+            Enrolment__c enroll = new Enrolment__c();
+            if(String.isNotBlank(enrollmentId) && endDate != NULL && lastLessonDate  != NULL){
+                enroll.Id = enrollmentId;
+                enroll = AdvanceActionsHelper.initEnroll(enroll);
+                enroll.Package_Process_Type__c = ConstantsClass.enrollmentProcessCancelType;
+                enroll.Effective_Date__c = lastLessonDate;
+                enroll.Package_Process_Request_Date__c = System.today();
+                enroll.Notice_Period_Start_Date__c = endDate.addDays(-30);
+                enroll.Notice_Period_End_Date__c = endDate;
+                enroll.Advance_Action_Requested_By__c = Userinfo.getUserId();
+                if(lastLessonDate >= nextBillDate){
+                    enroll.Package_Process_Status__c = ConstantsClass.enrollmentProcessPendingStatus;
+                }else{
+                    enroll.Package_Process_Status__c = ConstantsClass.enrollmentProcessCompletedStatus;
+                    enroll.Stage__c = 'Cancelled';
+                }
+                
+            }
+            if(enroll != NULL){
+                //system.debug('enroll '+enroll);
+                Database.SaveResult saveResult = Database.Update(enroll, false);
+                if(saveResult.isSuccess()){
+                    isSuccess = true;
+                    //Called method for attach WithdrawlSummaryPdf Attchment on enroll parent
+                    attachWithdrawlSummaryPdf(enrolObj.Name,enrolObj.id,enrolObj.Parent__c);
+                }
+            }
+            
+            //system.debug('@@@isSuccess'+isSuccess);
+            if(String.isNotBlank(enroll.id)){
+                enroll = AdvanceActionsHelper.fetchEnrolment(enroll.id);                
+            }
+            
+            //system.debug('@@@enrolmentObj'+enroll);
+            if(isSuccess && String.isNotBlank(enrollmentId)){
+                createPaymentRecordForWithdrawalProcess(enrolObj, lastLessonDate,nextBillDate);
+                
+                bookingListToDelete.addAll([SELECT ID FROM Booking__c 
+                                            WHERE Booking_Date__c > :enroll.Effective_Date__c AND 
+                                            Enrolment__c = :enroll.Id 
+                                            AND Status__c != :ConstantsClass.statusCanceled 
+                                            AND Type__c =: ConstantsClass.groupLessonTypeBooking]);
+                
+                processFutureMakeupBookingsForWithdrawal(enroll, bookingListToDelete);
+                
+                if(String.isNotBlank(enrolObj.Parent__c)){
+                    markMakeupExpiryDateAsLastLessonDate(enrolObj.Parent__c);
+                }
+            }
+            //system.debug('@@isSuccess'+isSuccess);
+            if(!isSuccess){
+                caseIdToReturn = 'error';
+            }
+            
+            if(isSuccess && redirectCase == 'true'){
+                Case objCase =  AureusCalendarControllerHelper.createCaseForEnrolment(myCase, enroll.Id, 'withdrawal', true);
+                //system.debug('@@caseObj'+objCase);
+                caseIdToReturn = objCase.Id;
+            }else if(isSuccess){
+                caseIdToReturn = '';
             }else{
-                enroll.Package_Process_Status__c = ConstantsClass.enrollmentProcessCompletedStatus;
-                enroll.Stage__c = 'Cancelled';
+                caseIdToReturn = 'error';
             }
-
-         }
-         if(enroll != NULL){
-           //system.debug('enroll '+enroll);
-            Database.SaveResult saveResult = Database.Update(enroll, false);
-            if(saveResult.isSuccess()){
-                isSuccess = true;
-                //Called method for attach WithdrawlSummaryPdf Attchment on enroll parent
-                attachWithdrawlSummaryPdf(enrolObj.Name,enrolObj.id,enrolObj.Parent__c);
-            }
-        }
-
-       //system.debug('@@@isSuccess'+isSuccess);
-       if(String.isNotBlank(enroll.id)){
-            enroll = AdvanceActionsHelper.fetchEnrolment(enroll.id);                
-        }
-        
-           //system.debug('@@@enrolmentObj'+enroll);
-        if(isSuccess && String.isNotBlank(enrollmentId)){
-            createPaymentRecordForWithdrawalProcess(enrolObj, lastLessonDate,nextBillDate);
-            
-            bookingListToDelete.addAll([SELECT ID FROM Booking__c 
-                                        WHERE Booking_Date__c > :enroll.Effective_Date__c AND 
-                                        Enrolment__c = :enroll.Id 
-                                        AND Status__c != :ConstantsClass.statusCanceled 
-                                        AND Type__c =: ConstantsClass.groupLessonTypeBooking]);
-
-            processFutureMakeupBookingsForWithdrawal(enroll, bookingListToDelete);
-            
-            if(String.isNotBlank(enrolObj.Parent__c)){
-                markMakeupExpiryDateAsLastLessonDate(enrolObj.Parent__c);
-            }
-        }
-       //system.debug('@@isSuccess'+isSuccess);
-        if(!isSuccess){
+        }catch (Exception e){
             caseIdToReturn = 'error';
-        }
-        
-        if(isSuccess && redirectCase == 'true'){
-            Case objCase =  AureusCalendarControllerHelper.createCaseForEnrolment(myCase, enroll.Id, 'withdrawal', true);
-           //system.debug('@@caseObj'+objCase);
-            caseIdToReturn = objCase.Id;
-        }else if(isSuccess){
-            caseIdToReturn = '';
-        }else{
-            caseIdToReturn = 'error';
-        }
-        
+            System.debug('@@caseIdToReturn'+e.getStackTraceString()+'-'+e.getMessage() +';');
+            //On 14-Oct-2020: Nishi to Add Custom Save Points so If Error Occures we can trace that.
+            Database.rollback(withdrawalSavePoint);
+        }        
         return caseIdToReturn;
     }
 
@@ -223,7 +231,8 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
         String payAsCredit = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get('Payment As Credit').getRecordTypeId();
         String refundRecType = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get('Refund').getRecordTypeId();
         
-        
+        Map<string,task> mapOfRefundReminderTasks = new Map<string,task>();
+        Map<string,QueueSObject > mapOfQueue = BillingUtility.getTaskQueueMap();
         Boolean hasMoreEnrolment = checkParentHasMultipleEnrolments(objEnrol.parent__c);
         List<Payment__c> paymentList = new List<Payment__c>();
         List<Payment__c> refundPayments = new List<Payment__c>();
@@ -368,19 +377,25 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
             if(string.isNotBlank(objCreditLineItem.Invoice_Line_Item__c)){
                 updateInvoiceLineItem.put(objCreditLineItem.Invoice_Line_Item__c,updateInvoiceLineItemMap( updateInvoiceLineItem,depositAmount, 0,objCreditLineItem.Invoice_Line_Item__c));
             }
+
+            // added by nishi: 5-Nov-2020: for if we not found any active enrolment all enrolments are withdrwal then we create a task to finance team for refund reminder.
+            if(mapOfQueue != null && mapOfQueue.size() > 0 && mapOfQueue.containskey('Finance Queue') && string.isNotBlank(mapOfQueue.get('Finance Queue').Queue.Id)){               
+            	mapOfRefundReminderTasks.put('Refund Deposit',BillingUtility.createNewTask('Refund Reminder',objEnrol.id,lastLessonDateObj,mapOfQueue.get('Finance Queue').Queue.Id));
+            }
+            // added by nishi: 5-Nov-2020: for if we not found any active enrolment all enrolments are withdrwal then we create a task to finance team for refund reminder.  
         }
 
          // we need to refund current month amount if applicable
         if(isRefund){
             listOfCreditmemolineitem = new list<Credit_memo_line_item__c>();
-            String chargeId =  AureusCalendarController.fetchCurrentMonthPaymentEntry(objEnrol,lastLessonDateObj);
+            String chargeId =  WithDrawlEnrolmentProcessController.fetchCurrentMonthPaymentEntry(objEnrol,lastLessonDateObj);
             Decimal refundAmount = classEditController.getLessonRefundAmount(objEnrol,lastLessonDateObj);
             string refundAmountWithTax = getLessonRefundAmountWithTax(objEnrol,lastLessonDateObj);
             // added by nishi: 21-Sep-2020: for if next month invoice already generated then we create next month payment records
             date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1); // 1-10-2020
             //added by nishi: 15-Oct-2020 : start:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
             Map<String,Invoice__c> mapofinvoice = new Map<String,Invoice__c>();
-            for(Invoice__c objInvoice : [Select id,Invoice_Date__c,
+            /*for(Invoice__c objInvoice : [Select id,Invoice_Date__c,
                                             (Select id,Credit_Memo_Amount__c,Credit_Memo_tax__c
                                             from Invoice_Line_Items__r 
                                             where Enrolment__C =:objEnrol.id)
@@ -392,6 +407,25 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
                 }else{
                     if(objInvoice.Invoice_Date__c.month() == system.today().month()){
                         mapofinvoice.put('Current',objInvoice);
+                    }
+                }*/
+                List<Subscription_Line_Item__c> listSubLineItem = UpgradeDowngradeController.fetchSubsLineItems(objEnrol.Subscription_Line_Items__r[0].id);
+                Subscription_Line_Item__c objSubLineItem;
+                if(listSubLineItem != null && listSubLineItem.size() > 0 ){
+                    objSubLineItem  = listSubLineItem[0];
+                }
+            for(Invoice__c invoiceobj : UpgradeDowngradeController.getInvoiceDetails(objEnrol,lastLessonDateObj,objSubLineItem)){
+                if(invoiceobj.invoice_type__c == 'Recurring'){
+                    for(Invoice_line_item__c objlineitem: invoiceobj.Invoice_line_items__r){
+                        string invoiceMonth ='';
+                        if(objlineitem.month__c.month() == lastLessonDateObj.month())
+                            invoiceMonth = 'Current';
+                        if(nextBillDate >= nextMonthDate && lastLessonDateObj.month() < nextMonthDate.addMonths(-1).month() && objlineitem.month__c.month() == nextMonthDate.addMonths(-1).month() )
+                            invoiceMonth = 'Next Month';
+                        if(string.isnotBlank(invoiceMonth)){
+                            mapofinvoice.put(invoiceMonth,invoiceobj);
+                        }
+                        updateInvoiceLineItem.put(objlineitem.id,objlineitem);
                     }
                 }
             }
@@ -544,12 +578,23 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
              if(listOfnewCreditmemolineitem != null && listOfnewCreditmemolineitem.size() > 0){
                  insert listOfnewCreditmemolineitem;
              }
+            // added by nishi: 5-Nov-2020: for if we not found any active enrolment all enrolments are withdrwal then we create a task to finance team for refund reminder.
+            if(mapOfRefundReminderTasks != null && mapOfRefundReminderTasks.size() > 0){
+                if(mapOfRefundReminderTasks.containskey('Refund Deposit')){
+                    task objtask = mapOfRefundReminderTasks.get('Refund Deposit');
+                    objtask.WhatId = newPendingCreditMemos.get('Refund Deposit').id;
+                    mapOfRefundReminderTasks.put('Refund Deposit',objtask);
+                }
+                insert mapOfRefundReminderTasks.values();
+            }
+            // added by nishi: 5-Nov-2020: for if we not found any active enrolment all enrolments are withdrwal then we create a task to finance team for refund reminder.
+            
         }
         if(updateInvoiceLineItem != null && updateInvoiceLineItem.size() > 0){
             update updateInvoiceLineItem.values();
         }
          //added by nishi: 6-Oct-2020 : end:for new requirement Create a Credit Memo record with the status pending instead of the Payment as Deposit record.
-        if(paymentList.size() > 0){
+         if(paymentList.size() > 0){
             insert paymentList;
         }
        //system.debug('paymentList'+paymentList);

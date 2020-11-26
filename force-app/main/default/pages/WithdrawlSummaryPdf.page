@@ -48,10 +48,10 @@
                 <table width="100%">        
                     <table width="100%">
                         <tr>                         
-                            <td style="height:35px;background: #efb550;"></td>
+                            <td style="{!IF(isOssia,'height:35px;background: #ed1c24;','height:35px;background: #efb550;')}"></td>
                         </tr>
                         <tr>                         
-                            <td style="text-align:right;"><apex:image style="width:20%;" url="{!$Resource.Aureus_logo}"/></td>
+                            <td style="text-align:right;"><apex:image style="width:20%;" url="{!iF(isOssia,$Resource.Osia_Logo,$Resource.Aureus_logo_png)}"/></td>
                         </tr>
                     </table>  
                 </table>    

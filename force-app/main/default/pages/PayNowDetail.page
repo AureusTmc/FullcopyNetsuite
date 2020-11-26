@@ -1,6 +1,11 @@
 <apex:page id="pg" controller="payNowDetailController" showHeader="false" standardStylesheets="true" sidebar="false" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False">
     <head>
-        <title>Aureus Academy – Make Payment</title>
+        <apex:outputPanel rendered="{!isOssia}">
+            <title>Ossia Music School – Withdrawal Summary</title>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!!isOssia}">
+            <title>Aureus Academy – Withdrawal Summary</title>
+        </apex:outputPanel>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0"/>
          <!-- 13-Nov-2020: nishi: added stripe and jquery files -->
            <!--<apex:slds /> -->

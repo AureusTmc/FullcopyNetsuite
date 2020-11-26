@@ -6,14 +6,16 @@ public class WithdrawController {
     public String bank_Name{get;set;}
     public String bank_Account_No{get;set;}
     public String refundMethod{get;set;}
+    public Boolean isOssia{get;set;}
+    public Boolean isPromotionalEnrolment{get;set;}
     public WithdrawController(){
         String parentId = '';
         Decimal unitTotal= 0;
         bookingId=ApexPages.currentPage().getParameters().get('id');
         list<Enrolment__c> enrol = new list<Enrolment__c>([SELECT Id, Package_Process_Request_Date__c, Effective_Date__c, 
                                                            Reason_of_Withdraw__c,Package__r.Name,Parent__r.Name,Student__r.Name, 
-                                                           Feedback_Comments__c, Lesson_Day__c, Refund_Method__c, Lesson_Start_Time__c, 
-                                                           Notice_Period_Start_Date__c, Notice_Period_End_Date__c, 
+                                                           Feedback_Comments__c, Lesson_Day__c, Refund_Method__c, Lesson_Start_Time__c, Type_of_Package__c,
+                                                           Notice_Period_Start_Date__c, Notice_Period_End_Date__c, Center__r.Organisation__r.Name,
                                                            Parent__r.Bank_Name__c, Parent__r.Bank_Account_No__c,Package_Process_Status__c FROM Enrolment__c 
                                                            WHERE id =: bookingId]);
         System.debug('@@@enrol '+enrol);
@@ -33,6 +35,16 @@ public class WithdrawController {
             List<Lessons> makeupPendingList = new List<Lessons>();
             parentId = enrollmentObj.Parent__c;
             checkRefundMethod(enrollmentObj.Id, parentId, withdrawEndDate);
+            isOssia = false;
+            isPromotionalEnrolment = false;
+            if( String.isNotBlank(enrollmentObj.Center__c) && String.isNotBlank(enrollmentObj.Center__r.Organisation__c) &&   
+            String.isNotBlank(enrollmentObj.Center__r.Organisation__r.Name) &&   
+            enrollmentObj.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){    
+                isOssia = true;
+            } 
+            if(enrollmentObj.Type_of_Package__c == ConstantsClass.prePaymentType || enrollmentObj.Type_of_Package__c == ConstantsClass.PromoTypePayment){
+                isPromotionalEnrolment = true;
+            }
             Enrolment__c enrolment;
             
             if(withdrawEndDate <> null){
@@ -94,12 +106,16 @@ public class WithdrawController {
                         }
                     } 
                 }
-                
-                
-                String chargeId = AureusCalendarController.fetchCurrentMonthPaymentEntry(enrolment,lastLessonDateObj);
+                String chargeId;
+                if(isPromotionalEnrolment){
+                    chargeId = AureusCalendarController.fetchCurrentMonthPrepaymentEntry(enrolment,lastLessonDateObj,nextBillingDate);
+                }else{
+                    chargeId = AureusCalendarController.fetchCurrentMonthPaymentEntry(enrolment,lastLessonDateObj);
+                }
+                //String chargeId = AureusCalendarController.fetchCurrentMonthPaymentEntry(enrolment,lastLessonDateObj);
                 if(lastLessonDateObj != NULL){
                      Date firstDate = Date.newInstance(lastLessonDateObj.year(),lastLessonDateObj.month(),01);
-                     Date lastDate = firstDate.addMonths(1).addDays(-1);
+                     Date lastDate = nextBillingDate.addDays(-1);// firstDate.addMonths(1).addDays(-1);
                      dtMap = BillingUtility.getDateMap(firstDate, lastDate);
                      System.debug(dtMap);
                 }
@@ -112,13 +128,17 @@ public class WithdrawController {
                 
                 withdrawSummary.gst = gst;
                 withdrawSummary.refund = withdrawSummary.deposit - withdrawSummary.total;
+                system.debug('chargeId'+chargeId);
                 if(String.isNotBlank(chargeId) && (lastLessonDateObj < nextBillingDate) && dtMap.containsKey(enrolment.Lesson_Day__c)){
+                    system.debug('dtMap'+dtMap);
                     Set<Date> cancelledBookingDates = getThisMonthCancelledLessons(enrolment.Id);
+                    system.debug('cancelledBookingDates'+cancelledBookingDates);
                     for(Date dateObj : dtMap.get(enrolment.Lesson_Day__c)){
-                        if((dateObj > lastLessonDateObj) && !cancelledBookingDates.contains(dateObj)){
+                        if((dateObj > lastLessonDateObj) && !cancelledBookingDates.contains(dateObj) && dateObj.day() <=28){
                             unitTotal += enrolment.Package__r.Unit_Fee__c;
                         }
                     }
+                    system.debug('unitTotal'+unitTotal);
                     if(unitTotal > 0 && enrolment.Center__r.Country__r.Tax_Rate__c > 0){
                         withdrawSummary.refund += unitTotal;
                         withdrawSummary.refund += unitTotal * (enrolment.Center__r.Country__r.Tax_Rate__c / 100);  
@@ -129,7 +149,7 @@ public class WithdrawController {
                 }
             }
         }
-    } 
+    }
     // we do not need to refund amount of cancelled dates, when we refund amount of next month.
     private static Set<Date> getThisMonthCancelledLessons(String EnrolId){
         Set<Date> cancelledDates  = new Set<Date>();
@@ -198,7 +218,8 @@ public class WithdrawController {
     
     private static Date getNextBillingDate(String enrolId){
         Date nextBillingDate;
-        List<Subscription_Line_Item__c> subscriptionLineItemList = [SELECT Id, Next_Bill_Date__c FROM Subscription_Line_Item__c WHERE Enrolment__c =: enrolId];
+        List<Subscription_Line_Item__c> subscriptionLineItemList = [SELECT Id, Next_Bill_Date__c FROM Subscription_Line_Item__c 
+        WHERE Enrolment__c =: enrolId And Next_Bill_Date__c != Null];
         if(subscriptionLineItemList.size() > 0){
             nextBillingDate = subscriptionLineItemList[0].Next_Bill_Date__c;
         }

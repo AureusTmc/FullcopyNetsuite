@@ -3,6 +3,7 @@ Name        :        WithDrawlEnrolmentProcessController
 Date        :        04 -Nov- 2019 
 Author      :        Jatin
 Description :        This Controller help for AureusCalendarController.
+test class 	:		WithDrawlEnrolmentProcessControllertest
 */
 public without sharing class WithDrawlEnrolmentProcessController implements IAdvanceAction{
     Private String bookingId;
@@ -209,6 +210,7 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
         String paymentRecordTypeId =  Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get(ConstantsClass.paymentAsDepositRecordType).getRecordTypeId();
         String payAsCredit = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get('Payment As Credit').getRecordTypeId();
         String refundRecType = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get('Refund').getRecordTypeId();
+        map<string,task> mapOfRefundReminderTasks = new map<string,task>();
         List<Subscription_Line_Item__c> listSubLineItem = UpgradeDowngradeController.fetchSubsLineItems(objEnrol.Subscription_Line_Items__r[0].id);
         Subscription_Line_Item__c objSubLineItem;
         if(listSubLineItem != null && listSubLineItem.size() > 0 ){
@@ -459,6 +461,12 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
                 if(string.isNotBlank(objCreditLineItem.Invoice_Line_Item__c)){
                     updateInvoiceLineItem.put(objCreditLineItem.Invoice_Line_Item__c,updateInvoiceLineItemMap( updateInvoiceLineItem,depositAmount,0,objCreditLineItem.Invoice_Line_Item__c));
                 }
+                // added by nishi: 5-Nov-2020: for if we not found any active enrolment all enrolments are withdrwal then we create a task to finance team for refund reminder.
+            Map<string,QueueSObject > mapOfQueue = BillingUtility.getTaskQueueMap();
+            if(mapOfQueue != null && mapOfQueue.size() > 0 && mapOfQueue.containskey('Finance Queue') && string.isNotBlank(mapOfQueue.get('Finance Queue').Queue.Id)){ 
+                mapOfRefundReminderTasks.put('Refund Deposit',BillingUtility.createNewTask('Refund Reminder',objEnrol.id,lastLessonDateObj,mapOfQueue.get('Finance Queue').Queue.Id));
+            }
+            // added by nishi: 5-Nov-2020: for if we not found any active enrolment all enrolments are withdrwal then we create a task to finance team for refund reminder.  
                 
         }
        //system.debug('isRefund'+isRefund);
@@ -481,25 +489,35 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
                             else if(objlineitem.Is_Discount__c)
                                 mapofinvoicelineitem.put('DiscountInvoice',objlineitem);
                         }
+                        updateInvoiceLineItem.put(objlineitem.id,objlineitem);
                     }
                 }else{
                 //added by nishi: 23-oct-2020:end: if enrolment package type is prepayament and promo and Promotion_Discount__c found then we calculate discount amount for regular booking  and refund all prepayement effective months 
-               
-                    string invoiceMonth ='';
-                    if(invoiceobj.Invoice_Date__c.month() == lastLessonDateObj.month())
-                        invoiceMonth = 'Current';
-                    if(nextBillDate >= nextMonthDate && lastLessonDateObj.month() < nextMonthDate.addMonths(-1).month() && invoiceobj.Invoice_Date__c.month() == nextMonthDate.addMonths(-1).month() )
-                        invoiceMonth = 'Next Month';
-                    system.debug('invoiceMonth'+invoiceMonth);
-                    if(string.isnotBlank(invoiceMonth)){
-                        mapofinvoice.put(invoiceMonth,invoiceobj);
+                    //string invoiceMonth ='';
+                    // if(invoiceobj.Invoice_Date__c.month() == lastLessonDateObj.month())
+                    //     invoiceMonth = 'Current';
+                    // if(nextBillDate >= nextMonthDate && lastLessonDateObj.month() < nextMonthDate.addMonths(-1).month() && invoiceobj.Invoice_Date__c.month() == nextMonthDate.addMonths(-1).month() )
+                    //     invoiceMonth = 'Next Month';
+                    // system.debug('invoiceMonth'+invoiceMonth);
+                    // if(string.isnotBlank(invoiceMonth)){
+                    //     mapofinvoice.put(invoiceMonth,invoiceobj);
+                    if(invoiceobj.invoice_type__c == 'Recurring'){
                         for(Invoice_line_item__c objlineitem: invoiceobj.Invoice_line_items__r){
-                            updateInvoiceLineItem.put(objlineitem.id,objlineitem);
-                            system.debug('objlineitem'+objlineitem);
-                            if(!objlineitem.Is_Discount__c)
+                            string invoiceMonth ='';
+                            if(objlineitem.month__c.month() == lastLessonDateObj.month())
+                                        invoiceMonth = 'Current';
+                            if(nextBillDate >= nextMonthDate && lastLessonDateObj.month() < nextMonthDate.addMonths(-1).month() && objlineitem.month__c.month() == nextMonthDate.addMonths(-1).month() )
+                                invoiceMonth = 'Next Month';
+                            if(string.isnotBlank(invoiceMonth)){
+                                mapofinvoice.put(invoiceMonth,invoiceobj);
+                                updateInvoiceLineItem.put(objlineitem.id,objlineitem);
+                                system.debug('objlineitem'+objlineitem);
+                                if(!objlineitem.Is_Discount__c)
                                 mapofinvoicelineitem.put(invoiceMonth,objlineitem);
+                            }
                         }
                     }
+                    //}
                 }
             }
             // added by nishi: 21-aug-2020: for if next month invoice already generated then we create next month payment records
@@ -699,12 +717,24 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
             if(listOfnewCreditmemolineitem != null && listOfnewCreditmemolineitem.size() > 0){
                 insert listOfnewCreditmemolineitem;
             }
+             // added by nishi: 5-Nov-2020: for if we not found any active enrolment all enrolments are withdrwal then we create a task to finance team for refund reminder.
+            if(mapOfRefundReminderTasks != null && mapOfRefundReminderTasks.size() > 0){
+                 if(mapOfRefundReminderTasks.containskey('Refund Deposit')){
+                     task objtask = mapOfRefundReminderTasks.get('Refund Deposit');
+                     objtask.WhatId = newPendingCreditMemos.get('Refund Deposit').id;
+                     mapOfRefundReminderTasks.put('Refund Deposit',objtask);
+                 }
+                insert mapOfRefundReminderTasks.values();
+            }
+            // added by nishi: 5-Nov-2020: for if we not found any active enrolment all enrolments are withdrwal then we create a task to finance team for refund reminder.
+          
         }
          //added by nishi: 6-Oct-2020 : end:for new requirement Create a Credit Memo record with the status pending instead of the Payment as Deposit record.
       
         if(updateInvoiceLineItem != null && updateInvoiceLineItem.size() > 0){
             update updateInvoiceLineItem.values();
         }
+       
         system.debug('@@@updateInvoiceLineItem'+updateInvoiceLineItem);
         if(paymentList.size() > 0){
             insert paymentList;
@@ -771,7 +801,8 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
                                                 //commented by nishi: 20_aug-2020: Createddate >=: firstDate AND createddate <=: lastDate
                                                 Month__C >=: firstDate AND Month__C <=: lastDate 
                                                  AND Booking__c = NULL)
-                                         AND Invoice_Date__c >=: firstDate AND Invoice_Date__c <=: lastDate AND Status__c = 'Paid' 
+                                         //AND Invoice_Date__c >=: firstDate 
+                                         AND Invoice_Date__c <=: lastDate AND Status__c = 'Paid' 
                                          Order By total_amount__c ];
         if(listOfInvoice.size()>0){
             chargeId = listOfInvoice[0].Stripe_charge_id__c;

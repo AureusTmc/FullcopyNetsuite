@@ -6,6 +6,7 @@ public class WithDrawlEnrolmentClassSummaryController {
     public String bank_Name{get;set;}
     public String bank_Account_No{get;set;}
     public String refundMethod{get;set;}
+    public Boolean isOssia{get;set;}
     public WithDrawlEnrolmentClassSummaryController(){
         String parentId = '';
         Decimal unitTotal= 0;
@@ -13,7 +14,7 @@ public class WithDrawlEnrolmentClassSummaryController {
         list<Enrolment__c> enrol = new list<Enrolment__c>([SELECT Id, Package_Process_Request_Date__c, Effective_Date__c, 
                                                            Reason_of_Withdraw__c,Package__r.Name,Parent__r.Name,Student__r.Name, 
                                                            Feedback_Comments__c, Lesson_Day__c, Refund_Method__c, Lesson_Start_Time__c, 
-                                                           Notice_Period_Start_Date__c, Notice_Period_End_Date__c, 
+                                                           Notice_Period_Start_Date__c, Notice_Period_End_Date__c,Center__r.Organisation__r.Name, 
                                                            Parent__r.Bank_Name__c, Parent__r.Bank_Account_No__c,Package_Process_Status__c FROM Enrolment__c 
                                                            WHERE id =: bookingId]);
         System.debug('@@@enrol '+enrol);
@@ -33,6 +34,12 @@ public class WithDrawlEnrolmentClassSummaryController {
             List<AureusCalendarController.Lessons> makeupPendingList = new List<AureusCalendarController.Lessons>();
             parentId = enrollmentObj.Parent__c;
             checkRefundMethod(enrollmentObj.Id, parentId, withdrawEndDate);
+            isOssia = false;
+            if( String.isNotBlank(enrollmentObj.Center__c) && String.isNotBlank(enrollmentObj.Center__r.Organisation__c) &&   
+            String.isNotBlank(enrollmentObj.Center__r.Organisation__r.Name) &&   
+            enrollmentObj.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){    
+                isOssia = true;
+            } 
             Enrolment__c enrolment;
             
             if(withdrawEndDate <> null){
@@ -99,7 +106,7 @@ public class WithDrawlEnrolmentClassSummaryController {
                 String chargeId = AureusCalendarController.fetchCurrentMonthPaymentEntry(enrolment,lastLessonDateObj);
                 if(lastLessonDateObj != NULL){
                      Date firstDate = Date.newInstance(lastLessonDateObj.year(),lastLessonDateObj.month(),01);
-                     Date lastDate = firstDate.addMonths(1).addDays(-1);
+                     Date lastDate = nextBillingDate.addDays(-1);//firstDate.addMonths(1).addDays(-1);
                      dtMap = BillingUtility.getDateMap(firstDate, lastDate);
                      System.debug(dtMap);
                 }
@@ -115,7 +122,7 @@ public class WithDrawlEnrolmentClassSummaryController {
                 if(String.isNotBlank(chargeId) && (lastLessonDateObj < nextBillingDate) && dtMap.containsKey(enrolment.Lesson_Day__c)){
                     Set<Date> cancelledBookingDates = getThisMonthCancelledLessons(enrolment.Id);
                     for(Date dateObj : dtMap.get(enrolment.Lesson_Day__c)){
-                        if((dateObj > lastLessonDateObj) && !cancelledBookingDates.contains(dateObj)){
+                        if((dateObj > lastLessonDateObj) && !cancelledBookingDates.contains(dateObj) && dateObj.day() <= 28){
                             unitTotal += enrolment.Package__r.Unit_Fee__c;
                         }
                     }
@@ -160,7 +167,8 @@ public class WithDrawlEnrolmentClassSummaryController {
         Date nextBillingDate;
         List<Subscription_Line_Item__c> subscriptionLineItemList = [SELECT Id, Next_Bill_Date__c 
                                                                     FROM Subscription_Line_Item__c
-                                                                     WHERE Enrolment__c =: enrolId];
+                                                                     WHERE Enrolment__c =: enrolId
+                                                                     And Next_Bill_Date__c != Null];
         if(subscriptionLineItemList.size() > 0){
             nextBillingDate = subscriptionLineItemList[0].Next_Bill_Date__c;
         }

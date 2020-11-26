@@ -547,22 +547,33 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                //added by nishi: 7-Oct-2020 : start:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
                         
              Map<String,Invoice__c> mapofinvoice = new Map<String,Invoice__c>();
-             for(Invoice__c objInvoice : [Select id,Invoice_Date__c,(Select id from Invoice_Line_Items__r 
-                                         where Enrolment__C =:objEnrol.id)
-                                         From Invoice__C 
-                                         Where  Parent_Account__c =: parentId
-                                         And invoice_type__c = 'Recurring']){
-                 if(nextBillingDate >= nextMonthDate && effectiveDate.month() < nextMonthDate.addMonths(-1).month() && objInvoice.Invoice_Date__c.month() == nextMonthDate.addMonths(-1).month() ){
-                         mapofinvoice.put('Next Month',objInvoice);
-                }else{
-                     if(objInvoice.Invoice_Date__c.month() == system.today().month()){
-                         mapofinvoice.put('Current',objInvoice);
-                     }
-                 }
-                 if(objInvoice.Invoice_Line_Items__r != null && objInvoice.Invoice_Line_Items__r.size() > 0){
-                    for(Invoice_Line_Item__c lineItem :objInvoice.Invoice_Line_Items__r){
-                       updateInvoiceLineItem.put(lineItem.id,lineItem);
+             List<Subscription_Line_Item__c> listSubLineItem = UpgradeDowngradeController.fetchSubsLineItems(objEnrol.Subscription_Line_Items__r[0].id);
+             Subscription_Line_Item__c objSubLineItem;
+             if(listSubLineItem != null && listSubLineItem.size() > 0 ){
+                 objSubLineItem  = listSubLineItem[0];
+             }
+             for(Invoice__c invoiceobj : UpgradeDowngradeController.getInvoiceDetails(objEnrol,effectiveDate,objSubLineItem)){
+                if(invoiceobj.invoice_type__c == 'Recurring'){
+                    // string invoiceMonth ='';
+                    // if(invoiceobj.Invoice_Date__c.month() == effectiveDate.month())
+                    //     invoiceMonth = 'Current';
+                    // if(nextBillingDate >= nextMonthDate && effectiveDate.month() < nextMonthDate.addMonths(-1).month() && invoiceobj.Invoice_Date__c.month() == nextMonthDate.addMonths(-1).month() )
+                    //     invoiceMonth = 'Next Month';
+                    // system.debug('invoiceMonth'+invoiceMonth);
+                    // if(string.isnotBlank(invoiceMonth)){
+                    //     mapofinvoice.put(invoiceMonth,invoiceobj);
+                    for(Invoice_line_item__c objlineitem: invoiceobj.Invoice_line_items__r){
+                        string invoiceMonth ='';
+                        if(objlineitem.month__c.month() == effectiveDate.month())
+                        invoiceMonth = 'Current';
+                        if(nextBillingDate >= nextMonthDate && effectiveDate.month() < nextMonthDate.addMonths(-1).month() && objlineitem.month__c.month() == nextMonthDate.addMonths(-1).month() )
+                            invoiceMonth = 'Next Month';
+                        if(string.isnotBlank(invoiceMonth)){
+                            mapofinvoice.put(invoiceMonth,invoiceobj);
+                            updateInvoiceLineItem.put(objlineitem.id,objlineitem);
+                        }
                     }
+                    //}
                 }
              }
               //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.

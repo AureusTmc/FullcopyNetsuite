@@ -172,6 +172,20 @@
                 height: 260px;
     			overflow-y: scroll;
             }
+                      .siteLable{
+                          font-size: 15px; 
+                          background-color: #ffbf2f; 
+                          text-align:center;
+                          color:#fff;
+                          font-weight:bold;
+                      }
+                      .ossiaSiteLabel{
+                          font-size: 15px; 
+                          background-color: #ed1c24; 
+                          text-align:center;
+                          color:#fff;
+                          font-weight:bold;
+                      }
         </style>      
         <script>
             //CH01 Karan Singh	
@@ -207,7 +221,7 @@
     <body class="">
     	 <apex:outputPanel rendered="{!isSiteGuestUser}">     
              <!--@Juneid 20,Aug 2020, Organization wise condition -->
-             <div  class="slds-p-around_medium" style="font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;">{!IF(isOssia,'Ossia Music School','Aureus Academy Enrolment')} Process       
+             <div  class="{!IF(isOssia,'ossiaSiteLabel slds-p-around_medium','siteLable slds-p-around_medium')}">{!IF(isOssia,'Ossia Music School','Aureus Academy Enrolment')} Process       
              </div>
              <p style="text-align:center;"><apex:image url="{!iF(isOssia,$Resource.Osia_Logo,$Resource.Aureus_logo_png)}" /></p>
          </apex:outputPanel>    
