@@ -873,7 +873,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="slds-form__row">
+                        <div class="slds-form__row EffecitveDateSummary">
                              <!-- Current effectvie date-->
                             <div class="slds-form__item" role="listitem">
                                 <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
@@ -893,6 +893,17 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="slds-form__row ChangeCenterDateSummary">
+                           <!-- new effectvie date -->
+                           <div class="slds-form__item" role="listitem">
+                               <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent">
+                                   <span class="slds-form-element__label">Effective Date:</span>
+                                   <div class="slds-form-element__control" id="invoiceChangeCenterEffectiveDate">
+                                       
+                                   </div>
+                               </div>
+                           </div>
+                       </div>
                         <!--Confirm Enrol Button-->
                         <div class="slds-form-element" style="margin-top: 15px;text-align:right;">
                             <button class="slds-button slds-button_neutral" id ="confirmUpgradeClassEnrolmentCancel" onclick="backToUpgradeChangesPopup(); return false;">BACK</button>
@@ -3003,6 +3014,8 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
     $('#ChangeCenterSummary').addClass('slds-hide');
     $('#upgradeBookingclass').addClass('slds-hide');
     $('#upgradeToIndividualTeacher').addClass('slds-hide');
+    $('.ChangeCenterDateSummary').addClass('slds-hide');
+    $('.EffecitveDateSummary').removeClass('slds-hide');
         var newEffectiveDateObj = moment();
         if(newEffectiveDate){
             newEffectiveDateObj.year(newEffectiveDate.split('/')[2]).month(newEffectiveDate.split('/')[0] - 1).date(newEffectiveDate.split('/')[1]);
@@ -3114,7 +3127,11 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                     $('#confirmUpgradeClassEnrolment').removeAttr('disabled');
                     $('#upgradeToIndividualTeacher').removeClass('slds-hide');
                     if(grade == 'GroupToChangeCenter'){
+                        $('#upgradeGroupClassSummaryHeader').html('Change Centre Summary');
+                        $('#confirmUpgradeClassEnrolment').html('CONFIRM CHANGE CENTRE');
                         $('#ChangeCenterSummary').removeClass('slds-hide');
+                        $('.ChangeCenterDateSummary').removeClass('slds-hide');
+                        $('.EffecitveDateSummary').addClass('slds-hide');
                         if('newCenterName' in result){
                             $('#newCenterNameupgradeToIndividualSummary').html(result.newCenterName);
                             $('#confirmModalYes').attr('data-newcenter', result.newCenterId);
@@ -3122,6 +3139,9 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
                         if('oldCenterName' in result){
                             $('#oldCenterNameupgradeToIndividualSummary').html(result.oldCenterName);
                             $('#confirmModalYes').attr('data-previousCenter', result.oldCenterId);
+                        }
+                        if('effectiveDate' in result){
+                            $('#invoiceChangeCenterEffectiveDate').html(result.effectiveDate);
                         }
                     }
                     if('newTeacherName' in result){
@@ -3678,11 +3698,16 @@ function  getUpgradeGroupClassPackageSummary(newEffectiveDate, oldPackageId, new
             $("#selectPackageEnrolGroupUpdate").attr('title',  $("#selectPackageEnrolGroupUpdate option:selected").text());
         }
         function getTimeSlotsGroupClassAccordingly(grade,centerId, teacherId, selectedPackage,  dtObj){
+            console.log('grade',grade);
+            console.log('centerId',centerId);
+            console.log('teacherId',teacherId);
+            console.log('selectedPackage',selectedPackage);
+            console.log('dtObj',dtObj);
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.ClassEditController.getTimeSlotsGroupClassAccordingly}',
                 centerId, teacherId, selectedPackage, dtObj.format('YYYY-MM-DD'), 
                 function(result, event){
-                  //console.log('result',result);
+                  console.log('result',result);
                     var availSlots = '';
                     $(result).each(function(index, value){
                         availSlots += '<option value="'+value+'">'+value.split('-')[1]+'</option>';   

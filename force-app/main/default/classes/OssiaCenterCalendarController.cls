@@ -434,7 +434,8 @@ public with sharing class OssiaCenterCalendarController {
 
      //2-Nov-2020: Nishi:  for get ossia student enrolment Ids which Available_Make_up_mins__c greater then 0 and get Adhoc-Group type packages accroding to duration
     @RemoteAction 
-    public static EnrolmentWrapper getOssiaGroupClassAdhocPackages(String centerId,String teacherId,string groupClassId,string studentId,Boolean isOssia){
+    public static EnrolmentWrapper getOssiaGroupClassAdhocPackages(String centerId,String teacherId,string groupClassId,
+                                                                   string studentId,Boolean isOssia){
         EnrolmentWrapper objEnrolmentWrapper = new EnrolmentWrapper();
         List<EnrolmentInstrumentWrapper> listOfEnrolmentInstrumentWrapper  = new List<EnrolmentInstrumentWrapper>();
         Map<string,List<Enrolment__c>> mapOfEnrolmentRelatedStudent = new Map<string,List<Enrolment__c>>();

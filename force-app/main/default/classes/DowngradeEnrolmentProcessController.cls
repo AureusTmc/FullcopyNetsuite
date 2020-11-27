@@ -315,13 +315,15 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
             //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic
             //BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId, depositAmount, centreCountry.Currency_Code__c, centreCountry.Stripe_Base_Url__c, centreCountry.Stripe_Secret_Key__c);                 
             Boolean isCreatedvoice = false;
+            Boolean isChargeDepositAmount = false;
             Boolean isOssiaNonStripeCustomer = false;
-            BillingUtility.StripeCharge chargeResponse;
+        BillingUtility.StripeCharge chargeResponse;
             if(totalAmount > 0){  
                 if(String.isNotBlank(stripeId)){
                     chargeResponse = BillingUtility.createChargeForCustomer(stripeId, totalAmount, organisationObj.country__r.Currency_Code__c, organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c);                 
                     if(chargeResponse.statusCode == 200 && chargeResponse.paid){
                         isCreatedvoice = true;
+                        isChargeDepositAmount=true;
                     }else{
                         if(isOssiaOrganization){
                             isCreatedvoice = true;
@@ -363,7 +365,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                     }
                 }
                 if(String.isNotBlank(objInvoice.Id)){
-                    if(chargeResponse.statusCode == 200 && chargeResponse.paid){
+                    if(isChargeDepositAmount){
                         isTransaction = true;
                         if(String.isNotBlank(objInvoice.Id)){
                             objInvoice = [SELECT Id,Name,Total_Amount__c,Parent_Account__c,Status__C FROM Invoice__c WHERE Id =:objInvoice.Id];
@@ -381,11 +383,10 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                             listOfPayments.add(objPayment);
                         }
                     }
-                     /*Commented by nishi:26-nov-2020 for deploye invoice date changes
                     if(isOssiaNonStripeCustomer){
                         BillingUtility.sendEmailsForOssiaNonStripeCustomers(new Set<string>{objInvoice.Id});
                     }
-                    */
+                    
                 }
             }
         }else if(depositAmount <= 0){

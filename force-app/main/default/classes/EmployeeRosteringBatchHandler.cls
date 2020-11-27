@@ -151,13 +151,19 @@ public static Date startDate = Date.today();
             }
             
             if(String.isNotBlank(rosteringCopy.Centre__c) && String.isNotBlank(rosteringCopy.Work_Day__c) && !rosteringCopy.Work_Day__c.equalsignorecase('Rest Day') && !existingRosteringByDateMap.containsKey(rosteringCopy.Effective_Date__c)){
-                rosteringList.add(rosteringCopy);
-            }else if(String.isNotBlank(rosteringCopy.Centre__c) && String.isNotBlank(rosteringCopy.Work_Day__c) && !rosteringCopy.Work_Day__c.equalsignorecase('Rest Day') && existingRosteringByDateMap.containsKey(rosteringCopy.Effective_Date__c)){
-                Rostering__c r = existingRosteringByDateMap.get(rosteringCopy.Effective_Date__c);
-                if(r.Work_Day__c != rosteringCopy.Work_Day__c || r.Shift__c != rosteringCopy.Shift__c || r.Centre__c != rosteringCopy.Centre__c){
-                    rosteringCopy.Work_Day__c = r.Work_Day__c;
-                    rosteringCopy.Id = r.Id;
+                // added by nishi: 27-nov-2020:Shift is a Required field. So we check that this field is not empty, if the value is empty then we have not added it to this list.
+                if(String.isNotBlank(rosteringCopy.Shift__c)){
                     rosteringList.add(rosteringCopy);
+                }
+            }else if(String.isNotBlank(rosteringCopy.Centre__c) && String.isNotBlank(rosteringCopy.Work_Day__c) && !rosteringCopy.Work_Day__c.equalsignorecase('Rest Day') && existingRosteringByDateMap.containsKey(rosteringCopy.Effective_Date__c)){
+                // added by nishi: 27-nov-2020:Shift is a Required field. So we check that this field is not empty, if the value is empty then we have not added it to this list.
+                if(String.isNotBlank(rosteringCopy.Shift__c)){
+                    Rostering__c r = existingRosteringByDateMap.get(rosteringCopy.Effective_Date__c);
+                    if(r.Work_Day__c != rosteringCopy.Work_Day__c || r.Shift__c != rosteringCopy.Shift__c || r.Centre__c != rosteringCopy.Centre__c){
+                        rosteringCopy.Work_Day__c = r.Work_Day__c;
+                        rosteringCopy.Id = r.Id;
+                        rosteringList.add(rosteringCopy);
+                    }
                 }
             }else if((String.isBlank(rosteringCopy.Work_Day__c) || rosteringCopy.Work_Day__c.equalsignorecase('Rest Day')) && existingRosteringByDateMap.containsKey(rosteringCopy.Effective_Date__c)){
                 existingRosteringToDeleteList.add(existingRosteringByDateMap.get(rosteringCopy.Effective_Date__c));

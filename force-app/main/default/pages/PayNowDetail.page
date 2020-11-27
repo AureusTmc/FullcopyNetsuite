@@ -254,7 +254,7 @@
                                         <div class="firstCmpcls" >
                                             <div class="content-body slds-col">
                                                 <div class="slds-form-element">
-                                                    <button id="payBtn" class="prev-btn slds-button slds-button_neutral custom-btn" onclick="PreviousOption();" >
+                                                    <button id="backBtn" class="prev-btn slds-button slds-button_neutral custom-btn" onclick="PreviousOption(); return false;" >
                                                         <span class="slds-icon_container slds-icon-utility-announcement" title="Go to Back">
                                                             <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
                                                                 <use fill="White" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#chevronleft')}" />
@@ -264,7 +264,7 @@
                                                     </button>
                                                 </div>
                                                 <div class="slds-form-element">
-                                                    <button id="payBtn" class="slds-button slds-button_neutral custom-btn" onclick="onetimepaymentcard();" >
+                                                    <button id="payBtn" class="slds-button slds-button_neutral custom-btn" onclick="onetimepaymentcard(); return false;" >
                                                         Pay Now
                                                         <span class="slds-icon_container slds-icon-utility-announcement" title="One Time Payment">
                                                             <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">

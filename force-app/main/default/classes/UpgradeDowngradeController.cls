@@ -412,7 +412,6 @@ public class UpgradeDowngradeController{
                 }else{
                     upgradePackageCaseDetails.isSuccess = false;
                      //19-Nov-2020:Send email with invoice attachment for if ossia organisation customers without card on file
-                    /*Commented by nishi:26-nov-2020 for deploye invoice date changes
                     if(isossiaOrganisation){
                         Map<String,List<Credit_Memo__c>>  mapOfParentCreditMemo = createCreditMemoForCurrentMonthUpgradeProcess(listOfInvoice,invoiceAdjustmentMap,enrolmentObj,effectDate,objSubLineItem, taxRate, isPromotionalEnrolment,oldPackg.id);
                         upgradePackageCaseDetails =  createUpgradedAmountInvoice(listOfInvoice,objSubLineItem, depositeFee,oldPackg,  newPackg,  effectDate,  taxRate, newTeacherId, enrolmentObj,mapOfParentCreditMemo,upgradePackageCaseDetails,invoiceAdjustmentMap,isPromotionalEnrolment);
@@ -420,7 +419,7 @@ public class UpgradeDowngradeController{
                             upgradePackageCaseDetails.isSuccess = true;
                             BillingUtility.sendEmailsForOssiaNonStripeCustomers(new Set<string>{upgradePackageCaseDetails.invoiceId});
                         }
-                    }*/
+                    }
                      //19-Nov-2020:Send email with invoice attachment for if ossia organisation customers without card on file
                 } 
             }else{

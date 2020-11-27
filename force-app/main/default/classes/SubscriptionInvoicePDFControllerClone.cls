@@ -119,8 +119,8 @@ Public without sharing class SubscriptionInvoicePDFControllerClone{
             if(String.isNotBlank(invoice.Status__c))
                 InvoiceStatus = invoice.Status__c;
             	InvoiceId=invoice.Id;
-            	customLabelValue = System.Label.Aureus_Site;
-            if(String.isNotBlank(invoice.Parent_Account__r.Card_Number__c))
+                customLabelValue = System.Label.Aureus_Site;
+            if(String.isNotBlank(invoice.Parent_Account__r.Card_Number__c) || isOssia)
             	displayUpdate = true;
             else
                 displayUpdate = false;

@@ -621,7 +621,6 @@ enrolmentObj = upgradeDetails.enrolObj;
             }else{
                 upgradePackageCaseDetails.isSuccess = false;
                   //19-Nov-2020:Send email with invoice attachment for if ossia organisation customers without card on file
-                   /*Commented by nishi:26-nov-2020 for deploye invoice date changes
                     if(isOssiaOrganization){
                         Map<String,List<Credit_Memo__c>>  mapOfParentCreditMemo = UpgradeDowngradeController.createCreditMemoForCurrentMonthUpgradeProcess(new List<Invoice__c>(),invoiceAdjustmentMap,objEnrol,effectDate,objSubLineItem, taxRate, false,oldPackg.id);
                         upgradePackageCaseDetails =  UpgradeDowngradeController.createUpgradedAmountInvoice(new List<Invoice__c>(), objSubLineItem, depositeFee,oldPackg,  newPackg,  effectDate,  taxRate, newTeacherId, objEnrol,mapOfParentCreditMemo,upgradePackageCaseDetails,invoiceAdjustmentMap,false);
@@ -630,7 +629,7 @@ enrolmentObj = upgradeDetails.enrolObj;
                             upgradePackageCaseDetails.isSuccess = true;
                             BillingUtility.sendEmailsForOssiaNonStripeCustomers(new Set<string>{upgradePackageCaseDetails.invoiceId});
                         }
-                    }*/
+                    }
                   //19-Nov-2020:Send email with invoice attachment for if ossia organisation customers without card on file
             } 
         }else{
@@ -758,14 +757,13 @@ enrolmentObj = upgradeDetails.enrolObj;
                 isSuccess = false;
                 upgradePackageCaseDetails.isSuccess = false;
                 //19-Nov-2020:Send email with invoice attachment for if ossia organisation customers without card on file
-                  /*Commented by nishi:26-nov-2020 for deploye invoice date changes
                 if(isOssiaOrganization){
                     upgradePackageCaseDetails = createDueInvoiceWithLineItem(enrolmentObj,parentId,upgradePackageCaseDetails,depositeFee,newPackage,effectiveDate);
                     if(String.isNotBlank(upgradePackageCaseDetails.invoiceId)){
                         BillingUtility.sendEmailsForOssiaNonStripeCustomers(new Set<string>{upgradePackageCaseDetails.invoiceId});
                         upgradePackageCaseDetails.isSuccess = true;
                     }
-                }*/
+                }
                  //19-Nov-2020:Send email with invoice attachment for if ossia organisation customers without card on file
             }
         }else{

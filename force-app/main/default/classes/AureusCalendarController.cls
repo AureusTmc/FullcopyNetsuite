@@ -1414,8 +1414,7 @@ ed.teacherAttachmentId = attachList[0].Id;
                         }
                            //if ossia organisation adhoc should be allowed and invoice should be still generated even if the card is failed
                     }
-                }/*commmented by nishi:23-Nov-2020: for deployment of the Ossia enhancements not include anything from Enhancements part -2 
-                else{
+                }else{
                     isSuccess = false;
                      //19-Nov-2020:Send email with invoice attachment for if ossia organisation customers without card on file
                      if(isOssiaOrganization){
@@ -1426,9 +1425,8 @@ ed.teacherAttachmentId = attachList[0].Id;
                             BillingUtility.sendEmailsForOssiaNonStripeCustomers(new Set<string>{invoiceId});
                         }
                         isSuccess = true;
-                    }
-                    //19-Nov-2020:Send email with invoice attachment for if ossia organisation customers without card on file
-                }commmented by nishi:23-Nov-2020: for deployment of the Ossia enhancements not include anything from Enhancements part -2 */
+                    }//19-Nov-2020:Send email with invoice attachment for if ossia organisation customers without card on file
+                }
             }else{
                 isSuccess = false;
             }

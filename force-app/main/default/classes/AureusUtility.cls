@@ -833,7 +833,13 @@ D. Change of Enrolment
                             objEnrolment.Center__c = objEnrolment.New_Centre__c;
                             objEnrolment.New_Centre__c = Null;
                         }
-                       
+                        // added by nishi: 27-Nov-2020: For is group class enrolment changes
+                        if(objEnrolment.type__c == ConstantsClass.enrolGroupType){
+                            if(objEnrolment.New_Class__c != NULL){
+                                objEnrolment.Class__c = objEnrolment.New_Class__c;
+                                objEnrolment.New_Class__c = NULL;
+                            }
+                        }
                         objEnrolment.Package_Process_Status__c =  ConstantsClass.enrollmentProcessCompletedStatus; //'Completed';
                     }
                    //added by nishi: 4-sep-2020: for if enrolment process is pending and Package_Process_Type__c == change center then we update enrolment
