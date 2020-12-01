@@ -273,6 +273,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
         date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1);
         Credit_memo_line_item__c objCreditLineItem = new  Credit_memo_line_item__c();    
         map<String,Invoice_Line_Item__c> updateInvoiceLineItem = new map<String,Invoice_Line_Item__c>();
+        map<String,Invoice_Line_Item__c>  updateCreditMemoInvoiceLineItem = new map<String,Invoice_Line_Item__c> (); 
         Credit_Memo__c  objCreditMemo = new     Credit_Memo__c();
         String payAsCredit = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get('Payment As Credit').getRecordTypeId();
         String paymentRecordTypeId =  Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get(ConstantsClass.paymentAsDepositRecordType).getRecordTypeId();
@@ -473,7 +474,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
 
                 //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
                 if(string.isNotBlank(objCreditLineItem.Invoice_Line_Item__c)){
-                    updateInvoiceLineItem.put(objCreditLineItem.Invoice_Line_Item__c,updateInvoiceLineItemMap( updateInvoiceLineItem,math.abs(depositAmount),
+                    updateCreditMemoInvoiceLineItem.put(objCreditLineItem.Invoice_Line_Item__c,updateInvoiceLineItemMap( updateInvoiceLineItem,math.abs(depositAmount),
                          0,objCreditLineItem.Invoice_Line_Item__c));
                 }
             }
@@ -500,6 +501,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                 else if(objlineitem.Is_Discount__c)
                                     mapofinvoicelineitem.put('DiscountInvoice',objlineitem);
                             }
+                            updateInvoiceLineItem.put(objlineitem.id,objlineitem);
                         }
                     }else{
                          if(invoiceobj.invoice_type__c == 'Recurring'){
@@ -674,7 +676,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                     
                     //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
                     if(string.isNotBlank(invoicelineitemId) ){
-                        updateInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,math.abs(negativeNextMonthInvoiceAmount),
+                        updateCreditMemoInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,math.abs(negativeNextMonthInvoiceAmount),
                          math.abs(negativeNextMonthInvoiceAmountGST),invoicelineitemId));
                     }
 
@@ -726,7 +728,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                 
                 //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
                 if(string.isNotBlank(invoicelineitemId) ){
-                    updateInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,math.abs(negativeInvoiceAmount),
+                    updateCreditMemoInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,math.abs(negativeInvoiceAmount),
                     math.abs(negativeInvoiceAmountGST),invoicelineitemId));
                 }
 
@@ -785,7 +787,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                                     objCreditLineItem.Is_Discount__c = true;                                                    
                     listOfCreditmemolineitem.add(objCreditLineItem);     
                     if(string.isNotBlank(discountlineitemId) ){
-                        updateInvoiceLineItem.put(discountlineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,(-BillingUtility.roundOffAmount(negativeInvoiceDiscountAmount - BillingUtility.roundOffAmount(negativeInvoiceDiscountAmountGST))),
+                        updateCreditMemoInvoiceLineItem.put(discountlineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,(-BillingUtility.roundOffAmount(negativeInvoiceDiscountAmount - BillingUtility.roundOffAmount(negativeInvoiceDiscountAmountGST))),
                         (-negativeInvoiceDiscountAmountGST),discountlineitemId));
                     }
                 }
@@ -800,7 +802,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                                     objEnrol.id,invoicelineitemId,'Remaining Lessons Adjustment',lastLessonDateObj);
                     listOfCreditmemolineitem.add(objCreditLineItem); 
                     if(string.isNotBlank(invoicelineitemId) ){
-                        updateInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,(lessonsAmt - BillingUtility.roundOffAmount(taxAmount)),
+                        updateCreditMemoInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,(lessonsAmt - BillingUtility.roundOffAmount(taxAmount)),
                         BillingUtility.roundOffAmount(taxAmount),invoicelineitemId));
                     }
                 }
@@ -814,7 +816,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                             objEnrol.id,nextMonthinvoicelineitemId,'Remaining Lessons Adjustment',nextMonthDate.addMonths(-1));
                     listOfCreditmemolineitem.add(objCreditLineItem); 
                     if(string.isNotBlank(nextMonthinvoicelineitemId) ){
-                        updateInvoiceLineItem.put(nextMonthinvoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,math.abs(nextMonthAmount - BillingUtility.roundOffAmount(taxAmount)),
+                        updateCreditMemoInvoiceLineItem.put(nextMonthinvoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,math.abs(nextMonthAmount - BillingUtility.roundOffAmount(taxAmount)),
                         math.abs(taxAmount),nextMonthinvoicelineitemId));
                     }
                 }
@@ -941,11 +943,11 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
         }
          //added by nishi: 6-Oct-2020 : end:for new requirement Create a Credit Memo record with the status pending instead of the Payment as Deposit record.
        
-         if(updateInvoiceLineItem != null && updateInvoiceLineItem.size() > 0){
-            update updateInvoiceLineItem.values();
+         if(updateCreditMemoInvoiceLineItem != null && updateCreditMemoInvoiceLineItem.size() > 0){
+            update updateCreditMemoInvoiceLineItem.values();
         }
 
-         system.debug('@@@updateInvoiceLineItem'+updateInvoiceLineItem);
+         system.debug('@@@updateCreditMemoInvoiceLineItem'+updateCreditMemoInvoiceLineItem);
        //system.debug('@@@isTransaction'+isTransaction);
         return isTransaction;
         

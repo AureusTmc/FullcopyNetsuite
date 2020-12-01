@@ -226,6 +226,7 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
         //system.debug('hasMoreEnrolment'+hasMoreEnrolment);
         Payment__c paymentObj  = new Payment__c();
         map<String,Invoice_Line_Item__c> updateInvoiceLineItem = new map<String,Invoice_Line_Item__c>();
+        map<String,Invoice_Line_Item__c> updateCreditMemoAmountInvoiceLineItem = new map<String,Invoice_Line_Item__c>();
         //@JAtin Commented on 15th Nov Due to Fetch Deposit Amount from current Deposit
         
         //Map<String, Invoice_Line_Item__c> mapOfInvoiceLineItems = new Map<String, Invoice_Line_Item__c>();
@@ -338,7 +339,7 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
                 mapOfCreditmemolineitem.put('Deposit Adjustment',listOfCreditmemolineitem);
                 //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
                 if(string.isNotBlank(objCreditLineItem.Invoice_Line_Item__c)){
-                    updateInvoiceLineItem.put(objCreditLineItem.Invoice_Line_Item__c,updateInvoiceLineItemMap( updateInvoiceLineItem,depositAmount,0,objCreditLineItem.Invoice_Line_Item__c));
+                    updateCreditMemoAmountInvoiceLineItem.put(objCreditLineItem.Invoice_Line_Item__c,updateInvoiceLineItemMap( updateInvoiceLineItem,depositAmount,0,objCreditLineItem.Invoice_Line_Item__c));
                  }
                 newPendingCreditMemos.put('Deposit Adjustment',objCreditMemo);
                 //added by nishi: 6-Oct-2020 : end:for new requirement Create a Credit Memo record with the status pending instead of the Payment as Deposit record.
@@ -459,7 +460,7 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
                 newPendingCreditMemos.put('Refund Deposit',objCreditMemo);
                  //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
                 if(string.isNotBlank(objCreditLineItem.Invoice_Line_Item__c)){
-                    updateInvoiceLineItem.put(objCreditLineItem.Invoice_Line_Item__c,updateInvoiceLineItemMap( updateInvoiceLineItem,depositAmount,0,objCreditLineItem.Invoice_Line_Item__c));
+                    updateCreditMemoAmountInvoiceLineItem.put(objCreditLineItem.Invoice_Line_Item__c,updateInvoiceLineItemMap( updateInvoiceLineItem,depositAmount,0,objCreditLineItem.Invoice_Line_Item__c));
                 }
                 // added by nishi: 5-Nov-2020: for if we not found any active enrolment all enrolments are withdrwal then we create a task to finance team for refund reminder.
             Map<string,QueueSObject > mapOfQueue = BillingUtility.getTaskQueueMap();
@@ -546,7 +547,7 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
                         listOfCreditmemolineitem.add(objCreditLineItem);
                         //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
                         if(string.isNotBlank(invoicelineitemId)){
-                            updateInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,Decimal.valueOf(refundNextMontAmountWithTax.split('@')[0]),Decimal.valueOf(refundNextMontAmountWithTax.split('@')[1]),invoicelineitemId));
+                            updateCreditMemoAmountInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,Decimal.valueOf(refundNextMontAmountWithTax.split('@')[0]),Decimal.valueOf(refundNextMontAmountWithTax.split('@')[1]),invoicelineitemId));
                         }
                     }
                      //added by nishi: 15-Oct-2020 : start:for new requirement Create a Credit Memo record with the status pending instead of the success Payment as credit record.    
@@ -604,7 +605,7 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
                                                         objCreditLineItem.is_Discount__c = true;
                         listOfCreditmemolineitem.add(objCreditLineItem); 
                         if(string.isNotBlank(invoiceDiscountlineitemId)){
-                            updateInvoiceLineItem.put(invoiceDiscountlineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,(-Decimal.valueOf(refundDiscountAmountWithTax.split('@')[0])),
+                            updateCreditMemoAmountInvoiceLineItem.put(invoiceDiscountlineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,(-Decimal.valueOf(refundDiscountAmountWithTax.split('@')[0])),
                             (-Decimal.valueOf(refundDiscountAmountWithTax.split('@')[1])),invoiceDiscountlineitemId));
                         }
                     }
@@ -631,7 +632,7 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
                     listOfCreditmemolineitem.add(objCreditLineItem); 
                     //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
                     if(string.isNotBlank(invoicelineitemId)){
-                        updateInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,Decimal.valueOf(refundAmountWithTax.split('@')[0]),
+                        updateCreditMemoAmountInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,Decimal.valueOf(refundAmountWithTax.split('@')[0]),
                         Decimal.valueOf(refundAmountWithTax.split('@')[1]),invoicelineitemId));
                     }
                 }
@@ -731,11 +732,11 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
         }
          //added by nishi: 6-Oct-2020 : end:for new requirement Create a Credit Memo record with the status pending instead of the Payment as Deposit record.
       
-        if(updateInvoiceLineItem != null && updateInvoiceLineItem.size() > 0){
-            update updateInvoiceLineItem.values();
+        if(updateCreditMemoAmountInvoiceLineItem != null && updateCreditMemoAmountInvoiceLineItem.size() > 0){
+            update updateCreditMemoAmountInvoiceLineItem.values();
         }
        
-        system.debug('@@@updateInvoiceLineItem'+updateInvoiceLineItem);
+        system.debug('@@@updateInvoiceLineItem'+updateCreditMemoAmountInvoiceLineItem);
         if(paymentList.size() > 0){
             insert paymentList;
         }
@@ -775,11 +776,11 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
                         objCreditLineItem.Is_Discount__c=objInvLine.Is_Discount__c;
                         listOfCreditmemolineitem.add(objCreditLineItem);                                      
                         //Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
-                        objInvLine.Credit_Memo_Amount__c = objInvLine.Amount__c;
-                        if( objInvLine.GST_Amount__c != Null ){
-                            objInvLine.Credit_Memo_Tax__c = objInvLine.GST_Amount__c;
+                        Invoice_Line_Item__c objupdateInvLine = new Invoice_Line_Item__c(id=objInvLine.id,Credit_Memo_Amount__c = objInvLine.Amount__c);
+                        if(objInvLine.GST_Amount__c != Null ){
+                            objupdateInvLine.Credit_Memo_Tax__c = objInvLine.GST_Amount__c;
                         }
-                        updateInvoiceLineItem.add(objInvLine);
+                        updateInvoiceLineItem.add(objupdateInvLine);
                     }
                 }
             }

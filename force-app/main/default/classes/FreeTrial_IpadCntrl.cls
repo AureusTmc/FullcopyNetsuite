@@ -1,3 +1,5 @@
+//Comment
+//CH-Z01 : Zakir 16-11-2020: added field (Major_Instruments_Disciplines__c) showing the value on the Vf page (FreeTrial_Ipad3) .   
 public class FreeTrial_IpadCntrl {
     public String slcdLsnType{get;set;}
     public String slcdCenter{get;set;}
@@ -98,7 +100,7 @@ countryCode = 'SG';
         system.debug('org-->'+org);
         
         if(String.isNotBlank(org)){
-            if(org.equalsIgnoreCase('ossia')){
+            if(org.equalsIgnoreCase('Ossia')){
                 org ='osia'; 
                 currentOrg = urlParamMetaMap.get('Ossia');
             }else{
@@ -269,6 +271,7 @@ stuWrap.lesson = lsn;
                
             }else{
                  //end:Added by nishi:3-Sep-2020: for show ossia group class time slot we get instrument to Ossia_Group_Grade_Package__c object
+                 //CH-Z01
                 List<Class__c> clssList = [SELECT Id,Teacher__c,Teacher__r.Name,Teacher__r.Teacher_Bio__c,Active__c,Centre_Name__c,Centre_Name__r.Name,Teacher__r.Major_Instruments_Disciplines__c,Instrument__c
                                         FROM Class__c 
                                         WHERE Active__c = true 
@@ -566,7 +569,7 @@ ApexPages.addMessage(new ApexPages.message(Apexpages.Severity.ERROR,'Please sele
         
         if(trialEnrMod.slcdLsnType.equalsIgnoreCase('Individual')){
             List<Teacher_Working_Hour__c> techWorkSchList = [SELECT Id,Name,Teacher_Name__c,Teacher_Name__r.Engagement_Type__c,Teacher_Name__r.Name, Teacher_Name__r.FirstName, Teacher_Name__r.LastName,
-                                                             Teacher_Name__r.Teacher_Bio__c,Working_Day__c,Start_Time__c,End_Time__c,Active__c
+                                                             Teacher_Name__r.Teacher_Bio__c,Working_Day__c,Start_Time__c,End_Time__c,Active__c,Teacher_Name__r.Major_Instruments_Disciplines__c
                                                              FROM  Teacher_Working_Hour__c 
                                                              WHERE Center_Name__c =: slcdCenter AND Active__c = true AND Working_Day__c != null AND Break_Time__c = False 
                                                              AND Teacher_Name__r.Status__c =: ConstantsClass.teacherWorkingStatus AND Start_Time__c != null AND End_Time__c != null AND
@@ -789,9 +792,9 @@ Set<Time> afternoonTimesTemp    = new Set<Time>();*/
                                                 List<String> tchrQual =  new List<String>();
                                                 if(tcrQualMap.get(teachWorkSch.Teacher_Name__c) != null)
                                                     tchrQual = tcrQualMap.get(teachWorkSch.Teacher_Name__c);
-                                                
+                                                  //CH-Z01 
                                                 TeacherModel tMod = new TeacherModel(teachWorkSch.Teacher_Name__c,teachWorkSch.Teacher_Name__r.FirstName,
-                                                                                    teachWorkSch.Teacher_Name__r.Teacher_Bio__c,'',tchrQual);
+                                                                                    teachWorkSch.Teacher_Name__r.Teacher_Bio__c,'',tchrQual, teachWorkSch.Teacher_Name__r.Major_Instruments_Disciplines__c);
                                                 if(teachAttaImageMap.get(teachWorkSch.Teacher_Name__c) != null)
                                                     tMod.attachmentId = teachAttaImageMap.get(teachWorkSch.Teacher_Name__c);
                                                 tchTempList.add(tMod);
@@ -869,7 +872,7 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
                 system.debug('timeSlotTemp------> '+timeSlotTemp);
                 List<String> slotList = new List<String>();
                 List<Time> tmpLst        = new List<Time>();
-                tmpLst.addAll(timeSlotTemp);tmpLst.sort();
+                tmpLst.addAll(timeSlotTemp);tmpLst.sort(); 
                 
                 String dayOfWeek  = ((DateTime)st).format('E');
                 for(Time t : tmpLst){
@@ -926,8 +929,7 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
                         if(clsList == null)
                             clsList = new List<Class__c>();                    
                         clsList.add(cls);                                                  
-                        clsSchMap.put(cls.Class_Day__c, clsList);   
-                        system.debug('@@cls.Bookings__r'+cls.Bookings__r);                              
+                        clsSchMap.put(cls.Class_Day__c, clsList);               
                         for(Booking__c book: cls.Bookings__r)
                             bookMap.put(cls.Id+'#'+book.Booking_Date__c, book);    
                     }
@@ -953,8 +955,7 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
                         if(clsList == null)
                             clsList = new List<Class__c>();                    
                         clsList.add(cls);                                                  
-                        clsSchMap.put(cls.Class_Day__c, clsList); 
-                        system.debug('@@cls.Bookings__r'+cls.Bookings__r);                 
+                        clsSchMap.put(cls.Class_Day__c, clsList);                
                         for(Booking__c book: cls.Bookings__r)
                             bookMap.put(cls.Id+'#'+book.Booking_Date__c, book);    
                     }
@@ -994,11 +995,8 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
                 String currDay =  DateTime.newInstance(st, Time.newInstance(0, 0, 0, 0)).format('E');
                 
                 if(clsSchMap.containsKey(currDay) && st >= System.today()){
-                    List<Class__c> clsSchLst = clsSchMap.get(currDay);
-                    system.debug('@@clsSchLst'+clsSchLst);        
-                    for(Class__c clsSch: clsSchLst){  
-                        system.debug('@@bookMap'+bookMap);          
-                        system.debug('@@clsSch.Id+st'+clsSch.Id+'#'+st);          
+                    List<Class__c> clsSchLst = clsSchMap.get(currDay);      
+                    for(Class__c clsSch: clsSchLst){          
                         if(bookMap.containsKey(clsSch.Id+'#'+st)){
                             Time stTime = clsSch.Start_Time__c;
                             timeSlotTemp.add(stTime);       
@@ -1015,8 +1013,9 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
                                 tchrQual = tcrQualMap.get(clsSch.Teacher__c);
                             // 14-Sep-2020:nishi: If a user added two enrolment and both enrolment types were grouped then we allowed the user to select the same teacher, time slot
                             // otherwise the enrolment type is individual then we showed an error message
+                               //CH-Z01  
                             TeacherModel tMod = new TeacherModel(clsSch.Teacher__c,clsSch.Teacher__r.FirstName,
-                                                                 clsSch.Teacher__r.Teacher_Bio__c,'',tchrQual,clsSch.Id,clsSch.Available_Capacity__c);
+                                                                 clsSch.Teacher__r.Teacher_Bio__c,'',tchrQual,clsSch.Id,clsSch.Available_Capacity__c,clsSch.Teacher__r.Major_Instruments_Disciplines__c);
                             if(teachAttaImageMap.get(clsSch.Teacher__c) != null)
                                 tMod.attachmentId = teachAttaImageMap.get(clsSch.Teacher__c);
                             tchTempList.add(tMod);
@@ -1187,7 +1186,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
             parentAcc.Instrument__c  = (new list<string>(scldInst) )[0] ;
         }
          // added by nishi: 28-Sep-2020: for stop process builer 
-        List<Account> centrList  = [SELECT Id, Name, Location__c, Country__c, Country__r.Country_Name__c FROM Account WHERE Id =: slcdCenter];
+        List<Account> centrList  = [SELECT Id, Name, Location__c,Organisation__c, Country__r.name,Country__c, Country__r.Country_Name__c FROM Account WHERE Id =: slcdCenter];
         if(centrList.size() > 0){
                 parentAcc.Location__c = centrList.get(0).Location__c;
                 //Added by rajesh, 10th sep 2019. To do some sharing seeting stuff as per Ashish ji discussion
@@ -1196,12 +1195,24 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
             }
             //Check that customer is already exist or not on the bases of email
             if(parentAcc.PersonEmail != null){
-                List<Account> accList = [SELECT Id,Name FROM Account WHERE PersonEmail =: parentAcc.PersonEmail]; 
-              
+                List<Account> accList = [SELECT Id,Name FROM Account
+                                         WHERE PersonEmail =: parentAcc.PersonEmail 
+                                        And Centre_Name__r.Organisation__c =: centrList.get(0).Organisation__c // Added by nishi: 30-nov-2020: for Change customer key from email address to email address+Organisation name
+                                        ]; 
                 if(accList.size() > 0){
                     //Integer count = 0;
                     parentAcc.Id = accList.get(0).Id;
                 }else{
+                    // Added by nishi:Start: 30-nov-2020: for Change customer key from email address to email address+Organisation name
+                    string useremail=parentAcc.PersonEmail+'.';
+                    if(org.equalsIgnoreCase('osia')){
+                        useremail +='ossia'+centrList.get(0).country__r.name; 
+                    }else{
+                        useremail += 'aureus'+centrList.get(0).country__r.name;
+                    }
+                    parentAcc.User_Email__c = useremail;
+                    // Added by nishi:end: 30-nov-2020: for Change customer key from email address to email address+Organisation name 
+
                     system.debug('in else of refrel -->'+isOsiaApply);
                     //@Juneid 04-Aug 2020, Filling refrence code of rferree
                     if(String.isNotBlank(uniqueRefCode) && isOsiaApply == true){
@@ -1634,8 +1645,9 @@ teachModSlotMap = new Map<String, List<TeacherModel>>();
         public String classId{get;set;}
         public Decimal classAvailableCapacity{get;set;}
         public String attachmentId{get;set;}
+		public String majorInstrumentDisciplines{get;set;}
         
-        public TeacherModel(String tecId,String tecName,String teacBioCon,String highestQualification, List<String> highestQualificationLst){
+        public TeacherModel(String tecId,String tecName,String teacBioCon,String highestQualification, List<String> highestQualificationLst, String majorInstrumentDisciplines){ 
             this.tecId   = tecId;
             this.tecName = tecName;
             this.teacBio = teacBioCon;
@@ -1644,11 +1656,12 @@ teachModSlotMap = new Map<String, List<TeacherModel>>();
             this.highestQualificationLst = highestQualificationLst;
             this.classId ='';
             this.classAvailableCapacity =0;
+			this.majorInstrumentDisciplines = majorInstrumentDisciplines ;
         }
         // 14-Sep-2020:nishi: If a user added two enrolment and both enrolment types were grouped then we allowed the user to select the same teacher, time slot
         // otherwise the enrolment type is individual then we showed an error message 
         // we get Class id and avaailable capacity with teacher
-        public TeacherModel(String tecId,String tecName,String teacBioCon,String highestQualification, List<String> highestQualificationLst,String classId, Decimal classAvailableCapacity){
+        public TeacherModel(String tecId,String tecName,String teacBioCon,String highestQualification, List<String> highestQualificationLst,String classId, Decimal classAvailableCapacity, String majorInstrumentDisciplines){
             this.tecId   = tecId;
             this.tecName = tecName;
             this.teacBio = teacBioCon;
@@ -1657,6 +1670,7 @@ teachModSlotMap = new Map<String, List<TeacherModel>>();
             this.highestQualificationLst = highestQualificationLst;
             this.classId =classId;
             this.classAvailableCapacity = classAvailableCapacity;
+			this.majorInstrumentDisciplines = majorInstrumentDisciplines;
         }
     }
 }

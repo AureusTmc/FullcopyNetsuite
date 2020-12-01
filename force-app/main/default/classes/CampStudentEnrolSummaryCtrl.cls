@@ -56,12 +56,26 @@ public without sharing class CampStudentEnrolSummaryCtrl {
         CampDetailsForEnrolStudentController.AccountModal newStudentDetails = studentSummaryDetails.studentDetails ;
         map<string,Account> mapOfStudentAndParentAccount = new map<string,Account>();
         newStudentDetails.parentAccDetails.Centre_Name__c = newStudentDetails.centerId;
+        
+        List<Account> centerlist =  [Select id,Name,Organisation__c,country__r.name,Organisation__r.name from account where id=:newStudentDetails.centerId and recordtype.Name=:ConstantsClass.centerRecTypeName];
         String customerRecId =  Schema.SObjectType.Account.getRecordTypeInfosByName().get(ConstantsClass.customerRecTypeName).getRecordTypeId();
         //Check that customer is already exist or not on the bases of email
         if(newStudentDetails.parentAccDetails.PersonEmail != null){
-            List<Account> accList = [SELECT Id,Name FROM Account WHERE PersonEmail =: newStudentDetails.parentAccDetails.PersonEmail]; 
+            List<Account> accList = [SELECT Id,Name FROM Account 
+                                    WHERE PersonEmail =: newStudentDetails.parentAccDetails.PersonEmail
+                                    And Centre_Name__r.Organisation__c =: centerlist.get(0).Organisation__c // Added by nishi: 30-nov-2020: for Change customer key from email address to email address+Organisation name
+                                    ]; 
             if(accList.size() > 0)
                 newStudentDetails.parentAccDetails.Id = accList.get(0).Id;
+             // Added by nishi:Start: 30-nov-2020: for Change customer key from email address to email address+Organisation name
+             string useremail=newStudentDetails.parentAccDetails.PersonEmail+'.';
+             if(centerlist.get(0).Organisation__r.name == Label.Ossia_Organisation_Name){
+                 useremail +='ossia'+centerlist.get(0).country__r.name; 
+             }else{
+                 useremail += 'aureus'+centerlist.get(0).country__r.name;
+             }
+             newStudentDetails.parentAccDetails.User_Email__c = useremail;
+             // Added by nishi:end: 30-nov-2020: for Change customer key from email address to email address+Organisation name     
         }
         newStudentDetails.parentAccDetails.Enroled__c     = false;
         newStudentDetails.parentAccDetails.Enroled_Date__c= System.today();

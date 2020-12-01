@@ -412,7 +412,7 @@ public class UpgradeDowngradeController{
                 }else{
                     upgradePackageCaseDetails.isSuccess = false;
                      //19-Nov-2020:Send email with invoice attachment for if ossia organisation customers without card on file
-                    if(isossiaOrganisation){
+                     if(isossiaOrganisation){
                         Map<String,List<Credit_Memo__c>>  mapOfParentCreditMemo = createCreditMemoForCurrentMonthUpgradeProcess(listOfInvoice,invoiceAdjustmentMap,enrolmentObj,effectDate,objSubLineItem, taxRate, isPromotionalEnrolment,oldPackg.id);
                         upgradePackageCaseDetails =  createUpgradedAmountInvoice(listOfInvoice,objSubLineItem, depositeFee,oldPackg,  newPackg,  effectDate,  taxRate, newTeacherId, enrolmentObj,mapOfParentCreditMemo,upgradePackageCaseDetails,invoiceAdjustmentMap,isPromotionalEnrolment);
                         if(string.isNotBlank(upgradePackageCaseDetails.invoiceId)){
@@ -586,11 +586,11 @@ public class UpgradeDowngradeController{
                     objCreditLineItem.Is_Discount__c=objInvLine.Is_Discount__c;
                     listOfCreditmemolineitem.add(objCreditLineItem);                                      
                     //Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
-                    objInvLine.Credit_Memo_Amount__c = objInvLine.Amount__c;
+                    Invoice_Line_Item__c objupdateInvLine = new Invoice_Line_Item__c(id=objInvLine.id,Credit_Memo_Amount__c = objInvLine.Amount__c);
                     if(objInvLine.GST_Amount__c != Null ){
-                        objInvLine.Credit_Memo_Tax__c = objInvLine.GST_Amount__c;
+                        objupdateInvLine.Credit_Memo_Tax__c = objInvLine.GST_Amount__c;
                     }
-                    updateInvoiceLineItem.add(objInvLine);
+                    updateInvoiceLineItem.add(objupdateInvLine);
                 }
             }
         }
@@ -631,11 +631,11 @@ public static Map<String,List<Credit_Memo__c>> createCreditMemoForPrepaymentInvo
                     mapOfCreditmemolineitem.put(objInvoice.id,listOfCreditmemolineitem);
                 
                     //Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
-                    objInvLine.Credit_Memo_Amount__c = objInvLine.Amount__c;
+                    Invoice_Line_Item__c objupdateInvLine = new Invoice_Line_Item__c(id=objInvLine.id,Credit_Memo_Amount__c = objInvLine.Amount__c);
                     if( objInvLine.GST_Amount__c != Null ){
-                        objInvLine.Credit_Memo_Tax__c = objInvLine.GST_Amount__c;
+                        objupdateInvLine.Credit_Memo_Tax__c = objInvLine.GST_Amount__c;
                     }
-                    updateInvoiceLineItem.add(objInvLine);
+                    updateInvoiceLineItem.add(objupdateInvLine);
                 }
                 newPendingCreditMemos.put(objInvoice.id,objCreditMemo);
             }
@@ -775,6 +775,8 @@ public static Map<String,List<Credit_Memo__c>> createCreditMemoForPrepaymentInvo
         List<Credit_memo_line_item__c> listOfCreditmemolineitem = new List<Credit_memo_line_item__c>(); 
         Credit_memo_line_item__c objCreditLineItem = new  Credit_memo_line_item__c();    
         map<String,Invoice_Line_Item__c> updateInvoiceLineItem = new map<String,Invoice_Line_Item__c>();
+        map<String,Invoice_Line_Item__c>  updateCreditMemoInvoiceLineItem = new map<String,Invoice_Line_Item__c> (); 
+  
         Credit_Memo__c  objCreditMemo = new     Credit_Memo__c();
          //for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
          Map<String,Invoice__c> mapofinvoice = new Map<String,Invoice__c>();
@@ -789,6 +791,7 @@ public static Map<String,List<Credit_Memo__c>> createCreditMemoForPrepaymentInvo
                         else if(objlineitem.Is_Discount__c)
                             mapofinvoicelineitem.put('DiscountInvoice',objlineitem);
                     }
+                    updateInvoiceLineItem.put(objlineitem.id,objlineitem);
                 }
             }else{
                 if(invoiceobj.invoice_type__c == 'Recurring'){
@@ -858,7 +861,7 @@ public static Map<String,List<Credit_Memo__c>> createCreditMemoForPrepaymentInvo
             listOfCreditmemolineitem.add(objCreditLineItem);     
             system.debug('objCreditLineItem'+objCreditLineItem);                                        
             if(string.isNotBlank(invoicelineitemId) ){
-                updateInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,BillingUtility.roundOffAmount(negativeInvoiceAmount),negativeInvoiceAmountGST,invoicelineitemId));
+                updateCreditMemoInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,BillingUtility.roundOffAmount(negativeInvoiceAmount),negativeInvoiceAmountGST,invoicelineitemId));
             }
         }
 
@@ -883,7 +886,7 @@ public static Map<String,List<Credit_Memo__c>> createCreditMemoForPrepaymentInvo
                 listOfCreditmemolineitem.add(objCreditLineItem);     
                 system.debug('objCreditLineItem'+objCreditLineItem);                                        
                 if(string.isNotBlank(invoicelineitemId) ){
-                    updateInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,-BillingUtility.roundOffAmount(negativeInvoiceDiscountAmount),-BillingUtility.roundOffAmount(negativeInvoiceDiscountAmountGST),invoicelineitemId));
+                    updateCreditMemoInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,-BillingUtility.roundOffAmount(negativeInvoiceDiscountAmount),-BillingUtility.roundOffAmount(negativeInvoiceDiscountAmountGST),invoicelineitemId));
                 }
             }
         }
@@ -909,7 +912,7 @@ public static Map<String,List<Credit_Memo__c>> createCreditMemoForPrepaymentInvo
                 listOfCreditmemolineitem.add(objCreditLineItem);                                      
                 system.debug('listOfCreditmemolineitem'+listOfCreditmemolineitem);      
                 if(string.isNotBlank(invoicelineitemId) ){
-                    updateInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,BillingUtility.roundOffAmount(negativeNextMonthInvoiceAmount),negativeNextMonthInvoiceAmountGST,invoicelineitemId));
+                    updateCreditMemoInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,BillingUtility.roundOffAmount(negativeNextMonthInvoiceAmount),negativeNextMonthInvoiceAmountGST,invoicelineitemId));
                 }
             }
         }
@@ -934,9 +937,9 @@ public static Map<String,List<Credit_Memo__c>> createCreditMemoForPrepaymentInvo
             }
                                        
         }
-        system.debug('updateInvoiceLineItem'+updateInvoiceLineItem);
-         if(updateInvoiceLineItem != null && updateInvoiceLineItem.size() > 0){
-            update updateInvoiceLineItem.values();
+        system.debug('updateCreditMemoInvoiceLineItem'+updateCreditMemoInvoiceLineItem);
+         if(updateCreditMemoInvoiceLineItem != null && updateCreditMemoInvoiceLineItem.size() > 0){
+            update updateCreditMemoInvoiceLineItem.values();
         }
         return getParentCreditMemo(new set<string>{objEnrol.parent__c},effectiveDate,creditmemoIds);
     }

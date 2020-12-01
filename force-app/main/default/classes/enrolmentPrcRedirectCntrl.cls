@@ -5,12 +5,15 @@ public class enrolmentPrcRedirectCntrl {
         String usrEmail = ApexPages.currentPage().getParameters().get('userEmail');
         
         if(String.isNotBlank(usrEmail)){
-            String type = ConstantsClass.typeTrial;
+            list<String> type = new list<String>{ConstantsClass.typeTrial,ConstantsClass.enrolGroupType};  //20-11-2020 Zakir Added Type Group in the List . 
+             
             Set<String> stgList = new Set<String>{ConstantsClass.enrollStageAttended, 'Pending Enrolment'};
                 
-            List<Enrolment__c> enrList = [SELECT Id, Name, Package__r.Name, Student__r.Name, Teacher__r.Name, Parent__r.Name, Parent__r.PersonEmail, Trial_Date__c, Stage__c 
-                               			  FROM Enrolment__c 
-                               			  WHERE Parent__r.PersonEmail =:usrEmail AND Type__c =:type  AND Stage__c IN:stgList AND Package__r.Active__c = true];
+            List<Enrolment__c> enrList = [SELECT Id, Name, Package__r.Name, Student__r.Name, Teacher__r.Name, Parent__r.Name, Parent__r.PersonEmail, Trial_Date__c, Stage__c,
+                                          Parent__r.Organisation__c,Parent__r.Organisation__r.Name FROM Enrolment__c 
+                                             WHERE // Parent__r.PersonEmail =:usrEmail //commented by nishi: 30-nov-2020: for  Change customer key from email address to email address+Organisation name   
+                                             Parent__r.User_Email__c =:usrEmail 
+                                             AND Type__c IN: type  AND Stage__c IN:stgList AND Package__r.Active__c = true];
             
             Boolean isTrialAttend = false;
             for(Enrolment__c enr : enrList){
@@ -31,12 +34,23 @@ public class enrolmentPrcRedirectCntrl {
             }else{
                 pgName += '/EnrolmentProcessForClass'; 
             }
+           
             pageRef = new PageReference(pgName);
             
 			Integer counter = 1;
             for(Enrolment__c enr: enrList){
                 String enrlStr = 'enr'+counter;
-                pageRef.getParameters().put(enrlStr, enr.Id);    
+                string orgName;
+                 //20-11-2020 Zakir Added Organisation parameter . 
+                pageRef.getParameters().put(enrlStr, enr.Id);
+                pageRef.getParameters().put('currentOrg',enr.Parent__r.Organisation__c);
+                if(enr.Parent__r.Organisation__r.Name == Label.Ossia_Organisation_Name){
+                    orgName = 'ossia'; 
+                }else{ orgName = 'aureus'; 
+                }
+                pageRef.getParameters().put('orgType',orgName);
+                 //20-11-2020 Zakir Added Added Organisation parameter . 
+                system.debug('pegeRef-->'+pageRef.getParameters());
                 
                 counter = counter+1;            
             }           

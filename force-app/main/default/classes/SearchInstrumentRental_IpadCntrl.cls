@@ -958,30 +958,41 @@ rw.errorMsg = 'Unknown error occured. Please contact your admin.';
             parentAcc.Centre_Name__c = slcdCenter;
             parentAcc.Phone =  PersonMobilePhoneCustom;
             system.debug('PersonMobilePhoneCustom -> '+ PersonMobilePhoneCustom);
-            if(parentAcc.PersonEmail != null){
-                List<Account> accList = [SELECT Id,Name,Stripe_Customer_Id__c,Card_Number__c,Card_Type__c,Card_Image__c,
-                                            BillingStreet,BillingCity,BillingPostalCode,BillingCountryCode
-                                        FROM Account WHERE PersonEmail =: parentAcc.PersonEmail]; 
-                if(accList.size() > 0){
-                    parentAcc.Id = accList.get(0).Id;
-                    parentAcc.BillingStreet      = accList.get(0).BillingStreet;
-                    parentAcc.BillingCity        =accList.get(0).BillingCity;
-                    parentAcc.BillingPostalCode  = accList.get(0).BillingPostalCode;
-                    if(accList.get(0).Stripe_Customer_Id__c != null && accList.get(0).Card_Number__c != null && accList.get(0).Card_Type__c != null){
-                        stripeCstmrId = accList.get(0).Stripe_Customer_Id__c;
-                        cardNumber    = accList.get(0).Card_Number__c;
-                        cardType      = accList.get(0).Card_Type__c;            
-                        cardImage     = accList.get(0).Card_Image__c;
-                        isAlreadyStripCstmr = true;
-                    }
-                }
-                
-            }
-            upsert parentAcc;
-            List<Account> centerlist =  [Select id,Name,Organisation__c,country__r.name from account where id=:slcdCenter and recordtype.Name=:ConstantsClass.centerRecTypeName];
-            
+            List<Account> centerlist =  [Select id,Name,Organisation__c,country__r.name,Organisation__r.name from account where id=:slcdCenter and recordtype.Name=:ConstantsClass.centerRecTypeName];
             system.debug('centerlist -> '+ centerlist);
             if(centerlist != null && centerlist.size() > 0){
+                if(parentAcc.PersonEmail != null){
+                    List<Account> accList = [SELECT Id,Name,Stripe_Customer_Id__c,Card_Number__c,Card_Type__c,Card_Image__c,
+                                                BillingStreet,BillingCity,BillingPostalCode,BillingCountryCode
+                                            FROM Account WHERE PersonEmail =: parentAcc.PersonEmail
+                                            And Centre_Name__r.Organisation__c =: centerlist.get(0).Organisation__c // Added by nishi: 30-nov-2020: for Change customer key from email address to email address+Organisation name
+                                            ]; 
+                    if(accList.size() > 0){
+                        parentAcc.Id = accList.get(0).Id;
+                        parentAcc.BillingStreet      = accList.get(0).BillingStreet;
+                        parentAcc.BillingCity        =accList.get(0).BillingCity;
+                        parentAcc.BillingPostalCode  = accList.get(0).BillingPostalCode;
+                        if(accList.get(0).Stripe_Customer_Id__c != null && accList.get(0).Card_Number__c != null && accList.get(0).Card_Type__c != null){
+                            stripeCstmrId = accList.get(0).Stripe_Customer_Id__c;
+                            cardNumber    = accList.get(0).Card_Number__c;
+                            cardType      = accList.get(0).Card_Type__c;            
+                            cardImage     = accList.get(0).Card_Image__c;
+                            isAlreadyStripCstmr = true;
+                        }
+                        // Added by nishi:Start: 30-nov-2020: for Change customer key from email address to email address+Organisation name
+                        string useremail=parentAcc.PersonEmail+'.';
+                        if(centerlist.get(0).Organisation__r.name == Label.Ossia_Organisation_Name){
+                            useremail +='ossia'+centerlist.get(0).country__r.name; 
+                        }else{
+                            useremail += 'aureus'+centerlist.get(0).country__r.name;
+                        }
+                        parentAcc.User_Email__c = useremail;
+                        // Added by nishi:end: 30-nov-2020: for Change customer key from email address to email address+Organisation name 
+                    }
+                    
+                }
+                upsert parentAcc;
+            
                 parentAcc.BillingCountryCode  = centerlist.get(0).country__r.name;
                 String organisationId          = centerlist[0].Organisation__c;
                 system.debug('organisationId -> '+ organisationId);

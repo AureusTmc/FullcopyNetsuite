@@ -520,6 +520,7 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
           map<string,List<Credit_memo_line_item__c>> mapOfCreditmemolineitem = new map<string,List<Credit_memo_line_item__c>>();
           List<Credit_memo_line_item__c> listOfCreditmemolineitem = new List<Credit_memo_line_item__c>(); 
           map<String,Invoice_Line_Item__c> updateInvoiceLineItem = new map<String,Invoice_Line_Item__c>();
+          map<String,Invoice_Line_Item__c> updateCreditMemoInvoiceLineItem = new map<String,Invoice_Line_Item__c>();
         packageIds.add(oldPackage);
         packageIds.add(newPackage);
         Map<id,Package__c> mapOfPackage = new Map<Id,package__c>([Select Id,Unit_Fee__c from Package__c where Id In:packageIds]);
@@ -706,7 +707,7 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                                     invoicelineItemCreditAmount =updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_Amount__c != null ?updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_Amount__c :0;
                                     invoicelineItemCreditGst = updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_tax__c != null ?updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_tax__c :0;
                                 }
-                                updateInvoiceLineItem.put(invoicelineitemId,new Invoice_Line_Item__c(id=invoicelineitemId,
+                                updateCreditMemoInvoiceLineItem.put(invoicelineitemId,new Invoice_Line_Item__c(id=invoicelineitemId,
                                                         Credit_Memo_Amount__c =invoicelineItemCreditAmount+(Math.abs(oldPackageTotalAmount)),
                                                         Credit_Memo_tax__c=invoicelineItemCreditGst+gstAmount));
                             }
@@ -781,7 +782,7 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                                     invoicelineItemCreditAmount =updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_Amount__c != null ?updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_Amount__c :0;
                                     invoicelineItemCreditGst = updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_tax__c != null ?updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_tax__c :0;
                                 }
-                                updateInvoiceLineItem.put(invoicelineitemId,new Invoice_Line_Item__c(id=invoicelineitemId,
+                                updateCreditMemoInvoiceLineItem.put(invoicelineitemId,new Invoice_Line_Item__c(id=invoicelineitemId,
                                                         Credit_Memo_Amount__c =invoicelineItemCreditAmount+(Math.abs(oldPackageNextMonthTotalAmount)),
                                                         Credit_Memo_tax__c=invoicelineItemCreditGst+gstAmount));
                             }
@@ -813,8 +814,8 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                 }
                 //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
               
-                if(updateInvoiceLineItem != null && updateInvoiceLineItem.size() > 0){
-                    update updateInvoiceLineItem.values();
+                if(updateCreditMemoInvoiceLineItem != null && updateCreditMemoInvoiceLineItem.size() > 0){
+                    update updateCreditMemoInvoiceLineItem.values();
                 }
                 
                 //system.debug('@@ create new invoiceLineItem'+invoiceLineItem);

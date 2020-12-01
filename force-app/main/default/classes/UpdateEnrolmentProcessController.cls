@@ -289,6 +289,7 @@ public without sharing class UpdateEnrolmentProcessController implements IAdvanc
         }
         List<Invoice_Line_Item__c> invoiceLineItem = new List<Invoice_Line_Item__c>();
         map<String,Invoice_Line_Item__c> updateInvoiceLineItem = new map<String,Invoice_Line_Item__c>();
+        map<String,Invoice_Line_Item__c> updateCreditMemoInvoiceLineItem = new map<String,Invoice_Line_Item__c>();
         String subLineItemId ;
         Integer noOfOldLesson,noOfNewLesson;
           // added by nishi: 6-oct-2020: for create credit memo records
@@ -348,6 +349,7 @@ public without sharing class UpdateEnrolmentProcessController implements IAdvanc
                             else if(objlineitem.Is_Discount__c)
                                 mapofinvoicelineitem.put('DiscountInvoice',objlineitem);
                         }
+                        updateInvoiceLineItem.put(objlineitem.id,objlineitem);
                    }
                }else{
                     if(invoiceobj.invoice_type__c == 'Recurring'){
@@ -518,7 +520,7 @@ public without sharing class UpdateEnrolmentProcessController implements IAdvanc
 
                                 //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
                                 if(string.isNotBlank(invoicelineitemId)){
-                                    updateInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,oldPackageTotalAmount,gstAmount,invoicelineitemId));
+                                    updateCreditMemoInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,oldPackageTotalAmount,gstAmount,invoicelineitemId));
                                 }
                             }                 
                         }
@@ -552,7 +554,7 @@ public without sharing class UpdateEnrolmentProcessController implements IAdvanc
                                     objectOfInvoice.Credit_Memo_Amount__c +=  oldPackageTotalDiscountAmount+gstAmount;
                                     listOfCreditmemolineitem.add(objCreditLineItem);                                                  
                                    if(string.isNotBlank(invoicelineitemId)){
-                                        updateInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,oldPackageTotalDiscountAmount,gstAmount,invoicelineitemId));
+                                        updateCreditMemoInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,oldPackageTotalDiscountAmount,gstAmount,invoicelineitemId));
                                     }
                                 }                 
                             }
@@ -612,7 +614,7 @@ public without sharing class UpdateEnrolmentProcessController implements IAdvanc
                                     objectOfInvoice.Credit_Memo_Amount__c +=  (oldPackageNextMonthTotalAmount+gstAmount);        
                                     //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
                                     if(string.isNotBlank(invoicelineitemId)){
-                                        updateInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,oldPackageNextMonthTotalAmount,gstAmount,invoicelineitemId));
+                                        updateCreditMemoInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,oldPackageNextMonthTotalAmount,gstAmount,invoicelineitemId));
                                     }
                                 }
                                 //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
@@ -656,10 +658,10 @@ public without sharing class UpdateEnrolmentProcessController implements IAdvanc
                     }
                     
                     //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
-                    if(updateInvoiceLineItem != null && updateInvoiceLineItem.size() > 0){
-                        update updateInvoiceLineItem.values();
+                    if(updateCreditMemoInvoiceLineItem != null && updateCreditMemoInvoiceLineItem.size() > 0){
+                        update updateCreditMemoInvoiceLineItem.values();
                     }
-                    system.debug('@@@updateInvoiceLineItem'+updateInvoiceLineItem);
+                    system.debug('@@@updateCreditMemoInvoiceLineItem'+updateCreditMemoInvoiceLineItem);
                //system.debug('@@ create new invoiceLineItem'+invoiceLineItem);
                     if(String.isNotBlank(objectOfInvoice.id)){
                         SageIntacctIntegrationUtility.changeEnrolment(objectOfInvoice.Id);

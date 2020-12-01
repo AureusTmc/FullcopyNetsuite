@@ -190,8 +190,10 @@ public class EnrolmentProcessIpadCntrl {
             for(Class__c cls : clsList)
                 tchrMap.put(cls.Teacher__c, cls.Teacher__r.Name);
             
-            for(String tchrId: tchrMap.keySet())
-                teacherOptions.add(new SelectOption(tchrId, tchrMap.get(tchrId))); 
+            for(String tchrId: tchrMap.keySet()){
+                if(string.isNotBlank(tchrId)&& tchrMap.containskey(tchrId))
+                	teacherOptions.add(new SelectOption(tchrId, tchrMap.get(tchrId))); 
+            }
         }
         return teacherOptions;
     }        
@@ -451,7 +453,7 @@ public class EnrolmentProcessIpadCntrl {
                          // start:nishi: 4-Sep-2020: for check teacher engagement type is part-time and is day is greater then 28 mean (5th lesson booking) so we not consider this teacher
                        //remove any timeslot for 5th days for part-time teachers.
                        Boolean isPartTimeTeacher = false; 
-                       if(teachWorkSch.Teacher_Name__r.Engagement_Type__c =='Part-Time' && st.day() > 28 && defaultOrg=='ossia'){
+                       if(ConstantsClass.teacherPartTimeEngagementStatus.contains(teachWorkSch.Teacher_Name__r.Engagement_Type__c) && st.day() > 28 && defaultOrg=='ossia'){
                            isPartTimeTeacher = true;
                        }
                        system.debug('%%%%isPartTimeTeacher'+isPartTimeTeacher +'  '+st); 
@@ -1363,7 +1365,7 @@ public class EnrolmentProcessIpadCntrl {
                     if(!setOfTeacherAndTime.contains(currDay+'-'+startTime+'-'+stu.lesson.selectedTeacher+clsSchMap.get(key).Id)){
                         setOfTeacherAndTime.add(currDay+'-'+startTime+'-'+stu.lesson.selectedTeacher+clsSchMap.get(key).Id);
                     }else{
-                        if(clsSchMap.get(key).Available_Capacity__c > 2){
+                        if(clsSchMap.get(key).Available_Capacity__c < 2){
                             errorMsg = 'Error: You can\'t book the same Teacher for \'the Same Time\'.';
                             isError  = true;
                             break; 
@@ -1507,7 +1509,7 @@ public class EnrolmentProcessIpadCntrl {
         public String tSlotStr{get;set;}
         public TimeSlotModelCntrl tSlotMap{get;set;}
         
-        Integer  pkgDuration;
+        public Integer  pkgDuration;
         String selectedPlanT;
         String selectedTeacherT;
         public LessonWrapper(){
