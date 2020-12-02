@@ -5,7 +5,23 @@
   Description : This triggerHelper is used to create case when person account sync with Pardot 
  */
 public class AccountTriggerHelper {
-	
+	//Added by Rajesh on 27th Oct 2020, For populate centre name on the bases of location as per discussion with Deepak or Ashish
+    public static void populateCentre(List<Account> filtrAccList){
+        Map<String, Id> accLocMap = new Map<String, Id>();
+        for(Account acc: filtrAccList)
+            accLocMap.put(acc.Location_PI__pc, null);
+        
+        if(accLocMap.size() > 0){
+        	for(Account acc: [SELECT Id, Name, Location__c FROM Account WHERE Location__c IN: accLocMap.keySet() AND RecordType.Name = 'Centre'])
+        		accLocMap.put(acc.Location__c, acc.Id);
+        	
+            for(Account ac: filtrAccList){
+                if(String.isNotBlank(ac.Location_PI__pc) && accLocMap.get(ac.Location_PI__pc)!=null)
+                	ac.Centre_Name__c = accLocMap.get(ac.Location_PI__pc);
+            }
+        }
+    }
+    
     public static void createCaseForPIsyncAccounts(List<Account> filtrAccList){
         List<Case>   caseAccList  = new List<Case>();
         List<Account> updAccList  = new List<Account>();

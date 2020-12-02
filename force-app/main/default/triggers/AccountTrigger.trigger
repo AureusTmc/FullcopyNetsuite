@@ -4,19 +4,38 @@
   Date   : 20th July 2019
   Description : This trigger is used to create case when person account sync with Pardot 
  */
-trigger AccountTrigger on Account (after insert, after update) {
-    List<Account> filterParAcList = new List<Account>();
-    
-    for(Account ac: Trigger.new){
-        //Added by Rajesh on 30th Oct 2019, Add B2BMA Integration user condtion as per discussion with Prashant. To solve duplicate insertion case(sales enquiry) record
-        if(ac.LastModifiedById == Label.B2BMA_Integration_UserId && String.isNotBlank(ac.PI_to_SF_Sync__pc) && ac.PI_to_SF_Sync__pc.equalsIgnoreCase('true') && (Trigger.isInsert || 
-                                    (Trigger.isUpdate && ac.PI_to_SF_Sync__pc != Trigger.oldMap.get(ac.Id).PI_to_SF_Sync__pc))){
-            filterParAcList.add(ac);
+trigger AccountTrigger on Account (before insert,before update,after insert, after update) {
+    if(Trigger.isBefore){
+        //Added by Rajesh on 27th Oct 2020, For populate centre name on the bases of location as per discussion with Deepak or Ashish
+        List<Account> filterParAcList = new List<Account>();
+        for(Account ac: Trigger.new){
+            // Zakir 2-12-2020 check the record type Name customer and passing the value  
+                 String customerRecordTypeId = Schema.SObjectType.Account.getRecordTypeInfosByName().get('Customer').getRecordTypeId();
+                 if(string.isNotBlank(ac.Organisation_Sharing__c) && ac.RecordTypeId == customerRecordTypeId  ){
+                    ac.Organisation_Name__pc = ac.Organisation_Sharing__c ;
+                }
+            if(ac.PI_to_SF_Sync__pc != null && ac.PI_to_SF_Sync__pc.equalsIgnoreCase('true') && (Trigger.isInsert || 
+                                        (Trigger.isUpdate && ac.PI_to_SF_Sync__pc != Trigger.oldMap.get(ac.Id).PI_to_SF_Sync__pc)) && String.isBlank(ac.Centre_Name__c) && String.isNotBlank(ac.Location_PI__pc)){
+                filterParAcList.add(ac);
+            }
         }
+        
+        if(filterParAcList.size() > 0)
+            AccountTriggerHelper.populateCentre(filterParAcList);
+    }else if(Trigger.isAfter){
+        List<Account> filterParAcList = new List<Account>();
+        
+        for(Account ac: Trigger.new){
+            //Added by Rajesh on 30th Oct 2019, Add B2BMA Integration user condtion as per discussion with Prashant. To solve duplicate insertion case(sales enquiry) record
+            if(ac.LastModifiedById == Label.B2BMA_Integration_UserId && String.isNotBlank(ac.PI_to_SF_Sync__pc) && ac.PI_to_SF_Sync__pc.equalsIgnoreCase('true') && (Trigger.isInsert || 
+                                        (Trigger.isUpdate && ac.PI_to_SF_Sync__pc != Trigger.oldMap.get(ac.Id).PI_to_SF_Sync__pc))){
+                filterParAcList.add(ac);
+            }
+        }
+        
+        if(filterParAcList.size() > 0)
+            AccountTriggerHelper.createCaseForPIsyncAccounts(filterParAcList);
     }
-    
-    if(filterParAcList.size() > 0)
-        AccountTriggerHelper.createCaseForPIsyncAccounts(filterParAcList);
     
     //Sanjay Hrms 
     if(Trigger.isAfter){
@@ -26,6 +45,7 @@ trigger AccountTrigger on Account (after insert, after update) {
             List<Account>accountsContainsReferal = new List<Account>();
             
             for(Account acc: trigger.new){
+                  
                 if(acc.Employee_Status__c == 'Probation' || acc.Employee_Status__c == 'Confirm'){
                     if(acc.Joining_Date__c == NULL){
                         acc.addError(label.EmpStatusJoiningDateMandatory);
@@ -34,6 +54,7 @@ trigger AccountTrigger on Account (after insert, after update) {
                         acc.addError(label.EmpStatusDutyTypeMandatory);
                     }
                     else{
+                       
                         if(acc.Job_Title__c != NULL)
                             accList.add(acc);
                     }
@@ -42,6 +63,7 @@ trigger AccountTrigger on Account (after insert, after update) {
                 if(acc.PersonContactId != Null && acc.Unique_Referral_Code__c !=Null){
                     accountsContainsReferal.add(acc);
                 }
+                
             }
             System.debug(accList);
             if(!accList.isEmpty())
@@ -59,6 +81,8 @@ trigger AccountTrigger on Account (after insert, after update) {
             List<Account> accForProbationList = new List<Account>();
             
             for(Account acc: trigger.new){
+                system.debug('zakir update');
+                 
                 if((acc.Employee_Status__c == 'Probation' || acc.Employee_Status__c == 'Confirm') && trigger.oldmap.get(acc.Id).Employee_Status__c != acc.Employee_Status__c && trigger.oldmap.get(acc.Id).Employee_Status__c == 'Draft'){
                     if(acc.Joining_Date__c == NULL){
                         acc.addError(label.EmpStatusJoiningDateMandatory);
@@ -67,9 +91,12 @@ trigger AccountTrigger on Account (after insert, after update) {
                         acc.addError(label.EmpStatusDutyTypeMandatory);
                     }
                     else{
+                        
                         if(acc.Job_Title__c != NULL)
                             accList.add(acc);
+                        
                     }
+                    
                 }
                 
                 if(acc.Onboarding_Stage__c == 'Completed' && trigger.oldmap.get(acc.Id).Onboarding_Stage__c != acc.Onboarding_Stage__c){
