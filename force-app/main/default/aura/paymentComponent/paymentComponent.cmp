@@ -18,7 +18,7 @@
     <aura:attribute name="chkValue" type="boolean" default="false" />
     <aura:attribute name="isEnabled" type="boolean" default="false" />
     <aura:attribute name="isUseCreditMemoOnly" type="boolean" default="false" /><!--added by nishi: 13-Nov-2020:for ossia user they use only credit memo not pay a cash amount-->
-    
+    <aura:attribute name="ispaidAmount" type="boolean" default="false" />
     
     <!--Use aura:if tag to display/hide popup based on isModalOpen value-->
     <aura:if isTrue="{!v.showmodal}">
@@ -85,8 +85,9 @@
                         
                         <!--Modal/Popup Box Footer Starts here-->
                         <footer class="slds-modal__footer">
-                            <lightning:button variant="neutral" label="Cancel"  onclick="{!c.closeModel}"  title="Cancel"
-                                              />
+                            <lightning:button variant="neutral" label="Cancel"  onclick="{!c.closeModel}"  title="Cancel"/>
+                              <!-- added by nishi: 8-Dec-2020: for ossia user they use only credit memo not pay a cash amount-->
+                            <lightning:button variant="brand" disabled="{!!v.chkValue}" label="Apply Credit Memo Only" title="Apply Credit Memo Only" onclick="{!c.handelCreditMemoSave}" />
                             <lightning:button variant="brand" label="Save" title="Save" onclick="{!c.handelSave}" />
                         </footer>
                     </div>
@@ -120,9 +121,9 @@
                         
                 <!--Modal/Popup Box Footer Starts here-->
                 <footer class="slds-modal__footer">
-                    <lightning:button variant="neutral" label="Cancel" title="Cancel"
+                    <lightning:button variant="neutral" label="No" title="NO"
                                         onclick="{!c.closePopup}" />
-                    <lightning:button variant="brand" label="Save" title="Save" onclick="{!c.saveGeneratePaymet}" />
+                    <lightning:button variant="brand" label="Yes" title="Yes" onclick="{!c.saveGeneratePaymet}" />
                 </footer>
             </div>
         </section>

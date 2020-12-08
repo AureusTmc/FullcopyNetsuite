@@ -101,7 +101,7 @@
         <apex:form >
             <apex:outputPanel id="tstpopup">
                  <apex:outputPanel rendered="{!displayPopupforDeclined}">
-                <div style="height:640px">
+                <div >
                     <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open slds-modal_small" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1">
                         <div class="slds-modal__container">
                             <header class="slds-modal__header">
@@ -111,7 +111,7 @@
                                 <span style="color:firebrick;">Your payment is not processed by the bank. Please try using a different card.	</span>
                             </div>
                             <footer class="slds-modal__footer">
-                                <button class="slds-button slds-button_brand"  onclick="closePopup();return false;">Close</button>
+                                <button class="slds-button slds-button_brand"  onclick="closeErrorPopup();return false;">Close</button>
                             </footer>
                         </div>
                     </section>
@@ -119,7 +119,7 @@
                 </div>
                 </apex:outputPanel>
                 <apex:outputPanel rendered="{!displayPopUp}">
-                <div style="height:640px">
+                <div>
                     <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open slds-modal_small" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1">
                         <div class="slds-modal__container">
                             <header class="slds-modal__header">
@@ -185,6 +185,11 @@
                                                     <apex:outputText value="{!InvObj.Parent_Account__r.Card_Image__c}" escape="false"/>{!'X'+InvObj.Parent_Account__r.Card_Number__c} 
                                                 </apex:outputPanel>
                                                 <!-- added outputPanel by nishi:13-Nov:2020: if user is stripe customer then we show card detials-->
+                                                 <!-- added outputPanel by nishi:8-Dec:2020: if user is not a stripe customer then we error message-->
+                                                 <apex:outputPanel rendered="{!!isAlreadyStripCstmr}">
+                                                    Not available
+                                                </apex:outputPanel>
+                                                <!-- added outputPanel by nishi:8-Dec:2020: if user is not a stripe customer then we error message-->
                                             </div>
                                         </li>
                                         
@@ -221,11 +226,14 @@
                     </div>
                 </div>
             </div>
+            <apex:actionFunction name="closeErrorPopup" action="{!closeErrorPopup}"   status="spinner"  reRender="tstpopup">
+            </apex:actionFunction>
             <apex:actionFunction name="PaymntOption" action="{!callPaymentGate}"   status="spinner"  reRender="tstpopup">
             </apex:actionFunction>
             <apex:actionFunction name="paywithonetimeStripe"  action="{!paywithonetimeStripe}" status="spinner" oncomplete="PreviousOption();" reRender="tstpopup">
                 <apex:param name="arg1" value="" assignTo="{!stripeToken}"/>
-            </apex:actionFunction>    
+            </apex:actionFunction>  
+
         </apex:form>
         <!-- added by nishi: 13-Nov-2020: for if user is not stripe customer then they use one time strip payment--> 
         <div class="main-content  slds-hide" id="onetimecardDetails">
@@ -264,7 +272,7 @@
                                                     </button>
                                                 </div>
                                                 <div class="slds-form-element">
-                                                    <button id="payBtn" class="slds-button slds-button_neutral custom-btn" onclick="onetimepaymentcard(); return false;" >
+                                                    <button id="payBtn" class="slds-button slds-button_neutral custom-btn" onclick="onetimepaymentcard();" >
                                                         Pay Now
                                                         <span class="slds-icon_container slds-icon-utility-announcement" title="One Time Payment">
                                                             <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
@@ -282,6 +290,7 @@
                         </div>
                     </div>
                     <script>
+                        var payAmount = false;
                         var stripe = Stripe('{!apiKey}');
                         
                         var elements = stripe.elements();
@@ -312,6 +321,7 @@
                         }
                         });
                         function onetimepaymentcard(){
+                            console.log('hello');
                             // Handle form submission.
                             var form = document.getElementById('payment-form');
                             form.addEventListener('submit', function(event) {
@@ -345,12 +355,15 @@
                             console.log(token.card.id); 
                             
                             var checkErr = checkErrorOnSummaryPage();
-                        
+                            console.log('checkErr'+checkErr);
                             if(!checkErr){
                                 //for disable pay button if no error on page validation 
                                 disablePayBtn(true);
                                 console.log('token.id'+token.id);
-                                paywithonetimeStripe(token.id);
+                                if(payAmount == false){
+                                    payAmount = true;
+                                    paywithonetimeStripe(token.id);
+                                }
                             }else{
                                 //for enable pay button if any error 
                                 disablePayBtn(false);

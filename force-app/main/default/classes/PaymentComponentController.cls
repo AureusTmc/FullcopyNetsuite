@@ -87,7 +87,7 @@ public class PaymentComponentController {
     @AuraEnabled
     public static invoiceWrapper  createPayment( String selectedMethod, String recordId, String transacId, Boolean isCreditAmnt, Decimal currentCreditAmounts,Boolean isUseCreditMemoOnly){
         system.debug('method call-->'+selectedMethod+ recordId+transacId);
-        if( String.isNotBlank(selectedMethod) && String.isNotBlank(recordId) && String.isNotBlank(transacId)){
+        if( (isUseCreditMemoOnly && String.isNotBlank(recordId)) || (!isUseCreditMemoOnly && String.isNotBlank(selectedMethod) && String.isNotBlank(recordId) && String.isNotBlank(transacId)) ){
             try{  
                 List<Payment__c> paymentsToUpsert  = new List<Payment__c>();//To update and create paymet of crdit
                 //Getting recordtype Id
@@ -139,18 +139,21 @@ public class PaymentComponentController {
                             List<Credit_Memo__c> listOfCreditMemos  =generateCreditMemoQuery( new Set<String>{invoice.Parent_Account__c});
                             if(listOfCreditMemos != null && listOfCreditMemos.size()>0){
                                 Date lastDate = listOfCreditMemos[0].Credit_Memo_Date__c;
+                                Map<String, Boolean> mapOfActiveParent = BillingUtility.checkParentHasMultipleEnrolments( new Set<String>{invoice.Parent_Account__c}, lastDate);
                                 Map<String,List<Credit_Memo__c>> mapOfParentCreditMemo = BillingUtility.getParentCreditMemo(new Set<String>{invoice.Parent_Account__c},lastDate);
-                                BillingUtility.adjustPendingCreditMemoDeposit(invoiceList, new Set<String>{invoice.id}, new Set<String>{invoice.Parent_Account__c},mapOfParentEnrolmentLastDate,false,mapOfParentCreditMemo,new Map<String, Boolean>{invoice.Parent_Account__c=>true} );
+                                BillingUtility.adjustPendingCreditMemoDeposit(invoiceList, new Set<String>{invoice.id}, new Set<String>{invoice.Parent_Account__c},mapOfParentEnrolmentLastDate,false,mapOfParentCreditMemo,mapOfActiveParent );
                                 if(accumulatedCreditMemoAmount<invoiceTotalAmount){
                                     diffrenceAmount =  invoiceList[0].Balance_Amount__c - accumulatedCreditMemoAmount;
                                 }
-                                if(diffrenceAmount >0 && !isUseCreditMemoOnly){// added condition nishi:13-nov-2020: for  if user use only credit memo amount not use other options
-                                    //Create new payment credit for remaning amount
-                                    objpayment = createpaymentrecord(diffrenceAmount,selectedMethod,invoiceList[0].Id,transacId,paySuccesRecId,invoiceList[0].Parent_Account__c);
-                                    paymentsToUpsert.add(objpayment); 
-                                    invoiceList[0].Status__c ='Paid'; 
-                                    // added by nishi: 13-nov-2020: for send Payment confiramtion email 
-                                    sendSingleEmailMessage.addAll(sendEmailConfirmation(invoiceList[0],isOssia));
+                                if(!isUseCreditMemoOnly){
+                                    if(diffrenceAmount >0){// added condition nishi:13-nov-2020: for  if user use only credit memo amount not use other options
+                                        //Create new payment credit for remaning amount
+                                        objpayment = createpaymentrecord(diffrenceAmount,selectedMethod,invoiceList[0].Id,transacId,paySuccesRecId,invoiceList[0].Parent_Account__c);
+                                        paymentsToUpsert.add(objpayment); 
+                                        invoiceList[0].Status__c ='Paid'; 
+                                        // added by nishi: 13-nov-2020: for send Payment confiramtion email 
+                                        sendSingleEmailMessage.addAll(sendEmailConfirmation(invoiceList[0],isOssia));
+                                    }
                                 }
                             }else{
                                 return new invoiceWrapper(400,'Pending Credit Memo Record Not Found');
@@ -186,18 +189,22 @@ public class PaymentComponentController {
                     if(invoiceList.size() > 0)
                         update  invoiceList[0];
                     system.debug('paymentsToUpsert-->'+paymentsToUpsert);
+                    system.debug('sendSingleEmailMessage-->'+sendSingleEmailMessage);
                     //for send Payment confiramtion email accoding to organisation
-                    Messaging.SendEmailResult[] results = Messaging.sendEmail(sendSingleEmailMessage,FALSE);
-                    if (results[0].success) {
-                        return new invoiceWrapper(200,'Credit Memo Amount Used Sucessfully');
-                    } else {
-                        return new invoiceWrapper(200,'Credit Memo Amount Used Sucessfully. But Some Internal Issue Email Not Send');
+                    if(sendSingleEmailMessage != null && sendSingleEmailMessage.size() > 0){
+                        Messaging.SendEmailResult[] results = Messaging.sendEmail(sendSingleEmailMessage,FALSE);
+                        system.debug('results-->'+results);
+                        if (results[0].success) {
+                            return new invoiceWrapper(200,'Paid Invoice Amount Sucessfully');
+                        } else {
+                            return new invoiceWrapper(200,'Paid Invoice Amount Sucessfully. But Some Internal Issue Email Not Send');
+                        }
                     }
                     //for send Payment confiramtion email accoding to organisation
                 }
             }catch(Exception e){
                 system.debug('error'+e.getStackTraceString()+'-'+e.getMessage());
-                return new invoiceWrapper(400,e.getMessage());
+                return new invoiceWrapper(400,e.getStackTraceString()+'-'+e.getMessage());
             }
             // added condition nishi:13-nov-2020: for if user use only credit memo amount not use other options
             if(isUseCreditMemoOnly){
@@ -207,7 +214,7 @@ public class PaymentComponentController {
             }
             // added condition nishi:13-nov-2020: for  if user use only credit memo amount not use other options
         }
-        return new invoiceWrapper(400,'Some Internal Issue Found.');
+        return new invoiceWrapper(400,'Please Select All Requied Fields.');
     }
 
     // added by nishi: 13-nov-2020: for send Payment confiramtion email accoding to organisation

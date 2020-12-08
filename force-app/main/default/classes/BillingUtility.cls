@@ -121,7 +121,7 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
                 }
                 INSERT invLineItmList;
             }
-           //system.debug('@@@invLineItmList'+invLineItmList);
+           system.debug('@@@invIds'+invIds);
             updateSubscriptionNextDate(mapOfSubInvoice.keySet());
             adjustDiscounts(mapOfSubInvoice.values(),invIds,invDate);
             //adjustDeposit(invoices, invIds, parentIds, firstDate, lastDate, mapOfParentEnrolmentLastDate); //commented by nishi: 16-Sep-2020 : for new requirement we adjust pending credit memo not payment
@@ -135,6 +135,7 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
     // added by nishi: 13-nov-2020: for send email if customer is belongs to Ossia organisation and Non stripe customers  
     @future(callout=true)
     public static void sendEmailsForOssiaNonStripeCustomers(Set<string> setOfInvIds){
+        system.debug('setOfInvIds'+setOfInvIds);
         if(setOfInvIds != null && setOfInvIds.size() > 0){
             Map<string,Invoice__c> mapOfinvoice = new Map<string,Invoice__c>();                                            
             List<Messaging.SingleEmailMessage> sendSingleEmailMessage = new List<Messaging.SingleEmailMessage>();
@@ -395,92 +396,105 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
                                 invoice.status__c = 'Paid';
                             }
                             //commented by nishi: for use 1 to many credit memo in one time  finding = FALSE;
-                        }else if(accumulatedCreditMemoAmount > invoiceTotalAmount && finding){//if the credit memo amount >  invoice amount then break the original credit memo to two credit memos - One equivalent to the invoice amount and other the balance with the status pending  for manage invoice and payment per amount  
-                            if(objCreditMemo.Total_Amount__c  > invoiceTotalAmount ){ //235.00 > 219.63 
-                                adjustedPaymentAmount =  adjustedPaymentAmount + objCreditMemo.Total_Amount__c; 
-                            }else if(objCreditMemo.Total_Amount__c == invoiceTotalAmount){
-                                adjustedPaymentAmount = adjustedPaymentAmount + invoiceTotalAmount; 
-                            }else if(objCreditMemo.Total_Amount__c < invoiceTotalAmount  ){
-                                adjustedPaymentAmount = adjustedPaymentAmount + objCreditMemo.Total_Amount__c; //2000 = 1000+1000
-                            }
-                            if(invoiceTotalAmount < adjustedPaymentAmount){// if invoice Total Amount is greater then  Adjust payment then we remove extra amount and create new payment record 
-                                Decimal remainingAmount = adjustedPaymentAmount - invoiceTotalAmount; 
-                                adjustedPaymentAmount = adjustedPaymentAmount - remainingAmount;
-                                Double adjustmentCreditMemoLineItemAmount = objCreditMemo.Total_Amount__c - remainingAmount; 
-                                if(objCreditMemo.Credit_memo_line_items__r != null && objCreditMemo.Credit_memo_line_items__r.size() > 0){
-                                    // 26-Oct-2020:nishi: for if any dicount negative amount is found then we added this amount to total amount.
-                                    if(creditmemoDiscounttotalAmount.containskey(objCreditMemo.id)){
-                                        system.debug('creditmemoDiscounttotalAmount.get(objCreditMemo.id)'+creditmemoDiscounttotalAmount.get(objCreditMemo.id));
-                                        adjustmentCreditMemoLineItemAmount = adjustmentCreditMemoLineItemAmount + math.abs(creditmemoDiscounttotalAmount.get(objCreditMemo.id)) ; 
-                                    }
-                                    // 26-Oct-2020:nishi:end: for if any dicount negative amount is found then we added this amount to total amount.
+                        }else if(accumulatedCreditMemoAmount > invoiceTotalAmount ){//if the credit memo amount >  invoice amount then break the original credit memo to two credit memos - One equivalent to the invoice amount and other the balance with the status pending  for manage invoice and payment per amount  
+                            if(finding){
+                                if(objCreditMemo.Total_Amount__c  > invoiceTotalAmount ){ //235.00 > 219.63 
+                                    adjustedPaymentAmount =  adjustedPaymentAmount + objCreditMemo.Total_Amount__c; 
+                                }else if(objCreditMemo.Total_Amount__c == invoiceTotalAmount){
+                                    adjustedPaymentAmount = adjustedPaymentAmount + invoiceTotalAmount; 
+                                }else if(objCreditMemo.Total_Amount__c < invoiceTotalAmount  ){
+                                    adjustedPaymentAmount = adjustedPaymentAmount + objCreditMemo.Total_Amount__c; //2000 = 1000+1000
+                                }
+                                if(invoiceTotalAmount < adjustedPaymentAmount){// if invoice Total Amount is greater then  Adjust payment then we remove extra amount and create new payment record 
+                                    Decimal remainingAmount = adjustedPaymentAmount - invoiceTotalAmount; 
+                                    adjustedPaymentAmount = adjustedPaymentAmount - remainingAmount;
+                                    Double adjustmentCreditMemoLineItemAmount = objCreditMemo.Total_Amount__c - remainingAmount; 
+                                    if(objCreditMemo.Credit_memo_line_items__r != null && objCreditMemo.Credit_memo_line_items__r.size() > 0){
+                                        // 26-Oct-2020:nishi: for if any dicount negative amount is found then we added this amount to total amount.
+                                        if(creditmemoDiscounttotalAmount.containskey(objCreditMemo.id)){
+                                            system.debug('creditmemoDiscounttotalAmount.get(objCreditMemo.id)'+creditmemoDiscounttotalAmount.get(objCreditMemo.id));
+                                            adjustmentCreditMemoLineItemAmount = adjustmentCreditMemoLineItemAmount + math.abs(creditmemoDiscounttotalAmount.get(objCreditMemo.id)) ; 
+                                        }
+                                        // 26-Oct-2020:nishi:end: for if any dicount negative amount is found then we added this amount to total amount.
 
-                                    //One equivalent to the invoice amount and other the balance with the status pending
-                                    for(Credit_memo_line_item__c objCreditmemolineitem : objCreditMemo.Credit_memo_line_items__r){
-                                        
-                                        decimal totalCreditMemoLineItemAmountWithoutTax=(objCreditmemolineitem.Amount__c != null ?objCreditmemolineitem.Amount__c : 0);
-                                        decimal totalCreditMemoLineItemTax= (objCreditmemolineitem.Tax_Amount__c != null ?objCreditmemolineitem.Tax_Amount__c : 0); 
-                                        totalCreditMemoLineItemAmount =  totalCreditMemoLineItemAmountWithoutTax+totalCreditMemoLineItemTax; 
-                                        if(totalCreditMemoLineItemAmount > 0){
-                                            if(adjustmentCreditMemoLineItemAmount <= 0.00){
-                                                List<Credit_memo_line_item__c> listOfCreditmemolineitem  = new  List<Credit_memo_line_item__c>();
-                                                if(creditNoteAmountAdjustment.containsKey(invoice.id)){
-                                                    listOfCreditmemolineitem =  creditNoteAmountAdjustment.get(invoice.id);
-                                                } 
-                                                Credit_memo_line_item__c objcreateCreditMemoLine = createCreditMemoLineRec(objCreditmemolineitem.Amount__c,objCreditmemolineitem.Tax_Amount__c,objCreditmemolineitem.Package__c,objCreditmemolineitem.enrolment__c,objCreditmemolineitem.Invoice_Line_Item__c,objCreditmemolineitem.remarks__c,objCreditmemolineitem.month__c);
-                                                objcreateCreditMemoLine.Is_Deposit__c =objCreditmemolineitem.Is_Deposit__c;
-                                                listOfCreditmemolineitem.add(objcreateCreditMemoLine);       
-                                                creditNoteAmountAdjustment.put(invoice.id,listOfCreditmemolineitem);
-                                                creditNotepreviousDetails.put(invoice.id,objCreditMemo);
-                                                listOfDeletedCreditmemolineitem.add(objCreditmemolineitem);
-                                            }else{
-                                                if(totalCreditMemoLineItemAmount > adjustmentCreditMemoLineItemAmount){
-                                                    Decimal taxAmount = 0;
-                                                    if(!objCreditmemolineitem.Is_Deposit__c && invoice.Center__r.Country__r.Tax_Rate__c != null && invoice.Center__r.Country__r.Tax_Rate__c != 0){
-                                                        taxAmount = BillingUtility.roundOffAmount(adjustmentCreditMemoLineItemAmount * invoice.Center__r.Country__r.Tax_Rate__c/(100+invoice.Center__r.Country__r.Tax_Rate__c));
+                                        //One equivalent to the invoice amount and other the balance with the status pending
+                                        for(Credit_memo_line_item__c objCreditmemolineitem : objCreditMemo.Credit_memo_line_items__r){
+                                            
+                                            decimal totalCreditMemoLineItemAmountWithoutTax=(objCreditmemolineitem.Amount__c != null ?objCreditmemolineitem.Amount__c : 0);
+                                            decimal totalCreditMemoLineItemTax= (objCreditmemolineitem.Tax_Amount__c != null ?objCreditmemolineitem.Tax_Amount__c : 0); 
+                                            totalCreditMemoLineItemAmount =  totalCreditMemoLineItemAmountWithoutTax+totalCreditMemoLineItemTax; 
+                                            if(totalCreditMemoLineItemAmount > 0){
+                                                if(adjustmentCreditMemoLineItemAmount <= 0.00){
+                                                    List<Credit_memo_line_item__c> listOfCreditmemolineitem  = new  List<Credit_memo_line_item__c>();
+                                                    if(creditNoteAmountAdjustment.containsKey(invoice.id)){
+                                                        listOfCreditmemolineitem =  creditNoteAmountAdjustment.get(invoice.id);
+                                                    } 
+                                                    Credit_memo_line_item__c objcreateCreditMemoLine = createCreditMemoLineRec(objCreditmemolineitem.Amount__c,objCreditmemolineitem.Tax_Amount__c,objCreditmemolineitem.Package__c,objCreditmemolineitem.enrolment__c,objCreditmemolineitem.Invoice_Line_Item__c,objCreditmemolineitem.remarks__c,objCreditmemolineitem.month__c);
+                                                    objcreateCreditMemoLine.Is_Deposit__c =objCreditmemolineitem.Is_Deposit__c;
+                                                    listOfCreditmemolineitem.add(objcreateCreditMemoLine);       
+                                                    creditNoteAmountAdjustment.put(invoice.id,listOfCreditmemolineitem);
+                                                    creditNotepreviousDetails.put(invoice.id,objCreditMemo);
+                                                    listOfDeletedCreditmemolineitem.add(objCreditmemolineitem);
+                                                }else{
+                                                    if(totalCreditMemoLineItemAmount > adjustmentCreditMemoLineItemAmount){
+                                                        Decimal taxAmount = 0;
+                                                        if(!objCreditmemolineitem.Is_Deposit__c && invoice.Center__r.Country__r.Tax_Rate__c != null && invoice.Center__r.Country__r.Tax_Rate__c != 0){
+                                                            taxAmount = BillingUtility.roundOffAmount(adjustmentCreditMemoLineItemAmount * invoice.Center__r.Country__r.Tax_Rate__c/(100+invoice.Center__r.Country__r.Tax_Rate__c));
+                                                        }
+                                                        objCreditmemolineitem.Amount__c =adjustmentCreditMemoLineItemAmount -  taxAmount; 
+                                                        objCreditmemolineitem.Tax_Amount__c = taxAmount;
+                                                        listOfUpdatedCreditmemolineitem.add(objCreditmemolineitem);
+                                                        adjustmentCreditMemoLineItemAmount = adjustmentCreditMemoLineItemAmount - totalCreditMemoLineItemAmount ;
+                                                        Decimal creditMemoTotalAmount = 0;
+                                                        Decimal creditMemoTotaltaxAmount = 0;
+                                                        if(mapofAdjustmentCreditNoteAmount.containsKey(invoice.id)){
+                                                            creditMemoTotalAmount = Decimal.valueOf(mapofAdjustmentCreditNoteAmount.get(invoice.id).split('@')[0]);
+                                                            creditMemoTotaltaxAmount =Decimal.valueOf(mapofAdjustmentCreditNoteAmount.get(invoice.id).split('@')[1]);
+                                                        }
+                                                        creditMemoTotalAmount += (totalCreditMemoLineItemAmountWithoutTax - objCreditmemolineitem.Amount__c);
+                                                        creditMemoTotaltaxAmount += (totalCreditMemoLineItemTax - objCreditmemolineitem.Tax_Amount__c);
+                                                        // 9-Oct-2020:nishi: start at the time of dividing the credit memo From Invoice number was similar changes are required in Credit memo line item.
+                                                        //mapofAdjustmentCreditNoteAmount.put(invoice.id,creditMemoTotalAmount+'@'+creditMemoTotaltaxAmount);
+                                                        if(!mapofAdjustmentCreditNoteAmount.containsKey(invoice.id) ){
+                                                            mapofAdjustmentCreditNoteAmount.put(invoice.id,objCreditMemo.From_Invoice__c);
+                                                        }
+                                                        // 9-Oct-2020:nishi: start at the time of dividing the credit memo From Invoice number was similar changes are required in Credit memo line item.
+                                                        Credit_memo_line_item__c objcreateCreditMemoLine = createCreditMemoLineRec(creditMemoTotalAmount,creditMemoTotaltaxAmount,objCreditmemolineitem.Package__c,objCreditmemolineitem.enrolment__c,objCreditmemolineitem.Invoice_Line_Item__c,objCreditmemolineitem.remarks__c,objCreditmemolineitem.month__c);
+                                                        if(creditMemoTotaltaxAmount == 0){
+                                                            objcreateCreditMemoLine.Is_Deposit__c =objCreditmemolineitem.Is_Deposit__c;
+                                                        }
+                                                        frominvoiceids.put(invoice.id,objcreateCreditMemoLine);
+                                                        
+                                                        
+                                                    }else if(totalCreditMemoLineItemAmount <= adjustmentCreditMemoLineItemAmount){
+                                                        adjustmentCreditMemoLineItemAmount = adjustmentCreditMemoLineItemAmount - totalCreditMemoLineItemAmount ; 
                                                     }
-                                                    objCreditmemolineitem.Amount__c =adjustmentCreditMemoLineItemAmount -  taxAmount; 
-                                                    objCreditmemolineitem.Tax_Amount__c = taxAmount;
-                                                    listOfUpdatedCreditmemolineitem.add(objCreditmemolineitem);
-                                                    adjustmentCreditMemoLineItemAmount = adjustmentCreditMemoLineItemAmount - totalCreditMemoLineItemAmount ;
-                                                    Decimal creditMemoTotalAmount = 0;
-                                                    Decimal creditMemoTotaltaxAmount = 0;
-                                                    if(mapofAdjustmentCreditNoteAmount.containsKey(invoice.id)){
-                                                        creditMemoTotalAmount = Decimal.valueOf(mapofAdjustmentCreditNoteAmount.get(invoice.id).split('@')[0]);
-                                                        creditMemoTotaltaxAmount =Decimal.valueOf(mapofAdjustmentCreditNoteAmount.get(invoice.id).split('@')[1]);
-                                                    }
-                                                    creditMemoTotalAmount += (totalCreditMemoLineItemAmountWithoutTax - objCreditmemolineitem.Amount__c);
-                                                    creditMemoTotaltaxAmount += (totalCreditMemoLineItemTax - objCreditmemolineitem.Tax_Amount__c);
-                                                    // 9-Oct-2020:nishi: start at the time of dividing the credit memo From Invoice number was similar changes are required in Credit memo line item.
-                                                    //mapofAdjustmentCreditNoteAmount.put(invoice.id,creditMemoTotalAmount+'@'+creditMemoTotaltaxAmount);
-                                                    if(!mapofAdjustmentCreditNoteAmount.containsKey(invoice.id) ){
-                                                        mapofAdjustmentCreditNoteAmount.put(invoice.id,objCreditMemo.From_Invoice__c);
-                                                    }
-                                                    // 9-Oct-2020:nishi: start at the time of dividing the credit memo From Invoice number was similar changes are required in Credit memo line item.
-                                                    Credit_memo_line_item__c objcreateCreditMemoLine = createCreditMemoLineRec(creditMemoTotalAmount,creditMemoTotaltaxAmount,objCreditmemolineitem.Package__c,objCreditmemolineitem.enrolment__c,objCreditmemolineitem.Invoice_Line_Item__c,objCreditmemolineitem.remarks__c,objCreditmemolineitem.month__c);
-                                                    if(creditMemoTotaltaxAmount == 0){
-                                                        objcreateCreditMemoLine.Is_Deposit__c =objCreditmemolineitem.Is_Deposit__c;
-                                                    }
-                                                    frominvoiceids.put(invoice.id,objcreateCreditMemoLine);
-                                                       
-                                                    
-                                                }else if(totalCreditMemoLineItemAmount <= adjustmentCreditMemoLineItemAmount){
-                                                    adjustmentCreditMemoLineItemAmount = adjustmentCreditMemoLineItemAmount - totalCreditMemoLineItemAmount ; 
                                                 }
                                             }
                                         }
                                     }
                                 }
-                            }
-                            string remark = 'Total Deposit '+String.valueOf(accumulatedCreditMemoAmount)+' adjusted with the final invoice to the extent of '+String.valueOf(invoiceTotalAmount) + ' and balance '+String.valueOf(accumulatedCreditMemoAmount - invoiceTotalAmount)+' become pending deposit.';
-                            objCreditMemo =updateCreditmemo(invoice,remark,objCreditMemo);
-                            mapOfCreditMemos.put(objCreditMemo.Id, objCreditMemo);
-                            invoice.Credit_Memo_Amount__c = existingCreditMemoAmount+invoiceTotalAmount;
-                            invoice.status__c = 'Paid';
-                                // Run if the Adjust payment is equals to total invoice Amount
-                            if(adjustedPaymentAmount ==  invoiceTotalAmount){ // 100 ==100
-                                adjustedAmount = accumulatedCreditMemoAmount - invoiceTotalAmount; // 400 = 500 - 100
-                                finding = FALSE;
+                                string remark = 'Total Deposit '+String.valueOf(accumulatedCreditMemoAmount)+' adjusted with the final invoice to the extent of '+String.valueOf(invoiceTotalAmount) + ' and balance '+String.valueOf(accumulatedCreditMemoAmount - invoiceTotalAmount)+' become pending deposit.';
+                                objCreditMemo =updateCreditmemo(invoice,remark,objCreditMemo);
+                                mapOfCreditMemos.put(objCreditMemo.Id, objCreditMemo);
+                                invoice.Credit_Memo_Amount__c = existingCreditMemoAmount+invoiceTotalAmount;
+                                invoice.status__c = 'Paid';
+                                    // Run if the Adjust payment is equals to total invoice Amount
+                                if(adjustedPaymentAmount ==  invoiceTotalAmount){ // 100 ==100
+                                    adjustedAmount = accumulatedCreditMemoAmount - invoiceTotalAmount; // 400 = 500 - 100
+                                    finding = FALSE;
+                                }
+                            }else{
+                                // 8-Dec-2020: Nishi: if Credit memo record is exist and adjusted Credit memo Amount is equal to invoice amount then we not creating new record
+                                // and if not any active enrolment then we create refund task records
+                                if(mapOfActiveParent.containsKey(invoice.parent_account__c)
+                                && mapOfActiveParent.get(invoice.parent_account__c)){
+                                    if(adjustedAmount >= objCreditMemo.Total_Amount__c ){
+                                        adjustedAmount = adjustedAmount - objCreditMemo.Total_Amount__c;
+                                    }
+                                }else{
+                                    mapOfRefundReminderTasks.put(objCreditMemo.id,createNewTask('Refund Reminder',objCreditMemo.id,mapOfParentEnrolmentLastDate.get(invoice.parent_account__c),mapOfQueue.get('Finance Queue').Queue.Id));
+                                }
                             }
                         }
                     }
@@ -511,33 +525,31 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
                     }
                     // 9-Oct-2020:end: start at the time of dividing the credit memo From Invoice number was similar changes are required in Credit memo line item.
                     List<Credit_memo_line_item__c> listOfCreditmemolineitem  = new  List<Credit_memo_line_item__c>();
-                    if(creditNoteAmountAdjustment.containsKey(invoice.id)){
-                        listOfCreditmemolineitem = creditNoteAmountAdjustment.get(invoice.id);
-                    } 
-                    if(frominvoiceids.containsKey(invoice.id)){
-                        listOfCreditmemolineitem.add(frominvoiceids.get(invoice.id));
-                    }
-                    creditNoteAmountAdjustment.put(creditMemoFromId,listOfCreditmemolineitem);
-                            
-                    newPendingCreditMemos.add(newCreditMemo);
-                    // added by nishi: 5-Nov-2020: for if we not found any active enrolment all enrolments are withdrwal then we create a task to finance team for refund reminder.
-                    if(isRefundReminder){
-                        string enrolmentId = null;
-                        for(Invoice_Line_Item__c lineitem: invoice.Invoice_Line_Items__r){
-                            if(string.isNotBlank(lineitem.enrolment__c)){
-                                enrolmentId = lineitem.enrolment__c;
-                                break;
+                    if(listOfCreditmemolineitem != null && listOfCreditmemolineitem.size() > 0){
+                        if(creditNoteAmountAdjustment.containsKey(invoice.id)){
+                            listOfCreditmemolineitem = creditNoteAmountAdjustment.get(invoice.id);
+                        } 
+                        if(frominvoiceids.containsKey(invoice.id)){
+                            listOfCreditmemolineitem.add(frominvoiceids.get(invoice.id));
+                        }
+                        creditNoteAmountAdjustment.put(creditMemoFromId,listOfCreditmemolineitem);
+                                
+                        newPendingCreditMemos.add(newCreditMemo);
+                    
+                        // added by nishi: 5-Nov-2020: for if we not found any active enrolment all enrolments are withdrwal then we create a task to finance team for refund reminder.
+                        if(isRefundReminder){
+                            string enrolmentId = null;
+                            for(Invoice_Line_Item__c lineitem: invoice.Invoice_Line_Items__r){
+                                if(string.isNotBlank(lineitem.enrolment__c)){
+                                    enrolmentId = lineitem.enrolment__c;
+                                    break;
+                                }
+                            }  
+                           if(mapOfParentEnrolmentLastDate.containskey(invoice.parent_account__c) && mapOfQueue != null && mapOfQueue.size() > 0 && mapOfQueue.containskey('Finance Queue') && string.isNotBlank(mapOfQueue.get('Finance Queue').Queue.Id)){               
+                                mapOfRefundReminderTasks.put(creditMemoFromId,createNewTask('Refund Reminder',enrolmentId,mapOfParentEnrolmentLastDate.get(invoice.parent_account__c),mapOfQueue.get('Finance Queue').Queue.Id));
                             }
-                        }  
-                        // system.debug('enrolmentId'+enrolmentId);
-                        // system.debug('creditMemoFromId'+creditMemoFromId);
-                        // system.debug('mapOfParentEnrolmentLastDate.get(invoice.parent_account__c)'+mapOfParentEnrolmentLastDate.get(invoice.parent_account__c));       
-                        // system.debug('mapOfQueue.get(Finance Queue).Queue.Id'+mapOfQueue.get('Finance Queue').Queue.Id);       
-                        if(mapOfParentEnrolmentLastDate.containskey(invoice.parent_account__c) && mapOfQueue != null && mapOfQueue.size() > 0 && mapOfQueue.containskey('Finance Queue') && string.isNotBlank(mapOfQueue.get('Finance Queue').Queue.Id)){               
-                            mapOfRefundReminderTasks.put(creditMemoFromId,createNewTask('Refund Reminder',enrolmentId,mapOfParentEnrolmentLastDate.get(invoice.parent_account__c),mapOfQueue.get('Finance Queue').Queue.Id));
                         }
                     }
-                    
                 }
                 invListToUpdate.add(invoice);
             }
@@ -553,7 +565,14 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
     
     // update old credit memo and insert new credit memo and related line item id credit memo amount is greated then invoice
     private static void insertCreditmemoAndLineItem(List<Credit_Memo__c> newPendingCreditMemos,Map<String,List<Credit_memo_line_item__c>> creditNoteAmountAdjustment,
-     List<Credit_memo_line_item__c> listOfDeletedCreditmemolineitem,List<Credit_memo_line_item__c> listOfUpdatedCreditmemolineitem,Map<String, Credit_Memo__c> mapOfCreditMemos,Map<string,task> mapOfRefundReminderTasks){
+     List<Credit_memo_line_item__c> listOfDeletedCreditmemolineitem,List<Credit_memo_line_item__c> listOfUpdatedCreditmemolineitem,Map<String, Credit_Memo__c> mapOfCreditMemos,
+     Map<string,task> mapOfRefundReminderTasks){
+       system.debug('newPendingCreditMemos'+newPendingCreditMemos);
+       system.debug('creditNoteAmountAdjustment'+creditNoteAmountAdjustment);
+       system.debug('listOfDeletedCreditmemolineitem'+listOfDeletedCreditmemolineitem);
+       system.debug('listOfUpdatedCreditmemolineitem'+listOfUpdatedCreditmemolineitem);
+       system.debug('mapOfCreditMemos'+mapOfCreditMemos);
+       system.debug('mapOfRefundReminderTasks'+mapOfRefundReminderTasks);
         if(newPendingCreditMemos.size() > 0){
             Insert newPendingCreditMemos;  
             List<Credit_memo_line_item__c> listOfNewCreditmemolineitem = new List<Credit_memo_line_item__c>();  

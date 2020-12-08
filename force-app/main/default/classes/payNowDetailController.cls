@@ -188,9 +188,16 @@ public class payNowDetailController {
         map<string,Country__c> maptoCoutry=BillingUtility.getCountryMap('');
         map<string,Organisation__c> organisationMap=BillingUtility.getOrganisationMap('');
         // Added By Ravi on ... 21st july 2020 to send mail in case of failure
-        list<EmailTemplate> listOfEmailTemplate = [SELECT Id, Name 
+        Set<String> paymentFailedEmails=new Set<string>{'Ossia_Payment_Collection_Failed','Payment_Collection_Failed'};
+        /*list<EmailTemplate> listOfEmailTemplate = [SELECT Id, Name 
                                                     FROM EmailTemplate 
-                                                    WHERE DeveloperName ='Payment_Collection_Failed'];
+                                                    WHERE DeveloperName ='Payment_Collection_Failed'];*/
+        Map<String,EmailTemplate> mapOfEmailTemplate = new Map<String,EmailTemplate>();
+        for(EmailTemplate objEmailTemplate: [SELECT Id, Name ,DeveloperName
+                                        FROM EmailTemplate 
+                                        WHERE DeveloperName In:paymentFailedEmails]){
+                                            mapOfEmailTemplate.put(objEmailTemplate.DeveloperName,objEmailTemplate);
+                                        }
         List<Messaging.SingleEmailMessage> sendSingleEmailMessage = new List<Messaging.SingleEmailMessage>();
          // End..Added By Ravi on ... 21st july 2020 to send mail in case of failure
         for(Invoice__c invObject:[Select Id,Customer_Name__c,Parent_Account__c,Center__r.Country__c,
@@ -212,70 +219,82 @@ public class payNowDetailController {
                     organisationObj = organisationMap.get(invObject.Center__r.Organisation__c);
                 }
                 //added  by nishi 5th Oct 2020,end: for get stripe information bases of the Organisation
-                system.debug('invObject.Balance_Amount__c'+invObject.Balance_Amount__c);
-                if(invObject.Balance_Amount__c >=0.30){
-                    system.debug('InvObj.Parent_Account__r.Stripe_Customer_Id__c'+InvObj.Parent_Account__r.Stripe_Customer_Id__c +'InvObj.Balance_Amount__c'+InvObj.Balance_Amount__c +'ConstantsClass.currencyCode,'+ConstantsClass.currencyCode +'InvObj.Name'+InvObj.Name);
-                    BillingUtility.StripeCharge objStripeCharge;
-                    // updated currency code dynamically on 3rd Nov by Ravi....
-                    //objStripeCharge = BillingUtility.createChargeForCustomerWithInvoice(InvObj.Parent_Account__r.Stripe_Customer_Id__c,InvObj.Balance_Amount__c,ConstantsClass.currencyCode,InvObj.Name,countryObj.Stripe_Base_Url__c, countryObj.Stripe_Secret_Key__c); 
-                    // commented by nishi: 5-oct-2020:  for get stripe information bases of the Organisation
-                    //	objStripeCharge = BillingUtility.createChargeForCustomerWithInvoice(InvObj.Parent_Account__r.Stripe_Customer_Id__c,InvObj.Balance_Amount__c,countryObj.Currency_Code__c,InvObj.Name,countryObj.Stripe_Base_Url__c, countryObj.Stripe_Secret_Key__c); 
-                    objStripeCharge = BillingUtility.createChargeForCustomerWithInvoice(InvObj.Parent_Account__r.Stripe_Customer_Id__c,InvObj.Balance_Amount__c,countryObj.Currency_Code__c,InvObj.Name,organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c); 
-                    
-                    
-                    system.debug('====>'+objStripeCharge);
-                    if(objStripeCharge.statusCode == 200 && objStripeCharge.paid){
-                        invObject.Status__c=ConstantsClass.paidStatus;
+                if(string.isnotBlank(InvObj.Parent_Account__r.Stripe_Customer_Id__c)){
+                    system.debug('invObject.Balance_Amount__c'+invObject.Balance_Amount__c);
+                    if(invObject.Balance_Amount__c >=0.30){
+                        system.debug('InvObj.Parent_Account__r.Stripe_Customer_Id__c'+InvObj.Parent_Account__r.Stripe_Customer_Id__c +'InvObj.Balance_Amount__c'+InvObj.Balance_Amount__c +'ConstantsClass.currencyCode,'+ConstantsClass.currencyCode +'InvObj.Name'+InvObj.Name);
+                        BillingUtility.StripeCharge objStripeCharge;
+                        // updated currency code dynamically on 3rd Nov by Ravi....
+                        //objStripeCharge = BillingUtility.createChargeForCustomerWithInvoice(InvObj.Parent_Account__r.Stripe_Customer_Id__c,InvObj.Balance_Amount__c,ConstantsClass.currencyCode,InvObj.Name,countryObj.Stripe_Base_Url__c, countryObj.Stripe_Secret_Key__c); 
+                        // commented by nishi: 5-oct-2020:  for get stripe information bases of the Organisation
+                        //	objStripeCharge = BillingUtility.createChargeForCustomerWithInvoice(InvObj.Parent_Account__r.Stripe_Customer_Id__c,InvObj.Balance_Amount__c,countryObj.Currency_Code__c,InvObj.Name,countryObj.Stripe_Base_Url__c, countryObj.Stripe_Secret_Key__c); 
+                        objStripeCharge = BillingUtility.createChargeForCustomerWithInvoice(InvObj.Parent_Account__r.Stripe_Customer_Id__c,InvObj.Balance_Amount__c,countryObj.Currency_Code__c,InvObj.Name,organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c); 
+                        
+                        
+                        system.debug('====>'+objStripeCharge);
+                        if(objStripeCharge.statusCode == 200 && objStripeCharge.paid){
+                            invObject.Status__c=ConstantsClass.paidStatus;
+                            InvList.add(invObject);
+                            
+                            Payment__c objPayment = BillingUtility.fillPayment(invObject.Parent_Account__c,invObject.Id, invObject.Balance_Amount__c,
+                                                                            ConstantsClass.successStatus); 
+                            objPayment.Transaction_ID__c = objStripeCharge.Id;
+                            objPayment.recordTypeId = paymentRecType;
+                            objPayment.Method_of_Payment__c='Card';// Updated on card method on 10 Jan 2020
+                            paymentListToCreate.add(objPayment); //String parId, String invId, Decimal payAmt, String status
+                            displayPopup=true;
+                        }else{
+                            if(objStripeCharge.error != null){
+                                iLog.Status__c = 'Failure';
+                                iLog.Invoice__c = invObject.Id;
+                                iLog.Message__c = objStripeCharge.error.message;
+                                iLog.Type__c = objStripeCharge.error.stripeType;
+                                if(String.isNotBlank(objStripeCharge.error.charge))
+                                    iLog.ChargeId__c = objStripeCharge.error.charge;
+                                if(String.isNotBlank(objStripeCharge.error.decline_code))
+                                    iLog.Code__c = objStripeCharge.error.decline_code;
+                                displayPopupforDeclined=true;
+                            }
+                            invoiceLogList.add(iLog);
+                            // Added By Ravi ..on 21st july 2020 to send email in case of payment failure
+                            if(mapOfEmailTemplate != null && mapOfEmailTemplate.size() > 0 ){
+                                string centerId,personContactId;
+                                if(invObject.Parent_Account__r != null && invObject.Parent_Account__r.Centre_Name__r != null &&
+                                string.isNotBlank(invObject.Parent_Account__r.Centre_Name__r.Location__c) ){
+                                    centerId = invObject.Parent_Account__r.Centre_Name__r.Location__c;
+                                }
+                                if(invObject.Parent_Account__r != null && string.isNotBlank(invObject.Parent_Account__r.PersonContactId)){
+                                    personContactId = invObject.Parent_Account__r.PersonContactId;
+                                }
+                                if(organisationObj.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                                    if(mapOfEmailTemplate.containsKey('Ossia_Payment_Collection_Failed')){
+                                        sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(mapOfEmailTemplate.get('Ossia_Payment_Collection_Failed').Id,personContactId,invObject.id,centerId));
+                                    }
+                                }else{
+                                    if(mapOfEmailTemplate.containsKey('Payment_Collection_Failed')){
+                                        sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(mapOfEmailTemplate.get('Payment_Collection_Failed').Id,personContactId,invObject.id,centerId));
+                                    }   
+                                }
+                            }
+                                
+                                
+                            // End.. Added By Ravi ..on 21st july 2020 to send email in case of payment failure
+                        }    
+                        
+                    }else if(invObject.Balance_Amount__c <= 0.30 && invObject.Balance_Amount__c >= 0){
+                        invObject.status__c = ConstantsClass.paidStatus;
                         InvList.add(invObject);
                         
                         Payment__c objPayment = BillingUtility.fillPayment(invObject.Parent_Account__c,invObject.Id, invObject.Balance_Amount__c,
-                                                                           ConstantsClass.successStatus); 
-                        objPayment.Transaction_ID__c = objStripeCharge.Id;
-                        objPayment.recordTypeId = paymentRecType;
+                                                                        ConstantsClass.successStatus); 
+                        objPayment.recordTypeId = payCreditRecType;
                         objPayment.Method_of_Payment__c='Card';// Updated on card method on 10 Jan 2020
+                        objPayment.remarks__c = 'Rounding Down';
                         paymentListToCreate.add(objPayment); //String parId, String invId, Decimal payAmt, String status
                         displayPopup=true;
-                    }else{
-                        if(objStripeCharge.error != null){
-                            iLog.Status__c = 'Failure';
-                            iLog.Invoice__c = invObject.Id;
-                            iLog.Message__c = objStripeCharge.error.message;
-                            iLog.Type__c = objStripeCharge.error.stripeType;
-                            if(String.isNotBlank(objStripeCharge.error.charge))
-                                iLog.ChargeId__c = objStripeCharge.error.charge;
-                            if(String.isNotBlank(objStripeCharge.error.decline_code))
-                                iLog.Code__c = objStripeCharge.error.decline_code;
-                            displayPopupforDeclined=true;
-                        }
-                        invoiceLogList.add(iLog);
-                        // Added By Ravi ..on 21st july 2020 to send email in case of payment failure
-                        if(listOfEmailTemplate != null && listOfEmailTemplate.size() > 0 ){
-                            string centerId,personContactId;
-                            if(invObject.Parent_Account__r != null && invObject.Parent_Account__r.Centre_Name__r != null &&
-                               string.isNotBlank(invObject.Parent_Account__r.Centre_Name__r.Location__c) ){
-                                   centerId = invObject.Parent_Account__r.Centre_Name__r.Location__c;
-                               }
-                            if(invObject.Parent_Account__r != null && string.isNotBlank(invObject.Parent_Account__r.PersonContactId)){
-                                personContactId = invObject.Parent_Account__r.PersonContactId;
-                            }
-                            sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(listOfEmailTemplate[0].Id,personContactId,invObject.id,centerId));
-                        }
-                            
-							
-                        // End.. Added By Ravi ..on 21st july 2020 to send email in case of payment failure
-                    }    
-                    
-                }else if(invObject.Balance_Amount__c <= 0.30 && invObject.Balance_Amount__c >= 0){
-                    invObject.status__c = ConstantsClass.paidStatus;
-                    InvList.add(invObject);
-                    
-                    Payment__c objPayment = BillingUtility.fillPayment(invObject.Parent_Account__c,invObject.Id, invObject.Balance_Amount__c,
-                                                                       ConstantsClass.successStatus); 
-                    objPayment.recordTypeId = payCreditRecType;
-                    objPayment.Method_of_Payment__c='Card';// Updated on card method on 10 Jan 2020
-                    objPayment.remarks__c = 'Rounding Down';
-                    paymentListToCreate.add(objPayment); //String parId, String invId, Decimal payAmt, String status
-                    displayPopup=true;
+                    }
+                }else{
+                    displayPopupforDeclined=true;
                 }
             }
                 catch(Exception ex){iLog.Status__c = 'Failure';iLog.Invoice__c = InvId;iLog.Message__c =   ex.getMessage(); //objStripeCharge.error.message;iLog.Type__c =     ex.getTypeName();  //objStripeCharge.error.stripeType;invoiceLogList.add(iLog);   }
@@ -297,5 +316,9 @@ public class payNowDetailController {
         if(sendSingleEmailMessage != null && sendSingleEmailMessage.size() > 0 ){
             Messaging.sendEmail(sendSingleEmailMessage, FALSE); 
         }
+    }
+
+    public  void closeErrorPopup(){
+        displayPopupforDeclined=false;
     }
 }

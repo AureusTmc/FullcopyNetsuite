@@ -243,7 +243,7 @@ public class PianoRentalHelperController {
             mail.saveAsActivity = true;
             String location = inv.Center__r.Location__c;
             if(String.isNotBlank(location) && mapOfOrgWide.containsKey(location)){
-                mail.setOrgWideEmailAddressId(mapOfOrgWide.get(location).Id);
+                mail.setOrgWideEmailAddressId(mapOfOrgWide.get('Aureus Westgate').Id);//(mapOfOrgWide.get(location).Id);
             }
             List<Messaging.Emailfileattachment> fileAttachments = new List<Messaging.Emailfileattachment>();
             mapOfAttachment = mapOfInvoiceAttachment.get(inv.id); 
