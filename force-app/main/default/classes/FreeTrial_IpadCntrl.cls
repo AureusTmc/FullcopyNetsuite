@@ -1192,7 +1192,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                 //Added by rajesh, 10th sep 2019. To do some sharing seeting stuff as per Ashish ji discussion
                 if(centrList.get(0).Country__r.Country_Name__c != null)
                     parentAcc.Country_PI__pc = centrList.get(0).Country__r.Country_Name__c;
-            }
+            
             //Check that customer is already exist or not on the bases of email
             if(parentAcc.PersonEmail != null){
                 List<Account> accList = [SELECT Id,Name FROM Account
@@ -1226,6 +1226,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                     }
                 }
             }
+        }
             if(isParAlsoAStudent){
                 Account stuAcc = enrModelList.get(0).studentAcc;
                 parentAcc.Also_a_Student__c = true;

@@ -4,16 +4,18 @@ global class SubscriptionMonthlyInvoiceBatch implements Database.Batchable<sObje
     global integer noOfRecords;
     global String  errorDesciption;
     global Set<String> enrolmentIds;
-    
+    global Map<string,string> errMsgMap;
     global SubscriptionMonthlyInvoiceBatch(){
         invIds = new Set<string>();
         noOfRecords  = 0;
         startTime = system.now();
         errorDesciption = '';
         enrolmentIds = new Set<string>();
+        errMsgMap = new Map<string,string>();
     }
     
     global Database.QueryLocator start(Database.BatchableContext BC){
+        date subscriptiondate = date.newInstance(2020, 12, 01);//system.today();
         // @02/26/2019 Next Billing Date filter added by Sanjay Bhati
         return Database.getQueryLocator([Select Id,Parent__c,Parent__r.personContactId,Next_Bill_Date__c,Center__c,
                                             
@@ -28,35 +30,34 @@ global class SubscriptionMonthlyInvoiceBatch implements Database.Batchable<sObje
                                           Next_Bill_Date__c, Enrolment__r.Center__r.Country__r.Id, Enrolment__r.Center__r.Country__r.Tax_Rate__c ,
                                           // added by nishi:18_aug-2020: for manage facility fee is ossia student Subscription invoice created
                                           Enrolment__r.Center__r.Organisation__r.Name,//Enrolment__r.New_Package_Id__r.Facility_Fee__c,Enrolment__r.Package__r.Facility_Fee__c,
-                                          Enrolment__r.Package__r.Name,Enrolment__r.New_Package_Id__r.Name, Enrolment__r.Center__r.Organisation__r.Tax_Rate__c , Enrolment__r.Center__r.Organisation__r.Id,
+                                          Enrolment__r.Package__r.Name,Enrolment__r.New_Package_Id__r.Name,/* Enrolment__r.Center__r.Organisation__r.Tax_Rate__c ,*/ Enrolment__r.Center__r.Organisation__r.Id,
                                           Enrolment__r.No_of_Stairs__c, // 9-oct-2020: for manage Additional pickup charges with stair case charges  
                                           // added by nishi: 7-Sep-2020: for manage Change center subscription line item
                                           Enrolment__r.New_Centre__r.Country__r.Id, Enrolment__r.New_Centre__r.Country__r.Tax_Rate__c ,
-                                          Enrolment__r.New_Centre__r.Organisation__r.Name, Enrolment__r.New_Centre__r.Organisation__r.Tax_Rate__c , Enrolment__r.New_Centre__r.Organisation__r.Id
+                                          Enrolment__r.New_Centre__r.Organisation__r.Name, /*Enrolment__r.New_Centre__r.Organisation__r.Tax_Rate__c ,*/ Enrolment__r.New_Centre__r.Organisation__r.Id
                                             // added by nishi: 7-Sep-2020: for manage Change center subscription line item
                                           FROM Subscription_Line_Items__r 
                                           WHERE Status__c=:ConstantsClass.activeStatus 
-                                          AND Next_Bill_Date__c <= :system.today()
-                                          AND Subscription_Start_Date__c <=: system.today() 
+                                          AND Next_Bill_Date__c <= :subscriptiondate
+                                          AND Subscription_Start_Date__c <=: subscriptiondate 
                                           AND (Subscription_Expiry_Date__c=NULL 
-                                               OR Subscription_Expiry_Date__c >: system.today())
+                                               OR Subscription_Expiry_Date__c >: subscriptiondate)
                                          ) 
                                          FROM Subscription__c 
                                          WHERE Status__c=:ConstantsClass.activeStatus 
                                          AND Parent__c !=null 
-                                         AND Subscription_Start_Date__c<=:system.today() 
-                                         AND Next_Bill_Date__c <=:system.today() 
+                                         AND Subscription_Start_Date__c<=:subscriptiondate 
+                                         AND Next_Bill_Date__c <=:subscriptiondate 
                                          AND (Subscription_End_Date__c=NULL 
-                                              OR Subscription_End_Date__c >: system.today())
-                                         
+                                              OR Subscription_End_Date__c >: subscriptiondate)
                                         ]);
     }
     
     global void execute(Database.BatchableContext BC, List<Subscription__c> subscriptions){
         //On 6th December 2019 to Add Custom Save Points so If Error Occures we can trace that.
         Savepoint monthInvoiceSavePoint;
+        string subIds = getSubscriptionsIds(subscriptions);
         try{
-            
             noOfRecords += subscriptions.size();
             Date today = System.today();
             monthInvoiceSavePoint = Database.setSavepoint();
@@ -72,6 +73,8 @@ global class SubscriptionMonthlyInvoiceBatch implements Database.Batchable<sObje
             Database.rollback(monthInvoiceSavePoint);
             errorDesciption  += e.getStackTraceString()+'-'+e.getMessage() +';';
             System.debug('@@errorDesciption'+errorDesciption);
+            system.debug('subIds'+subIds);
+            errMsgMap.put(subIds, e.getStackTraceString()+'-'+e.getMessage() +';');
         }
         /*Commented by arpit, As No need to generate invoice here, generate invoice after billing*/
         //BillingUtility.addInvocieAttachment(invIds); //@07-05-2018 create the attachment for invoice By Sanjay Bhati
@@ -102,5 +105,50 @@ Commented because need to disable payment batch
             //Database.executeBatch(new SageInvoicePushBatch(invIds),Integer.valueOf(label.SageBatchSize));
             //database.executeBatch(new SagePaymentPushBatch('Invoice',invIds),Integer.valueOf(label.SageBatchSize));
         }
+        // added by nishi: 15-Dec-2020: for if in batch class found any error then we send a email to Tmc users with error details
+        if(errMsgMap != null && errMsgMap.size() > 0){
+            AsyncApexJob a = [Select Id, Status,ExtendedStatus,NumberOfErrors,     JobItemsProcessed,
+            TotalJobItems, CreatedBy.Email
+            from AsyncApexJob where Id =:BC.getJobId()];
+                system.debug('a'+a);
+                system.debug('errMsgMap'+errMsgMap);
+                system.debug('a.CreatedBy.Email'+a.CreatedBy.Email);
+                Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+                String[] toAddresses = new String[] {};
+                if(string.isnotBlank(label.Batch_Error_User_id)){
+                    List<user> listUserList = [select id,email from user where id=:label.Batch_Error_User_id];
+                    if(listUserList.size() > 0 ){
+                        toAddresses.add(listUserList[0].email);
+                    }else{
+                        toAddresses.add('ashish.bansal@techmatrixconsulting.com');
+                    }
+                }else{
+                    toAddresses.add('ashish.bansal@techmatrixconsulting.com');
+                }
+                mail.setToAddresses(toAddresses);
+                mail.setSubject('Subscription  Monthly Invoice Batch Job Details :' + BC.getJobId());
+                mail.setSaveAsActivity(false);
+                string htmlbody='Batch Job Items : '+a.TotalJobItems;
+                htmlbody+= '\n Total Subscription Records : ' + noOfRecords ;
+                htmlbody+= '\n Total Records Processed : ' + invIds.size() ;
+                htmlbody+= ' \n  Error Description : \n\n';
+                Integer errorNumber = 1;
+                for(string subscriptionids :errMsgMap.keySet()){
+                    htmlbody+= errorNumber +'. Rollback Subscription Ids are "'+subscriptionids+'" and Failure Reason '+ errMsgMap.get(subscriptionids)+' \n\n';
+                    errorNumber++;
+                }
+                mail.setPlainTextBody(htmlbody);
+                Messaging.sendEmail(new Messaging.SingleEmailMessage[] { mail });
+                system.debug('mail'+mail);
+        }
+        // added by nishi: 15-Dec-2020: for if we for found any error log then we send a email to Tmc users
+        
+    }
+    private  string getSubscriptionsIds(List<Subscription__c> subscriptions){
+        set<string> subIds = new set<string>(); 
+        for(Subscription__c objSubscription  : subscriptions){
+            subIds.add(objSubscription.id);
+        }
+        return string.join(new List<string>(subIds),', ');
     }
 }

@@ -3534,7 +3534,8 @@ Selected by the user from the calendar UI.
                                                 //commented by nishi: 20-Aug-2020: Createddate >=: firstDate AND createddate <=: lastDate 
                                                 AND Booking__c = NULL)
                                          //AND Invoice_Date__c >=: firstDate 
-                                         AND Invoice_Date__c <=: lastDate AND Status__c = 'Paid' 
+                                        // AND Invoice_Date__c <=: lastDate 
+                                        AND Status__c = 'Paid' 
                                          Order By total_amount__c ];
                                         //system.debug('listOfInvoice'+listOfInvoice);
         if(listOfInvoice.size()>0){
@@ -4469,7 +4470,7 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
         Boolean innerLoop = false;
         for(integer i = 0; i< timeSlots.size(); i++){
             currentDT = getDateTimeFromString(timeSlots[i]);
-            innerLoop = (i + duration / 15) >= timeSlots.size() ? false : true;
+            innerLoop = (i + duration / 15) > timeSlots.size() ? false : true; //commented by nishi:15-Dec-2020: (i + duration / 15) >= timeSlots.size() ? false : true;
             if(innerLoop){
                 for(integer j = i ; j < i + duration / 15; j++){
                     if(currentDT.format('h:mm a') != timeSlots[j]){
@@ -4480,7 +4481,6 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
             }else{
                 elementsToRemove.add(timeSlots[i]);
             }
-            
         }
         return elementsToRemove;
     }

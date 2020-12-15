@@ -18,11 +18,13 @@ global class PostInvoiceBatch implements Database.Batchable<sObject>, database.s
      global Set<String> enrolTypes;
      global String enrolRegularType;
      global Set<String> enrolmentIds;
+     global String  errorDesciption;
      global PostInvoiceBatch(){
         enroledStatus = ConstantsClass.enroledStatus;
         enrolRegularType = ConstantsClass.enrolRegularStatus;
         noOfRecords  = 0;
         startTime = system.now();
+        errorDesciption = '';
          enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus,ConstantsClass.enrolGroupType};
          enrolmentIds = new Set<String>();
      }
@@ -32,6 +34,7 @@ global class PostInvoiceBatch implements Database.Batchable<sObject>, database.s
         enrolRegularType = ConstantsClass.enrolRegularStatus;
         noOfRecords  = 0;
         startTime = system.now();
+        errorDesciption = '';
          enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus,ConstantsClass.enrolGroupType};
         
     }
@@ -42,6 +45,7 @@ global class PostInvoiceBatch implements Database.Batchable<sObject>, database.s
       enrolRegularType = ConstantsClass.enrolRegularStatus;
       noOfRecords  = 0;
       startTime = startingDate;
+      errorDesciption = '';
        enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus,ConstantsClass.enrolGroupType};
   }
      global Database.QueryLocator start(Database.BatchableContext BC){
@@ -80,10 +84,27 @@ global class PostInvoiceBatch implements Database.Batchable<sObject>, database.s
         system.debug('enrolmentList'+enrolmentList);
          // commented by nishi: 9-Sep-2020: for creating next month invoice requirement we send next month date with enrolment id
          //AureusUtility.postInvoiceJobOnEnrolment(enrolmentList);
-         AureusUtility.postInvoiceJobOnEnrolment(enrolmentList,startTime.date());
+         Savepoint monthInvoiceSavePoint;
+         string enrolIds = getenrolmentListIds(enrolmentList);
+         try{
+            monthInvoiceSavePoint = Database.setSavepoint();
+            AureusUtility.postInvoiceJobOnEnrolment(enrolmentList,startTime.date());
+         }catch (Exception e){
+            //On 16th December 2020 to Add Custom Save Points so If Error Occures we can trace that.
+            Database.rollback(monthInvoiceSavePoint);
+            errorDesciption  += 'enrolIds:'+enrolIds+' : '+e.getStackTraceString()+'-'+e.getMessage() +';';
+         }
      }
      
      global void finish(Database.BatchableContext BC){
-        BillingUtility.createBatchLog('Post-Invoice Batch',startTime,system.now(),noOfRecords);
+        BillingUtility.createBatchLog('Post-Invoice Batch',startTime,system.now(),noOfRecords,errorDesciption);
      }
+     // get enroment ids in string format
+     private  string getenrolmentListIds(List<Enrolment__c> enrolmentList){
+      set<string> objenrolIds = new set<string>(); 
+      for(Enrolment__c objenrol  : enrolmentList){
+         objenrolIds.add(objenrol.id);
+      }
+      return string.join(new List<string>(objenrolIds),', ');
+  }
 }
