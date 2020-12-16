@@ -8,7 +8,7 @@
 
 public class MonthlyPaymentBatchHelper{
 
-    public static Set<String> getPaymentForInvoices(List<Invoice__c> listOfInvoice){
+    public static /*Set<String>*/ BillingUtility.MonthlyBatchClassChunkError getPaymentForInvoices(List<Invoice__c> listOfInvoice){
         //Set<String> successinvoiceIdSet = new Set<String>();
         Map<String,Invoice__c> successinvoiceIdmap = new  Map<String,Invoice__c>();
         List<Invoice__c> listOfInvoicesTOUpdate = new List<Invoice__c>();
@@ -204,9 +204,11 @@ public class MonthlyPaymentBatchHelper{
         system.debug('@@@listOfInvoicesTOUpdate'+listOfInvoicesTOUpdate);
         system.debug('@@@invoiceLogList'+invoiceLogList);
         system.debug('@@@sendSingleEmailMessage'+sendSingleEmailMessage.size());
+        BillingUtility.MonthlyBatchClassChunkError objMonthlyBatchClassChunkError = new BillingUtility.MonthlyBatchClassChunkError();
+       
         if(listOfInvoicesTOUpdate.size()>0){
             // 15-Dec-2020: Nishi: start: as per new logic if in this process we have found any type of error in invoice and payment then we send a email. 
-            boolean sendErrorEmail = createpaymentsForDueInvoice(listOfInvoicesTOUpdate,mapOfPayment, successinvoiceIdmap,listOfInvoice.size(),'Monthly Payment Batch Job Details ');
+            objMonthlyBatchClassChunkError = createpaymentsForDueInvoice(listOfInvoicesTOUpdate,mapOfPayment, successinvoiceIdmap,listOfInvoice.size(),true/*'Monthly Payment Batch Job Details '*/);
             /*
             Database.Update(listOfInvoicesTOUpdate,false);
             if(mapOfPayment.size() > 0){
@@ -230,14 +232,15 @@ public class MonthlyPaymentBatchHelper{
         if(fifthBookingIdSet.size()>0){
             updateFifthBookingStatus(fifthBookingIdSet);
         }
-        
-        return successinvoiceIdmap.keyset();//successinvoiceIdSet
+        objMonthlyBatchClassChunkError.invoiceIds = successinvoiceIdmap.keyset();
+        return objMonthlyBatchClassChunkError;//successinvoiceIdSet
     }
 
     // 15-Dec-2020: Nishi: start: as per new logic if in this process we have found any type of error in invoice and payment then we send a email. 
-    public static boolean createpaymentsForDueInvoice(List<Invoice__c> listOfInvoicesTOUpdate,Map<string,Payment__c> mapOfPayment,Map<String,Invoice__c> successinvoiceIdmap,Integer totalInvoice,string subjectname){
+    public static BillingUtility.MonthlyBatchClassChunkError createpaymentsForDueInvoice(List<Invoice__c> listOfInvoicesTOUpdate,Map<string,Payment__c> mapOfPayment,Map<String,Invoice__c> successinvoiceIdmap,Integer totalInvoice,boolean isBatchclass/*,string subjectname*/){
          List<Payment__c> listOfPayment = new List<Payment__c>(); 
          boolean sendErrorEmail =false;
+         BillingUtility.MonthlyBatchClassChunkError objMonthlyBatchClassChunkError = new BillingUtility.MonthlyBatchClassChunkError();
          if(listOfInvoicesTOUpdate.size()>0){
             set<string> failInvoiceId=new Set<string>();
             Set<string> sucessInvoiceIds=new Set<string>();
@@ -289,13 +292,35 @@ public class MonthlyPaymentBatchHelper{
                             invoiceName = successinvoiceIdmap.get(objPay.Invoice__c).name;
                             parentName = successinvoiceIdmap.get(objPay.Invoice__c).Parent_Account__r.Name;
                         }
-                        listOfpaymentErrorWrapper.add(new paymentErrorWrapper(invoiceName, parentName, objPay.Transaction_ID__c, errors.getMessage(),string.join(errors.getFields(), ', ')));
+                        //listOfpaymentErrorWrapper.add(new paymentErrorWrapper(invoiceName, parentName, objPay.Transaction_ID__c, errors.getMessage(),string.join(errors.getFields(), ', ')));
+                        listOfinvoiceErrorWrapper.add(new paymentErrorWrapper(invoiceName, parentName, objPay.Transaction_ID__c, errors.getMessage(),string.join(errors.getFields(), ', ')));
                     }
                 }
                 System.debug('sucesspaymentIds'+sucesspaymentIds);
-                System.debug('listOfpaymentErrorWrapper'+listOfpaymentErrorWrapper);
+                System.debug('listOfinvoiceErrorWrapper'+listOfinvoiceErrorWrapper);
                 System.debug('sendErrorEmail'+sendErrorEmail);
                 if(sendErrorEmail){
+                    if(listOfinvoiceErrorWrapper != null && listOfinvoiceErrorWrapper.size() > 0){
+                        string errorDescription ='';
+                        Integer errorNumber = 1;
+                        for(paymentErrorWrapper objInvoiceErrorWrapper :listOfinvoiceErrorWrapper){
+                            if(isBatchclass){
+                            errorDescription+= '#'+errorNumber +'.Invoice_Name:'+objInvoiceErrorWrapper.invoiceName;
+                            errorDescription+= ',Customer Name:'+objInvoiceErrorWrapper.parentName;
+                            errorDescription+= ',Stripe Id:'+objInvoiceErrorWrapper.stripeId;
+                            errorDescription+= ',Error:'+ objInvoiceErrorWrapper.erroDescription + (string.isNotBlank(objInvoiceErrorWrapper.errorField) ? '(Field Error :'+objInvoiceErrorWrapper.errorField+'),' : ',') ;
+                            }else{
+                                errorDescription+= 'Stripe Id:'+objInvoiceErrorWrapper.stripeId;
+                                errorDescription+=',Error:'+objInvoiceErrorWrapper.erroDescription+',';
+                            }
+                            errorNumber++;
+                        }
+                        objMonthlyBatchClassChunkError.errorDescription = errorDescription.removeEnd(',');
+                        objMonthlyBatchClassChunkError.processRecords = totalInvoice;
+                        objMonthlyBatchClassChunkError.failRecords = listOfinvoiceErrorWrapper.size();
+                    }
+                    
+                    /*commented by nishi: 16-Dec-2020 : change requirement we create batch chunk error  Log records 
                     Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
                     String[] toAddresses = new String[] {};
                     
@@ -348,12 +373,14 @@ public class MonthlyPaymentBatchHelper{
                         mail.setPlainTextBody(htmlbody);
                         Messaging.sendEmail(new Messaging.SingleEmailMessage[] { mail });
                         system.debug('mail'+mail);
-                    }
+                    }commented by nishi: 16-Dec-2020 : change requirement we create batch chunk error  Log records */
+
                 }
             }
         }
-        return sendErrorEmail;
+        return objMonthlyBatchClassChunkError;
     }
+    
     public class paymentErrorWrapper{
         public string invoiceName{get;set;}
         public String parentName{get;set;}
@@ -370,6 +397,29 @@ public class MonthlyPaymentBatchHelper{
         }
     }
     
+
+    // create batch Job Log records
+    public static string createBatchLog(String jobName,DateTime startTime,DateTime endTime,Integer noOfRecords,string Description){
+        Batch_Job_Log__c blog = new Batch_Job_Log__c();
+        blog.Name = jobName;
+        blog.Start_Time__c = startTime;
+        blog.End_Time__c = endTime;
+        blog.No_of_records_proceeds__c = noOfRecords;
+        blog.Description__c = Description;
+        insert blog;
+        return blog.id;
+    }
+
+     // create batch Job Log records
+     public static Batch_Chunk_Error_Log__c createBatchChunkErrorLogs(String batchjobId,Integer noOfRecords,Integer noOffailRecords,string Description){
+        Batch_Chunk_Error_Log__c blog = new Batch_Chunk_Error_Log__c();
+        blog.Batch_Job_Log__c = batchjobId;
+        blog.Number_of_Failure_Records__c = noOffailRecords;
+        blog.Number_of_Records__c = noOfRecords;
+        blog.Error_Description__c = Description;
+        return blog;
+    }
+
     //12-03-2019 This method update the fifth bookings status By Sanjay Bhati
     public static void updateFifthBookingStatus(Set<Id> invoiceIdSet){
         Set<Id> bookingIdSet = new Set<Id>();

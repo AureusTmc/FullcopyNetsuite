@@ -1354,7 +1354,7 @@ List<Task> listOftask = new List<Task>();
     }
     
     
-    public static stripeCharge createOneTimeCharge(string token,Decimal amount,string currencyCode,String baseUrl,String apiKey){
+    public static stripeCharge createOneTimeCharge(string token,Decimal amount,string invoiceName,string currencyCode,String baseUrl,String apiKey){
         string chargeUrl = baseurl + '/v1/charges';
         amount = ((amount)*100);
         Integer stripeAmt = Integer.valueOf(amount);
@@ -1368,7 +1368,9 @@ List<Task> listOftask = new List<Task>();
         string url = '&' + EncodingUtil.urlEncode('source', 'UTF-8') + '=' + EncodingUtil.urlEncode(token, 'UTF-8') + '&';
         url += EncodingUtil.urlEncode('amount', 'UTF-8') + '=' + EncodingUtil.urlEncode(string.valueOf(stripeAmt), 'UTF-8') + '&';
         url += EncodingUtil.urlEncode('currency', 'UTF-8') + '=' + EncodingUtil.urlEncode(string.valueOf(currencyCode), 'UTF-8') + '&';
-        
+        if(String.isNotBlank(invoiceName)){
+            url += EncodingUtil.urlEncode('description', 'UTF-8') + '=' + EncodingUtil.urlEncode(invoiceName, 'UTF-8') + '&';
+        }
         http.setBody(url);
         
         Integer statusCode;
@@ -1558,7 +1560,62 @@ List<Task> listOftask = new List<Task>();
         blog.Description__c = Description;
         insert blog;
     }
-    
+     //16-dec-2020: nishi: create batch Job Log records
+     public static string createBatchJobLog(String jobName,DateTime startTime,DateTime endTime,Integer noOfRecords,string Description){
+        Batch_Job_Log__c blog = new Batch_Job_Log__c();
+        blog.Name = jobName;
+        blog.Start_Time__c = startTime;
+        blog.End_Time__c = endTime;
+        blog.No_of_records_proceeds__c = noOfRecords;
+        blog.Description__c = Description;
+        insert blog;
+        return blog.id;
+    }
+    // nishi: 16-dec-2020: for track any errors in the batch class in any chunk.
+    public class MonthlyBatchClassChunkError{
+        public String errorDescription{get;set;}
+        public set<string> invoiceIds{get;set;}
+        public Integer processRecords{get;set;}
+        public Integer failRecords{get;set;}
+        
+        public MonthlyBatchClassChunkError(){
+            errorDescription ='';
+            invoiceIds = new set<string>();
+            processRecords =0;
+            failRecords =0;
+        }
+        public MonthlyBatchClassChunkError(String errorDescription,Integer processRecords,Integer failRecords){
+            this.errorDescription =errorDescription;
+            this.invoiceIds = new set<string>();
+            this.processRecords =processRecords;
+            this.failRecords =failRecords;
+        }
+    }
+
+    //16-dec-2020: nishi: create batch chunk error  Log records
+    public static void createBatchChunkErrorLogs(List<MonthlyBatchClassChunkError> listOfBatchChunkError,string batchjoblogrecordId){
+        if(string.isNotBlank(batchjoblogrecordId) && listOfBatchChunkError != null && listOfBatchChunkError.size() > 0){
+            List<Batch_Chunk_Error_Log__c>  listofChunkErrorlogs = new List<Batch_Chunk_Error_Log__c> ();
+            for(MonthlyBatchClassChunkError objMonthlyBatchClassChunkError : listOfBatchChunkError){
+                listofChunkErrorlogs.add(createBatchChunkErrorLog(batchjoblogrecordId,objMonthlyBatchClassChunkError.processRecords,objMonthlyBatchClassChunkError.failRecords,objMonthlyBatchClassChunkError.errorDescription));
+            }
+            if(listofChunkErrorlogs != null && listofChunkErrorlogs.size()> 0 ){
+                insert listofChunkErrorlogs;
+            }
+        }
+    }
+
+     //16-dec-2020: nishi: create batch chunk error  Log records
+     public static Batch_Chunk_Error_Log__c createBatchChunkErrorLog(String batchjobId,Integer noOfRecords,Integer noOffailRecords,string Description){
+        Batch_Chunk_Error_Log__c blog = new Batch_Chunk_Error_Log__c();
+        blog.Batch_Job_Log__c = batchjobId;
+        blog.Number_of_Failure_Records__c = noOffailRecords;
+        blog.Number_of_Records__c = noOfRecords;
+        blog.Error_Description__c = Description;
+        return blog;
+    }
+
+
     Public static Decimal calculateCurrentMonthPckFees(Date lessDate, Decimal unitFees) {
         Date tempDt = lessDate;        
         Integer noOfLessInCurrMonth = 0;

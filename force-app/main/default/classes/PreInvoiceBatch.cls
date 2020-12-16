@@ -14,6 +14,8 @@ global class PreInvoiceBatch implements Database.Batchable<sObject>, database.st
      
      global DateTime startTime;
      global integer noOfRecords;
+     global String  errorDesciption;
+     global List<BillingUtility.MonthlyBatchClassChunkError> listOfSubscriptionChunkError;
     //Constructor
      global PreInvoiceBatch(){
          enroledStatus = ConstantsClass.enroledStatus;
@@ -23,17 +25,19 @@ global class PreInvoiceBatch implements Database.Batchable<sObject>, database.st
          enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus,ConstantsClass.enrolGroupType};
          noOfRecords  = 0;
          startTime = system.now();
+         errorDesciption='';
+         listOfSubscriptionChunkError = new List<BillingUtility.MonthlyBatchClassChunkError>();
      }
      
      global Database.QueryLocator start(Database.BatchableContext BC){
                                            
-      return Database.getQueryLocator([SELECT Id, Student__c, Center__c, Center__r.Location__c, Center__r.Name, Teacher__c, Package__c,
+      return Database.getQueryLocator([SELECT Id,Name, Student__c, Center__c, Center__r.Location__c, Center__r.Name, Teacher__c, Package__c,
                                          Lesson_Start_time__c, Package__r.Duration__c, Lesson_Day__c,
                                          Parent__c, Parent__r.Available_Make_up_Units__c,Student__r.Name,Parent__r.Name, Parent__r.personContactId, 
                                          Package_Process_Type__c, Package_Process_Request_Date__c, 
                                          New_Package_Id__c, Package_Process_Status__c, Effective_Date__c,
                                          New_Teacher__c, Next_Lesson_Start_time__c, New_Lesson_Day__c, Stage__c,
-                                         Type__c ,
+                                         Type__c ,Teacher__r.Engagement_Type__c,
                                          Center__r.Organisation__r.Name,Available_Make_up_mins__c // added by nishi : 13-Aug-2020:for ossia organisation requirement
                                          FROM Enrolment__c 
                                          WHERE Type__c In: enrolTypes AND
@@ -47,11 +51,31 @@ global class PreInvoiceBatch implements Database.Batchable<sObject>, database.st
      global void execute(Database.BatchableContext BC, List<Enrolment__c> enrolmentList){
         noOfRecords  += enrolmentList.size();
         system.debug('enrolmentList'+enrolmentList);
-        AureusUtility.preInvoiceJobOnEnrolment(enrolmentList);   
-        
+        string enrolIds = getenrolmentListIds(enrolmentList);
+        Savepoint monthInvoiceSavePoint;
+        try{
+            monthInvoiceSavePoint = Database.setSavepoint();
+            AureusUtility.preInvoiceJobOnEnrolment(enrolmentList);   
+         }catch (Exception e){
+            //On 16th December 2020 to Add Custom Save Points so If Error Occures we can trace that.
+            Database.rollback(monthInvoiceSavePoint);
+            errorDesciption  += e.getStackTraceString()+'-'+e.getMessage() +';';
+            string errorDescription = 'Rollback Enrolment Ids are "'+enrolIds+'" and Failure Reason '+ e.getStackTraceString()+'-'+e.getMessage() +';';
+            listOfSubscriptionChunkError.add(new BillingUtility.MonthlyBatchClassChunkError(errorDescription,enrolmentList.size(),enrolmentList.size()));// 16-dec-2020:nishi create batch chunk error  Log records
+         }
      }
      
-     global void finish(Database.BatchableContext BC){
-        BillingUtility.createBatchLog('Pre-Invoice Batch',startTime,system.now(),noOfRecords);
+      global void finish(Database.BatchableContext BC){
+         string batchjobId = BillingUtility.createBatchJobLog('Pre-Invoice Batch',startTime,system.now(),noOfRecords,errorDesciption);
+         BillingUtility.createBatchChunkErrorLogs(listOfSubscriptionChunkError,batchjobId);// 16-dec-2020:nishi create batch chunk error  Log records
+
      }
+     //16-Dec-2020:nishi: get enroment ids in string format
+      private  string getenrolmentListIds(List<Enrolment__c> enrolmentList){
+         set<string> objenrolIds = new set<string>(); 
+         for(Enrolment__c objenrol  : enrolmentList){
+            objenrolIds.add(objenrol.name);
+         }
+         return string.join(new List<string>(objenrolIds),', ');
+      }
 }

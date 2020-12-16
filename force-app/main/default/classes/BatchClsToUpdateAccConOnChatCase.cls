@@ -23,6 +23,11 @@ global class BatchClsToUpdateAccConOnChatCase implements  Database.Batchable<sOb
                 locationList.add(cse.Location__c);
             }
         }
+        for(LiveChatTranscript lct : [SELECT Id,ContactId,Country__c,Contact.Location_PI__c, Contact.Email,Contact.FirstName,Contact.LastName,Status,caseid FROM LiveChatTranscript WHERE caseid IN : mapOfCaseIdWithCountry.keyset()]){
+            if(String.isNotBlank(lct.ContactId) && string.isNotBlank(lct.Contact.Location_PI__c)){
+                locationList.add(lct.Contact.Location_PI__c);
+            }
+        } 
         Id centerId = Schema.SObjectType.Account.getRecordTypeInfosByName().get(ConstantsClass.centerRecTypeName).getRecordTypeId();
         Map<string,Account> mapofCenter = new Map<string,Account>();
         Map<string,Account> mapofCaseCenter = new Map<string,Account>();
@@ -55,9 +60,14 @@ global class BatchClsToUpdateAccConOnChatCase implements  Database.Batchable<sOb
         }
         system.debug('mapOfEmailWithName'+mapOfEmailWithName);
         system.debug('mapofAccountLocation'+mapofAccountLocation);
-        for(LiveChatTranscript chat : [SELECT Id,Country__c,caseid FROM LiveChatTranscript WHERE caseid IN : mapOfCaseIdWithCountry.keyset()]){
-            if(string.isNotBlank(chat.Country__c))
-                mapOfCaseIdWithCountry.put(chat.caseid,chat.Country__c);  
+        for(LiveChatTranscript lct : [SELECT Id,Country__c,ContactId,Contact.Location_PI__c, Contact.Email,Contact.FirstName,Contact.LastName,Status,caseid FROM LiveChatTranscript WHERE caseid IN : mapOfCaseIdWithCountry.keyset()]){
+            if(string.isNotBlank(lct.Country__c))
+                mapOfCaseIdWithCountry.put(lct.caseid,lct.Country__c); 
+            if(String.isNotBlank(lct.ContactId) && string.isNotBlank(lct.Contact.Email)){
+                mapOfEmailWithName.put(lct.Contact.Email,lct.Contact.FirstName+' '+lct.Contact.LastName);  
+                if(string.isNotBlank(lct.Contact.Location_PI__c) && mapofCaseCenter.containsKey(lct.Contact.Location_PI__c))
+                    mapofAccountLocation.put(lct.Contact.Email,mapofCaseCenter.get(lct.Contact.Location_PI__c).id);
+            }
         } 
         for( Account acc : [Select id,Name,Location__c,Organisation_Sharing__c,(Select id From Contacts),PersonEmail 
                             From Account 
@@ -198,7 +208,9 @@ global class BatchClsToUpdateAccConOnChatCase implements  Database.Batchable<sOb
                     }
                 }   
             }
-            
+            if(String.isBlank(cse.Email__c)&& string.isBlank(cse.AccountId) && string.isblank(cse.ContactId)){
+
+            }
         }
         system.debug('accountListToUpdate'+accountListToUpdate);
         system.debug('caseListToUpdate'+caseListToUpdate);

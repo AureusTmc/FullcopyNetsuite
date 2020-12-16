@@ -4,20 +4,20 @@ global class SubscriptionMonthlyInvoiceBatch implements Database.Batchable<sObje
     global integer noOfRecords;
     global String  errorDesciption;
     global Set<String> enrolmentIds;
-    global Map<string,string> errMsgMap;
+    global List<BillingUtility.MonthlyBatchClassChunkError> listOfSubscriptionChunkError;
     global SubscriptionMonthlyInvoiceBatch(){
         invIds = new Set<string>();
         noOfRecords  = 0;
         startTime = system.now();
         errorDesciption = '';
         enrolmentIds = new Set<string>();
-        errMsgMap = new Map<string,string>();
+        listOfSubscriptionChunkError = new List<BillingUtility.MonthlyBatchClassChunkError>();
     }
     
     global Database.QueryLocator start(Database.BatchableContext BC){
         date subscriptiondate = date.newInstance(2020, 12, 01);//system.today();
         // @02/26/2019 Next Billing Date filter added by Sanjay Bhati
-        return Database.getQueryLocator([Select Id,Parent__c,Parent__r.personContactId,Next_Bill_Date__c,Center__c,
+        return Database.getQueryLocator([Select Id,Name,Parent__c,Parent__r.personContactId,Next_Bill_Date__c,Center__c,
                                             
                                          (Select Id,Amount__c,Enrolment__c,Plan_Package__c,Enrolment__r.Effective_Date__c,
                                           // Added by jatin: 28-jan-2020 : For create Invoices According to rental invoice fields
@@ -72,16 +72,19 @@ global class SubscriptionMonthlyInvoiceBatch implements Database.Batchable<sObje
             //On 6th December 2019 to Add Custom Save Points so If Error Occures we can trace that.
             Database.rollback(monthInvoiceSavePoint);
             errorDesciption  += e.getStackTraceString()+'-'+e.getMessage() +';';
-            System.debug('@@errorDesciption'+errorDesciption);
-            system.debug('subIds'+subIds);
-            errMsgMap.put(subIds, e.getStackTraceString()+'-'+e.getMessage() +';');
+            
+            // added by nishi:15-Dec-2020: if any error found then we send a email with subscription ids and error details
+            //errMsgMap.put(subIds, e.getStackTraceString()+'-'+e.getMessage() +';');commented by nishi: 16-Dec-2020 : change requirement we create batch chunk error  Log records 
+            string errorDescription = 'Rollback Subscription Ids are "'+subIds+'" and Failure Reason '+ e.getStackTraceString()+'-'+e.getMessage() +';';
+            listOfSubscriptionChunkError.add(new BillingUtility.MonthlyBatchClassChunkError(errorDescription,subscriptions.size(),subscriptions.size()));// 16-dec-2020:nishi create batch chunk error  Log records
         }
         /*Commented by arpit, As No need to generate invoice here, generate invoice after billing*/
         //BillingUtility.addInvocieAttachment(invIds); //@07-05-2018 create the attachment for invoice By Sanjay Bhati
     }   
     
     global void finish(Database.BatchableContext BC){
-        BillingUtility.createBatchLog('Subscription  Monthly Invoice Batch',startTime,system.now(),noOfRecords,errorDesciption);
+        string batchjobId = BillingUtility.createBatchJobLog('Subscription  Monthly Invoice Batch',startTime,system.now(),noOfRecords,errorDesciption);
+        BillingUtility.createBatchChunkErrorLogs(listOfSubscriptionChunkError,batchjobId);// 16-dec-2020:nishi create batch chunk error  Log records
         // Jatin : for call postInvoiceBatch class with enrolment Ids
         /*Commented by Nishi 7-Oct-2020: for call postInvoiceBatch class without enrolment Ids
         System.debug('@@@enrolmentIds'+enrolmentIds);
@@ -90,7 +93,7 @@ global class SubscriptionMonthlyInvoiceBatch implements Database.Batchable<sObje
             Database.executeBatch(new PostInvoiceBatch(enrolmentIds), 200);
         }*/
         // Nishi 7-Oct-2020:start for call postInvoiceBatch class without enrolment Ids
-        Database.executeBatch(new PostInvoiceBatch(), 200);
+        //Database.executeBatch(new PostInvoiceBatch(), 200);
          // Nishi 7-Oct-2020:end: for call postInvoiceBatch class without enrolment Ids
         if(invIds!=null && invIds.size()>0){
             //database.executeBatch(new EmailInvoicebatch(invIds));
@@ -106,7 +109,9 @@ Commented because need to disable payment batch
             //database.executeBatch(new SagePaymentPushBatch('Invoice',invIds),Integer.valueOf(label.SageBatchSize));
         }
         // added by nishi: 15-Dec-2020: for if in batch class found any error then we send a email to Tmc users with error details
+        /*commented by nishi: 16-Dec-2020 : change requirement we create batch chunk error  Log records 
         if(errMsgMap != null && errMsgMap.size() > 0){
+            
             AsyncApexJob a = [Select Id, Status,ExtendedStatus,NumberOfErrors,     JobItemsProcessed,
             TotalJobItems, CreatedBy.Email
             from AsyncApexJob where Id =:BC.getJobId()];
@@ -120,10 +125,10 @@ Commented because need to disable payment batch
                     if(listUserList.size() > 0 ){
                         toAddresses.add(listUserList[0].email);
                     }else{
-                        toAddresses.add('ashish.bansal@techmatrixconsulting.com');
+                        toAddresses.add('aureus@techmatrixconsulting.com');
                     }
                 }else{
-                    toAddresses.add('ashish.bansal@techmatrixconsulting.com');
+                    toAddresses.add('aureus@techmatrixconsulting.com');
                 }
                 mail.setToAddresses(toAddresses);
                 mail.setSubject('Subscription  Monthly Invoice Batch Job Details :' + BC.getJobId());
@@ -140,14 +145,14 @@ Commented because need to disable payment batch
                 mail.setPlainTextBody(htmlbody);
                 Messaging.sendEmail(new Messaging.SingleEmailMessage[] { mail });
                 system.debug('mail'+mail);
-        }
+        }*/
         // added by nishi: 15-Dec-2020: for if we for found any error log then we send a email to Tmc users
         
     }
     private  string getSubscriptionsIds(List<Subscription__c> subscriptions){
         set<string> subIds = new set<string>(); 
         for(Subscription__c objSubscription  : subscriptions){
-            subIds.add(objSubscription.id);
+            subIds.add(objSubscription.Name);
         }
         return string.join(new List<string>(subIds),', ');
     }

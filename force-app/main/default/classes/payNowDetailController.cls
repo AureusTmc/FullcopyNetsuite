@@ -67,7 +67,7 @@ public class payNowDetailController {
                                             }
             List<Messaging.SingleEmailMessage> sendSingleEmailMessage = new List<Messaging.SingleEmailMessage>();
              // End..Added By Ravi on ... 21st july 2020 to send mail in case of failure
-            Invoice__c invObject = [Select Id,Customer_Name__c,Parent_Account__c,Center__r.Country__c,
+            Invoice__c invObject = [Select Id,Customer_Name__c,Parent_Account__c,Center__r.Country__c,Parent_Account__r.name,
                                       Center__r.Organisation__r.Name , //added  by nishi 5th Oct 2020,start: for get stripe information bases of the Organisation
                                       Name,Balance_Amount__c,Parent_Account__r.Stripe_Customer_Id__c,
                                       Parent_Account__r.Card_Number__c,Parent_Account__r.PersonContactId,Parent_Account__r.Centre_Name__r.Location__c
@@ -158,18 +158,12 @@ public class payNowDetailController {
                 iLog.Status__c = 'Failure';
                 iLog.Invoice__c = InvId;
                 iLog.Message__c =   ex.getMessage(); //objStripeCharge.error.message;
-                iLog.Type__c =     ex.getTypeName();  //objStripeCharge.error.stripeType;
+                iLog.Type__c =     'internal_error';  //objStripeCharge.error.stripeType;
                 invoiceLogList.add(iLog);  
                 displayPopupforDeclined=true;
                 displayPopup=false;
             }
-            if(invoiceLogList.size()>0){
-                Database.insert(invoiceLogList,false);
-            }
-           
-            if(sendSingleEmailMessage != null && sendSingleEmailMessage.size() > 0 ){
-                Messaging.sendEmail(sendSingleEmailMessage, FALSE); 
-            }
+            
             /*commented by nishi 15-Dec-2020: for as per new logic if in this process we have found any type of error in invoice and payment then we send a email. 
             if(InvList.size()>0){
                 system.debug('---->'+InvList);
@@ -181,12 +175,27 @@ public class payNowDetailController {
             }
             */
             
+            system.debug('---->InvList'+InvList);
+            system.debug('---->mapOfPayment'+mapOfPayment);
             if(InvList.size()>0){
-                boolean sendErrorEmail =  MonthlyPaymentBatchHelper.createpaymentsForDueInvoice(InvList,mapOfPayment, successinvoiceIdmap,1,'Pay Now Page Error Details');
-                if(sendErrorEmail){
+                BillingUtility.MonthlyBatchClassChunkError objMonthlyBatchClassChunkError =  MonthlyPaymentBatchHelper.createpaymentsForDueInvoice(InvList,mapOfPayment, successinvoiceIdmap,1,false);
+                system.debug('---->objMonthlyBatchClassChunkError'+objMonthlyBatchClassChunkError);
+                if(string.isnotBlank(objMonthlyBatchClassChunkError.errorDescription)){
+                    iLog.Status__c = 'Failure';
+                    iLog.Invoice__c = InvId;
+                    iLog.Message__c =   objMonthlyBatchClassChunkError.errorDescription; 
+                    iLog.Type__c =  'internal_error';
+                    invoiceLogList.add(iLog);  
                     displayPopupforDeclined=true;
                     displayPopup=false;
                 }
+            }
+            if(invoiceLogList.size()>0){
+                Database.insert(invoiceLogList,false);
+            }
+        
+            if(sendSingleEmailMessage != null && sendSingleEmailMessage.size() > 0 ){
+                Messaging.sendEmail(sendSingleEmailMessage, FALSE); 
             }
             
         }else{
@@ -217,7 +226,7 @@ public class payNowDetailController {
                                         }
         List<Messaging.SingleEmailMessage> sendSingleEmailMessage = new List<Messaging.SingleEmailMessage>();
          // End..Added By Ravi on ... 21st july 2020 to send mail in case of failure
-        Invoice__c invObject = [Select Id,Customer_Name__c,Parent_Account__c,Center__r.Country__c,
+        Invoice__c invObject = [Select Id,Customer_Name__c,Parent_Account__c,Center__r.Country__c,Parent_Account__r.name,
                                 Center__r.Organisation__r.Name , //added  by nishi 5th Oct 2020,start: for get stripe information bases of the Organisation
                                 Name,Balance_Amount__c,Parent_Account__r.Stripe_Customer_Id__c,
                                 Parent_Account__r.Card_Number__c,Parent_Account__r.PersonContactId,Parent_Account__r.Centre_Name__r.Location__c
@@ -319,18 +328,13 @@ public class payNowDetailController {
             iLog.Status__c = 'Failure';
             iLog.Invoice__c = InvId;
             iLog.Message__c =   ex.getMessage(); //objStripeCharge.error.message;
-            iLog.Type__c =     ex.getTypeName();  //objStripeCharge.error.stripeType;
+            iLog.Type__c =     'internal_error';  //objStripeCharge.error.stripeType;
             invoiceLogList.add(iLog);  
             displayPopupforDeclined=true;
             displayPopup=false;
         }
-        if(invoiceLogList.size()>0){
-            Database.insert(invoiceLogList,false);
-        }
-       
-        if(sendSingleEmailMessage != null && sendSingleEmailMessage.size() > 0 ){
-            Messaging.sendEmail(sendSingleEmailMessage, FALSE); 
-        }
+        system.debug('invoiceLogList'+invoiceLogList);
+        
         /* 15-Dec-2020: Nishi: start: as per new logic if in this process we have found any type of error in invoice and payment then we send a email. 
         if(InvList.size()>0){
             system.debug('---->'+InvList);
@@ -341,12 +345,27 @@ public class payNowDetailController {
             Database.insert(paymentListToCreate,false);
         }
         */
+        system.debug('---->InvList'+InvList);
+        system.debug('---->mapOfPayment'+mapOfPayment);
         if(InvList.size()>0){
-            boolean sendErrorEmail =  MonthlyPaymentBatchHelper.createpaymentsForDueInvoice(InvList,mapOfPayment, successinvoiceIdmap,1,'Pay Now Page Error Details');
-            if(sendErrorEmail){
+            BillingUtility.MonthlyBatchClassChunkError objMonthlyBatchClassChunkError =  MonthlyPaymentBatchHelper.createpaymentsForDueInvoice(InvList,mapOfPayment, successinvoiceIdmap,1,false);
+            system.debug('---->objMonthlyBatchClassChunkError'+objMonthlyBatchClassChunkError);
+            if(string.isnotBlank(objMonthlyBatchClassChunkError.errorDescription)){
+                iLog.Status__c = 'Failure';
+                iLog.Invoice__c = InvId;
+                iLog.Message__c =   objMonthlyBatchClassChunkError.errorDescription; //objStripeCharge.error.message;
+                iLog.Type__c =  'internal_error';  //objStripeCharge.error.stripeType;
+                invoiceLogList.add(iLog);  
                 displayPopupforDeclined=true;
                 displayPopup=false;
             }
+        }
+        if(invoiceLogList.size()>0){
+            Database.insert(invoiceLogList,false);
+        }
+       
+        if(sendSingleEmailMessage != null && sendSingleEmailMessage.size() > 0 ){
+            Messaging.sendEmail(sendSingleEmailMessage, FALSE); 
         }
         // 15-Dec-2020: Nishi: end: as per new logic if in this process we have found any type of error in invoice and payment then we send a email. 
     }

@@ -9,10 +9,12 @@ global class MonthlyPaymentBatch implements Database.Batchable<sObject>,database
     global DateTime startTime;
     global integer noOfRecords;
     global Set<String> invIds;
+    global List<BillingUtility.MonthlyBatchClassChunkError> listOfPaymentChunkError;
     global MonthlyPaymentBatch(){
         noOfRecords  = 0;
         startTime = system.now();
         invIds = new Set<String>();
+        listOfPaymentChunkError = new List<BillingUtility.MonthlyBatchClassChunkError>();
     }
     global Database.QueryLocator start(Database.BatchableContext BC){
         return Database.getQueryLocator([Select Id,Name,Parent_Account__c,Parent_Account__r.PersonContactId,Parent_Account__r.Stripe_Customer_Id__c, 
@@ -32,11 +34,22 @@ global class MonthlyPaymentBatch implements Database.Batchable<sObject>,database
     
     global void execute(Database.BatchableContext BC, List<Invoice__c> invList){
         noOfRecords  += invList.size();
-        invIds.addAll(MonthlyPaymentBatchHelper.getPaymentForInvoices(invList));   
+        // 16-dec-2020:nishi:start: as per discussion we create new 'Batch chunk error' records if chunk throw any error.   
+        BillingUtility.MonthlyBatchClassChunkError objMonthlyBatchClassChunkError  = MonthlyPaymentBatchHelper.getPaymentForInvoices(invList);
+        if(string.isnotBlank(objMonthlyBatchClassChunkError.errorDescription)){
+            listOfPaymentChunkError.add(objMonthlyBatchClassChunkError);
+        }
+        if(objMonthlyBatchClassChunkError.invoiceIds != null && objMonthlyBatchClassChunkError.invoiceIds.size()> 0 ){
+            invIds.addAll(objMonthlyBatchClassChunkError.invoiceIds);
+        }
+        // 16-dec-2020:end: as per discussion we create new 'Batch chunk error' records if chunk throw any error.  
+
+        //commented by nishi: 16-dec-2020: invIds.addAll(MonthlyPaymentBatchHelper.getPaymentForInvoices(invList));   
     }
 
     global void finish(Database.BatchableContext BC){
-        BillingUtility.createBatchLog('Monthly Payment Batch',startTime,system.now(),noOfRecords);
+        string batchjobId = BillingUtility.createBatchJobLog('Monthly Payment Batch',startTime,system.now(),noOfRecords,'');
+        BillingUtility.createBatchChunkErrorLogs(listOfPaymentChunkError,batchjobId); // 16-dec-2020:nishi create batch chunk error  Log records
         system.debug('invIds'+invIds);
         system.debug('noOfRecords'+noOfRecords);
         if(invIds.size()>0){

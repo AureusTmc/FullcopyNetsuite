@@ -19,6 +19,7 @@ global class PostInvoiceBatch implements Database.Batchable<sObject>, database.s
      global String enrolRegularType;
      global Set<String> enrolmentIds;
      global String  errorDesciption;
+     global List<BillingUtility.MonthlyBatchClassChunkError> listOfSubscriptionChunkError;
      global PostInvoiceBatch(){
         enroledStatus = ConstantsClass.enroledStatus;
         enrolRegularType = ConstantsClass.enrolRegularStatus;
@@ -27,6 +28,7 @@ global class PostInvoiceBatch implements Database.Batchable<sObject>, database.s
         errorDesciption = '';
          enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus,ConstantsClass.enrolGroupType};
          enrolmentIds = new Set<String>();
+         listOfSubscriptionChunkError = new List<BillingUtility.MonthlyBatchClassChunkError>();
      }
     public PostInvoiceBatch(Set<string> enrolIds){
         enrolmentIds = enrolIds;
@@ -36,6 +38,7 @@ global class PostInvoiceBatch implements Database.Batchable<sObject>, database.s
         startTime = system.now();
         errorDesciption = '';
          enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus,ConstantsClass.enrolGroupType};
+         listOfSubscriptionChunkError = new List<BillingUtility.MonthlyBatchClassChunkError>();
         
     }
     // added by nishi: 9-Sep-2020: for creating next month invoice requirement we send next month date with enrolment id
@@ -47,9 +50,10 @@ global class PostInvoiceBatch implements Database.Batchable<sObject>, database.s
       startTime = startingDate;
       errorDesciption = '';
        enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus,ConstantsClass.enrolGroupType};
+       listOfSubscriptionChunkError = new List<BillingUtility.MonthlyBatchClassChunkError>();
   }
      global Database.QueryLocator start(Database.BatchableContext BC){
-        string queryString = 'SELECT Id, Student__c, Center__c, Center__r.Name, Teacher__c, Package__c,Lesson_Start_time__c, Package__r.Duration__c, Lesson_Day__c,Parent__c, Parent__r.Available_Make_up_Units__c,Student__r.Name,Parent__r.Name, ';
+        string queryString = 'SELECT Id,Name,Student__c, Center__c, Center__r.Name, Teacher__c, Package__c,Lesson_Start_time__c, Package__r.Duration__c, Lesson_Day__c,Parent__c, Parent__r.Available_Make_up_Units__c,Student__r.Name,Parent__r.Name, ';
          queryString+= ' Package_Process_Type__c, Package_Process_Request_Date__c,New_Package_Id__c, Package_Process_Status__c, Effective_Date__c,New_Teacher__c, Next_Lesson_Start_time__c, New_Lesson_Day__c, Stage__c,New_Centre__c,';
          queryString+= ' Type__c, Class__c,New_Class__c  FROM Enrolment__c ';
          queryString+= ' WHERE Type__c In: enrolTypes ';
@@ -92,18 +96,21 @@ global class PostInvoiceBatch implements Database.Batchable<sObject>, database.s
          }catch (Exception e){
             //On 16th December 2020 to Add Custom Save Points so If Error Occures we can trace that.
             Database.rollback(monthInvoiceSavePoint);
-            errorDesciption  += 'enrolIds:'+enrolIds+' : '+e.getStackTraceString()+'-'+e.getMessage() +';';
+            errorDesciption  += e.getStackTraceString()+'-'+e.getMessage() +';';
+            string errorDescription = 'Rollback Enrolment Ids are "'+enrolIds+'" and Failure Reason '+ e.getStackTraceString()+'-'+e.getMessage() +';';
+            listOfSubscriptionChunkError.add(new BillingUtility.MonthlyBatchClassChunkError(errorDescription,enrolmentList.size(),enrolmentList.size()));// 16-dec-2020:nishi create batch chunk error  Log records
          }
      }
      
      global void finish(Database.BatchableContext BC){
-        BillingUtility.createBatchLog('Post-Invoice Batch',startTime,system.now(),noOfRecords,errorDesciption);
+      string batchjobId = BillingUtility.createBatchJobLog('Post-Invoice Batch',startTime,system.now(),noOfRecords,errorDesciption);
+        BillingUtility.createBatchChunkErrorLogs(listOfSubscriptionChunkError,batchjobId);// 16-dec-2020:nishi create batch chunk error  Log records
      }
-     // get enroment ids in string format
+    //16-Dec-2020:nishi: get enroment ids in string format
      private  string getenrolmentListIds(List<Enrolment__c> enrolmentList){
       set<string> objenrolIds = new set<string>(); 
       for(Enrolment__c objenrol  : enrolmentList){
-         objenrolIds.add(objenrol.id);
+         objenrolIds.add(objenrol.name);
       }
       return string.join(new List<string>(objenrolIds),', ');
   }
