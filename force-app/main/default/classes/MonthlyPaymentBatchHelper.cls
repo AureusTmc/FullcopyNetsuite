@@ -8,7 +8,28 @@
 
 public class MonthlyPaymentBatchHelper{
 
-    public static /*Set<String>*/ BillingUtility.MonthlyBatchClassChunkError getPaymentForInvoices(List<Invoice__c> listOfInvoice){
+    public static Set<String>  getPaymentForInvoices(List<Invoice__c> listOfInvoice){
+        List<Stripe_Payment_Log__c> invoiceLogList = new List<Stripe_Payment_Log__c>();
+        BillingUtility.MonthlyBatchClassChunkError objMonthlyBatchClassChunkError =  getMonthlyPaymentForInvoices(listOfInvoice,false);
+        if(objMonthlyBatchClassChunkError.mapOfPaymentErrorWrapper != null && objMonthlyBatchClassChunkError.mapOfPaymentErrorWrapper.size() > 0){
+            for(Invoice__c objInvoice : listOfInvoice){
+                if(objMonthlyBatchClassChunkError.mapOfPaymentErrorWrapper.containsKey(objInvoice.id)){
+                    Stripe_Payment_Log__c iLog = new Stripe_Payment_Log__c();
+                    iLog.Status__c = 'Failure';
+                    iLog.Invoice__c = objInvoice.id;
+                    iLog.Message__c =   objMonthlyBatchClassChunkError.mapOfPaymentErrorWrapper.get(objInvoice.id).erroDescription; 
+                    iLog.Type__c =  'internal_error';
+                    iLog.ChargeId__c = objMonthlyBatchClassChunkError.mapOfPaymentErrorWrapper.get(objInvoice.id).stripeId;
+                    invoiceLogList.add(iLog); 
+                }
+            }
+        }
+        if(invoiceLogList != null && invoiceLogList.size() > 0 ){
+            insert invoiceLogList;
+        }
+       return objMonthlyBatchClassChunkError.invoiceIds;
+    }
+    public static BillingUtility.MonthlyBatchClassChunkError getMonthlyPaymentForInvoices(List<Invoice__c> listOfInvoice,boolean isBatchclass){
         //Set<String> successinvoiceIdSet = new Set<String>();
         Map<String,Invoice__c> successinvoiceIdmap = new  Map<String,Invoice__c>();
         List<Invoice__c> listOfInvoicesTOUpdate = new List<Invoice__c>();
@@ -208,7 +229,7 @@ public class MonthlyPaymentBatchHelper{
        
         if(listOfInvoicesTOUpdate.size()>0){
             // 15-Dec-2020: Nishi: start: as per new logic if in this process we have found any type of error in invoice and payment then we send a email. 
-            objMonthlyBatchClassChunkError = createpaymentsForDueInvoice(listOfInvoicesTOUpdate,mapOfPayment, successinvoiceIdmap,listOfInvoice.size(),true/*'Monthly Payment Batch Job Details '*/);
+            objMonthlyBatchClassChunkError = createpaymentsForDueInvoice(listOfInvoicesTOUpdate,mapOfPayment, successinvoiceIdmap,listOfInvoice.size(),isBatchclass/*'Monthly Payment Batch Job Details '*/);
             /*
             Database.Update(listOfInvoicesTOUpdate,false);
             if(mapOfPayment.size() > 0){
@@ -232,7 +253,7 @@ public class MonthlyPaymentBatchHelper{
         if(fifthBookingIdSet.size()>0){
             updateFifthBookingStatus(fifthBookingIdSet);
         }
-        objMonthlyBatchClassChunkError.invoiceIds = successinvoiceIdmap.keyset();
+        
         return objMonthlyBatchClassChunkError;//successinvoiceIdSet
     }
 
@@ -245,8 +266,8 @@ public class MonthlyPaymentBatchHelper{
             set<string> failInvoiceId=new Set<string>();
             Set<string> sucessInvoiceIds=new Set<string>();
             Set<string> sucesspaymentIds=new Set<string>();
-            List<paymentErrorWrapper> listOfinvoiceErrorWrapper = new list<paymentErrorWrapper>();
-            List<paymentErrorWrapper> listOfpaymentErrorWrapper = new list<paymentErrorWrapper>();
+            Map<string,paymentErrorWrapper> mapOfinvoiceErrorWrapper = new Map<string,paymentErrorWrapper>();
+            //List<paymentErrorWrapper> listOfpaymentErrorWrapper = new list<paymentErrorWrapper>();
             list<Database.SaveResult> invoiceUpdatioResult = Database.Update(listOfInvoicesTOUpdate,false);
             for(Integer i=0; i < listOfInvoicesTOUpdate.size(); i++) {
                 Database.SaveResult objinvoiceUpdatioResult = invoiceUpdatioResult[i];
@@ -258,12 +279,13 @@ public class MonthlyPaymentBatchHelper{
                     Database.Error errors =  objinvoiceUpdatioResult.getErrors().get(0);
                     failInvoiceId.add(objinvoiceUpdatioResult.Id);
                     sendErrorEmail = true;
-                    listOfinvoiceErrorWrapper.add(new paymentErrorWrapper(objinvoice.Name, objinvoice.Parent_Account__r.Name, mapOfPayment.containsKey(objinvoice.id) ? mapOfPayment.get(objinvoice.id).Transaction_ID__c : '', errors.getMessage(),string.join(errors.getFields(), ', ')));
+                    successinvoiceIdmap.remove(objinvoiceUpdatioResult.Id);
+                    mapOfinvoiceErrorWrapper.put(objinvoiceUpdatioResult.Id,new paymentErrorWrapper(objinvoice.Name, objinvoice.Parent_Account__r.Name, mapOfPayment.containsKey(objinvoice.id) ? mapOfPayment.get(objinvoice.id).Transaction_ID__c : '', errors.getMessage(),string.join(errors.getFields(), ', ')));
                 }
             }
             System.debug('sucessInvoiceIds'+sucessInvoiceIds);
             System.debug('failInvoiceId'+failInvoiceId);
-            System.debug('listOfinvoiceErrorWrapper'+listOfinvoiceErrorWrapper);
+            System.debug('listOfinvoiceErrorWrapper'+mapOfinvoiceErrorWrapper);
             if(mapOfPayment.size() > 0){
                 if(failInvoiceId != null && failInvoiceId.size() > 0 ){
                     for(string invoiceId : failInvoiceId){
@@ -291,33 +313,34 @@ public class MonthlyPaymentBatchHelper{
                         if(successinvoiceIdmap.containsKey(objPay.Invoice__c)){
                             invoiceName = successinvoiceIdmap.get(objPay.Invoice__c).name;
                             parentName = successinvoiceIdmap.get(objPay.Invoice__c).Parent_Account__r.Name;
+                            successinvoiceIdmap.remove(objPay.Invoice__c);
                         }
                         //listOfpaymentErrorWrapper.add(new paymentErrorWrapper(invoiceName, parentName, objPay.Transaction_ID__c, errors.getMessage(),string.join(errors.getFields(), ', ')));
-                        listOfinvoiceErrorWrapper.add(new paymentErrorWrapper(invoiceName, parentName, objPay.Transaction_ID__c, errors.getMessage(),string.join(errors.getFields(), ', ')));
+                        mapOfinvoiceErrorWrapper.put(objPay.Invoice__c,new paymentErrorWrapper(invoiceName, parentName, objPay.Transaction_ID__c, errors.getMessage(),string.join(errors.getFields(), ', ')));
                     }
                 }
                 System.debug('sucesspaymentIds'+sucesspaymentIds);
-                System.debug('listOfinvoiceErrorWrapper'+listOfinvoiceErrorWrapper);
+                System.debug('mapOfinvoiceErrorWrapper'+mapOfinvoiceErrorWrapper);
                 System.debug('sendErrorEmail'+sendErrorEmail);
                 if(sendErrorEmail){
-                    if(listOfinvoiceErrorWrapper != null && listOfinvoiceErrorWrapper.size() > 0){
+                    if(mapOfinvoiceErrorWrapper != null && mapOfinvoiceErrorWrapper.size() > 0){
                         string errorDescription ='';
                         Integer errorNumber = 1;
-                        for(paymentErrorWrapper objInvoiceErrorWrapper :listOfinvoiceErrorWrapper){
+                        for(paymentErrorWrapper objInvoiceErrorWrapper :mapOfinvoiceErrorWrapper.values()){
                             if(isBatchclass){
                             errorDescription+= '#'+errorNumber +'.Invoice_Name:'+objInvoiceErrorWrapper.invoiceName;
                             errorDescription+= ',Customer Name:'+objInvoiceErrorWrapper.parentName;
                             errorDescription+= ',Stripe Id:'+objInvoiceErrorWrapper.stripeId;
-                            errorDescription+= ',Error:'+ objInvoiceErrorWrapper.erroDescription + (string.isNotBlank(objInvoiceErrorWrapper.errorField) ? '(Field Error :'+objInvoiceErrorWrapper.errorField+'),' : ',') ;
+                            errorDescription+= ',Error:'+ objInvoiceErrorWrapper.erroDescription + (string.isNotBlank(objInvoiceErrorWrapper.errorField) ? '(Field Error :'+objInvoiceErrorWrapper.errorField+');\n' : ';\n') ;
                             }else{
-                                errorDescription+= 'Stripe Id:'+objInvoiceErrorWrapper.stripeId;
-                                errorDescription+=',Error:'+objInvoiceErrorWrapper.erroDescription+',';
+                                errorDescription+= objInvoiceErrorWrapper.erroDescription+';';
                             }
                             errorNumber++;
                         }
+                        objMonthlyBatchClassChunkError.mapOfPaymentErrorWrapper = mapOfinvoiceErrorWrapper;
                         objMonthlyBatchClassChunkError.errorDescription = errorDescription.removeEnd(',');
                         objMonthlyBatchClassChunkError.processRecords = totalInvoice;
-                        objMonthlyBatchClassChunkError.failRecords = listOfinvoiceErrorWrapper.size();
+                        objMonthlyBatchClassChunkError.failRecords = mapOfinvoiceErrorWrapper.size();
                     }
                     
                     /*commented by nishi: 16-Dec-2020 : change requirement we create batch chunk error  Log records 
@@ -376,6 +399,7 @@ public class MonthlyPaymentBatchHelper{
                     }commented by nishi: 16-Dec-2020 : change requirement we create batch chunk error  Log records */
 
                 }
+                objMonthlyBatchClassChunkError.invoiceIds = successinvoiceIdmap.keyset();
             }
         }
         return objMonthlyBatchClassChunkError;
@@ -398,27 +422,7 @@ public class MonthlyPaymentBatchHelper{
     }
     
 
-    // create batch Job Log records
-    public static string createBatchLog(String jobName,DateTime startTime,DateTime endTime,Integer noOfRecords,string Description){
-        Batch_Job_Log__c blog = new Batch_Job_Log__c();
-        blog.Name = jobName;
-        blog.Start_Time__c = startTime;
-        blog.End_Time__c = endTime;
-        blog.No_of_records_proceeds__c = noOfRecords;
-        blog.Description__c = Description;
-        insert blog;
-        return blog.id;
-    }
-
-     // create batch Job Log records
-     public static Batch_Chunk_Error_Log__c createBatchChunkErrorLogs(String batchjobId,Integer noOfRecords,Integer noOffailRecords,string Description){
-        Batch_Chunk_Error_Log__c blog = new Batch_Chunk_Error_Log__c();
-        blog.Batch_Job_Log__c = batchjobId;
-        blog.Number_of_Failure_Records__c = noOffailRecords;
-        blog.Number_of_Records__c = noOfRecords;
-        blog.Error_Description__c = Description;
-        return blog;
-    }
+   
 
     //12-03-2019 This method update the fifth bookings status By Sanjay Bhati
     public static void updateFifthBookingStatus(Set<Id> invoiceIdSet){

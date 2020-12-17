@@ -35,8 +35,8 @@ global class MonthlyPaymentBatch implements Database.Batchable<sObject>,database
     global void execute(Database.BatchableContext BC, List<Invoice__c> invList){
         noOfRecords  += invList.size();
         // 16-dec-2020:nishi:start: as per discussion we create new 'Batch chunk error' records if chunk throw any error.   
-        BillingUtility.MonthlyBatchClassChunkError objMonthlyBatchClassChunkError  = MonthlyPaymentBatchHelper.getPaymentForInvoices(invList);
-        if(string.isnotBlank(objMonthlyBatchClassChunkError.errorDescription)){
+        BillingUtility.MonthlyBatchClassChunkError objMonthlyBatchClassChunkError  = MonthlyPaymentBatchHelper.getMonthlyPaymentForInvoices(invList,true);
+        if(objMonthlyBatchClassChunkError.mapOfPaymentErrorWrapper != null && objMonthlyBatchClassChunkError.mapOfPaymentErrorWrapper.size() > 0){
             listOfPaymentChunkError.add(objMonthlyBatchClassChunkError);
         }
         if(objMonthlyBatchClassChunkError.invoiceIds != null && objMonthlyBatchClassChunkError.invoiceIds.size()> 0 ){

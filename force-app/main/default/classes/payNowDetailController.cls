@@ -46,7 +46,7 @@ public class payNowDetailController {
         // added by nishi: 13-Nov-2020:end for if user is not a Stripe customer then you use one time payment using stripe
     }
 
-    public void paywithonetimeStripe(){
+     public void paywithonetimeStripe(){
         system.debug('stripeToken'+stripeToken);
         if(stripeToken!=null && string.isNotBlank(stripeToken.trim())){
             List<Invoice__c> InvList  = new List<Invoice__c>();
@@ -180,12 +180,16 @@ public class payNowDetailController {
             if(InvList.size()>0){
                 BillingUtility.MonthlyBatchClassChunkError objMonthlyBatchClassChunkError =  MonthlyPaymentBatchHelper.createpaymentsForDueInvoice(InvList,mapOfPayment, successinvoiceIdmap,1,false);
                 system.debug('---->objMonthlyBatchClassChunkError'+objMonthlyBatchClassChunkError);
-                if(string.isnotBlank(objMonthlyBatchClassChunkError.errorDescription)){
-                    iLog.Status__c = 'Failure';
-                    iLog.Invoice__c = InvId;
-                    iLog.Message__c =   objMonthlyBatchClassChunkError.errorDescription; 
-                    iLog.Type__c =  'internal_error';
-                    invoiceLogList.add(iLog);  
+                if(objMonthlyBatchClassChunkError.mapOfPaymentErrorWrapper != null && objMonthlyBatchClassChunkError.mapOfPaymentErrorWrapper.size() > 0){
+                    for(MonthlyPaymentBatchHelper.paymentErrorWrapper objpaymentErrorWrapper :  objMonthlyBatchClassChunkError.mapOfPaymentErrorWrapper.values()){
+                        iLog = new Stripe_Payment_Log__c();
+                        iLog.Status__c = 'Failure';
+                        iLog.Invoice__c = InvId;
+                        iLog.Message__c =   objpaymentErrorWrapper.erroDescription; 
+                        iLog.Type__c =  'internal_error';
+                        iLog.ChargeId__c = objpaymentErrorWrapper.stripeId;
+                        invoiceLogList.add(iLog);  
+                    }
                     displayPopupforDeclined=true;
                     displayPopup=false;
                 }
@@ -203,7 +207,32 @@ public class payNowDetailController {
         }
 
     }
-    
+    //167dec-2020:nishi: if we find sucessfully invoice ids then we show  confirmation alert popup other wise we show error messages 
+    public  void callPaymentGate(){
+        List<Stripe_Payment_Log__c> invoiceLogList = new List<Stripe_Payment_Log__c>();
+        List<Invoice__c> listOfInvoice = [Select Id,Name,Parent_Account__c,Parent_Account__r.PersonContactId,Parent_Account__r.Stripe_Customer_Id__c, 
+                                            Total_Amount__c,subscription__c,Balance_Amount__c,Paid_Amount__c,Parent_Account__r.Name,
+                                            Parent_Account__r.personEmail,Parent_Account__r.Centre_Name__r.Location__c,
+                                            Center__r.Country__c, Center__r.Country__r.Id, Center__r.Country__r.Tax_Rate__c, 
+                                            Center__r.Country__r.Currency_Code__c, Center__r.Country__r.Stripe_Base_Url__c, 
+                                            Center__r.Country__r.Stripe_Secret_Key__c,
+                                            Center__r.Organisation__c, Center__r.Organisation__r.Id, /*Center__r.Organisation__r.Tax_Rate__c, */
+                                            Center__r.Organisation__r.Country__r.Currency_Code__c, Center__r.Organisation__r.Stripe_Base_Url__c, 
+                                            Center__r.Organisation__r.Stripe_Secret_Key__c,Center__r.Organisation__r.Name
+                                            FROM Invoice__c 
+                                            WHERE Id=:InvId];
+        Set<String>  invoiceIds  = MonthlyPaymentBatchHelper.getPaymentForInvoices(listOfInvoice);
+        if(invoiceIds != null && invoiceIds.size() > 0 ){
+            displayPopup=true;
+            displayPopupforDeclined=false;
+        }else{
+            displayPopupforDeclined=true;
+            displayPopup=false;
+        }
+       
+    }
+
+    /*Commented by nishi: 17-Dec-2020: for we centeralize payment insertion code
     public  void callPaymentGate(){
         List<Invoice__c> InvList  = new List<Invoice__c>();
         String payCreditRecType = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get(ConstantsClass.paymentAsCredit).getRecordTypeId(); 
@@ -217,7 +246,7 @@ public class payNowDetailController {
         Set<String> paymentFailedEmails=new Set<string>{'Ossia_Payment_Collection_Failed','Payment_Collection_Failed'};
         /*list<EmailTemplate> listOfEmailTemplate = [SELECT Id, Name 
                                                     FROM EmailTemplate 
-                                                    WHERE DeveloperName ='Payment_Collection_Failed'];*/
+                                                    WHERE DeveloperName ='Payment_Collection_Failed'];*-/
         Map<String,EmailTemplate> mapOfEmailTemplate = new Map<String,EmailTemplate>();
         for(EmailTemplate objEmailTemplate: [SELECT Id, Name ,DeveloperName
                                         FROM EmailTemplate 
@@ -344,18 +373,22 @@ public class payNowDetailController {
             system.debug('@@@@@@'+paymentListToCreate);
             Database.insert(paymentListToCreate,false);
         }
-        */
+        *-/
         system.debug('---->InvList'+InvList);
         system.debug('---->mapOfPayment'+mapOfPayment);
         if(InvList.size()>0){
             BillingUtility.MonthlyBatchClassChunkError objMonthlyBatchClassChunkError =  MonthlyPaymentBatchHelper.createpaymentsForDueInvoice(InvList,mapOfPayment, successinvoiceIdmap,1,false);
             system.debug('---->objMonthlyBatchClassChunkError'+objMonthlyBatchClassChunkError);
-            if(string.isnotBlank(objMonthlyBatchClassChunkError.errorDescription)){
-                iLog.Status__c = 'Failure';
-                iLog.Invoice__c = InvId;
-                iLog.Message__c =   objMonthlyBatchClassChunkError.errorDescription; //objStripeCharge.error.message;
-                iLog.Type__c =  'internal_error';  //objStripeCharge.error.stripeType;
-                invoiceLogList.add(iLog);  
+            if(objMonthlyBatchClassChunkError.mapOfPaymentErrorWrapper != null && objMonthlyBatchClassChunkError.mapOfPaymentErrorWrapper.size() > 0){
+                for(MonthlyPaymentBatchHelper.paymentErrorWrapper objpaymentErrorWrapper :  objMonthlyBatchClassChunkError.mapOfPaymentErrorWrapper.values()){
+                    iLog = new Stripe_Payment_Log__c();
+                    iLog.Status__c = 'Failure';
+                    iLog.Invoice__c = InvId;
+                    iLog.Message__c =   objpaymentErrorWrapper.erroDescription; 
+                    iLog.Type__c =  'internal_error';
+                    iLog.ChargeId__c = objpaymentErrorWrapper.stripeId;
+                    invoiceLogList.add(iLog);  
+                }
                 displayPopupforDeclined=true;
                 displayPopup=false;
             }
@@ -368,7 +401,7 @@ public class payNowDetailController {
             Messaging.sendEmail(sendSingleEmailMessage, FALSE); 
         }
         // 15-Dec-2020: Nishi: end: as per new logic if in this process we have found any type of error in invoice and payment then we send a email. 
-    }
+    }*/
 
     public  void closeErrorPopup(){
         displayPopupforDeclined=false;
