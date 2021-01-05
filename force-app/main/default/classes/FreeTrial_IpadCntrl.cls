@@ -1091,14 +1091,16 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                 System.debug('@@@tSet'+tSet);
                 
                 Integer j = 0;
-                while (j < slotList.size()){
-                    // if(slotList.get(j).equalsIgnoreCase(trialEnrMod.slcdFullSlot)){
-                    if(tSet.contains(slotList.get(j))){
-                        slotList.remove(j);
-                        enrModelList.get(1).slcdFullSlot= '';
-                        enrModelList.get(1).slcdSlot = '';
-                    }else{
-                        j++;
+                if(slotList != null && slotList.size() > 0){// added by nishi:5-Jan-2021:  to solve null pointer exception
+                    while (j < slotList.size()){
+                        // if(slotList.get(j).equalsIgnoreCase(trialEnrMod.slcdFullSlot)){
+                        if(tSet.contains(slotList.get(j))){
+                            slotList.remove(j);
+                            enrModelList.get(1).slcdFullSlot= '';
+                            enrModelList.get(1).slcdSlot = '';
+                        }else{
+                            j++;
+                        }
                     }
                 }
                 
@@ -1192,25 +1194,25 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                 //Added by rajesh, 10th sep 2019. To do some sharing seeting stuff as per Ashish ji discussion
                 if(centrList.get(0).Country__r.Country_Name__c != null)
                     parentAcc.Country_PI__pc = centrList.get(0).Country__r.Country_Name__c;
-            
+            }
             //Check that customer is already exist or not on the bases of email
             if(parentAcc.PersonEmail != null){
                 List<Account> accList = [SELECT Id,Name FROM Account
                                          WHERE PersonEmail =: parentAcc.PersonEmail 
-                                        And Centre_Name__r.Organisation__c =: centrList.get(0).Organisation__c // Added by nishi: 30-nov-2020: for Change customer key from email address to email address+Organisation name
+                                        //And Centre_Name__r.Organisation__c =: centrList.get(0).Organisation__c // Added by nishi: 30-nov-2020: for Change customer key from email address to email address+Organisation name
                                         ]; 
                 if(accList.size() > 0){
                     //Integer count = 0;
                     parentAcc.Id = accList.get(0).Id;
                 }else{
                     // Added by nishi:Start: 30-nov-2020: for Change customer key from email address to email address+Organisation name
-                    string useremail=parentAcc.PersonEmail+'.';
+                   /* string useremail=parentAcc.PersonEmail+'.';
                     if(org.equalsIgnoreCase('osia')){
                         useremail +='ossia'+centrList.get(0).country__r.name; 
                     }else{
                         useremail += 'aureus'+centrList.get(0).country__r.name;
                     }
-                    parentAcc.User_Email__c = useremail;
+                    parentAcc.User_Email__c = useremail;*/
                     // Added by nishi:end: 30-nov-2020: for Change customer key from email address to email address+Organisation name 
 
                     system.debug('in else of refrel -->'+isOsiaApply);
@@ -1226,7 +1228,6 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                     }
                 }
             }
-        }
             if(isParAlsoAStudent){
                 Account stuAcc = enrModelList.get(0).studentAcc;
                 parentAcc.Also_a_Student__c = true;
