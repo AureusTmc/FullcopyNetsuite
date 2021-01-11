@@ -892,6 +892,7 @@ public class EnrolmentProcessForClassCtrl {
                         
                         Map<String, Subscription__c> activeSubMap = new Map<String, Subscription__c>();
                         Set<String> grpClsBookSet = new Set<String>();
+                       
                         for(Enrolment__c enr: enrolDetails.enrolments.values()){
                             if(enr.center__c != null)
                                 activeSubMap.put(enr.center__c, null);
@@ -913,12 +914,11 @@ public class EnrolmentProcessForClassCtrl {
                             }    
                         }
                         
-                        
-                        for(Subscription__c sub: [SELECT Id, Parent__c, Center__c FROM Subscription__c  
+                       for(Subscription__c sub: [SELECT Id, Parent__c, Center__c,Next_Bill_Date__c FROM Subscription__c  
                                                   WHERE Parent__c =: parentAcc.Id AND Center__c IN:activeSubMap.keySet()  
                                                         AND Status__c =: ConstantsClass.activeStatus])
                             activeSubMap.put(sub.Center__c, sub);
-                        
+                                                
                      /*   Map<String, Booking__c> bookingMap = new Map<String, Booking__c>();
                         for(Booking__c book: [SELECT Id, Name, Booking_Date__c, Enrolment__c, Type__c, Status__c, Category__c, Enrolment__r.Lessons_Start_Date__c FROM Booking__c 
                                               WHERE Enrolment__c IN: enrolDetails.enrolments.keySet() 
@@ -942,7 +942,7 @@ public class EnrolmentProcessForClassCtrl {
                         List<Subscription_Line_Item__c> subLinItmList = new List<Subscription_Line_Item__c>();
                         List<Invoice_Line_Item__c> invLineItmList     = new List<Invoice_Line_Item__c>();
                         List<Payment__c> customerPaymentList = new List<Payment__c>();
-                        
+                        Date subscriptionLowestNextBilldate;
                         //Added by rajesh,17th sept 2019: for fifth lesson record
                         List<Fifth_Lesson__c> fifthLsnList  = new List<Fifth_Lesson__c>();                        
                         //Added by rajesh,17th sept 2019: cancelled booking process if teacher on leave
@@ -1048,6 +1048,9 @@ public class EnrolmentProcessForClassCtrl {
                             Subscription__c subs = new Subscription__c();
                             if(activeSubMap.get(enr.Center__c) != null){
                                 subs = activeSubMap.get(enr.Center__c);
+                                if(subscriptionLowestNextBilldate == null && subs.Next_Bill_Date__c != null){
+                                    subscriptionLowestNextBilldate = subs.Next_Bill_Date__c;
+                                }
                             }else if(centSubMap.get(enr.Center__c) != null){
                                 subs = centSubMap.get(enr.Center__c);
                             }else{
@@ -1058,6 +1061,19 @@ public class EnrolmentProcessForClassCtrl {
                                 //Commented by Rajesh on 24th June 2019, for populating next billing date according to promotinaly package
                                 subs.Next_Bill_Date__c   = subsNextBillingDate;
                             }
+                            // Jan-11-2021: nishi :start: for if 2nd enrolment is created then we udpate lowest next billing date.
+                            if(subscriptionLowestNextBilldate == null ){
+                                if(subsNextBillingDate != null){
+                                    subscriptionLowestNextBilldate = subsNextBillingDate;
+                                }
+                            }else{
+                                if(subscriptionLowestNextBilldate > subsNextBillingDate){
+                                    subs.Next_Bill_Date__c = subsNextBillingDate;
+                                    subscriptionLowestNextBilldate =subsNextBillingDate;
+                                }
+                            }
+                              // Jan-11-2021: nishi :start: for if 2nd enrolment is created then we udpate lowest next billing date.
+                            
                             centSubMap.put(enr.Center__c, subs);
                             
                             //Filling Invoice
@@ -2812,7 +2828,7 @@ public class EnrolmentProcessForClassCtrl {
             String body ='';
             // added by nishi: 23-Nov-2020: for aureus Panda doc template is changed
             if(isOssia){
-                body = fillCreateDocumentWrapper(enrolDetails);  
+                body = fillCreateAureusDocumentWrapper(enrolDetails); //fillCreateDocumentWrapper(enrolDetails);  
             }else{
                 body = fillCreateAureusDocumentWrapper(enrolDetails);  
             }
@@ -2875,8 +2891,8 @@ public class EnrolmentProcessForClassCtrl {
     private String fillCreateAureusDocumentWrapper(EnrolDetails enrolDetail){        
         String jsonBody = '';       
         DocumentWrapper.Fields field;    
-        DocumentWrapper.Parent_Guardian_Name parent_GuardianName;
-        DocumentWrapper.Parent_Guardian_Name enrolmentdate;       
+        DocumentWrapper.Fields parentName;
+        DocumentWrapper.Fields enrolmentdate;       
         DocumentWrapper.recipients recipient = new DocumentWrapper.recipients();  
         DocumentWrapper.Tokens token = new DocumentWrapper.Tokens();        
         List<DocumentWrapper.Rows> rows = new List<DocumentWrapper.Rows>();     
@@ -2891,9 +2907,9 @@ public class EnrolmentProcessForClassCtrl {
             recipient.first_name = enrolDetail.parent.firstName;        
             recipient.last_name = enrolDetail.parent.lastName;      
             recipient.email = enrolDetail.parent.email;     
-            parent_GuardianName =  new DocumentWrapper.Parent_Guardian_Name(enrolDetail.parent.firstName +' '+enrolDetail.parent.lastName, 'Parent Name');  
-            enrolmentdate =  new DocumentWrapper.Parent_Guardian_Name(system.now().format('dd-MM-yyyy'), 'Enrolment Date');
-            createDocWrapper.fields = new DocumentWrapper.CustomField(parent_GuardianName,enrolmentdate);       
+            parentName =  new DocumentWrapper.Fields(enrolDetail.parent.firstName +' '+enrolDetail.parent.lastName, 'Parent/Guardian Name');  
+            enrolmentdate =  new DocumentWrapper.Fields(string.valueof(system.now()), 'Enrolment Sigunature Date');
+            createDocWrapper.fields = new DocumentWrapper.CustomField(parentName,enrolmentdate);       
             recipient.role = 'Client';  
             token.name='Parent Name';
             token.value=enrolDetail.parent.firstName +' '+enrolDetail.parent.lastName;
@@ -2928,8 +2944,8 @@ public class EnrolmentProcessForClassCtrl {
         if(String.isNotBlank(createDocWrapper.name)){       
             jsonBody = JSON.Serialize(createDocWrapper).replaceAll('pandadoc_Default_Section_XYZ','default');   
             jsonBody = jsonBody.replaceAll('pandadoc_Currency_Code_XYZ','currency'); 
-            jsonBody = jsonBody.replaceAll('parentGuardianName','Parent/Guardian Name'); 
-            jsonBody = jsonBody.replaceAll('Selectdate','Select date');     
+            //jsonBody = jsonBody.replaceAll('parentGuardianName','Parent/Guardian Name'); 
+            //jsonBody = jsonBody.replaceAll('Selectdate','Select date');     
             System.debug('createDocWrapper '+createDocWrapper);     
             System.debug('createDocWrapper '+createDocWrapper.metadata);        
             jsonBody = jsonBody.replaceAll('salesforceAccount_id','salesforce.account_id');     
@@ -2942,7 +2958,7 @@ public class EnrolmentProcessForClassCtrl {
                 
         return jsonBody;        
     } 
-    private String fillCreateDocumentWrapper(EnrolDetails enrolDetail){        
+    /*private String fillCreateDocumentWrapper(EnrolDetails enrolDetail){        
         String jsonBody = '';       
         DocumentWrapper.Fields field;       
         DocumentWrapper.recipients recipient = new DocumentWrapper.recipients();        
@@ -2975,12 +2991,12 @@ public class EnrolmentProcessForClassCtrl {
                 createDocWrapper.name += enrolmentObj.name + '-';       
                 row = new DocumentWrapper.Rows(new DocumentWrapper.Data(enrolmentObj.Student__r.FirstName + ' ' + enrolmentObj.Student__r.LastName), new DocumentWrapper.CustomFields(enrolmentObj.Package__r.Name, enrolmentDateTime.format('EEE @ hh:mm a'),*/ /*enrolmentObj.CreatedDate.format('dd-MM-yyyy')*//* enrolmentDateTime.format('dd-MM-yyyy')));      
                 rows.add(row);      
-            } */
+            } *-/
             for(Enrolment__c enrolmentObj:[SELECT Id, Name, Lessons_Start_Date__c, Lesson_Start_time__c, Student__r.FirstName, Student__r.LastName, Package__r.Name 
                                            FROM Enrolment__c WHERE Id IN: enrolDetail.enrolments.keySet()]){
                 enrolmentDateTime = DateTime.newInstance(enrolmentObj.Lessons_Start_Date__c, enrolmentObj.Lesson_Start_time__c);  
                 createDocWrapper.name += enrolmentObj.name + '-';       
-                row = new DocumentWrapper.Rows(new DocumentWrapper.Data(enrolmentObj.Student__r.FirstName + ' ' + enrolmentObj.Student__r.LastName), new DocumentWrapper.CustomFields(enrolmentObj.Package__r.Name, enrolmentDateTime.format('EEE @ hh:mm a'), /*enrolmentObj.CreatedDate.format('dd-MM-yyyy')*/ enrolmentDateTime.format('dd-MM-yyyy')));      
+                row = new DocumentWrapper.Rows(new DocumentWrapper.Data(enrolmentObj.Student__r.FirstName + ' ' + enrolmentObj.Student__r.LastName), new DocumentWrapper.CustomFields(enrolmentObj.Package__r.Name, enrolmentDateTime.format('EEE @ hh:mm a'), /*enrolmentObj.CreatedDate.format('dd-MM-yyyy')*-/ enrolmentDateTime.format('dd-MM-yyyy')));      
                 rows.add(row);   
             }    
                 
@@ -3006,7 +3022,7 @@ public class EnrolmentProcessForClassCtrl {
             
                 
         return jsonBody;        
-    }
+    }*/
     
      public PageReference redirectToenrollmentprocessPage(){
         String url = '/apex/enrolmentprocess_ipad?';

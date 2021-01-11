@@ -15,7 +15,7 @@ global class SubscriptionMonthlyInvoiceBatch implements Database.Batchable<sObje
     }
     
     global Database.QueryLocator start(Database.BatchableContext BC){
-        date subscriptiondate = date.newInstance(2020, 12, 01);//system.today();
+        date subscriptiondate = system.today();
         // @02/26/2019 Next Billing Date filter added by Sanjay Bhati
         return Database.getQueryLocator([Select Id,Name,Parent__c,Parent__r.personContactId,Next_Bill_Date__c,Center__c,
                                             
@@ -27,6 +27,7 @@ global class SubscriptionMonthlyInvoiceBatch implements Database.Batchable<sObje
                                           Enrolment__r.New_Package_Id__r.Deposit_Fee__c,Enrolment__r.New_Package_Id__r.Unit_Fee__c,
                                           Enrolment__r.Package__c,Enrolment__r.Teacher__c, Enrolment__r.New_Teacher__c,Enrolment__r.Promotional_Period_End_Date__c,
                                           Enrolment__r.Package__r.Deposit_Fee__c,Enrolment__r.Package__r.Unit_Fee__c,
+                                          Enrolment__r.Package_To_Be_Change__r.Unit_Fee__c,Enrolment__r.Package_To_Be_Change__c,///added by nishi:11-Jan-2020: for invoice packages amount according to Promo enrolment changed into regular package. 
                                           Next_Bill_Date__c, Enrolment__r.Center__r.Country__r.Id, Enrolment__r.Center__r.Country__r.Tax_Rate__c ,
                                           // added by nishi:18_aug-2020: for manage facility fee is ossia student Subscription invoice created
                                           Enrolment__r.Center__r.Organisation__r.Name,//Enrolment__r.New_Package_Id__r.Facility_Fee__c,Enrolment__r.Package__r.Facility_Fee__c,
@@ -93,7 +94,7 @@ global class SubscriptionMonthlyInvoiceBatch implements Database.Batchable<sObje
             Database.executeBatch(new PostInvoiceBatch(enrolmentIds), 200);
         }*/
         // Nishi 7-Oct-2020:start for call postInvoiceBatch class without enrolment Ids
-        //Database.executeBatch(new PostInvoiceBatch(), 200);
+        Database.executeBatch(new PostInvoiceBatch(), 200);
          // Nishi 7-Oct-2020:end: for call postInvoiceBatch class without enrolment Ids
         if(invIds!=null && invIds.size()>0){
             //database.executeBatch(new EmailInvoicebatch(invIds));

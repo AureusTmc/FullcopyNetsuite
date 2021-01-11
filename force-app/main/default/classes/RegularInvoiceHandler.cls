@@ -20,7 +20,7 @@ public class RegularInvoiceHandler implements PackageProcessInterface{
         List<Invoice_Line_Item__c> listOfInvoiceLineItems = new List<Invoice_Line_Item__c>();
         // Jatin: 28-jan-2020: for manage rental invoice amount
         if(objSubLineItem.Enrolment__r.recordtype.Name == ConstantsClass.enrollmentInstrumentRecTypeName){
-            Date effectiveDate = objSubLineItem.Enrolment__r.Termination_request_date__c;  
+            Date effectiveDate = objSubLineItem.Enrolment__r.Termination_request_date__c; 
             if(effectiveDate != NULL && effectiveDate >= firstDate && effectiveDate <= lastDate){
                 system.debug(effectiveDate.day());
                 system.debug(objSubLineItem.Amount__c /  date.daysInMonth(effectiveDate.year(), effectiveDate.month()));
@@ -60,8 +60,13 @@ public class RegularInvoiceHandler implements PackageProcessInterface{
                     } 
                 }
                 if(noOfLessonToBeBilled > 0){
+                    /*Commented by nishi:11-Jan-2020: for invoice packages amount according to Promo enrolment changed into regular package.
                     Decimal lessonCharge = noOfLessonToBeBilled *  objSubLineItem.Enrolment__r.Package__r.Unit_Fee__c;
                     listOfInvoiceLineItems.add(PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,lessonCharge  ,objSubLineItem.Enrolment__r.Package__c,False,objSubLineItem.Enrolment__r.Teacher__c)); 
+					*/
+                    Decimal lessonCharge = noOfLessonToBeBilled *  objSubLineItem.Enrolment__r.Package_To_Be_Change__r.Unit_Fee__c;
+                    listOfInvoiceLineItems.add(PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,lessonCharge  ,objSubLineItem.Enrolment__r.Package_To_Be_Change__c,False,objSubLineItem.Enrolment__r.Teacher__c)); 
+                   //added by nishi:11-Jan-2020: for invoice packages amount according to Promo enrolment changed into regular package.           
                 }   
             }else{
                 Invoice_Line_Item__c invLineItm = PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,objSubLineItem.Amount__c,

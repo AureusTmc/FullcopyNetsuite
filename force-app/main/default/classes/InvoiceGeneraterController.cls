@@ -247,7 +247,7 @@ public with sharing class InvoiceGeneraterController {
                                                         Enrolment__r.New_Centre__r.Country__r.Id, Enrolment__r.New_Centre__r.Country__r.Tax_Rate__c,
                                                         Enrolment__r.New_Centre__r.Organisation__r.Name,/*Enrolment__r.New_Package_Id__r.Facility_Fee__c,Enrolment__r.Package__r.Facility_Fee__c,*/
                                                         Enrolment__r.New_Centre__r.Organisation__r.Tax_Rate__c,
-
+														Enrolment__r.Package_To_Be_Change__r.Unit_Fee__c,Enrolment__r.Package_To_Be_Change__c,///added by nishi:11-Jan-2020: for invoice packages amount according to Promo enrolment changed into regular package. 
                                                         Enrolment__r.Parent__r.Centre_Name__r.Organisation__r.Tax_Rate__c
                                                             FROM Subscription_Line_Items__r
                                                             WHERE Status__c=:ConstantsClass.activeStatus AND Next_Bill_Date__c <= :nextBillingDate
