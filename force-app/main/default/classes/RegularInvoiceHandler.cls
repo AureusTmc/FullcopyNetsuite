@@ -21,7 +21,7 @@ public class RegularInvoiceHandler implements PackageProcessInterface{
         // Jatin: 28-jan-2020: for manage rental invoice amount
         if(objSubLineItem.Enrolment__r.recordtype.Name == ConstantsClass.enrollmentInstrumentRecTypeName){
             Date effectiveDate = objSubLineItem.Enrolment__r.Termination_request_date__c; 
-            if(effectiveDate != NULL && effectiveDate >= firstDate && effectiveDate <= lastDate){
+            if(effectiveDate != NULL && (effectiveDate >= firstDate || effectiveDate.month() < firstDate.month()) && effectiveDate <= lastDate){
                 system.debug(effectiveDate.day());
                 system.debug(objSubLineItem.Amount__c /  date.daysInMonth(effectiveDate.year(), effectiveDate.month()));
                 Decimal rentalTotalAmount = effectiveDate.day() * ( objSubLineItem.Amount__c /  date.daysInMonth(effectiveDate.year(), effectiveDate.month()));
@@ -46,7 +46,7 @@ public class RegularInvoiceHandler implements PackageProcessInterface{
             }
          }else{
             Date effectiveDate = objSubLineItem.Enrolment__r.Promotional_Period_End_Date__c;       
-            if(effectiveDate != NULL && effectiveDate >= firstDate && effectiveDate <= lastDate &&
+            if(effectiveDate != NULL && (effectiveDate >= firstDate || effectiveDate.month() < firstDate.month())  && effectiveDate <= lastDate &&
             String.isNotBlank(objSubLineItem.Enrolment__r.Lesson_Day__c) && 
             mapOfDates.containsKey(objSubLineItem.Enrolment__r.Lesson_Day__c)){
                 Integer noOfLessonToBeBilled = 0;
@@ -59,6 +59,7 @@ public class RegularInvoiceHandler implements PackageProcessInterface{
                         noOfLessonToBeBilled += 1;
                     } 
                 }
+                system.debug('noOfLessonToBeBilled'+noOfLessonToBeBilled);
                 if(noOfLessonToBeBilled > 0){
                     /*Commented by nishi:11-Jan-2020: for invoice packages amount according to Promo enrolment changed into regular package.
                     Decimal lessonCharge = noOfLessonToBeBilled *  objSubLineItem.Enrolment__r.Package__r.Unit_Fee__c;

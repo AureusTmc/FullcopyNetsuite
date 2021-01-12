@@ -104,6 +104,12 @@ public with sharing class InvoiceGeneraterController {
                             if(string.isNotBlank(objSubscriptionLineItem.Enrolment__r.New_Package_Id__c) && objinvLineItm.Package__c ==objSubscriptionLineItem.Enrolment__r.New_Package_Id__c){
                                 packageName = objSubscriptionLineItem.Enrolment__r.New_Package_Id__r.name;
                             }
+                               //added by nishi:12-Jan-2020:Start: for invoice packages amount according to Promo enrolment changed into regular package.           
+                            if(string.isNotBlank(objSubscriptionLineItem.Enrolment__r.Package_To_Be_Change__c) && objinvLineItm.Package__c ==objSubscriptionLineItem.Enrolment__r.Package_To_Be_Change__c){
+                                packageName = objSubscriptionLineItem.Enrolment__r.Package_To_Be_Change__r.name;
+                            }
+                               //added by nishi:12-Jan-2020:end: for invoice packages amount according to Promo enrolment changed into regular package.           
+               
                         }
                         if(string.isNotBlank(objSubscriptionLineItem.Enrolment__r.Student_Name__c)){
                             studentName = objSubscriptionLineItem.Enrolment__r.Student_Name__c;
@@ -175,7 +181,7 @@ public with sharing class InvoiceGeneraterController {
 
     @AuraEnabled
     public static generateInvoiceWrapper generateInvoicePayment(String invoiceId){
-        Date nextBillingDate = Date.newInstance(system.today().addMonths(1).year(),system.today().addMonths(1).month(),01);
+        
         if(string.isNotBlank(invoiceId)){
             Savepoint monthInvoiceSavePoint;
             try{
@@ -247,7 +253,7 @@ public with sharing class InvoiceGeneraterController {
                                                         Enrolment__r.New_Centre__r.Country__r.Id, Enrolment__r.New_Centre__r.Country__r.Tax_Rate__c,
                                                         Enrolment__r.New_Centre__r.Organisation__r.Name,/*Enrolment__r.New_Package_Id__r.Facility_Fee__c,Enrolment__r.Package__r.Facility_Fee__c,*/
                                                         Enrolment__r.New_Centre__r.Organisation__r.Tax_Rate__c,
-														Enrolment__r.Package_To_Be_Change__r.Unit_Fee__c,Enrolment__r.Package_To_Be_Change__c,///added by nishi:11-Jan-2020: for invoice packages amount according to Promo enrolment changed into regular package. 
+														Enrolment__r.Package_To_Be_Change__r.Unit_Fee__c,Enrolment__r.Package_To_Be_Change__c,Enrolment__r.Package_To_Be_Change__r.name,///added by nishi:11-Jan-2020: for invoice packages amount according to Promo enrolment changed into regular package. 
                                                         Enrolment__r.Parent__r.Centre_Name__r.Organisation__r.Tax_Rate__c
                                                             FROM Subscription_Line_Items__r
                                                             WHERE Status__c=:ConstantsClass.activeStatus AND Next_Bill_Date__c <= :nextBillingDate
@@ -262,20 +268,26 @@ public with sharing class InvoiceGeneraterController {
 
     public static List<Subscription__c> getActiveSubscriptionList(String subscriptionId){
         return [Select Id,Parent__c,Parent__r.personContactId,Next_Bill_Date__c,Center__c,
-                                                        (Select Id,Amount__c,Enrolment__c,Plan_Package__c,Enrolment__r.Effective_Date__c,
-                                                            Enrolment__r.Parent__c,Enrolment__r.Student__c,Enrolment__r.Student_Name__c,Enrolment__r.Parent__r.Centre_Name__r.Country__r.Tax_Rate__c,
-                                                            Enrolment__r.recordtype.Name,Enrolment__r.Termination_request_date__c,Enrolment__r.Parent__r.Name,
-                                                            Enrolment__r.Package_Process_Type__c,Enrolment__r.Package_Process_Status__c,Enrolment__r.Lesson_day__c,
-                                                        Enrolment__r.New_Package_Id__c,Enrolment__r.Package_Process_Request_Date__c,Enrolment__r.New_Package_Id__r.Name,
-                                                        Enrolment__r.New_Package_Id__r.Deposit_Fee__c,Enrolment__r.New_Package_Id__r.Unit_Fee__c,
-                                                        Enrolment__r.Package__c,Enrolment__r.Teacher__c, Enrolment__r.New_Teacher__c,Enrolment__r.Promotional_Period_End_Date__c,
-                                                        Enrolment__r.Package__r.Deposit_Fee__c,Enrolment__r.Package__r.Unit_Fee__c,Enrolment__r.Package__r.Name,
-                                                        Next_Bill_Date__c, Enrolment__r.Center__r.Country__r.Id, Enrolment__r.Center__r.Country__r.Tax_Rate__c,
-                                                        Enrolment__r.Center__r.Organisation__r.Name,/*Enrolment__r.New_Package_Id__r.Facility_Fee__c,Enrolment__r.Package__r.Facility_Fee__c,*/
-                                                        Enrolment__r.Center__r.Organisation__r.Tax_Rate__c,Enrolment__r.Parent__r.Centre_Name__r.Organisation__r.Tax_Rate__c
-                                                            FROM Subscription_Line_Items__r
-                                                            WHERE Status__c=:ConstantsClass.activeStatus 
-                                                            AND (Subscription_Expiry_Date__c=NULL))
+                                                    (Select Id,Amount__c,Enrolment__c,Plan_Package__c,Enrolment__r.Effective_Date__c,
+                                                    Enrolment__r.Parent__c,Enrolment__r.Student__c,Enrolment__r.Student_Name__c,Enrolment__r.Parent__r.Centre_Name__r.Country__r.Tax_Rate__c,
+                                                    Enrolment__r.recordtype.Name,Enrolment__r.Termination_request_date__c,Enrolment__r.Parent__r.Name,
+                                                    Enrolment__r.Package_Process_Type__c,Enrolment__r.Package_Process_Status__c,Enrolment__r.Lesson_day__c,
+                                                    Enrolment__r.New_Package_Id__c,Enrolment__r.Package_Process_Request_Date__c,Enrolment__r.New_Package_Id__r.Name,
+                                                    Enrolment__r.New_Package_Id__r.Deposit_Fee__c,Enrolment__r.New_Package_Id__r.Unit_Fee__c,
+                                                    Enrolment__r.Package__c,Enrolment__r.Teacher__c, Enrolment__r.New_Teacher__c,Enrolment__r.Promotional_Period_End_Date__c,
+                                                    Enrolment__r.Package__r.Deposit_Fee__c,Enrolment__r.Package__r.Unit_Fee__c,Enrolment__r.Package__r.Name,
+                                                    Next_Bill_Date__c, Enrolment__r.Center__r.Country__r.Id, Enrolment__r.Center__r.Country__r.Tax_Rate__c,
+                                                    Enrolment__r.Center__r.Organisation__r.Name,/*Enrolment__r.New_Package_Id__r.Facility_Fee__c,Enrolment__r.Package__r.Facility_Fee__c,*/
+                                                    Enrolment__r.Center__r.Organisation__r.Tax_Rate__c,
+                                                    Enrolment__r.No_of_Stairs__c, // 9-oct-2020: for manage Additional pickup charges with stair case charges  
+                                                    Enrolment__r.New_Centre__r.Country__r.Id, Enrolment__r.New_Centre__r.Country__r.Tax_Rate__c,
+                                                    Enrolment__r.New_Centre__r.Organisation__r.Name,/*Enrolment__r.New_Package_Id__r.Facility_Fee__c,Enrolment__r.Package__r.Facility_Fee__c,*/
+                                                    Enrolment__r.New_Centre__r.Organisation__r.Tax_Rate__c,
+                                                    Enrolment__r.Package_To_Be_Change__r.Unit_Fee__c,Enrolment__r.Package_To_Be_Change__c,Enrolment__r.Package_To_Be_Change__r.name,///added by nishi:11-Jan-2020: for invoice packages amount according to Promo enrolment changed into regular package. 
+                                                    Enrolment__r.Parent__r.Centre_Name__r.Organisation__r.Tax_Rate__c
+                                                    FROM Subscription_Line_Items__r
+                                                        WHERE Status__c=:ConstantsClass.activeStatus 
+                                                        AND (Subscription_Expiry_Date__c=NULL))
                                                     FROM Subscription__c
                                                     WHERE Status__c=:ConstantsClass.activeStatus 
                                                     and Parent__c!=null
