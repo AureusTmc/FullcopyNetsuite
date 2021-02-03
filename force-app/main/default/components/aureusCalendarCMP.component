@@ -193,6 +193,12 @@
                 background: repeating-linear-gradient( 45deg, #e5a51600, #eb212100 10px, #5d6d7d 10px, #5d6d7d 20px ), linear-gradient( to bottom, #8ba9c8, #8ba9c8 );
              } */
             /*end: 30-Jul-20202:added by nishi : for show online class booking color different  */
+            /*nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.*/
+            .avlminsclass{
+                font-weight: 600;
+                color: #dc2d65
+            }
+            /*nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.*/
             th.fc-day-header {      
             padding: 1px;  /*10px */    
             }       
@@ -5799,7 +5805,7 @@ Enrol now
                     if(result != '' && result != null && result != 'undefined'){
                         
                         var calendarResult = JSON.parse(result.replace(/(&quot\;)/g,"\""));
-                      //console.log('@@@@calendarResult', calendarResult);
+                      console.log('@@@@calendarResult', calendarResult);
                         listOfResource = calendarResult.listOfResources;
                         listOfEvents = calendarResult.listOfEvents;
                         teacherWorkingHours = calendarResult.teachersWorkingHours;
@@ -6801,6 +6807,7 @@ Enrol now
                                                 element.attr('title', event.title);
                                             }
                                             
+                                            
                                             if(element.find(".fc-content").text()){
                                                 element.find(".fc-content").append('<div id="eventIcons"></div>');
                                                 // Added By Ravi on 2nd july 2020 for lesson type
@@ -6836,6 +6843,13 @@ Enrol now
                                                 element.find("#check").on('click', function() {
                                                     $('#blank').html('check');
                                                 });
+                                                 //nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.
+                                                if(event.isavailablemins){
+                                                    element.find(".fc-content").append('<div id="avlmins"></div>');
+                                                    element.find(".fc-content #avlmins").append("<span class='avlminsclass' id=''>"+event.availablemins+"</span>");
+                                                }
+                                                //nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.
+                                            
                                             }
                                             
                                         },

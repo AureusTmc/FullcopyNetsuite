@@ -88,7 +88,8 @@ public class ConstantsClass {
     public static string recordTypeCenter = 'Centre'; 
     public static string typeBusy = 'Busy';
     public static string typeTrial = 'Trial';
-    public static string typeAdhocGroup = 'Adhoc'; // added by nishi: 2-Nov-2020: for group lesson adhoc package type
+    public static string typeGroup = 'Group';   // added by Zakir : Add Type Group in the site .
+    public static string typeAdhocGroup = 'Group Adhoc'; // added by nishi: 2-Nov-2020: for group lesson adhoc package type
     public static string typeAdhoc = 'Ad-hoc';
     public static string typeMakeup = 'Make-up';
     public static string typePianoViewing = 'Piano Viewing'; //add by jatin: 20-jan-2020 : for show piano viewing type bookings
@@ -227,5 +228,6 @@ public class ConstantsClass {
     
     //by uzair 14/01/2020
     public static Decimal chargerate = 10;
-    
+    public static Set<String> excludedPayoutItemsbonus = new Set<string> {'Bonus (AW)','Bonus (OW)','Bonus (NON-CPF)','Referral Bonus','NS Make-up Pay'}; // added by uzair : 18-Nov-2020
+    public static String enrolWaitingStatus = 'Waiting';
 }

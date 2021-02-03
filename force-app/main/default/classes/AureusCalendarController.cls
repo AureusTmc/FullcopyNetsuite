@@ -6102,6 +6102,8 @@ countWithNewPackage +=1;
         public String Individual;
         public String category;
         public Boolean isClass;
+        public String availablemins;//nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.
+        public Boolean isavailablemins;//nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.
          public Boolean isOssia; // added by Arpit 16-Jul-2020 : for manage Ossia Organization student
         // Added By Ravi on 2nd july 2020 
         public String lessonType;
@@ -6109,6 +6111,7 @@ countWithNewPackage +=1;
         public Events(){
             isClass = false;
              isOssia = false;
+             isavailablemins = false;//nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.
         }
     }
     
