@@ -682,7 +682,15 @@ this method takes 5 actual arguments
                     if(String.isNotBlank(startDate)){
                         enrolObj.Lesson_Start_time__c = Time.newInstance(Integer.valueOf(startDate.split('T')[1].split(':')[0]), Integer.valueOf(startDate.split('T')[1].split(':')[1]), Integer.valueOf(startDate.split('T')[1].split(':')[2]), 0); 
                     } 
-                    
+                    //Start : added by Nishi : 4-Feb-2021 :Aureus Q1 2021: for update Waitlist_Status__c   emailed to  Assigned
+                    if(string.isnotBlank(enrolObj.Waitlist_Status__c) && string.isnotBlank(enrolObj.Preferred_Day__c) && string.isnotBlank(enrolObj.Preferred_Teacher__c) 
+                        && enrolObj.Preferred_End_time__c != null && enrolObj.Preferred_Start_Time__c != null 
+                        && (enrolObj.Lesson_Start_time__c >= enrolObj.Preferred_Start_Time__c && enrolObj.Lesson_Start_time__c < enrolObj.Preferred_End_time__c)
+                        && enrolObj.Waitlist_Status__c.equalsIgnoreCase('Emailed') && enrolObj.Lesson_Day__c.equalsIgnoreCase(enrolObj.Preferred_Day__c) 
+                        && enrolObj.Teacher__c == enrolObj.Preferred_Teacher__c){
+                        enrolObj.Waitlist_Status__c ='Assigned';
+                    }
+                    //end : added by Nishi : 4-Feb-2021 :Aureus Q1 2021: for update Waitlist_Status__c   emailed to  Assigned when center admin reschadle all bookings according to Preferred time slot
                 }
                 
                 if(String.isNotBlank(enrolObj.Id)){
@@ -5371,8 +5379,11 @@ countWithNewPackage +=1;
                                              Where Status__c =:ConstantsClass.activeStatus //4-sep-2020: added by nishi for new requirement one enrolment have two subscrition so we get active line item
                                              And Next_Bill_Date__c != null),
                                             //Start : added by Nishi : 30-Jul-2020 for update Resource id in reschadul future booking
-                                             Resource__c ,Lesson_Mode__c,Online_Lesson_Passcode__c,Online_Lesson_URL__c,name
+                                             Resource__c ,Lesson_Mode__c,Online_Lesson_Passcode__c,Online_Lesson_URL__c,name,
                                              //End: added by Nishi : 30-Jul-2020 for update Resource id in reschadul future booking
+                                             //Start : added by Nishi : 4-Feb-2021 :Aureus Q1 2021: for update Waitlist_Status__c   emailed to  Assigned
+                                             Waitlist_Status__c,Preferred_End_time__c,Preferred_Start_Time__c,Preferred_Day__c,Preferred_Teacher__c 
+                                              //Start : added by Nishi : 4-Feb-2021:Aureus Q1 2021:  for update Waitlist_Status__c  emailed to  Assigned
                                             FROM Enrolment__c WHERE Id =: enrolmentId];
         if(enrolmentList.size() > 0){
             enrolmentObj = enrolmentList[0];
@@ -6104,6 +6115,8 @@ countWithNewPackage +=1;
         public Boolean isClass;
         public String availablemins;//nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.
         public Boolean isavailablemins;//nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.
+        public Boolean isWaitingEnrolment;//nishi: 4-Feb-2021 :Aureus Q1 2021: show enrollment waitlist status is 'waiting' then show wait icon for center admin.
+        public Boolean isEmailedEnrolment;//nishi: 4-Feb-2021 :Aureus Q1 2021: show enrollment waitlist status is 'Emailed' then show Emailed icon for center admin.
          public Boolean isOssia; // added by Arpit 16-Jul-2020 : for manage Ossia Organization student
         // Added By Ravi on 2nd july 2020 
         public String lessonType;
@@ -6112,6 +6125,8 @@ countWithNewPackage +=1;
             isClass = false;
              isOssia = false;
              isavailablemins = false;//nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.
+             isWaitingEnrolment= false;//nishi: 4-Feb-2021 :Aureus Q1 2021: show enrollment waitlist status is 'waiting' then show wait icon for center admin.
+             isEmailedEnrolment = false;//nishi: 4-Feb-2021 :Aureus Q1 2021: show enrollment waitlist status is 'Emailed' then show Emailed icon for center admin.
         }
     }
     

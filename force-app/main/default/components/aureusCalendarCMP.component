@@ -6800,6 +6800,12 @@ Enrol now
                                                 if(spantext){
                                                     spantext = spantext.split('-')[0];
                                                     element.find('.fc-time').children('span').text(spantext);
+                                                    //nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.
+                                                    if(event.isavailablemins && element.find(".fc-content").text()){
+                                                        element.find(".fc-content .fc-time").after('<div id="avlmins" style="position: absolute;top: 0px;right: 25px;"></div>');
+                                                        element.find(".fc-content #avlmins").append("<span class='avlminsclass'>"+event.availablemins+"</span>");
+                                                    }
+                                                    //nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.
                                                 }
                                             }
                                             if(event.Type == 'Busy'){
@@ -6810,6 +6816,17 @@ Enrol now
                                             
                                             if(element.find(".fc-content").text()){
                                                 element.find(".fc-content").append('<div id="eventIcons"></div>');
+                                                //nishi: 4-Feb-2021 start:Aureus Q1 2021: show enrollment waitlist status is 'waiting' or 'Emailed' then show related icon for center admin.
+                                                if(event.isWaitingEnrolment){
+                                                    spanstring = "<span class='closeon' id='contact_request'><a href='javascript:void(0);'><svg class='slds-button__icon slds-icon_xx-small' aria-hidden='true' style='color: darkred;'><use xlink:href='{!URLFOR($Asset.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#clock')}'></use></svg></a></span>";
+                                                    element.find(".fc-content #eventIcons").append(spanstring);
+                                                }
+                                                if(event.isEmailedEnrolment){
+                                                    spanstring = "<span class='closeon' id='answer'><a href='javascript:void(0);'><svg class='slds-button__icon slds-icon_xx-small' aria-hidden='true' style='color: darkred;'><use xlink:href='{!URLFOR($Asset.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#email')}'></use></svg></a></span>";
+                                                    element.find(".fc-content #eventIcons").append(spanstring);
+                                                }
+                                                //nishi: 4-Feb-2021 end:Aureus Q1 2021: show enrollment waitlist status is 'waiting' or 'Emailed' then show related icon for center admin.
+
                                                 // Added By Ravi on 2nd july 2020 for lesson type
                                                 if(event.lessonType === 'Online'){
                                                      element.find(".fc-content #eventIcons").append("<span class='closeon' id='online'><img src='{!$Resource.Online_Globe}' width='14px;' height='14px;'/></span>");
@@ -6843,12 +6860,7 @@ Enrol now
                                                 element.find("#check").on('click', function() {
                                                     $('#blank').html('check');
                                                 });
-                                                 //nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.
-                                                if(event.isavailablemins){
-                                                    element.find(".fc-content").append('<div id="avlmins"></div>');
-                                                    element.find(".fc-content #avlmins").append("<span class='avlminsclass' id=''>"+event.availablemins+"</span>");
-                                                }
-                                                //nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.
+                                               
                                             
                                             }
                                             

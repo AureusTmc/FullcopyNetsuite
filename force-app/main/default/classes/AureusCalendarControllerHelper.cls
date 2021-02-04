@@ -372,7 +372,7 @@ this method returns the list of events or bookings to show on the calendar for t
 */
 
     public static string BookingObjectQueryFields(String classLessonBookingType){
-        return ' Id,Total_Available_Make_up_mins__c,Enrolment__r.Package_Process_Type__c,Center__r.Organisation__r.Name,Enrolment__r.Effective_Date__c,Lesson_Type__c,Camp_Id__r.id, Name, Class__r.Class_Type__c, Class__r.grade__c, Class__r.Id, Class__r.package__r.name,Class__r.Total_Enrolment__c,(Select id from Bookings1__r where type__c=:classLessonBookingType), Class__r.Available_Capacity__c,Class__r.Total_Capacity__c, Class__r.Name, Category__c, Teacher_Account__r.Name, start_Time__c, Event_Color__c, End_Time__c, status__c, type__c, Student__r.Name, RecordTypeId, Student__r.Parent__r.Name, Center_Id__c, Booking_Date__c, Instrument__c, Resource__c, Resource__r.Name, Individual_Booking__c, Remarks__c ';
+        return ' Id,Total_Available_Make_up_mins__c,Enrolment__r.Waitlist_Status__c,Enrolment__r.Package_Process_Type__c,Center__r.Organisation__r.Name,Enrolment__r.Effective_Date__c,Lesson_Type__c,Camp_Id__r.id, Name, Class__r.Class_Type__c, Class__r.grade__c, Class__r.Id, Class__r.package__r.name,Class__r.Total_Enrolment__c,(Select id from Bookings1__r where type__c=:classLessonBookingType), Class__r.Available_Capacity__c,Class__r.Total_Capacity__c, Class__r.Name, Category__c, Teacher_Account__r.Name, start_Time__c, Event_Color__c, End_Time__c, status__c, type__c, Student__r.Name, RecordTypeId, Student__r.Parent__r.Name, Center_Id__c, Booking_Date__c, Instrument__c, Resource__c, Resource__r.Name, Individual_Booking__c, Remarks__c ';
     }
     public static List<AureusCalendarController.Events> getEventsListOfBooking(Set<String> setOfTeacher, Set<String> setOfResources, String centerId, List<String> datesOfAppointments, String instrument){
         // commneted by jatin: 19-feb:2020 :start: for add camp lesson record_type condition 
@@ -459,7 +459,7 @@ this method returns the list of events or bookings to show on the calendar for t
         // we will show the message icon on event on calendar.
         // this method takes the set of booking Id's and returns the count of notes for perticular booking.
         countOfBookings  = getContentNoteCount(setOfBookings);
-        
+        String profileName=[Select Id,Name from Profile where Id=:userinfo.getProfileId()].Name;
         if(bookingList.size() > 0){
             
             for(Booking__c book: bookingList){
@@ -535,14 +535,25 @@ this method returns the list of events or bookings to show on the calendar for t
                 currentEvent.start = String.valueOf(book.Booking_Date__c)+'T'+String.valueOf(book.start_Time__c).split('\\.')[0];
                 currentEvent.end_c = String.valueOf(book.Booking_Date__c)+'T'+String.valueOf(book.End_Time__c).split('\\.')[0];
                 
-                //nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.
+                //nishi: 3-Feb-2021 start:Aureus Q1 2021: show Avl makeup minutes on all future bookings.
                 currentEvent.isavailablemins = false;
-                if(system.today().daysBetween(book.Booking_Date__c) > 0 && book.Total_Available_Make_up_mins__c  != null && book.Total_Available_Make_up_mins__c > 0 ){
+                if(system.today().daysBetween(book.Booking_Date__c) > 0 && book.Type__c == 'Regular' && book.Total_Available_Make_up_mins__c  != null && book.Total_Available_Make_up_mins__c > decimal.valueOf(System.Label.Total_Make_up_Credits) ){
                     currentEvent.isavailablemins = true;
-                    currentEvent.availablemins = '('+book.Total_Available_Make_up_mins__c + ' Make-up Mins)';
+                    currentEvent.availablemins = 'AMM - '+book.Total_Available_Make_up_mins__c;
                  }
-                //nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.
+                //nishi: 3-Feb-2021 end:Aureus Q1 2021: show Avl makeup minutes on all future bookings.
 
+                //nishi: 4-Feb-2021 start:Aureus Q1 2021: show enrollment waitlist status is 'waiting' or 'Emailed' then show related icon for center admin.
+                if(string.isnotBlank(book.Enrolment__c) && string.isnotBlank(book.Enrolment__r.Waitlist_Status__c)){
+                    if(book.Enrolment__r.Waitlist_Status__c.equalsIgnoreCase('Waiting')){
+                        currentEvent.isWaitingEnrolment = true;
+                    }    
+                    if(book.Enrolment__r.Waitlist_Status__c.equalsIgnoreCase('Emailed')){
+                        currentEvent.isEmailedEnrolment = true;
+                    } 
+                }
+                //nishi: 4-Feb-2021 start:Aureus Q1 2021: show enrollment waitlist status is 'waiting' or 'Emailed' then show related icon for center admin.
+                
                // added by jatin:20-mar-2020: for show group class background color
                 if(String.isNotBlank(book.Class__r.Id) && book.type__c != 'busy'){
                     currentEvent.eventColor ='#FFBF00';
