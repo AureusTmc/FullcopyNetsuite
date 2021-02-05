@@ -195,6 +195,7 @@
             /*end: 30-Jul-20202:added by nishi : for show online class booking color different  */
             /*nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.*/
             .avlminsclass{
+                padding-left: 4px;
                 font-weight: 600;
                 color: #dc2d65
             }
@@ -641,7 +642,9 @@
             margin-top:5px;
             }
             
-            
+            .enrolmentstatus:hover + .slds-popover.slds-popover_tooltip.slds-hide {
+                display : block!important;
+            }
             
         </style>
         <apex:form >
@@ -6800,12 +6803,39 @@ Enrol now
                                                 if(spantext){
                                                     spantext = spantext.split('-')[0];
                                                     element.find('.fc-time').children('span').text(spantext);
+                                                    //nishi: 4-Feb-2021 start:Aureus Q1 2021: show enrollment waitlist status is 'waiting' or 'Emailed' then show related icon for center admin.
+                                                    if(event.isShowpreferedEnrolmentDetails){
+                                                        //nishi: 5-Feb-2021 :Aureus Q1 2021: show prefered enrollment details show in tooltip for center admin.
+                                                        var starttime ='';
+                                                        // console.log('event.preferedEnrolmentDetails.preferredStartTime'+event.preferedEnrolmentDetails.preferredStartTime);
+                                                        // console.log('event.preferedEnrolmentDetails.PreferredEndTime'+event.preferedEnrolmentDetails.PreferredEndTime);
+                                                        if(event.preferedEnrolmentDetails.preferredStartTime != null){
+                                                            starttime = convertTimeToMoment(event.preferedEnrolmentDetails.preferredStartTime.split(':')[0],event.preferedEnrolmentDetails.preferredStartTime.split(':')[1]);
+                                                        }
+                                                        var endtime ='';
+                                                        if(event.preferedEnrolmentDetails.PreferredEndTime != null){
+                                                            endtime = convertTimeToMoment(event.preferedEnrolmentDetails.PreferredEndTime.split(':')[0],event.preferedEnrolmentDetails.PreferredEndTime.split(':')[1]);
+                                                        }
+                                                        var prefferedenrolmentdetails =  " Preffered Teacher : "+event.preferedEnrolmentDetails.Preferredteacher +"\n Preffered Day : "+event.preferedEnrolmentDetails.PreferredDay + "\n Preffered Start Time : "+ starttime + "\n Preffered End Time : "+endtime;
+                                                        //nishi: 5-Feb-2021 :Aureus Q1 2021: show prefered enrollment details show in tooltip for center admin.
+                                                        if(event.preferedEnrolmentDetails.status == 'Waiting'){
+                                                            spanstring = "<span class='slds-icon_container slds-icon-utility-announcement' title='"+prefferedenrolmentdetails+"' id='WaitingPreferEnrolment'><a href='javascript:void(0);'><svg class='slds-button__icon slds-icon_xx-small' aria-hidden='true' style='color: darkred;'><use xlink:href='{!URLFOR($Asset.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#clock')}'></use></svg></a></span>";
+                                                            element.find(".fc-content .fc-time").append(spanstring);
+                                                        }
+                                                        if(event.preferedEnrolmentDetails.status == 'Emailed'){
+                                                            spanstring = "<span class='slds-icon_container slds-icon-utility-announcement' title='"+prefferedenrolmentdetails+"' id='emailPreferEnrolment'><a href='javascript:void(0);'><svg class='slds-button__icon slds-icon_xx-small' aria-hidden='true' style='color: darkred;'><use xlink:href='{!URLFOR($Asset.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#email')}'></use></svg></a></span>";
+                                                            element.find(".fc-content .fc-time").append(spanstring);
+                                                        }
+                                                    }
+                                                    //nishi: 4-Feb-2021 end:Aureus Q1 2021: show enrollment waitlist status is 'waiting' or 'Emailed' then show related icon for center admin.
                                                     //nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.
                                                     if(event.isavailablemins && element.find(".fc-content").text()){
-                                                        element.find(".fc-content .fc-time").after('<div id="avlmins" style="position: absolute;top: 0px;right: 25px;"></div>');
-                                                        element.find(".fc-content #avlmins").append("<span class='avlminsclass'>"+event.availablemins+"</span>");
+                                                        //element.find(".fc-content .fc-time").append('<div id="avlmins" style="position: absolute;top: 0px;right: 25px;"></div>');
+                                                        element.find(".fc-content .fc-time").append("<span class='avlminsclass'>"+event.availablemins+"</span>");
                                                     }
-                                                    //nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.
+                                                     //nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.
+                                                    
+                                                   
                                                 }
                                             }
                                             if(event.Type == 'Busy'){
@@ -6816,17 +6846,7 @@ Enrol now
                                             
                                             if(element.find(".fc-content").text()){
                                                 element.find(".fc-content").append('<div id="eventIcons"></div>');
-                                                //nishi: 4-Feb-2021 start:Aureus Q1 2021: show enrollment waitlist status is 'waiting' or 'Emailed' then show related icon for center admin.
-                                                if(event.isWaitingEnrolment){
-                                                    spanstring = "<span class='closeon' id='contact_request'><a href='javascript:void(0);'><svg class='slds-button__icon slds-icon_xx-small' aria-hidden='true' style='color: darkred;'><use xlink:href='{!URLFOR($Asset.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#clock')}'></use></svg></a></span>";
-                                                    element.find(".fc-content #eventIcons").append(spanstring);
-                                                }
-                                                if(event.isEmailedEnrolment){
-                                                    spanstring = "<span class='closeon' id='answer'><a href='javascript:void(0);'><svg class='slds-button__icon slds-icon_xx-small' aria-hidden='true' style='color: darkred;'><use xlink:href='{!URLFOR($Asset.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#email')}'></use></svg></a></span>";
-                                                    element.find(".fc-content #eventIcons").append(spanstring);
-                                                }
-                                                //nishi: 4-Feb-2021 end:Aureus Q1 2021: show enrollment waitlist status is 'waiting' or 'Emailed' then show related icon for center admin.
-
+                                               
                                                 // Added By Ravi on 2nd july 2020 for lesson type
                                                 if(event.lessonType === 'Online'){
                                                      element.find(".fc-content #eventIcons").append("<span class='closeon' id='online'><img src='{!$Resource.Online_Globe}' width='14px;' height='14px;'/></span>");

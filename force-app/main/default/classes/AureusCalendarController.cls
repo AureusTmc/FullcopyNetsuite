@@ -6115,8 +6115,8 @@ countWithNewPackage +=1;
         public Boolean isClass;
         public String availablemins;//nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.
         public Boolean isavailablemins;//nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.
-        public Boolean isWaitingEnrolment;//nishi: 4-Feb-2021 :Aureus Q1 2021: show enrollment waitlist status is 'waiting' then show wait icon for center admin.
-        public Boolean isEmailedEnrolment;//nishi: 4-Feb-2021 :Aureus Q1 2021: show enrollment waitlist status is 'Emailed' then show Emailed icon for center admin.
+        public Boolean isShowpreferedEnrolmentDetails;//nishi: 4-Feb-2021 :Aureus Q1 2021: show enrollment waitlist status  then show  icon for center admin.
+        public preferedEnrolmentDetail preferedEnrolmentDetails{get;set;}//nishi: 5-Feb-2021 :Aureus Q1 2021: show prefered enrollment details show in tooltip for center admin.
          public Boolean isOssia; // added by Arpit 16-Jul-2020 : for manage Ossia Organization student
         // Added By Ravi on 2nd july 2020 
         public String lessonType;
@@ -6125,11 +6125,34 @@ countWithNewPackage +=1;
             isClass = false;
              isOssia = false;
              isavailablemins = false;//nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.
-             isWaitingEnrolment= false;//nishi: 4-Feb-2021 :Aureus Q1 2021: show enrollment waitlist status is 'waiting' then show wait icon for center admin.
-             isEmailedEnrolment = false;//nishi: 4-Feb-2021 :Aureus Q1 2021: show enrollment waitlist status is 'Emailed' then show Emailed icon for center admin.
+             isShowpreferedEnrolmentDetails= false;//nishi: 4-Feb-2021 :Aureus Q1 2021: show enrollment waitlist status is 'waiting' then show wait icon for center admin.
+             preferedEnrolmentDetails = new preferedEnrolmentDetail();//nishi: 5-Feb-2021 :Aureus Q1 2021: show prefered enrollment details show in tooltip for center admin.
         }
     }
-    
+    //nishi: 5-Feb-2021 :Aureus Q1 2021: show prefered enrollment details show in tooltip for center admin.
+    public class preferedEnrolmentDetail{
+        public String preferredStartTime{get;set;}
+        public String PreferredEndTime{get;set;}
+        public String PreferredDay{get;set;}
+        public String Preferredteacher{get;set;}
+        public String status{get;set;}
+        public preferedEnrolmentDetail(){
+            preferredStartTime = null;
+            PreferredEndTime = null;
+            PreferredDay = '';
+            Preferredteacher = '';
+            status ='';
+        }
+        public preferedEnrolmentDetail( String preferredStartTime,String PreferredEndTime,String PreferredDay,String Preferredteacher,String status){
+            this.preferredStartTime = preferredStartTime;
+            this.PreferredEndTime = PreferredEndTime;
+            this.PreferredDay = PreferredDay;
+            this.Preferredteacher = Preferredteacher;
+            this.status =status;
+        }
+    }
+    //nishi: 5-Feb-2021 :Aureus Q1 2021: show enrollment waitlist status is 'waiting' then show wait icon for center admin.
+   
     //Wrapper class for Event Details 
     public class EventDetails{
         public String Id;

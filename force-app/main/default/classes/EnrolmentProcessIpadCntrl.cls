@@ -22,7 +22,7 @@ public class EnrolmentProcessIpadCntrl {
     String countryCode;
     string currentOrg;//@Juneid 19 Aug 2020, Storing current organization id
     public string defaultOrg{get;set;}//@Juneid 19 Aug 2020, Storing current users organization name
-    
+    public string pagetype{get;set;}// nishi: 5Feb2021: Aureus Q1 2021 : for get page name is found that means user use direct entolment process
     public EnrolmentProcessIpadCntrl(){
         studentWrapList = new List<StudentWrapper>();
         isAmcClubMember = false;
@@ -35,6 +35,12 @@ public class EnrolmentProcessIpadCntrl {
         currentOrg = ApexPages.currentPage().getParameters().get('currentOrg');//@Juneid 19 Aug 2020, Current Organization id
         system.debug('org default--->'+ApexPages.currentPage().getParameters().get('orgType'));
         defaultOrg = ApexPages.currentPage().getParameters().get('orgType');
+        // nishi: 5Feb2021: Aureus Q1 2021 : for get page name is found that means user use direct entolment process
+        if(string.isnotBlank(ApexPages.currentPage().getParameters().get('pagetype'))){
+            pagetype= ApexPages.currentPage().getParameters().get('pagetype');
+        }
+        // nishi: 5Feb2021:end: Aureus Q1 2021 : for get page name is found that means user use direct entolment process
+
         Map<String, String> params  =  ApexPages.currentPage().getParameters(); 
         if(params != null && params.size() > 0){
             for(String strKey : params.keySet()){
@@ -55,16 +61,31 @@ public class EnrolmentProcessIpadCntrl {
         
         if(enrIds.size() > 0){     
             //Updated by Rajesh: 12th Nov 2011, Added lost condition for the pardot trial as per discussion with Ashish ji
-            List<Enrolment__c> enrList = [SELECT Id, Center__c, Teacher__c, Package__c, Package__r.Type__c,Package__r.Duration__c, Package__r.Program__r.Instrument__c, Parent__r.Also_a_Student__c, Parent__r.Personemail,
-                                                 Student__c, Student__r.Name, Parent__c, Parent__r.Name, Trial_Date__c, Trial_Start_Time__c, Center__r.Travel_Time__c, Center__r.Name, Parent__r.Is_Club_Member__c,
-                                                 Parent__r.Membership_Type__c, Parent__r.personContactId, Lessons_Start_Date__c, Lesson_Start_Time__c,Type__c,Stage__c,
-                                                Center__r.Country__r.Name
-                                          FROM Enrolment__c
-                                          WHERE Id IN: enrIds AND (Type__c = 'Trial' OR Type__c = 'Group') AND Student__c != null AND Parent__c != null AND 
-                                          ((Stage__c =: ConstantsClass.enrollStageAttended AND Trial_Date__c != null AND Trial_Start_Time__c != null) OR 
-                                           (Stage__c =: ConstantsClass.enrollStageLost AND Trial_Date__c != null AND Trial_Start_Time__c != null) OR
-                                           (Stage__c =: ConstantsClass.PendingEnrolment AND Lessons_Start_Date__c != null AND Lesson_Start_Time__c != null))
-                                          AND Center__c != null AND Teacher__c != null AND Package__c != null ORDER BY Student__c];
+            List<Enrolment__c> enrList = new List<Enrolment__c>();
+            // nishi: 5Feb2021: Aureus Q1 2021 : for get page name is found that means user use direct entolment process
+            if(string.isNotBlank(pagetype)){
+                enrList = [SELECT Id, Center__c, Teacher__c, Package__c, Package__r.Type__c,Package__r.Duration__c, Package__r.Program__r.Instrument__c, Parent__r.Also_a_Student__c, Parent__r.Personemail,
+                                    Student__c, Student__r.Name, Parent__c, Parent__r.Name, Trial_Date__c, Trial_Start_Time__c, Center__r.Travel_Time__c, Center__r.Name, Parent__r.Is_Club_Member__c,
+                                    Parent__r.Membership_Type__c, Parent__r.personContactId, Lessons_Start_Date__c, Lesson_Start_Time__c,Type__c,Stage__c,
+                                Center__r.Country__r.Name
+                            FROM Enrolment__c
+                            WHERE Id IN: enrIds AND (Type__c = 'Trial' OR Type__c = 'Group') 
+                            AND Student__c != null AND Parent__c != null AND 
+                            Stage__c =: ConstantsClass.enrollStageAttended
+                            AND Center__c != null ORDER BY Student__c];
+            }else{
+                // nishi: 5Feb2021: Aureus Q1 2021 : end: for get page name is found that means user use direct entolment process
+             enrList = [SELECT Id, Center__c, Teacher__c, Package__c, Package__r.Type__c,Package__r.Duration__c, Package__r.Program__r.Instrument__c, Parent__r.Also_a_Student__c, Parent__r.Personemail,
+                                Student__c, Student__r.Name, Parent__c, Parent__r.Name, Trial_Date__c, Trial_Start_Time__c, Center__r.Travel_Time__c, Center__r.Name, Parent__r.Is_Club_Member__c,
+                                Parent__r.Membership_Type__c, Parent__r.personContactId, Lessons_Start_Date__c, Lesson_Start_Time__c,Type__c,Stage__c,
+                            Center__r.Country__r.Name
+                        FROM Enrolment__c
+                        WHERE Id IN: enrIds AND (Type__c = 'Trial' OR Type__c = 'Group') AND Student__c != null AND Parent__c != null AND 
+                        ((Stage__c =: ConstantsClass.enrollStageAttended AND Trial_Date__c != null AND Trial_Start_Time__c != null) OR 
+                        (Stage__c =: ConstantsClass.enrollStageLost AND Trial_Date__c != null AND Trial_Start_Time__c != null) OR
+                        (Stage__c =: ConstantsClass.PendingEnrolment AND Lessons_Start_Date__c != null AND Lesson_Start_Time__c != null))
+                        AND Center__c != null  AND Teacher__c != null AND Package__c != null ORDER BY Student__c];
+            }
             
             if(enrList.size() > 0){
                 countryCode = String.isNotBlank(enrList.get(0).Center__r.Country__r.Name) ? enrList.get(0).Center__r.Country__r.Name : 'SG';
@@ -83,27 +104,33 @@ public class EnrolmentProcessIpadCntrl {
                     
                     Date tempDT;
                     Time tempTime;
-                    if(enr.Stage__c.equalsIgnoreCase('Attended')){
-                         tempDT= enr.Trial_Date__c.addDays(7);
-                         tempTime= enr.Trial_Start_Time__c;
-                    //Updated by Rajesh: 12th Nov 2011, Added lost condition for the pardot trial as per discussion with Ashish ji
-                    }else if(enr.Stage__c.equalsIgnoreCase('Lost')){
-                         tempDT= enr.Trial_Date__c.addDays(7);
-                         tempTime= enr.Trial_Start_Time__c;
-                    }else if(enr.Stage__c.equalsIgnoreCase('Pending Enrolment')){
-                        tempDT = enr.Lessons_Start_Date__c;
-                        tempTime = enr.Lesson_Start_Time__c;
+                    
+                    if(string.isBlank(pagetype)){// nishi: 5Feb2021: Aureus Q1 2021 : for get page name is found that means user use direct entolment process
+                        if(enr.Stage__c.equalsIgnoreCase('Attended') && enr.Trial_Date__c != null && enr.Trial_Start_Time__c != null ){
+                            tempDT= enr.Trial_Date__c.addDays(7);
+                            tempTime= enr.Trial_Start_Time__c;
+                        //Updated by Rajesh: 12th Nov 2011, Added lost condition for the pardot trial as per discussion with Ashish ji
+                        }else if(enr.Stage__c.equalsIgnoreCase('Lost') && enr.Trial_Date__c != null && enr.Trial_Start_Time__c != null){
+                            tempDT= enr.Trial_Date__c.addDays(7);
+                            tempTime= enr.Trial_Start_Time__c;
+                        }else if(enr.Stage__c.equalsIgnoreCase('Pending Enrolment') && enr.Lessons_Start_Date__c != null && enr.Lesson_Start_Time__c != null){
+                            tempDT = enr.Lessons_Start_Date__c;
+                            tempTime = enr.Lesson_Start_Time__c;
+                        }
+                        if(tempDT != null && tempTime != null){
+                            lsn.lessonSlcdDate = tempDT.day()+'/'+tempDT.month()+'/'+tempDT.year() ;
+                            lsn.lessonSlcdDateD = tempDT;
+                            
+                            String minTmp = tempTime.minute() != 0 ?  (tempTime.minute() +'') : '00';
+                            String tempTSlot = tempTime.hour() + ':' + minTmp;
+                            lsn.lessonSlctSlot = tempTSlot;
+                            lsn.lessonSlctSlotT = DateTime.newInstance(tempDT, tempTime).format('hh:mm a');
+                        }
                     }
-                    lsn.lessonSlcdDate = tempDT.day()+'/'+tempDT.month()+'/'+tempDT.year() ;
-                    lsn.lessonSlcdDateD = tempDT;
-                    
-                    String minTmp = tempTime.minute() != 0 ?  (tempTime.minute() +'') : '00';
-                    String tempTSlot = tempTime.hour() + ':' + minTmp;
-                    lsn.lessonSlctSlot = tempTSlot;
-                    lsn.lessonSlctSlotT = DateTime.newInstance(tempDT, tempTime).format('hh:mm a');
-                    
                     st.lesson = lsn;
+                    
                     studentWrapList.add(st);
+                
                 }     
                 
                 //Process for first enrolment
@@ -111,14 +138,21 @@ public class EnrolmentProcessIpadCntrl {
                 st.lesson.teacherOptions= fetchTeachers(st.lesson);
                 Boolean isTrialAtt = true;
                 if(st.enrl.Stage__c.equalsIgnoreCase('Pending Enrolment')){
-                    isTrialAtt = false;                    
-                    st.lesson.selectedPlan = st.enrl.Package__c;
-                    st.lesson.pkgDuration  = Integer.valueOf(st.enrl.Package__r.Duration__c);
+                    isTrialAtt = false;      
+                    if(string.isNotBlank(st.enrl.Package__c) && string.isBlank(pagetype)){  // nishi: 5Feb2021: Aureus Q1 2021 : for get page name is found that means user use direct entolment process            
+                        st.lesson.selectedPlan = st.enrl.Package__c;
+                        st.lesson.pkgDuration  = Integer.valueOf(st.enrl.Package__r.Duration__c);
+                    }
                 }
                 st.lesson.planOptions   =  fetchPlans(st.lesson, isTrialAtt);
                 
                 //fetchTimeSlot(st.lesson);
-                fetchTimeSlot(st);
+                // nishi: 5Feb2021: Aureus Q1 2021 : for get page name is found that means user use direct entolment process
+                //fetchTimeSlot(st);
+                if(string.isBlank(pagetype) && (enrList.get(0).Trial_Date__c != null && enrList.get(0).Trial_Start_Time__c != null) || (enrList.get(0).Lessons_Start_Date__c != null && enrList.get(0).Lesson_Start_Time__c != null)){
+                    fetchTimeSlot(st);
+                }
+                // nishi: 5Feb2021: Aureus Q1 2021 end: for get page name is found that means user use direct entolment process
                 
                 if(enrList.get(0).Parent__r.Is_Club_Member__c && enrList.get(0).Parent__r.Membership_Type__c == ConstantsClass.amcClubMember)
                     isAmcClubMember = true;

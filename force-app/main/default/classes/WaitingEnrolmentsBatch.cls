@@ -119,21 +119,24 @@ global with sharing class WaitingEnrolmentsBatch implements Database.Batchable<s
                     DateTime peferredEnrolmentstartTime = DateTime.newInstance(system.today(),  objPreferredEnrolment.Preferred_Start_Time__c);
                      DateTime peferredEnrolmentendime = DateTime.newInstance(system.today(),  objPreferredEnrolment.Preferred_End_time__c);
                      if(peferredEnrolmentstartTime != NULL && peferredEnrolmentendime != NULL){
-                        peferredEnrolmentTimeslots = getFormatedTimeSlotList(peferredEnrolmentstartTime, peferredEnrolmentendime);
+                        peferredEnrolmentTimeslots = MakeupEnrolmentBatchHelper.getFormatedTimeSlotList(peferredEnrolmentstartTime, peferredEnrolmentendime);
                         if(peferredEnrolmentTimeslots != null && peferredEnrolmentTimeslots.size() > 0 && listOfCanceledEnrolment != null && listOfCanceledEnrolment.size() > 0){
                             for( Enrolment__c objCancelEnrolment : listOfCanceledEnrolment){
                                 DateTime cancelEnrolmentstartTime = DateTime.newInstance(system.today(),  objCancelEnrolment.Lesson_Start_time__c);
                                 DateTime cancelEnrolmentendTime = DateTime.newInstance(system.today(),  objCancelEnrolment.Lesson_Start_time__c.addMinutes(Integer.valueOf(objCancelEnrolment.Package__r.Duration__c)));
                                 if(cancelEnrolmentstartTime != NULL && cancelEnrolmentendTime != NULL){
-                                    cancelEnrolmentTimeSlots = getFormatedTimeSlotList(cancelEnrolmentstartTime, cancelEnrolmentendTime);
+                                    cancelEnrolmentTimeSlots = MakeupEnrolmentBatchHelper.getFormatedTimeSlotList(cancelEnrolmentstartTime, cancelEnrolmentendTime);
                                     // check canceled enrolment time slots are match to perferred enrolment if we found that time slots so we send a email to customer and update Waitlist_Status__c
                                     if(cancelEnrolmentTimeSlots != null && cancelEnrolmentTimeSlots.size() > 0 && cancelEnrolmentTimeSlots.containsAll(peferredEnrolmentTimeslots)
                                      && objCancelEnrolment.Package__r.Duration__c >=  objPreferredEnrolment.Package__r.Duration__c){
                                         System.debug('objPreferredEnrolment'+objPreferredEnrolment.name); 
                                         System.debug('objCancelEnrolment'+objCancelEnrolment.name); 
                                         if(mapOfEmailTemplate != null && mapOfEmailTemplate.size() > 0 ){
-                                            sendSingleEmailMessage.add(getEmailInformation(mapOfEmailTemplate,objPreferredEnrolment));
-                                            objPreferredEnrolment.Waitlist_Status__c ='Emailed';
+                                            Messaging.SingleEmailMessage objSingleEmailMessage = MakeupEnrolmentBatchHelper.getEmailInformation(mapOfEmailTemplate,objPreferredEnrolment);
+                                            if(objSingleEmailMessage != null){
+                                                sendSingleEmailMessage.add(objSingleEmailMessage);
+                                                objPreferredEnrolment.Waitlist_Status__c ='Emailed';
+                                            }
                                         }
                                         Break;
                                     }
@@ -148,38 +151,5 @@ global with sharing class WaitingEnrolmentsBatch implements Database.Batchable<s
          return sendSingleEmailMessage;
     }
 
-     // we get templete according to Enrolment organisation
-    private static Messaging.SingleEmailMessage getEmailInformation(Map<String,EmailTemplate> mapOfEmailTemplate,Enrolment__c objPreferredEnrolment){
-        Messaging.SingleEmailMessage objsendSingleEmailMessage = new Messaging.SingleEmailMessage();
-        if(mapOfEmailTemplate != null && mapOfEmailTemplate.size() > 0 ){
-            string centerId,personContactId;
-            if(objPreferredEnrolment.Parent__c != null && objPreferredEnrolment.Parent__r.Centre_Name__r != null &&
-                string.isNotBlank(objPreferredEnrolment.Parent__r.Centre_Name__r.Location__c) ){
-                centerId = objPreferredEnrolment.Parent__r.Centre_Name__r.Location__c;
-            }
-            if(objPreferredEnrolment.Parent__c != null && string.isNotBlank(objPreferredEnrolment.Parent__r.PersonContactId)){
-                personContactId = objPreferredEnrolment.Parent__r.PersonContactId;
-            }
-            if(objPreferredEnrolment.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
-                if(mapOfEmailTemplate.containsKey('Ossia_Waitlist_Enrolment_Time_Available')){
-                    objsendSingleEmailMessage = AureusUtility.getSingleEmailMessage(mapOfEmailTemplate.get('Ossia_Waitlist_Enrolment_Time_Available').Id,personContactId,objPreferredEnrolment.id,centerId);
-                }
-            }else{
-                if(mapOfEmailTemplate.containsKey('Waitlist_Enrolment_Time_Available')){
-                    objsendSingleEmailMessage = AureusUtility.getSingleEmailMessage(mapOfEmailTemplate.get('Waitlist_Enrolment_Time_Available').Id,personContactId,objPreferredEnrolment.id,centerId);
-                }   
-            }
-        }
-        return objsendSingleEmailMessage;
-    }
-    private static set<String> getFormatedTimeSlotList(DateTime startTime, DateTime endTime){
-        set<String> timeSlots = new set<String>();
-        if(startTime < endTime){
-            while(startTime <= endTime){
-                timeSlots.add(startTime.format('h:mm a'));
-                startTime = startTime.addMinutes(15);
-            }
-        }
-        return timeSlots;
-    }
+    
 }

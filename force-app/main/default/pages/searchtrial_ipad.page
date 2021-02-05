@@ -117,6 +117,7 @@
         function subtractDate() {
             subTodayDate();
         }
+       
         </script>
         
         <style>
@@ -192,6 +193,11 @@
             </apex:actionFunction>
             <apex:actionFunction name="subTodayDate" action="{!subDate}" reRender="forDate,enr_cen">
             </apex:actionFunction>
+            <!-- Nishi: 5-Feb-2021: Aureus Q1 2021:Start: Clicking on New customer  button then we open a new page to capture the Parent and Student details.-->
+	        <apex:actionFunction name="directCreateNewEnrolment" action="{!directCreateNewEnrolment}" reRender="frm">
+            </apex:actionFunction>
+            <!-- Nishi: 5-Feb-2021: Aureus Q1 2021:End: Clicking on New customer  button then we open a new page to capture the Parent and Student details.-->
+	       
             
             <div id="step-1" class="container slds-p-around_small slds-large-p-around_large">
                  <div id="validateSameParent" Class="slds-hide" style="text-align:center;">
@@ -218,9 +224,23 @@
                             <apex:inputText id="searchInput"  html-placeholder="Search for Enrolment..." styleclass="slds-input searchInput"  onkeyup="getEnrolments($(this));"/>
                         </div>
                         <div id="searchEnrol"/>
-                        
-                        
+
                         <div class="slds-form-element slds-m-vertical_xx-large">
+           
+                            <!-- Nishi: 5-Feb-2021: Aureus Q1 2021:Start: Clicking on New customer  button then we open a new page to capture the Parent and Student details.-->
+	                        <div class="slds-grid slds-wrap">
+                                <div class="slds-size_1-of-1 slds-large-size_1-of-6 slds-p-bottom_small">
+    
+                                </div>
+                                <div class="slds-size_1-of-1 slds-large-size_4-of-6 slds-p-bottom_small">
+                                    <a class="slds-button m-sm-0 btn-block btn-yellow slds-p-vertical_x-small slds-p-horizontal_x-large  slds-m-horizontal_x-large slds-m-bottom_large" onclick="directCreateNewEnrolment(); return false;" >New customer</a>
+                                </div>
+                                <div class="slds-size_1-of-1 slds-large-size_1-of-6 slds-p-bottom_small">
+    
+                                </div>
+                            </div>
+                            <!-- Nishi: 5-Feb-2021: Aureus Q1 2021:end: Clicking on New customer button then we open a new page to capture the Parent and Student details.-->
+	       
                             <div class="slds-form-element__control">
                                 <div class="slds-select_container">
                                     <!--<select class="slds-select" id="select-01" style="height: calc(1.875rem + (1px * 10));">
@@ -236,7 +256,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+                       
                         <div class="slds-p-around_small box-info slds-m-bottom_large" >
                             <div class="slds-grid slds-gutters">
                                   <div class="slds-col slds-size_2-of-12">

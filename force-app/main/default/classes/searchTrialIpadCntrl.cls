@@ -105,6 +105,11 @@ public class searchTrialIpadCntrl {
         system.debug('enrList---'+enrList.size());
         return enrList;
     }
+    /* Nishi: 5-Feb-2021:Start: Aureus Q1 2021: Clicking on New customer  button then we open a new page to capture the Parent and Student details.*/
+	public PageReference directCreateNewEnrolment(){
+        return new PageReference('/apex/createDirectEnrolmentPage?'+'currentOrg='+enrolmentOrg+'&'+'orgType='+orgType+'&'+'slcdCenter='+slcdCenter+'&'+'countryCode='+countryCode);
+    }
+     /* Nishi: 5-Feb-2021:end: Aureus Q1 2021: Clicking on New customer  button then we open a new page to capture the Parent and Student details.*/
 	
     public PageReference redirectToEnrolment(){
         isError    = false;
