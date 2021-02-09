@@ -85,28 +85,43 @@ public class AureusHRManagementUtil{
         if(leaveEntitlementEndingDate != NULL){
             endDate = leaveEntitlementEndingDate;
         }
-        
-        for(Account acc: [SELECT Id, (SELECT Id, Employee__c, End_Date__c, Start_Date__c, Carry_forward_Paid_Leave__c FROM Leave_Entitlement__r WHERE Start_Date__c >: endDate ORDER BY Start_Date__c ASC LIMIT 1) FROM Account WHERE Id IN: mapEmployeeToLeaveEntitlement.KeySet()]){
+        system.debug('endDate '+endDate );
+        system.debug('mapEmployeeToLeaveEntitlement '+mapEmployeeToLeaveEntitlement );
+        for(Account acc: [SELECT Id, 
+                                (SELECT Id, Employee__c, End_Date__c, Start_Date__c, Carry_forward_Paid_Leave__c
+                                FROM Leave_Entitlement__r 
+                                WHERE Start_Date__c >: endDate 
+                                ORDER BY Start_Date__c ASC 
+                                LIMIT 1) 
+                            FROM Account 
+                            WHERE Id IN: mapEmployeeToLeaveEntitlement.KeySet()]){
             Leave_Entitlement__c leaveEntitlementObjEndingToday = mapEmployeeToLeaveEntitlement.get(acc.Id);
             Decimal actualUsedLeaves = 0;
-            Decimal carryForwardLeaves = leaveEntitlementObjEndingToday.Paid_Leave__c;
+            Decimal carryForwardLeaves = leaveEntitlementObjEndingToday.Paid_Leave__c + leaveEntitlementObjEndingToday.Additional_Paid_Leaves__c;
             
             if(leaveEntitlementObjEndingToday.Used_Paid_Leaves__c != NULL && leaveEntitlementObjEndingToday.Used_Paid_Leaves__c > 0){
                 if(leaveEntitlementObjEndingToday.Carry_forward_Paid_Leave__c != NULL && leaveEntitlementObjEndingToday.Carry_forward_Paid_Leave__c > 0){
                     actualUsedLeaves = leaveEntitlementObjEndingToday.Used_Paid_Leaves__c - leaveEntitlementObjEndingToday.Carry_forward_Paid_Leave__c;
-                    carryForwardLeaves = leaveEntitlementObjEndingToday.Paid_Leave__c - actualUsedLeaves;
+                   //9-Feb-2021: Nishi: start: we have added additional paid leave for carry forward leaves Calculation and populate it in next entitlement
+                    //carryForwardLeaves = leaveEntitlementObjEndingToday.Paid_Leave__c - actualUsedLeaves;
+                    carryForwardLeaves = (leaveEntitlementObjEndingToday.Paid_Leave__c + leaveEntitlementObjEndingToday.Additional_Paid_Leaves__c)- actualUsedLeaves;
+                    //9-Feb-2021: Nishi: end: we have added additional paid leave for carry forward leaves Calculation and populate it in next entitlement
                 }
                 else{
-                    carryForwardLeaves = leaveEntitlementObjEndingToday.Paid_Leave__c - leaveEntitlementObjEndingToday.Used_Paid_Leaves__c;
+                    //9-Feb-2021: Nishi: start: we have added additional paid leave for carry forward leaves Calculation and populate it in next entitlement
+                    //carryForwardLeaves = leaveEntitlementObjEndingToday.Paid_Leave__c  - leaveEntitlementObjEndingToday.Used_Paid_Leaves__c;
+                    carryForwardLeaves = (leaveEntitlementObjEndingToday.Paid_Leave__c + leaveEntitlementObjEndingToday.Additional_Paid_Leaves__c) - leaveEntitlementObjEndingToday.Used_Paid_Leaves__c;
+                    //9-Feb-2021: Nishi: end: we have added additional paid leave for carry forward leaves Calculation and populate it in next entitlement
                 }
             }
-            
+            system.debug('carryForwardLeaves '+carryForwardLeaves );
+            system.debug('acc.Leave_Entitlement__r '+acc.Leave_Entitlement__r );
             if(acc.Leave_Entitlement__r != NULL && acc.Leave_Entitlement__r.size() > 0){
                 acc.Leave_Entitlement__r[0].Carry_forward_Paid_Leave__c = carryForwardLeaves;
                 leaveEntitlementListToUpdate.add(acc.Leave_Entitlement__r[0]);
             }
         }
-        
+        system.debug('leaveEntitlementListToUpdate'+leaveEntitlementListToUpdate);
         if(!leaveEntitlementListToUpdate.isEmpty()){
             update leaveEntitlementListToUpdate;
         }

@@ -13,9 +13,9 @@ global class CarryForwardLeaveBatch implements Database.Batchable<Leave_Entitlem
     }
     global List<Leave_Entitlement__c> start(Database.BatchableContext context){
         //get Entitlement records ending today or on the received date
-        String query = 'SELECT Id, Paid_Leave__c, Used_Paid_Leaves__c, Carry_forward_Paid_Leave__c, Remaining_Paid_Leaves__c, Employee__c, End_Date__c, Start_Date__c FROM Leave_Entitlement__c WHERE End_Date__c = TODAY';
+        String query = 'SELECT Id, Paid_Leave__c, Used_Paid_Leaves__c, Carry_forward_Paid_Leave__c, Remaining_Paid_Leaves__c,Additional_Paid_Leaves__c, Employee__c, End_Date__c, Start_Date__c FROM Leave_Entitlement__c WHERE End_Date__c = TODAY';
         if(leaveEntitlementEndingDate != NULL){
-            query = 'SELECT Id, Paid_Leave__c, Used_Paid_Leaves__c, Carry_forward_Paid_Leave__c, Remaining_Paid_Leaves__c, Employee__c, End_Date__c, Start_Date__c FROM Leave_Entitlement__c WHERE End_Date__c =: leaveEntitlementEndingDate';
+            query = 'SELECT Id, Paid_Leave__c, Used_Paid_Leaves__c, Carry_forward_Paid_Leave__c, Remaining_Paid_Leaves__c,Additional_Paid_Leaves__c, Employee__c, End_Date__c, Start_Date__c FROM Leave_Entitlement__c WHERE End_Date__c =: leaveEntitlementEndingDate';
         }
         return Database.query(query);
     }
