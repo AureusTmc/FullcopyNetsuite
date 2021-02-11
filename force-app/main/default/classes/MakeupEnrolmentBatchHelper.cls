@@ -36,7 +36,35 @@ public with sharing class MakeupEnrolmentBatchHelper {
             }
          return mapOfMakeupAvailMinDetails;
     }
-
+    //Check if 15 or 30 minutes timeslot is available immediately before or after their scheduled regular booking scheduled after 3 days 
+        //if any slot is blank then we send out an email notification to Parent for booking the timeslot
+    public static Map<string,EnrolmentDetails> newMakeupBookingNotification(List<Enrolment__c>listOfEnrolment,datetime enrolmentEffectiveDate){
+        set<string> setofCenterIds = new set<string>();
+        set<String> teacherIds = new set<String>();
+        Map<string,EnrolmentDetails> mapOfEnrolmentDetails = new Map<string,EnrolmentDetails>();
+        list<string> listOfTeacherWithDuration = new list<string>{'15','30'};
+        for(Enrolment__c objEnrolment: listOfEnrolment){
+            DateTime enrolmentstartTime = DateTime.newInstance(system.today(),  objEnrolment.Lesson_Start_time__c);
+            DateTime enrolmentendTime = DateTime.newInstance(system.today(),  objEnrolment.Lesson_Start_time__c.addMinutes(Integer.valueOf(objEnrolment.Package__r.Duration__c)));
+            if(enrolmentstartTime != NULL && enrolmentendTime != NULL){
+                setofCenterIds.add(objEnrolment.Center__c);
+                teacherIds.add(objEnrolment.Teacher__c);
+            }
+            system.debug('objEnrolment'+objEnrolment.name);
+        }
+        system.debug('setofCenterIds'+setofCenterIds);
+        system.debug('teacherIds'+teacherIds);
+        system.debug('enrolmentEffectiveDate.format'+enrolmentEffectiveDate.format('EEE'));
+        system.debug('enrolmentEffectiveDate'+enrolmentEffectiveDate);
+        Map<string,MakeupAvailMinDetails> mapOfMakeupAvailMinDetails = getMultipleTeacherWorkingHourTimeSlotList(setofCenterIds ,teacherIds,new set<string>{enrolmentEffectiveDate.format('EEE')},listOfTeacherWithDuration,enrolmentEffectiveDate);
+        //Check if 15 or 30 minutes timeslot is available immediately before or after their scheduled regular booking scheduled after 3 days 
+        //if any slot is blank then we send out an email notification to Parent for booking the timeslot
+        if(mapOfMakeupAvailMinDetails != null && mapOfMakeupAvailMinDetails.size() > 0){
+            system.debug('mapOfMakeupAvailMinDetails'+mapOfMakeupAvailMinDetails);
+            mapOfEnrolmentDetails = sendMakeupEnrolmentNotification(listOfEnrolment,mapOfMakeupAvailMinDetails,listOfTeacherWithDuration,enrolmentEffectiveDate);
+        }
+        return mapOfEnrolmentDetails;   
+    }
     public static Map<string,EnrolmentDetails> sendMakeupEnrolmentNotification(List<Enrolment__c>listOfEnrolment,Map<string,MakeupAvailMinDetails> availTeacherTimeSlots,
     List<String> listOfDuration,datetime enrolmentEffectiveDate){
        Map<string,EnrolmentDetails> mapOfEnrolmentDetails = new Map<string,EnrolmentDetails>();
@@ -463,7 +491,7 @@ public with sharing class MakeupEnrolmentBatchHelper {
     
 
      // we get templete according to Enrolment organisation
-     public static Messaging.SingleEmailMessage getEmailInformation(Map<String,EmailTemplate> mapOfEmailTemplate,Enrolment__c objPreferredEnrolment){
+     public static Messaging.SingleEmailMessage getEmailInformation(Map<String,EmailTemplate> mapOfEmailTemplate,Enrolment__c objPreferredEnrolment,string templatename){
         Messaging.SingleEmailMessage objsendSingleEmailMessage = new Messaging.SingleEmailMessage();
         if(mapOfEmailTemplate != null && mapOfEmailTemplate.size() > 0 ){
             string centerId,personContactId;
@@ -474,15 +502,10 @@ public with sharing class MakeupEnrolmentBatchHelper {
             if(objPreferredEnrolment.Parent__c != null && string.isNotBlank(objPreferredEnrolment.Parent__r.PersonContactId)){
                 personContactId = objPreferredEnrolment.Parent__r.PersonContactId;
             }
-            if(objPreferredEnrolment.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
-                if(mapOfEmailTemplate.containsKey('Ossia_Waitlist_Enrolment_Time_Available')){
-                    objsendSingleEmailMessage = AureusUtility.getSingleEmailMessage(mapOfEmailTemplate.get('Ossia_Waitlist_Enrolment_Time_Available').Id,personContactId,objPreferredEnrolment.id,centerId);
-                }
-            }else{
-                if(mapOfEmailTemplate.containsKey('Waitlist_Enrolment_Time_Available')){
-                    objsendSingleEmailMessage = AureusUtility.getSingleEmailMessage(mapOfEmailTemplate.get('Waitlist_Enrolment_Time_Available').Id,personContactId,objPreferredEnrolment.id,centerId);
-                }   
+            if(mapOfEmailTemplate.containsKey(templatename)){
+                objsendSingleEmailMessage = AureusUtility.getSingleEmailMessage(mapOfEmailTemplate.get(templatename).Id,personContactId,objPreferredEnrolment.id,centerId);
             }
+        
         }
         return objsendSingleEmailMessage;
     }
