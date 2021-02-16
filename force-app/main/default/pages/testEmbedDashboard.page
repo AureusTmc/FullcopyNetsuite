@@ -1,0 +1,27 @@
+<apex:page sidebar="true" standardController="Account" extensions="AuthenticationDetail">
+    <apex:includeLightning />
+    <script src="https://full-aureusgroup.cs117.force.com/lightning/lightning.out.js"></script>  
+    <div  id="FlipcardContainer" />
+        <script>
+        $Lightning.use("wave:waveApp", function() {
+            $Lightning.createComponent("wave:waveDashboard",
+                                       { 
+                                           dashboardId: "0FK1m00000000WqGAI",
+                                           showTitle:"false" ,
+                                           height:"1000px" ,
+                                           showSharing:"false", 
+                                           openLinksInNewWindow:"true" ,
+                                           hideOnError:"true",
+                                           showHeader:"false",
+                                           filter:"{'datasets':{'Enrolment_Snapshot_With_Org':[{'fields':['Center__c.Name'],'filter':{'operator':'in','values':['Aureus at Home']},'locked':true,'hidden':true},{ 'fields':	['Teacher__c.Name'], 'filter':{'operator':'in','values':['{!Account.Name}']},'locked':true,'hidden':true},{'fields':['Center__c.Country_Sharing__c'],'filter':{'operator':'in','values':['Singapore'],'locked':true,'hidden':true}}]}}",
+                                       },
+                                       "FlipcardContainer",
+                                       function(cmp) {
+                                           console.log('Component created, do something cool here={!accesstoken}');
+                                       });
+        },'https://aureusgroup--full.lightning.force.com','{!accesstoken}');
+    //    filter:"{'datasets':{'Enrolment_Snapshot_With_Org':[{'fields':['Center__c.Name'],'filter':{'operator':'in','values':['Aureus at Home']},'locked':true,'hidden':true},{ 'fields':	['Teacher__c.Name'], 'filter':{'operator':'in','values':['{!Account.Name}']},'locked':true,'hidden':true},{'fields':['Center__c.Country_Sharing__c'],'filter':{'operator':'in','values':['Singapore'],'locked':true,'hidden':true}}]}}",
+                                      
+    </script>
+    
+</apex:page>

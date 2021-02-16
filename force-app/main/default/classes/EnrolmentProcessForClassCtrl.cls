@@ -130,6 +130,7 @@ public class EnrolmentProcessForClassCtrl {
                                       Package__r.Is_Promotion_Discount__c, Package__r.Promotion_Discount__c, Package__r.Promotion_period_In_months__c,Referred_by__c,Referred_by__r.name,Referee_discount_amount__c,Referrer_discount_amount__c,Center__r.Location__c, 
                                      Package__r.Type_of_package__c,Enrolment__c.Referred_by__r.personContactId, Package__r.Registration_Discount_Active__c, Package__r.Registration_Discount_Value__c, CreatedDate,Instrument__c, 
                                       Package__r.of_Units__c, Package__r.Package_after_Promotion__c, Package__r.Duration__c, Center__r.Country__c, Package__r.Type__c, Type__c, Class__c,
+                                      Package__r.Rent_Free_Period__c,Package__r.Is_Rent_Free_Instrument_available__c, // added by nishi: 13-Feb-2021: Retail promotion for Piano rental : get instrument Retail promotion details  
                                       Center__r.Country__r.Name, Center__r.Country__r.Country_Name__c, Center__r.Country__r.Tax_Rate__c, Center__r.Organisation__c,Center__r.Organisation__r.name,
                                       (SELECT Id, Subscription__c, Enrolment__c FROM Subscription_Line_Items__r) 
                                       FROM Enrolment__c WHERE Id IN: enrolIds AND Stage__c = 'Pending Enrolment'];
@@ -762,6 +763,8 @@ public class EnrolmentProcessForClassCtrl {
         Savepoint sp;
         isError = false;
         errorMsg = '';
+        Map<string,string> retailPromotionEnrolmentPackageIds = new Map<string,string>(); // added  by nishi: 13-Feb-2021: New Requirement Retail promotion for Piano rental: get selected package is promotional rental package
+                   
         // Decimal facilityFeesGst = 0;//@Juneid 08 Aug 2020, String Facility Fee gst
         //BillingUtility.initConnection(countryId);
                     
@@ -892,14 +895,19 @@ public class EnrolmentProcessForClassCtrl {
                         
                         Map<String, Subscription__c> activeSubMap = new Map<String, Subscription__c>();
                         Set<String> grpClsBookSet = new Set<String>();
-                       
                         for(Enrolment__c enr: enrolDetails.enrolments.values()){
+                             // added  by nishi: 13-Feb-2021: New Requirement Retail promotion for Piano rental: get selected package is promotional rental package
+                            if( String.isNotBlank(enr.Package__c) && string.isnotblank(enr.Package__r.Rent_Free_Period__c) && enr.Package__r.Is_Rent_Free_Instrument_available__c){
+                                retailPromotionEnrolmentPackageIds.put(enr.id,enr.Package__c+'-'+enr.Package__r.Rent_Free_Period__c);
+                            }
+                             // added  by nishi: 13-Feb-2021: New Requirement Retail promotion for Piano rental: get selected package is promotional rental package
                             if(enr.center__c != null)
                                 activeSubMap.put(enr.center__c, null);
                             
                             if(enr.Class__c != null && String.isNotBlank(enr.Package__r.Type__c) && enr.Package__r.Type__c.equalsIgnoreCase('Group'))
                                 grpClsBookSet.add(enr.Class__c);
                         }
+                            
                         Map<String, Booking__c> grpClsBookMap = new Map<String, Booking__c>();
                         if(grpClsBookSet.size() > 0){
                             String bookGrpClsRecId =  Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get('Group Class').getRecordTypeId();   
@@ -2085,8 +2093,39 @@ public class EnrolmentProcessForClassCtrl {
                             //Jatin: 6-Mar-2020: Start: For  not to Filter out the Camp Placeholder in enrolment Process 
                             campBookingCancelProcess(enrolmentTeacherIds,enrolmentCenterIds,bookingMap,fifthLessMap,canBookIds,isOssia);
                             //Jatin: 6-Mar-2020: End: For  not to Filter out the Camp Placeholder in enrolment Process 
-                            //@Juneid 22 Aug 20202 , Passing organization to next page as per page filter
                             PageReference pageRef = new PageReference('/apex/thankyoupage_ipad?&isOssia='+isOssia);
+                               // added  by nishi: 13-Feb-2021: New Requirement Retail promotion for Piano rental: Once the payment is completed for these specific instruments -> New Dynamic Public Page where parents can decide if they would like to take up the rental
+                           if(retailPromotionEnrolmentPackageIds != null && retailPromotionEnrolmentPackageIds.size() > 0){
+                                string retailPromotionEnrolmentId ='';
+                                decimal packageTime = 0 ;
+                                // 15-Feb-2021: Nishi: If we enroll two enrolment at the same time, then we considered that enrollment is the maximum time for free rental.
+                                for(string enrolmentId : retailPromotionEnrolmentPackageIds.keyset()){
+                                    decimal enrolmentFreeRentalTime = decimal.valueof(retailPromotionEnrolmentPackageIds.get(enrolmentId).split('-')[1].trim());
+                                    if(packageTime < enrolmentFreeRentalTime){
+                                        packageTime = enrolmentFreeRentalTime;
+                                        retailPromotionEnrolmentId = enrolmentId;
+                                    }
+                                } 
+                                
+                                if(string.isnotBlank(retailPromotionEnrolmentId) && retailPromotionEnrolmentPackageIds.containsKey(retailPromotionEnrolmentId)){
+                                    pageRef.getParameters().put('enrolment', retailPromotionEnrolmentId);
+                                    pageRef.getParameters().put('package',retailPromotionEnrolmentPackageIds.get(retailPromotionEnrolmentId).split('-')[0].trim());
+                                }
+                                // 15-Feb-2021: Nishi: If we enroll two enrolment at the same time, then we considered that enrollment is the maximum time for free rental.
+
+                                /*for(string enrolmentId : retailPromotionEnrolmentPackageIds.keyset()){
+                                    pageRef.getParameters().put('enrolment'+enrolCounter, enrolmentId+'-'+retailPromotionEnrolmentPackageIds.get(enrolmentId));
+                                    enrolCounter = enrolCounter+1; 
+                                } */   
+                                //Added by Sanjay/Rajesh, 26th June 2019.  For push invoice on sageIntaccount describe by Sanjay
+                                pageRef.getParameters().put('AureusNewEnolment', 'true');
+                                pageRef.getParameters().put('parentId', String.valueOf(parentAcc.Id));
+                                
+                           }
+                            // added  by nishi: 13-Feb-2021: New Requirement Retail promotion for Piano rental: Once the payment is completed for these specific instruments -> New Dynamic Public Page where parents can decide if they would like to take up the rental
+                           
+                            //@Juneid 22 Aug 20202 , Passing organization to next page as per page filter
+                            
                             
                             Set<String> invIds = new Set<String>();
                             Integer invCounter = 1;
@@ -2102,6 +2141,7 @@ public class EnrolmentProcessForClassCtrl {
                             
                             pageRef.getParameters().put('scId', sc.id);
                             return pageRef.setRedirect(true);
+                            
                         }
                     }else{
                         errorMsg = sc.error.message;

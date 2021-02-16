@@ -1,4 +1,4 @@
-<apex:page id="pg" showHeader="false" controller="SearchInstrumentRental_IpadCntrl"  standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False"  action="{!getProducts1}"><!-- CH02 action="{!getProducts1}" -->
+<apex:page id="pg" showHeader="false" controller="SearchInstrumentRental_IpadCntrl"  standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False" action="{!getProducts1}"> <!-- CH02 action="{!getProducts1}" -->
    <!-- CH02 Karan Singh As Netsuite integration is used of Sage integration so changing the fetch piano list and slcd piano details -->
     <!-- CH05 Karan Singh 24 Sep 2020 : showing the type of the instrument in the page and storing the type of the instrument in the enrolment which can be piano,keyboard etc -->
     <!-- CH06 Karan Singh 24 Sep 2020 : Making the data table optimized for the Ipad -->
@@ -145,43 +145,77 @@
             }
             table.dataTable tr td,table.dataTable tr th{white-space: normal !important;}
             .slds-table_cell-buffer tr > th:first-child, .slds-table_cell-buffer tr > td:first-child {padding-left:15px;}
+            
+            @media(min-width:991px){.new-container.class-true{width:80%; margin:0 auto; background-color:#fff;} .class-true .sticky{width:80%; left:10%;}}/*ch:011: show piano rental process for  site guest user*/
+        
         </style> 
         
         <script>
-            $(document).ready(function() {      
+            $(document).ready(function() {   
+                 
                 var cntryCode = '{!countryCode}';
                 $('[id$=inputMobileId]').intlInputPhone({preferred_country: [cntryCode]}); 
                 var mobNumber = '{!PersonMobilePhoneCustom}';
                 $('[id$=phoneNumber]').val(mobNumber.replace(/^\+[0-9]{2}/,'')); 
-                
+                if({!isAureusNewEnolment}){   
+                    $('[id$=phoneNumber]').prop('disabled',true); 
+                }
                 // var accTable = $('[id$="accTable"]').DataTable({});
             }); 
         
             j$ = jQuery.noConflict();
-            j$(document).ready( function () {
+            j$(document).ready(function () {
+                var packageInstrument = '{!packageInstrument}';
+                console.log(packageInstrument);
                 var accTable = j$('[id$="accTable"]').removeAttr('width').DataTable({
                     "pageLength": 10, //"pageLength": 30, CH02 showing only 10 results  
-                "bInfo" : false,
-                responsive: true,
-                 "lengthChange": false,
-                "language": {
-                    "search": "_INPUT_",
-                    "searchPlaceholder": "Search Brand, Model, Serial No., or Type"
-                },
+                    "bInfo": false,
+                    responsive: true,
+                    "lengthChange": false,
+                    "language": {
+                        "search": "_INPUT_",
+                        "searchPlaceholder": "Search Brand, Model, Serial No., or Type"
+                    },
                     //CH06 Start
-                columnDefs: [
-            { width: 10, targets: 0},{ width: 27, targets: 1},{ width: 60, targets: 2},{ width: 60, targets: 3},{ width: 60, targets: 5}
-        ],//CH06 END
-        fixedColumns: true
-                    
+                    columnDefs: [
+                        { width: 10, targets: 0 }, { width: 27, targets: 1 }, { width: 60, targets: 2 }, { width: 60, targets: 3 }, { width: 60, targets: 5 }
+                    ],//CH06 END
+                    fixedColumns: true,
+                    "oSearch": { "sSearch": packageInstrument }
                 });
-                
+
                 //CH06 Start - making the search box width as for the ipad
-                var addressTableFilter = document.getElementById('accTable_filter');    
+                var addressTableFilter = document.getElementById('accTable_filter');
                 console.log(addressTableFilter);
                 addressTableFilter.firstChild.getElementsByTagName('input')[0].style.width = "500px";
+                if({!isAureusNewEnolment}){
+                    $( "#accTable_filter label" ).after(function() {
+                        return `<label class="slds-checkbox_toggle" style="display: inline-flex;padding-left: 120px;width: auto;">
+                            <span class="slds-form-element__label slds-m-bottom_none">Show All Instrument : </span>
+                            <input type="checkbox" name="SelectAll" value="SelectAll" aria-describedby="SelectAll" onclick="getAllProduct();" checked=""/>
+                            <span id="SelectAll" class="slds-checkbox_faux_container" aria-live="assertive">
+                                <span class="slds-checkbox_faux"></span>
+                                <span class="slds-checkbox_on">Enabled</span>
+                                <span class="slds-checkbox_off">Disabled</span>
+                            </span>
+                        </label>`;
+                    });
+                    $('input[name="SelectAll"]').prop('checked',false);
+                }
                 //CH06 END
             });
+
+
+            function getAllProduct(){
+                if($('input[name="SelectAll"]').prop('checked')){
+                    var oldtable = j$('[id$="accTable"]').DataTable();
+                    oldtable.search('').draw();
+                }else{
+                    var packageInstrument = '{!packageInstrument}';
+                    var oldtable = j$('[id$="accTable"]').DataTable();
+                    oldtable.search(packageInstrument).draw();
+                }
+            }  
         
         
         
@@ -223,25 +257,35 @@
                     console.log(concatePhoneNo);
                      $('[id$=phoneCstmId]').val(concatePhoneNo);
                 }   
-
-                if(isErr){
-                    $('.cmpErrDiv').removeClass('slds-hide');
-                    $('.contentErrorDiv').html('Please fill all mandatory fields.');
-                }else{
-                    var isSelectedTime = $("input[name='slcdPianoOptions']:checked").val();
-                    if(!isSelectedTime){
-                        isErr = true;   
+			
+                    if(isErr){
                         $('.cmpErrDiv').removeClass('slds-hide');
-                        $('.contentErrorDiv').html('Please select a piano.');
+                        $('.contentErrorDiv').html('Please fill all mandatory fields.');
+                    }else{
+                        var isSelectedTime = $("input[name='slcdPianoOptions']:checked").val();
+                        if(!isSelectedTime){
+                            isErr = true;   
+                            $('.cmpErrDiv').removeClass('slds-hide');
+                            $('.contentErrorDiv').html('Please select a piano.');
+                        }
                     }
-                }
                 
                 return isErr;
             }
         </script>
     </head>
     <body class="bg-white">
+        <!--ch:011: show piano rental process for  site guest user-->
+        <apex:outputPanel rendered="{!isSiteGuestUser}">     
+            <!--@Juneid 11 AUg 202 -->
+            <div  class="slds-p-around_medium" style="{!iF(isOssia,'font-size:15px; background-color: #ed1c24; text-align:center; color:#fff; font-weight:bold;','font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;')}">{!IF(isOssia,'Ossia Piano Rental Process','Aureus Academy Piano Rental Process')}      
+            </div>
+            <p style="text-align:center;"><apex:image url="{!iF(isOssia,$Resource.Osia_Logo,$Resource.Aureus_logo_png)}" /></p>        
+            
+        </apex:outputPanel>  
+         <!--ch:011: show piano rental process for  site guest user-->
         <apex:form id="frm">
+            <div class="new-container {!IF(isSiteGuestUser, 'class-true','')}"  >
             <apex:actionStatus id="spinner">
                 <apex:facet name="start"> 
                     <apex:outputPanel id="backdrop" styleClass="popupBackground">
@@ -277,9 +321,12 @@
                         <h3 class="slds-text-heading_large" style="font-weight:bold;">Select an Instrument</h3>
                     </div>
                     <div class="slds-size_1-of-2 slds-large-size_1-of-3 slds-large-order_1  slds-p-bottom_large">
-                        <a href="javascript:void(0)" onclick="processBack();" class="slds-button btn-gray slds-p-vertical_xxx-small slds-p-horizontal_xx-large slds-m-bottom_small" >Back</a>
+                        <apex:outputPanel rendered="{!!isAureusNewEnolment}" layout="none">
+                            <a href="javascript:void(0)" onclick="processBack();" class="slds-button btn-gray slds-p-vertical_xxx-small slds-p-horizontal_xx-large slds-m-bottom_small" >
+                               Back
+                            </a>
+                        </apex:outputPanel>
                     </div>
-                    
                     <div class="slds-size_1-of-2 slds-large-size_1-of-3 slds-text-align_right slds-large-order_3  slds-p-bottom_large" >
                        <!-- <a href="javascript:void(0)" id="next_step2" class="slds-button btn-yellow slds-p-vertical_xxx-small slds-p-horizontal_xx-large slds-m-bottom_small" onclick="processEnrolment();" style="">Next</a>-->
                     </div>                    
@@ -307,24 +354,24 @@
                     <div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
                         <p class=""><strong>First Name</strong></p>
                         <p class="m-lg-right">
-                            <apex:inputText value="{!parentAcc.firstName}" styleclass="slds-input inputtxt parNameCls requiredInput" id="parFirstName"/>
+                            <apex:inputText value="{!parentAcc.firstName}"  disabled="{!isAureusNewEnolment}" styleclass="slds-input inputtxt parNameCls requiredInput" id="parFirstName"/>
                         </p>
                     </div>
                     
                     <div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
                         <p class=""><strong>Last Name</strong></p>
-                        <apex:inputText value="{!parentAcc.lastName}" styleclass="slds-input inputtxt parNameCls requiredInput" id="parLastName"/>
+                        <apex:inputText value="{!parentAcc.lastName}"  disabled="{!isAureusNewEnolment}" styleclass="slds-input inputtxt parNameCls requiredInput" id="parLastName"/>
                     </div>
                     <div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
                         <p class=""><strong>Email</strong></p>
                         <p class="m-lg-right">
-                            <apex:inputField value="{!parentAcc.PersonEmail}" styleclass="slds-input inputtxt emailCls requiredInput" id="emailtxt"/>
+                            <apex:inputText value="{!parentAcc.PersonEmail}"   disabled="{!isAureusNewEnolment}" styleclass="slds-input inputtxt emailCls requiredInput" id="emailtxt"/>
                         </p>
                     </div>
                     
                     <div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
                         <p class=""><strong>Phone
-                            <abbr class="slds-required slds-m-horizontal_none phoneNumber" title="required" style="cursor: default;"></abbr>
+                            <abbr class="slds-required slds-m-horizontal_none phoneNumber"  title="required" style="cursor: default;"></abbr>
                        </strong></p>
                         <div id="slds-form-element__control inputMobileId"></div>
                     </div>
@@ -389,7 +436,6 @@
                 </table> 
                 
                  <div class="slds-grid slds-wrap slds-text-align_center slds-p-top_x-large">
-                     
                      <!--CH01 center align button by karan Singh 24 aug 2020
                     <div class="slds-medium-size_1-of-2 slds-p-bottom_small" -->
                      <div class="slds-medium-size_1-of-3 slds-p-bottom_small"/>
@@ -402,6 +448,7 @@
                     </div -->
                     <!-- CH01 END -->     
                 </div>
+            </div>
             </div>
         </apex:form>
     </body>

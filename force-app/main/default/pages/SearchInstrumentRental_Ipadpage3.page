@@ -396,25 +396,26 @@
                     </div>
                 </apex:facet>
             </apex:actionStatus>
-            <apex:actionFunction name="setTime" action="{!setSlots}" reRender="rendr" status="spinner" >
+            <apex:actionFunction name="setTime" action="{!setSlots}" reRender="rendr" status="spinner" oncomplete=" console.log('call setTime');">
                 <apex:param name="slcdSlot" value="" assignTo="{!slcdSlot}" />
                 <apex:param name="slcdSlotDate" value="" assignTo="{!slcdSlotDate}" />
                 <apex:param name="htmtxt" value="" assignTo="{!htmtxt}" />
             </apex:actionFunction>
-            <apex:actionFunction name="processBack" action="{!backBtnCmp3}" />
-            <apex:actionFunction name="removeEle" action="{!detSlots}" reRender="rendr" status="spinner">
+            <apex:actionFunction name="processBack" action="{!backBtnCmp3}" oncomplete=" console.log('call processBack');" />
+            <apex:actionFunction name="removeEle" action="{!detSlots}" reRender="rendr" status="spinner" oncomplete=" console.log('call removeEle');">
                 <apex:param name="slcdSlot" value="" assignTo="{!slcdSlotDate}" />
             </apex:actionFunction>
 
             <apex:actionFunction name="nextWeek" action="{!nextWeek}" reRender="frm" status="spinner" />
-            <apex:actionFunction name="prevWeek" action="{!prevWeek}" reRender="frm" status="spinner"/>
+            <apex:actionFunction name="prevWeek" action="{!prevWeek}" reRender="frm" status="spinner" oncomplete=" console.log('call prevWeek');"
+            />
 
             <apex:actionFunction name="fetchFullAddress" action="{!fetchFullAddress}" status="spinner" reRender="parentDetailsPanel"
-                >
+                oncomplete=" console.log('call fetchFullAddress');">
                 <apex:param id="postCode" name="postalCode" value="" />
             </apex:actionFunction>
 
-            <apex:actionFunction name="nextBtn" action="{!nextBtnCmp3}"  />
+            <apex:actionFunction name="nextBtn" action="{!nextBtnCmp3}" oncomplete=" console.log('call nextBtn');" />
 
 
 

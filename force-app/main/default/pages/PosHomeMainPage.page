@@ -1,0 +1,31 @@
+<apex:page standardController="Enrolment__c" extensions="PosHomeComponentCntrl" standardStylesheets="false" docType="html-5.0">
+<apex:slds />
+<apex:includeLightning />
+ 
+    <apex:outputPanel rendered="{!!isAllowedPermissionToThisUser}">
+        <div class="slds-align_absolute-center slds-p-around_x-small" style="color:red;">
+            <strong>You can't access this page. Please contact centre admin for further assistance.
+            </strong>
+        </div>
+    </apex:outputPanel>
+    <apex:outputPanel rendered="{!isAllowedPermissionToThisUser}">
+        <div id="lightning" ></div>
+        
+        <script>
+                $Lightning.use("c:PosHomeComponentApp", function() {
+                    $Lightning.createComponent("c:PosHomeComponent",
+                { 
+                    slcdCentr : '{!Enrolment__c.Center__c}',
+                    slcdEnrolmentId :  '{!Enrolment__c.Id}',
+                    //isAdhocPOSServices : true,
+                    //accCstmrId : '{!Enrolment__c.parent__c}',
+                    //accName : '{!Enrolment__c.Parent_First_Name__c} {!Enrolment__c.Parent_Last_Name__c}'
+                },
+            "lightning",
+                function(component) {
+                    console.log('Component is created!');
+                });
+            });
+        </script>    
+    </apex:outputPanel>
+</apex:page>

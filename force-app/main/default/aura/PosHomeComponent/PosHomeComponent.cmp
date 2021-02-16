@@ -1,9 +1,11 @@
-<aura:component controller="PosHomeComponentCntrl" implements="force:appHostable" access="global">
+<aura:component controller="PosHomeComponentCntrl" 
+implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global">
     <aura:handler name="init" value="{!this}" action="{!c.onInit}" />
     
     <!--aura attributes-->
     <aura:attribute name="cntrAccMap" type="Map" />
     <aura:attribute name="slcdCentr" type="String" />
+    <aura:attribute name="slcdEnrolmentId" type="String" />
     <!-- <aura:attribute name="slcdCstmr" type="String"/>-->
     <aura:attribute name="slcdProducts" type="object" />
     <aura:attribute name="isModalOpen" type="boolean" default="false" />

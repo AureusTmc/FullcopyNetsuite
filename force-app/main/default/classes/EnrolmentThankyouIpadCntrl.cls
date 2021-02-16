@@ -1,7 +1,9 @@
 public without sharing class EnrolmentThankyouIpadCntrl {
     public Boolean isOssia{get;set;}//@Juneid 22 Aug 2020, For Checking ossia
+    public Boolean isAureusNewEnolment{get;set;}
     public EnrolmentThankyouIpadCntrl(){
         isOssia = false;
+        isAureusNewEnolment = false;
         //String parId = ApexPages.currentPage().getParameters().get('id');
         //String status  = ApexPages.currentPage().getParameters().get('status');
         //system.debug('thanku url -->'+ApexPages.currentPage().getParameters().get('isOssia'));
@@ -9,7 +11,19 @@ public without sharing class EnrolmentThankyouIpadCntrl {
         if(String.isNotBlank(ApexPages.currentPage().getParameters().get('isOssia'))){
             isOssia =  Boolean.valueOf((ApexPages.currentPage().getParameters().get('isOssia')));
         }
+        if(String.isNotBlank(ApexPages.currentPage().getParameters().get('AureusNewEnolment'))){
+            isAureusNewEnolment =  Boolean.valueOf((ApexPages.currentPage().getParameters().get('AureusNewEnolment')));
+        }
         system.debug('isOssia in thanku -->'+isOssia);
+    }
+    public Pagereference redirectToPianoRental(){
+        PageReference pageRef = new PageReference('/apex/SearchInstrumentRental_Ipad2');
+        pageRef.getParameters().put('isOssia', String.valueOf((ApexPages.currentPage().getParameters().get('isOssia'))));
+        pageRef.getParameters().put('enrolment', String.valueOf((ApexPages.currentPage().getParameters().get('enrolment'))));
+        pageRef.getParameters().put('package',String.valueOf((ApexPages.currentPage().getParameters().get('package'))));
+        pageRef.getParameters().put('AureusNewEnolment',String.valueOf((ApexPages.currentPage().getParameters().get('AureusNewEnolment'))));
+        pageRef.getParameters().put('parentId',String.valueOf((ApexPages.currentPage().getParameters().get('parentId'))));
+        return pageRef.setRedirect(true);
     }
     
     public pagereference generateInvPdf(){
