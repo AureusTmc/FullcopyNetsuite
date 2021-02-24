@@ -131,6 +131,7 @@ public class EnrolmentProcessForClassCtrl {
                                      Package__r.Type_of_package__c,Enrolment__c.Referred_by__r.personContactId, Package__r.Registration_Discount_Active__c, Package__r.Registration_Discount_Value__c, CreatedDate,Instrument__c, 
                                       Package__r.of_Units__c, Package__r.Package_after_Promotion__c, Package__r.Duration__c, Center__r.Country__c, Package__r.Type__c, Type__c, Class__c,
                                       Package__r.Rent_Free_Period__c,Package__r.Is_Rent_Free_Instrument_available__c, // added by nishi: 13-Feb-2021: Retail promotion for Piano rental : get instrument Retail promotion details  
+                                      Package__r.Complimentary_Credit_Mins__c,Package__r.Complimentary_End_Date__c,Package__r.Complimentary_Start_Date__c,Package__r.Is_Complimentary_Credit_Available__c,// added by nishi 24-Feb-2021: Creating Complimentary Lessons: check if the package has any active complementary credit then the applicable complementary credit will be assigned.
                                       Center__r.Country__r.Name, Center__r.Country__r.Country_Name__c, Center__r.Country__r.Tax_Rate__c, Center__r.Organisation__c,Center__r.Organisation__r.name,
                                       (SELECT Id, Subscription__c, Enrolment__c FROM Subscription_Line_Items__r) 
                                       FROM Enrolment__c WHERE Id IN: enrolIds AND Stage__c = 'Pending Enrolment'];
@@ -895,13 +896,37 @@ public class EnrolmentProcessForClassCtrl {
                         
                         Map<String, Subscription__c> activeSubMap = new Map<String, Subscription__c>();
                         Set<String> grpClsBookSet = new Set<String>();
+                        List<Complementary_Credit__c> insertComplementaryCredit = new List<Complementary_Credit__c>(); // added by nishi 24-Feb-2021: Creating Complimentary Lessons: check if the package has any active complementary credit then the applicable complementary credit will be assigned.
+                               
+                        
                         for(Enrolment__c enr: enrolDetails.enrolments.values()){
                              // added  by nishi: 13-Feb-2021: New Requirement Retail promotion for Piano rental: get selected package is promotional rental package
-                            if( String.isNotBlank(enr.Package__c) && string.isnotblank(enr.Package__r.Rent_Free_Period__c) && enr.Package__r.Is_Rent_Free_Instrument_available__c){
-                                retailPromotionEnrolmentPackageIds.put(enr.id,enr.Package__c+'-'+enr.Package__r.Rent_Free_Period__c);
+                            if( String.isNotBlank(enr.Package__c)){
+                                if(string.isnotblank(enr.Package__r.Rent_Free_Period__c) && enr.Package__r.Is_Rent_Free_Instrument_available__c){
+                                    retailPromotionEnrolmentPackageIds.put(enr.id,enr.Package__c+'-'+enr.Package__r.Rent_Free_Period__c);
+                                }
+                                // added by nishi 24-Feb-2021: Creating Complimentary Lessons: check if the package has any active complementary credit then the applicable complementary credit will be assigned.
+                                if(enr.Package__r.Is_Complimentary_Credit_Available__c && enr.Package__r.Complimentary_Credit_Mins__c != null && 
+                                enr.Package__r.Complimentary_Start_Date__c != null && enr.Package__r.Complimentary_End_Date__c != null && enr.Lessons_Start_Date__c != null &&
+                                enr.Lessons_Start_Date__c >= enr.Package__r.Complimentary_Start_Date__c && enr.Lessons_Start_Date__c <= enr.Package__r.Complimentary_End_Date__c){
+                                    insertComplementaryCredit.add(new Complementary_Credit__c(
+                                        Available_credit_Min__c =enr.Package__r.Complimentary_Credit_Mins__c,
+                                        Name ='New enrolment',
+                                        Enrolment__c = enr.id,
+                                        Package_Name__c = enr.Package__c,
+                                        Parent__c = parentAcc.id,
+                                        Teacher_Name__c =enr.Teacher__c,
+                                        Credit_Reason__c='New enrolment',
+                                        Credit_Apply_date__c = enr.Lessons_Start_Date__c,
+                                        is_Active__c= true,
+                                        Credit_Expiry_date__c = enr.Lessons_Start_Date__c.Addmonths(integer.valueOf(Label.Complimentary_Credit_Expiry_Duration_in_Months))
+                                    ));
+                                }
+                                // added by nishi 24-Feb-2021: Creating Complimentary Lessons: check if the package has any active complementary credit then the applicable complementary credit will be assigned.
                             }
                              // added  by nishi: 13-Feb-2021: New Requirement Retail promotion for Piano rental: get selected package is promotional rental package
-                            if(enr.center__c != null)
+                           
+                             if(enr.center__c != null)
                                 activeSubMap.put(enr.center__c, null);
                             
                             if(enr.Class__c != null && String.isNotBlank(enr.Package__r.Type__c) && enr.Package__r.Type__c.equalsIgnoreCase('Group'))
@@ -1841,9 +1866,13 @@ public class EnrolmentProcessForClassCtrl {
                             update enrolmentList;
                             //@Juneid 07 Aug,2020, Notify the reafree about Enrolment
                             sendMailToReffrel(enrolmentList[0]);
-                           
-                           
-                            
+                            // added by nishi 24-Feb-2021: Creating Complimentary Lessons:start: check if the package has any active complementary credit then the applicable complementary credit will be assigned.
+                               
+                           if(insertComplementaryCredit != null && insertComplementaryCredit.size() > 0){
+                            insert insertComplementaryCredit;
+                           }
+                             // added by nishi 24-Feb-2021: Creating Complimentary Lessons: end:check if the package has any active complementary credit then the applicable complementary credit will be assigned.
+                               
                             //Insert Subscription
                             if(centSubMap.size() > 0)
                                 upsert centSubMap.values();

@@ -1118,7 +1118,7 @@ ed.teacherAttachmentId = attachList[0].Id;
             bookingList = [SELECT Id, Name, Status__c, Type__c, Make_up_Utilize_Bookings__c, Center__c,Group_Class__c,
                            Make_up_Expiry_Date__c, Booking_Date__c, Makeup_Reason__c, Teacher_Account__c, 
                            Make_up_Credit_Note__c, Start_Time__c, Duration__c, Student__c, Student__r.Name, 
-                           Student__r.Parent__c, End_Time__c, Available_Make_up_Units__c, Cancellation_Reason__c, 
+                           Student__r.Parent__c, End_Time__c, Available_Make_up_Units__c, Cancellation_Reason__c, Is_Complimentary_Credit__c,
                            RecordtypeId, RecordType.Name, Category__c, Appointment_Day__c, Is_fifth_booking__c FROM Booking__c 
                            WHERE Id =: bookingId];
             if(bookingList.size() > 0){
@@ -1167,37 +1167,83 @@ ed.teacherAttachmentId = attachList[0].Id;
                     bookingList[0].Status__c = ConstantsClass.statusCanceled;
                     
                     if(bookingList[0].Type__c == ConstantsClass.typeMakeup){
-                        List<String> makeupReferenceList = new List<String>();
-                        Set<String> bookingIds = new Set<String>();
-                        List<Booking__c> bookingListObj = new List<Booking__c>();
-                        List<Booking__c> bookingUpdatedList = new List<Booking__c>();
-                        if(String.isNotBlank(bookingList[0].Make_up_Utilize_Bookings__c)){
-                            makeupReferenceList.addAll(bookingList[0].Make_up_Utilize_Bookings__c.split(';'));
-                            if(makeupReferenceList.size() > 0){
-                                for(String makeup : makeupReferenceList){
-                                    if(String.isNotBlank(makeup)){
-                                        bookingIds.add(makeup.split('-')[0]);
+                        // added by nishi: 24-Feb-2021:start : Cancelling a complimentary credit will add back the complimentary credit on the same record
+                        if(bookingList[0].Is_Complimentary_Credit__c){
+                            List<String> makeupReferenceList = new List<String>();
+                            Set<String> complementryCreditIds = new Set<String>();
+                            List<Booking__c> bookingListObj = new List<Booking__c>();
+                            List<Booking__c> bookingUpdatedList = new List<Booking__c>();
+                            Map<string,Complementary_Credit__c> complementaryCreditUpdatedMap = new Map<string,Complementary_Credit__c>();
+                            if(String.isNotBlank(bookingList[0].Make_up_Utilize_Bookings__c)){
+                                makeupReferenceList.addAll(bookingList[0].Make_up_Utilize_Bookings__c.split(';'));
+                                if(makeupReferenceList != null && makeupReferenceList.size() > 0){
+                                    for(String makeup : makeupReferenceList){
+                                        if(String.isNotBlank(makeup)){
+                                            complementryCreditIds.add(makeup.split('-')[0]);
+                                        }
                                     }
-                                }
-                            }    
-                            if(bookingIds.size() > 0){
-                                bookingListObj = [SELECT Id, Available_Make_up_Units__c, Make_up_Expiry_Date__c
-                                 FROM Booking__c WHERE Make_up_Expiry_Date__c >= TODAY AND Id IN: bookingIds];
-                                if(bookingListObj.size() > 0){
-                                    for(Booking__c booking : bookingListObj){
-                                        for(String currentMakeup : makeupReferenceList){
-                                            if(currentMakeup.contains(booking.Id)){
-                                                bookingUpdatedList.add(new Booking__c(Id = booking.Id, Available_Make_up_Units__c = booking.Available_Make_up_Units__c + Decimal.valueOf(currentMakeup.split('-')[1])));
-                                                break;
+                                }    
+                                if(complementryCreditIds != null && complementryCreditIds.size() > 0){
+                                    List<Complementary_Credit__c> listOfComplementaryCredit = [SELECT Credit_Apply_date__c, Credit_Expiry_date__c, Credit_Reason__c, Enrolment__c, Teacher_Name__c, Parent__c, Available_credit_Min__c, Package_Name__c, Is_Active__c, Name, Id 
+                                                                                                FROM Complementary_Credit__c
+                                                                                                WHERE Id IN: complementryCreditIds];
+                                    if(listOfComplementaryCredit != null && listOfComplementaryCredit.size() > 0){
+                                        Map<string,Decimal> complementaryCreditMinsMap = new Map<string,Decimal>();
+                                        for(Complementary_Credit__c booking : listOfComplementaryCredit){
+                                            for(String currentMakeup : makeupReferenceList){
+                                                if(currentMakeup.contains(booking.Id)){
+                                                    decimal complementaryCreditMins = 0;
+                                                    if(complementaryCreditMinsMap.containsKey(booking.Id)){
+                                                        complementaryCreditMins = complementaryCreditMinsMap.get(booking.Id);
+                                                    }
+                                                    complementaryCreditMins += Decimal.valueOf(currentMakeup.split('-')[1]);
+                                                    complementaryCreditUpdatedMap.put(booking.Id,new Complementary_Credit__c(Id = booking.Id, 
+                                                    Available_credit_Min__c = booking.Available_credit_Min__c + complementaryCreditMins));
+                                                    complementaryCreditMinsMap.put(booking.Id,complementaryCreditMins);
+                                                }
                                             }
                                         }
                                     }
                                 }
+                                if(complementaryCreditUpdatedMap.size() > 0){
+                                    update complementaryCreditUpdatedMap.values();
+                                }
+                                bookingList[0].Make_up_Utilize_Bookings__c = '';
                             }
-                            if(bookingUpdatedList.size() > 0){
-                                update bookingUpdatedList;
+                        }// added by nishi: 24-Feb-2021:start : Cancelling a complimentary credit will add back the complimentary credit on the same record
+                        else{
+                            List<String> makeupReferenceList = new List<String>();
+                            Set<String> bookingIds = new Set<String>();
+                            List<Booking__c> bookingListObj = new List<Booking__c>();
+                            List<Booking__c> bookingUpdatedList = new List<Booking__c>();
+                            if(String.isNotBlank(bookingList[0].Make_up_Utilize_Bookings__c)){
+                                makeupReferenceList.addAll(bookingList[0].Make_up_Utilize_Bookings__c.split(';'));
+                                if(makeupReferenceList.size() > 0){
+                                    for(String makeup : makeupReferenceList){
+                                        if(String.isNotBlank(makeup)){
+                                            bookingIds.add(makeup.split('-')[0]);
+                                        }
+                                    }
+                                }    
+                                if(bookingIds.size() > 0){
+                                    bookingListObj = [SELECT Id, Available_Make_up_Units__c, Make_up_Expiry_Date__c
+                                    FROM Booking__c WHERE Make_up_Expiry_Date__c >= TODAY AND Id IN: bookingIds];
+                                    if(bookingListObj.size() > 0){
+                                        for(Booking__c booking : bookingListObj){
+                                            for(String currentMakeup : makeupReferenceList){
+                                                if(currentMakeup.contains(booking.Id)){
+                                                    bookingUpdatedList.add(new Booking__c(Id = booking.Id, Available_Make_up_Units__c = booking.Available_Make_up_Units__c + Decimal.valueOf(currentMakeup.split('-')[1])));
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                if(bookingUpdatedList.size() > 0){
+                                    update bookingUpdatedList;
+                                }
+                                bookingList[0].Make_up_Utilize_Bookings__c = '';
                             }
-                            bookingList[0].Make_up_Utilize_Bookings__c = '';
                         }
                     }
                 }
@@ -2225,6 +2271,7 @@ newBookingWrapperObj.studentList = sObjList;
         if(String.isNotBlank(str)){
             accList = [SELECT Id, Name, RecordType.Name, Available_Make_up_Units__c, Also_a_Student__c, Parent__c, 
             Parent__r.Available_Make_up_Units__c, Parent__r.Name, PersonEmail, Parent__r.PersonEmail, PersonMobilePhone , 
+            Parent__r.Available_Complementary_Credit_mins__c,Available_Complementary_Credit_mins__c,// Added By nishi on 24 Feb 2021: for show Complimentary credit mins
             Parent__r.PersonMobilePhone FROM Account WHERE RecordType.Name =:recordTypeCustomer  
             AND ((Also_a_Student__c = true AND Parent__c = NULL) OR 
             (Parent__c != NULL AND Also_a_Student__c = false)) AND (Name LIKE :'%'+str+'%') LIMIT 10];
@@ -2238,17 +2285,24 @@ newBookingWrapperObj.studentList = sObjList;
                     sObj.parentName = '';
                     sObj.email = acc.PersonEmail;
                     sObj.phone = acc.PersonMobilePhone;
-                    sObj.makeupHours = Integer.valueOf(acc.Available_Make_up_Units__c);
+                    sObj.makeupHours = Integer.valueOf(acc.Available_Make_up_Units__c); 
+                    sObj.complementryHours= acc.Available_Complementary_Credit_mins__c != null ? Integer.valueOf(acc.Available_Complementary_Credit_mins__c) :0; // Added By nishi on 24 Feb 2021: for show Complimentary credit mins
                 }else if(acc.Also_a_Student__c == false && String.isNotBlank(acc.Parent__c)){
                     sObj.parentId = acc.Parent__c;
                     sObj.parentName = acc.Parent__r.Name;
                     sObj.email = acc.Parent__r.PersonEmail;
                     sObj.phone = acc.Parent__r.PersonMobilePhone;
                     sObj.makeupHours = Integer.valueOf(acc.Parent__r.Available_Make_up_Units__c);
+                    sObj.complementryHours= acc.Parent__r.Available_Complementary_Credit_mins__c != null ? Integer.valueOf(acc.Parent__r.Available_Complementary_Credit_mins__c) :0; // Added By nishi on 24 Feb 2021: for show Complimentary credit mins
                 }
                 if(sObj.makeupHours == NULL){
                     sObj.makeupHours = 0;
                 }
+                 // Added By nishi on 24 Feb 2021: for show Complimentary credit mins
+                if(sObj.complementryHours == NULL){
+                    sObj.complementryHours=0;
+                }
+                 // // Added By nishi on 24 Feb 2021: for show Complimentary credit mins
                 sObjList.add(sObj);
             }
             
@@ -2269,6 +2323,7 @@ newBookingWrapperObj.studentList = sObjList;
         DateTime bookingDateTime;
         String parentId;
         Date bookDate;
+        Boolean isComplimentaryCredit = false;// nishi: 24-feb-2021 :start: check booking use available makeup mins or available Complimentary Credit hours 
         if(String.isNotBlank(bookingJson)){
            ////system.debug(bookingJson);
             bookingMap = (Map<String, Object>)JSON.deserializeUntyped(bookingJson);
@@ -2330,7 +2385,16 @@ newBookingWrapperObj.studentList = sObjList;
                     if(bookingMap.containsKey('type')){
                         if(String.valueOf(bookingMap.get('type')) == ConstantsClass.pakageTypeMakeup){
                             bookingObj.Type__c = ConstantsClass.typeMakeup;
-                             //Nishi:22-Jul-2020:Start: if ossian student is create new booking then we added enrolment Id  for only makeup bookings
+                            // nishi: 24-feb-2021 :start: check booking use available makeup mins or available Complimentary Credit hours 
+                            if(bookingMap.containsKey('isComplimentaryCredit')){
+                                if(Boolean.valueOf(bookingMap.get('isComplimentaryCredit'))){
+                                    bookingObj.Is_Complimentary_Credit__c = true;
+                                    isComplimentaryCredit = true;
+                                }
+                                system.debug('isComplimentaryCredit'+bookingMap.get('isComplimentaryCredit'));
+                            }
+                            // nishi: 24-feb-2021 :end: check booking use available makeup mins or available Complimentary Credit hours 
+                            //Nishi:22-Jul-2020:Start: if ossian student is create new booking then we added enrolment Id  for only makeup bookings
                             if(bookingMap.containsKey('enrolmentId') && string.isNotBlank(String.valueOf(bookingMap.get('enrolmentId')))){
                                 bookingObj.Enrolment__c = String.valueOf(bookingMap.get('enrolmentId'));
                             }
@@ -2385,7 +2449,14 @@ newBookingWrapperObj.studentList = sObjList;
                         if(bookingObj.Type__c == ConstantsClass.typeMakeup  || bookingObj.Type__c == ConstantsClass.typeTrial){
                             if(bookingObj.Type__c == ConstantsClass.typeMakeup){
                                 bookingList.add(bookingObj); 
-                                deductMakeupHours(bookingList, parentId);
+                                // nishi: 24-feb-2021 : deduct available Complimentary Credit hours and minus and calculate utilize min then update parent 
+                                if(isComplimentaryCredit){
+                                    deductComplimentaryCreditHours(bookingList, parentId);
+                                }
+                                // nishi: 24-feb-2021 : deduct available Complimentary Credit hours and minus and calculate utilize min then update parent 
+                                else{
+                                    deductMakeupHours(bookingList, parentId);
+                                }
                             }
                             
                             //create case Here
@@ -2459,6 +2530,15 @@ newBookingWrapperObj.studentList = sObjList;
                         if(bookingMap.containsKey('type')){
                             if(String.valueOf(bookingMap.get('type')) == ConstantsClass.pakageTypeMakeup){
                                 type = ConstantsClass.typeMakeup;
+                                // nishi: 24-feb-2021 :start: check booking use available makeup mins or available Complimentary Credit hours 
+                                if(bookingMap.containsKey('isComplimentaryCredit')){
+                                    if(Boolean.valueOf(bookingMap.get('isComplimentaryCredit'))){
+                                        bookingObj.Is_Complimentary_Credit__c = true;
+                                        isComplimentaryCredit = true;
+                                    }
+                                    system.debug('isComplimentaryCredit'+bookingMap.get('isComplimentaryCredit'));
+                                }
+                                // nishi: 24-feb-2021 :start: check booking use available makeup mins or available Complimentary Credit hours 
                                 if(type == ConstantsClass.typeMakeup){
                                     status = ConstantsClass.statusScheduled;
                                 }
@@ -2466,10 +2546,20 @@ newBookingWrapperObj.studentList = sObjList;
                                 status = ConstantsClass.statusPending;
                             }
                         }
-                        if(bookingMap.containsKey('availableHours') && Integer.valueOf(bookingMap.get('availableHours')) > 0){
-                            availableHours = Integer.valueOf(bookingMap.get('availableHours'));
-                            //System.debug('duration'+availableHours);
+                        
+                         // nishi: 24-feb-2021 :start: check booking use available makeup mins or available Complimentary Credit hours 
+                        if(isComplimentaryCredit ){
+                            if(bookingMap.containsKey('complentryHours') && Integer.valueOf(bookingMap.get('complentryHours')) > 0){
+                                availableHours = Integer.valueOf(bookingMap.get('complentryHours'));
+                            }
                         }
+                         // nishi: 24-feb-2021 :start: check booking use available makeup mins or available Complimentary Credit hours 
+                        else{
+                            if(bookingMap.containsKey('availableHours') && Integer.valueOf(bookingMap.get('availableHours')) > 0){
+                                availableHours = Integer.valueOf(bookingMap.get('availableHours'));
+                            }
+                        }
+                        
                         if(bookingMap.containsKey('duration') && Integer.valueOf(bookingMap.get('duration')) > 0){
                             duration = Integer.valueOf(bookingMap.get('duration'));
                             //System.debug('duration'+duration);
@@ -2545,8 +2635,14 @@ newBookingWrapperObj.studentList = sObjList;
                                ////system.debug('parentId '+parentId);
                                 if(!isError && bookingList.size() > 0){
                                     if(bookingList[0].Type__c == ConstantsClass.typeMakeup){
+                                        // nishi: 24-feb-2021 : deduct available Complimentary Credit hours and minus and calculate utilize min then update parent 
+                                        if(isComplimentaryCredit){
+                                            deductComplimentaryCreditHours(bookingList, parentId);
+                                        }else{
                                             deductMakeupHours(bookingList, parentId);
-                                       }
+                                        }
+                                        // nishi: 24-feb-2021 : deduct available Complimentary Credit hours and minus and calculate utilize min then update parent 
+                                    }
                                 }
                                 
                             }else{
@@ -2783,8 +2879,8 @@ newBookingWrapperObj.studentList = sObjList;
                 //                 FROM Booking__c 
                 //                 WHERE Id IN:setOfBookings];
             
-               //system.debug('ossiaBookingList '+ossiaBookingList);
-               //system.debug('bookingList '+bookingList);
+               system.debug('##ossiaBookingList '+ossiaBookingList);
+               system.debug('##bookingList '+bookingList);
                 if(ossiaBookingList != null && ossiaBookingList.size() > 0){
                     OssiaCenterCalendarController.deductOssiaMakeupHours(ossiaBookingList,bookingParentId,new Set<String>());
                 }
@@ -2838,7 +2934,7 @@ newBookingWrapperObj.studentList = sObjList;
                                 Available_Make_up_Units__c = (Decimal)mapOfHours.get(keysetValue)));
                             }
                         }
-                        //System.debug('bookingUpdatedList '+bookingUpdatedList);
+                        System.debug('##bookingUpdatedList '+bookingUpdatedList);
                         if(bookingUpdatedList.size() > 0){
                             Database.SaveResult[] saveResults = Database.update(bookingUpdatedList, false);
                             for(Database.SaveResult saveResult : saveResults){
@@ -2867,6 +2963,111 @@ newBookingWrapperObj.studentList = sObjList;
                         // beacuse trigger not calculate canceled booking available mins
                         if(String.isNotBlank(parentId)){
                             AureusCalendarControllerHelper.cancelBookingProceed(parentId);
+                        }
+                    }   
+                }
+            }
+        }
+    }
+
+
+    // nishi: 24-feb-2021 : deduct available Complimentary Credit hours and minus and calculate utilize min then update parent 
+    public static void deductComplimentaryCreditHours(List<Booking__c> bookingObjList, String bookingParentId){
+        //System.debug('Deduct Makeup hours called');
+        String statusCanceled = ConstantsClass.statusCanceled;
+        Boolean isError = false;
+        String studentId;
+        List<Booking__c> bookingUpdatedList = new List<Booking__c>();
+        List<Complementary_Credit__c> complementaryCreditUpdatedList = new List<Complementary_Credit__c>();
+        Integer hoursToDeduct = 0;
+        List<Booking__c> bookingList = new List<Booking__c>();
+        List<Booking__c> ossiaBookingList = new List<Booking__c>();
+        Booking__c bookObj = new Booking__c();
+        Set<Id> setOfBookings = new Set<Id>();
+        Map<Id, Integer> mapOfHours = new Map<Id, Integer>();
+        Set<String> setOfParentStudent = new Set<String>();
+        //System.debug('bookingParentId '+bookingParentId);
+        if(String.isNotBlank(bookingParentId)){
+            setOfParentStudent = getParentsChild(bookingParentId);
+        }
+        if(bookingObjList.size() > 0){
+            studentId = bookingObjList[0].Student__c;
+            for(Booking__c bObj : bookingObjList){
+                setOfBookings.add(bObj.Id);
+            }
+            if(setOfBookings.size() > 0){
+                 // according to new requiremnt While utilizing Make up credit, 
+                //it should consider those makeup minutes which are related to the booking with the cancellation reason – Teacher MC/Leave first.
+                Set<string> enrolmentIds = new Set<string>();                        
+                for(Booking__c objBook: [SELECT Id,Student__c, Duration__c,Enrolment__c, Make_up_Utilize_Bookings__c ,Center__r.Organisation__r.Name
+                                        FROM Booking__c 
+                                        WHERE Id IN:setOfBookings]){
+                    bookingList.add(objBook);
+                }
+                if(bookingList != null && bookingList.size() > 0){                               
+                    if(setOfParentStudent.size() > 0){
+                        List<Complementary_Credit__c> listOfComplementaryCredit = [SELECT Credit_Apply_date__c, Credit_Expiry_date__c, Credit_Reason__c, Enrolment__c, Teacher_Name__c, Parent__c, Available_credit_Min__c, Package_Name__c, Is_Active__c, Name, Id 
+                                                                        FROM Complementary_Credit__c
+                                                                        WHERE Is_Active__c = TRUE 
+                                                                        AND Parent__c IN: setOfParentStudent AND 
+                                                                        Credit_Expiry_date__c >= TODAY 
+                                                                        AND (Available_credit_Min__c > 0 AND Available_credit_Min__c != NULL) 
+                                                                        ORDER BY Available_credit_Min__c];
+                        if(listOfComplementaryCredit != null && listOfComplementaryCredit.size() > 0){
+                            for(Complementary_Credit__c objComplementaryCredit : listOfComplementaryCredit){
+                                mapOfHours.put(objComplementaryCredit.Id, Integer.valueOf(objComplementaryCredit.Available_credit_Min__c)); 
+                            }
+                        }
+                        if(bookingList.size() > 0){
+                            for(Booking__c bookingObj : bookingList){
+                                hoursToDeduct = Integer.valueOf(bookingObj.duration__c);
+                                bookObj = new Booking__c();
+                                bookObj.Id = bookingObj.Id;
+                                bookObj.Make_up_Utilize_Bookings__c = '';
+                                for(Complementary_Credit__c objComplementaryCredit : listOfComplementaryCredit){
+                                    if(mapOfHours.containsKey(objComplementaryCredit.Id) && mapOfHours.get(objComplementaryCredit.Id) > 0 ){
+                                        //if(mapOfHours.get(key) > 0){
+                                        if(hoursToDeduct > mapOfHours.get(objComplementaryCredit.Id)){
+                                            bookObj.Make_up_Utilize_Bookings__c  += objComplementaryCredit.Id +'-'+mapOfHours.get(objComplementaryCredit.Id)+';';
+                                            hoursToDeduct -= mapOfHours.get(objComplementaryCredit.Id);
+                                            mapOfHours.put(objComplementaryCredit.Id, 0);
+                                        }else if(hoursToDeduct <= mapOfHours.get(objComplementaryCredit.Id)){
+                                            mapOfHours.put(objComplementaryCredit.Id, mapOfHours.get(objComplementaryCredit.Id) - hoursToDeduct);
+                                            bookObj.Make_up_Utilize_Bookings__c  += objComplementaryCredit.Id +'-'+hoursToDeduct+';';
+                                            hoursToDeduct = 0;
+                                        }
+                                        //}
+                                        if(hoursToDeduct <= 0){
+                                            break;   
+                                        }
+                                    }
+                                }
+                                //System.debug('bookObj '+bookObj);
+                                bookingUpdatedList.add(bookObj);
+                            }
+                        }
+                        for(String keysetValue : mapOfHours.keyset()){
+                            if(mapOfHours.containsKey(keysetValue)){
+                                complementaryCreditUpdatedList.add(new Complementary_Credit__c(Id = keysetValue, 
+                                Available_credit_Min__c = (Decimal)mapOfHours.get(keysetValue)));
+                            }
+                        }
+                        System.debug('##bookingUpdatedList '+bookingUpdatedList);
+                        if(bookingUpdatedList.size() > 0){
+                            Database.SaveResult[] saveResults = Database.update(bookingUpdatedList, false);
+                            for(Database.SaveResult saveResult : saveResults){
+                                if(!saveResult.isSuccess()){
+                                    isError = true;
+                                }
+                            }
+                        }
+                        if(complementaryCreditUpdatedList.size() > 0){
+                            Database.SaveResult[] saveResults = Database.update(complementaryCreditUpdatedList, false);
+                            for(Database.SaveResult saveResult : saveResults){
+                                if(!saveResult.isSuccess()){
+                                    isError = true;
+                                }
+                            }
                         }
                     }   
                 }
@@ -6013,6 +6214,8 @@ countWithNewPackage +=1;
        public  String email;
         public String phone;
         public integer makeupHours;
+        public integer complementryHours; // added by nishi: 24-feb-2021: for get complementry credit Hours
+        
     }
     
     public class NewBookingWrapper{

@@ -276,10 +276,10 @@
                         <!-- added by nishi:  14-Oct-2020: for show credit memo logo for indicate invoice paid and its patial credit memo or full-->
                         <apex:outputPanel rendered="{!If(isShowCreditMemo, true, false)}">
                             <apex:outputPanel rendered="{!If(isPartial, true, false)}">
-                                <apex:image  style="margin-left:30px;" width="190" title="Partially Used Amount  in Credit Memo" url="{!URLFOR($Resource.Credit_Memo_Logo, 'Credit_Memo_partial.png')}"  alt="Partially Used Amount in Credit Memo"/>
+                                <apex:image style="margin-left:30px;" width="190" title="Partially Used Amount  in Credit Memo" url="{!URLFOR($Resource.Credit_Memo_Logo, 'Credit_Memo_partial.png')}"  alt="Partially Used Amount in Credit Memo"/>
                             </apex:outputPanel>
                             <apex:outputPanel rendered="{!If(isPartial, FALSE, TRUE)}">
-                                <apex:image  style="margin-left:30px;" width="190" title="Full Used Amount in Credit Memo" url="{!URLFOR($Resource.Credit_Memo_Logo, 'Credit_Memo_full.png')}"  alt="Full Used Amount in Credit Memo"/>
+                                <apex:image style="margin-left:30px;" width="190" title="Full Used Amount in Credit Memo" url="{!URLFOR($Resource.Credit_Memo_Logo, 'Credit_Memo_full.png')}"  alt="Full Used Amount in Credit Memo"/>
                             </apex:outputPanel>
                         </apex:outputPanel>
                         <!-- added by nishi: 14-Oct-2020: for show credit memo logo for indicate invoice paid and its patial credit memo or full-->
@@ -329,19 +329,30 @@
                             <b class="{!IF(isOssia==true,'color_Ossia','color')}">Invoice To</b><br/>
                             <b style="color:rgb(79,79,78)">{!invoice.Parent_Account__r.Name}</b><br/>
                             <b class="invoice">A:</b><span class="grayColor"> {!invoice.Parent_Account__r.Billingstreet} {!invoice.Parent_Account__r.BillingCountry} {!invoice.Parent_Account__r.BillingPostalcode}</span><br/>
-                            <b class="invoice">E:</b><span class="grayColor"> {!invoice.Parent_Account__r.personEmail} <b class="invoice">P:</b> {!invoice.Parent_Account__r.personMobilePhone}</span><br/>
+
+                            <b class="invoice">E:</b><span class="grayColor"> 
+                                <apex:outputPanel rendered="{!isContractInvoice}" layout="none">{!invoice.Parent_Account__r.Personal_Email__c}</apex:outputPanel>
+                                <apex:outputPanel rendered="{!!isContractInvoice}" layout="none">{!invoice.Parent_Account__r.personEmail}</apex:outputPanel>
+                                <b class="invoice">P:</b>
+                                 <apex:outputPanel rendered="{!isContractInvoice}" layout="none">{!invoice.Parent_Account__r.Phone}</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!isContractInvoice}" layout="none">{!invoice.Parent_Account__r.personMobilePhone}</apex:outputPanel>
+                                </span><br/>
                         </div>
                     </td>
                     <td>
                         <br/><br/><br/><br/>
-                        <div class="invoice-from">
-                            <!--Color Class Applied By Bhawna On 19-8-20 ---> 
-                            <b class="{!IF(isOssia==true,'color_Ossia','color')}">Invoice From</b><br/>
-                            <b style="color:rgb(79,79,78)">{!center.name}</b><br/>
-                            <b class="invoice">A:</b><span class="grayColor"> {!center.address}</span><br/>
-                             <!-- added on 14 july 2020 hardcoded '(Aureus Group Pte. Ltd.)'-->
-                            <b class="invoice">GST Reg:</b><span class="grayColor"> {!invoice.Center__r.GST_Number__c} {!IF(invoice.Center__r.GST_Number__c!='',' (Aureus Group Pte. Ltd.)','')}</span><br/>
-                        </div>
+                        <!-- nishi: 24-Feb-2021: aureus -Q1-2021: start:we check which invoice type is contract then we not showing center details -->
+                        <apex:outputPanel rendered="{!!isContractInvoice}" layout="none">
+                            <div class="invoice-from">
+                                <!--Color Class Applied By Bhawna On 19-8-20 ---> 
+                                <b class="{!IF(isOssia==true,'color_Ossia','color')}">Invoice From</b><br/>
+                                <b style="color:rgb(79,79,78)">{!center.name}</b><br/>
+                                <b class="invoice">A:</b><span class="grayColor"> {!center.address}</span><br/>
+                                <!-- added on 14 july 2020 hardcoded '(Aureus Group Pte. Ltd.)'-->
+                                <b class="invoice">GST Reg:</b><span class="grayColor"> {!invoice.Center__r.GST_Number__c} {!IF(invoice.Center__r.GST_Number__c!='',' (Aureus Group Pte. Ltd.)','')}</span><br/>
+                            </div>
+                        </apex:outputPanel>
+                        <!-- nishi: 24-Feb-2021: aureus -Q1-2021: end:we check which invoice type is contract then we not showing center details -->
                     </td>
                 </tr>
                 <tr>
@@ -376,25 +387,48 @@
                     <apex:repeat value="{!invoice.Invoice_Line_Items__r}" var="invLineItm">
                         <tr class="border_bottom">
                             <td >
-                                <div class="item-Name"><b style="color:rgb(79,79,78);">
-                                    <apex:outputPanel rendered="{!invLineItm.Is_Discount__c}">
-                                        Discount - 
-                                    </apex:outputPanel>
-                                    {!invLineItm.Package_Name__c}</b><br/>
-                                    <span class="grayColor">
-                                        <apex:outputPanel rendered="{!If(invLineItm.Package__r.Type__c == 'Adhoc', FALSE, TRUE)}">
-                                                {!invLineItm.Subscription_Line_Item__r.Student__r.Name}
-                                                (<apex:outputText value="{0, date,MMM','  yyyy}">
-                                                    <apex:param value="{!invLineItm.Month__c}" /> 
-                                                 </apex:outputText>)
+                                <!-- nishi: 24-Feb-2021: aureus -Q1-2021: start:we check which invoice type is contract then we show student different details -->
+                                <apex:outputPanel rendered="{!isContractInvoice}" layout="none">
+                                    <div class="item-Name"><b style="color:rgb(79,79,78);">
+                                        <apex:outputPanel rendered="{!invLineItm.Is_Discount__c}">
+                                            Discount - 
                                         </apex:outputPanel>
-                                        <apex:outputPanel rendered="{!If(invLineItm.Package__r.Type__c == 'Adhoc', TRUE, FALSE)}">
-                                                (For Ad-hoc booking on <apex:outputText value="{0, date, dd MMM yyyy}">
+                                        {!invLineItm.Package_Name__c} - {!invLineItm.Teacher_Id__r.name}</b><br/>
+                                        
+                                        <span class="grayColor">{!invLineItm.Student_Name__c}
+                                            (For Contract {!invLineItm.Number_of_Lesson__c} Lessons on
+                                            <apex:outputText value="{0, date, dd MMM yyyy}">
+                                                <apex:param value="{!invLineItm.Term_Start_Date__c}" />
+                                            </apex:outputText> - 
+                                            <apex:outputText value="{0, date, dd MMM yyyy}">
+                                                <apex:param value="{!invLineItm.Term_End_Date__c}" />
+                                            </apex:outputText>
+                                            )
+                                        </span>
+                                    </div>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!!isContractInvoice}" layout="none">
+                                    <div class="item-Name"><b style="color:rgb(79,79,78);">
+                                        <apex:outputPanel rendered="{!invLineItm.Is_Discount__c}">
+                                            Discount - 
+                                        </apex:outputPanel>
+                                        {!invLineItm.Package_Name__c}</b><br/>
+                                        <span class="grayColor">
+                                            <apex:outputPanel rendered="{!If(invLineItm.Package__r.Type__c == 'Adhoc', FALSE, TRUE)}">
+                                                    {!invLineItm.Subscription_Line_Item__r.Student__r.Name}
+                                                    (<apex:outputText value="{0, date,MMM','  yyyy}">
                                                         <apex:param value="{!invLineItm.Month__c}" /> 
-                                                        </apex:outputText>)
-                                        </apex:outputPanel>                                       
-                                    </span>
-                                </div>
+                                                    </apex:outputText>)
+                                            </apex:outputPanel>
+                                            <apex:outputPanel rendered="{!If(invLineItm.Package__r.Type__c == 'Adhoc', TRUE, FALSE)}">
+                                                    (For Ad-hoc booking on <apex:outputText value="{0, date, dd MMM yyyy}">
+                                                            <apex:param value="{!invLineItm.Month__c}" /> 
+                                                            </apex:outputText>)
+                                            </apex:outputPanel>                                       
+                                        </span>
+                                    </div>
+                                </apex:outputPanel> 
+                                <!-- nishi: 24-Feb-2021: aureus -Q1-2021: start:we check which invoice type is contract then we show student different details -->
                             </td>
                             <td><div class="PQT grayColor"><apex:outputField value="{!invLineItm.Amount__c}"/></div></td>
                             <td><div class="PQT1 grayColor">01</div></td>

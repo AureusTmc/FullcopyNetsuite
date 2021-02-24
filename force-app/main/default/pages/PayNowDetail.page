@@ -214,7 +214,7 @@
                                         <a class="slds-button custom-btn" onclick="PaymentOption();">Pay Now</a>
                                     </div>
                                      <!-- added outputPanel by nishi:13-Nov:2020: if user is stripe customer then we show card detials-->
-                                     <apex:outputPanel rendered="{!!isAlreadyStripCstmr && isOssia}">
+                                     <apex:outputPanel rendered="{!!isAlreadyStripCstmr && (isOssia || isContractInvoice)}">
                                         <div class="slds-form-element">
                                             <a class="slds-button custom-btn" onclick="oneTimePaymentOption();">One Time Payment</a>
                                         </div>

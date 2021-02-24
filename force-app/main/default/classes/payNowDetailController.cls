@@ -14,14 +14,18 @@ public class payNowDetailController {
     public boolean isAlreadyStripCstmr {get; set;}  // added by nishi: 13-Nov-2020: for if user is not a Stripe customer then you use one time payment using stripe
     public string apiKey{get;set;}
     public string stripeToken{get;set;}
+    public boolean isContractInvoice{get;set;} // nishi: 24-Feb-2021: aureus -Q1-2021: we check which invoice type is contract then we show student different details
+   
     public  payNowDetailController() {
         isOssia= false;
         isAlreadyStripCstmr = false;
         apiKey ='';
+        isContractInvoice = false;  // nishi: 24-Feb-2021: aureus -Q1-2021: we check which invoice type is contract then we show student different details
+         
         paymentRecType = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get(ConstantsClass.paymentTransactionRecType).getRecordTypeId();
         InvId=ApexPages.currentPage().getParameters().get('id');
         InvObj= [Select Id,Status__c,Parent_Account__r.Card_Type__c,Parent_Account__r.Card_Image__c,Customer_Name__c,Parent_Account__r.Name,Parent_Account__c,Name,Balance_Amount__c,Parent_Account__r.Stripe_Customer_Id__c,Parent_Account__r.Card_Number__c, 
-                Center__r.Organisation__r.Stripe_Publishable_Key__c, Center__r.Organisation__r.Name //added by nishi :5-Oct:2020  for show Ossia Logo image
+                Center__r.Organisation__r.Stripe_Publishable_Key__c, Center__r.Organisation__r.Name,Invoice_Type__c //added by nishi :5-Oct:2020  for show Ossia Logo image
                 from Invoice__c where Id=:InvId];
          // added by nishi: 5-Oct:2020 for show Ossia Logo
          if(String.isNotBlank(InvObj.Center__c) && 
@@ -35,7 +39,11 @@ public class payNowDetailController {
         changePayment = 'Charge credit card';
         displayPopup=false;
         displayPopupforDeclined=false;
-
+        // nishi: 24-Feb-2021: aureus -Q1-2021: we check which invoice type is contract then we show student different details
+        if(InvObj.Invoice_Type__c == 'Contract'){
+            isContractInvoice = true;
+        }
+        // nishi: 24-Feb-2021: aureus -Q1-2021: we check which invoice type is contract then we show student different details
         // added by nishi: 13-Nov-2020:start: for if user is not a Stripe customer then you use one time payment using stripe
         if(InvObj.Parent_Account__r.Stripe_Customer_Id__c != null && InvObj.Parent_Account__r.Card_Number__c != null && InvObj.Parent_Account__r.Card_Type__c != null){
             isAlreadyStripCstmr = true;
