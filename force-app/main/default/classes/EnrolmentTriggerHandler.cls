@@ -269,17 +269,21 @@ WHERE Id IN: parIds AND Lead__c != null AND Lead__r.IsConverted = False]);
                       }
         
         List<Case> insCaseList = new List<Case>();
-        List<Case> updCaseList = new List<Case>();        
+        List<Case> updCaseList = new List<Case>();       
+        Set<Id> caseIds = new  Set<Id>();
         for(Enrolment__c enrol: processEnrList){
             Enrolment__c enrParenInfo = enrMap.get(enrol.Id);
             Case salesEnqCase = fillCase(enrol, enrParenInfo);
             
             if(accCaseMap.get(enrol.Parent__c) != null){
-                salesEnqCase.Id  = accCaseMap.get(enrol.Parent__c).Id;
-                // salesEnqCase.Stage__c       = 'Trial Requested';    
-                //salesEnqCase.Opportunity__c = enrol.Opportunity__c;
-                //salesEnqCase.Enrolment__c   = enrol.Id; 
-                updCaseList.add(salesEnqCase);
+                if(!caseIds.contains(accCaseMap.get(enrol.Parent__c).Id)){
+                    salesEnqCase.Id  = accCaseMap.get(enrol.Parent__c).Id;
+                    caseIds.add(accCaseMap.get(enrol.Parent__c).Id); // added by nishi: 25-nov-2020: for updated case uniqueness
+                    // salesEnqCase.Stage__c       = 'Trial Requested';    
+                    //salesEnqCase.Opportunity__c = enrol.Opportunity__c;
+                    //salesEnqCase.Enrolment__c   = enrol.Id; 
+                    updCaseList.add(salesEnqCase);
+                }
             }else{
                 salesEnqCase.AccountId      = enrol.Parent__c;  
                 salesEnqCase.Status         = ConstantsClass.NewStatus;
@@ -783,15 +787,19 @@ accList.add(accObj);
     //via email along with the confirmed timeslot
     public static void  generateRentalInvoice(Set<String> enrolmentIds){
         Map<String,Invoice__c> mapOfInvoice = New Map<String,Invoice__c>();
-        Map<String,Invoice_Line_Item__c> mapOfInvoiceLineItem = New Map<String,Invoice_Line_Item__c>();
+        Map<String,List<Invoice_Line_Item__c>> mapOfInvoiceLineItem = New Map<String,List<Invoice_Line_Item__c>>();
+        List<Invoice_Line_Item__c> listOfInvoiceLineItem = new List<Invoice_Line_Item__c>();
         system.debug('enrolmentIds'+enrolmentIds); 
         list<Subscription_Line_Item__c> listOfSubsLineItem = new LIst<Subscription_Line_Item__c>();
-        
+        Set<string> invIds = new Set<string>();
+        Set<String> parentIds = new Set<String>();
         map<Id,Date> subscriptionMap = new  map<Id,Date> ();
         List<Enrolment__c> listOfEnrolment = new List<Enrolment__c>();
         for(Enrolment__c objEnrolment :  PianoRentalHelperController.getRentalEnrolmentList(enrolmentIds)){
             if(string.isNotBlank(objEnrolment.center__r.id) && string.isNotBlank(objEnrolment.center__r.country__r.id) &&
                 objEnrolment.Subscription_Line_Items__r != null && objEnrolment.Subscription_Line_Items__r.size() >0){
+                    Enrolment__c objNewEnrolment = new Enrolment__c(id= objEnrolment.id,Rental_Start_date__c = objEnrolment.Final_Delivery_date__c.addDays(1));
+                    listOfInvoiceLineItem = new List<Invoice_Line_Item__c>();
                     Country__c countryObj = objEnrolment.center__r.country__r;
                     if(objEnrolment.Subscription_Line_Items__r[0].Amount__c != null && objEnrolment.Final_Delivery_date__c != null){
                         Integer remainingDays = date.daysInMonth(objEnrolment.Final_Delivery_date__c.year(), objEnrolment.Final_Delivery_date__c.month()) - objEnrolment.Final_Delivery_date__c.day();
@@ -801,7 +809,9 @@ accList.add(accObj);
                         system.debug(rentalTotalAmount);
                         
                         Subscription_Line_Item__c  objSubLineItem = objEnrolment.Subscription_Line_Items__r[0];
-                        
+                        if(string.isNotBlank(objEnrolment.Parent__c)){
+                            parentIds.add(objEnrolment.Parent__c);
+                        }
                         Invoice__c objInvoice = BillingUtility.fillInvoice(objSubLineItem.Subscription__c,objEnrolment.Parent__c,ConstantsClass.dueStatus);
                         objInvoice.Center__c = objEnrolment.Center__c;
                         objInvoice.Invoice_Type__c =ConstantsClass.recurringInvoiceType;
@@ -809,21 +819,42 @@ accList.add(accObj);
                        // objInvoice.Invoice_Date__c =objEnrolment.Final_Delivery_date__c;
                        // objInvoice.Due_Date__c=objEnrolment.Final_Delivery_date__c;
                         mapOfInvoice.put(objEnrolment.Id,objInvoice);
-                        Invoice_Line_Item__c inlineItemForChange = new Invoice_Line_Item__c();
-                        inlineItemForChange.Enrolment__c = objEnrolment.id;
-                        inlineItemForChange.Subscription_Line_Item__c = objSubLineItem.Id;
-                        if(rentalTotalAmount > 0){
-                            inlineItemForChange.Amount__c = BillingUtility.roundOffAmount(rentalTotalAmount);                                                               
-                        } 
-                        inlineItemForChange.Package__c = objEnrolment.Package__c;
-                        inlineItemForChange.Is_Deposit__c = false;        
-                        inlineItemForChange.Remarks__C = 'Rental Invoice';                                             
-                        if(countryObj.Tax_Rate__c >  0 && rentalTotalAmount > 0 ){
-                            Double gstAmount = BillingUtility.roundOffAmount(Double.valueOf(rentalTotalAmount) * (countryObj.Tax_Rate__c / 100));
-                            inlineItemForChange.gst_Amount__c = gstAmount;
+                        if(objEnrolment.Free_Rental_Month__c != null && objEnrolment.Free_Rental_Month__c > 0){
+                            objNewEnrolment.Free_Rental_Expiration_Date__c = Datetime.newInstance(objEnrolment.Final_Delivery_date__c,time.newInstance(0, 0,0,0)).addMonths(integer.valueOf(objEnrolment.Free_Rental_Month__c)).date();
+                            Date effectiveFreeRentalDate = objNewEnrolment.Free_Rental_Expiration_Date__c;  //15- apr 
+                            Date startFreeRentalDate = objEnrolment.Final_Delivery_date__c;  //15- apr 
+                            Integer startmonth =0;
+                            while(startFreeRentalDate <= effectiveFreeRentalDate){
+                                system.debug('startFreeRentalDate'+startFreeRentalDate);
+                                date invoicedate = objEnrolment.Final_Delivery_date__c;
+                                date lastdate = date.newInstance(invoicedate.year(), invoicedate.month(),date.daysInMonth(invoicedate.year(), invoicedate.month()));
+                                if(startFreeRentalDate !=  objEnrolment.Final_Delivery_date__c){
+                                    invoicedate=  date.newInstance(startFreeRentalDate.addmonths(1).year(), startFreeRentalDate.addmonths(1).month(),1);
+                                    lastdate = date.newInstance(invoicedate.year(), invoicedate.month(),date.daysInMonth(invoicedate.year(), invoicedate.month()));
+                                    //firstDate = 1 mar  lastDate = 30m
+                                    if(effectiveFreeRentalDate != NULL && invoicedate.daysBetween(effectiveFreeRentalDate) > 0 ){
+                                        if((effectiveFreeRentalDate >= invoicedate || effectiveFreeRentalDate.month() < invoicedate.month()) && effectiveFreeRentalDate <= lastDate){
+                                            rentalTotalAmount = effectiveFreeRentalDate.day() * ( objEnrolment.Subscription_Line_Items__r[0].Amount__c  /  date.daysInMonth(effectiveFreeRentalDate.year(), effectiveFreeRentalDate.month()));
+                                            listOfInvoiceLineItem.add(createInvoiceLineItem(objEnrolment,objSubLineItem.Id, rentalTotalAmount, countryObj.Tax_Rate__c, true,'Complimentary Rental Invoice',invoicedate));
+                                        }else{
+                                            listOfInvoiceLineItem.add(createInvoiceLineItem(objEnrolment,objSubLineItem.Id,objEnrolment.Subscription_Line_Items__r[0].Amount__c , countryObj.Tax_Rate__c, true,'Complimentary Rental Invoice',invoicedate));
+                                        }
+                                    }  
+                                    listOfInvoiceLineItem.add(createInvoiceLineItem(objEnrolment,objSubLineItem.Id, objEnrolment.Subscription_Line_Items__r[0].Amount__c , countryObj.Tax_Rate__c, false,'Rental Invoice',invoicedate));
+                                }else{
+                                    listOfInvoiceLineItem.add(createInvoiceLineItem(objEnrolment,objSubLineItem.Id, rentalTotalAmount, countryObj.Tax_Rate__c, false,'Rental Invoice',objEnrolment.Final_Delivery_date__c));
+                                    listOfInvoiceLineItem.add(createInvoiceLineItem(objEnrolment,objSubLineItem.Id, rentalTotalAmount, countryObj.Tax_Rate__c, true,'Complimentary Rental Invoice',objEnrolment.Final_Delivery_date__c));
+                                }
+                                startFreeRentalDate=lastdate;
+                            }
                         }
-                        inlineItemForChange.month__c = objEnrolment.Final_Delivery_date__c;
-                        mapOfInvoiceLineItem.put(objEnrolment.Id,inlineItemForChange);
+                        else{
+                            listOfInvoiceLineItem.add(createInvoiceLineItem(objEnrolment,objSubLineItem.Id, rentalTotalAmount, countryObj.Tax_Rate__c, false,'Rental Invoice',objEnrolment.Final_Delivery_date__c));
+                               
+                        }
+                        
+                        mapOfInvoiceLineItem.put(objEnrolment.Id,listOfInvoiceLineItem);
+
                         system.debug('mapOfInvoice'+mapOfInvoice); 
                         system.debug('mapOfInvoiceLineItem'+mapOfInvoiceLineItem);
 
@@ -845,7 +876,7 @@ accList.add(accObj);
                          //ENd:added by nishi: 27-Jul-2020: for already subscription start date and next bill date exist then we 
                        system.debug('@@listOfSubsLineItem'+listOfSubsLineItem);
                         //10-Feb-2020: add Rental start date 
-                        listOfEnrolment.add(new Enrolment__c(id= objEnrolment.id,Rental_Start_date__c = objEnrolment.Final_Delivery_date__c.addDays(1)));
+                        listOfEnrolment.add(objNewEnrolment);
                     }           
                 }
         } 
@@ -859,14 +890,18 @@ accList.add(accObj);
             insert mapOfInvoice.values();
             system.debug('mapOfInvoice'+mapOfInvoice);
             Map<String,String> mapOfInvoiceId = new  Map<String,String>();
+            List<Invoice_Line_Item__c> listOfInsertInvoiceLineItem = new List<Invoice_Line_Item__c>();
             if(mapOfInvoiceLineItem != null && mapOfInvoiceLineItem.Size() > 0){
-                for(Invoice_Line_Item__c inlineItemForChange : mapOfInvoiceLineItem.values()){
-                    if(mapOfInvoice.containsKey(inlineItemForChange.Enrolment__c)){
-                        inlineItemForChange.Invoice__c = mapOfInvoice.get(inlineItemForChange.Enrolment__c).id;
-                        mapOfInvoiceId.put(mapOfInvoice.get(inlineItemForChange.Enrolment__c).id,inlineItemForChange.Enrolment__c); 
+                for(string  enrolmentId : mapOfInvoiceLineItem.keyset()){
+                    for(Invoice_Line_Item__c inlineItemForChange  : mapOfInvoiceLineItem.get(enrolmentId)){
+                        if(mapOfInvoice.containsKey(enrolmentId)){
+                            inlineItemForChange.Invoice__c = mapOfInvoice.get(enrolmentId).id;
+                            mapOfInvoiceId.put(mapOfInvoice.get(enrolmentId).id,enrolmentId); 
+                        }
+                        listOfInsertInvoiceLineItem.add(inlineItemForChange);
                     }
                 }
-                Insert  mapOfInvoiceLineItem.values();
+                Insert  listOfInsertInvoiceLineItem;
             }
             system.debug('mapOfInvoiceLineItem'+mapOfInvoiceLineItem);
              // 5-Feb:2020: for update subscription_line_item or subscription next bill date and start date
@@ -887,10 +922,37 @@ accList.add(accObj);
                 }
                 system.debug('W@@listOfSubscription'+listOfSubscription);
             }
-           
+            
+           // Nishi: 15-Feb-2021: We have given Complimentary Loan Discount. We offer a rental period so we create an invoice but the invoice amount is adjusted in the credit memo so we created an invoice of 0 amount.   
+            // List<Credit_Memo__c> listOfCreditMemos  =PaymentComponentController.generateCreditMemoQuery(parentIds);
+            // if(listOfCreditMemos != null && listOfCreditMemos.size()>0){
+            //     Date lastDate = listOfCreditMemos[0].Credit_Memo_Date__c;
+            //     adjustCreditMemoDeposit( mapOfInvoiceId, parentIds, lastDate, true);
+            // }
+            // Nishi: 15-Feb-2021: We have given Complimentary Loan Discount. We offer a rental period so we create an invoice but the invoice amount is adjusted in the credit memo so we created an invoice of 0 amount.                                                    
             getPaymentForInvoices(mapOfInvoiceId);  
+            
         }
         
+    }
+
+    private static Invoice_Line_Item__c createInvoiceLineItem(enrolment__c objEnrolment,string subLineItemId,Decimal rentalTotalAmount,Decimal taxRate, boolean isDiscount,string remarks,date invoiceDate){
+        Invoice_Line_Item__c inlineItemForChange = new Invoice_Line_Item__c();
+        inlineItemForChange.Enrolment__c = objEnrolment.id;
+        inlineItemForChange.Subscription_Line_Item__c = subLineItemId;
+        if(rentalTotalAmount > 0){
+            inlineItemForChange.Amount__c = BillingUtility.roundOffAmount(isDiscount ?  rentalTotalAmount * -1: rentalTotalAmount);                                                               
+        } 
+        inlineItemForChange.Is_Discount__c= isDiscount;
+        inlineItemForChange.Package__c = objEnrolment.Package__c;
+        inlineItemForChange.Is_Deposit__c = false;        
+        inlineItemForChange.Remarks__C = remarks;                                             
+        if(taxRate >  0 && rentalTotalAmount > 0 ){
+            Double gstAmount = BillingUtility.roundOffAmount(Double.valueOf(rentalTotalAmount) * (taxRate / 100));
+            inlineItemForChange.gst_Amount__c = BillingUtility.roundOffAmount(isDiscount ?  gstAmount * -1: gstAmount);    
+        }
+        inlineItemForChange.month__c = invoiceDate;
+        return inlineItemForChange;
     }
     @future (callout=true)
     public static void getPaymentForInvoices(Map<String,String> mapOfInvoiceId){
@@ -899,5 +961,35 @@ accList.add(accObj);
         } 
     }
     
-   
+    // Nishi: 15-Feb-2021: We have given Complimentary Loan Discount. We offer a rental period so we create an invoice but the invoice amount is adjusted in the credit memo so we created an invoice of 0 amount.   
+    Private static void adjustCreditMemoDeposit(Map<String,String> mapOfInvoiceId,Set<String> setOfParentIds,
+    Date lastDate, boolean isGetTotalAmount){
+         List<Invoice__c> listOfInv = new List<Invoice__c>();
+        Map<String, Date> mapOfParentEnrolmentLastDate = new Map<String, Date>();
+        //@Jatin on 21st Nov 2019 commented due to refund record not created
+        //Map<String, Set<String>> mapOfParentEnrolments = new Map<String, Set<String>>();
+        for(Invoice__c invoiceObj : [SELECT Id, Name,Parent_Account__c,Total_Amount__c, Remarks__c,Invoice_Date__c,Parent_Account__r.Centre_Name__c,
+        Center__r.Country__r.Tax_Rate__c,Credit_Memo_Amount__c,Balance_Amount__c,
+                                            (SELECT Id, Enrolment__r.id,Enrolment__r.Package_Process_Type__c ,
+                                            Enrolment__r.Effective_Date__c ,Package__c
+                                            FROM Invoice_Line_Items__r) 
+                                        FROM Invoice__c 
+                                    WHERE Id IN : mapOfInvoiceId.keySet()]){
+            listOfInv.add(invoiceObj);
+            for(Invoice_Line_Item__c  lineItemObj : invoiceObj.Invoice_Line_Items__r){
+                if(mapOfParentEnrolmentLastDate.containsKey(invoiceObj.Parent_Account__c) && 
+                    mapOfParentEnrolmentLastDate.get(invoiceObj.Parent_Account__c) < lineItemObj.Enrolment__r.Effective_Date__c){
+                    mapOfParentEnrolmentLastDate.put(invoiceObj.Parent_Account__c, lineItemObj.Enrolment__r.Effective_Date__c);
+                }else if(String.isNotBlank(lineItemObj.Enrolment__c) && lineItemObj.Enrolment__r.Package_Process_Type__c == ConstantsClass.enrollmentProcessCancelType 
+                            && lineItemObj.Enrolment__r.Effective_Date__c != NULL){
+                    mapOfParentEnrolmentLastDate.put(invoiceObj.Parent_Account__c, lineItemObj.Enrolment__r.Effective_Date__c);
+                }
+            }
+        }
+        Map<String, Boolean> mapOfActiveParent = new Map<String, Boolean>();
+        mapOfActiveParent = BillingUtility.checkParentHasMultipleEnrolments(setOfParentIds, lastDate);
+        Map<String,List<Credit_Memo__c>> mapOfParentCreditMemo = BillingUtility.getParentCreditMemo(setOfParentIds,lastDate);
+        BillingUtility.adjustPendingCreditMemoDeposit(listOfInv, mapOfInvoiceId.keySet(), setOfParentIds, mapOfParentEnrolmentLastDate,isGetTotalAmount,mapOfParentCreditMemo,mapOfActiveParent);
+    }
+    
 }

@@ -479,9 +479,11 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
                       
             Map<String,Invoice__c> mapofinvoice = new Map<String,Invoice__c>();
             Map<String,Invoice_line_item__c> mapofinvoicelineitem = new Map<String,Invoice_line_item__c>();
+            system.debug('@@@isPromotionalEnrolment'+isPromotionalEnrolment);
             for(Invoice__c invoiceobj : UpgradeDowngradeController.getInvoiceDetails(objEnrol,lastLessonDateObj,objSubLineItem)){
                 //added by nishi: 23-oct-2020:start: if enrolment package type is prepayament and promo and Promotion_Discount__c found then we calculate discount amount for regular booking  and refund all prepayement effective months 
                 if(isPromotionalEnrolment){
+                    system.debug('@@@invoiceobj'+invoiceobj);
                     for(Invoice_line_item__c objlineitem: invoiceobj.Invoice_line_items__r){
                         if(objlineitem.month__c.month() == lastLessonDateObj.month()){
                             mapofinvoice.put('Current',invoiceobj);
@@ -776,11 +778,11 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
                         objCreditLineItem.Is_Discount__c=objInvLine.Is_Discount__c;
                         listOfCreditmemolineitem.add(objCreditLineItem);                                      
                         //Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
-                        Invoice_Line_Item__c objupdateInvLine = new Invoice_Line_Item__c(id=objInvLine.id,Credit_Memo_Amount__c = objInvLine.Amount__c);
-                        if(objInvLine.GST_Amount__c != Null ){
-                            objupdateInvLine.Credit_Memo_Tax__c = objInvLine.GST_Amount__c;
+                        objInvLine.Credit_Memo_Amount__c = objInvLine.Amount__c;
+                        if( objInvLine.GST_Amount__c != Null ){
+                            objInvLine.Credit_Memo_Tax__c = objInvLine.GST_Amount__c;
                         }
-                        updateInvoiceLineItem.add(objupdateInvLine);
+                        updateInvoiceLineItem.add(objInvLine);
                     }
                 }
             }
@@ -803,7 +805,8 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
                                                 Month__C >=: firstDate AND Month__C <=: lastDate 
                                                  AND Booking__c = NULL)
                                          //AND Invoice_Date__c >=: firstDate 
-                                         AND Invoice_Date__c <=: lastDate AND Status__c = 'Paid' 
+                                         //AND Invoice_Date__c <=: lastDate 
+                                         AND Status__c = 'Paid' 
                                          Order By total_amount__c ];
         if(listOfInvoice.size()>0){
             chargeId = listOfInvoice[0].Stripe_charge_id__c;

@@ -124,7 +124,7 @@ public  class SearchInstrumentRental_IpadCntrl {
 
     //public static 
     public SearchInstrumentRental_IpadCntrl(){
-        isSiteGuestUser = true;// (UserInfo.getName()).contains('Site');
+        isSiteGuestUser =  (UserInfo.getName()).contains('Site');
 
         //CH09 Start
             if( String.isNotBlank( Label.Instrument_Type_for_the_Existing_Aureus_Students ) ){
@@ -346,7 +346,7 @@ options.add(new SelectOption(str,str));*/
                 count = count+1;
             }
             
-            List<Enrolment__c> enrList = [SELECT Id, Name, Parent__c, Parent__r.Name, Parent__r.Personemail, Parent_Email__c, Student__c, Parent__r.FirstName, Parent__r.LastName,
+            List<Enrolment__c> enrList = [SELECT Id, Name, Parent__c, Parent__r.Name, Parent__r.Personemail, Parent_Email__c, Student__c, Parent__r.FirstName, Parent__r.LastName,Unit_and_Level__c,
                                           Parent__r.Phone, Parent__r.BillingStreet, Parent__r.BillingCity,  Parent__r.BillingPostalCode,  Parent__r.BillingCountryCode, House_type__c, Block__c,Additional_Delivery_comments__c,
                                           Teacher__c, Teacher__r.Name, Package__c, Package__r.Name, Trial_Date__c, Trial_Start_Time__c, Center__c, Center__r.Name, Standard_Accessories__c,
                                           Parent__r.Stripe_Customer_Id__c, Parent__r.Card_Number__c, Parent__r.Card_Type__c, Parent__r.Card_Image__c,Center__r.Country__r.name, Center__r.Country__c, Center__r.Organisation__c
@@ -383,7 +383,7 @@ options.add(new SelectOption(str,str));*/
                 BillingPostalCode = enrList.get(0).Parent__r.BillingPostalCode;
                 BillingStreet      = enrList.get(0).Parent__r.BillingStreet;
                 BillingCountryCode = enrList.get(0).Parent__r.BillingCountryCode;
-                block =enrList.get(0).block__C;
+                block =enrList.get(0).Unit_and_Level__c;
                 Housetype =  enrList.get(0).House_type__c;
                 cenOrgId = enrList.get(0).Center__r.Organisation__c;
                 slcdEnrolment = enrList.get(0);
@@ -505,13 +505,16 @@ options.add(new SelectOption(str,str));*/
             }else{
                 minimumCommitmentPeriod = 6;
             }
-             //start:CH011 :Minimum Commitment will be X* months as well for the lessons 
+            //start:CH011 :Minimum Commitment will be X* months as well for the lessons 
             if(isAureusNewEnolment && totalFreeRentalMonth > 0){
                 minimumCommitmentPeriod =  Integer.valueOf(totalFreeRentalMonth);
             }
-             //end:CH011
+            //end:CH011
+           
         }//end of checking the exisitng student creteria
-        //CH09 END         
+        //CH09 END     
+        
+       
         
         //CH08 : for Aureus Students Delivery fees
         if(/*commented by nishi: for check active enrolment isAlreadyStripCstmr != null && isAlreadyStripCstmr*/ isAnyActiveEnrolment != null && isAnyActiveEnrolment  && String.isNotBlank( Label.Delivery_Charges_for_Aureus_Students )){
@@ -521,6 +524,7 @@ options.add(new SelectOption(str,str));*/
             slcdPiano.monthlyRental = slcdPiano.studentPrice;
             //CH09
         }
+        gstAmount = (gstAmount != null && gstAmount > 0) ?gstAmount: fm.gstTaxPer;
         //CH08 END
         //Start: nishi: 27-Jul-2020: Existing Student – one month (with any active enrolment) ; others – two months
         if(isAnyActiveEnrolment != null && isAnyActiveEnrolment){ //commented by nishi: for check active enrolment if(isAlreadyStripCstmr != null && isAlreadyStripCstmr){ 
@@ -528,20 +532,20 @@ options.add(new SelectOption(str,str));*/
             //CH02 
             //fm.depFee = BillingUtility.roundOffAmount(Decimal.valueOf(Label.Piano_Rental_Deposit_Fee)); CH02 Karan 17 Sep 2020 :use piano Deposit fee only instead Label as now we are getting rental amount of piano from netSuite
             system.debug('gstAmount-->  ' + gstAmount);
+            
             if(string.isNotBlank(slcdPiano.monthlyRental) &&  slcdPiano.monthlyRental != Null ){
                 fm.depFee = (Decimal.valueOf(slcdPiano.monthlyRental));
                 //CH03 Will add Gst amount as well
-                fm.depFee += BillingUtility.roundOffAmount((Decimal.valueOf(slcdPiano.monthlyRental)) * gstAmount) /100;
-                fm.depFee = (fm.depFee); 
+                fm.depFee += ((Decimal.valueOf(slcdPiano.monthlyRental)) * gstAmount) /100;
+                fm.depFee = BillingUtility.roundOffAmount(fm.depFee); 
                 system.debug('slcdPiano.monthlyRental'+slcdPiano.monthlyRental);  
                 system.debug('isAureusNewEnolment'+isAureusNewEnolment);  
                 system.debug('totalFreeRentalMonth'+totalFreeRentalMonth);  
                   //start:CH011
-                if(isAureusNewEnolment && totalFreeRentalMonth >0){
+                if(isAureusNewEnolment && totalFreeRentalMonth >0 && setMinimumRental_Termination_InstrumentTypes.contains( slcdPiano.inventoryType)){
                     fm.isDiscount = true;
                     fm.discountAmount =BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.monthlyRental) *totalFreeRentalMonth );
-                    fm.discountGstAmount = BillingUtility.roundOffAmount(((Decimal.valueOf(slcdPiano.monthlyRental) *totalFreeRentalMonth) * gstAmount) /100);
-                    //fm.discountAmount = BillingUtility.roundOffAmount(fm.discountAmount);
+                    //fm.discountGstAmount = BillingUtility.roundOffAmount(((Decimal.valueOf(slcdPiano.monthlyRental) *totalFreeRentalMonth) * gstAmount) /100);
                 }else{
                     totalFreeRentalMonth = 1;
                 }
@@ -603,6 +607,7 @@ options.add(new SelectOption(str,str));*/
         fm.totFee += fm.depFee;
        //start:CH011
         fm.totFee = BillingUtility.roundOffAmount(fm.totFee);
+        system.debug('totalFreeRentalMonth'+totalFreeRentalMonth);
         fm.prmtnalPkgInMonth = totalFreeRentalMonth;
        // fm.subsTot  = BillingUtility.roundOffAmount(fm.totFee - (fm.discountAmount));
         //fm.grandTot =BillingUtility.roundOffAmount(fm.subsTot + fm.gstAmt);
@@ -1231,14 +1236,15 @@ rw.errorMsg = 'Unknown error occured. Please contact your admin.';
     public void  updateCstmrDetail(){        
         //update parentAcc;//;// commented by nishi:23-Sep-2020: according to  new requirement we update or insert customer details
         upsert parentAcc;
+        system.debug('parentAcc'+parentAcc);
     }
     Public void signAgreement(){
         documentDetails = new PandaDocUtility.CreateDocument();
         if(String.isNotBlank(ParentAcc.id)){
-            String body = fillCreateDocumentWrapper(slcdEnrolment);  
+            String body = fillCreateDocumentWrapper(slcdEnrolment,isAureusNewEnolment);  
             documentDetails = PandaDocUtility.createDocument(body);   
         }  
-        
+        system.debug('documentDetails'+documentDetails);
     }
     
     Public Void waitAgreement(){
@@ -1285,14 +1291,18 @@ rw.errorMsg = 'Unknown error occured. Please contact your admin.';
     }
     
     
-    private String fillCreateDocumentWrapper(Enrolment__c enrolDetail){        
+    private String fillCreateDocumentWrapper(Enrolment__c enrolDetail,boolean isAureusNewEnolment){        
         String jsonBody = '';   
-        
-        List<Enrolment__c> enrList = [SELECT Id, Name, Parent__c, Parent__r.FirstName, Parent__r.LastName, Parent__r.PersonEmail, Model__c, Serial_Number__c, Rental_price_per_month__c 
+        List<Enrolment__c> enrList = new List<Enrolment__c>();
+        if(isAureusNewEnolment || string.isBlank(enrolDetail.Id)){
+            enrList.add(enrolDetail);
+        }else{
+            enrList = [SELECT Id, Name, Parent__c, Parent__r.FirstName, Parent__r.LastName, Parent__r.PersonEmail, Model__c, Serial_Number__c, Rental_price_per_month__c 
                                       FROM Enrolment__c WHERE Id =: enrolDetail.Id];
-        List<User> userList = [SELECT Id,FirstName,LastName,Email FROM User WHERE Id=: Userinfo.getUserId()];
+        }
+        //List<User> userList = [SELECT Id,FirstName,LastName,Email FROM User WHERE Id=: Userinfo.getUserId()];
         
-        if(enrList.size() > 0 && userList.size() > 0){
+        if(enrList.size() > 0 ){ //&&  userList.size() > 0
             String pandaFolderId   =  'Hk2younc4gRoh696TvY6yn';
             String pandaTemplateId =  '9LbUZRRrAofSkQ3ECrYfEB';
             if(isRentalOrSellType.equalsIgnoreCase('Sell')){
@@ -1301,7 +1311,7 @@ rw.errorMsg = 'Unknown error occured. Please contact your admin.';
             }
             
             Enrolment__c enrolmentObj = enrList.get(0);
-            User curntUsr = userList.get(0);
+            //User curntUsr = userList.get(0);
             
             //DocumentWrapperForPianoAgreement.recipients recipientTransporter = new DocumentWrapperForPianoAgreement.recipients();     
             DocumentWrapperForPianoAgreement.recipients recipientClient = new DocumentWrapperForPianoAgreement.recipients();     
@@ -1558,8 +1568,8 @@ System.debug('@@@jsonBody'+jsonBody);
                         parentAcc.RecordTypeId   = csmrRecId;
                         parentAcc.Stripe_Customer_Id__c = stripeCstmrId;
                         parentAcc.BillingStreet = (String.isNotBlank(BillingStreet)) ?BillingStreet + ' ': '';
-                        parentAcc.BillingCity +=  (String.isNotBlank(BillingCity)) ?BillingCity + ' ': '';
-                        parentAcc.BillingPostalCode +=  (String.isNotBlank(BillingPostalCode)) ?BillingPostalCode + ' ': '';
+                        parentAcc.BillingCity =  (String.isNotBlank(BillingCity)) ?BillingCity + ' ': '';
+                        parentAcc.BillingPostalCode =  (String.isNotBlank(BillingPostalCode)) ?BillingPostalCode + ' ': '';
                        
                         if(String.isNotBlank(last4CardNumber))
                             parentAcc.Card_Number__c = last4CardNumber;
@@ -1589,8 +1599,8 @@ System.debug('@@@jsonBody'+jsonBody);
                         slcdEnrolment.Cancellation_Policy_Agreed__c = true;
                         slcdEnrolment.No_of_Stairs__c = nostairs;
                         slcdEnrolment.Center__c = slcdCenter;
-                        slcdEnrolment.block__C=  block;
-                      
+                        slcdEnrolment.Unit_and_Level__c=  block;
+                        slcdEnrolment.PIN_code__c = BillingPostalCode;
                         slcdEnrolment.House_type__c=Housetype;
                         //CH02 Changes after Net Suite Integration
                         
@@ -1604,6 +1614,12 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                         slcdEnrolment.Serial_Number__c = slcdPiano.serialNumber ;
                         slcdEnrolment.Brand__c = slcdPiano.brand ;
                         slcdEnrolment.Rental_price_per_month__c =  Decimal.valueOf(slcdPiano.monthlyRental );
+                        system.debug('fm.prmtnalPkgInMonth'+fm.prmtnalPkgInMonth);
+                        system.debug('fm.isDiscount'+fm.isDiscount);
+                        system.debug('totalFreeRentalMonth'+totalFreeRentalMonth);
+                        if(isAureusNewEnolment && fm.isDiscount ){
+                            slcdEnrolment.Free_Rental_Month__c = totalFreeRentalMonth;//fm.prmtnalPkgInMonth;
+                        }
                         slcdEnrolment.Selling_price__c = Decimal.valueOf(slcdPiano.listPrice );
                         slcdEnrolment.Product_Id__c =  'R-' + slcdPiano.productId; //newly added
                         //CH02 END
@@ -1842,6 +1858,11 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
     //we create payment with reference charge id 
     public PageReference SaveAndCompleteProcessViaReferenceId(){
         Decimal amountInSmallUnit      = fm.grandTot;
+        String csmrRecId =  Schema.SObjectType.Account.getRecordTypeInfosByName().get('Customer').getRecordTypeId(); 
+        parentAcc.RecordTypeId   = csmrRecId;
+        parentAcc.BillingStreet = (String.isNotBlank(BillingStreet)) ?BillingStreet + ' ': '';
+        parentAcc.BillingCity =  (String.isNotBlank(BillingCity)) ?BillingCity + ' ': '';
+        parentAcc.BillingPostalCode =  (String.isNotBlank(BillingPostalCode)) ?BillingPostalCode + ' ': '';
         parentAcc.Centre_Name__c = slcdCenter;
         List<Account> centrList = [SELECT Id, Name, Location__c, Country__r.Country_Name__c FROM Account WHERE Id =: slcdCenter];
         if(centrList.size() > 0){
@@ -1852,6 +1873,12 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
         }
         //update parentAcc;// commented by nishi:23-Sep-2020: according to  new requirement we update or insert customer details
         upsert parentAcc;
+
+        slcdEnrolment.Unit_and_Level__c=  block;
+        slcdEnrolment.PIN_code__c = BillingPostalCode;
+        slcdEnrolment.House_type__c=Housetype;
+        slcdEnrolment.Product_Id__c =  'R-' + slcdPiano.productId; //newly added
+        //CH02 END
         //Filling enrolment
         if(isRentalOrSellType.equalsIgnoreCase('Rent'))
             slcdEnrolment.Stage__c = 'Piano Rental Active';
@@ -1882,8 +1909,11 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
         slcdEnrolment.Brand__c = slcdPiano.brand;
         slcdEnrolment.Rental_price_per_month__c = Decimal.valueOf(slcdPiano.monthlyRental);
         slcdEnrolment.Selling_price__c = Decimal.valueOf(slcdPiano.listPrice );
-        if(isAureusNewEnolment){
-            slcdEnrolment.Free_Rental_Month__c = fm.prmtnalPkgInMonth;
+        system.debug('fm.prmtnalPkgInMonth'+fm.prmtnalPkgInMonth);
+        system.debug('fm.isDiscount'+fm.isDiscount);
+        system.debug('totalFreeRentalMonth'+totalFreeRentalMonth);
+        if(isAureusNewEnolment && fm.isDiscount ){
+            slcdEnrolment.Free_Rental_Month__c = totalFreeRentalMonth;//fm.prmtnalPkgInMonth;
         }
         //CH02 END
         slcdEnrolment.Delivery_Charges__c= fm.deliCharges > 0 ? fm.deliCharges : 0;
@@ -1910,8 +1940,11 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
             slcdEnrolment.put('Delivery_Option_Timeslot_'+count+'__c', deliverTime);
             
             count = count+1;
-        }                        
-       // update slcdEnrolment;// commented by nishi:23-Sep-2020: according to  new requirement we update or insert customer details
+        }  
+        slcdEnrolment.Offline_Signing_Selected__c = isCustmrOptedOfflineSign; 
+        slcdEnrolment.Instrument_Type__c = slcdPiano.inventoryType;
+        slcdEnrolment.Min_Commit_Dur_Inst_Rental__c = minimumCommitmentPeriod;
+        slcdEnrolment.Min_Notice_Inst_Rental_Termination__c = minimumRentalTerminationPeriod;
         upsert slcdEnrolment;
         //Mark as complete booking which created trail earlier
         List<Booking__c> bookList = [SELECT Id, Status__c FROM Booking__c where Enrolment__c=: slcdEnrolment.Id AND Type__c IN ('Trial','Piano Viewing') AND Status__c != 'Completed'];
@@ -2286,7 +2319,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
     
     public  void fetchAureusStudentEnrolment(String parentId,  Set<String> enrolmentIds){
         if(String.isNotBlank(parentId)){
-            List<Enrolment__c> enrList = [SELECT Id, Name, Parent__c, Parent__r.Name, Parent__r.Personemail, Parent_Email__c, Student__c, Parent__r.FirstName, Parent__r.LastName,
+            List<Enrolment__c> enrList = [SELECT Id, Name, Parent__c, Parent__r.Name, Parent__r.Personemail, Parent_Email__c, Student__c, Parent__r.FirstName, Parent__r.LastName,Unit_and_Level__c,
                                           Parent__r.Phone, Parent__r.BillingStreet, Parent__r.BillingCity,  Parent__r.BillingPostalCode,  Parent__r.BillingCountryCode, House_type__c, Block__c,Additional_Delivery_comments__c,
                                           Teacher__c, Teacher__r.Name, Package__c, Package__r.Name, Trial_Date__c, Trial_Start_Time__c, Center__c, Center__r.Name, Standard_Accessories__c,
                                           Parent__r.Stripe_Customer_Id__c, Parent__r.Card_Number__c, Parent__r.Card_Type__c, Parent__r.Card_Image__c,Center__r.Country__r.name, Center__r.Country__c, Center__r.Organisation__c,
@@ -2312,7 +2345,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                 BillingCity = enrList.get(0).Parent__r.BillingCity;
                 BillingPostalCode = enrList.get(0).Parent__r.BillingPostalCode;
                 BillingStreet      = enrList.get(0).Parent__r.BillingStreet;
-                block = enrList.get(0).block__C;
+                block = enrList.get(0).Unit_and_Level__c;
                 BillingCountryCode  = enrList.get(0).Parent__r.BillingCountryCode;
                 parentAcc.BillingPostalCode  = enrList.get(0).Parent__r.BillingPostalCode;
                 parentAcc.BillingCountryCode = enrList.get(0).Parent__r.BillingCountryCode;

@@ -39,42 +39,64 @@ public class RegularInvoiceHandler implements PackageProcessInterface{
                                                                 invLineItmStair.Remarks__c = 'Additional Stairs Pickup Charges ('+noOfStairs+' Steps - $10/Step)';
                 listOfInvoiceLineItems.add(invLineItmStair);
             }else{
+                 // added by nishi: 15-Feb-2021:start: To manage the rental exemption amount, if Free_Rental_Expiration_Date__c is present, we check if it is less than the last date of the month.
+                if(objSubLineItem.Enrolment__r.Free_Rental_Month__c != null && objSubLineItem.Enrolment__r.Free_Rental_Month__c > 0){
+                    Date effectiveFreeRentalDate = objSubLineItem.Enrolment__r.Free_Rental_Expiration_Date__c;  //15- apr
+                    //firstDate = 1 mar  lastDate = 30m
+                    if(effectiveFreeRentalDate != NULL && firstDate.daysBetween(effectiveFreeRentalDate) > 0 ){
+                        if((effectiveFreeRentalDate >= firstDate || effectiveFreeRentalDate.month() < firstDate.month()) && effectiveFreeRentalDate <= lastDate){
+                            Decimal rentalTotalAmount = effectiveFreeRentalDate.day() * ( objSubLineItem.Amount__c /  date.daysInMonth(effectiveFreeRentalDate.year(), effectiveFreeRentalDate.month()));
+                            Invoice_Line_Item__c invLineItm = PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,rentalTotalAmount* -1,
+                            objSubLineItem.Enrolment__r.Package__c,False,objSubLineItem.Enrolment__r.Teacher__c);
+                            invLineItm.Remarks__c = 'Piano Rental';
+                            invLineItm.Is_Discount__c = true;
+                            listOfInvoiceLineItems.add(invLineItm);
+                        }else{
+                            Invoice_Line_Item__c invLineItm = PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,objSubLineItem.Amount__c* -1,
+                                                                objSubLineItem.Enrolment__r.Package__c,False,objSubLineItem.Enrolment__r.Teacher__c);
+                            invLineItm.Is_Discount__c = true;
+                            invLineItm.Remarks__c = 'Piano Rental';
+                            listOfInvoiceLineItems.add(invLineItm);
+                        }
+                    }  
+                } 
+                // added by nishi: 15-Feb-2021:end: To manage the rental exemption amount, if Free_Rental_Expiration_Date__c is present, we check if it is less than the last date of the month.
                 Invoice_Line_Item__c invLineItm = PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,objSubLineItem.Amount__c,
                                                                 objSubLineItem.Enrolment__r.Package__c,False,objSubLineItem.Enrolment__r.Teacher__c);
                 invLineItm.Remarks__c = 'Piano Rental';
                 listOfInvoiceLineItems.add(invLineItm);
-            }
-         }else{
-            Date effectiveDate = objSubLineItem.Enrolment__r.Promotional_Period_End_Date__c;       
-            if(effectiveDate != NULL && (effectiveDate >= firstDate || effectiveDate.month() < firstDate.month())  && effectiveDate <= lastDate &&
-            String.isNotBlank(objSubLineItem.Enrolment__r.Lesson_Day__c) && 
-            mapOfDates.containsKey(objSubLineItem.Enrolment__r.Lesson_Day__c)){
-                Integer noOfLessonToBeBilled = 0;
-                List<Date> listOfDates = mapOfDates.get(objSubLineItem.Enrolment__r.Lesson_Day__c);
-                if(listOfDates.size() == 5){
-                    listOfDates.remove(4);
                 }
-                for(Date objDate : listOfDates){
-                    if(objDate > effectiveDate){
-                        noOfLessonToBeBilled += 1;
-                    } 
-                }
-                system.debug('noOfLessonToBeBilled'+noOfLessonToBeBilled);
-                if(noOfLessonToBeBilled > 0){
-                    /*Commented by nishi:11-Jan-2020: for invoice packages amount according to Promo enrolment changed into regular package.
-                    Decimal lessonCharge = noOfLessonToBeBilled *  objSubLineItem.Enrolment__r.Package__r.Unit_Fee__c;
-                    listOfInvoiceLineItems.add(PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,lessonCharge  ,objSubLineItem.Enrolment__r.Package__c,False,objSubLineItem.Enrolment__r.Teacher__c)); 
-					*/
-                    Decimal lessonCharge = noOfLessonToBeBilled *  objSubLineItem.Enrolment__r.Package_To_Be_Change__r.Unit_Fee__c;
-                    listOfInvoiceLineItems.add(PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,lessonCharge  ,objSubLineItem.Enrolment__r.Package_To_Be_Change__c,False,objSubLineItem.Enrolment__r.Teacher__c)); 
-                   //added by nishi:11-Jan-2020: for invoice packages amount according to Promo enrolment changed into regular package.           
-                }   
             }else{
-                Invoice_Line_Item__c invLineItm = PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,objSubLineItem.Amount__c,
-                                                                objSubLineItem.Enrolment__r.Package__c,False,objSubLineItem.Enrolment__r.Teacher__c);
-                listOfInvoiceLineItems.add(invLineItm);
-            }   
-         }
+                Date effectiveDate = objSubLineItem.Enrolment__r.Promotional_Period_End_Date__c;       
+                if(effectiveDate != NULL && (effectiveDate >= firstDate || effectiveDate.month() < firstDate.month())  && effectiveDate <= lastDate &&
+                String.isNotBlank(objSubLineItem.Enrolment__r.Lesson_Day__c) && 
+                mapOfDates.containsKey(objSubLineItem.Enrolment__r.Lesson_Day__c)){
+                    Integer noOfLessonToBeBilled = 0;
+                    List<Date> listOfDates = mapOfDates.get(objSubLineItem.Enrolment__r.Lesson_Day__c);
+                    if(listOfDates.size() == 5){
+                        listOfDates.remove(4);
+                    }
+                    for(Date objDate : listOfDates){
+                        if(objDate > effectiveDate){
+                            noOfLessonToBeBilled += 1;
+                        } 
+                    }
+                    system.debug('noOfLessonToBeBilled'+noOfLessonToBeBilled);
+                    if(noOfLessonToBeBilled > 0){
+                        /*Commented by nishi:11-Jan-2020: for invoice packages amount according to Promo enrolment changed into regular package.
+                        Decimal lessonCharge = noOfLessonToBeBilled *  objSubLineItem.Enrolment__r.Package__r.Unit_Fee__c;
+                        listOfInvoiceLineItems.add(PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,lessonCharge  ,objSubLineItem.Enrolment__r.Package__c,False,objSubLineItem.Enrolment__r.Teacher__c)); 
+                        */
+                        Decimal lessonCharge = noOfLessonToBeBilled *  objSubLineItem.Enrolment__r.Package_To_Be_Change__r.Unit_Fee__c;
+                        listOfInvoiceLineItems.add(PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,lessonCharge  ,objSubLineItem.Enrolment__r.Package_To_Be_Change__c,False,objSubLineItem.Enrolment__r.Teacher__c)); 
+                    //added by nishi:11-Jan-2020: for invoice packages amount according to Promo enrolment changed into regular package.           
+                    }   
+                }else{
+                    Invoice_Line_Item__c invLineItm = PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,objSubLineItem.Amount__c,
+                                                                    objSubLineItem.Enrolment__r.Package__c,False,objSubLineItem.Enrolment__r.Teacher__c);
+                    listOfInvoiceLineItems.add(invLineItm);
+                }   
+            }
         return listOfInvoiceLineItems;
     }
 

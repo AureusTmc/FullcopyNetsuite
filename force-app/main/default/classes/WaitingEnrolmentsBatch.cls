@@ -12,7 +12,7 @@ global with sharing class WaitingEnrolmentsBatch implements Database.Batchable<s
     global Set<String> enrolStatus;
     global String enroledStage;
     global WaitingEnrolmentsBatch (){
-        enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus}; 
+        enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus,}; 
         enrolStatus =New Set<String>{ConstantsClass.enrolWaitingStatus};
         enroledStage = ConstantsClass.enroledStatus;
     }
@@ -27,6 +27,9 @@ global with sharing class WaitingEnrolmentsBatch implements Database.Batchable<s
         queryString+= ' AND Preferred_End_time__c != null ';
         queryString+= ' AND Preferred_Start_Time__c != null ';
         queryString+= ' AND Preferred_Day__c != null ';
+        // string enrolmentId='a066F00001VZgNPQA1';
+        // queryString+= ' AND Id =:enrolmentId ';
+        
        return Database.getQueryLocator(queryString);                           
     }
     
@@ -49,6 +52,7 @@ global with sharing class WaitingEnrolmentsBatch implements Database.Batchable<s
         }
         if(preferredTeacherDays != null && preferredTeacherDays.size() >0 && preferredEnrolmentLessonDays != null && preferredEnrolmentLessonDays.size() > 0){
             List<Enrolment__c> cancelledEnrolmentList = getCanceledEnrolmentList(preferredTeacherDays,preferredEnrolmentLessonDays);
+            System.debug('cancelledEnrolmentList'+cancelledEnrolmentList);
             map<string,Set<string>> cancelEnrolmentDayTime = new map<string,Set<string>>();
             set<string> cancelEnrolmentTimeslots = new set<string>();
             set<string> peferredEnrolmentTimeslots = new set<string>();
@@ -72,12 +76,15 @@ global with sharing class WaitingEnrolmentsBatch implements Database.Batchable<s
                     cancelEnrolmentLessonDays.put(objEnrolment.Lesson_Day__c,listOfCanceledEnrolment);
                 }
             }
-
+            System.debug('cancelTeacherDays'+cancelTeacherDays);
+            System.debug('cancelEnrolmentLessonDays'+cancelEnrolmentLessonDays);
+            System.debug('listOfPrefferedEnrolment'+listOfPrefferedEnrolment);
             if(cancelTeacherDays != null && cancelTeacherDays.size() >0 && cancelEnrolmentLessonDays != null && cancelEnrolmentLessonDays.size() > 0){
                 sendSingleEmailMessage = sendEmailToWaitlistEnrolments(listOfPrefferedEnrolment, cancelTeacherDays, cancelEnrolmentLessonDays,mapOfEmailTemplate);
-                system.debug('sendSingleEmailMessage'+sendSingleEmailMessage);
+                System.debug('sendSingleEmailMessage'+sendSingleEmailMessage);
                 if(sendSingleEmailMessage != null && sendSingleEmailMessage.size() > 0 ){
-                    Messaging.sendEmail(sendSingleEmailMessage, FALSE); 
+                    System.debug('sendSingleEmailMessage'+sendSingleEmailMessage);
+                    Messaging.sendEmail(sendSingleEmailMessage,false); 
                 }
             }
         }
@@ -106,33 +113,57 @@ global with sharing class WaitingEnrolmentsBatch implements Database.Batchable<s
         List<Messaging.SingleEmailMessage> sendSingleEmailMessage = new List<Messaging.SingleEmailMessage>();  
         
         for(Enrolment__c objPreferredEnrolment: listOfPrefferedEnrolment){
-            //System.debug('objCancelEnrolment'+objCancelEnrolment); 
+             System.debug('objPreferredEnrolment'+objPreferredEnrolment); 
              listOfCanceledEnrolment = new List<Enrolment__c>();
              peferredEnrolmentTimeslots = new set<string>();
              cancelWorkingDays = new set<string>();
              cancelEnrolmentTimeSlots = new set<String>();
+             System.debug('objPreferredEnrolment.Preferred_Teacher__c'+objPreferredEnrolment.Preferred_Teacher__c); 
              if(cancelTeacherDays.containsKey(objPreferredEnrolment.Preferred_Teacher__c)){
                 cancelWorkingDays  = cancelTeacherDays.get(objPreferredEnrolment.Preferred_Teacher__c);
-                if(string.isnotBlank(objPreferredEnrolment.Preferred_Day__c) && (cancelWorkingDays != null && cancelWorkingDays.size() > 0 && cancelWorkingDays.contains(objPreferredEnrolment.Preferred_Day__c)) 
+                System.debug('cancelWorkingDays'+cancelWorkingDays); 
+                System.debug('objPreferredEnrolment.Preferred_Day__c'+objPreferredEnrolment.Preferred_Day__c); 
+                System.debug('cancelEnrolmentLessonDays'+cancelEnrolmentLessonDays); 
+
+                if(string.isnotBlank(objPreferredEnrolment.Preferred_Day__c) && (cancelWorkingDays != null && cancelWorkingDays.size() > 0 
+                    && cancelWorkingDays.contains(objPreferredEnrolment.Preferred_Day__c)) 
                     && cancelEnrolmentLessonDays.containsKey(objPreferredEnrolment.Preferred_Day__c) ){
                     listOfCanceledEnrolment = cancelEnrolmentLessonDays.get(objPreferredEnrolment.Preferred_Day__c) ;
+                    System.debug('listOfCanceledEnrolment'+listOfCanceledEnrolment); 
                     DateTime peferredEnrolmentstartTime = DateTime.newInstance(system.today(),  objPreferredEnrolment.Preferred_Start_Time__c);
                      DateTime peferredEnrolmentendime = DateTime.newInstance(system.today(),  objPreferredEnrolment.Preferred_End_time__c);
+                     System.debug('peferredEnrolmentstartTime'+peferredEnrolmentstartTime); 
+                     System.debug('peferredEnrolmentendime'+peferredEnrolmentendime); 
                      if(peferredEnrolmentstartTime != NULL && peferredEnrolmentendime != NULL){
                         peferredEnrolmentTimeslots = MakeupEnrolmentBatchHelper.getFormatedTimeSlotList(peferredEnrolmentstartTime, peferredEnrolmentendime);
+                        System.debug('peferredEnrolmentTimeslots'+peferredEnrolmentTimeslots);
                         if(peferredEnrolmentTimeslots != null && peferredEnrolmentTimeslots.size() > 0 && listOfCanceledEnrolment != null && listOfCanceledEnrolment.size() > 0){
                             for( Enrolment__c objCancelEnrolment : listOfCanceledEnrolment){
                                 DateTime cancelEnrolmentstartTime = DateTime.newInstance(system.today(),  objCancelEnrolment.Lesson_Start_time__c);
                                 DateTime cancelEnrolmentendTime = DateTime.newInstance(system.today(),  objCancelEnrolment.Lesson_Start_time__c.addMinutes(Integer.valueOf(objCancelEnrolment.Package__r.Duration__c)));
+                                  System.debug('cancelEnrolmentstartTime'+cancelEnrolmentstartTime);
+                                  System.debug('cancelEnrolmentendTime'+cancelEnrolmentendTime);
                                 if(cancelEnrolmentstartTime != NULL && cancelEnrolmentendTime != NULL){
                                     cancelEnrolmentTimeSlots = MakeupEnrolmentBatchHelper.getFormatedTimeSlotList(cancelEnrolmentstartTime, cancelEnrolmentendTime);
+                                      System.debug('cancelEnrolmentTimeSlots'+cancelEnrolmentTimeSlots);
+                                      System.debug('peferredEnrolmentTimeslots'+peferredEnrolmentTimeslots);
+                                      System.debug('objCancelEnrolment.Package__r.Duration__c'+objCancelEnrolment.Package__r.Duration__c);
+                                      System.debug('objPreferredEnrolment.Package__r.Duration__c'+objPreferredEnrolment.Package__r.Duration__c);
+                                      System.debug('cancelEnrolmentTimeSlots.containsAll(peferredEnrolmentTimeslots)'+cancelEnrolmentTimeSlots.containsAll(peferredEnrolmentTimeslots));
+                                      System.debug('cancelEnrolmentTimeSlots.containsAll(peferredEnrolmentTimeslots)'+peferredEnrolmentTimeslots.containsAll(cancelEnrolmentTimeSlots));
                                     // check canceled enrolment time slots are match to perferred enrolment if we found that time slots so we send a email to customer and update Waitlist_Status__c
-                                    if(cancelEnrolmentTimeSlots != null && cancelEnrolmentTimeSlots.size() > 0 && cancelEnrolmentTimeSlots.containsAll(peferredEnrolmentTimeslots)
+                                    if(cancelEnrolmentTimeSlots != null && cancelEnrolmentTimeSlots.size() > 0 && peferredEnrolmentTimeslots.containsAll(cancelEnrolmentTimeSlots)
                                      && objCancelEnrolment.Package__r.Duration__c >=  objPreferredEnrolment.Package__r.Duration__c){
                                         System.debug('objPreferredEnrolment'+objPreferredEnrolment.name); 
                                         System.debug('objCancelEnrolment'+objCancelEnrolment.name); 
                                         if(mapOfEmailTemplate != null && mapOfEmailTemplate.size() > 0 ){
-                                            Messaging.SingleEmailMessage objSingleEmailMessage = MakeupEnrolmentBatchHelper.getEmailInformation(mapOfEmailTemplate,objPreferredEnrolment);
+                                            string templatename='';
+                                            if(objPreferredEnrolment.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                                                templatename = 'Ossia_Waitlist_Enrolment_Time_Available';
+                                            }else{
+                                                templatename = 'Waitlist_Enrolment_Time_Available';
+                                            }
+                                            Messaging.SingleEmailMessage objSingleEmailMessage = MakeupEnrolmentBatchHelper.getEmailInformation(mapOfEmailTemplate,objPreferredEnrolment,templatename);
                                             if(objSingleEmailMessage != null){
                                                 sendSingleEmailMessage.add(objSingleEmailMessage);
                                                 objPreferredEnrolment.Waitlist_Status__c ='Emailed';
@@ -147,6 +178,7 @@ global with sharing class WaitingEnrolmentsBatch implements Database.Batchable<s
                  }
              }
          }
+         System.debug('listOfPrefferedEnrolment'+listOfPrefferedEnrolment); 
          update listOfPrefferedEnrolment;
          return sendSingleEmailMessage;
     }

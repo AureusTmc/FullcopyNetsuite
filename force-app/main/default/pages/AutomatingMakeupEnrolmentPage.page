@@ -1,4 +1,4 @@
-<apex:page showHeader="false" standardController="enrolment__c" standardStylesheets="true" docType="html-5.0" applyBodyTag="False"
+<apex:page showHeader="false" standardController="Enrolment__c" standardStylesheets="true" docType="html-5.0" applyBodyTag="False"
     applyHtmlTag="False">
     
     <head>
@@ -581,8 +581,8 @@
 
 
     </head>
-    <apex:form>
-        <c:AutomatingMakeupEnrolmentCMP enrolId="{!enrolment__c.Id}" isPage="true"/>
+    <apex:form >
+        <c:AutomatingMakeupEnrolmentCMP enrolId="{!Enrolment__c.Id}" isPage="true"/>
     </apex:form>
    
 </apex:page>
