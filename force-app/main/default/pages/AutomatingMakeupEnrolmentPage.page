@@ -1,11 +1,29 @@
-<apex:page showHeader="false" standardController="Enrolment__c" standardStylesheets="true" docType="html-5.0" applyBodyTag="False"
+<apex:page showHeader="false" standardController="Booking__c" standardStylesheets="true" docType="html-5.0" applyBodyTag="False"
     applyHtmlTag="False">
     
     <head>
         <title>Aureus Academy Makeup Booking</title>
         
-        <c:IpadHeaderJqueryCmp />
+        <!-- <c:IpadHeaderJqueryCmp /> -->
         <style>
+            .slds-button {
+                position: relative;
+                display: inline-block;
+                padding: 0;
+                background: 0 0;
+                background-clip: border-box;
+                border: 1px solid transparent;
+                border-radius: .25rem;
+                line-height: 1.875rem;
+                text-decoration: none;
+                color: #0070d2;
+                -webkit-appearance: none;
+                white-space: normal;
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
             /*.sticky {  position: fixed;  top: 0;  width: 100%; z-index:99;}*/
 
             .sticky {
@@ -575,6 +593,10 @@
                     left: 10%;
                 }
             }
+            tr.slds-hint-parent {
+                height: 70px;
+            }
+           
         </style>
 
 
@@ -582,7 +604,8 @@
 
     </head>
     <apex:form >
-        <c:AutomatingMakeupEnrolmentCMP enrolId="{!Enrolment__c.Id}" isPage="true"/>
+        <!-- <c:AutomatingMakeupEnrolmentCMP bookingId="{!booking__C.Id}" isPage="true"/> -->
+        <c:AutoNewMakeupBookingCMP bookingId="{!booking__C.Id}" isPage="true"/>
     </apex:form>
    
 </apex:page>

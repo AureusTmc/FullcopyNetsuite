@@ -11,12 +11,15 @@ global with sharing class WaitingEnrolmentsBatch implements Database.Batchable<s
     global Set<String> enrolTypes;
     global Set<String> enrolStatus;
     global String enroledStage;
+    Global datetime enrolmentEffectiveDate;
     global WaitingEnrolmentsBatch (){
-        enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus,}; 
+        enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus}; 
         enrolStatus =New Set<String>{ConstantsClass.enrolWaitingStatus};
         enroledStage = ConstantsClass.enroledStatus;
+        enrolmentEffectiveDate =system.now().addDays(1);//Datetime.newInstance(date.newInstance( 2021,3,6),system.now().time());
     }
     global Database.QueryLocator start(Database.BatchableContext BC){
+        String weekday = enrolmentEffectiveDate.format('EEEE');
         string queryString = 'SELECT Id,Name,Student__c,Waitlist_Status__c,Preferred_End_time__c,Preferred_Start_Time__c,Preferred_Day__c,Preferred_Teacher__c ,Center__c, Center__r.Name, Teacher__c, Package__c,Lesson_Start_time__c, Package__r.Duration__c, Lesson_Day__c,Parent__c, Parent__r.Available_Make_up_Units__c,Student__r.Name,Parent__r.Name, ';
         queryString+= ' Package_Process_Type__c, Package_Process_Request_Date__c,New_Package_Id__c, Package_Process_Status__c, Effective_Date__c,New_Teacher__c, Next_Lesson_Start_time__c, New_Lesson_Day__c, Stage__c,New_Centre__c,';
         queryString+= ' Type__c, Class__c,New_Class__c,Center__r.Organisation__r.name,Parent__r.Centre_Name__r.Location__c,Parent__r.PersonContactId  FROM Enrolment__c ';
@@ -27,7 +30,9 @@ global with sharing class WaitingEnrolmentsBatch implements Database.Batchable<s
         queryString+= ' AND Preferred_End_time__c != null ';
         queryString+= ' AND Preferred_Start_Time__c != null ';
         queryString+= ' AND Preferred_Day__c != null ';
-        // string enrolmentId='a066F00001VZgNPQA1';
+        queryString+= ' AND Preferred_Day__c =: weekday ';
+        
+        // string enrolmentId='a066F00001VZgNP';
         // queryString+= ' AND Id =:enrolmentId ';
         
        return Database.getQueryLocator(queryString);                           
@@ -45,12 +50,83 @@ global with sharing class WaitingEnrolmentsBatch implements Database.Batchable<s
                                             }
          List<Messaging.SingleEmailMessage> sendSingleEmailMessage = new List<Messaging.SingleEmailMessage>();                                            
         set<string> preferredTeacherDays = new set<string>(); 
-        set<string> preferredEnrolmentLessonDays = new set<string> (); 
+        //set<string> preferredEnrolmentLessonDays = new set<string> (); 
+        set<string> setofCenterIds = new set<string>();
+        list<string> listOfTeacherWithDuration = new list<string>();
+
         for(Enrolment__c objEnrolment: listOfPrefferedEnrolment){
             preferredTeacherDays.add(objEnrolment.Preferred_Teacher__c);
-            preferredEnrolmentLessonDays.add(objEnrolment.Preferred_Day__c);
+            //preferredEnrolmentLessonDays.add(objEnrolment.Preferred_Day__c);
+            setofCenterIds.add(objEnrolment.Center__c);
+            if(string.isNotBlank(objEnrolment.Package__c) && objEnrolment.Package__r.Duration__c != null){
+                listOfTeacherWithDuration.add(objEnrolment.Package__r.Duration__c);
+            }
         }
-        if(preferredTeacherDays != null && preferredTeacherDays.size() >0 && preferredEnrolmentLessonDays != null && preferredEnrolmentLessonDays.size() > 0){
+        Map<string,MakeupEnrolmentBatchHelper.MakeupAvailMinDetails> mapOfMakeupAvailMinDetails = MakeupEnrolmentBatchHelper.getMultipleTeacherWorkingHourTimeSlotList(setofCenterIds ,preferredTeacherDays,new set<string>{ enrolmentEffectiveDate.format('E')},listOfTeacherWithDuration,enrolmentEffectiveDate,false);
+        if(mapOfMakeupAvailMinDetails != null && mapOfMakeupAvailMinDetails.size() > 0){
+            system.debug('@mapOfMakeupAvailMinDetails'+mapOfMakeupAvailMinDetails);
+            Map<string,MakeupEnrolmentBatchHelper.EnrolmentDetails> mapOfEnrolmentDetails = MakeupEnrolmentBatchHelper.sendPreferredEnrolmentNotification(listOfPrefferedEnrolment,mapOfMakeupAvailMinDetails,listOfTeacherWithDuration,enrolmentEffectiveDate);
+            if(mapOfEnrolmentDetails != null && mapOfEnrolmentDetails.size() > 0){
+                system.debug('mapOfEnrolmentDetails'+mapOfEnrolmentDetails);
+               List<Mobile_Notification__c> listOfMobileNotification = new List<Mobile_Notification__c>();
+                // we get templete according to organisation
+                Set<string> availabletime =new Set<string>() ;
+                Set<string>  availableMakeupTimeSlot =new Set<string>() ;
+                if(mapOfEnrolmentDetails != null && mapOfEnrolmentDetails.size() > 0){
+                    List<Enrolment__c> updateEnrolments= new  List<Enrolment__c>();
+                    for(MakeupEnrolmentBatchHelper.EnrolmentDetails objEnrolmentDetails: mapOfEnrolmentDetails.values()){
+                        if(objEnrolmentDetails.mapOfavailTimeslots != null && objEnrolmentDetails.mapOfavailTimeslots.size() > 0){
+                            availabletime =new Set<string>();
+                            availableMakeupTimeSlot =new Set<string>() ;
+                            for(string duration : objEnrolmentDetails.mapOfavailTimeslots.keyset()){
+                                availabletime =objEnrolmentDetails.mapOfavailTimeslots.get(duration);
+                                if(availabletime != null && availabletime.size() > 0){
+                                    for(string slot:availabletime){
+                                        availableMakeupTimeSlot.add(slot + ' (' + duration+ ' mins)');
+                                    }
+                                }
+                                
+                            }
+                            if(availableMakeupTimeSlot != null && availableMakeupTimeSlot.size() > 0){
+                                string templatename='';
+                                if(objEnrolmentDetails.objEnrolment.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                                    templatename = 'Ossia_Waitlist_Enrolment_Time_Available';
+                                }else{
+                                    templatename = 'Waitlist_Enrolment_Time_Available';
+                                }
+                                Messaging.SingleEmailMessage objSingleEmailMessage = MakeupEnrolmentBatchHelper.getEmailInformation(mapOfEmailTemplate,objEnrolmentDetails.objEnrolment,templatename);
+                                if(objSingleEmailMessage != null){
+                                    sendSingleEmailMessage.add(objSingleEmailMessage);
+                                    updateEnrolments.add(new enrolment__c (id= objEnrolmentDetails.objEnrolment.id,Waitlist_Status__c ='Emailed'));
+                                }
+                            }
+                        }
+                        system.debug('objEnrolmentDetails'+objEnrolmentDetails.objEnrolment.name);
+                        system.debug('objEnrolmentDetails.mapOfavailTimeslots'+objEnrolmentDetails.mapOfavailTimeslots);
+                    }
+                    system.debug('updateEnrolments'+updateEnrolments);
+                    if(updateEnrolments != null && updateEnrolments.size() > 0 ){
+                        update updateEnrolments;
+                    }
+                }
+            
+                system.debug('listOfMobileNotification'+listOfMobileNotification);
+                system.debug('sendSingleEmailMessage'+sendSingleEmailMessage);
+                if(sendSingleEmailMessage != null && sendSingleEmailMessage.size() > 0 ){
+                    Messaging.SendEmailResult[] result = Messaging.sendEmail(sendSingleEmailMessage,false);
+                    Set<Id> targetIdsFailed = new Set<Id>();
+                    for(Messaging.SendEmailResult resObj: result){
+                        if(!resObj.isSuccess()){
+                            targetIdsFailed.add(resObj.getErrors()[0].getTargetObjectId());
+                        }
+                    }
+                    system.debug('targetIdsFailed'+targetIdsFailed);
+                }
+            
+            }
+        }
+       
+        /*if(preferredTeacherDays != null && preferredTeacherDays.size() >0 && preferredEnrolmentLessonDays != null && preferredEnrolmentLessonDays.size() > 0){
             List<Enrolment__c> cancelledEnrolmentList = getCanceledEnrolmentList(preferredTeacherDays,preferredEnrolmentLessonDays);
             System.debug('cancelledEnrolmentList'+cancelledEnrolmentList);
             map<string,Set<string>> cancelEnrolmentDayTime = new map<string,Set<string>>();
@@ -87,7 +163,7 @@ global with sharing class WaitingEnrolmentsBatch implements Database.Batchable<s
                     Messaging.sendEmail(sendSingleEmailMessage,false); 
                 }
             }
-        }
+        }*/
        
     }
 

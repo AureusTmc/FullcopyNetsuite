@@ -1,7 +1,7 @@
 <apex:component controller="AutomatingMakeupEnrolmentCtrl" allowDML="True" access="global">
     <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/jquery.min.js')}" />
     <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/moment.min.js')}" />
-    <apex:attribute name="enrolId" description="" type="String" assignTo="{!enrolmentId}" />
+    <apex:attribute name="bookingId" description="" type="String" assignTo="{!regularBookingId}" />
     <apex:attribute name="isPage" description="" type="Boolean" default="false" />
     <apex:outputPanel rendered="{!isPage}">
         <div class="slds-p-around_medium" style="{!iF(isOssiaOrg,'font-size:15px; background-color: #ed1c24; text-align:center; color:#fff; font-weight:bold;','font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;')}">{!IF(isOssiaOrg,'Ossia Makup Process','Aureus Academy Makup Process')}
@@ -12,7 +12,7 @@
     </apex:outputPanel>
 
     <apex:outputPanel id="availTimeslots">
-        <apex:outputPanel id="errorMessage" rendered="{!isError}">
+        <!-- <apex:outputPanel id="errorMessage" rendered="{!isError}">
             <div class="slds-text-align_center slds-is-relative cmpErrDiv">
                 <div class="slds-notify slds-notify_toast slds-theme_error slds-m-left_none slds-m-right_medium" role="status">
                     <div class="slds-notify__content">
@@ -30,6 +30,7 @@
                 </div>
             </div>
         </apex:outputPanel>
+   
         <apex:actionStatus id="spinner" styleClass="status">
             <apex:facet name="start">
                 <div class="demo-only demo--inverse " style="height:100%;width:100%;z-index:200;position:fixed">
@@ -42,7 +43,7 @@
                     </div>
                 </div>
             </apex:facet>
-        </apex:actionStatus>
+        </apex:actionStatus> -->
         <!-- <apex:outputPanel id="errorMessage" rendered="{!if(isError || isSucess , true,false)}">
             <script>
                 alert('{!errorMessage}');
@@ -93,11 +94,11 @@
             </div>
         </apex:repeat>
     </apex:outputPanel>
-    <apex:actionFunction name="createBooking" action="{!createBooking}" reRender="availTimeslots" status="spinner">
+    <!-- <apex:actionFunction name="createBooking" action="{!createBooking}" reRender="availTimeslots" status="spinner">
         <apex:param name="realtimeslot" value="" assignTo="{!selectedtimeslotRealTime}" />
         <apex:param name="timeslot" value="" assignTo="{!selectedtimeslot}" />
         <apex:param name="duration" value="" assignTo="{!selectedduration}" />
-    </apex:actionFunction>
+    </apex:actionFunction> -->
 
     <script>
         function createmakeupBooking(timeslot, duration) {
@@ -107,7 +108,16 @@
             console.log(starttime);
             console.log(duration);
             if (confirm("Are you sure to book this " + duration + " mins Booking?")) {
-                createBooking(realtimeslot, timeslot, duration);
+                //createBooking(realtimeslot, timeslot, duration);
+                window.open('/apex/CreateNewMakeupBookings?BookingId={!regularBookingId}&timeslotRealTime='+realtimeslot+'&bookingTime='+starttime+'&duration='+duration,'targetWindow',
+                                   `toolbar=no,
+                                    location=no,
+                                    status=no,
+                                    menubar=no,
+                                    scrollbars=yes,
+                                    resizable=yes,
+                                    width=400,
+                                    height=400`);
             }
         }
     </script>
