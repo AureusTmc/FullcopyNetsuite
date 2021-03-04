@@ -1,7 +1,7 @@
 <apex:component controller="AutomatingMakeupEnrolmentCtrl" allowDML="True" access="global">
     <!-- <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/jquery.min.js')}" />
     <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/moment.min.js')}" /> -->
-    <apex:slds/>
+    <apex:slds />
     <apex:attribute name="bookingId" description="" type="String" assignTo="{!regularBookingId}" />
     <apex:attribute name="isPage" description="" type="Boolean" default="false" />
     <apex:outputPanel rendered="{!isPage}">

@@ -227,8 +227,8 @@ public with sharing class MakeupEnrolmentBatchHelper {
             string duration =objEnrolment.Package__r.Duration__c;
             DateTime enrolmentAddedStartTime = DateTime.newInstance(enrolmentEffectiveDate.date(),  objEnrolment.Preferred_Start_Time__c);
             DateTime enrolmentAddedEndTime = DateTime.newInstance(enrolmentEffectiveDate.date(),  objEnrolment.Preferred_End_time__c);
-            DateTime enrolmentstartTime = DateTime.newInstance(enrolmentEffectiveDate.date(),  objEnrolment.Lesson_Start_time__c);
-            DateTime enrolmentendTime = DateTime.newInstance(enrolmentEffectiveDate.date(),  objEnrolment.Lesson_Start_time__c.addMinutes(Integer.valueOf(objEnrolment.Package__r.Duration__c)));
+            DateTime enrolmentstartTime = DateTime.newInstance(enrolmentEffectiveDate.date(), (objEnrolment.Lesson_Start_time__c != null ? objEnrolment.Lesson_Start_time__c :objEnrolment.Trial_Start_Time__c) );
+            DateTime enrolmentendTime = DateTime.newInstance(enrolmentEffectiveDate.date(),  (objEnrolment.Lesson_Start_time__c != null ? objEnrolment.Lesson_Start_time__c :objEnrolment.Trial_Start_Time__c).addMinutes(Integer.valueOf(objEnrolment.Package__r.Duration__c)));
             if(enrolmentstartTime != NULL && enrolmentendTime != NULL && enrolmentAddedStartTime != NULL && enrolmentAddedEndTime != NULL){
                 enrolmentRequiredTimeSlots = MakeupEnrolmentBatchHelper.getFormatedTimeSlotList(enrolmentAddedStartTime, enrolmentAddedEndTime);
                 List<String> enrolmentRealTimeSlots = new List<string>(MakeupEnrolmentBatchHelper.getFormatedTimeSlotList(enrolmentstartTime, enrolmentendTime));

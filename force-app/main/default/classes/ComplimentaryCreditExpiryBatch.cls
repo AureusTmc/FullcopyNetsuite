@@ -16,6 +16,8 @@ global with sharing class ComplimentaryCreditExpiryBatch implements Database.Bat
                                             Enrolment__r.Package_Process_Status__c,Enrolment__r.Package_Process_Type__c,Enrolment__r.effective_Date__c
                                             FROM Complementary_Credit__c 
                                             WHERE  Parent__c != null
+                                            And Credit_Expiry_date__c != null 
+                                            And Credit_Apply_date__c != null
                                         ]);
                                 
     }
@@ -23,50 +25,67 @@ global with sharing class ComplimentaryCreditExpiryBatch implements Database.Bat
     global void execute(Database.BatchableContext BC, List<Complementary_Credit__c> listOfComplementaryCredit){
         Set<String> setOfParentIds = new Set<String>();
         for(Complementary_Credit__c objComplementaryCredit : listOfComplementaryCredit){
-            if(string.isNotBlank(objComplementaryCredit.Enrolment__c)){
-                enrolment__c objEnrolment = objComplementaryCredit.Enrolment__r;
-                if(objEnrolment.stage__c == 'Cancelled' && objEnrolment.Type__c == 'Regular'){
-                    setOfParentIds.add(objComplementaryCredit.Parent__c);
-                }else if(string.isnotBlank(objEnrolment.Package_Process_Type__c) && objEnrolment.Package_Process_Type__c == ConstantsClass.enrollmentProcessCancelType){
-                    if(string.isnotBlank(objEnrolment.Package_Process_Status__c)){
-                        setOfParentIds.add(objComplementaryCredit.Parent__c);
-                    }
-                }
-            }else{
                 setOfParentIds.add(objComplementaryCredit.Parent__c);
-            }
         }
         Map<String, Boolean> mapOfActiveParent = new Map<String, Boolean>();
-        mapOfActiveParent = BillingUtility.checkParentHasMultipleEnrolments(setOfParentIds, complimentaryEffectiveDate);
+        mapOfActiveParent = checkParentHasMultipleEnrolments(setOfParentIds, complimentaryEffectiveDate);
+        Map<String, Date> mapOfParentCancelEnrolment  = getParentCancelEnrolmentsDate(setOfParentIds);
         system.debug('listOfComplementaryCredit'+listOfComplementaryCredit);
+        system.debug('mapOfActiveParent'+mapOfActiveParent);
+        system.debug('mapOfParentCancelEnrolment'+mapOfParentCancelEnrolment);
         for(Complementary_Credit__c objComplementaryCredit : listOfComplementaryCredit){
+            system.debug('mapOfParentCancelEnrolment'+mapOfParentCancelEnrolment.containsKey(objComplementaryCredit.Parent__c));
+            system.debug('mapOfParentCancelEnrolment'+mapOfParentCancelEnrolment.get(objComplementaryCredit.Parent__c));
+            if(!mapOfActiveParent.containsKey(objComplementaryCredit.Parent__c) && mapOfParentCancelEnrolment.containsKey(objComplementaryCredit.Parent__c)){
+                objComplementaryCredit.Credit_Expiry_date__c = mapOfParentCancelEnrolment.get(objComplementaryCredit.Parent__c);
+            }
             if(objComplementaryCredit.Is_Active__c && objComplementaryCredit.Credit_Expiry_date__c != null && objComplementaryCredit.Credit_Expiry_date__c <=  complimentaryEffectiveDate){
                 objComplementaryCredit.Is_Active__c = false;
-            }
-            if(!objComplementaryCredit.Is_Active__c && objComplementaryCredit.Credit_Apply_date__c != null && objComplementaryCredit.Credit_Apply_date__c <=  complimentaryEffectiveDate){
+            }else if(!objComplementaryCredit.Is_Active__c && objComplementaryCredit.Credit_Apply_date__c != null && objComplementaryCredit.Credit_Apply_date__c <=  complimentaryEffectiveDate){
                 objComplementaryCredit.Is_Active__c = true;
-            }
-            if(string.isNotBlank(objComplementaryCredit.Enrolment__c)){
-                enrolment__c objEnrolment = objComplementaryCredit.Enrolment__r;
-                if(objEnrolment.stage__c == 'Cancelled' && objEnrolment.Type__c == 'Regular'){
-                    if(!mapOfActiveParent.containsKey(objComplementaryCredit.Parent__c)){
-                        objComplementaryCredit.Is_Active__c = false;
-                        objComplementaryCredit.Credit_Expiry_date__c = objEnrolment.effective_Date__c;
-                    }
-                }else if(string.isnotBlank(objEnrolment.Package_Process_Type__c) && objEnrolment.Package_Process_Type__c == ConstantsClass.enrollmentProcessCancelType){
-                    if(string.isnotBlank(objEnrolment.Package_Process_Status__c) && (!mapOfActiveParent.containsKey(objComplementaryCredit.Parent__c))){
-                        if(objEnrolment.Package_Process_Status__c == ConstantsClass.enrollmentProcessPendingStatus){
-                            objComplementaryCredit.Credit_Expiry_date__c = objEnrolment.effective_Date__c;
-                        }else if(objEnrolment.Package_Process_Status__c == ConstantsClass.enrollmentProcessCompletedStatus){
-                            objComplementaryCredit.Is_Active__c = false;
-                            objComplementaryCredit.Credit_Expiry_date__c = objEnrolment.effective_Date__c;
-                        }
-                    }
-                }
             }
         }
         update listOfComplementaryCredit;
 
+    }
+
+    //check that the Parent Has other Enrolments or Not
+    public static Map<String, Boolean> checkParentHasMultipleEnrolments(Set<String> parentIds, Date lastDate){
+        Map<String, Boolean> mapOfParentActiveEnrolment = new Map<String, Boolean>();
+        Boolean flag = false;
+        Set<String>  enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus,ConstantsClass.enrolGroupType};
+        for(Enrolment__c enrolObj : [SELECT Id, Parent__c FROM Enrolment__c
+                                        WHERE Parent__c IN :parentIds 
+                                        AND ((Stage__c = :ConstantsClass.enroledStatus 
+                                                AND Type__c In: enrolTypes
+                                                AND (Package_Process_Type__c != :ConstantsClass.enrollmentProcessCancelType 
+                                                    OR Effective_Date__c > :lastDate)
+                                                )
+                                            )]){
+            mapOfParentActiveEnrolment.put(enrolObj.Parent__c, TRUE);
+        }
+        return mapOfParentActiveEnrolment;
+    }
+
+    //check that the Parent Has other Enrolments or Not
+    public static Map<String, Date> getParentCancelEnrolmentsDate(Set<String> parentIds){
+        Map<String, Date> mapOfParentCancelEnrolment = new Map<String, Date>();
+        Boolean flag = false;
+        Set<String>  enrolstage = New Set<String>{ConstantsClass.enroledStatus,'Cancelled'};
+        Set<String>  enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus,ConstantsClass.enrolGroupType};
+        for(Enrolment__c enrolObj : [SELECT Id, Parent__c,Effective_Date__c FROM Enrolment__c
+                                        WHERE Parent__c IN :parentIds 
+                                        AND Type__c In:enrolTypes
+                                        AND  Stage__c In: enrolstage
+                                        AND Package_Process_Type__c = :ConstantsClass.enrollmentProcessCancelType 
+                                        and Effective_Date__c != null
+                                        order by Effective_Date__c desc
+                                    ]){
+                                        if(!mapOfParentCancelEnrolment.containsKey(enrolObj.Parent__c)){
+                                            mapOfParentCancelEnrolment.put(enrolObj.Parent__c, enrolObj.Effective_Date__c);
+                                        }
+        }
+        return mapOfParentCancelEnrolment;
     }
 
     global void finish(Database.BatchableContext BC){
