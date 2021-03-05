@@ -228,17 +228,17 @@
                         <div class="slds-form-element slds-m-vertical_xx-large">
            
                             <!-- Nishi: 5-Feb-2021: Aureus Q1 2021:Start: Clicking on New customer  button then we open a new page to capture the Parent and Student details.-->
-	                        <div class="slds-grid slds-wrap">
+	                         <div class="slds-grid slds-wrap">
                                 <div class="slds-size_1-of-1 slds-large-size_1-of-6 slds-p-bottom_small">
     
                                 </div>
                                 <div class="slds-size_1-of-1 slds-large-size_4-of-6 slds-p-bottom_small">
-                                    <a class="slds-button m-sm-0 btn-block btn-yellow slds-p-vertical_x-small slds-p-horizontal_x-large  slds-m-horizontal_x-large slds-m-bottom_large" onclick="directCreateNewEnrolment(); return false;" >New customer</a>
+                                    <a class="slds-button m-sm-0 btn-block btn-yellow slds-p-vertical_x-small slds-p-horizontal_x-large  slds-m-horizontal_x-large slds-m-bottom_large" onclick="directCreateNewEnrolment(); return false;" >New Customer</a>
                                 </div>
                                 <div class="slds-size_1-of-1 slds-large-size_1-of-6 slds-p-bottom_small">
     
                                 </div>
-                            </div>
+                            </div> 
                             <!-- Nishi: 5-Feb-2021: Aureus Q1 2021:end: Clicking on New customer button then we open a new page to capture the Parent and Student details.-->
 	       
                             <div class="slds-form-element__control">

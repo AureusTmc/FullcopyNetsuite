@@ -1,4 +1,4 @@
-<apex:page id="pg" showHeader="false" controller="createDirectEnrolmentCtrl"  standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False">
+<apex:page id="pg" showHeader="false" controller="CreateDirectEnrolmentCtrl"  standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False">
     <head>
         <title>Aureus Academy Trial Booking</title>
         <c:IpadHeaderJqueryCmp />
@@ -467,15 +467,14 @@
                     </apex:outputPanel>
                     
                     <div class="slds-grid slds-wrap date-list">
-                        <div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                        <!-- <div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
                             <p class=""><strong>Centre</strong></p>
                             <p class="m-lg-right">
-                                <!--<input type="text" id="text-input-id-5" value="Island Resort Mall" required="" class="slds-input m-lg-right" /> -->
-                                <div class="box-info m-lg-right" style="padding:5px 0px;">
+                                 <div class="box-info m-lg-right" style="padding:5px 0px;">
                                     {!slcdCentrName}
                                 </div> 
                             </p>
-                        </div>
+                        </div> -->
                         
                         <div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
                             <p class=""><strong>First Name</strong></p>
