@@ -903,7 +903,7 @@ public class EnrolmentProcessForClassCtrl {
                              // added  by nishi: 13-Feb-2021: New Requirement Retail promotion for Piano rental: get selected package is promotional rental package
                             if( String.isNotBlank(enr.Package__c)){
                                 if(string.isnotblank(enr.Package__r.Rent_Free_Period__c) && enr.Package__r.Is_Rent_Free_Instrument_available__c){
-                                    retailPromotionEnrolmentPackageIds.put(enr.id,enr.Package__c+'-'+enr.Package__r.Rent_Free_Period__c);
+                                    retailPromotionEnrolmentPackageIds.put(enr.id,enr.Package__c+'-'+enr.Package__r.Rent_Free_Period__c+'-'+enr.Instrument__c);
                                 }
                                 // added by nishi 24-Feb-2021: Creating Complimentary Lessons: check if the package has any active complementary credit then the applicable complementary credit will be assigned.
                                 if(enr.Package__r.Is_Complimentary_Credit_Available__c && enr.Package__r.Complimentary_Credit_Mins__c != null && 
@@ -911,7 +911,7 @@ public class EnrolmentProcessForClassCtrl {
                                 enr.Lessons_Start_Date__c >= enr.Package__r.Complimentary_Start_Date__c && enr.Lessons_Start_Date__c <= enr.Package__r.Complimentary_End_Date__c){
                                     insertComplementaryCredit.add(new Complementary_Credit__c(
                                         Available_credit_Min__c =enr.Package__r.Complimentary_Credit_Mins__c,
-                                        Name ='New enrolment',
+                                        Name ='Complimentary Credit - '+Enr.name,
                                         Enrolment__c = enr.id,
                                         Package_Name__c = enr.Package__c,
                                         Parent__c = parentAcc.id,
@@ -2139,6 +2139,7 @@ public class EnrolmentProcessForClassCtrl {
                                 if(string.isnotBlank(retailPromotionEnrolmentId) && retailPromotionEnrolmentPackageIds.containsKey(retailPromotionEnrolmentId)){
                                     pageRef.getParameters().put('enrolment', retailPromotionEnrolmentId);
                                     pageRef.getParameters().put('package',retailPromotionEnrolmentPackageIds.get(retailPromotionEnrolmentId).split('-')[0].trim());
+                                    pageRef.getParameters().put('instrumentName',retailPromotionEnrolmentPackageIds.get(retailPromotionEnrolmentId).split('-')[2].trim());
                                 }
                                 // 15-Feb-2021: Nishi: If we enroll two enrolment at the same time, then we considered that enrollment is the maximum time for free rental.
 

@@ -140,11 +140,34 @@
             .requiredInput {
                 border-left: 2px solid #F44336;
             }
+            @media(min-width:991px){.new-container.class-true{width:80%; margin:0 auto; background-color:#fff;} .class-true .sticky{width:80%; left:10%;}}/*ch:011: show piano rental process for  site guest user*/
+            .alert {
+            padding: 8px;
+            background-color: #3ECF8E;
+            color: white;
+            font-size: 15px;	
+            }
+            .rentalAlert {
+            padding: 8px;
+            background-color: #3ECF8E;
+            color: white;
+            font-size: 18px;	
+            }
         </style>
     </head>
 
     <body style="background-color:#fff;">
+          <!--ch:011: show piano rental process for  site guest user-->
+          <apex:outputPanel rendered="{!isSiteGuestUser}">     
+            <!--@Juneid 11 AUg 202 -->
+            <div  class="slds-p-around_medium" style="{!iF(isOssia,'font-size:15px; background-color: #ed1c24; text-align:center; color:#fff; font-weight:bold;','font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;')}">{!IF(isOssia,'Ossia Piano Rental Process','Aureus Academy Piano Rental Process')}      
+            </div>
+            <p style="text-align:center;"><apex:image url="{!iF(isOssia,$Resource.Osia_Logo,$Resource.Aureus_logo_png)}" /></p>        
+            
+        </apex:outputPanel>  
+         <!--ch:011: show piano rental process for  site guest user-->
         <apex:form id="frm">
+            <div class="new-container {!IF(isSiteGuestUser, 'class-true','')}"  >
             <apex:actionStatus id="spinner" styleClass="status">
                 <apex:facet name="start">
                     <div class="demo-only demo--inverse " style="height:100%;width:100%;z-index:200;position:fixed">
@@ -360,7 +383,8 @@
                             <strong>Residence Type</strong>
                         </p>
                         <div class="box-info m-lg-right">
-                            {!slcdEnrolment.House_type__c}
+                            <!-- {!slcdEnrolment.House_type__c} -->
+                            {!Housetype}
                         </div>
                     </div>
 
@@ -594,6 +618,13 @@
                     </div>
                 </div>
             </div>
+            <apex:outputPanel rendered="{!fm.isDiscount}">
+                <div class="rentalAlert" >
+                    <strong>CONGRATULATIONS!</strong> You will receive the discount of ${!fm.discountAmount} on Instrument rental(${!slcdPiano.monthlyRental} * {!fm.prmtnalPkgInMonth} months) from the date of the delivery. 
+                </div>
+            </apex:outputPanel>  
+            </div>
+          
         </apex:form>
 
         <apex:form id="payment">

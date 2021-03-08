@@ -614,8 +614,97 @@ options.add(new SelectOption(str,str));*/
          fm.grandTot = BillingUtility.roundOffAmount(fm.totFee + fm.gstAmt);
         fm.totalAmt = BillingUtility.roundOffAmount(fm.totFee);
         //end:CH011
-       
+      
+        getCorrectEmployee();
         return page.SearchInstrumentFinalConfirmPage_Ipad4;
+    }
+
+    public void getCorrectEmployee(){
+        Integer count = 1;
+        system.debug('!!dtimeslot'+dtimeslot);
+        map<string,set<string>> enrolmentDeliveryDaytime = new map<string,set<string>>();
+        for(DateTimeSlot dSlot: dtimeslot){  
+            List<string> tList = dSlot.dtTime.split(' \\(');
+            
+            tList = tList.get(1).split('-');
+            String stTime = tList.get(0);
+            String endTime = ((tList.get(1).trim()).split('\\)')[0]).trim();
+            Integer lsStartTime;
+            if(stTime.contains('am')){
+                lsStartTime = Integer.valueOf(stTime.split('am').get(0));
+            }else if(stTime.contains('pm')){
+                lsStartTime = Integer.valueOf(stTime.split('pm').get(0));
+                if(lsStartTime != 12)
+                    lsStartTime = lsStartTime + 12;
+            }
+            
+            Time deliverstartTime = Time.newInstance(lsStartTime, 0, 0, 0);
+            string deliveryDay = datetime.newInstance( dSlot.dt.date(),deliverstartTime).format('E');
+            set<string> deliveryTimes = new set<string>();
+            if(enrolmentDeliveryDaytime.containskey(deliveryDay)){
+                deliveryTimes = enrolmentDeliveryDaytime.get(deliveryDay);
+            }
+            Integer lsEndTime;
+            system.debug('endTime'+endTime);
+            if(endTime.contains('am')){
+                lsEndTime = Integer.valueOf(endTime.split('am').get(0));
+            }else if(endTime.contains('pm')){
+                lsEndTime = Integer.valueOf(endTime.split('pm').get(0));
+                if(lsEndTime != 12)
+                lsEndTime = lsEndTime + 12;
+            }
+            system.debug('lsStartTime'+lsStartTime);
+            system.debug('lsEndTime'+lsEndTime);
+            deliveryTimes.add(lsStartTime+'-'+lsEndTime);
+            enrolmentDeliveryDaytime.put(deliveryDay,deliveryTimes);
+            count = count+1;
+        }  
+        system.debug('enrolmentDeliveryDaytime'+enrolmentDeliveryDaytime);
+        Set<String> salesTeamList = new Set<String>{'Sales Executive','Sales and Operations Executive','Sales Manager'};
+        Map<string,set<string>> deliveryDayEmployeeIds = new Map<string,set<string>>();
+        set<string> deliverydays = new set<string>();
+        for(Teacher_Working_Hour__c objTeacher_Working_Hour :  [SELECT Id,Name,Teacher_Name__c,Teacher_Name__r.Name,Teacher_Name__r.Teacher_Bio__c,Working_Day__c,Start_Time__c,
+                                                                End_Time__c,Active__c,Center_Name__c,Center_Name__r.Name,Teacher_Name__r.Major_Instruments_Disciplines__c 
+                                                        FROM  Teacher_Working_Hour__c 
+                                                        WHERE Active__c = true AND Working_Day__c != null AND Break_Time__c = False AND Center_Name__c =: slcdCenter AND
+                                                        Working_Day__c In: enrolmentDeliveryDaytime.keyset()
+                                                        And Teacher_Name__r.Job_Title__c IN:salesTeamList]){
+            if(enrolmentDeliveryDaytime.containskey(objTeacher_Working_Hour.Working_Day__c)){
+                system.debug('objTeacher_Working_Hour.Start_Time__c'+enrolmentDeliveryDaytime.get(objTeacher_Working_Hour.Working_Day__c));
+                system.debug('objTeacher_Working_Hour.Start_Time__c'+objTeacher_Working_Hour.Working_Day__c);
+                for(string enrolmentDeliverytime : enrolmentDeliveryDaytime.get(objTeacher_Working_Hour.Working_Day__c)){
+                    Time deliveryStartTime = Time.newInstance(integer.valueOf(enrolmentDeliverytime.split('-')[0]), 0, 0, 0);
+                    Time deliveryEndTime=Time.newInstance(integer.valueOf(enrolmentDeliverytime.split('-')[1]), 0, 0, 0);
+                    system.debug('objTeacher_Working_Hour.Start_Time__c'+objTeacher_Working_Hour.Start_Time__c);
+                    system.debug('objTeacher_Working_Hour.End_Time__c'+objTeacher_Working_Hour.End_Time__c);
+                    system.debug('deliveryStartTime'+deliveryStartTime);
+                    system.debug('deliveryEndTime'+deliveryEndTime);
+                    if(objTeacher_Working_Hour.Start_Time__c.hour() <= deliveryStartTime.hour()
+                    && objTeacher_Working_Hour.End_Time__c.hour() >= deliveryEndTime.hour()){
+                        deliverydays = new set<string>();
+                        if(deliveryDayEmployeeIds.containsKey(objTeacher_Working_Hour.Teacher_Name__c)){
+                            deliverydays = deliveryDayEmployeeIds.get(objTeacher_Working_Hour.Teacher_Name__c);
+                        }
+                        deliverydays.add(objTeacher_Working_Hour.Working_Day__c);
+                        deliveryDayEmployeeIds.put(objTeacher_Working_Hour.Teacher_Name__c,deliverydays);
+                    } 
+                }
+            }
+        }
+        system.debug('deliveryDayEmployeeIds'+deliveryDayEmployeeIds);
+        string teacherid='';
+        for(string employeeid : deliveryDayEmployeeIds.keySet()){
+            deliverydays = deliveryDayEmployeeIds.get(employeeid);
+            system.debug('enrolmentDeliveryDaytime'+enrolmentDeliveryDaytime);
+            system.debug('deliverydays'+deliverydays);
+            if(deliverydays.containsAll(enrolmentDeliveryDaytime.keySet())){
+                teacherid = employeeid;
+                break;
+            }
+            
+        }
+        system.debug('teacherid'+teacherid);
+        slcdEnrolment.teacher__c = string.isnotBlank(teacherid)?teacherid:null;
     }
     public void setSlots(){
         System.debug('slcdSlot---->>>'+slcdSlot);
@@ -1141,6 +1230,7 @@ rw.errorMsg = 'Unknown error occured. Please contact your admin.';
             slcdEnrolment.RecordTypeId  = enrInsRenRecId;
             slcdEnrolment.Type__c       = 'Instrument';
             slcdEnrolment.Center__c = slcdCenter;
+            
             //6-nov-2020:nishi:for check active enrolment if we found any active enrolment then we added this  enrolment id in Related_Lesson_Enrolment field	
             Map<String, string> mapOfParentActiveEnrolment = checkParentHasMultipleEnrolments(new set<string>{parentAcc.Id});
             if(mapOfParentActiveEnrolment != null && mapOfParentActiveEnrolment.size() > 0){
@@ -1165,7 +1255,7 @@ rw.errorMsg = 'Unknown error occured. Please contact your admin.';
 
                     slcdEnrolment.id = enrList[0].id;
                 }
-                update slcdEnrolment;
+                upsert slcdEnrolment;
             }
             
             /*end: added by nishi:23-Sep-2020 for insert parent and student id */  
@@ -1627,16 +1717,14 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                         slcdEnrolment.Stair_Charges__c = fm.stairDelCharges > 0 ? fm.stairDelCharges : 0;
                         Integer count = 1;
                         system.debug('!!dtimeslot'+dtimeslot);
+                        map<string,set<string>> enrolmentDeliveryDaytime = new map<string,set<string>>();
                         for(DateTimeSlot dSlot: dtimeslot){  
-                            system.debug('!!dSlot'+dSlot);
                             List<string> tList = dSlot.dtTime.split(' \\(');
-                            system.debug('!!tList'+tList);
                             
                             tList = tList.get(1).split('-');
                             String stTime = tList.get(0);
                             String endTime = tList.get(1);
                             Integer lsStartTime;
-                            system.debug('!!stTime'+stTime);
                             if(stTime.contains('am')){
                                 lsStartTime = Integer.valueOf(stTime.split('am').get(0));
                             }else if(stTime.contains('pm')){
@@ -1644,15 +1732,14 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                                 if(lsStartTime != 12)
                                     lsStartTime = lsStartTime + 12;
                             }
-                            system.debug('!!lsStartTime'+lsStartTime);
-                            Time deliverTime = Time.newInstance(lsStartTime, 0, 0, 0);
+                            
+                            Time deliverstartTime = Time.newInstance(lsStartTime, 0, 0, 0);
                             
                             slcdEnrolment.put('Delivery_Option_Date_'+count+'__c', dSlot.dt.date());
-                            slcdEnrolment.put('Delivery_Option_Timeslot_'+count+'__c', deliverTime);
-                            
-                            count = count+1;
-                        }
-                        
+                            slcdEnrolment.put('Delivery_Option_Timeslot_'+count+'__c', deliverstartTime);
+                           count = count+1;
+                        }  
+                     
                         //CH01  Karan Singh25 March   
                         slcdEnrolment.Offline_Signing_Selected__c = isCustmrOptedOfflineSign; 
                         //CH01 END     
@@ -1732,11 +1819,11 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                             //CH02 END
                             //
                             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, fm.instrumentChrg, remarksStr, slcdEnrolment.Teacher__c);
-                            invLnItm.Teacher_Id__c = null;
+                            //invLnItm.Teacher_Id__c = null;
                             invLnItm.Invoice__c   = inv.Id;
                             invLnItm.Enrolment__c = slcdEnrolment.Id; 
                             invLnItm.Month__c     =  System.today();
-                            
+                            invLnItm.Subscription_Line_Item__c = subLItm.Id;
                             //Added by Rajesh on 21st oct 2019. calcuate individual gst amount for the line items
                             Decimal tempTotAmt = invLnItm.Amount__c; 
                             invLnItm.GST_Amount__c = BillingUtility.roundOffAmount((tempTotAmt > 0 && fm.gstTaxPer > 0) ? ((tempTotAmt * fm.gstTaxPer) / 100):0);
@@ -1746,7 +1833,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                         if(fm.depFee > 0){
                             remarksStr = ConstantsClass.pkgDepFeesDes;
                             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null,fm.depFee, remarksStr, slcdEnrolment.Teacher__c);
-                            invLnItm.Teacher_Id__c = null;
+                            //invLnItm.Teacher_Id__c = null;
                             invLnItm.Invoice__c   = inv.Id;
                             invLnItm.Enrolment__c = slcdEnrolment.Id;
                             invLnItm.Subscription_Line_Item__c = subLItm.Id;
@@ -1762,10 +1849,11 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                             else    
                                 remarksStr += '(1-way)';
                             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, fm.deliCharges, remarksStr, slcdEnrolment.Teacher__c);
-                            invLnItm.Teacher_Id__c = null;
+                            //invLnItm.Teacher_Id__c = null;
                             invLnItm.Invoice__c   = inv.Id;
                             invLnItm.Enrolment__c = slcdEnrolment.Id; 
                             invLnItm.Month__c     =  System.today();
+                            invLnItm.Subscription_Line_Item__c = subLItm.Id;
                             Decimal tempTotAmt = invLnItm.Amount__c; 
                             invLnItm.GST_Amount__c = BillingUtility.roundOffAmount((tempTotAmt > 0 && fm.gstTaxPer > 0) ? ((tempTotAmt * fm.gstTaxPer) / 100):0);                            
                             invLineItmList.add(invLnItm);
@@ -1774,10 +1862,11 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                             remarksStr = 'Tuning Fee';
                             
                             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null,fm.tuningFee, remarksStr, slcdEnrolment.Teacher__c);
-                            invLnItm.Teacher_Id__c = null;
+                            //invLnItm.Teacher_Id__c = null;
                             invLnItm.Invoice__c   = inv.Id;
                             invLnItm.Enrolment__c = slcdEnrolment.Id; 
                             invLnItm.Month__c     =  System.today();
+                            invLnItm.Subscription_Line_Item__c = subLItm.Id;
                             Decimal tempTotAmt = invLnItm.Amount__c; 
                             invLnItm.GST_Amount__c = BillingUtility.roundOffAmount((tempTotAmt > 0 && fm.gstTaxPer > 0) ? ((tempTotAmt * fm.gstTaxPer) / 100):0);                            
                             invLineItmList.add(invLnItm);
@@ -1789,9 +1878,10 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                             else    
                                 remarksStr += '(1-way)';        
                             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, fm.stairDelCharges, remarksStr, slcdEnrolment.Teacher__c);
-                            invLnItm.Teacher_Id__c = null;
+                            //invLnItm.Teacher_Id__c = null;
                             invLnItm.Invoice__c   = inv.Id;
                             invLnItm.Enrolment__c = slcdEnrolment.Id; 
+                            invLnItm.Subscription_Line_Item__c = subLItm.Id;
                             invLnItm.Month__c     =  System.today();
                             Decimal tempTotAmt = invLnItm.Amount__c; 
                             invLnItm.GST_Amount__c = BillingUtility.roundOffAmount((tempTotAmt > 0 && fm.gstTaxPer > 0) ? ((tempTotAmt * fm.gstTaxPer) / 100):0);                            
@@ -1801,10 +1891,11 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                             remarksStr = 'Heating Rod Installation';
                             
                             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null,fm.heatingRodInsFee, remarksStr, slcdEnrolment.Teacher__c);
-                            invLnItm.Teacher_Id__c = null;
+                            //invLnItm.Teacher_Id__c = null;
                             invLnItm.Invoice__c   = inv.Id;
                             invLnItm.Enrolment__c = slcdEnrolment.Id; 
                             invLnItm.Month__c     =  System.today();
+                            invLnItm.Subscription_Line_Item__c = subLItm.Id;
                             Decimal tempTotAmt = invLnItm.Amount__c; 
                             invLnItm.GST_Amount__c = BillingUtility.roundOffAmount((tempTotAmt > 0 && fm.gstTaxPer > 0) ? ((tempTotAmt * fm.gstTaxPer) / 100):0);                            
                             invLineItmList.add(invLnItm);
@@ -1919,6 +2010,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
         slcdEnrolment.Delivery_Charges__c= fm.deliCharges > 0 ? fm.deliCharges : 0;
         slcdEnrolment.Stair_Charges__c = fm.stairDelCharges > 0 ? fm.stairDelCharges : 0;
         Integer count = 1;
+        map<string,set<string>> enrolmentDeliveryDaytime = new map<string,set<string>>();
         for(DateTimeSlot dSlot: dtimeslot){  
             List<string> tList = dSlot.dtTime.split(' \\(');
             
@@ -1934,13 +2026,13 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                     lsStartTime = lsStartTime + 12;
             }
             
-            Time deliverTime = Time.newInstance(lsStartTime, 0, 0, 0);
+            Time deliverstartTime = Time.newInstance(lsStartTime, 0, 0, 0);
             
             slcdEnrolment.put('Delivery_Option_Date_'+count+'__c', dSlot.dt.date());
-            slcdEnrolment.put('Delivery_Option_Timeslot_'+count+'__c', deliverTime);
-            
+            slcdEnrolment.put('Delivery_Option_Timeslot_'+count+'__c', deliverstartTime);
             count = count+1;
         }  
+      
         slcdEnrolment.Offline_Signing_Selected__c = isCustmrOptedOfflineSign; 
         slcdEnrolment.Instrument_Type__c = slcdPiano.inventoryType;
         slcdEnrolment.Min_Commit_Dur_Inst_Rental__c = minimumCommitmentPeriod;
@@ -2009,7 +2101,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
             remarksStr = slcdPiano.brand;
             //CH02 END
             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (fm.instrumentChrg), remarksStr, slcdEnrolment.Teacher__c);
-            invLnItm.Teacher_Id__c = null;
+            //invLnItm.Teacher_Id__c = null;
             invLnItm.Invoice__c   = inv.Id;
             invLnItm.Enrolment__c = slcdEnrolment.Id; 
             invLnItm.Month__c     =  System.today();
@@ -2023,7 +2115,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
         if(fm.depFee > 0){
             remarksStr = ConstantsClass.pkgDepFeesDes;
             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (fm.depFee), remarksStr, slcdEnrolment.Teacher__c);
-            invLnItm.Teacher_Id__c = null;
+            //invLnItm.Teacher_Id__c = null;
             invLnItm.Invoice__c   = inv.Id;
             invLnItm.Enrolment__c = slcdEnrolment.Id;
             invLnItm.Subscription_Line_Item__c = subLItm.Id;
@@ -2064,10 +2156,11 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
             else    
                 remarksStr += '(1-way)';
             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (fm.deliCharges), remarksStr, slcdEnrolment.Teacher__c);
-            invLnItm.Teacher_Id__c = null;
+            //invLnItm.Teacher_Id__c = null;
             invLnItm.Invoice__c   = inv.Id;
             invLnItm.Enrolment__c = slcdEnrolment.Id; 
             invLnItm.Month__c     =  System.today();
+            invLnItm.Subscription_Line_Item__c = subLItm.Id;
             Decimal tempTotAmt = invLnItm.Amount__c; 
             invLnItm.GST_Amount__c = BillingUtility.roundOffAmount((tempTotAmt > 0 && fm.gstTaxPer > 0) ? ((tempTotAmt * fm.gstTaxPer) / 100):0);                            
             invLineItmList.add(invLnItm);
@@ -2076,10 +2169,11 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
             remarksStr = 'Tuning Fee';
             
             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (fm.tuningFee), remarksStr, slcdEnrolment.Teacher__c);
-            invLnItm.Teacher_Id__c = null;
+            //invLnItm.Teacher_Id__c = null;
             invLnItm.Invoice__c   = inv.Id;
             invLnItm.Enrolment__c = slcdEnrolment.Id; 
             invLnItm.Month__c     =  System.today();
+            invLnItm.Subscription_Line_Item__c = subLItm.Id;
             Decimal tempTotAmt = invLnItm.Amount__c; 
             invLnItm.GST_Amount__c = BillingUtility.roundOffAmount((tempTotAmt > 0 && fm.gstTaxPer > 0) ? ((tempTotAmt * fm.gstTaxPer) / 100):0);                            
             invLineItmList.add(invLnItm);
@@ -2091,10 +2185,11 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
             else    
                 remarksStr += '(1-way)';        
             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (fm.stairDelCharges), remarksStr, slcdEnrolment.Teacher__c);
-            invLnItm.Teacher_Id__c = null;
+            //invLnItm.Teacher_Id__c = null;
             invLnItm.Invoice__c   = inv.Id;
             invLnItm.Enrolment__c = slcdEnrolment.Id; 
             invLnItm.Month__c     =  System.today();
+            invLnItm.Subscription_Line_Item__c = subLItm.Id;
             Decimal tempTotAmt = invLnItm.Amount__c; 
             invLnItm.GST_Amount__c = BillingUtility.roundOffAmount((tempTotAmt > 0 && fm.gstTaxPer > 0) ? ((tempTotAmt * fm.gstTaxPer) / 100):0);                            
             invLineItmList.add(invLnItm);
@@ -2103,10 +2198,11 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
             remarksStr = 'Heating Rod Installation';
             
             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (fm.heatingRodInsFee), remarksStr, slcdEnrolment.Teacher__c);
-            invLnItm.Teacher_Id__c = null;
+            //invLnItm.Teacher_Id__c = null;
             invLnItm.Invoice__c   = inv.Id;
             invLnItm.Enrolment__c = slcdEnrolment.Id; 
             invLnItm.Month__c     =  System.today();
+            invLnItm.Subscription_Line_Item__c = subLItm.Id;
             Decimal tempTotAmt = invLnItm.Amount__c; 
             invLnItm.GST_Amount__c = BillingUtility.roundOffAmount((tempTotAmt > 0 && fm.gstTaxPer > 0) ? ((tempTotAmt * fm.gstTaxPer) / 100):0);                            
             invLineItmList.add(invLnItm);
@@ -2186,15 +2282,21 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                 
                 if( String.isBlank(netSuiteProducts[ index ].listPrice) ){
                     netSuiteProducts[ index ].listPrice = '0';
+                }else{
+                    netSuiteProducts[ index ].listPrice = string.valueOf(BillingUtility.roundOffAmount(Decimal.valueOf(netSuiteProducts[ index ].listPrice )));
                 }
                 if( String.isBlank(netSuiteProducts[ index ].monthlyRental) ){
                     netSuiteProducts[ index ].monthlyRental = '0';
+                }else{
+                    netSuiteProducts[ index ].monthlyRental = string.valueOf(BillingUtility.roundOffAmount(Decimal.valueOf(netSuiteProducts[ index ].monthlyRental )));
                 }
                 
                 //CH08 : reseting the value if the api doesnot retrun any value
                 
                 if( String.isBlank(netSuiteProducts[ index ].studentPrice) ){
                     netSuiteProducts[ index ].studentPrice = '0';
+                }else{
+                    netSuiteProducts[ index ].studentPrice = string.valueOf(BillingUtility.roundOffAmount(Decimal.valueOf(netSuiteProducts[ index ].studentPrice )));
                 }
                 //CH08 END
 

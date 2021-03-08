@@ -6,6 +6,8 @@
 
     Author : Nishi Jain
     Date : 5-Feb-2021
+	Test class : AutomatingMakeupEnrolmenttest
+	Schedular class  :AutomatingMakeupEnrolmentSchedular
 */
 global with sharing class AutomatingMakeupEnrolmentBatch implements Database.Batchable<sObject>,database.stateful,Database.AllowsCallouts{
     global Set<String> enrolTypes;
@@ -14,16 +16,15 @@ global with sharing class AutomatingMakeupEnrolmentBatch implements Database.Bat
     global String weekday;
     global String teacherId;
     
-    global AutomatingMakeupEnrolmentBatch (date startdate){
+    global AutomatingMakeupEnrolmentBatch (integer makeupday){
         enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus}; 
         enroledStage = ConstantsClass.enroledStatus;
-        enrolmentEffectiveDate =  Datetime.newInstance(startdate.addDays(Integer.valueOf( System.Label.Make_up_Credit_Days)), time.newInstance(0,0,0,0));
+        enrolmentEffectiveDate =  Datetime.newInstance(system.today().addDays(makeupday), time.newInstance(0,0,0,0));
         weekday = enrolmentEffectiveDate.format('EEEE');
     }
     global AutomatingMakeupEnrolmentBatch (date startdate,String teacherId){
         enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus}; 
         enroledStage = ConstantsClass.enroledStatus;
-        //enrolmentEffectiveDate =  Datetime.newInstance(startdate.addDays(Integer.valueOf( System.Label.Make_up_Credit_Days)), time.newInstance(0,0,0,0));
         enrolmentEffectiveDate =  Datetime.newInstance(startdate, time.newInstance(0,0,0,0));
         weekday = enrolmentEffectiveDate.format('EEEE');
         this.teacherId =teacherId; 
@@ -42,7 +43,7 @@ global with sharing class AutomatingMakeupEnrolmentBatch implements Database.Bat
         //     queryString+= ' Type__c, Class__c,New_Class__c,Center__r.Organisation__r.name,Parent__r.Centre_Name__r.Location__c,Parent__r.PersonContactId,Parent__r.FCM_Token__c,';
         //     queryString+= ' (Select id from Bookings__r WHERE RecordType.Name =: recordTypeLesson AND Start_Time__c != NULL AND End_Time__c != NULL';
         //     queryString += ' AND Booking_Date__c IN: dates AND status__c IN: bookingStatus AND Type__c IN: bookTypeSet ), ';
-        //     queryString += ' instrument__c,Automation_make_up_booking_Date__c  FROM Enrolment__c ';
+        //     queryString += ' instrument__c  FROM Enrolment__c ';
         //     queryString+= ' WHERE Type__c In: enrolTypes ';
         //     queryString+= ' AND Stage__c =: enroledStage ';
         //     queryString+= ' AND Lesson_Day__c =: weekday ';
@@ -74,12 +75,13 @@ global with sharing class AutomatingMakeupEnrolmentBatch implements Database.Bat
                 mapOfBookingEnrolmentIds.put(objBooking.enrolment__c,objBooking);
             }
             List<Enrolment__c> listOfEnrolment = MakeupEnrolmentBatchHelper.getEnrolmentlist(mapOfBookingEnrolmentIds.keyset(),enrolmentEffectiveDate);
+            system.debug('$$$listOfEnrolment'+listOfEnrolment);
             Map<string,MakeupEnrolmentBatchHelper.EnrolmentDetails> mapOfEnrolmentDetails = MakeupEnrolmentBatchHelper.newMakeupBookingNotification(listOfEnrolment, enrolmentEffectiveDate);
             
         //Check if 15 or 30 minutes timeslot is available immediately before or after their scheduled regular booking scheduled after 3 days 
             //if any slot is blank then we send out an email notification to Parent for booking the timeslot
             if(mapOfEnrolmentDetails != null && mapOfEnrolmentDetails.size() > 0){
-                system.debug('mapOfEnrolmentDetails'+mapOfEnrolmentDetails);
+                system.debug('$$$mapOfEnrolmentDetails'+mapOfEnrolmentDetails);
                 Set<String> paymentFailedEmails=new Set<string>{'Makeup_Booking_Alert_Template','Ossia_Makeup_Booking_Alert_Template','Ossia_Enrolment_New_Makeup_Alert','Enrolment_New_Makeup_Alert'};
                 Map<String,EmailTemplate> mapOfEmailTemplate = new Map<String,EmailTemplate>();
                 List<Mobile_Notification__c> listOfMobileNotification = new List<Mobile_Notification__c>();
@@ -137,9 +139,10 @@ global with sharing class AutomatingMakeupEnrolmentBatch implements Database.Bat
                 if(listOfMobileNotification!= Null && listOfMobileNotification.size() > 0){
                         insert listOfMobileNotification;
                 }
-                system.debug('listOfMobileNotification'+listOfMobileNotification);
-                system.debug('sendSingleEmailMessage'+sendSingleEmailMessage);
+                system.debug('$$$listOfMobileNotification'+listOfMobileNotification);
+                system.debug('$$$sendSingleEmailMessage'+sendSingleEmailMessage);
                 if(sendSingleEmailMessage != null && sendSingleEmailMessage.size() > 0 ){
+                    Messaging.sendEmail(sendSingleEmailMessage);
                     Messaging.SendEmailResult[] result = Messaging.sendEmail(sendSingleEmailMessage,false);
                     Set<Id> targetIdsFailed = new Set<Id>();
                     for(Messaging.SendEmailResult resObj: result){
@@ -147,12 +150,12 @@ global with sharing class AutomatingMakeupEnrolmentBatch implements Database.Bat
                             targetIdsFailed.add(resObj.getErrors()[0].getTargetObjectId());
                         }
                     }
-                    system.debug('targetIdsFailed'+targetIdsFailed);
+                    system.debug('$$$targetIdsFailed'+targetIdsFailed);
                 }
             
             }
         }catch(Exception e) {
-            System.debug(e);
+            System.debug('$$$'+e);
         }
     }
 

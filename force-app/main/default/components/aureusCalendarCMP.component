@@ -958,6 +958,18 @@
                                                             </div -->
                                                             
                                                         </div>
+                                                        <!--  // added by nishi: 8Mar-2021:start for add makeup type field on calendar booking interface-->
+                                                        <div class="slds-grid slds-gutters MakeupType">
+                                                            <!-- added by Ravi..Exchanged the place of Package and Duration on 15 july 2020-->
+                                                            <div class="slds-col slds-size_5-of-12">
+                                                                <span class="slds-form-element__label slds-text-align_right"><b>Makeup Type:</b></span>
+                                                                <span id="MakeupType"></span>
+                                                            </div>
+                                                            <div class="slds-col slds-size_7-of-12">
+                                                                
+                                                            </div>
+                                                        </div>
+                                                         <!--  // added by nishi: 8Mar-2021:start for add makeup type field on calendar booking interface-->
                                                         <!-- added By ravi on 3rd july 2020 -->
                                                         <div class="slds-grid slds-gutters" >
                                                             <div class="slds-col slds-size_5-of-12">
@@ -3780,7 +3792,7 @@ Enrol now
                                 <span class="slds-assistive-text">Close</span>
                             </a>
                         </header>
-                        <div class="slds-modal__content slds-p-around_medium" id="newGroupClassModalBody" style="overflow-y: auto;height:400px">
+                        <div class="slds-modal__content slds-p-around_medium" id="newGroupClassBody" style="overflow-y: auto;height:400px;background: white;">
                             <div class="slds-grid slds-wrap">
                                 <!-- center or teacher-->
                                 <div class="slds-col slds-size_12-of-12 slds-grid  slds-wrap  slds-m-top_small">
@@ -6292,6 +6304,14 @@ Enrol now
                             $('#parentEmail').text(eventResult.parentEmail);
                             
                             $('#servicePackagName').text(eventResult.service);
+                             // added by nishi: 8Mar-2021:start for add makeup type field on calendar booking interface
+                            if(eventResult.isMakeup){
+                                $('.MakeupType').removeClass('slds-hide');
+                                $('#MakeupType').text(eventResult.makeupType);
+                            }else{
+                                $('.MakeupType').addClass('slds-hide');
+                            }
+                             // added by nishi: 8Mar-2021:start for add makeup type field on calendar booking interface
                             $('#serviceStaff').text(eventResult.staffMember);
                             $('#serviceResource').text(eventResult.resource);
                             $('#serviceTime').text(eventResult.timeOfBooking);
@@ -7692,7 +7712,7 @@ Enrol now
                                             $('#selectCreditTypeListSection').empty();
                                             $('.complentryHrsDiv').addClass('slds-hide');
                                             var selectCreditType = '<option value="">Select Any Credit type </option>';
-                                            selectCreditType += '<option value="false">Makeup</option>';
+                                            selectCreditType += '<option value="false">Make-up</option>';
                                             selectCreditType += '<option value="true">Complimentary</option>';
                                             $('#selectCreditTypeListSection').append(selectCreditType);
                                             $('#selectCreditTypeListSection').val('false');
@@ -8148,6 +8168,14 @@ Enrol now
                                                 $('#parentPhone').text(eventResult.parentPhone);
                                                 $('#parentEmail').text(eventResult.parentEmail);
                                                 $('#servicePackagName').text(eventResult.service);
+                                                 // added by nishi: 8Mar-2021:start for add makeup type field on calendar booking interface
+                                                if(eventResult.isMakeup){
+                                                    $('.MakeupType').removeClass('slds-hide');
+                                                    $('#MakeupType').text(eventResult.makeupType);
+                                                }else{
+                                                    $('.MakeupType').addClass('slds-hide');
+                                                }
+                                                // added by nishi: 8Mar-2021:start for add makeup type field on calendar booking interface
                                                 $('#serviceStaff').text(eventResult.staffMember);
                                                 $('#serviceResource').text(eventResult.resource);
                                                 $('#serviceDuration').text(eventResult.duration);

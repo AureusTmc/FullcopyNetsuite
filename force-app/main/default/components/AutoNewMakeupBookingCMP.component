@@ -14,7 +14,7 @@
 
     <apex:outputPanel id="availTimeslots" layout="none">
         <div class="new-container class-true" style="padding:50px;">
-            <div class="slds-text-heading_large  slds-p-around_small slds-text-align_center" style="font-weight:bold;text-align: center;font-size: large;">Schadule New Makeup Booking on {!bookingDate}</div>
+            <div class="slds-text-heading_large  slds-p-around_small slds-text-align_center" style="font-weight:bold;text-align: center;font-size: large;">Schedule New Makeup Booking on {!bookingDate}</div>
             <div class="container slds-p-around_small " style="padding: 18px;">
                 <table width="100%" class="slds-table slds-table_cell-buffer slds-table_header-hidden slds-table_bordered" style="    text-align: center;font-family: arial, sans-serif;border:1px solid #d8c9c9;">
                     <tbody>
@@ -37,18 +37,18 @@
                                     <td data-label="Time Slot">
                                         <div class="slds-truncate" > {!tslot.bookinglabel} <br/>  ({!tslot.bookingStartTime} - {!tslot.bookingEndTime})</div>
                                     </td>
-                                    <td data-label="Schadule Makeup Booking">
-                                        <div class="slds-truncate" title="Schadule Makeup Booking" style="padding:10px;">
+                                    <td data-label="Schedule Makeup Booking">
+                                        <div class="slds-truncate" title="Schedule Makeup Booking" style="padding:10px;">
                                             <apex:outputPanel rendered="{!isOssiaOrg}" layout="none">
                                                 <a href="{!$Label.Aureus_Site}/CreateNewMakeupBookings?BookingId={!regularBookingId}&timeslotRealTime={!tslot.timeslotRealTime}&bookingTime={!tslot.bookingStartTime}&duration={!tslot.makeupBookingDuration}" class="es-button es-button-1" target="_blank"
                                                 style="    mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-size:11px;color:#FFFFFF;border-style:solid;border-color:#ed1c24;border-width:15px 20px 15px 20px;display:inline-block;background-color: #ed1c24;;border-radius:10px;font-weight:bold;font-style:normal;line-height:17px;width:auto;text-align:center;">
-                                                Schadule Makeup Booking
+                                                Schedule Makeup Booking
                                                 </a>
                                             </apex:outputPanel>
                                             <apex:outputPanel rendered="{!!isOssiaOrg}" layout="none">
                                                 <a href="{!$Label.Aureus_Site}/CreateNewMakeupBookings?BookingId={!regularBookingId}&timeslotRealTime={!tslot.timeslotRealTime}&bookingTime={!tslot.bookingStartTime}&duration={!tslot.makeupBookingDuration}" class="es-button es-button-1" target="_blank"
                                                 style="    mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-size:11px;color:#FFFFFF;border-style:solid;border-color:#FFBF2F;border-width:15px 20px 15px 20px;display:inline-block;background:#FFBF2F;border-radius:10px;font-weight:bold;font-style:normal;line-height:17px;width:auto;text-align:center;">
-                                                Schadule Makeup Booking
+                                                Schedule Makeup Booking
                                                 </a>
                                             </apex:outputPanel>
                                         </div>

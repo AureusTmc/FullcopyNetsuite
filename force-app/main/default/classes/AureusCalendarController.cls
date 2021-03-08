@@ -682,15 +682,15 @@ this method takes 5 actual arguments
                     if(String.isNotBlank(startDate)){
                         enrolObj.Lesson_Start_time__c = Time.newInstance(Integer.valueOf(startDate.split('T')[1].split(':')[0]), Integer.valueOf(startDate.split('T')[1].split(':')[1]), Integer.valueOf(startDate.split('T')[1].split(':')[2]), 0); 
                     } 
-                    //Start : added by Nishi : 4-Feb-2021 :Aureus Q1 2021: for update Waitlist_Status__c   emailed to  Assigned
-                    if(string.isnotBlank(enrolObj.Waitlist_Status__c) && string.isnotBlank(enrolObj.Preferred_Day__c) && string.isnotBlank(enrolObj.Preferred_Teacher__c) 
-                        && enrolObj.Preferred_End_time__c != null && enrolObj.Preferred_Start_Time__c != null 
-                        && (enrolObj.Lesson_Start_time__c >= enrolObj.Preferred_Start_Time__c && enrolObj.Lesson_Start_time__c < enrolObj.Preferred_End_time__c)
-                        && enrolObj.Waitlist_Status__c.equalsIgnoreCase('Emailed') && enrolObj.Lesson_Day__c.equalsIgnoreCase(enrolObj.Preferred_Day__c) 
-                        && enrolObj.Teacher__c == enrolObj.Preferred_Teacher__c){
-                        enrolObj.Waitlist_Status__c ='Assigned';
-                    }
-                    //end : added by Nishi : 4-Feb-2021 :Aureus Q1 2021: for update Waitlist_Status__c   emailed to  Assigned when center admin reschadle all bookings according to Preferred time slot
+                    // //Start : added by Nishi : 4-Feb-2021 :Aureus Q1 2021: for update Waitlist_Status__c   emailed to  Assigned
+                    // if(string.isnotBlank(enrolObj.Waitlist_Status__c) && string.isnotBlank(enrolObj.Preferred_Day__c) && string.isnotBlank(enrolObj.Preferred_Teacher__c) 
+                    //     && enrolObj.Preferred_End_time__c != null && enrolObj.Preferred_Start_Time__c != null 
+                    //     && (enrolObj.Lesson_Start_time__c >= enrolObj.Preferred_Start_Time__c && enrolObj.Lesson_Start_time__c < enrolObj.Preferred_End_time__c)
+                    //     && enrolObj.Waitlist_Status__c.equalsIgnoreCase('Emailed') && enrolObj.Lesson_Day__c.equalsIgnoreCase(enrolObj.Preferred_Day__c) 
+                    //     && enrolObj.Teacher__c == enrolObj.Preferred_Teacher__c){
+                    //     enrolObj.Waitlist_Status__c ='Assigned';
+                    // }
+                    // //end : added by Nishi : 4-Feb-2021 :Aureus Q1 2021: for update Waitlist_Status__c   emailed to  Assigned when center admin reschadle all bookings according to Preferred time slot
                 }
                 
                 if(String.isNotBlank(enrolObj.Id)){
@@ -966,7 +966,7 @@ return Success;
                            Student__r.FirstName,  Student__r.LastName, Student__r.Parent__r.FirstName, Student__r.Parent__r.LastName, Student__r.Parent__r.PersonMobilePhone, Student__r.PersonMobilePhone, Student__r.Phone, Student__r.PersonEmail,
                            Student__r.Parent__r.Phone, Student__r.Parent__r.PersonEmail, Student__r.id, RecordType.Name, Individual_Booking__c,  Student__r.Also_a_Student__c, Student__r.Parent__r.Also_a_Student__c, Enrolment__c, Enrolment__r.Package_Process_Type__c, 
                            Enrolment__r.New_Package_Id__r.Name, Enrolment__r.Package_Process_Request_Date__c, Enrolment__r.Effective_Date__c, Enrolment__r.Notice_Period_Start_Date__c, Enrolment__r.Notice_Period_End_Date__c, Enrolment__r.Package_Process_Status__c,
-                           Enrolment__r.Advance_Action_Requested_By__r.Name, Center__c, Center__r.Name, Remarks__c 
+                           Enrolment__r.Advance_Action_Requested_By__r.Name, Center__c, Center__r.Name, Remarks__c ,Is_Complimentary_Credit__c
                            FROM Booking__c WHERE id =: bookingId];
             //System.debug('@@@bookingList'+bookingList);
             if(bookingList.size() > 0){
@@ -1007,6 +1007,16 @@ Subscription__c subscription = new Subscription__c ();*/
                 ed.duration = bookingObj.Duration__c;
                 ed.price = bookingObj.Price__c;
                 ed.type = bookingObj.Type__c;
+                ed.isMakeup = false;
+                // added by nishi: 8Mar-2021:start for add makeup type field on calendar booking interface
+                if(bookingObj.Type__c =='Make-up' && bookingObj.recordtype.name=='Lesson'){
+                    ed.isMakeup = true;
+                    ed.makeupType = 'Make-up';
+                    if(bookingObj.Is_Complimentary_Credit__c){
+                        ed.makeupType = 'Complimentary';
+                    }
+                }
+                // added by nishi: 8Mar-2021:end: for add makeup type field on calendar booking interface
                 ed.placeholder = bookingObj.Remarks__c;
                 ed.studentFirstName = bookingObj.Student__r.FirstName;
                 ed.studentLastName = bookingObj.Student__r.LastName;
@@ -1633,7 +1643,7 @@ ed.teacherAttachmentId = attachList[0].Id;
         EventDetails ed = new EventDetails();
         if(bookingReschedule.containsKey('Id')){
             bookObjList = [SELECT id, Booking_Date__c,Lesson_Type__c, Start_Time__c, Center__c,Center__r.name, End_Time__c, Duration__c,Type__c, Status__c, Price__c, Teacher_Account__r.Name, Package__r.Name, 
-                           Student__r.FirstName, Resource__c,Resource__r.Name, Student__r.LastName, Student__r.Parent__r.FirstName, Student__r.Parent__r.LastName, Student__r.Parent__r.PersonMobilePhone, 
+                           Student__r.FirstName, Resource__c,Resource__r.Name, Student__r.LastName, Student__r.Parent__r.FirstName, Student__r.Parent__r.LastName, Student__r.Parent__r.PersonMobilePhone, Is_Complimentary_Credit__c,
                            Student__r.Parent__r.Phone, Student__r.Parent__r.PersonEmail, Student__r.id, Student__r.PersonMobilePhone, Student__r.Phone, Student__r.PersonEmail,Student__r.Also_a_Student__c, Student__r.Parent__r.Also_a_Student__c, RecordType.Name
                            FROM Booking__c WHERE id =: String.valueOf(bookingReschedule.get('Id'))];
             if(bookObjList.size() > 0){
@@ -1666,8 +1676,16 @@ ed.teacherAttachmentId = attachList[0].Id;
                     ed.parentPhone = bookingObj.Student__r.Phone;
                     ed.parentEmail = bookingObj.Student__r.PersonEmail;
                 }             
-                
-                
+                ed.isMakeup = false;
+                 // added by nishi: 8Mar-2021:start for add makeup type field on calendar booking interface
+                 if(bookingObj.Type__c =='Make-up'  && bookingObj.recordtype.name=='Lesson'){
+                    ed.isMakeup = true;
+                    ed.makeupType = 'Make-up';
+                    if(bookingObj.Is_Complimentary_Credit__c){
+                        ed.makeupType = 'Complimentary';
+                    }
+                }
+                // added by nishi: 8Mar-2021:end: for add makeup type field on calendar booking interface
                 ed.status = bookingObj.status__c;
                 ed.duration = bookingObj.Duration__c;
                 ed.price = bookingObj.Price__c;
@@ -6418,6 +6436,9 @@ countWithNewPackage +=1;
         public string lessonPassCode;
         Public List<Resource__c> listOfAvailableResources; //added by nishi: 30-Jul-2020: for get all Available_For_Aureus_Lesson__c resources
         public Boolean isOssia; // added by Arpit 13-aug-2020 : for manage Ossia Organization student  
+        public boolean isMakeup;
+        public string makeupType;
+        
     }
     //Booking History Wrapper Class
     public class BookingHistory{

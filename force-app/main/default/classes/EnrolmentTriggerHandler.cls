@@ -793,11 +793,12 @@ accList.add(accObj);
         list<Subscription_Line_Item__c> listOfSubsLineItem = new LIst<Subscription_Line_Item__c>();
         Set<string> invIds = new Set<string>();
         Set<String> parentIds = new Set<String>();
-        map<Id,Date> subscriptionMap = new  map<Id,Date> ();
+        map<Id,string> subscriptionupdateMap = new  map<Id,string> ();
         List<Enrolment__c> listOfEnrolment = new List<Enrolment__c>();
         for(Enrolment__c objEnrolment :  PianoRentalHelperController.getRentalEnrolmentList(enrolmentIds)){
             if(string.isNotBlank(objEnrolment.center__r.id) && string.isNotBlank(objEnrolment.center__r.country__r.id) &&
                 objEnrolment.Subscription_Line_Items__r != null && objEnrolment.Subscription_Line_Items__r.size() >0){
+                    date subscriptionNextBilldate = date.newInstance(objEnrolment.Final_Delivery_date__c.addMonths(1).year(),objEnrolment.Final_Delivery_date__c.addMonths(1).month(),1);
                     Enrolment__c objNewEnrolment = new Enrolment__c(id= objEnrolment.id,Rental_Start_date__c = objEnrolment.Final_Delivery_date__c.addDays(1));
                     listOfInvoiceLineItem = new List<Invoice_Line_Item__c>();
                     Country__c countryObj = objEnrolment.center__r.country__r;
@@ -819,8 +820,11 @@ accList.add(accObj);
                        // objInvoice.Invoice_Date__c =objEnrolment.Final_Delivery_date__c;
                        // objInvoice.Due_Date__c=objEnrolment.Final_Delivery_date__c;
                         mapOfInvoice.put(objEnrolment.Id,objInvoice);
+                        // 4-Mar-2021: Aureus Q1 2021: piano rental : If we found Free_Rental_Month__c then we create all invoices as per months and added Complimentary discount invoice line items  
                         if(objEnrolment.Free_Rental_Month__c != null && objEnrolment.Free_Rental_Month__c > 0){
-                            objNewEnrolment.Free_Rental_Expiration_Date__c = Datetime.newInstance(objEnrolment.Final_Delivery_date__c,time.newInstance(0, 0,0,0)).addMonths(integer.valueOf(objEnrolment.Free_Rental_Month__c)).date();
+                            date freeRentalExpirationDate = Datetime.newInstance(objEnrolment.Final_Delivery_date__c,time.newInstance(0, 0,0,0)).addMonths(integer.valueOf(objEnrolment.Free_Rental_Month__c)).date();
+                            objNewEnrolment.Free_Rental_Expiration_Date__c = freeRentalExpirationDate;
+                            subscriptionNextBilldate = date.newInstance(freeRentalExpirationDate.addMonths(1).year(),freeRentalExpirationDate.addMonths(1).month(),1);
                             Date effectiveFreeRentalDate = objNewEnrolment.Free_Rental_Expiration_Date__c;  //15- apr 
                             Date startFreeRentalDate = objEnrolment.Final_Delivery_date__c;  //15- apr 
                             Integer startmonth =0;
@@ -831,8 +835,8 @@ accList.add(accObj);
                                 if(startFreeRentalDate !=  objEnrolment.Final_Delivery_date__c){
                                     invoicedate=  date.newInstance(startFreeRentalDate.addmonths(1).year(), startFreeRentalDate.addmonths(1).month(),1);
                                     lastdate = date.newInstance(invoicedate.year(), invoicedate.month(),date.daysInMonth(invoicedate.year(), invoicedate.month()));
-                                    //firstDate = 1 mar  lastDate = 30m
-                                    if(effectiveFreeRentalDate != NULL && invoicedate.daysBetween(effectiveFreeRentalDate) > 0 ){
+                                    listOfInvoiceLineItem.add(createInvoiceLineItem(objEnrolment,objSubLineItem.Id, objEnrolment.Subscription_Line_Items__r[0].Amount__c , countryObj.Tax_Rate__c, false,'Rental Invoice',invoicedate));
+                                      if(effectiveFreeRentalDate != NULL && invoicedate.daysBetween(effectiveFreeRentalDate) > 0 ){
                                         if((effectiveFreeRentalDate >= invoicedate || effectiveFreeRentalDate.month() < invoicedate.month()) && effectiveFreeRentalDate <= lastDate){
                                             rentalTotalAmount = effectiveFreeRentalDate.day() * ( objEnrolment.Subscription_Line_Items__r[0].Amount__c  /  date.daysInMonth(effectiveFreeRentalDate.year(), effectiveFreeRentalDate.month()));
                                             listOfInvoiceLineItem.add(createInvoiceLineItem(objEnrolment,objSubLineItem.Id, rentalTotalAmount, countryObj.Tax_Rate__c, true,'Complimentary Rental Invoice',invoicedate));
@@ -840,7 +844,6 @@ accList.add(accObj);
                                             listOfInvoiceLineItem.add(createInvoiceLineItem(objEnrolment,objSubLineItem.Id,objEnrolment.Subscription_Line_Items__r[0].Amount__c , countryObj.Tax_Rate__c, true,'Complimentary Rental Invoice',invoicedate));
                                         }
                                     }  
-                                    listOfInvoiceLineItem.add(createInvoiceLineItem(objEnrolment,objSubLineItem.Id, objEnrolment.Subscription_Line_Items__r[0].Amount__c , countryObj.Tax_Rate__c, false,'Rental Invoice',invoicedate));
                                 }else{
                                     listOfInvoiceLineItem.add(createInvoiceLineItem(objEnrolment,objSubLineItem.Id, rentalTotalAmount, countryObj.Tax_Rate__c, false,'Rental Invoice',objEnrolment.Final_Delivery_date__c));
                                     listOfInvoiceLineItem.add(createInvoiceLineItem(objEnrolment,objSubLineItem.Id, rentalTotalAmount, countryObj.Tax_Rate__c, true,'Complimentary Rental Invoice',objEnrolment.Final_Delivery_date__c));
@@ -848,9 +851,9 @@ accList.add(accObj);
                                 startFreeRentalDate=lastdate;
                             }
                         }
+                        // 4-Mar-2021: Aureus Q1 2021: piano rental : If we found Free_Rental_Month__c then we create all invoices as per months and added Complimentary discount invoice line items
                         else{
                             listOfInvoiceLineItem.add(createInvoiceLineItem(objEnrolment,objSubLineItem.Id, rentalTotalAmount, countryObj.Tax_Rate__c, false,'Rental Invoice',objEnrolment.Final_Delivery_date__c));
-                               
                         }
                         
                         mapOfInvoiceLineItem.put(objEnrolment.Id,listOfInvoiceLineItem);
@@ -859,21 +862,26 @@ accList.add(accObj);
                         system.debug('mapOfInvoiceLineItem'+mapOfInvoiceLineItem);
 
                         // 5-Feb:2020: for update subscription_line_item next bill date and start date
-                        if(objSubLineItem.Subscription__r.Next_Bill_Date__c == null 
-                        && objSubLineItem.Subscription__r.Subscription_Start_Date__c == null){
-                            subscriptionMap.put(objSubLineItem.Subscription__c,objEnrolment.Final_Delivery_date__c.addDays(1));
-                            listOfSubsLineItem.add(new Subscription_Line_Item__c(id=objSubLineItem.id,
-                                Next_Bill_Date__c =  date.newInstance(objEnrolment.Final_Delivery_date__c.addMonths(1).year(),objEnrolment.Final_Delivery_date__c.addMonths(1).month(),1),
-                                Subscription_Start_Date__c =  objEnrolment.Final_Delivery_date__c.addDays(1)));
-                        }
                         //Start:added by nishi: 27-Jul-2020: for already subscription start date and next bill date exist then we 
-                        // added subscription Next bill date as a line Item date.
-                        else{
+                         // added subscription Next bill date as a line Item date.
+                       
+                        if(objSubLineItem.Subscription__r.Next_Bill_Date__c != null 
+                        && objSubLineItem.Subscription__r.Subscription_Start_Date__c != null){
+                            system.debug('subscriptionNextBilldate'+subscriptionNextBilldate);
+                            system.debug('objSubLineItem.Subscription__r.Next_Bill_Date__c'+objSubLineItem.Subscription__r.Next_Bill_Date__c);
+                            if(objSubLineItem.Subscription__r.Next_Bill_Date__c > subscriptionNextBilldate){
+                                subscriptionupdateMap.put(objSubLineItem.Subscription__c,objSubLineItem.Subscription__r.Subscription_Start_Date__c+'-'+subscriptionNextBilldate);
+                            }
                             listOfSubsLineItem.add(new Subscription_Line_Item__c(id=objSubLineItem.id,
-                                Next_Bill_Date__c =  objSubLineItem.Subscription__r.Next_Bill_Date__c,
+                                Next_Bill_Date__c =  subscriptionNextBilldate,
                                 Subscription_Start_Date__c =  objEnrolment.Final_Delivery_date__c.addDays(1)));
+                        }  //ENd:added by nishi: 27-Jul-2020: for already subscription start date and next bill date exist then we 
+                        else{
+                            subscriptionupdateMap.put(objSubLineItem.Subscription__c,objEnrolment.Final_Delivery_date__c.addDays(1)+'-'+subscriptionNextBilldate);
+                            listOfSubsLineItem.add(new Subscription_Line_Item__c(id=objSubLineItem.id,
+                                Next_Bill_Date__c =  subscriptionNextBilldate,//date.newInstance(objEnrolment.Final_Delivery_date__c.addMonths(1).year(),objEnrolment.Final_Delivery_date__c.addMonths(1).month(),1),
+                                Subscription_Start_Date__c =  objEnrolment.Final_Delivery_date__c.addDays(1)));    
                         }
-                         //ENd:added by nishi: 27-Jul-2020: for already subscription start date and next bill date exist then we 
                        system.debug('@@listOfSubsLineItem'+listOfSubsLineItem);
                         //10-Feb-2020: add Rental start date 
                         listOfEnrolment.add(objNewEnrolment);
@@ -909,13 +917,13 @@ accList.add(accObj);
                 update listOfSubsLineItem;
             }
             system.debug('W@@listOfSubsLineItem'+listOfSubsLineItem);
-            system.debug('W@@subscriptionMap'+subscriptionMap);
-            if(subscriptionMap != null && subscriptionMap.size() > 0){
+            system.debug('W@@subscriptionMap'+subscriptionupdateMap);
+            if(subscriptionupdateMap != null && subscriptionupdateMap.size() > 0){
                 List<Subscription__c> listOfSubscription = new List<Subscription__c>();
-                for(Id subscriptionId :subscriptionMap.keySet()){
+                for(Id subscriptionId :subscriptionupdateMap.keySet()){
                     listOfSubscription.add(new Subscription__c(id= subscriptionId, 
-                                            Subscription_Start_Date__c = subscriptionMap.get(subscriptionId),
-                                            Next_Bill_Date__c = date.newInstance(subscriptionMap.get(subscriptionId).addMonths(1).year(),subscriptionMap.get(subscriptionId).addMonths(1).month(),1)));
+                                            Subscription_Start_Date__c = date.valueOf(subscriptionupdateMap.get(subscriptionId).split('-')[0]),
+                                            Next_Bill_Date__c = date.valueOf(subscriptionupdateMap.get(subscriptionId).split('-')[1])));
                 }
                 if(listOfSubscription != null && listOfSubscription.size() > 0){
                     update listOfSubscription;
@@ -946,7 +954,8 @@ accList.add(accObj);
         inlineItemForChange.Is_Discount__c= isDiscount;
         inlineItemForChange.Package__c = objEnrolment.Package__c;
         inlineItemForChange.Is_Deposit__c = false;        
-        inlineItemForChange.Remarks__C = remarks;                                             
+        inlineItemForChange.Remarks__C = remarks;       
+        inlineItemForChange.Teacher_Id__c = objEnrolment.Teacher__c;       
         if(taxRate >  0 && rentalTotalAmount > 0 ){
             Double gstAmount = BillingUtility.roundOffAmount(Double.valueOf(rentalTotalAmount) * (taxRate / 100));
             inlineItemForChange.gst_Amount__c = BillingUtility.roundOffAmount(isDiscount ?  gstAmount * -1: gstAmount);    

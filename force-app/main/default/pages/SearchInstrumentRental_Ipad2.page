@@ -166,6 +166,9 @@
             j$ = jQuery.noConflict();
             j$(document).ready(function () {
                 var packageInstrument = '{!packageInstrument}';
+                if(packageInstrument == 'Piano'){
+                    packageInstrument = 'Keyboard';
+                }
                 console.log(packageInstrument);
                 var accTable = j$('[id$="accTable"]').removeAttr('width').DataTable({
                     "pageLength": 10, //"pageLength": 30, CH02 showing only 10 results  
@@ -186,32 +189,65 @@
 
                 //CH06 Start - making the search box width as for the ipad
                 var addressTableFilter = document.getElementById('accTable_filter');
-                console.log(addressTableFilter);
                 addressTableFilter.firstChild.getElementsByTagName('input')[0].style.width = "500px";
                 if({!isAureusNewEnolment}){
                     $( "#accTable_filter label" ).after(function() {
-                        return `<label class="slds-checkbox_toggle" style="display: inline-flex;padding-left: 120px;width: auto;">
-                            <span class="slds-form-element__label slds-m-bottom_none">Show All Instrument : </span>
+                        return `<fieldset class="slds-form-element" style="display: inline-flex;padding-left: 120px;width: auto;margin-bottom: -12px">
+                            <div class="slds-form-element__control">
+                                <div class="slds-radio_button-group" style="height:40px;">
+                                <span class="slds-button slds-radio_button" style="height:42px;">
+                                    <input type="radio" name="SelectAll" id="Promotional" value="Promotional" onclick="getAllProduct();" />
+                                    <label class="slds-radio_button__label" for="Promotional">
+                                    <span class="slds-radio_faux">Show Promotional Instruments</span>
+                                    </label>
+                                </span>
+                                <span class="slds-button slds-radio_button" style="height:42px;">
+                                    <input type="radio" name="SelectAll" id="allinstrument" value="allinstrument" onclick="getAllProduct();" />
+                                    <label class="slds-radio_button__label" for="allinstrument">
+                                    <span class="slds-radio_faux">Show All Instruments</span>
+                                    </label>
+                                </span>
+                            </div>
+                        </fieldset>`;
+                        /*return `<label class="slds-checkbox_toggle" style="display: inline-flex;padding-left: 120px;width: auto;margin-bottom: -12px">
+                            <span class="slds-form-element__label slds-m-bottom_none showAllInstrument" style="font-weight: bold;font-size: inherit;">Show Promotional Instruments : </span>
                             <input type="checkbox" name="SelectAll" value="SelectAll" aria-describedby="SelectAll" onclick="getAllProduct();" checked=""/>
                             <span id="SelectAll" class="slds-checkbox_faux_container" aria-live="assertive">
                                 <span class="slds-checkbox_faux"></span>
                                 <span class="slds-checkbox_on">Enabled</span>
                                 <span class="slds-checkbox_off">Disabled</span>
                             </span>
-                        </label>`;
+                        </label>`*/;
                     });
-                    $('input[name="SelectAll"]').prop('checked',false);
+                    $('#Promotional').prop('checked',true);
+                    //$('input[name="SelectAll"]').prop('checked',false);
                 }
                 //CH06 END
             });
 
 
             function getAllProduct(){
-                if($('input[name="SelectAll"]').prop('checked')){
+                /*if($('input[name="SelectAll"]').prop('checked')){
+                    $('.showAllInstrument').text('Show All Instruments');
+                    var oldtable = j$('[id$="accTable"]').DataTable();
+                    oldtable.search('').draw();
+                }else{
+                    $('.showAllInstrument').text('Show Promotional Instruments');
+                    var packageInstrument = '{!packageInstrument}';
+                    if(packageInstrument == 'Piano'){
+                        packageInstrument = 'Keyboard';
+                    }
+                    var oldtable = j$('[id$="accTable"]').DataTable();
+                    oldtable.search(packageInstrument).draw();
+                }*/
+                if($('#allinstrument').prop('checked')){
                     var oldtable = j$('[id$="accTable"]').DataTable();
                     oldtable.search('').draw();
                 }else{
                     var packageInstrument = '{!packageInstrument}';
+                    if(packageInstrument == 'Piano'){
+                        packageInstrument = 'Keyboard';
+                    }
                     var oldtable = j$('[id$="accTable"]').DataTable();
                     oldtable.search(packageInstrument).draw();
                 }

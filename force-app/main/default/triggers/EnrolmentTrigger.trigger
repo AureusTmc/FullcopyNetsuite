@@ -291,7 +291,8 @@ trigger EnrolmentTrigger on Enrolment__c (before Insert, after Insert,before Upd
                             listOfClass.add(enrObj.Class__c);
                         }
                     // added by jatin: 30-Dec-2019 : for Rental invoice will be generated and sent to the customer via email along with the confirmed timeslot
-                    if(enrObj.Type__c == ConstantsClass.enrollmentTypeInstrument && enrObj.RecordTypeId == enrollmentInstrumentRecTypeId && enrObj.Stage__c ==ConstantsClass.enrollmentPianoRentalActiveStage){
+                    if(enrObj.Type__c == ConstantsClass.enrollmentTypeInstrument && enrObj.RecordTypeId == enrollmentInstrumentRecTypeId && 
+                       enrObj.Stage__c ==ConstantsClass.enrollmentPianoRentalActiveStage){
                         if((Trigger.oldmap.get(enrObj.Id).Final_Delivery_date__c != enrObj.Final_Delivery_date__c 
                                 && Trigger.oldmap.get(enrObj.Id).Final_Delivery_date__c == null 
                                 &&  enrObj.Final_Delivery_date__c != Null )
@@ -385,6 +386,61 @@ trigger EnrolmentTrigger on Enrolment__c (before Insert, after Insert,before Upd
         }
     }
 
-
-    
+    //Start : added by Nishi : 4-Mar-2021 :Aureus Q1 2021: for update Waitlist_Status__c   emailed to  Assigned when enrolment update teacher/lesson time/ lesosn day according to  Preferred detials 
+    if(trigger.isBefore && trigger.isUpdate){
+        set<String> enroledStage = New Set<String>{ConstantsClass.enroledStatus,ConstantsClass.enrollStageAttended,ConstantsClass.PendingEnrolment,'Requested','Booked'};
+        for(Enrolment__c enrolObj:trigger.new){
+            if((String.isNotBlank(enrolObj.Type__c) && String.isNotBlank(enrolObj.Stage__c)) && 
+                enrolObj.Type__c == ConstantsClass.enrolRegularStatus && enroledStage.contains(enrolObj.Stage__c)  &&
+                enrolObj.Lesson_Start_time__c != null &&   String.isNotBlank(enrolObj.Lesson_Day__c)&& String.isNotBlank(enrolObj.Teacher__c) &&  
+                (enrolObj.Lesson_Start_time__c != Trigger.oldmap.get(enrolObj.Id).Lesson_Start_time__c ||
+                enrolObj.Teacher__c != Trigger.oldmap.get(enrolObj.Id).Teacher__c ||
+                enrolObj.Lesson_Day__c != Trigger.oldmap.get(enrolObj.Id).Lesson_Day__c)){
+                    if(string.isnotBlank(enrolObj.Waitlist_Status__c) && string.isnotBlank(enrolObj.Preferred_Day__c) && string.isnotBlank(enrolObj.Preferred_Teacher__c) 
+                        && enrolObj.Preferred_End_time__c != null && enrolObj.Preferred_Start_Time__c != null 
+                        && (enrolObj.Lesson_Start_time__c >= enrolObj.Preferred_Start_Time__c && enrolObj.Lesson_Start_time__c < enrolObj.Preferred_End_time__c)
+                        && (!enrolObj.Waitlist_Status__c.equalsIgnoreCase('Assigned')) && enrolObj.Lesson_Day__c.equalsIgnoreCase(enrolObj.Preferred_Day__c) 
+                        && enrolObj.Teacher__c == enrolObj.Preferred_Teacher__c){
+                            DateTime lessonEnrolmentstartTime = DateTime.newInstance(system.today(),  enrolObj.Lesson_Start_time__c);
+                            DateTime lessonEnrolmentendTime = DateTime.newInstance(system.today(),  enrolObj.Lesson_Start_time__c.addMinutes(Integer.valueOf(enrolObj.Duration__c)));
+                            DateTime peferredEnrolmentstartTime = DateTime.newInstance(system.today(),  enrolObj.Preferred_Start_Time__c);
+                            DateTime peferredEnrolmentendime = DateTime.newInstance(system.today(),  enrolObj.Preferred_End_time__c);
+                            set<string> peferredEnrolmentTimeslots = MakeupEnrolmentBatchHelper.getFormatedTimeSlotList(peferredEnrolmentstartTime, peferredEnrolmentendime);
+                            set<string> lessonEnrolmentTimeSlots = MakeupEnrolmentBatchHelper.getFormatedTimeSlotList(lessonEnrolmentstartTime, lessonEnrolmentendTime);
+                            if(lessonEnrolmentTimeSlots != null && lessonEnrolmentTimeSlots.size() > 0 && 
+                                peferredEnrolmentTimeslots != null && peferredEnrolmentTimeslots.size() > 0 && peferredEnrolmentTimeslots.containsAll(lessonEnrolmentTimeSlots)){
+                                enrolObj.Waitlist_Status__c ='Assigned';
+                            }
+                    }
+            } 
+             //start : added by Nishi : 8-mar-2021 :Aureus Q1 2021: for update Waitlist_Status__c   emailed to  Assigned when enrolment update teacher/lesson time/ lesosn day according to  Preferred detials 
+            if((String.isNotBlank(enrolObj.Type__c) && String.isNotBlank(enrolObj.Stage__c)) && 
+                enrolObj.Type__c == ConstantsClass.typeTrial && enroledStage.contains(enrolObj.Stage__c) && 
+                enrolObj.Trial_Date__c != null &&  enrolObj.Trial_Start_Time__c != null && String.isNotBlank(enrolObj.Teacher__c) &&  
+                (enrolObj.Trial_Start_Time__c != Trigger.oldmap.get(enrolObj.Id).Trial_Start_Time__c ||
+                enrolObj.Trial_Date__c != Trigger.oldmap.get(enrolObj.Id).Trial_Date__c ||
+                enrolObj.Teacher__c != Trigger.oldmap.get(enrolObj.Id).Teacher__c)){
+                    string lessonday = datetime.newInstance(enrolObj.Trial_Date__c,enrolObj.Trial_Start_Time__c).format('EEEE');
+                    if(string.isnotBlank(enrolObj.Waitlist_Status__c) && string.isnotBlank(enrolObj.Preferred_Day__c) && string.isnotBlank(enrolObj.Preferred_Teacher__c) 
+                        && enrolObj.Preferred_End_time__c != null && enrolObj.Preferred_Start_Time__c != null 
+                        && (enrolObj.Trial_Start_Time__c >= enrolObj.Preferred_Start_Time__c && enrolObj.Trial_Start_Time__c < enrolObj.Preferred_End_time__c)
+                        && (!enrolObj.Waitlist_Status__c.equalsIgnoreCase('Assigned')) && lessonday.equalsIgnoreCase(enrolObj.Preferred_Day__c) 
+                        && enrolObj.Teacher__c == enrolObj.Preferred_Teacher__c){
+                            DateTime lessonEnrolmentstartTime = DateTime.newInstance(system.today(),  enrolObj.Trial_Start_Time__c);
+                            DateTime lessonEnrolmentendTime = DateTime.newInstance(system.today(),  enrolObj.Trial_Start_Time__c.addMinutes(Integer.valueOf(enrolObj.Duration__c)));
+                            DateTime peferredEnrolmentstartTime = DateTime.newInstance(system.today(),  enrolObj.Preferred_Start_Time__c);
+                            DateTime peferredEnrolmentendime = DateTime.newInstance(system.today(),  enrolObj.Preferred_End_time__c);
+                            set<string> peferredEnrolmentTimeslots = MakeupEnrolmentBatchHelper.getFormatedTimeSlotList(peferredEnrolmentstartTime, peferredEnrolmentendime);
+                            set<string> lessonEnrolmentTimeSlots = MakeupEnrolmentBatchHelper.getFormatedTimeSlotList(lessonEnrolmentstartTime, lessonEnrolmentendTime);
+                            if(lessonEnrolmentTimeSlots != null && lessonEnrolmentTimeSlots.size() > 0 && 
+                                peferredEnrolmentTimeslots != null && peferredEnrolmentTimeslots.size() > 0 && peferredEnrolmentTimeslots.containsAll(lessonEnrolmentTimeSlots)){
+                                enrolObj.Waitlist_Status__c ='Assigned';
+                            }
+                    }
+            }     
+             //end : added by Nishi : 8-mar-2021 :Aureus Q1 2021: for update Waitlist_Status__c   emailed to  Assigned when enrolment update teacher/lesson time/ lesosn day according to  Preferred detials 
+        }
+    }
+     //end : added by Nishi : 4-mar-2021 :Aureus Q1 2021: for update Waitlist_Status__c   emailed to  Assigned when enrolment update teacher/lesson time/ lesosn day according to  Preferred detials 
+               
 }

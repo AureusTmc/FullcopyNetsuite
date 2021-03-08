@@ -10,29 +10,35 @@
 global with sharing class WaitingEnrolmentsBatch implements Database.Batchable<sObject>,database.stateful {
     global Set<String> enrolTypes;
     global Set<String> enrolStatus;
-    global String enroledStage;
+    global set<String> enroledStage;
     Global datetime enrolmentEffectiveDate;
-    global WaitingEnrolmentsBatch (){
-        enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus}; 
-        enrolStatus =New Set<String>{ConstantsClass.enrolWaitingStatus};
-        enroledStage = ConstantsClass.enroledStatus;
-        enrolmentEffectiveDate =system.now().addDays(1);//Datetime.newInstance(date.newInstance( 2021,3,6),system.now().time());
+    global WaitingEnrolmentsBatch (integer addWaitingdays){
+        enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus,ConstantsClass.typeTrial}; 
+        enrolStatus = New Set<String>{ConstantsClass.enrolWaitingStatus};
+        enroledStage = New Set<String>{ConstantsClass.enroledStatus,enrollStageAttended,ConstantsClass.PendingEnrolment,'Requested','Booked'};
+        enrolmentEffectiveDate =system.now().addDays(addWaitingdays);//Datetime.newInstance(date.newInstance( 2021,3,6),system.now().time());
+    }
+    global WaitingEnrolmentsBatch (datetime enrolmentEffectiveDate){
+        enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus,ConstantsClass.typeTrial}; 
+        enrolStatus = New Set<String>{ConstantsClass.enrolWaitingStatus};
+        enroledStage = New Set<String>{ConstantsClass.enroledStatus,ConstantsClass.enrollStageAttended,ConstantsClass.PendingEnrolment,'Requested','Booked'};//
+        this.enrolmentEffectiveDate =enrolmentEffectiveDate;
     }
     global Database.QueryLocator start(Database.BatchableContext BC){
         String weekday = enrolmentEffectiveDate.format('EEEE');
         string queryString = 'SELECT Id,Name,Student__c,Waitlist_Status__c,Preferred_End_time__c,Preferred_Start_Time__c,Preferred_Day__c,Preferred_Teacher__c ,Center__c, Center__r.Name, Teacher__c, Package__c,Lesson_Start_time__c, Package__r.Duration__c, Lesson_Day__c,Parent__c, Parent__r.Available_Make_up_Units__c,Student__r.Name,Parent__r.Name, ';
         queryString+= ' Package_Process_Type__c, Package_Process_Request_Date__c,New_Package_Id__c, Package_Process_Status__c, Effective_Date__c,New_Teacher__c, Next_Lesson_Start_time__c, New_Lesson_Day__c, Stage__c,New_Centre__c,';
-        queryString+= ' Type__c, Class__c,New_Class__c,Center__r.Organisation__r.name,Parent__r.Centre_Name__r.Location__c,Parent__r.PersonContactId  FROM Enrolment__c ';
+        queryString+= ' Type__c, Class__c,New_Class__c,Center__r.Organisation__r.name,Parent__r.Centre_Name__r.Location__c,Parent__r.PersonContactId ,Trial_Start_Time__c FROM Enrolment__c ';
         queryString+= ' WHERE Type__c In: enrolTypes ';
         queryString+= ' AND Waitlist_Status__c In: enrolStatus ';
-        queryString+= ' AND Stage__c =: enroledStage ';
+        queryString+= ' AND Stage__c In: enroledStage ';
         queryString+= ' AND Preferred_Teacher__c != null ';
         queryString+= ' AND Preferred_End_time__c != null ';
         queryString+= ' AND Preferred_Start_Time__c != null ';
         queryString+= ' AND Preferred_Day__c != null ';
         queryString+= ' AND Preferred_Day__c =: weekday ';
-        
-        // string enrolmentId='a066F00001VZgNP';
+        system.debug('weekday'+weekday);
+        // string enrolmentId='a066F00001SthwMQAR';
         // queryString+= ' AND Id =:enrolmentId ';
         
        return Database.getQueryLocator(queryString);                           
@@ -170,7 +176,7 @@ global with sharing class WaitingEnrolmentsBatch implements Database.Batchable<s
     global void finish(Database.BatchableContext BC){
    
     }
-    private static List<Enrolment__c> getCanceledEnrolmentList(Set<string> preferredTeacherDays, set<string> preferredEnrolmentLessonDays){
+ /*   private static List<Enrolment__c> getCanceledEnrolmentList(Set<string> preferredTeacherDays, set<string> preferredEnrolmentLessonDays){
         return [SELECT Id,Name,Student__c,Preferred_End_time__c,Preferred_Start_Time__c,Preferred_Day__c,Preferred_Teacher__c ,Center__c, Center__r.Name, 
         Teacher__c, Package__c,Lesson_Start_time__c, Package__r.Duration__c, Lesson_Day__c,
         Stage__c,Type__c, Class__c,New_Class__c  FROM Enrolment__c 
@@ -258,6 +264,6 @@ global with sharing class WaitingEnrolmentsBatch implements Database.Batchable<s
          update listOfPrefferedEnrolment;
          return sendSingleEmailMessage;
     }
-
+*/
     
 }

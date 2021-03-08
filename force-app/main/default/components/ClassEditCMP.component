@@ -20,7 +20,7 @@
                     </a>
                 </header>
 
-                <div class="" id="newGroupClassModalBody" style="overflow-y: none;">
+                <div class="" id="newGroupClassModalBody" style="overflow-y: none;background: white;">
                     <!-- tabs-->
                     <div class="slds-tabs_default">
                         <ul class="slds-tabs_default__nav" role="tablist">

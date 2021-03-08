@@ -393,7 +393,11 @@
                                         <apex:outputPanel rendered="{!invLineItm.Is_Discount__c}">
                                             Discount - 
                                         </apex:outputPanel>
-                                        {!invLineItm.Package_Name__c} - {!invLineItm.Teacher_Id__r.name}</b><br/>
+                                        {!invLineItm.Package_Name__c} 
+                                        <apex:outputPanel rendered="{!If(NOT(ISNULL(invLineItm.Teacher_Id__r.name)), true,false)}">
+                                                - {!invLineItm.Teacher_Id__r.name}
+                                            </apex:outputPanel>
+                                        </b><br/>
                                         
                                         <span class="grayColor">{!invLineItm.Student_Name__c}
                                             (For Contract {!invLineItm.Number_of_Lesson__c} Lessons on
@@ -415,7 +419,12 @@
                                         {!invLineItm.Package_Name__c}</b><br/>
                                         <span class="grayColor">
                                             <apex:outputPanel rendered="{!If(invLineItm.Package__r.Type__c == 'Adhoc', FALSE, TRUE)}">
+                                                <apex:outputPanel rendered="{!If(NOT(ISNULL(invLineItm.Subscription_Line_Item__r.Student__r.Name)), true,false)}">
                                                     {!invLineItm.Subscription_Line_Item__r.Student__r.Name}
+                                               </apex:outputPanel>
+                                               <apex:outputPanel rendered="{!If(NOT(ISNULL(invLineItm.Subscription_Line_Item__r.Student__r.Name)), false,true)}">
+                                                   {!invLineItm.Student__c}
+                                              </apex:outputPanel>
                                                     (<apex:outputText value="{0, date,MMM','  yyyy}">
                                                         <apex:param value="{!invLineItm.Month__c}" /> 
                                                     </apex:outputText>)
