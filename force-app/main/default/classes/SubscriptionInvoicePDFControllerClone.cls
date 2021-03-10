@@ -16,7 +16,7 @@ Public without sharing class SubscriptionInvoicePDFControllerClone{
     public boolean isPartial{get;set;}
     public boolean isShowCreditMemo{get;set;}
     public boolean isContractInvoice{get;set;} // nishi: 24-Feb-2021: aureus -Q1-2021: we check which invoice type is contract then we show student different details
-           
+    public boolean isPianoRentalEnrolment{get;set;}  // nishi: 24-Feb-2021: aureus -Q1-2021: we check which enrolment  is piano rental  then we show piano rent date  
     
     //By Ravi
     public SubscriptionInvoicePDFControllerClone(){
@@ -31,7 +31,7 @@ Public without sharing class SubscriptionInvoicePDFControllerClone{
         totalAmount =0;
         payableAmount=0;
         isContractInvoice = false;  // nishi: 24-Feb-2021: aureus -Q1-2021: we check which invoice type is contract then we show student different details
-           
+        isPianoRentalEnrolment = false; // nishi: 24-Feb-2021: aureus -Q1-2021: we check which enrolment  is piano rental  then we show piano rent date
         string invId = Apexpages.currentPage().getParameters().get('Id');
         system.debug('@@invId'+invId);
         List<Invoice__c> invList = [Select Id,Name,Due_Date__c,Parent_Account__r.Card_Number__c,GST_Tax__c,GST_Tax_Amount__c,Invoice_Date__c,Parent_Account__c, Admin_Fees__c, 
@@ -49,7 +49,8 @@ Public without sharing class SubscriptionInvoicePDFControllerClone{
                                     Center__r.country__r.Id,Center__r.Organisation__r.Tax_Rate__c, Center__r.country__r.Tax_Rate__c, New_GST_Amount__c, Internal_Ref_No__c,
                                         (Select Id,Amount__c, is_Deposit__c,Subscription_Line_Item__c,Package_Name__c,Remarks__c,Opportunity__c,Student__c,
                                         Subscription_Line_Item__r.Student__r.Name,Subscription_Line_Item__r.Plan_Package__r.Location__r.Name,
-                                        Subscription_Line_Item__r.Enrolment__r.Teacher__r.Name,Month__c, Package__r.Type__c ,Is_Discount__c ,
+                                        Subscription_Line_Item__r.Enrolment__r.Teacher__r.Name,Month__c, Package__r.Type__c,
+                                        Enrolment__r.RecordType.Name,Is_Discount__c ,
                                         Number_of_Lesson__c,Student_Name__c,Term_Start_Date__c,Term_End_Date__c,Teacher_Id__r.name // nishi: 24-Feb-2021: aureus -Q1-2021: we use this field which invoice type is contract   
                                          from Invoice_Line_Items__r 
                                          ORDER BY Month__c Asc), 
@@ -65,6 +66,17 @@ Public without sharing class SubscriptionInvoicePDFControllerClone{
                 isContractInvoice = true;
             }
             // nishi: 24-Feb-2021: aureus -Q1-2021: we check which invoice type is contract then we show student different details
+
+            // nishi: 24-Feb-2021: aureus -Q1-2021: we check which enrolment  is piano rental  then we show piano rent date
+            if(invoice.Invoice_Line_Items__r != null && invoice.Invoice_Line_Items__r.size()> 0 ){
+                for(Invoice_Line_Item__c objInvoice_Line_Item: invoice.Invoice_Line_Items__r){
+                    if(objInvoice_Line_Item.Enrolment__r.RecordType.Name ==ConstantsClass.enrollmentInstrumentRecTypeName &&
+                    objInvoice_Line_Item.Term_Start_Date__c != null && objInvoice_Line_Item.Term_End_Date__c != null){
+                        isPianoRentalEnrolment = true;
+                    }
+                }
+            }
+            // nishi: 24-Feb-2021: aureus -Q1-2021: we check which enrolment  is piano rental then we show piano rent date
             // added by nishi: 18-Aug-2020: for show Ossia Logo
             if(String.isNotBlank(invList[0].Center__c) && 
             String.isNotBlank(invList[0].Center__r.Organisation__c) && 

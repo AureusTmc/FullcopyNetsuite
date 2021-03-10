@@ -372,7 +372,7 @@ this method returns the list of events or bookings to show on the calendar for t
 */
 
     public static string BookingObjectQueryFields(String classLessonBookingType){
-        return ' Id,Total_Available_Make_up_mins__c,Enrolment__r.Waitlist_Status__c,Enrolment__r.Preferred_End_time__c,Enrolment__r.Preferred_Start_Time__c,Enrolment__r.Preferred_Day__c,Enrolment__r.Preferred_Teacher__r.Name ,Enrolment__r.Package_Process_Type__c,Center__r.Organisation__r.Name,Enrolment__r.Effective_Date__c,Lesson_Type__c,Camp_Id__r.id, Name, Class__r.Class_Type__c, Class__r.grade__c, Class__r.Id, Class__r.package__r.name,Class__r.Total_Enrolment__c,(Select id from Bookings1__r where type__c=:classLessonBookingType), Class__r.Available_Capacity__c,Class__r.Total_Capacity__c, Class__r.Name, Category__c, Teacher_Account__r.Name, start_Time__c, Event_Color__c, End_Time__c, status__c, type__c, Student__r.Name, RecordTypeId, Student__r.Parent__r.Name, Center_Id__c, Booking_Date__c, Instrument__c, Resource__c, Resource__r.Name, Individual_Booking__c, Remarks__c ';
+        return ' Id,Is_Complimentary_Credit__c,Total_Available_Make_up_mins__c,Enrolment__r.Waitlist_Status__c,Enrolment__r.Preferred_End_time__c,Enrolment__r.Preferred_Start_Time__c,Enrolment__r.Preferred_Day__c,Enrolment__r.Preferred_Teacher__r.Name ,Enrolment__r.Package_Process_Type__c,Center__r.Organisation__r.Name,Enrolment__r.Effective_Date__c,Lesson_Type__c,Camp_Id__r.id, Name, Class__r.Class_Type__c, Class__r.grade__c, Class__r.Id, Class__r.package__r.name,Class__r.Total_Enrolment__c,(Select id from Bookings1__r where type__c=:classLessonBookingType), Class__r.Available_Capacity__c,Class__r.Total_Capacity__c, Class__r.Name, Category__c, Teacher_Account__r.Name, start_Time__c, Event_Color__c, End_Time__c, status__c, type__c, Student__r.Name, RecordTypeId, Student__r.Parent__r.Name, Center_Id__c, Booking_Date__c, Instrument__c, Resource__c, Resource__r.Name, Individual_Booking__c, Remarks__c ';
     }
     public static List<AureusCalendarController.Events> getEventsListOfBooking(Set<String> setOfTeacher, Set<String> setOfResources, String centerId, List<String> datesOfAppointments, String instrument){
         // commneted by jatin: 19-feb:2020 :start: for add camp lesson record_type condition 
@@ -598,6 +598,11 @@ this method returns the list of events or bookings to show on the calendar for t
                                 currentEvent.className = book.Type__c.trim().replaceAll('-','_') +book.Status__c+'Class'; 
                             }else{
                                 currentEvent.className = book.Type__c.trim().replaceAll('-','_') +'Class'; 
+                                // added by nish: 10-mar-2021: for show Complimentry Credit booking color change 
+                                if(book.Is_Complimentary_Credit__c){
+                                    currentEvent.className = 'Complimentary_Credit_Class'; 
+                                }
+                                // added by nish: 10-mar-2021: for show Complimentry Credit booking color change 
                             }
                         }
                     }
@@ -976,7 +981,7 @@ parentList.add(new Account(Id = currentParent, Available_Make_up_Units__c = sumO
             }
             
         }
-        
+        system.debug('##parentList'+parentList);
         if(parentList.size() > 0){
             update parentList;
         }

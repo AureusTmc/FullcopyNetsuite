@@ -113,6 +113,18 @@
             background-color: #fff;
             padding:5px;
             }
+            #accPromotinalTable_length{display:none !important;}
+            #accPromotinalTable_filter{
+            float:none; 
+            text-align:center; 
+            margin:0 auto; 
+            padding:40px 25px 20px;}
+            #accPromotinalTable_filter input{height: calc(1.875rem + (1px )); width:55rem; border-radius: 4px;
+            box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0);
+            border: solid 1px #ececee;
+            background-color: #fff;
+            padding:5px;
+            }
             /*#accTable_filter label{position:relative;}
             #accTable_filter label:after{
             position:absolute;
@@ -162,48 +174,70 @@
                 }
                 // var accTable = $('[id$="accTable"]').DataTable({});
             }); 
-        
+            var isShowAllProduct = {!isShowAllInstrument};
             j$ = jQuery.noConflict();
             j$(document).ready(function () {
-                var packageInstrument = '{!packageInstrument}';
+               /* var packageInstrument = '{!packageInstrument}';
                 if(packageInstrument == 'Piano'){
                     packageInstrument = 'Keyboard';
                 }
                 console.log(packageInstrument);
+                */
                 var accTable = j$('[id$="accTable"]').removeAttr('width').DataTable({
-                    "pageLength": 10, //"pageLength": 30, CH02 showing only 10 results  
-                    "bInfo": false,
-                    responsive: true,
-                    "lengthChange": false,
-                    "language": {
-                        "search": "_INPUT_",
-                        "searchPlaceholder": "Search Brand, Model, Serial No., or Type"
-                    },
-                    //CH06 Start
-                    columnDefs: [
-                        { width: 10, targets: 0 }, { width: 27, targets: 1 }, { width: 60, targets: 2 }, { width: 60, targets: 3 }, { width: 60, targets: 5 }
-                    ],//CH06 END
-                    fixedColumns: true,
-                    "oSearch": { "sSearch": packageInstrument }
-                });
-
+                        "pageLength": 10, //"pageLength": 30, CH02 showing only 10 results  
+                        "bInfo": false,
+                        responsive: true,
+                        "lengthChange": false,
+                        "language": {
+                            "search": "_INPUT_",
+                            "searchPlaceholder": "Search Brand, Model, Serial No., or Type"
+                        },
+                        //CH06 Start
+                        columnDefs: [
+                            { width: 10, targets: 0 }, { width: 27, targets: 1 }, { width: 60, targets: 2 }, { width: 60, targets: 3 }, { width: 60, targets: 5 }
+                        ],//CH06 END
+                        fixedColumns: true,
+                        //"oSearch": { "sSearch": packageInstrument }
+                    });
+                var isAureusNewEnolment = {!isAureusNewEnolment};
+                
+                if(isAureusNewEnolment){
+                    var accPromotinalTable = j$('[id$="accPromotinalTable"]').removeAttr('width').DataTable({
+                        "pageLength": 10, //"pageLength": 30, CH02 showing only 10 results  
+                        "bInfo": false,
+                        responsive: true,
+                        "lengthChange": false,
+                        "language": {
+                            "search": "_INPUT_",
+                            "searchPlaceholder": "Search Brand, Model, Serial No., or Type"
+                        },
+                        //CH06 Start
+                        columnDefs: [
+                            { width: 10, targets: 0 }, { width: 27, targets: 1 }, { width: 60, targets: 2 }, { width: 60, targets: 3 }, { width: 60, targets: 5 }
+                        ],//CH06 END
+                        fixedColumns: true,
+                        //"oSearch": { "sSearch": packageInstrument }
+                    });
+                   
+                }
                 //CH06 Start - making the search box width as for the ipad
-                var addressTableFilter = document.getElementById('accTable_filter');
-                addressTableFilter.firstChild.getElementsByTagName('input')[0].style.width = "500px";
-                if({!isAureusNewEnolment}){
+                if(isAureusNewEnolment){
+                    var accTable_filter = document.getElementById('accTable_filter');
+                    accTable_filter.firstChild.getElementsByTagName('input')[0].style.width = "500px";
+                    
                     $( "#accTable_filter label" ).after(function() {
                         return `<fieldset class="slds-form-element" style="display: inline-flex;padding-left: 120px;width: auto;margin-bottom: -12px">
                             <div class="slds-form-element__control">
                                 <div class="slds-radio_button-group" style="height:40px;">
                                 <span class="slds-button slds-radio_button" style="height:42px;">
-                                    <input type="radio" name="SelectAll" id="Promotional" value="Promotional" onclick="getAllProduct();" />
-                                    <label class="slds-radio_button__label" for="Promotional">
+                                    <input type="radio" name="accTableSelectAll" id="accTablePromotional" value="Promotional" onclick="getAllProduct(false);return false;" />
+                                    <label class="slds-radio_button__label" for="accTablePromotional">
                                     <span class="slds-radio_faux">Show Promotional Instruments</span>
                                     </label>
                                 </span>
                                 <span class="slds-button slds-radio_button" style="height:42px;">
-                                    <input type="radio" name="SelectAll" id="allinstrument" value="allinstrument" onclick="getAllProduct();" />
-                                    <label class="slds-radio_button__label" for="allinstrument">
+                                    <input type="radio" name="accTableSelectAll" id="accTableallinstrument" value="allinstrument" onclick="getAllProduct(true);return false;" />
+                                    <label class="slds-radio_button__label" for="accTableallinstrument">
                                     <span class="slds-radio_faux">Show All Instruments</span>
                                     </label>
                                 </span>
@@ -219,14 +253,46 @@
                             </span>
                         </label>`*/;
                     });
-                    $('#Promotional').prop('checked',true);
-                    //$('input[name="SelectAll"]').prop('checked',false);
+                    $('.allProductTable').addClass('slds-hide');
+                    var accPromotinalTable_filter = document.getElementById('accPromotinalTable_filter');
+                    accPromotinalTable_filter.firstChild.getElementsByTagName('input')[0].style.width = "500px";
+                        $( "#accPromotinalTable_filter label" ).after(function() {
+                            return `<fieldset class="slds-form-element" style="display: inline-flex;padding-left: 120px;width: auto;margin-bottom: -12px">
+                                <div class="slds-form-element__control">
+                                    <div class="slds-radio_button-group" style="height:40px;">
+                                    <span class="slds-button slds-radio_button" style="height:42px;">
+                                        <input type="radio" name="accPromotinalSelectAll" id="accPromotinalPromotional" value="Promotional" onclick="getAllProduct(false);return false;" />
+                                        <label class="slds-radio_button__label" for="accPromotinalPromotional">
+                                        <span class="slds-radio_faux">Show Promotional Instruments</span>
+                                        </label>
+                                    </span>
+                                    <span class="slds-button slds-radio_button" style="height:42px;">
+                                        <input type="radio" name="accPromotinalSelectAll" id="accPromotinalallinstrument" value="allinstrument" onclick="getAllProduct(true);return false;" />
+                                        <label class="slds-radio_button__label" for="accPromotinalallinstrument">
+                                        <span class="slds-radio_faux">Show All Instruments</span>
+                                        </label>
+                                    </span>
+                                </div>
+                            </fieldset>`;
+                            /*return `<label class="slds-checkbox_toggle" style="display: inline-flex;padding-left: 120px;width: auto;margin-bottom: -12px">
+                                <span class="slds-form-element__label slds-m-bottom_none showAllInstrument" style="font-weight: bold;font-size: inherit;">Show Promotional Instruments : </span>
+                                <input type="checkbox" name="SelectAll" value="SelectAll" aria-describedby="SelectAll" onclick="getAllProduct();" checked=""/>
+                                <span id="SelectAll" class="slds-checkbox_faux_container" aria-live="assertive">
+                                    <span class="slds-checkbox_faux"></span>
+                                    <span class="slds-checkbox_on">Enabled</span>
+                                    <span class="slds-checkbox_off">Disabled</span>
+                                </span>
+                            </label>`*/;
+                        });
+                        $('#accPromotinalPromotional').prop('checked',true);
+                        //$('input[name="SelectAll"]').prop('checked',false);
+                    
                 }
                 //CH06 END
             });
 
 
-            function getAllProduct(){
+            function getAllProduct(showAllProduct){
                 /*if($('input[name="SelectAll"]').prop('checked')){
                     $('.showAllInstrument').text('Show All Instruments');
                     var oldtable = j$('[id$="accTable"]').DataTable();
@@ -240,17 +306,28 @@
                     var oldtable = j$('[id$="accTable"]').DataTable();
                     oldtable.search(packageInstrument).draw();
                 }*/
-                if($('#allinstrument').prop('checked')){
+                //if($('#allinstrument').prop('checked')){
+                    console.log('showAllProduct',showAllProduct);
+                if(showAllProduct){    
+                     $('.allPromotionalProductTable').addClass('slds-hide');
+                     $('.allProductTable').removeClass('slds-hide');
                     var oldtable = j$('[id$="accTable"]').DataTable();
                     oldtable.search('').draw();
+                    $('#accTableallinstrument').prop('checked',true);
                 }else{
-                    var packageInstrument = '{!packageInstrument}';
+                    $('.allProductTable').addClass('slds-hide');
+                    $('.allPromotionalProductTable').removeClass('slds-hide');
+                    var oldtable = j$('[id$="accPromotinalTable"]').DataTable();
+                    oldtable.search('').draw();
+                    $('#accPromotinalPromotional').prop('checked',true);
+                    /*var packageInstrument = '{!packageInstrument}';
                     if(packageInstrument == 'Piano'){
                         packageInstrument = 'Keyboard';
                     }
                     var oldtable = j$('[id$="accTable"]').DataTable();
-                    oldtable.search(packageInstrument).draw();
+                    oldtable.search(packageInstrument).draw();*/
                 }
+               
             }  
         
         
@@ -332,7 +409,6 @@
                     </apex:outputPanel>
                 </apex:facet>
             </apex:actionStatus>
-            
             
             <apex:actionFunction name="prcToRental" action="{!prcToRental}"/>
             <apex:actionFunction name="prcToSell" action="{!prcToSell}"/>
@@ -417,60 +493,118 @@
                 
                 
                 <div class="container slds-border_top" style="background-color:#f9f9fb;" >
-                <table id="accTable" class="display slds-table slds-table_cell-buffer slds-table_bordered" style="background-color:#fff;" >
-                    <thead>
-                        <tr class="slds-line-height_reset">
-                            <th scope="col"></th> 
-                            <th scope="col">No.</th>
-                            <th scope="col">Brand</th>
-                            <th scope="col">Model</th>
-                            <th scope="col">Type</th> <!-- CH05 added new column -->
-                            <th scope="col">Serial No.</th>
-                            <th scope="col">Location</th>
-                            <th scope="col">Rental</th>
-                            <th scope="col">Sales Price</th>
-                            <th scope="col">Cond.</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                         <apex:repeat value="{!netSuiteProducts}" var="net"><!--   <apex:repeat value="{!sageProducts}" var="sag"> -->
-                            <tr class="slds-hint-parent">
-                                <td>
-                                    <span class="slds-radio">
-                                    <!-- CH02 <input type="radio" id="radio-{!sag.srNo}" value="{!sag.srNo}" onchange="setSlcdPianoIndx('{!sag.srNo}'); return false;" name="slcdPianoOptions" checked="" /> -->
-                                        <input type="radio" id="radio-{!net.srNo}" value="{!net.srNo}" onchange="setSlcdPianoIndx('{!net.srNo}'); return false;" name="slcdPianoOptions" checked="" />
-                                        <!--CH02  <label class="slds-radio__label" for="radio-{!sag.srNo}">-->
-                                        <label class="slds-radio__label" for="radio-{!net.srNo}">
-                                            <span class="slds-radio_faux"></span>
-                                            <span class="slds-form-element__label"></span>
-                                        </label>
-                                    </span>
-                                </td>
-                                <!--CH02 changes , see controller
-                                 <td>{!sag.srNo}</td>
-                                <td>{!sag.brand}</td>
-                                <td>{!sag.modelNo}</td>
-                                <td>{!sag.serNo}</td>
-                                <td>{!sag.location}</td>
-                                <td>{!sag.rentalPrice}</td>
-                                <td>{!sag.salesPrice}</td>
-                                <td>{!sag.condi}</td>
-                                
-                                -->
-                                <td>{!net.srNo}</td>
-                                <td>{!net.brand}</td>
-                                <td><p>{!net.model}</p></td>
-                                <td>{!net.inventoryType}</td><!-- CH05 added new column -->
-                                <td>{!net.serialNumber}</td>
-                                <td>{!net.location}</td>
-                                <td>{!net.studentPrice}&nbsp;/&nbsp;{!net.monthlyRental}</td> <!-- CH09 now will show both the fields : <td>{!net.monthlyRental}</td> -->
-                                <td>{!net.listPrice}</td>
-                                <td>{!net.status}</td>
-                            </tr>
-                        </apex:repeat>
-                    </tbody>
-                </table> 
-                
+                    <div class="allProductTable">
+                        <table id="accTable" class="display slds-table slds-table_cell-buffer slds-table_bordered" style="background-color:#fff;" >
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th scope="col"></th> 
+                                    <th scope="col">No.</th>
+                                    <th scope="col">Brand</th>
+                                    <th scope="col">Model</th>
+                                    <th scope="col">Type</th> <!-- CH05 added new column -->
+                                    <th scope="col">Serial No.</th>
+                                    <th scope="col">Location</th>
+                                    <th scope="col">Rental</th>
+                                    <th scope="col">Sales Price</th>
+                                    <th scope="col">Cond.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <apex:repeat value="{!netSuiteProducts}" var="net"><!--   <apex:repeat value="{!sageProducts}" var="sag"> -->
+                                    <tr class="slds-hint-parent">
+                                        <td>
+                                            <span class="slds-radio">
+                                            <!-- CH02 <input type="radio" id="radio-{!sag.srNo}" value="{!sag.srNo}" onchange="setSlcdPianoIndx('{!sag.srNo}'); return false;" name="slcdPianoOptions" checked="" /> -->
+                                                <input type="radio" id="radio-{!net.srNo}" value="{!net.srNo}" onchange="setSlcdPianoIndx('{!net.srNo}'); return false;" name="slcdPianoOptions" checked="" />
+                                                <!--CH02  <label class="slds-radio__label" for="radio-{!sag.srNo}">-->
+                                                <label class="slds-radio__label" for="radio-{!net.srNo}">
+                                                    <span class="slds-radio_faux"></span>
+                                                    <span class="slds-form-element__label"></span>
+                                                </label>
+                                            </span>
+                                        </td>
+                                        <!--CH02 changes , see controller
+                                        <td>{!sag.srNo}</td>
+                                        <td>{!sag.brand}</td>
+                                        <td>{!sag.modelNo}</td>
+                                        <td>{!sag.serNo}</td>
+                                        <td>{!sag.location}</td>
+                                        <td>{!sag.rentalPrice}</td>
+                                        <td>{!sag.salesPrice}</td>
+                                        <td>{!sag.condi}</td>
+                                        
+                                        -->
+                                        <td>{!net.srNo}</td>
+                                        <td>{!net.brand}</td>
+                                        <td><p>{!net.model}</p></td>
+                                        <td>{!net.inventoryType}</td><!-- CH05 added new column -->
+                                        <td>{!net.serialNumber}</td>
+                                        <td>{!net.location}</td>
+                                        <td>{!net.studentPrice}&nbsp;/&nbsp;{!net.monthlyRental}</td> <!-- CH09 now will show both the fields : <td>{!net.monthlyRental}</td> -->
+                                        <td>{!net.listPrice}</td>
+                                        <td>{!net.status}</td>
+                                    </tr>
+                                </apex:repeat>
+                            </tbody>
+                        </table> 
+                    </div>
+                <apex:outputPanel rendered="{!isAureusNewEnolment}">
+                    <div class="allPromotionalProductTable">
+                        <table id="accPromotinalTable" class="display slds-table slds-table_cell-buffer slds-table_bordered" style="background-color:#fff;" >
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th scope="col"></th> 
+                                    <th scope="col">No.</th>
+                                    <th scope="col">Brand</th>
+                                    <th scope="col">Model</th>
+                                    <th scope="col">Type</th> <!-- CH05 added new column -->
+                                    <th scope="col">Serial No.</th>
+                                    <th scope="col">Location</th>
+                                    <th scope="col">Rental</th>
+                                    <th scope="col">Sales Price</th>
+                                    <th scope="col">Cond.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <apex:repeat value="{!netSuitePromotionalProducts}" var="net"><!--   <apex:repeat value="{!sageProducts}" var="sag"> -->
+                                    <tr class="slds-hint-parent">
+                                        <td>
+                                            <span class="slds-radio">
+                                            <!-- CH02 <input type="radio" id="radio-{!sag.srNo}" value="{!sag.srNo}" onchange="setSlcdPianoIndx('{!sag.srNo}'); return false;" name="slcdPianoOptions" checked="" /> -->
+                                                <input type="radio" id="radio-{!net.srNo}" value="{!net.srNo}" onchange="setSlcdPianoIndx('{!net.srNo}'); return false;" name="slcdPianoOptions" checked="" />
+                                                <!--CH02  <label class="slds-radio__label" for="radio-{!sag.srNo}">-->
+                                                <label class="slds-radio__label" for="radio-{!net.srNo}">
+                                                    <span class="slds-radio_faux"></span>
+                                                    <span class="slds-form-element__label"></span>
+                                                </label>
+                                            </span>
+                                        </td>
+                                        <!--CH02 changes , see controller
+                                        <td>{!sag.srNo}</td>
+                                        <td>{!sag.brand}</td>
+                                        <td>{!sag.modelNo}</td>
+                                        <td>{!sag.serNo}</td>
+                                        <td>{!sag.location}</td>
+                                        <td>{!sag.rentalPrice}</td>
+                                        <td>{!sag.salesPrice}</td>
+                                        <td>{!sag.condi}</td>
+                                        
+                                        -->
+                                        <td>{!net.srNo}</td>
+                                        <td>{!net.brand}</td>
+                                        <td><p>{!net.model}</p></td>
+                                        <td>{!net.inventoryType}</td><!-- CH05 added new column -->
+                                        <td>{!net.serialNumber}</td>
+                                        <td>{!net.location}</td>
+                                        <td>{!net.studentPrice}&nbsp;/&nbsp;{!net.monthlyRental}</td> <!-- CH09 now will show both the fields : <td>{!net.monthlyRental}</td> -->
+                                        <td>{!net.listPrice}</td>
+                                        <td>{!net.status}</td>
+                                    </tr>
+                                </apex:repeat>
+                            </tbody>
+                        </table> 
+                    </div>
+                </apex:outputPanel>
                  <div class="slds-grid slds-wrap slds-text-align_center slds-p-top_x-large">
                      <!--CH01 center align button by karan Singh 24 aug 2020
                     <div class="slds-medium-size_1-of-2 slds-p-bottom_small" -->

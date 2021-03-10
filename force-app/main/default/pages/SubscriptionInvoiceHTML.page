@@ -399,10 +399,10 @@
                                 <br/>
                                 <span class="lightgray">{!invLineItm.Student_Name__c}
                                     (For Contract {!invLineItm.Number_of_Lesson__c} Lessons on
-                                    <apex:outputText value="{0, date, dd MMM yyyy}">
+                                    <apex:outputText value="{0, date,MMM dd yyyy}">
                                         <apex:param value="{!invLineItm.Term_Start_Date__c}" />
                                     </apex:outputText> - 
-                                    <apex:outputText value="{0, date, dd MMM yyyy}">
+                                    <apex:outputText value="{0, date, MMM dd yyyy}">
                                         <apex:param value="{!invLineItm.Term_End_Date__c}" />
                                     </apex:outputText>
                                     )
@@ -428,9 +428,22 @@
                                    </apex:outputPanel>
                                     <apex:outputPanel rendered="{!If(invLineItm.Package__r.Type__c == 'Adhoc', FALSE, TRUE)}">
                                         (
-                                        <apex:outputText value="{0, date,MMM','  yyyy}">
-                                            <apex:param value="{!invLineItm.Month__c}" />
-                                        </apex:outputText>)
+                                            <apex:outputPanel rendered="{!!isPianoRentalEnrolment}">
+                                                <apex:outputText value="{0, date,MMM','  yyyy}">
+                                                    <apex:param value="{!invLineItm.Month__c}" />
+                                                </apex:outputText>
+                                            </apex:outputPanel>
+                                               <!-- // nishi: 24-Feb-2021: aureus -Q1-2021: we check which enrolment  is promotional piano rental  then we show piano rent start and end dates -->
+                                            <apex:outputPanel rendered="{!isPianoRentalEnrolment}">
+                                                <apex:outputText value="{0, date,MMM dd yyyy}">
+                                                    <apex:param value="{!invLineItm.Term_Start_Date__c}" />
+                                                </apex:outputText> -  <apex:outputText value="{0, date, MMM dd yyyy}">
+                                                    <apex:param value="{!invLineItm.Term_End_Date__c}" />
+                                                </apex:outputText>
+                                            </apex:outputPanel>
+                                               <!-- // nishi: 24-Feb-2021: aureus -Q1-2021: we check which enrolment  is promotional piano rental  then we show piano rent start and end dates -->
+                                                   
+                                        )
                                     </apex:outputPanel>
                                     <apex:outputPanel rendered="{!If(invLineItm.Package__r.Type__c == 'Adhoc', TRUE, FALSE)}">
                                         (For Ad-hoc booking on

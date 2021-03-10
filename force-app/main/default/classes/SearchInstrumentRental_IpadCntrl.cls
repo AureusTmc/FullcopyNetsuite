@@ -89,6 +89,9 @@ public  class SearchInstrumentRental_IpadCntrl {
     
     //CH02 
     public List<NetSuiteIntegrationUtility.NetSuiteProducts> netSuiteProducts{get;set;}
+    public List<NetSuiteIntegrationUtility.NetSuiteProducts> netSuitePromotionalProducts{get;set;} // added by nishi: 1-Mar-2021: for show all promotional products
+    public Boolean isShowAllInstrument{get;set;} // added by nishi: 1-Mar-2021: for show all products or promotional products
+    
     public NetSuiteIntegrationUtility.NetSuiteProducts slcdPiano{get;set;}
     public Boolean isExistingLessonEnrolment{get;set;} //17 sep 2020 as if slcd enrolment is an active lesson type enrolment then we will charge only one time rental amount not twice.
     //CH02 END
@@ -146,6 +149,8 @@ public  class SearchInstrumentRental_IpadCntrl {
         //CH03
         //CH02
         netSuiteProducts = new List<NetSuiteIntegrationUtility.NetSuiteProducts>();
+        netSuitePromotionalProducts = new List<NetSuiteIntegrationUtility.NetSuiteProducts>();
+        isShowAllInstrument = true;
         slcdPiano = new NetSuiteIntegrationUtility.NetSuiteProducts();
         isExistingLessonEnrolment = false;
         //CH02
@@ -200,6 +205,7 @@ public  class SearchInstrumentRental_IpadCntrl {
             isAureusNewEnolment =  Boolean.valueOf((ApexPages.currentPage().getParameters().get('AureusNewEnolment')));
         }
         if(isAureusNewEnolment){
+            isShowAllInstrument = false; 
             if(String.isNotBlank(ApexPages.currentPage().getParameters().get('parentId'))){
                 parentId =  string.valueOf((ApexPages.currentPage().getParameters().get('parentId')));
             }
@@ -223,11 +229,35 @@ public  class SearchInstrumentRental_IpadCntrl {
             system.debug('@retailPromotionEnrolmentPackageIds in thanku -->'+retailPromotionEnrolmentPackageIds);
             if(string.isNotBlank(retailPromotionEnrolmentId) && string.isNotBlank(retailPromotionpackageId)){
                 totalFreeRentalMonth = 0;
+                getDefaultCenter();
                 fetchAureusStudentEnrolment(parentId,new set<string>{retailPromotionEnrolmentId});
+               
             }
         }
         //CH010: end
     }   
+
+    // added by nishi:10:Mar-2021 for new subscription created in promotional enrolment case so we set detault center if Aureus student is get free rental then we set 'Aureus HQ'
+    //otherwise we set for ossia student 'Ossia HQ'
+    public void getDefaultCenter(){
+        map<string,string>  rentalDefaultCenter = new Map<String,string>{'Aureus'=>Label.Piano_Rental_Default_Aureus_Center_Name,'Ossia'=>Label.Piano_Rental_Default_Ossia_Center_Name};
+        String cenRecId  =  Schema.SObjectType.Account.getRecordTypeInfosByName().get(ConstantsClass.centerRecTypeName).getRecordTypeId();
+         for(Account acc: [SELECT Id,Name,CentreName_Cust__c FROM Account 
+                             WHERE Piano_Viewing_Available__c = True 
+                             AND RecordtypeId =: cenRecId 
+                             AND Centre_Status__c =:ConstantsClass.activeStatus 
+                             AND CentreName_Cust__c In: rentalDefaultCenter.values() ORDER BY CentreName_Cust__c]){
+             if(isOssia){
+                if( string.isNotBlank(rentalDefaultCenter.get('Ossia')) && rentalDefaultCenter.get('Ossia') == acc.CentreName_Cust__c){
+                     slcdCenter =acc.id;
+                }
+             }else{
+                if( string.isNotBlank(rentalDefaultCenter.get('Aureus')) && rentalDefaultCenter.get('Aureus') == acc.CentreName_Cust__c){
+                     slcdCenter =acc.id;
+                }
+            }
+         }
+    }
     
     public list<SelectOption> getCenters(){
         list<SelectOption> options = new list<SelectOption>();
@@ -396,6 +426,11 @@ options.add(new SelectOption(str,str));*/
                 }else{
                     slcdEnrolment.Available_Tuning_Credit__c  = 1;
                 }
+                // added by nishi: 10Mar-2021:start: if inventory type is keyboard or drum then we set tuning credit is 0
+                if( setNoTuningFeeInstrument.contains( slcdPiano.inventoryType) ){
+                    slcdEnrolment.Available_Tuning_Credit__c  = 0; 
+                }
+                // added by nishi: 10Mar-2021:end: if inventory type is keyboard or drum then we set tuning credit is 0
                 //6-nov-2020:nishi:for check active enrolment if we found any active enrolment then we added this  enrolment id in Related_Lesson_Enrolment field	
                 slcdEnrolment.Standard_Accessories__c = defStnAss;
                 
@@ -544,7 +579,9 @@ options.add(new SelectOption(str,str));*/
                   //start:CH011
                 if(isAureusNewEnolment && totalFreeRentalMonth >0 && setMinimumRental_Termination_InstrumentTypes.contains( slcdPiano.inventoryType)){
                     fm.isDiscount = true;
-                    fm.discountAmount =BillingUtility.roundOffAmount(Decimal.valueOf(slcdPiano.monthlyRental) *totalFreeRentalMonth );
+                    fm.discountAmount =(Decimal.valueOf(slcdPiano.monthlyRental) *totalFreeRentalMonth );
+                    fm.discountAmount += ((Decimal.valueOf(slcdPiano.monthlyRental) *totalFreeRentalMonth)  * gstAmount) /100;
+                    fm.discountAmount = BillingUtility.roundOffAmount(fm.discountAmount); 
                     //fm.discountGstAmount = BillingUtility.roundOffAmount(((Decimal.valueOf(slcdPiano.monthlyRental) *totalFreeRentalMonth) * gstAmount) /100);
                 }else{
                     totalFreeRentalMonth = 1;
@@ -1246,6 +1283,11 @@ rw.errorMsg = 'Unknown error occured. Please contact your admin.';
             }else{
                 slcdEnrolment.Available_Tuning_Credit__c  = 1;
             }
+             // added by nishi: 10Mar-2021:start: if inventory type is keyboard or drum then we set tuning credit is 0
+             if( setNoTuningFeeInstrument.contains( slcdPiano.inventoryType) ){
+                slcdEnrolment.Available_Tuning_Credit__c  = 0; 
+            }
+            // added by nishi: 10Mar-2021:end: if inventory type is keyboard or drum then we set tuning credit is 0
             //6-nov-2020:nishi:for check active enrolment if we found any active enrolment then we added this  enrolment id in Related_Lesson_Enrolment field	
             if(!isAureusNewEnolment){
                 List<Enrolment__c> enrList = [SELECT Id, Name, Parent__c, Parent__r.FirstName, Parent__r.LastName, Parent__r.PersonEmail, Model__c, Serial_Number__c,
@@ -1819,7 +1861,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                             //CH02 END
                             //
                             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, fm.instrumentChrg, remarksStr, slcdEnrolment.Teacher__c);
-                            //invLnItm.Teacher_Id__c = null;
+                            invLnItm.Teacher_Id__c = null;
                             invLnItm.Invoice__c   = inv.Id;
                             invLnItm.Enrolment__c = slcdEnrolment.Id; 
                             invLnItm.Month__c     =  System.today();
@@ -1833,7 +1875,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                         if(fm.depFee > 0){
                             remarksStr = ConstantsClass.pkgDepFeesDes;
                             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null,fm.depFee, remarksStr, slcdEnrolment.Teacher__c);
-                            //invLnItm.Teacher_Id__c = null;
+                            invLnItm.Teacher_Id__c = null;
                             invLnItm.Invoice__c   = inv.Id;
                             invLnItm.Enrolment__c = slcdEnrolment.Id;
                             invLnItm.Subscription_Line_Item__c = subLItm.Id;
@@ -1849,7 +1891,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                             else    
                                 remarksStr += '(1-way)';
                             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, fm.deliCharges, remarksStr, slcdEnrolment.Teacher__c);
-                            //invLnItm.Teacher_Id__c = null;
+                            invLnItm.Teacher_Id__c = null;
                             invLnItm.Invoice__c   = inv.Id;
                             invLnItm.Enrolment__c = slcdEnrolment.Id; 
                             invLnItm.Month__c     =  System.today();
@@ -1862,7 +1904,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                             remarksStr = 'Tuning Fee';
                             
                             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null,fm.tuningFee, remarksStr, slcdEnrolment.Teacher__c);
-                            //invLnItm.Teacher_Id__c = null;
+                            invLnItm.Teacher_Id__c = null;
                             invLnItm.Invoice__c   = inv.Id;
                             invLnItm.Enrolment__c = slcdEnrolment.Id; 
                             invLnItm.Month__c     =  System.today();
@@ -1878,7 +1920,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                             else    
                                 remarksStr += '(1-way)';        
                             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, fm.stairDelCharges, remarksStr, slcdEnrolment.Teacher__c);
-                            //invLnItm.Teacher_Id__c = null;
+                            invLnItm.Teacher_Id__c = null;
                             invLnItm.Invoice__c   = inv.Id;
                             invLnItm.Enrolment__c = slcdEnrolment.Id; 
                             invLnItm.Subscription_Line_Item__c = subLItm.Id;
@@ -1891,7 +1933,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                             remarksStr = 'Heating Rod Installation';
                             
                             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null,fm.heatingRodInsFee, remarksStr, slcdEnrolment.Teacher__c);
-                            //invLnItm.Teacher_Id__c = null;
+                            invLnItm.Teacher_Id__c = null;
                             invLnItm.Invoice__c   = inv.Id;
                             invLnItm.Enrolment__c = slcdEnrolment.Id; 
                             invLnItm.Month__c     =  System.today();
@@ -2101,7 +2143,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
             remarksStr = slcdPiano.brand;
             //CH02 END
             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (fm.instrumentChrg), remarksStr, slcdEnrolment.Teacher__c);
-            //invLnItm.Teacher_Id__c = null;
+            invLnItm.Teacher_Id__c = null;
             invLnItm.Invoice__c   = inv.Id;
             invLnItm.Enrolment__c = slcdEnrolment.Id; 
             invLnItm.Month__c     =  System.today();
@@ -2115,7 +2157,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
         if(fm.depFee > 0){
             remarksStr = ConstantsClass.pkgDepFeesDes;
             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (fm.depFee), remarksStr, slcdEnrolment.Teacher__c);
-            //invLnItm.Teacher_Id__c = null;
+            invLnItm.Teacher_Id__c = null;
             invLnItm.Invoice__c   = inv.Id;
             invLnItm.Enrolment__c = slcdEnrolment.Id;
             invLnItm.Subscription_Line_Item__c = subLItm.Id;
@@ -2156,7 +2198,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
             else    
                 remarksStr += '(1-way)';
             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (fm.deliCharges), remarksStr, slcdEnrolment.Teacher__c);
-            //invLnItm.Teacher_Id__c = null;
+            invLnItm.Teacher_Id__c = null;
             invLnItm.Invoice__c   = inv.Id;
             invLnItm.Enrolment__c = slcdEnrolment.Id; 
             invLnItm.Month__c     =  System.today();
@@ -2169,7 +2211,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
             remarksStr = 'Tuning Fee';
             
             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (fm.tuningFee), remarksStr, slcdEnrolment.Teacher__c);
-            //invLnItm.Teacher_Id__c = null;
+            invLnItm.Teacher_Id__c = null;
             invLnItm.Invoice__c   = inv.Id;
             invLnItm.Enrolment__c = slcdEnrolment.Id; 
             invLnItm.Month__c     =  System.today();
@@ -2185,7 +2227,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
             else    
                 remarksStr += '(1-way)';        
             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (fm.stairDelCharges), remarksStr, slcdEnrolment.Teacher__c);
-            //invLnItm.Teacher_Id__c = null;
+            invLnItm.Teacher_Id__c = null;
             invLnItm.Invoice__c   = inv.Id;
             invLnItm.Enrolment__c = slcdEnrolment.Id; 
             invLnItm.Month__c     =  System.today();
@@ -2198,7 +2240,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
             remarksStr = 'Heating Rod Installation';
             
             Invoice_Line_Item__c invLnItm = BillingUtility.fillInvLnItm(null, null, null, (fm.heatingRodInsFee), remarksStr, slcdEnrolment.Teacher__c);
-            //invLnItm.Teacher_Id__c = null;
+            invLnItm.Teacher_Id__c = null;
             invLnItm.Invoice__c   = inv.Id;
             invLnItm.Enrolment__c = slcdEnrolment.Id; 
             invLnItm.Month__c     =  System.today();
@@ -2248,7 +2290,13 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
         
     //this will call the netsuite inventorty products
     public void getProducts1(){
-        
+        isShowAllInstrument = true;
+        if(String.isNotBlank(ApexPages.currentPage().getParameters().get('AureusNewEnolment'))){
+            isAureusNewEnolment =  Boolean.valueOf((ApexPages.currentPage().getParameters().get('AureusNewEnolment')));
+            if(isAureusNewEnolment){
+            isShowAllInstrument = false; 
+            }
+        }
         system.debug(' isAlreadyStripCstmr ->> ' + isAlreadyStripCstmr );
         NetSuite_Integration_Creds__c objNetSuiteCred = NetSuite_Integration_Creds__c.getValues('Aureus Inventory Search');
         
@@ -2274,9 +2322,9 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
             
             netSuiteProducts = ( List<NetSuiteIntegrationUtility.NetSuiteProducts>  )JSON.deserialize(resp.getBody(), List<NetSuiteIntegrationUtility.NetSuiteProducts>.class);
             system.debug('@@netSuiteProducts'+netSuiteProducts);
+            netSuitePromotionalProducts = new List<NetSuiteIntegrationUtility.NetSuiteProducts>();
             for( Integer index = 0; index < netSuiteProducts.size(); index++ ){
                 system.debug('@@netSuiteProducts itme -->'+netSuiteProducts[ index ]);
-                // system.debug('netSuiteProducts productId -->'+netSuiteProducts[ index ].productId);
                 netSuiteProducts[ index ].srNo = index + 1;
                 system.debug(' -->  ' + netSuiteProducts[ index ] );
                 
@@ -2299,11 +2347,16 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                     netSuiteProducts[ index ].studentPrice = string.valueOf(BillingUtility.roundOffAmount(Decimal.valueOf(netSuiteProducts[ index ].studentPrice )));
                 }
                 //CH08 END
-
+                // added by nishi: 1-Mar-2021:start: for manage  promotional instruments
+                if(setMinimumRental_Termination_InstrumentTypes.contains(netSuiteProducts[ index ].inventoryType)){
+                    netSuitePromotionalProducts.add(netSuiteProducts[ index ]);
+                }
+                // added by nishi: 1-Mar-2021:start: for manage  promotional  instruments
             }//end of for Loop
         }//end of response check
     }//end of getProducts1
-    
+   
+
     @future(callout=true)
     public static void pushDataToNetsuite( String enrolName, string serialNo, string productId ){
         
@@ -2453,8 +2506,11 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                 parentAcc.BillingCountryCode = enrList.get(0).Parent__r.BillingCountryCode;
                 packageInstrument =enrList.get(0).Package__r.instrument__c;
                 PersonMobilePhoneCustom =enrList.get(0).Parent__r.Phone;
-                slcdCenter= enrList.get(0).Center__c;
-                
+                system.debug('slcdCenter'+slcdCenter);
+                if(string.isBlank(slcdCenter)){
+                    slcdCenter= enrList.get(0).Center__c;
+                }
+                // added by nishi: 10-Mar-2021: 
                 if( String.isNotBlank(enrList.get(0).Package__c) && string.isnotblank(enrList.get(0).Package__r.Rent_Free_Period__c) && enrList.get(0).Package__r.Is_Rent_Free_Instrument_available__c){
                     totalFreeRentalMonth = decimal.valueOf(enrList.get(0).Package__r.Rent_Free_Period__c);
                 }

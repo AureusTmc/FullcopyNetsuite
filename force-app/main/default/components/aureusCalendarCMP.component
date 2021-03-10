@@ -188,6 +188,12 @@
                 color: black;
                 background: repeating-linear-gradient( 45deg, #e5a51600, #eb212100 10px, #071FA6 10px, #071FA6 20px ), linear-gradient( to bottom, #6170c8, #6170c8 );
              }
+             /*// added by nish: 10-mar-2021: for show Complimentry Credit booking color change when booking is online*/
+             .Complimentary_Credit_Class { 
+                color: black;
+                background: repeating-linear-gradient( 45deg, #16e52600, #eb212100 10px, #9c0303 10px, #dc1a1a 20px ), linear-gradient( to bottom, #ce8d8d, #e69b9b );
+             }
+             // added by nish: 10-mar-2021: for show Complimentry Credit booking color change 
              /* .StudioClass {//done
                 color: black;
                 background: repeating-linear-gradient( 45deg, #e5a51600, #eb212100 10px, #5d6d7d 10px, #5d6d7d 20px ), linear-gradient( to bottom, #8ba9c8, #8ba9c8 );
