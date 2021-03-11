@@ -751,6 +751,7 @@ public class EnrolmentProcessIpadCntrl {
     }
     
     public pageReference redirectOnSrch(){
+        
         PageReference pageRef = Page.searchtrial_ipad; 
         pageRef.getParameters().put('country', countrycode);    
         return pageRef;
@@ -886,6 +887,8 @@ public class EnrolmentProcessIpadCntrl {
         List<Enrolment__c> updEnrList = new List<Enrolment__c>();
         for(StudentWrapper stu : studentWrapList){
             Enrolment__c enrl = new Enrolment__c(Id = stu.enrl.Id, Enrolment_Email_Date__c = System.now());
+            enrl.Enrolment_Owner__c = UserInfo.getUserId(); // updated by nishi: 11- mar-2021: to store center staff on enrolment to track Who sent the enrolment email to be tracked via enrolment link from calendar
+
             //updated by Rajesh, 7th Aug 2019. to store enrolmentsource on enrolment/case object
             if(String.isNotBlank(enrolmentSource))
                 enrl.Enrolment_Source__c = enrolmentSource;
@@ -1038,7 +1041,8 @@ public class EnrolmentProcessIpadCntrl {
                 stu.enrl.Lessons_Start_Date__c =  lessDt;
                 stu.enrl.Lesson_Start_time__c =  startTime;
                 stu.enrl.Enrolment_Email_Date__c = System.now();
-                
+                stu.enrl.Enrolment_Owner__c = UserInfo.getUserId(); // updated by nishi: 11- mar-2021: to store center staff on enrolment to track Who sent the enrolment email to be tracked via enrolment link from calendar
+
                 //updated by Rajesh, 7th Aug 2019. to store enrolmentsource on enrolment/case object
                 if(String.isNotBlank(enrolmentSource))
                     stu.enrl.Enrolment_Source__c = enrolmentSource;

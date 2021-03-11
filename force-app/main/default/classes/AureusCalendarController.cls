@@ -5661,6 +5661,12 @@ countWithNewPackage +=1;
                 enrolmentId = upgradeDowngradeController.getEnrolmentId(bookingId);
             }
             if(String.isNotBlank(enrolmentId) && String.isBlank(caseObjId)){
+                // updated by nishi: 11- mar-2021: to store center staff on enrolment to track Who sent the enrolment email to be tracked via enrolment link from calendar
+                Enrolment__c enrl = new Enrolment__c(Id = enrolmentId);
+                enrl.Enrolment_Owner__c = UserInfo.getUserId(); 
+                update enrl;
+                // updated by nishi: 11- mar-2021: to store center staff on enrolment to track Who sent the enrolment email to be tracked via enrolment link from calendar
+                
                 caseObjId = checkExistingCases(bookingId, enrolmentId);
             }
             Case caseObj = AureusCalendarControllerHelper.createCase(caseObjId, bookingId, type);

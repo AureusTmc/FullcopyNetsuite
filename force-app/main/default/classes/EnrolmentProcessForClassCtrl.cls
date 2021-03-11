@@ -1185,7 +1185,9 @@ public class EnrolmentProcessForClassCtrl {
                                 enr.Enrolment_Source__c = enrolmentSource;
                              if(isLinkGrpBookClsId)
                                 enr.Type__c        = 'Group';
-                            
+                                if(!isSiteGuestUser){
+                                    enr.Enrolment_Owner__c = UserInfo.getUserId();
+                                }// updated by nishi: 11- mar-2021: to store center staff id on enrolment to track Who sent the enrolment email to be tracked  
                              enrolmentList.add(enr);
                             
                              Subscription_Line_Item__c subLItm = BillingUtility.fillSubscriptionLineItem(enr.Student__c, null, enr.Package__c, enr.Id, 
@@ -2608,6 +2610,8 @@ public class EnrolmentProcessForClassCtrl {
                 //enrList.add(new Enrolment__c(Id = enr.Id, Enrolment_Email_Date__c = System.now()));
                  //updated by Rajesh, 16th Nov 2019. to store enrolmentsource on enrolment/case object
                 Enrolment__c enrl = new Enrolment__c(Id = enr.Id, Enrolment_Email_Date__c = System.now());
+                enrl.Enrolment_Owner__c = UserInfo.getUserId(); // updated by nishi: 11- mar-2021: to store center staff on enrolment to track Who sent the enrolment email to be tracked via enrolment link from calendar
+
                 if(String.isNotBlank(enrolmentSource))
                     enrl.Enrolment_Source__c = enrolmentSource;
                 

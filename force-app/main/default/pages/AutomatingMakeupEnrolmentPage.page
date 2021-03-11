@@ -1,10 +1,10 @@
-<apex:page showHeader="false" standardController="Booking__c" standardStylesheets="true" docType="html-5.0" applyBodyTag="False"
+<apex:page showHeader="false" standardController="Account" standardStylesheets="true" docType="html-5.0" applyBodyTag="False"
     applyHtmlTag="False">
     
     <head>
         <title>Aureus Academy Makeup Booking</title>
         
-        <!-- <c:IpadHeaderJqueryCmp /> -->
+        <c:IpadHeaderJqueryCmp />
         <style>
             .slds-button {
                 position: relative;
@@ -604,8 +604,10 @@
 
     </head>
     <apex:form >
-        <!-- <c:AutomatingMakeupEnrolmentCMP bookingId="{!booking__C.Id}" isPage="true"/> -->
-        <c:AutoNewMakeupBookingCMP bookingId="{!booking__C.Id}" isPage="true"/>
+        <!-- <c:AutomatingMakeupEnrolmentCMP bookingId="{!Booking__c.Id}" isPage="true"/> -->
+        <!-- <c:AutoNewMakeupBookingCMP bookingId="{!Booking__c.Id}" isPage="true"/> -->
+        <c:WaitListingEnrolmentListCMP centerId="{!account.Id}" isPage="true"/>
+        <!-- <c:WaitListingEnrolmentListCMP centerId="{!account.Id}" isPage="false" waitlistingDate="{!account.Waitlisting_Date__c}"/> -->
     </apex:form>
    
 </apex:page>

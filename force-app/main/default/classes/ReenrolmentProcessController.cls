@@ -11,7 +11,8 @@ Description :    This controller is used for Re-enrolment
                     Package
                     Status
                     Parent can click on the Re-enrol button for the enrolment to be resumed.
-
+test class:ReenrolmentProcessControllertest
+page name:ReenrolmentProcessPage
 */
 public with Sharing class ReenrolmentProcessController{
     public List<Enrolment__c> listOfEnrolment{get;set;}
@@ -36,7 +37,7 @@ public with Sharing class ReenrolmentProcessController{
             mapOfEnrolment = new Map<Id,Enrolment__c>([SELECT Id, Name, Center__r.Organisation__c,Center__r.Name,Center__c, Lesson_Day__c, Lesson_Start_time__c, Package__r.name,Package__c, 
                                 Parent__r.name,Parent__c, Student__r.name,Student__c, Teacher__r.name, Teacher__c, type__C,Stage__c ,Center__r.Country__r.Name,
                                 student__r.Learning_Style__c,Parent__r.Learning_Style__c,Previous_Experience_if_any__c,I_want_to_receive_latest_newsletter__c,
-                                Center__r.Organisation__r.Name
+                                Center__r.Organisation__r.Name,Enrolment_Owner__c
                                 FROM Enrolment__c
                                 where Parent__c =:parentAcc.id
                                 AND Type__c In: enrolTypes ]);
@@ -124,6 +125,10 @@ public with Sharing class ReenrolmentProcessController{
                 if(!test.isRunningTest()){
                     enrl.Center__c     = slcdCenter;
                 }
+                // updated by nishi: 11- mar-2021: to store center staff on enrolment to track Who sent the enrolment email to be tracked via enrolment link 
+                string userId = ApexPages.currentPage().getParameters().get('userId');
+                enrl.Enrolment_Owner__c =string.isnotBlank(userId) ? userId : objenrolment.Enrolment_Owner__c; 
+                // updated by nishi: 11- mar-2021: to store center staff on enrolment to track Who sent the enrolment email to be tracked via enrolment link 
                 enrl.Previous_Experience_if_any__c  = objenrolment.Previous_Experience_if_any__c;
                 enrl.Cancellation_Policy_Agreed__c  = true;
                 enrl.I_want_to_receive_latest_newsletter__c = objenrolment.I_want_to_receive_latest_newsletter__c;

@@ -191,7 +191,7 @@
              /*// added by nish: 10-mar-2021: for show Complimentry Credit booking color change when booking is online*/
              .Complimentary_Credit_Class { 
                 color: black;
-                background: repeating-linear-gradient( 45deg, #16e52600, #eb212100 10px, #9c0303 10px, #dc1a1a 20px ), linear-gradient( to bottom, #ce8d8d, #e69b9b );
+                background: repeating-linear-gradient( 45deg, #16e52600, #eb212100 10px, #4863a0 10px, #8296c3 20px ), linear-gradient( to bottom, #becae4, #8b97b3 );
              }
              // added by nish: 10-mar-2021: for show Complimentry Credit booking color change 
              /* .StudioClass {//done

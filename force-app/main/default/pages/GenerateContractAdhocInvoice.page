@@ -1,6 +1,6 @@
-<apex:page lightningStylesheets="true" standardController="Account" extensions="GenerateContractAdhocInvoiceCtr" title="Generate Invoice"
+<apex:page lightningStylesheets="true" standardController="Account" extensions="GenerateContractAdhocInvoiceCtrl" title="Generate Invoice"
     docType="html-5.0">
-    <apex:form>
+    <apex:form >
         <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/jquery.min.js')}" />
         <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
         <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
@@ -41,7 +41,7 @@
             <apex:param name="indexId" value="" assignTo="{!index}" />
         </apex:actionFunction>
         <apex:actionFunction Name="getCountry" action="{!fetchCentreCountry}" status="spinner" reRender="itemSection" />
-        <apex:pageMessages></apex:pageMessages>
+        <apex:pageMessages ></apex:pageMessages>
         <!-- start from here -->
         <div style="padding-bottom: 5.5rem;">
         <div class="slds-page-header">
@@ -56,7 +56,7 @@
                         </h1>
                       </div>
                     </div>
-                    <p class="slds-page-header__name-meta">School Name: •  {!Account.name} •  {!Account.person_email__c}</p>
+                    <p class="slds-page-header__name-meta">School Name: •  {!Account.name} •  {!Account.Person_Email__c}</p>
                   </div>
                 </div>
               </div>
@@ -649,7 +649,7 @@
                 var studentListItem = '';
                 setTimeout(function () {
                     Visualforce.remoting.Manager.invokeAction(
-                        '{!$RemoteAction.GenerateContractAdhocInvoiceCtr.getStudents}',
+                        '{!$RemoteAction.GenerateContractAdhocInvoiceCtrl.getStudents}',
                         student_name,centreCountry,
                         function (result, event) {
                             console.log('result',result);

@@ -1,3 +1,14 @@
+/*
+    Name : AutomatingMakeupEnrolmentCtrl
+    Desription :  a.	Identify all those parents whose makeup credit is more than > 200 minutes (configurable)
+                    b.	Check if 15 or 30 minutes timeslot is available immediately before or after their scheduled regular booking scheduled after 3 days (configurable). 
+                    c.	In case any such opportunity is available then create makeup booking according to the timeslot.
+    Author : Nishi Jain
+    Date : 15-Feb-2021
+	Test class 	: AutomatingMakeupEnrolmentTest
+	page class  :CreateNewMakeupBookings
+	component	:AutoNewMakeupBookingCMP
+*/
 public with sharing class AutomatingMakeupEnrolmentCtrl {
     public Date enrolmentEffectiveDate{get;set;}
     public string bookingDate{get;set;}
@@ -11,7 +22,6 @@ public with sharing class AutomatingMakeupEnrolmentCtrl {
     public String selectedtimeslotRealTime{get;set;}
     public String selectedtimeSlot{get;set;}
     public String selectedduration{get;set;}
-    
     List<Enrolment__c> listOfEnrolment = new List<Enrolment__c>();
     Enrolment__c objEnrolment = new Enrolment__c();
     List<Booking__c> listOfBooking = new List<Booking__c>();
@@ -37,7 +47,9 @@ public with sharing class AutomatingMakeupEnrolmentCtrl {
            // map<string,set<string>> mapOfavailTimeslots = getmapOfMakeupAvailTimeslots();
             List<AutoMakeupBooking> listOfAutoMakeupBooking = getmapOfMakeupAvailTimeslots();
             system.debug('listOfAutoMakeupBooking'+listOfAutoMakeupBooking);
-            createBooking();
+            if(isError == false){
+                 createBooking(checkTimeSlotExist(selectedtimeSlot,selectedduration));
+            }
         }
     }
 
@@ -61,10 +73,10 @@ public with sharing class AutomatingMakeupEnrolmentCtrl {
                         enrolmentEffectiveDate =  objBooking.Booking_date__c;
                         system.debug('enrolmentEffectiveDate'+enrolmentEffectiveDate);
                         if(enrolmentEffectiveDate != null && enrolmentEffectiveDate > System.today()){
-                            weekday = Datetime.newInstance(objBooking.Booking_date__c, system.now().time()).format('EEEE');
-                            bookingDate = Datetime.newInstance(objBooking.Booking_date__c, system.now().time()).format('dd, MMM yyyy');
+                            weekday = Datetime.newInstance(objBooking.Booking_date__c, objBooking.start_Time__c).format('EEEE');
+                            bookingDate = Datetime.newInstance(objBooking.Booking_date__c, objBooking.start_Time__c).format('dd, MMM yyyy');
                            // mapOfavailTimeslots = getMakeupBookingTimeSlots(objEnrolment.id,Datetime.newInstance(objBooking.Booking_date__c,system.now().time()));
-                           listOfAutoMakeupBooking = getAutoMakeupBookingslots(objEnrolment.id,Datetime.newInstance(objBooking.Booking_date__c,system.now().time()));
+                           listOfAutoMakeupBooking = getAutoMakeupBookingslots(objEnrolment.id,Datetime.newInstance(objBooking.Booking_date__c,objBooking.start_Time__c));
                             system.debug('listOfAutoMakeupBooking'+listOfAutoMakeupBooking);
                             if(listOfAutoMakeupBooking == null || listOfAutoMakeupBooking.size() == 0){
                                 isError = true;
@@ -100,7 +112,9 @@ public with sharing class AutomatingMakeupEnrolmentCtrl {
         listOfEnrolment = getEnrolmentList(enrolmentId,true,enrolmentEffectiveDate);
         map<string,set<string>> mapOfMakeupavailTimeslots = new map<string,set<string>>(); 
         system.debug('#enrolmentEffectiveDate'+enrolmentEffectiveDate);
-        Map<string,MakeupEnrolmentBatchHelper.EnrolmentDetails> mapOfEnrolmentDetails = MakeupEnrolmentBatchHelper.newMakeupBookingNotification(listOfEnrolment, enrolmentEffectiveDate);
+        Map<String,Booking__c> mapOfBookingEnrolmentIds = new Map<String,Booking__c>();  
+        mapOfBookingEnrolmentIds.put(objBooking.enrolment__c,objBooking);
+        Map<string,MakeupEnrolmentBatchHelper.EnrolmentDetails> mapOfEnrolmentDetails = MakeupEnrolmentBatchHelper.newMakeupBookingNotification(listOfEnrolment, enrolmentEffectiveDate,mapOfBookingEnrolmentIds);
         system.debug('#mapOfEnrolmentDetails'+mapOfEnrolmentDetails);
         //Check if 15 or 30 minutes timeslot is available immediately before or after their scheduled regular booking scheduled after 3 days 
         //if any slot is blank then we send out an email notification to Parent for booking the timeslot
@@ -146,7 +160,9 @@ public with sharing class AutomatingMakeupEnrolmentCtrl {
         listOfEnrolment = getEnrolmentList(enrolmentId,true,enrolmentEffectiveDate);
         Map<string,AutoMakeupBooking> mapOfAutoMakeupBooking = new Map<string,AutoMakeupBooking>(); 
         system.debug('#enrolmentEffectiveDate'+enrolmentEffectiveDate);
-        Map<string,MakeupEnrolmentBatchHelper.EnrolmentDetails> mapOfEnrolmentDetails = MakeupEnrolmentBatchHelper.newMakeupBookingNotification(listOfEnrolment, enrolmentEffectiveDate);
+        Map<String,Booking__c> mapOfBookingEnrolmentIds = new Map<String,Booking__c>();  
+        mapOfBookingEnrolmentIds.put(objBooking.enrolment__c,objBooking);
+        Map<string,MakeupEnrolmentBatchHelper.EnrolmentDetails> mapOfEnrolmentDetails = MakeupEnrolmentBatchHelper.newMakeupBookingNotification(listOfEnrolment, enrolmentEffectiveDate,mapOfBookingEnrolmentIds);
         system.debug('#mapOfEnrolmentDetails'+mapOfEnrolmentDetails);
         //Check if 15 or 30 minutes timeslot is available immediately before or after their scheduled regular booking scheduled after 3 days 
         //if any slot is blank then we send out an email notification to Parent for booking the timeslot
@@ -156,9 +172,13 @@ public with sharing class AutomatingMakeupEnrolmentCtrl {
             if(mapOfEnrolmentDetails != null && mapOfEnrolmentDetails.size() > 0){
                 for(MakeupEnrolmentBatchHelper.EnrolmentDetails objEnrolmentDetails: mapOfEnrolmentDetails.values()){
                     if(objEnrolmentDetails.mapOfavailTimeslots != null && objEnrolmentDetails.mapOfavailTimeslots.size() > 0){
-                        for(string duration : objEnrolmentDetails.mapOfavailTimeslots.keyset()){
-                            DateTime enrolmentBeforeStartTime = DateTime.newInstance(enrolmentEffectiveDate.date(),  objEnrolment.Lesson_Start_time__c).addMinutes(-integer.valueOf(duration));
-                            DateTime enrolmentBeforeEndTime = DateTime.newInstance(enrolmentEffectiveDate.date(),  objEnrolment.Lesson_Start_time__c);
+                        List<string> listOfavailTimeslots = new List<string>();
+                        listOfavailTimeslots.addAll(objEnrolmentDetails.mapOfavailTimeslots.keyset());
+                        //for(string duration : objEnrolmentDetails.mapOfavailTimeslots.keyset()){
+                         for(Integer durationCounter=listOfavailTimeslots.size()-1;durationCounter>=0;durationCounter--){    
+                             string duration = listOfavailTimeslots[durationCounter];
+                            DateTime enrolmentBeforeStartTime = DateTime.newInstance(enrolmentEffectiveDate.date(),  objBooking.start_Time__c).addMinutes(-integer.valueOf(duration));
+                            DateTime enrolmentBeforeEndTime = DateTime.newInstance(enrolmentEffectiveDate.date(),  objBooking.start_Time__c);
                             set<String> enrolmentBeforeTimeSlots = MakeupEnrolmentBatchHelper.getFormatedTimeSlotList(enrolmentBeforeStartTime, enrolmentBeforeEndTime);
                             string durationString = duration+ ' Mins ';
                             if(objEnrolmentDetails.mapOfavailTimeslots.get(duration) != null && objEnrolmentDetails.mapOfavailTimeslots.get(duration).size() > 0){
@@ -172,8 +192,8 @@ public with sharing class AutomatingMakeupEnrolmentCtrl {
                                 }
                             }
                         }
-                        DateTime enrolmentstartTime = DateTime.newInstance(enrolmentEffectiveDate.date(),  objEnrolment.Lesson_Start_time__c);
-                        DateTime enrolmentendTime = DateTime.newInstance(enrolmentEffectiveDate.date(),  objEnrolment.Lesson_Start_time__c.addMinutes(Integer.valueOf(objEnrolment.Package__r.Duration__c)));
+                        DateTime enrolmentstartTime = DateTime.newInstance(enrolmentEffectiveDate.date(),  objBooking.start_Time__c);
+                        DateTime enrolmentendTime = DateTime.newInstance(enrolmentEffectiveDate.date(),  objBooking.start_Time__c.addMinutes(Integer.valueOf(objEnrolment.Package__r.Duration__c)));
                         set<String> enrolmentCurrentTimeSlots = MakeupEnrolmentBatchHelper.getFormatedTimeSlotList(enrolmentstartTime, enrolmentendTime);
                         mapOfAutoMakeupBooking.put('Current Time Slot :',(new AutoMakeupBooking('Current Time Slot :',enrolmentstartTime.format('h:mm a'),enrolmentendTime.format('h:mm a'),false,objEnrolment.Package__r.Duration__c,enrolmentstartTime.format('HH:mm:ss'))));
                                    
@@ -237,7 +257,7 @@ public with sharing class AutomatingMakeupEnrolmentCtrl {
             queryString+= ' (Select id from Bookings__r WHERE RecordType.Name =: recordTypeLesson AND Start_Time__c != NULL AND End_Time__c != NULL';
             queryString += ' AND Booking_Date__c IN: dates AND status__c IN: bookingStatus AND Type__c IN: bookTypeSet ), ';
         }
-         queryString += ' instrument__c,Automation_make_up_booking_Date__c  FROM Enrolment__c WHERE id != null';
+         queryString += ' instrument__c  FROM Enrolment__c WHERE id != null';
          queryString+= ' AND Type__c In: enrolTypes ';
          queryString+= ' AND Stage__c =: enroledStage ';
         if(isQueryBooking  && string.isNotBlank(weekday)){
@@ -252,7 +272,7 @@ public with sharing class AutomatingMakeupEnrolmentCtrl {
     private Boolean checkTimeSlotExist(string selectedtimeSlot,string selectedduration){
         boolean isTimeSlotExist = false;
         map<string,set<string>> mapOfMakeupavailTimeslots = new map<string,set<string>>(); 
-        mapOfMakeupavailTimeslots = getMakeupBookingTimeSlots(objEnrolment.id,Datetime.newInstance(enrolmentEffectiveDate, system.now().time()));
+        mapOfMakeupavailTimeslots = getMakeupBookingTimeSlots(objEnrolment.id,Datetime.newInstance(enrolmentEffectiveDate, objBooking.start_Time__c));
         if(mapOfMakeupavailTimeslots != null || mapOfMakeupavailTimeslots.size() > 0){
             if(mapOfMakeupavailTimeslots.containsKey(selectedduration)){
                 Set<string> availabletime =new Set<string>() ;  
@@ -275,14 +295,14 @@ public with sharing class AutomatingMakeupEnrolmentCtrl {
         system.debug('###isTimeSlotExist'+isTimeSlotExist);
         return isTimeSlotExist;
     }
-    public void createBooking(){
+    public void createBooking(boolean checkDurationExist){
         Savepoint createBookingSavePoint;
         try{
             isError = false;
             isSucess = false;
             createBookingSavePoint = Database.setSavepoint();
            
-            if(checkTimeSlotExist(selectedtimeSlot,selectedduration)){
+            if(checkDurationExist){
                 Booking__c bookingObj = new Booking__c();
                 String lessonRecordType = Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get(ConstantsClass.recordTypeLesson).getRecordTypeId();   
                 List<Booking__c> bookingList = new List<Booking__c>();

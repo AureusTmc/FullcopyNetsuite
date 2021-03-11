@@ -652,11 +652,11 @@ options.add(new SelectOption(str,str));*/
         fm.totalAmt = BillingUtility.roundOffAmount(fm.totFee);
         //end:CH011
       
-        getCorrectEmployee();
+        //getCorrectEmployee();
         return page.SearchInstrumentFinalConfirmPage_Ipad4;
     }
 
-    public void getCorrectEmployee(){
+    /*public void getCorrectEmployee(){
         Integer count = 1;
         system.debug('!!dtimeslot'+dtimeslot);
         map<string,set<string>> enrolmentDeliveryDaytime = new map<string,set<string>>();
@@ -742,7 +742,7 @@ options.add(new SelectOption(str,str));*/
         }
         system.debug('teacherid'+teacherid);
         slcdEnrolment.teacher__c = string.isnotBlank(teacherid)?teacherid:null;
-    }
+    }*/
     public void setSlots(){
         System.debug('slcdSlot---->>>'+slcdSlot);
      
@@ -1697,6 +1697,11 @@ System.debug('@@@jsonBody'+jsonBody);
                     if(sc.statusCode == 200 && sc.paid){
                         sp = Database.setSavepoint();
                         String csmrRecId =  Schema.SObjectType.Account.getRecordTypeInfosByName().get('Customer').getRecordTypeId(); 
+                        Map<String, string> mapOfParentActiveEnrolment = checkParentHasMultipleEnrolments(new set<string>{parentAcc.id});
+                        Map<id,enrolment__C> mapOfEnrolmentOwner = new Map<id,enrolment__C>([select id,Enrolment_Owner__c from enrolment__C 
+                                                                                            where id in:mapOfParentActiveEnrolment.values() 
+                                                                                            and Enrolment_Owner__c != null]);
+                                                                                            
                         parentAcc.RecordTypeId   = csmrRecId;
                         parentAcc.Stripe_Customer_Id__c = stripeCstmrId;
                         parentAcc.BillingStreet = (String.isNotBlank(BillingStreet)) ?BillingStreet + ' ': '';
@@ -1757,6 +1762,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                         //CH02 END
                         slcdEnrolment.Delivery_Charges__c= fm.deliCharges > 0 ? fm.deliCharges : 0;
                         slcdEnrolment.Stair_Charges__c = fm.stairDelCharges > 0 ? fm.stairDelCharges : 0;
+
                         Integer count = 1;
                         system.debug('!!dtimeslot'+dtimeslot);
                         map<string,set<string>> enrolmentDeliveryDaytime = new map<string,set<string>>();
@@ -1781,7 +1787,12 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
                             slcdEnrolment.put('Delivery_Option_Timeslot_'+count+'__c', deliverstartTime);
                            count = count+1;
                         }  
-                     
+                      // updated by nishi: 11- mar-2021:start: to store center staff id on enrolment to track Who complete the rental enrolment   
+                        string enrolmentOwner = ((mapOfEnrolmentOwner != null && mapOfEnrolmentOwner.size()>0) && mapOfEnrolmentOwner.containsKey(slcdEnrolment.Related_Lesson_Enrolment__c)
+                                                ? mapOfEnrolmentOwner.get(slcdEnrolment.Related_Lesson_Enrolment__c).Enrolment_Owner__c : UserInfo.getUserId() );
+                        slcdEnrolment.Enrolment_Owner__c = isSiteGuestUser ? enrolmentOwner :UserInfo.getUserId();
+                        // updated by nishi: 11- mar-2021:end: to store center staff id on enrolment to track Who complete the rental enrolment   
+                        
                         //CH01  Karan Singh25 March   
                         slcdEnrolment.Offline_Signing_Selected__c = isCustmrOptedOfflineSign; 
                         //CH01 END     
@@ -1990,6 +2001,10 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
     // 20-Feb-2020: Jatin: if user pay amount with offline card then we create paid status invoice then 
     //we create payment with reference charge id 
     public PageReference SaveAndCompleteProcessViaReferenceId(){
+        Map<String, string> mapOfParentActiveEnrolment = checkParentHasMultipleEnrolments(new set<string>{parentAcc.id});
+        Map<id,enrolment__C> mapOfEnrolmentOwner = new Map<id,enrolment__C>([select id,Enrolment_Owner__c from enrolment__C 
+                                                                            where id in:mapOfParentActiveEnrolment.values() 
+                                                                            and Enrolment_Owner__c != null]);
         Decimal amountInSmallUnit      = fm.grandTot;
         String csmrRecId =  Schema.SObjectType.Account.getRecordTypeInfosByName().get('Customer').getRecordTypeId(); 
         parentAcc.RecordTypeId   = csmrRecId;
@@ -2042,6 +2057,12 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
         slcdEnrolment.Brand__c = slcdPiano.brand;
         slcdEnrolment.Rental_price_per_month__c = Decimal.valueOf(slcdPiano.monthlyRental);
         slcdEnrolment.Selling_price__c = Decimal.valueOf(slcdPiano.listPrice );
+        // updated by nishi: 11- mar-2021:start: to store center staff id on enrolment to track Who complete the rental enrolment   
+        string enrolmentOwner = ((mapOfEnrolmentOwner != null && mapOfEnrolmentOwner.size()>0) && mapOfEnrolmentOwner.containsKey(slcdEnrolment.Related_Lesson_Enrolment__c)
+                                 ? mapOfEnrolmentOwner.get(slcdEnrolment.Related_Lesson_Enrolment__c).Enrolment_Owner__c : UserInfo.getUserId() );
+        slcdEnrolment.Enrolment_Owner__c = isSiteGuestUser ? enrolmentOwner :UserInfo.getUserId();
+        // updated by nishi: 11- mar-2021:end: to store center staff id on enrolment to track Who complete the rental enrolment   
+                           
         system.debug('fm.prmtnalPkgInMonth'+fm.prmtnalPkgInMonth);
         system.debug('fm.isDiscount'+fm.isDiscount);
         system.debug('totalFreeRentalMonth'+totalFreeRentalMonth);

@@ -1,3 +1,11 @@
+/*
+    Name        :    MakeupEnrolmentBatchHelper
+    Date        :    15-feb-2021
+    Author      :    Nishi
+    Description :    this helper class use in MakeupEnrolmentBatch,AutomatingMakeupEnrolmentCtrl
+    test class:MakeupEnrolmentBatchtest
+*/
+
 public with sharing class MakeupEnrolmentBatchHelper {
     public static Map<string,MakeupAvailMinDetails> getMultipleTeacherWorkingHourTimeSlotList(set<string> setofCenterIds ,set<String> teacherIds,set<String> allWeekdays,
         list<string> listOfDuration,datetime enrolmentEffectiveDate,Boolean isMakeup){
@@ -9,7 +17,7 @@ public with sharing class MakeupEnrolmentBatchHelper {
                 if(mapOfMakeupAvailMinDetails != null && mapOfMakeupAvailMinDetails.size() > 0){
                     // get Bookings according to selected date 
                     Map<string,MakeupAvailMinDetails> mapOfScheduledBookingTimeSlots = getScheduledBookingTimeSlots(setofCenterIds, teacherIds, enrolmentEffectiveDate.date(), listOfDuration,isMakeup);
-                 // system.debug('@@@@availTimeslots after mapOfScheduledBookingTimeSlots --'+mapOfScheduledBookingTimeSlots);
+                 ////system.debug('@@@@availTimeslots after mapOfScheduledBookingTimeSlots --'+mapOfScheduledBookingTimeSlots);
                     //  remove booking records
                     if(mapOfScheduledBookingTimeSlots != null && mapOfScheduledBookingTimeSlots.size() >0){
                         mapOfMakeupAvailMinDetails = getTimeSlotsListRemoval(mapOfMakeupAvailMinDetails ,mapOfScheduledBookingTimeSlots,listOfDuration);
@@ -36,7 +44,7 @@ public with sharing class MakeupEnrolmentBatchHelper {
                     if(mapOfUnOrderedTimeSlots != null && mapOfUnOrderedTimeSlots.size() > 0){
                         mapOfMakeupAvailMinDetails = getTimeSlotsListRemoval(mapOfMakeupAvailMinDetails ,mapOfUnOrderedTimeSlots,listOfDuration );
                     }
-                //system.debug('@@@@availTimeslots after remove slots --'+mapOfMakeupAvailMinDetails);
+               //system.debug('@@@@availTimeslots after remove slots --'+mapOfMakeupAvailMinDetails);
                 }
             }
          return mapOfMakeupAvailMinDetails;
@@ -46,19 +54,19 @@ public with sharing class MakeupEnrolmentBatchHelper {
     private static Map<string,MakeupAvailMinDetails> fetchSelectedGroupClassTimeSlots( set<string> setofCenterIds ,set<String> teacherIds,date bookingsDate,list<string> listOfDuration,Boolean isMakeup){
         Map<string,MakeupAvailMinDetails> mapOfFifthBookingTimeSlots = new Map<string,MakeupAvailMinDetails> ();
         List<Booking__c> fifthlessonList = getGroupClassBookingsOnSelectedDates(setofCenterIds, teacherIds, new Set<Date>{bookingsDate},isMakeup);
-      system.debug('@@@@getFifthBookingSlots fifthlessonList--> '+fifthlessonList);
+     //system.debug('@@@@getFifthBookingSlots fifthlessonList--> '+fifthlessonList);
         map<id,BookingDetails> fifthlessonDetailsmap= new map<id,BookingDetails>();
         if(fifthlessonList != null && fifthlessonList.size() > 0 ){
             //Returns the timeslots in formated form(10:00 AM) with 15 mins gap 
             for(Booking__c currentBook : fifthlessonList){
                 string weekday = DateTime.newInstance(currentBook.Booking_Date__c, currentBook.Start_Time__c).format('EEE');
-              system.debug('@@@weekday --'+weekday);
+             //system.debug('@@@weekday --'+weekday);
               fifthlessonDetailsmap.put(currentBook.id,new BookingDetails(currentBook.Center__c,currentBook.Teacher_Account__c,weekday,
                 DateTime.newInstance(currentBook.Booking_Date__c, currentBook.Start_Time__c), DateTime.newInstance(currentBook.Booking_Date__c, currentBook.end_Time__c))); 
             }
             mapOfFifthBookingTimeSlots = getAvailableTimeSlots(fifthlessonDetailsmap,listOfDuration,false);
         }
-      system.debug('@@@fifthbookingSlots --'+mapOfFifthBookingTimeSlots);
+     //system.debug('@@@fifthbookingSlots --'+mapOfFifthBookingTimeSlots);
         return mapOfFifthBookingTimeSlots;
     }
 
@@ -110,39 +118,43 @@ public with sharing class MakeupEnrolmentBatchHelper {
 
     //Check if 15 or 30 minutes timeslot is available immediately before or after their scheduled regular booking scheduled after 3 days 
         //if any slot is blank then we send out an email notification to Parent for booking the timeslot
-    public static Map<string,EnrolmentDetails> newMakeupBookingNotification(List<Enrolment__c>listOfEnrolment,datetime enrolmentEffectiveDate){
+    public static Map<string,EnrolmentDetails> newMakeupBookingNotification(List<Enrolment__c>listOfEnrolment,datetime enrolmentEffectiveDate,Map<String,Booking__c> mapOfBookingEnrolmentIds){
         set<string> setofCenterIds = new set<string>();
         set<String> teacherIds = new set<String>();
         Map<string,EnrolmentDetails> mapOfEnrolmentDetails = new Map<string,EnrolmentDetails>();
         list<string> listOfTeacherWithDuration = new list<string>{'15','30'};
         for(Enrolment__c objEnrolment: listOfEnrolment){
-            system.debug('@ objEnrolment.Lesson_Start_time__c'+ objEnrolment.Lesson_Start_time__c);
-            system.debug('@ objEnrolment.Package__r.Duration__c'+ objEnrolment.Package__r.Duration__c);
+           //system.debug('@ objEnrolment.Lesson_Start_time__c'+ objEnrolment.Lesson_Start_time__c);
+           //system.debug('@ objEnrolment.Package__r.Duration__c'+ objEnrolment.Package__r.Duration__c);
             DateTime enrolmentstartTime = DateTime.newInstance(enrolmentEffectiveDate.date(),  objEnrolment.Lesson_Start_time__c);
             time endtime =  ((string.isNotBlank(objEnrolment.Package__c)  && objEnrolment.Package__r.Duration__c != null) ? 
                             objEnrolment.Lesson_Start_time__c.addMinutes(Integer.valueOf(objEnrolment.Package__r.Duration__c)) :objEnrolment.Lesson_Start_time__c);
             DateTime enrolmentendTime = DateTime.newInstance(enrolmentEffectiveDate.date(),objEnrolment.Lesson_Start_time__c.addMinutes(Integer.valueOf(objEnrolment.Package__r.Duration__c)) );
+            if(mapOfBookingEnrolmentIds.containsKey(objEnrolment.id)){
+                enrolmentstartTime = DateTime.newInstance(mapOfBookingEnrolmentIds.get(objEnrolment.id).Booking_Date__c,  mapOfBookingEnrolmentIds.get(objEnrolment.id).start_Time__c);
+                enrolmentendTime = DateTime.newInstance(mapOfBookingEnrolmentIds.get(objEnrolment.id).Booking_Date__c,  mapOfBookingEnrolmentIds.get(objEnrolment.id).End_Time__c);
+            }
             if(enrolmentstartTime != NULL && enrolmentendTime != NULL){
                 setofCenterIds.add(objEnrolment.Center__c);
                 teacherIds.add(objEnrolment.Teacher__c);
             }
-            system.debug('@objEnrolment'+objEnrolment.name);
+           //system.debug('@objEnrolment'+objEnrolment.name);
         }
-        system.debug('@setofCenterIds'+setofCenterIds);
-        system.debug('@teacherIds'+teacherIds);
-        system.debug('@enrolmentEffectiveDate.format'+enrolmentEffectiveDate.format('EEE'));
-        system.debug('@enrolmentEffectiveDate'+enrolmentEffectiveDate);
+       //system.debug('@setofCenterIds'+setofCenterIds);
+       //system.debug('@teacherIds'+teacherIds);
+       //system.debug('@enrolmentEffectiveDate.format'+enrolmentEffectiveDate.format('EEE'));
+       //system.debug('@enrolmentEffectiveDate'+enrolmentEffectiveDate);
         Map<string,MakeupAvailMinDetails> mapOfMakeupAvailMinDetails = getMultipleTeacherWorkingHourTimeSlotList(setofCenterIds ,teacherIds,new set<string>{enrolmentEffectiveDate.format('EEE')},listOfTeacherWithDuration,enrolmentEffectiveDate,true);
         //Check if 15 or 30 minutes timeslot is available immediately before or after their scheduled regular booking scheduled after 3 days 
         //if any slot is blank then we send out an email notification to Parent for booking the timeslot
         if(mapOfMakeupAvailMinDetails != null && mapOfMakeupAvailMinDetails.size() > 0){
-            system.debug('@mapOfMakeupAvailMinDetails'+mapOfMakeupAvailMinDetails);
-            mapOfEnrolmentDetails = sendMakeupEnrolmentNotification(listOfEnrolment,mapOfMakeupAvailMinDetails,listOfTeacherWithDuration,enrolmentEffectiveDate);
+           //system.debug('@mapOfMakeupAvailMinDetails'+mapOfMakeupAvailMinDetails);
+            mapOfEnrolmentDetails = sendMakeupEnrolmentNotification(listOfEnrolment,mapOfMakeupAvailMinDetails,listOfTeacherWithDuration,enrolmentEffectiveDate,mapOfBookingEnrolmentIds);
         }
         return mapOfEnrolmentDetails;   
     }
     public static Map<string,EnrolmentDetails> sendMakeupEnrolmentNotification(List<Enrolment__c>listOfEnrolment,Map<string,MakeupAvailMinDetails> availTeacherTimeSlots,
-    List<String> listOfDuration,datetime enrolmentEffectiveDate){
+    List<String> listOfDuration,datetime enrolmentEffectiveDate,Map<String,Booking__c> mapOfBookingEnrolmentIds){
        Map<string,EnrolmentDetails> mapOfEnrolmentDetails = new Map<string,EnrolmentDetails>();
        
         set<String> enrolmentRequiredTimeSlots = new set<String>();
@@ -159,18 +171,24 @@ public with sharing class MakeupEnrolmentBatchHelper {
                 DateTime enrolmentAddedEndTime = DateTime.newInstance(enrolmentEffectiveDate.date(),  objEnrolment.Lesson_Start_time__c.addMinutes(Integer.valueOf(objEnrolment.Package__r.Duration__c)));//.addMinutes(15);
                 DateTime enrolmentstartTime = DateTime.newInstance(enrolmentEffectiveDate.date(),  objEnrolment.Lesson_Start_time__c);
                 DateTime enrolmentendTime = DateTime.newInstance(enrolmentEffectiveDate.date(),  objEnrolment.Lesson_Start_time__c.addMinutes(Integer.valueOf(objEnrolment.Package__r.Duration__c)));
+                if(mapOfBookingEnrolmentIds.containsKey(objEnrolment.id)){
+                    enrolmentAddedStartTime = DateTime.newInstance(mapOfBookingEnrolmentIds.get(objEnrolment.id).Booking_Date__c,  mapOfBookingEnrolmentIds.get(objEnrolment.id).start_Time__c).addMinutes(-integer.valueOf(duration));
+                    enrolmentAddedEndTime = DateTime.newInstance(mapOfBookingEnrolmentIds.get(objEnrolment.id).Booking_Date__c,  mapOfBookingEnrolmentIds.get(objEnrolment.id).End_Time__c);
+                    enrolmentstartTime = DateTime.newInstance(mapOfBookingEnrolmentIds.get(objEnrolment.id).Booking_Date__c,  mapOfBookingEnrolmentIds.get(objEnrolment.id).start_Time__c);
+                    enrolmentendTime = DateTime.newInstance(mapOfBookingEnrolmentIds.get(objEnrolment.id).Booking_Date__c,  mapOfBookingEnrolmentIds.get(objEnrolment.id).End_Time__c);
+                }
                 if(enrolmentstartTime != NULL && enrolmentendTime != NULL && enrolmentAddedStartTime != NULL && enrolmentAddedEndTime != NULL){
                     enrolmentRequiredTimeSlots = MakeupEnrolmentBatchHelper.getFormatedTimeSlotList(enrolmentAddedStartTime, enrolmentAddedEndTime);
                     List<String> enrolmentRealTimeSlots = new List<string>(MakeupEnrolmentBatchHelper.getFormatedTimeSlotList(enrolmentstartTime, enrolmentendTime));
-                system.debug('@enrolmentRequiredTimeSlots'+enrolmentRequiredTimeSlots);
-                system.debug('@enrolmentRealTimeSlots'+enrolmentRealTimeSlots);
+               //system.debug('@enrolmentRequiredTimeSlots'+enrolmentRequiredTimeSlots);
+               //system.debug('@enrolmentRealTimeSlots'+enrolmentRealTimeSlots);
                     for(Integer counterSlots=0;counterSlots < (enrolmentRealTimeSlots.size()-1);counterSlots++){
                         enrolmentRequiredTimeSlots.remove(enrolmentRealTimeSlots[0]);
                     }
                 //  enrolmentRequiredTimeSlots.removeAll(enrolmentRealTimeSlots);
-                system.debug('@enrolmentRequiredTimeSlots'+enrolmentRequiredTimeSlots);
-                    system.debug('@objEnrolment.Bookings__r'+objEnrolment.Bookings__r);
-                system.debug('@##objEnrolment.name'+objEnrolment.name);
+               //system.debug('@enrolmentRequiredTimeSlots'+enrolmentRequiredTimeSlots);
+                   //system.debug('@objEnrolment.Bookings__r'+objEnrolment.Bookings__r);
+               //system.debug('@##objEnrolment.name'+objEnrolment.name);
                     if(enrolmentRequiredTimeSlots != null && enrolmentRequiredTimeSlots.size() > 0 && objEnrolment.Bookings__r != null && objEnrolment.Bookings__r.size() > 0 
                     && availTeacherTimeSlots.containsKey(objEnrolment.Center__c)){
                         objMakeupAvailMinDetails = availTeacherTimeSlots.get(objEnrolment.Center__c);
@@ -232,14 +250,14 @@ public with sharing class MakeupEnrolmentBatchHelper {
             if(enrolmentstartTime != NULL && enrolmentendTime != NULL && enrolmentAddedStartTime != NULL && enrolmentAddedEndTime != NULL){
                 enrolmentRequiredTimeSlots = MakeupEnrolmentBatchHelper.getFormatedTimeSlotList(enrolmentAddedStartTime, enrolmentAddedEndTime);
                 List<String> enrolmentRealTimeSlots = new List<string>(MakeupEnrolmentBatchHelper.getFormatedTimeSlotList(enrolmentstartTime, enrolmentendTime));
-                system.debug('@enrolmentRequiredTimeSlots'+enrolmentRequiredTimeSlots);
-                system.debug('@enrolmentRealTimeSlots'+enrolmentRealTimeSlots);
+               //system.debug('@enrolmentRequiredTimeSlots'+enrolmentRequiredTimeSlots);
+               //system.debug('@enrolmentRealTimeSlots'+enrolmentRealTimeSlots);
                 for(Integer counterSlots=0;counterSlots < (enrolmentRealTimeSlots.size()-1);counterSlots++){
                     enrolmentRequiredTimeSlots.remove(enrolmentRealTimeSlots[0]);
                 }
-                system.debug('@enrolmentRequiredTimeSlots'+enrolmentRequiredTimeSlots);
-                system.debug('@objEnrolment.Bookings__r'+objEnrolment.Bookings__r);
-                system.debug('@##objEnrolment.name'+objEnrolment.name);
+               //system.debug('@enrolmentRequiredTimeSlots'+enrolmentRequiredTimeSlots);
+               //system.debug('@objEnrolment.Bookings__r'+objEnrolment.Bookings__r);
+               //system.debug('@##objEnrolment.name'+objEnrolment.name);
                 if(enrolmentRequiredTimeSlots != null && enrolmentRequiredTimeSlots.size() > 0 && availTeacherTimeSlots.containsKey(objEnrolment.Center__c)){
                     objMakeupAvailMinDetails = availTeacherTimeSlots.get(objEnrolment.Center__c);
                     if(objMakeupAvailMinDetails.mapOfTeachers != null && objMakeupAvailMinDetails.mapOfTeachers.size() > 0 
@@ -326,8 +344,8 @@ public with sharing class MakeupEnrolmentBatchHelper {
                 }
             }
         }
-        system.debug('@@@mapOfUnOrderedTimeSlots --'+mapOfUnOrderedTimeSlots);
-        system.debug('@@@mapOfMakeupAvailMinDetails --'+mapOfMakeupAvailMinDetails);
+       //system.debug('@@@mapOfUnOrderedTimeSlots --'+mapOfUnOrderedTimeSlots);
+       //system.debug('@@@mapOfMakeupAvailMinDetails --'+mapOfMakeupAvailMinDetails);
         return mapOfUnOrderedTimeSlots;
     }
 
@@ -383,20 +401,20 @@ public with sharing class MakeupEnrolmentBatchHelper {
     private static Map<string,MakeupAvailMinDetails> getAvailableTeacherWorkingTimeSlot(set<string> setofCenterIds ,set<String> teacherIds,set<String> allWeekdays,list<string> listOfDuration,date effectivedate){
         List<Teacher_Working_Hour__c> teachersHours = getMultipleTeachersWorkingHours(teacherIds,setofCenterIds, allWeekdays);
         Map<string,MakeupAvailMinDetails> mapOfMakeupAvailMinDetails = new Map<string,MakeupAvailMinDetails>();
-      system.debug('@@@allWeekdays --'+allWeekdays);
-      system.debug('@@@teachersHours --'+teachersHours);
+     //system.debug('@@@allWeekdays --'+allWeekdays);
+     //system.debug('@@@teachersHours --'+teachersHours);
         if( listOfDuration!= null&&  teachersHours != null && teachersHours.size() > 0 && listOfDuration.size() > 0){
             map<id,BookingDetails> teacherWorkinghrsDetailsmap = new map<id,BookingDetails>();
             for(Teacher_Working_Hour__c teachersHour :teachersHours){
                 Long timeAvailable = gettimeAvailable(teachersHour.Start_Time__c, teachersHour.End_Time__c);
                 // check Available time but is not common then we remove this days
-                system.debug('@@@teachersHour.Working_Day__c --'+teachersHour.Working_Day__c);
+               //system.debug('@@@teachersHour.Working_Day__c --'+teachersHour.Working_Day__c);
                 teacherWorkinghrsDetailsmap.put(teachersHour.id,new BookingDetails(teachersHour.Center_Name__c,teachersHour.Teacher_Name__c,teachersHour.Working_Day__c,
                             DateTime.newInstance(effectivedate, teachersHour.Start_Time__c),DateTime.newInstance(effectivedate, teachersHour.End_Time__c),timeAvailable));
             }
             mapOfMakeupAvailMinDetails = getAvailableTimeSlots(teacherWorkinghrsDetailsmap,listOfDuration,true);
         }
-      system.debug('@@@getAvailableTeacherWorkingTimeSlot --'+mapOfMakeupAvailMinDetails);
+     //system.debug('@@@getAvailableTeacherWorkingTimeSlot --'+mapOfMakeupAvailMinDetails);
         return mapOfMakeupAvailMinDetails;
     }
 
@@ -409,13 +427,13 @@ public with sharing class MakeupEnrolmentBatchHelper {
             //Returns the timeslots in formated form(10:00 AM) with 15 mins gap 
             for(Booking__c currentBook : bookingList){
                 string weekday = DateTime.newInstance(currentBook.Booking_Date__c, currentBook.Start_Time__c).format('EEE');
-              system.debug('@@@weekday --'+weekday);
+             //system.debug('@@@weekday --'+weekday);
               bookingDetailsmap.put(currentBook.id, new BookingDetails(currentBook.Center__c,currentBook.Teacher_Account__c,weekday,
                 DateTime.newInstance(currentBook.Booking_Date__c, currentBook.Start_Time__c),DateTime.newInstance(currentBook.Booking_Date__c, currentBook.end_Time__c)));  
             }
             mapOfScheduledBookingTimeSlots = getAvailableTimeSlots(bookingDetailsmap,listOfDuration,false);
         }
-      system.debug('@@@getScheduledBookingTimeSlots --'+mapOfScheduledBookingTimeSlots);
+     //system.debug('@@@getScheduledBookingTimeSlots --'+mapOfScheduledBookingTimeSlots);
         return mapOfScheduledBookingTimeSlots;
     }
 
@@ -423,19 +441,19 @@ public with sharing class MakeupEnrolmentBatchHelper {
      private static Map<string,MakeupAvailMinDetails> getFifthBookingSlots( set<string> setofCenterIds ,set<String> teacherIds,date bookingsDate,list<string> listOfDuration){
         Map<string,MakeupAvailMinDetails> mapOfFifthBookingTimeSlots = new Map<string,MakeupAvailMinDetails> ();
         List<Fifth_Lesson__c> fifthlessonList = getBookingsOnFifthDates(setofCenterIds, teacherIds, new Set<Date>{bookingsDate});
-      system.debug('@@@@getFifthBookingSlots fifthlessonList--> '+fifthlessonList);
+     //system.debug('@@@@getFifthBookingSlots fifthlessonList--> '+fifthlessonList);
         map<id,BookingDetails> fifthlessonDetailsmap= new map<id,BookingDetails>();
         if(fifthlessonList != null && fifthlessonList.size() > 0 ){
             //Returns the timeslots in formated form(10:00 AM) with 15 mins gap 
             for(Fifth_Lesson__c currentBook : fifthlessonList){
                 string weekday = DateTime.newInstance(currentBook.Booking_Date__c, currentBook.Start_Time__c).format('EEE');
-              system.debug('@@@weekday --'+weekday);
+             //system.debug('@@@weekday --'+weekday);
               fifthlessonDetailsmap.put(currentBook.id,new BookingDetails(currentBook.Center__c,currentBook.Teacher_Account__c,weekday,
                 DateTime.newInstance(currentBook.Booking_Date__c, currentBook.Start_Time__c), DateTime.newInstance(currentBook.Booking_Date__c, currentBook.end_Time__c))); 
             }
             mapOfFifthBookingTimeSlots = getAvailableTimeSlots(fifthlessonDetailsmap,listOfDuration,false);
         }
-      system.debug('@@@fifthbookingSlots --'+mapOfFifthBookingTimeSlots);
+     //system.debug('@@@fifthbookingSlots --'+mapOfFifthBookingTimeSlots);
         return mapOfFifthBookingTimeSlots;
     }
 
@@ -474,12 +492,12 @@ public with sharing class MakeupEnrolmentBatchHelper {
                                         objAvailWeekdaysDetails = availweekdaysWithDuration.get(objRemovalweekdays.weekdayname);
                                         mapOfavailTimeslots = new map<String,set<string>>();
                                         //mapOfavailTimeslots = objAvailWeekdaysDetails.mapOfavailTimeslots;
-                                      system.debug('@mapOfavailTimeslots'+mapOfavailTimeslots);
-                                      system.debug('@objRemovalweekdays.mapOfavailTimeslots'+objRemovalweekdays.mapOfavailTimeslots);
+                                     //system.debug('@mapOfavailTimeslots'+mapOfavailTimeslots);
+                                     //system.debug('@objRemovalweekdays.mapOfavailTimeslots'+objRemovalweekdays.mapOfavailTimeslots);
                                         for(string duration :listOfDuration){
                                             Set<String> availdurationSet = new Set<String>();
                                             Set<String> removaldurationSet = new Set<String>();
-                                          system.debug('@duration'+duration);
+                                         //system.debug('@duration'+duration);
                                             if(objAvailWeekdaysDetails.mapOfavailTimeslots.containsKey(duration)){
                                                 removaldurationSet = objRemovalweekdays.mapOfavailTimeslots.get(duration);
                                                 if(objAvailWeekdaysDetails.mapOfavailTimeslots != null && objAvailWeekdaysDetails.mapOfavailTimeslots.size() >0){
@@ -559,8 +577,8 @@ public with sharing class MakeupEnrolmentBatchHelper {
                 }
             
                 bookingSlots.addAll(getFormatedTimeSlotListForBooking(currentBook.startTime, currentBook.endTime));
-              system.debug('@@@currentBook.startTime --'+currentBook.startTime);
-              system.debug('@@@currentBook.endTime --'+currentBook.endTime);
+             //system.debug('@@@currentBook.startTime --'+currentBook.startTime);
+             //system.debug('@@@currentBook.endTime --'+currentBook.endTime);
                 if(bookingSlots != null && bookingSlots.size() > 0){
                     for(string duration : listOfDuration){
                         If(mapOfavailTimeslots.containsKey(duration)){
@@ -575,9 +593,9 @@ public with sharing class MakeupEnrolmentBatchHelper {
                         }
                     } 
                     // for(string slots:bookingSlots){
-                    //   system.debug('@@@slots --'+slots);
+                    //  //system.debug('@@@slots --'+slots);
                     // }
-                  system.debug('@@@mapOfavailTimeslots --'+mapOfavailTimeslots); 
+                 //system.debug('@@@mapOfavailTimeslots --'+mapOfavailTimeslots); 
                     if(mapOfavailTimeslots != null && mapOfavailTimeslots.size() > 0){
                         weekdaysWithDuration.put(weekday,new WeekdaysDetails(weekday, mapOfavailTimeslots));
                         mapOfTeachers.put(currentBook.teacherid,new TeacherDetails(currentBook.teacherid,weekdaysWithDuration));
@@ -586,7 +604,7 @@ public with sharing class MakeupEnrolmentBatchHelper {
                 }
             }
         }
-      system.debug('@@@mapOfMakeupAvailMinDetails --'+mapOfMakeupAvailMinDetails);
+     //system.debug('@@@mapOfMakeupAvailMinDetails --'+mapOfMakeupAvailMinDetails);
         return mapOfMakeupAvailMinDetails;
     }
 
@@ -635,7 +653,7 @@ public with sharing class MakeupEnrolmentBatchHelper {
         }
         queryStr += ' AND status__c IN: bookingStatus AND ((Type__c IN: bookTypeSet) OR (Type__c =: busyType  AND Category__c !=: placeholderCategory))';
         
-      system.debug('@!!!queryStr'+queryStr);
+     //system.debug('@!!!queryStr'+queryStr);
         return Database.query(queryStr);
     }
 
@@ -810,7 +828,7 @@ public with sharing class MakeupEnrolmentBatchHelper {
             queryString+= ' Type__c, Class__c,New_Class__c,Center__r.Organisation__r.name,Parent__r.Centre_Name__r.Location__c,Parent__r.PersonContactId,Parent__r.FCM_Token__c,';
             queryString+= ' (Select id from Bookings__r WHERE RecordType.Name =: recordTypeLesson AND Start_Time__c != NULL AND End_Time__c != NULL';
             queryString += ' AND Booking_Date__c IN: dates AND status__c IN: bookingStatus AND Type__c IN: bookTypeSet ), ';
-            queryString += ' instrument__c,Automation_make_up_booking_Date__c  FROM Enrolment__c ';
+            queryString += ' instrument__c  FROM Enrolment__c ';
             queryString+= ' WHERE Type__c In: enrolTypes ';
             queryString+= ' AND Stage__c =: enroledStage ';
             queryString+= ' AND Lesson_Day__c =: weekday ';
@@ -820,5 +838,95 @@ public with sharing class MakeupEnrolmentBatchHelper {
                 queryString+= ' And Id=: enrolmentIds';
             }
         return Database.query(queryString);    
+    }
+
+    public static  Map<string,set<string>> getCenterQueueMap(){
+        Map<string,set<string>> mapOfCenterQueueEmails = new Map<string,set<String>>();
+        set<string> userIds = new set<string>();
+        
+        map<Id,User> mapOfUser= new map<Id,User>([select id,Email from user]);
+        for(GroupMember objQueueSObject :   [SELECT UserOrGroupId, Group.developername
+                                                FROM GroupMember 
+                                                WHERE Group.Type = 'Queue']){
+            userIds = new set<string>();
+            if(mapOfCenterQueueEmails.containsKey(objQueueSObject.Group.developername)){
+                userIds = mapOfCenterQueueEmails.get(objQueueSObject.Group.developername);
+            }
+            if(mapOfUser.containsKey(objQueueSObject.UserOrGroupId)){
+                //userIds.add(mapOfUser.get(objQueueSObject.UserOrGroupId).Email);
+                userIds.add(objQueueSObject.UserOrGroupId);
+            }
+            mapOfCenterQueueEmails.put(objQueueSObject.Group.developername,userIds);  
+        }  
+        return mapOfCenterQueueEmails;
+    }
+    public static void sendEmailToCenterQueueMember( map<string,string> centerIds){
+        Map<string,set<string>> mapOfCenterQueue = getCenterQueueMap();
+        Map<String, Manage_Queue__c> queueSetting = Manage_Queue__c.getAll();
+       //system.debug('queueSetting'+queueSetting);
+        List<Messaging.SingleEmailMessage> sendSingleEmailMessage = new List<Messaging.SingleEmailMessage>();
+        Set<String> paymentFailedEmails=new Set<string>{'Ossia_Waitlist_Enrolment_Time_Available','Waitlist_Enrolment_Time_Available','Preferred_Enrolment_Time_Available'};
+        Map<String,EmailTemplate> mapOfEmailTemplate = new Map<String,EmailTemplate>();
+         // we get templete according to organisation
+        
+        for(EmailTemplate objEmailTemplate: [SELECT Id, Name,DeveloperName,Subject, HtmlValue  
+                                            FROM EmailTemplate 
+                                            WHERE DeveloperName In:paymentFailedEmails]){
+                                                mapOfEmailTemplate.put(objEmailTemplate.DeveloperName,objEmailTemplate);
+                                            }
+        for(Account centerObj : [Select id,name,Organisation__r.Name,Location__c from Account where id In:centerIds.keySet()])  {
+           //system.debug('queueSetting.containsKey(centerObj.name)'+queueSetting.containsKey(centerObj.name));
+           //system.debug('queueSetting.containsKey(centerObj.name)'+mapOfCenterQueue);
+            if(queueSetting.containsKey(centerObj.name) && string.isNotBlank(queueSetting.get(centerObj.name).Queue_Name__c) &&
+             mapOfCenterQueue.containsKey(queueSetting.get(centerObj.name).Queue_Name__c)){
+                List<String> sendTo = new List<String>();
+                sendTo.addAll(mapOfCenterQueue.get(queueSetting.get(centerObj.name).Queue_Name__c));
+               //system.debug('sendTo'+sendTo);
+                string templatename='';
+                // if(centerObj.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                //     templatename = 'Ossia_Waitlist_Enrolment_Time_Available';
+                // }else{
+                //     templatename = 'Waitlist_Enrolment_Time_Available';
+                // }
+                templatename = 'Preferred_Enrolment_Time_Available';
+                if(mapOfEmailTemplate.containsKey(templatename) && sendTo != null && sendTo.size() > 0){
+                    sendSingleEmailMessage.addAll(getSingleEmailMessage(mapOfEmailTemplate.get(templatename),sendTo,centerObj.id,centerObj.Location__c,centerIds.get(centerObj.id)));
+                }
+            }
+        } 
+        // Send the email you have created.
+        if(sendSingleEmailMessage != null && sendSingleEmailMessage.size() > 0 ){
+            Messaging.SendEmailResult[] result = Messaging.sendEmail(sendSingleEmailMessage);//false
+            /*Set<Id> targetIdsFailed = new Set<Id>();
+            for(Messaging.SendEmailResult resObj: result){
+                if(!resObj.isSuccess()){
+                    targetIdsFailed.add(resObj.getErrors()[0].getTargetObjectId());
+                }
+            }
+           //system.debug('targetIdsFailed'+targetIdsFailed);*/
+        }
+    }
+    public static List<Messaging.SingleEmailMessage> getSingleEmailMessage(EmailTemplate template,List<String> sendTo,String relatedId,String location,string whatId){
+        Map<String,OrgWideEmailAddress> mapOfOrgWide = new  Map<String,OrgWideEmailAddress>();
+        mapOfOrgWide  = new Map<String,OrgWideEmailAddress>();
+        for(OrgWideEmailAddress objAddress : [SELECT Address, DisplayName, Id FROM OrgWideEmailAddress]){
+            mapOfOrgWide.put(objAddress.DisplayName,objAddress);
+        }
+        List<Messaging.SingleEmailMessage> sendSingleEmailMessage = new List<Messaging.SingleEmailMessage>();
+        for(string userId:sendTo){
+            //system.debug('whatId'+whatId);
+           //system.debug('relatedId'+relatedId);
+            Messaging.SingleEmailMessage mail = new  Messaging.SingleEmailMessage(); 
+            mail.setTemplateId(template.id);
+            mail.setWhatId(relatedId);
+            //mail.setToAddresses(sendTo);
+            mail.setTargetObjectId(userId);//0056F00000BPHwM
+            if(String.isNotBlank(location) && mapOfOrgWide.containsKey(location)){
+                mail.setOrgWideEmailAddressId(mapOfOrgWide.get(location).Id);
+            }
+            mail.setSaveAsActivity(False);    
+            sendSingleEmailMessage.add(mail);
+        }
+        return sendSingleEmailMessage;
     }
 }

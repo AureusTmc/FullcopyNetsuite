@@ -1,10 +1,12 @@
 /*
-Name        :    GenerateContractAdhocInvoiceCtr
+Name        :    GenerateContractAdhocInvoiceCtrl
 Date        :    23 Feb 2021
 Author      :
 Description :    This controller is used for the Contract ad hoc invoice.
+test class:GenerateContractAdhocInvoiceCtrlTest
+page		:	GenerateContractAdhocInvoicePage
 */
-public with Sharing class GenerateContractAdhocInvoiceCtr{
+public with Sharing class GenerateContractAdhocInvoiceCtrl{
     public List<SelectOption> listOfCenter{get;set;}
     public String selectedCenter{get;set;}
     public String centerName{get;set;}
@@ -25,7 +27,7 @@ public with Sharing class GenerateContractAdhocInvoiceCtr{
     public string errormessage{get;set;}
     public string selectedMethod{get;set;}
     public string invoiceId{get;set;}
-    public GenerateContractAdhocInvoiceCtr(ApexPages.StandardController sc){
+    public GenerateContractAdhocInvoiceCtrl(ApexPages.StandardController sc){
         centreCountry = new Country__c();
         isSummaryOpen = false;
         objAcc = (Account)sc.getRecord();
@@ -68,37 +70,36 @@ public with Sharing class GenerateContractAdhocInvoiceCtr{
         //listOfTeacher.add(new SelectOption('', ''));
         //String selCenter = String.isBlank(selectedCenter) ? objAcc.Centre_Name__c : selectedCenter;
         Set<String> teachersIdSet = new Set<String>();
-        if(String.isNotBlank(centreCountryId) ){
+        if(String.isNotBlank(centreCountryId)){
             List<Teacher_Working_Hour__c> teacherWorkingHourList = new List<Teacher_Working_Hour__c>();
             teacherWorkingHourList = [SELECT id, Center_Name__c, Teacher_Name__c, Start_Time__c, End_Time__c FROM Teacher_Working_Hour__c WHERE Center_Name__r.Country__c =: centreCountryId ];
             for(Teacher_Working_Hour__c twh : teacherWorkingHourList){
                 teachersIdSet.add(twh.Teacher_Name__c);
             }
-        
-            system.debug('teachersIdSet'+teachersIdSet);
-            String query = '';    
-            string teacherWorkingStatus = ConstantsClass.teacherWorkingStatus;
-            String teacherRecType = ConstantsClass.teacherRecordType;         
-            if(teachersIdSet != null && teachersIdSet.size() > 0){
-                string searchstring = String.isNotBlank(str)  ?'%'+str+'%':'';
-                List<account> listOfTeachers = [SELECT Id, Name FROM Account WHERE RecordType.Name =: teacherRecType AND Status__c =: teacherWorkingStatus
-                                                AND id IN : teachersIdSet
-                                                And (Name LIKE :searchstring)
-                                                ORDER BY Name
-                                                Limit 5];
-                                                system.debug('listOfTeachers'+listOfTeachers);                                 
-                for(account objStudent:  listOfTeachers){
-                    TeacherDetail objTeacherDetail = new TeacherDetail();
-                    objTeacherDetail.teacherid = objStudent.Id;
-                    objTeacherDetail.teachername = objStudent.Name;
-                    //listOfTeacher.add(new SelectOption(objStudent.Id,objStudent.Name));
-                    //mapOfStuName.put(objStudent.Id,objStudent.Name);
-                    listOfTeacherDetails.add(objTeacherDetail);
-                }  
-            }  
-            system.debug('listOfTeacherDetails'+listOfTeacherDetails); 
-            objTeacherDetails.listOfTeacherDetails = listOfTeacherDetails;
         }
+        system.debug('teachersIdSet'+teachersIdSet);
+        String query = '';    
+        string teacherWorkingStatus = ConstantsClass.teacherWorkingStatus;
+        String teacherRecType = ConstantsClass.teacherRecordType;         
+        if(teachersIdSet.size() > 0){
+            string searchstring = String.isNotBlank(str)  ?'%'+str+'%':'';
+            List<account> listOfTeachers = [SELECT Id, Name FROM Account WHERE RecordType.Name =: teacherRecType AND Status__c =: teacherWorkingStatus
+                                             AND id IN : teachersIdSet
+                                             And (Name LIKE :searchstring)
+                                             ORDER BY Name
+                                             Limit 5];
+                                             system.debug('listOfTeachers'+listOfTeachers);                                 
+            for(account objStudent:  listOfTeachers){
+                TeacherDetail objTeacherDetail = new TeacherDetail();
+                objTeacherDetail.teacherid = objStudent.Id;
+                objTeacherDetail.teachername = objStudent.Name;
+                //listOfTeacher.add(new SelectOption(objStudent.Id,objStudent.Name));
+                //mapOfStuName.put(objStudent.Id,objStudent.Name);
+                listOfTeacherDetails.add(objTeacherDetail);
+            }  
+        }  
+        system.debug('listOfTeacherDetails'+listOfTeacherDetails); 
+        objTeacherDetails.listOfTeacherDetails = listOfTeacherDetails;
         return JSON.serialize(objTeacherDetails);
     }
     public class TeacherDetails{
@@ -210,7 +211,7 @@ public with Sharing class GenerateContractAdhocInvoiceCtr{
     }
 
     // this method is used for adjusting credit notes on the parent.
-    private static void adjustDiscounts(Set<String> setOfInvIds,Date invDate){
+   /* private static void adjustDiscounts(Set<String> setOfInvIds,Date invDate){
         Map<String,Invoice__c> mapOfParentInv = new Map<String,Invoice__c>();
         Map<String,Customer_Adhoc_Discount__c> customerDiscountsMap = new Map<String,Customer_Adhoc_Discount__c>();
         List<Invoice_Line_Item__c> listOfLineItems = new List<Invoice_Line_Item__c>();
@@ -387,7 +388,7 @@ public with Sharing class GenerateContractAdhocInvoiceCtr{
         system.debug('gstAmount'+gstAmount);
         system.debug('amount - gstAmount'+(amount - gstAmount));
         return (amount - gstAmount);
-    }
+    }*/
     public void toggaleSummary(){
         isSummaryOpen = isSummaryOpen ? false : true;
     }
