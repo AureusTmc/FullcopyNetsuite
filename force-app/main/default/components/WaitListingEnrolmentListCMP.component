@@ -14,7 +14,7 @@
 
     <apex:outputPanel id="availTimeslots" layout="none">
         <div class="new-container class-true" style="padding:50px;">
-            <div class="slds-text-heading_large  slds-p-around_small slds-text-align_center" style="font-weight:bold;font-size: large;">Preferred Enrolment List from {!bookingDate}</div>
+            <div class="slds-text-heading_large  slds-p-around_small slds-text-align_center" style="font-weight:bold;font-size: large;">Preferred Enrollment List  {!objCenter.name} for {!bookingDate}</div>
             <div class="container slds-p-around_small " style="padding: 18px;">
                 <table width="100%" class="slds-table slds-table_cell-buffer slds-table_header-hidden slds-table_bordered" style=" font-family: arial, sans-serif;border:1px solid #d8c9c9;">
                     <tbody>

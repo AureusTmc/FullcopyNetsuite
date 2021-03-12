@@ -12,24 +12,20 @@ public with sharing class WaitingEnrolmentListCtrl {
     public string bookingDate{get;set;}
     public string prefferedDate{get;set;}
     public String weekday{get;set;}
-    public String enrolmentId{get;set;}
     public String relatedCenterId{get;set;}
     public Boolean isOssiaOrg{get;set;}
      public Boolean isError{get;set;}
      public Boolean isSucess{get;set;}
     public String errorMessage{get;set;}
-    public String selectedtimeslotRealTime{get;set;}
-    public String selectedtimeSlot{get;set;}
-    public String selectedduration{get;set;}
     List<Enrolment__c> listOfEnrolment = new List<Enrolment__c>();
     Enrolment__c objEnrolment = new Enrolment__c();
-    List<Booking__c> listOfBooking = new List<Booking__c>();
-    Booking__c objBooking = new Booking__c();
+    public Account objCenter{get;set;}
    public WaitingEnrolmentListCtrl() {
         listOfEnrolment = new List<Enrolment__c>();
         isError = false;
         isOssiaOrg = false;
         isSucess = false;
+        objCenter = new Account();
     }
    
     public List<PrefferdEnrolment>  getlistOfPrefferdEnrolments(){
@@ -37,11 +33,12 @@ public with sharing class WaitingEnrolmentListCtrl {
         isError = false;
         isOssiaOrg = false;
         isSucess = false;
+        objCenter = new Account();
         system.debug('enrolmentId'+relatedCenterId);
         //enrolmentEffectiveDate =system.now().addDays(integer.valueOf(label.Waiting_Enrolment_Notification_Days));
         List<PrefferdEnrolment> listOfprefferdEnrolments = new List<PrefferdEnrolment>(); 
         if(string.isNotBlank(relatedCenterId)){
-            Account objCenter = [select id,Organisation__r.Name,Waitlisting_Date__c from account  where id=:relatedCenterId];
+            objCenter = [select id,Organisation__r.Name,Waitlisting_Date__c,name from account  where id=:relatedCenterId];
             if(string.isnotBlank(ApexPages.currentPage().getParameters().get('prefferedDate'))){
                 string prefferedDay  = ApexPages.currentPage().getParameters().get('prefferedDate').replaceAll('/','-');
                enrolmentEffectiveDate = Datetime.newInstance(date.newInstance(integer.valueOf(prefferedDay.split('-')[2]) , integer.valueOf(prefferedDay.split('-')[1]), integer.valueOf(prefferedDay.split('-')[0])),system.now().time());
@@ -52,7 +49,7 @@ public with sharing class WaitingEnrolmentListCtrl {
             weekday = enrolmentEffectiveDate.format('EEEE');
             bookingDate = enrolmentEffectiveDate.format('dd, MMM yyyy');
             listOfEnrolment = getEnrolmentList(relatedCenterId,enrolmentEffectiveDate);
-            system.debug('getEnrolmentList.'+getEnrolmentList.size()> 0);
+            system.debug('getEnrolmentList.'+listOfEnrolment.size());
             if(listOfEnrolment != null && listOfEnrolment.size()>0 ){
                 listOfprefferdEnrolments = getlistOfWaitingEnrolments(relatedCenterId,enrolmentEffectiveDate,listOfEnrolment);
                 system.debug('listOfprefferdEnrolments'+listOfprefferdEnrolments);
