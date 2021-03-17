@@ -1,13 +1,29 @@
 <apex:page lightningStylesheets="true" standardController="Account" extensions="GenerateContractAdhocInvoiceCtrl" title="Generate Invoice"
     docType="html-5.0">
-    <apex:form >
+    <apex:form>
         <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/jquery.min.js')}" />
         <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
         <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
         <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
         <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
-        <apex:slds />
 
+        <!-- <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/jquery.min.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/moment.min.js')}"/>
+       
+        <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/fullCalenderCustom.js')}"/>
+     
+        <apex:stylesheet value="{!URLFOR($Resource.FullCalender, '/fullcalendar.min.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.FullCalender, '/scheduler.min.css')}" />
+        <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/scheduler.min.js')}" />
+        <apex:includeScript value="{!$Resource.aljs}"/>
+        <apex:includeScript value="{!$Resource.datepicker}"/> -->
+        <apex:slds />
+        <style>
+            input.reqField {
+                width: 100%;
+            }
+        </style>
         <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
         <apex:actionStatus id="spinner" styleClass="status">
             <apex:facet name="start">
@@ -33,471 +49,595 @@
             <apex:param name="indexId" value="" assignTo="{!index}" />
             <apex:param name="startDate" value="" assignTo="{!startDate}" />
             <apex:param name="enddate" value="" assignTo="{!enddate}" />
-            <apex:param name="totalLesson" value="" assignTo="{!totalLesson}" />
+            <!-- <apex:param name="totalLesson" value="" assignTo="{!totalLesson}" /> -->
         </apex:actionFunction>
-        <apex:actionFunction Name="udpateTeacher" action="{!udpateTeacherDetails}" status="spinner" reRender="itemSection" oncomplete="$('#allFieldsError').addClass('slds-hide');">
+        <apex:actionFunction Name="setInvoiceDate" action="{!setInvoiceDate}" status="spinner" reRender="itemSection">
+            <apex:param name="invoiceDate" value="" assignTo="{!invoiceDate}" />
+            <apex:param name="isInvoiceDate" value="" assignTo="{!isInvoiceDate}" />
+            <!-- <apex:param name="totalLesson" value="" assignTo="{!totalLesson}" /> -->
+        </apex:actionFunction>
+        <apex:actionFunction Name="udpateTeacher" action="{!udpateTeacherDetails}" status="spinner" reRender="itemSection">
             <apex:param name="teacherId" value="" assignTo="{!teacherId}" />
             <apex:param name="teacherName" value="" assignTo="{!teacherName}" />
             <apex:param name="indexId" value="" assignTo="{!index}" />
         </apex:actionFunction>
         <apex:actionFunction Name="getCountry" action="{!fetchCentreCountry}" status="spinner" reRender="itemSection" />
-        <apex:pageMessages ></apex:pageMessages>
+        <apex:pageMessages></apex:pageMessages>
         <!-- start from here -->
         <div style="padding-bottom: 5.5rem;">
-        <div class="slds-page-header">
-            <div class="slds-page-header__row">
-              <div class="slds-page-header__col-title">
-                <div class="slds-media">
-                  <div class="slds-media__body">
-                    <div class="slds-page-header__name">
-                      <div class="slds-page-header__name-title">
-                        <h1>
-                          <span class="slds-page-header__title slds-truncate" title="Contract Invoice Generator">Contract Invoice Generator</span>
-                        </h1>
-                      </div>
-                    </div>
-                    <p class="slds-page-header__name-meta">School Name: •  {!Account.name} •  {!Account.Person_Email__c}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        <div class="slds-scope slds-p-around_x-small slds-grid slds-wrap" style="padding: 1rem;">
-            <apex:outputPanel id="paymentCompleted">
-                <apex:outputPanel id="errorLog" rendered="{!isError}">
-                    <div id="errormessage" class=" slds-col slds-size_12-of-12 ">
-                        <div class="demo-only" style="height:4rem">
-                            <div class="slds-notify_container slds-is-relative">
-                                <div class="slds-notify slds-notify_toast slds-theme_error" role="status">
-                                    <span class="slds-assistive-text">error</span>
-                                    <div class="slds-notify__content">
-                                        <h2 class="slds-text-heading_small ">{!errormessage}</h2>
+            <div class="slds-page-header">
+                <div class="slds-page-header__row">
+                    <div class="slds-page-header__col-title">
+                        <div class="slds-media">
+                            <div class="slds-media__body">
+                                <div class="slds-page-header__name">
+                                    <div class="slds-page-header__name-title">
+                                        <h1>
+                                            <span class="slds-page-header__title slds-truncate" title="Contract Invoice Generator">Contract Invoice Generator</span>
+                                        </h1>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </apex:outputPanel>
-                <apex:outputPanel id="sucessLog" rendered="{!isSucess}">
-                    <div id="sucessmessage" class="slds-col slds-size_12-of-12 ">
-                        <div class="demo-only" style="height:4rem">
-                            <div class="slds-notify_container slds-is-relative">
-                                <div class="slds-notify slds-notify_toast slds-theme_success" role="status">
-                                    <span class="slds-assistive-text">Sucess</span>
-                                    <div class="slds-notify__content">
-                                        <h2 class="slds-text-heading_small ">{!errormessage}</h2>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <script>
-                        window.open('/{!invoiceId}', "_self");
-                    </script>
-                </apex:outputPanel>
-            </apex:outputPanel>
-
-            <div id="allFieldsError" class="slds-hide slds-col slds-size_12-of-12 ">
-                <div class="demo-only" style="height:4rem">
-                    <div class="slds-notify_container slds-is-relative">
-                        <div class="slds-notify slds-notify_toast slds-theme_error" role="status">
-                            <span class="slds-assistive-text">error</span>
-                            <div class="slds-notify__content">
-                                <h2 class="slds-text-heading_small ">Please Fill All Required Fields.</h2>
+                                <p class="slds-page-header__name-meta">School Name: • {!Account.name} • {!Account.Person_Email__c}</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <article class="slds-card slds-col slds-size_12-of-12">
-                <apex:outputPanel id="itemSection">
-
-                    <apex:variable var="index" value="{!0}" />
-                    <apex:repeat value="{!listOfItems}" var="item">
-                        <apex:variable var="index" value="{!index+ 1}" />
-                        <script type="text/javascript">
-                            console.log('startDateterm -{!item.startDateterm}');
-                            console.log('endDateterm -{!item.endDateterm}');
-                            $(function () {
-                                $('input[name="datefilter{!index}"]').daterangepicker("destroy");
-                                $('input[name="datefilter{!index}"]').daterangepicker({
-                                    autoUpdateInput: false,
-                                    startDate: moment('{!item.startDateterm}'),
-                                    endDate: moment('{!item.endDateterm}'),
-                                    locale: {
-                                        cancelLabel: 'Clear'
-                                    }
-                                });
-                                $('input[name="datefilter1"]').val('{!item.startDateterm} - {!item.endDateterm}');
-                                $('input[name="datefilter{!index}"]').on('apply.daterangepicker', function (ev, picker) {
-                                    $(this).val(picker.startDate.format('MM/DD/YYYY') + ' - ' + picker.endDate.format('MM/DD/YYYY'));
-                                    var days = picker.endDate.diff(picker.startDate, 'days');
-                                    console.log('days', days);
-                                    udpateTermDateRange({!index}, picker.startDate.format('MM/DD/YYYY'), picker.endDate.format('MM/DD/YYYY'), days + 1);
-                            });
-
-                            $('input[name="datefilter{!index}"]').on('cancel.daterangepicker', function (ev, picker) {
-                                $(this).val('');
-                                udpateTermDateRange({!index}, '', '', 0);
-                                });
-
-                            });
-                            $('#studentInput{!index}').val('{!item.slctdteacherName}');
-                        </script>
-                    </apex:repeat>
-                    <apex:variable var="index" value="{!0}" />
-                    <div class="slds-card__body">
-                        <table class="slds-table slds-table_cell-buffer slds-no-row-hover slds-table_bordered slds-table_fixed-layout" role="grid">
-                            <thead>
-                                <tr class="slds-line-height_reset">
-                                    <th class="" scope="col">
-                                        <div class="slds-truncate" title="Name">SR No.</div>
-                                    </th>
-                                    <th class="" scope="col">
-                                        <div class="slds-truncate" title="Name">Action</div>
-                                    </th>
-                                    <th class="" scope="col">
-                                        <div class="slds-truncate" title="Student">Student Name</div>
-                                    </th>
-                                    <th class="" scope="col">
-                                        <div class="slds-truncate" title="Teacher">Teacher Name</div>
-                                    </th>
-                                    <th class="" scope="col">
-                                        <div class="slds-truncate" title="Package">Package Name</div>
-                                    </th>
-                                    <th class="" scope="col">
-                                        <div class="slds-truncate" title="No. Of Lessons">No. Of Lessons</div>
-                                    </th>
-                                    <th class="" scope="col">
-                                        <div class="slds-truncate" title="Term (In Date)">Term (In Date)</div>
-                                    </th>
-                                    <th class="" scope="col">
-                                        <div class="slds-truncate" title="Pre GST Amount"> Amount</div>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <apex:repeat value="{!listOfItems}" var="item">
-                                    <apex:variable var="index" value="{!index+ 1}" />
-                                    <tr class="slds-hint-parent">
-                                        <td role="gridcell">
-                                            <div class="slds-truncate" title="Sr No.">{!index}</div>
-                                        </td>
-                                        <td role="gridcell">
-                                            <div class="slds-truncate" title="Action">
-                                                <apex:commandButton title="" value="+" action="{!addRow}" oncomplete="calculateTotalAmount({!centreCountry.Tax_Rate__c});"
-                                                    reRender="itemSection" /> &nbsp;
-                                                <apex:outputPanel rendered="{!IF(index==1,FALSE,TRUE)}">
-                                                    <apex:commandButton title="" value="-" action="{!removeRow}" oncomplete="calculateTotalAmount({!centreCountry.Tax_Rate__c});"
-                                                        reRender="itemSection">
-                                                        <apex:param name="indexId" value="{!index}" assignTo="{!index}" />
-                                                    </apex:commandButton>
-                                                </apex:outputPanel>
-                                            </div>
-                                        </td>
-                                        <td role="gridcell">
-                                            <div class="slds-truncate" title="Student Name">
-                                                <apex:inputText styleClass="reqField" value="{!item.selectedStudent}" onchange="$('#allFieldsError').addClass('slds-hide');"  html-placeholder="Student Name"/>
-                                            </div>
-                                        </td>
-                                        <td role="gridcell">
-                                            <div class="" title="Teacher Name">
-                                                <!-- <apex:selectList value="{!item.slctdteacher}" styleClass="reqField" size="1" onchange="$('#allFieldsError').addClass('slds-hide');">
-                                                    <apex:selectOptions value="{!item.listOfTeacher}"></apex:selectOptions>
-                                                </apex:selectList> -->
-                                                <div class="slds-form-element__control">
-                                                    <div class="slds-combobox_container">
-                                                        <div class="slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click " aria-expanded="false" aria-haspopup="listbox"
-                                                            role="combobox" id="studentSelectContainer{!index}">
-                                                            <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
-                                                                <input class="slds-input slds-combobox__input reqField" id="studentInput{!index}" aria-autocomplete="list" aria-controls="listbox-id-1" autocomplete="off"
-                                                                    role="textbox" type="text" placeholder="Teacher Name" value="" onkeyup="getTeacherlist('{!index}');"
-                                                                />
-
-                                                            </div>
-                                                            <div id="listbox-id-1" class="slds-dropdown slds-dropdown_length-with-icon-7 slds-dropdown_fluid" role="listbox" >
-                                                                <ul class="slds-listbox slds-listbox_vertical" role="presentation" id="studentSearchList{!index}">
-
-                                                                </ul>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td role="gridcell">
-                                            <div class="slds-truncate" title="Package Name">
-                                                <!-- <apex:selectList value="{!item.slctdPkg}" onchange="fetchPkgAmt('{!index}');return false;" styleClass="reqField" size="1">
-                                                    <apex:selectOptions value="{!CampPkgList}"></apex:selectOptions>
-                                                </apex:selectList> -->
-                                                <apex:inputText styleClass="reqField" value="{!item.itemName}" onchange="$('#allFieldsError').addClass('slds-hide');" html-placeholder="Package Name"/>
-
-                                            </div>
-                                        </td>
-                                        <td role="gridcell">
-                                            <div class="slds-truncate" title="No. Of Lessons">
-                                                <apex:inputText styleClass="reqField" value="{!item.noOflesson}" onchange="$('#allFieldsError').addClass('slds-hide');" html-placeholder="No of Lessons"/>
-                                                <!-- onchange="fetchPkgAmt('{!index}'); return false;"-->
-                                            </div>
-                                        </td>
-                                        <td role="gridcell">
-                                            <div class="slds-truncate" title="Term (In Date)">
-                                                <input type="text" name="datefilter{!index}" value="" onchange="$('#allFieldsError').addClass('slds-hide');"  html-placeholder="Term Start & End Date"/>
-                                            </div>
-                                        </td>
-                                        <td role="gridcell">
-                                            <div class="slds-truncate" title="">
-                                                <apex:inputText styleClass="slds-input price reqField" onblur="calculateTotalAmount({!centreCountry.Tax_Rate__c});return false;"
-                                                    html-type="number" value="{!item.price}" html-placeholder="Pre GST Amount"/>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </apex:repeat>
-                                <tr role="gridcell" class="slds-hint-parent">
-                                    <td colspan="7">
-                                        <apex:outputPanel rendered="{!IF(AND(centreCountry.Tax_Rate__c != NULL, centreCountry.Tax_Rate__c > 0), TRUE, FALSE)}">
-                                            <div class="slds-truncate slds-text-align_right">
-                                                <b>GST({!centreCountry.Tax_Rate__c}%):</b>
-                                            </div>
-                                        </apex:outputPanel>
-                                    </td>
-                                    <td>
-                                        <apex:outputPanel rendered="{!IF(AND(centreCountry.Tax_Rate__c != NULL, centreCountry.Tax_Rate__c > 0), TRUE, FALSE)}">
-                                            <b>
-                                                <span id="gstAmount">0</span>
-                                            </b>
-                                        </apex:outputPanel>
-                                    </td>
-
-                                </tr>
-                                <tr role="gridcell" class="slds-hint-parent">
-                                    <td colspan="7">
-                                        <div class="slds-truncate slds-text-align_right">
-                                            <b>Total:</b>
+            <div class="slds-scope slds-p-around_x-small slds-grid slds-wrap" style="padding: 1rem;">
+                <apex:outputPanel id="paymentCompleted">
+                    <apex:outputPanel id="errorLog" rendered="{!isError}">
+                        <div id="errormessage" class=" slds-col slds-size_12-of-12 ">
+                            <div class="demo-only" style="height:4rem">
+                                <div class="slds-notify_container slds-is-relative">
+                                    <div class="slds-notify slds-notify_toast slds-theme_error" role="status">
+                                        <span class="slds-assistive-text">error</span>
+                                        <div class="slds-notify__content">
+                                            <h2 class="slds-text-heading_small ">{!errormessage}</h2>
                                         </div>
-                                    </td>
-                                    <td>
-                                        <b>
-                                            <span id="totalAmount">0</span>
-                                        </b>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                </apex:outputPanel>
-                <footer class="slds-docked-form-footer">
-                    <div class="slds-float_right">
-                        <apex:commandButton action="{!cancel}" value="Cancel" styleClass="slds-button slds-button_destructive" />
-                        <button  class="slds-button slds-button_brand" id="summaryBtn" onclick="displaySummary();return false;">Preview</button>
-                        <!-- <button class="slds-button slds-button_brand" id="payBtn" onclick="$('#PaymentPopup').removeClass('slds-hide');$('#centerSummaryName').html($('.centerVal option:selected').text());return false;">Generate Invoice</button> -->
-                        <button class="slds-button slds-button_brand" id="payBtn" onclick="validateAndPay();return false;">Generate Invoice</button>
-                        <!--<apex:commandButton action="{!payAndRedirect}"  validateAndPay();/>-->
-                    </div>
-                </footer>
-            </article>
-        </div>
-        <apex:outputPanel layout="none" id="summarySection">
-            <apex:variable var="ind" value="{!0}" />
-
-            <apex:outputPanel rendered="{!isSummaryOpen}">
-
-                <!-- Modal Start -->
-                <div id="SummaryPopup" style="height:600px;">
-                    <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1"
-                        class="slds-modal slds-fade-in-open slds-modal_medium">
-                        <div class="slds-modal__container">
-                            <header class="slds-modal__header" style="background: #303a42;Color:white;">
-                                <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Summary</h2>
-                            </header>
-                            <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
-                                <div class="slds-grid slds-gutters">
-                                    <div class="slds-col slds-size_6-of-12">
-                                        <span>
-                                            <b>School Name:</b> {!Account.name}</span>
                                     </div>
-
-                                    <!-- <div class="slds-col slds-size_6-of-12">
-                                        <b>Center Name:</b>&nbsp;
-                                        <span id="centerName"></span>
-                                    </div> -->
                                 </div>
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <apex:outputPanel id="sucessLog" rendered="{!isSucess}">
+                        <div id="sucessmessage" class="slds-col slds-size_12-of-12 ">
+                            <div class="demo-only" style="height:4rem">
+                                <div class="slds-notify_container slds-is-relative">
+                                    <div class="slds-notify slds-notify_toast slds-theme_success" role="status">
+                                        <span class="slds-assistive-text">Sucess</span>
+                                        <div class="slds-notify__content">
+                                            <h2 class="slds-text-heading_small ">{!errormessage}</h2>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <script>
+                            window.open('/{!invoiceId}', "_self");
+                        </script>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+
+                <div id="allFieldsError" class="slds-hide slds-col slds-size_12-of-12 ">
+                    <div class="demo-only" style="height:4rem">
+                        <div class="slds-notify_container slds-is-relative">
+                            <div class="slds-notify slds-notify_toast slds-theme_error" role="status">
+                                <span class="slds-assistive-text">error</span>
+                                <div class="slds-notify__content">
+                                    <h2 class="slds-text-heading_small ">Please Fill All Required Fields.</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <article class="slds-card slds-col slds-size_12-of-12">
+                    <apex:outputPanel rendered="{!!isAllowedPermissionToThisUser}">
+                        <div id="errormessage" class=" slds-col slds-size_12-of-12 ">
+                            <div class="demo-only" style="height:4rem">
+                                <div class="slds-notify_container slds-is-relative">
+                                    <div class="slds-notify slds-notify_toast slds-theme_error" role="status">
+                                        <span class="slds-assistive-text">error</span>
+                                        <div class="slds-notify__content">
+                                            <h2 class="slds-text-heading_small ">You can't access this page. Please contact system admin for further assistance.</h2>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>   
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!isAllowedPermissionToThisUser}">
+                        <script type="text/javascript">
+                            $(function () {
+                                $('input[name="InvoiceDate"]').daterangepicker({
+                                    singleDatePicker: true,
+                                    showDropdowns: true,
+                                    minYear: 1901,
+                                    maxYear: parseInt(moment().format('YYYY'), 10),
+                                    initDate: moment(),
+                                    locale: { cancelLabel: 'Clear', format: 'DD/MM/YYYY', }
+                                });
+                                $('input[name="DueDate"]').daterangepicker({
+                                    singleDatePicker: true,
+                                    showDropdowns: true,
+                                    minYear: 1901,
+                                    maxYear: parseInt(moment().format('YYYY'), 10),
+                                    initDate: moment(),
+                                    locale: { cancelLabel: 'Clear', format: 'DD/MM/YYYY', }
+                                });
+                                $('input[name="InvoiceDate"]').on('apply.daterangepicker', function (ev, picker) {
+                                    setInvoiceDate(picker.startDate.format('MM/DD/YYYY'), false);
+                                });
+
+                                $('input[name="InvoiceDate"]').on('cancel.daterangepicker', function (ev, picker) {
+                                    $(this).val(moment().format("DD/MM/YYYY"));
+                                    setInvoiceDate(moment().format('MM/DD/YYYY'), false);
+                                });
+                                $('input[name="DueDate"]').on('apply.daterangepicker', function (ev, picker) {
+                                    setInvoiceDate(picker.startDate.format('MM/DD/YYYY'), false);
+                                });
+
+                                $('input[name="DueDate"]').on('cancel.daterangepicker', function (ev, picker) {
+                                    $(this).val(moment().format("DD/MM/YYYY"));
+                                    setInvoiceDate(moment().format('MM/DD/YYYY'), false);
+                                });
+                            });
+                        </script>
+
+                        <div class="slds-grid slds-wrap">
+                            <div class="slds-col slds-size_6-of-12 slds-p-around_large">
+                                <span>
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label" for="text-input-id-1">
+                                            <abbr class="slds-required" title="required">* </abbr>Invoice Date</label>
+                                        <div class="slds-form-element__control">
+                                            <input type="text" name="InvoiceDate" class="reqField" value="" onchange="$('#allFieldsError').addClass('slds-hide');" style="width: 100%;"
+                                                html-placeholder="Invoice Date" />
+                                        </div>
+                                    </div>
+                                </span>
+                            </div>
+                            <div class="slds-col slds-size_6-of-12 slds-p-around_large">
+                                <span>
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label" for="text-input-id-1">
+                                            <abbr class="slds-required" title="required">* </abbr>Due Date</label>
+                                        <div class="slds-form-element__control">
+                                            <input type="text" name="DueDate" class="reqField" value="" onchange="$('#allFieldsError').addClass('slds-hide');" style="width: 100%;"
+                                                html-placeholder="Due Date" />
+                                        </div>
+                                    </div>
+                                </span>
+                            </div>
+                        </div>
+                        <apex:outputPanel id="itemSection">
+                            <apex:variable var="index" value="{!0}" />
+                            <apex:repeat value="{!listOfItems}" var="item">
+                                <apex:variable var="index" value="{!index+ 1}" />
+                                <script type="text/javascript">
+                                    $(function () {
+                                        var startDateterm = moment('{!item.startDateterm}');
+                                        var endDateterm = moment('{!item.endDateterm}');
+                                        console.log('startDateterm -{!item.startDateterm}');
+                                        console.log('endDateterm -{!item.endDateterm}');
+                                        $('input[name="datefilter{!index}"]').daterangepicker("destroy");
+                                        $('input[name="datefilter{!index}"]').daterangepicker({
+                                            autoUpdateInput: false,
+                                            startDate: startDateterm,
+                                            endDate: endDateterm,
+                                            locale: {
+                                                cancelLabel: 'Clear',
+                                                format: 'DD/MM/YYYY'
+                                            },
+                                            applyClass: 'btn-sm btn-primary',
+                                            cancelClass: 'btn-sm btn-default'
+
+                                        });
+                                        $('input[name="datefilter{!index}"]').on('apply.daterangepicker', function (ev, picker) {
+                                            //$(this).val(picker.startDate.format('MM/DD/YYYY') + ' - ' + picker.endDate.format('MM/DD/YYYY'));
+                                            var days = picker.endDate.diff(picker.startDate, 'days');
+                                            console.log('days', days);
+                                            console.log('index- {!index}');
+                                            console.log('startDate', picker.startDate.format('MM/DD/YYYY'));
+                                            console.log('endDate', picker.endDate.format('MM/DD/YYYY'));
+                                            udpateTermDateRange({!index}, picker.startDate.format('MM/DD/YYYY'), picker.endDate.format('MM/DD/YYYY')/*, days + 1*/);
+                                    });
+
+                                    $('input[name="datefilter{!index}"]').on('cancel.daterangepicker', function (ev, picker) {
+                                        $(this).val(startDateterm.format("DD/MM/YYYY") + ' - ' + endDateterm.format("DD/MM/YYYY"));
+                                        udpateTermDateRange({!index}, '', '' /*,0*/);
+                                    });
+                                    console.log('@startDateterm' + startDateterm.format("DD/MM/YYYY"));
+                                    console.log('@endDateterm' + endDateterm.format("DD/MM/YYYY"));
+                                    $('input[name="datefilter{!index}"]').val(startDateterm.format("DD/MM/YYYY") + ' - ' + endDateterm.format("DD/MM/YYYY"));
+                                });
+                                    $('#studentInput{!index}').val('{!item.slctdteacherName}'); 
+                                </script>
+                            </apex:repeat>
+                            <apex:variable var="index" value="{!0}" />
+                            <div class="slds-card__body">
                                 <table class="slds-table slds-table_cell-buffer slds-no-row-hover slds-table_bordered slds-table_fixed-layout" role="grid">
                                     <thead>
                                         <tr class="slds-line-height_reset">
-                                            <th class="" scope="col">
+                                            <th class="" scope="col" style="width: 5%;">
                                                 <div class="slds-truncate" title="Name">SR No.</div>
                                             </th>
-                                            <th class="" scope="col">
-                                                <div class="slds-truncate" title="Student">Student</div>
+                                            <th class="" scope="col" style="width: 7%;">
+                                                <div class="slds-truncate" title="Name">Action</div>
                                             </th>
-                                            <th class="" scope="col">
-                                                <div class="slds-truncate" title="Teacher Name">Teacher Name</div>
+                                            <th class="" scope="col" style="width: 15%;">
+                                                <div class="slds-truncate" title="Student">Student Name</div>
                                             </th>
-                                            <th class="" scope="col">
-                                                <div class="slds-truncate" title="pkgName">Package Name</div>
+                                            <th class="" scope="col" style="width: 15%;">
+                                                <div class="slds-truncate" title="Teacher">Teacher Name</div>
                                             </th>
-                                            <th class="" scope="col">
-                                                <div class="slds-truncate" title="No. Of Lessons">No. Of Lessons</div>
+                                            <th class="" scope="col" style="width: 15%;">
+                                                <div class="slds-truncate" title="Package">Package Name</div>
                                             </th>
-                                            <th class="" scope="col">
-                                                <div class="slds-truncate" title="Term (In Date)">Term (In Date)</div>
+                                            <th class="" scope="col" style="width: 15%;">
+                                                <div class="slds-truncate" title="No. Of Sessions">No. Of Sessions</div>
                                             </th>
-                                            <th class="" scope="col">
-                                                <div class="slds-truncate" title="Amount">Amount</div>
+                                            <th class="" scope="col" style="width: 15%;">
+                                                <div class="slds-truncate" title="Term (In Date)">Period</div>
+                                            </th>
+                                            <th class="" scope="col" style="width: 15%;">
+                                                <div class="slds-truncate" title="Pre GST Amount"> Amount</div>
                                             </th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <apex:repeat value="{!listOfItems}" var="item">
-                                            <apex:variable var="ind" value="{!ind+1}" />
-
+                                            <apex:variable var="index" value="{!index+ 1}" />
                                             <tr class="slds-hint-parent">
                                                 <td role="gridcell">
-                                                    <div class="slds-truncate" title="Sr No.">{!ind}</div>
+                                                    <div class="slds-truncate" title="Sr No.">{!index}</div>
+                                                </td>
+                                                <td role="gridcell">
+                                                    <div class="slds-truncate" title="Action">
+                                                        <apex:commandButton styleClass="slds-button slds-button_brand" title="Add New Row" value="+" action="{!addRow}" oncomplete="calculateTotalAmount({!centreCountry.Tax_Rate__c});"
+                                                            reRender="itemSection" status="spinner" /> &nbsp;
+                                                        <apex:outputPanel rendered="{!IF(index==1,FALSE,TRUE)}">
+                                                            <apex:commandButton styleClass="slds-button slds-button_destructive" title="Remove Row" value="X" action="{!removeRow}" oncomplete="calculateTotalAmount({!centreCountry.Tax_Rate__c});"
+                                                                reRender="itemSection" status="spinner">
+                                                                <apex:param name="indexId" value="{!index}" assignTo="{!index}" />
+                                                            </apex:commandButton>
+                                                        </apex:outputPanel>
+                                                    </div>
                                                 </td>
                                                 <td role="gridcell">
                                                     <div class="slds-truncate" title="Student Name">
-                                                        {!item.selectedStudent}
+                                                        <apex:inputText styleClass="reqField" value="{!item.selectedStudent}" onchange="$('#allFieldsError').addClass('slds-hide');"
+                                                            html-placeholder="Student Name" />
                                                     </div>
                                                 </td>
                                                 <td role="gridcell">
-                                                    <div class="slds-truncate" title="Teacher Name">
-                                                        {!item.slctdteacherName}
+                                                    <div class="" title="Teacher Name">
+                                                        <!-- <apex:selectList value="{!item.slctdteacher}" styleClass="reqField" size="1" onchange="$('#allFieldsError').addClass('slds-hide');">
+                                                        <apex:selectOptions value="{!item.listOfTeacher}"></apex:selectOptions>
+                                                    </apex:selectList> -->
+                                                        <div class="slds-form-element__control">
+                                                            <div class="slds-combobox_container">
+                                                                <div class="slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click " aria-expanded="false" aria-haspopup="listbox"
+                                                                    role="combobox" id="studentSelectContainer{!index}">
+                                                                    <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
+                                                                        <input class="slds-input slds-combobox__input reqField" id="studentInput{!index}" aria-autocomplete="list" aria-controls="listbox-id-1"
+                                                                            autocomplete="off" role="textbox" type="text" placeholder="Teacher Name"
+                                                                            value="" onkeyup="getTeacherlist('{!index}');" />
+
+                                                                    </div>
+                                                                    <div id="listbox-id-1" class="slds-dropdown slds-dropdown_length-with-icon-7 slds-dropdown_fluid" role="listbox">
+                                                                        <ul class="slds-listbox slds-listbox_vertical" role="presentation" id="studentSearchList{!index}">
+
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </td>
-                                                <td role="gridcell" class="slds-truncate">
+                                                <td role="gridcell">
                                                     <div class="slds-truncate" title="Package Name">
-                                                        {!item.itemName}
+                                                        <!-- <apex:selectList value="{!item.slctdPkg}" onchange="fetchPkgAmt('{!index}');return false;" styleClass="reqField" size="1">
+                                                        <apex:selectOptions value="{!CampPkgList}"></apex:selectOptions>
+                                                    </apex:selectList> -->
+                                                        <apex:inputText styleClass="reqField" value="{!item.itemName}" onchange="$('#allFieldsError').addClass('slds-hide');" html-placeholder="Package Name"
+                                                        />
+
                                                     </div>
                                                 </td>
-                                                <td role="gridcell" class="slds-truncate">
+                                                <td role="gridcell">
                                                     <div class="slds-truncate" title="No. Of Lessons">
-                                                        {!item.noOflesson}
+                                                        <apex:inputText styleClass="reqField" value="{!item.noOflesson}" onchange="$('#allFieldsError').addClass('slds-hide');" html-placeholder="No of Sessions"
+                                                        />
+                                                        <!-- onchange="fetchPkgAmt('{!index}'); return false;"-->
                                                     </div>
                                                 </td>
                                                 <td role="gridcell">
                                                     <div class="slds-truncate" title="Term (In Date)">
-                                                        {!item.startDateterm} - {!item.endDateterm}
+                                                        <input type="text" class="reqField" name="datefilter{!index}" value="" onchange="$('#allFieldsError').addClass('slds-hide');"
+                                                            style="width: 100%;" html-placeholder="Term Start & End Date" />
                                                     </div>
                                                 </td>
                                                 <td role="gridcell">
-                                                    <div class="slds-truncate" title="Amount">
-                                                        {!item.price}
+                                                    <div class="slds-truncate" title="">
+                                                        <div class="slds-form-element__control slds-input-has-fixed-addon">
+                                                            <span class="slds-form-element__addon" id="fixed-text-addon-pre">$</span>
+                                                            <apex:inputText styleClass="slds-input price reqField" onblur="calculateTotalAmount({!centreCountry.Tax_Rate__c});return false;"
+                                                                value="{!item.price}" html-placeholder="Pre GST Amount" html-aria-labelledby="fixed-text-label fixed-text-addon-pre fixed-text-addon-post"
+                                                            />
+
+                                                        </div>
                                                     </div>
                                                 </td>
                                             </tr>
                                         </apex:repeat>
                                         <tr role="gridcell" class="slds-hint-parent">
-
-                                            <td colspan="6">
+                                            <td colspan="7">
                                                 <apex:outputPanel rendered="{!IF(AND(centreCountry.Tax_Rate__c != NULL, centreCountry.Tax_Rate__c > 0), TRUE, FALSE)}">
                                                     <div class="slds-truncate slds-text-align_right">
                                                         <b>GST({!centreCountry.Tax_Rate__c}%):</b>
                                                     </div>
                                                 </apex:outputPanel>
                                             </td>
-
-
                                             <td>
                                                 <apex:outputPanel rendered="{!IF(AND(centreCountry.Tax_Rate__c != NULL, centreCountry.Tax_Rate__c > 0), TRUE, FALSE)}">
                                                     <b>
-                                                        <span id="summarygstAmount">0</span>
+                                                        <span id="gstAmount">0</span>
                                                     </b>
                                                 </apex:outputPanel>
                                             </td>
 
                                         </tr>
                                         <tr role="gridcell" class="slds-hint-parent">
-                                            <td colspan="6">
+                                            <td colspan="7">
                                                 <div class="slds-truncate slds-text-align_right">
                                                     <b>Total:</b>
                                                 </div>
                                             </td>
                                             <td>
                                                 <b>
-                                                    <span id="summarytotalAmount">0</span>
+                                                    <span id="totalAmount">0</span>
                                                 </b>
                                             </td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
-                            <footer class="slds-modal__footer">
-                                <button class="slds-button slds-button_neutral" onclick="displaySummary();return false;">Close</button>
+
+
+                            <footer class="slds-docked-form-footer">
+                                <div class="slds-float_right">
+                                    <apex:commandButton action="{!cancel}" value="Cancel" styleClass="slds-button slds-button_destructive" />
+                                    <button class="slds-button slds-button_brand" id="summaryBtn" onclick="displaySummary();return false;">Preview</button>
+                                    <!-- <button class="slds-button slds-button_brand" id="payBtn" onclick="$('#PaymentPopup').removeClass('slds-hide');$('#centerSummaryName').html($('.centerVal option:selected').text());return false;">Generate Invoice</button> -->
+                                    <button class="slds-button slds-button_brand" id="payBtn" onclick="validateAndPay();return false;">Generate Invoice</button>
+                                    <!--<apex:commandButton action="{!payAndRedirect}"  validateAndPay();/>-->
+                                </div>
                             </footer>
-                        </div>
-                    </section>
-                    <div class="slds-backdrop slds-backdrop_open"></div>
-                </div>
-                <!-- Modal End-->
-            </apex:outputPanel>
-        </apex:outputPanel>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                </article>
+            </div>
+            <apex:outputPanel layout="none" id="summarySection">
+                <apex:variable var="ind" value="{!0}" />
 
+                <apex:outputPanel rendered="{!isSummaryOpen}">
 
-
-        <!-- Modal Start -->
-        <div id="PaymentPopup" class="slds-hide" style="height:600px;">
-            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1"
-                class="slds-modal slds-fade-in-open slds-modal_Small">
-                <div class="slds-modal__container">
-                    <header class="slds-modal__header" style="background: #303a42;Color:white;">
-                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Payment Confirmation</h2>
-                    </header>
-                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
-                        <div class="slds-grid slds-wrap">
-                            <div class="slds-col slds-size_6-of-12 slds-p-top_large">
-                                <span>
-                                    <b>School Name:</b> {!Account.name}</span>
-                            </div>
-
-                            <div class="slds-col slds-size_6-of-12 slds-p-top_large">
-                                <b>Center Name:</b>&nbsp;
-                                <span id="centerSummaryName"></span>
-                            </div>
-                            <div class="slds-col slds-size_6-of-12 slds-p-top_large">
-                                <b>Amount to Be Paid:</b>&nbsp;
-                                <span id="totalAmountSummary"></span>
-                            </div>
-                            <div class="slds-col slds-size_6-of-12 slds-p-top_large">
-                                <fieldset class="slds-form-element">
-                                    <legend class="slds-form-element__legend slds-form-element__label">
-                                        <abbr class="slds-required" title="required">*</abbr>Please Select Payment Method
-                                    </legend>
-                                    <div class="slds-form-element__control">
-                                        <div class="slds-radio_button-group">
-                                            <span class="slds-button slds-radio_button">
-                                                <input type="radio" name="example-unique-name-99" id="example-unique-id-101" value="Bank" />
-                                                <label class="slds-radio_button__label" for="example-unique-id-101">
-                                                    <span class="slds-radio_faux">Bank transfer</span>
-                                                </label>
-                                            </span>
-                                            <span class="slds-button slds-radio_button">
-                                                <input type="radio" name="example-unique-name-99" id="example-unique-id-102" value="Cheque" />
-                                                <label class="slds-radio_button__label" for="example-unique-id-102">
-                                                    <span class="slds-radio_faux">Cheque</span>
-                                                </label>
-                                            </span>
+                    <!-- Modal Start -->
+                    <div id="SummaryPopup" style="height:600px;">
+                        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1"
+                            class="slds-modal slds-fade-in-open slds-modal_medium">
+                            <div class="slds-modal__container">
+                                <header class="slds-modal__header" style="background: #303a42;Color:white;">
+                                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Summary</h2>
+                                </header>
+                                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                                    <div class="slds-grid slds-gutters">
+                                        <div class="slds-col slds-size_6-of-12">
+                                            <span>
+                                                <b>School Name:</b> {!Account.name}</span>
                                         </div>
-                                        <div id="Paymenterror" style="color:red;" class="slds-hide slds-form-element__help">Please Select Payment Method</div>
+
+                                        <!-- <div class="slds-col slds-size_6-of-12">
+                                        <b>Center Name:</b>&nbsp;
+                                        <span id="centerName"></span>
+                                    </div> -->
                                     </div>
-                                </fieldset>
+                                    <apex:variable var="index" value="{!0}" />
+                                    <apex:repeat value="{!listOfItems}" var="item">
+                                        <apex:variable var="index" value="{!index+ 1}" />
+                                        <script type="text/javascript">
+                                            $(function () {
+                                                var startDateterm = moment('{!item.startDateterm}');
+                                                var endDateterm = moment('{!item.endDateterm}');
+                                                $('#startDate{!index}').html(startDateterm.format("DD/MM/YYYY"));
+                                                $('#endDate{!index}').html(endDateterm.format("DD/MM/YYYY"));
+                                            });
+                                        </script>
+                                    </apex:repeat>
+                                    <table class="slds-table slds-table_cell-buffer slds-no-row-hover slds-table_bordered slds-table_fixed-layout" role="grid">
+                                        <thead>
+                                            <tr class="slds-line-height_reset">
+                                                <th class="" scope="col">
+                                                    <div class="slds-truncate" title="Name">SR No.</div>
+                                                </th>
+                                                <th class="" scope="col">
+                                                    <div class="slds-truncate" title="Student">Student</div>
+                                                </th>
+                                                <th class="" scope="col">
+                                                    <div class="slds-truncate" title="Teacher Name">Teacher Name</div>
+                                                </th>
+                                                <th class="" scope="col">
+                                                    <div class="slds-truncate" title="Package Name">Package Name</div>
+                                                </th>
+                                                <th class="" scope="col">
+                                                    <div class="slds-truncate" title="No. Of Sessions">No. Of Sessions</div>
+                                                </th>
+                                                <th class="" scope="col">
+                                                    <div class="slds-truncate" title="Term Start Date">Term Start Date</div>
+                                                </th>
+                                                <th class="" scope="col">
+                                                    <div class="slds-truncate" title="Term End Date">Term End Date</div>
+                                                </th>
+                                                <th class="" scope="col">
+                                                    <div class="slds-truncate" title="Amount">Amount</div>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <apex:variable var="ind" value="{!0}" />
+                                            <apex:repeat value="{!listOfItems}" var="item">
+                                                <apex:variable var="ind" value="{!ind+1}" />
+                                                <tr class="slds-hint-parent">
+                                                    <td role="gridcell">
+                                                        <div class="slds-truncate" title="Sr No.">{!ind}</div>
+                                                    </td>
+                                                    <td role="gridcell">
+                                                        <div class="slds-truncate" title="Student Name">
+                                                            {!item.selectedStudent}
+                                                        </div>
+                                                    </td>
+                                                    <td role="gridcell">
+                                                        <div class="slds-truncate" title="Teacher Name">
+                                                            {!item.slctdteacherName}
+                                                        </div>
+                                                    </td>
+                                                    <td role="gridcell" class="slds-truncate">
+                                                        <div class="slds-truncate" title="Package Name">
+                                                            {!item.itemName}
+                                                        </div>
+                                                    </td>
+                                                    <td role="gridcell" class="slds-truncate">
+                                                        <div class="slds-truncate" title="No. Of Sessions">
+                                                            {!item.noOflesson}
+                                                        </div>
+                                                    </td>
+                                                    <td role="gridcell">
+                                                        <div class="slds-truncate" title="Term Start Date" id="startDate{!ind}">
+                                                            <!-- {!item.startDateterm} -->
+                                                        </div>
+                                                    </td>
+                                                    <td role="gridcell">
+                                                        <div class="slds-truncate" title="Term End Date" id="endDate{!ind}">
+                                                            <!-- {!item.endDateterm} -->
+                                                        </div>
+                                                    </td>
+                                                    <td role="gridcell">
+                                                        <div class="slds-truncate" title="Amount">
+                                                            ${!item.price}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </apex:repeat>
+                                            <tr role="gridcell" class="slds-hint-parent">
+
+                                                <td colspan="7">
+                                                    <apex:outputPanel rendered="{!IF(AND(centreCountry.Tax_Rate__c != NULL, centreCountry.Tax_Rate__c > 0), TRUE, FALSE)}">
+                                                        <div class="slds-truncate slds-text-align_right">
+                                                            <b>GST({!centreCountry.Tax_Rate__c}%):</b>
+                                                        </div>
+                                                    </apex:outputPanel>
+                                                </td>
+
+
+                                                <td>
+                                                    <apex:outputPanel rendered="{!IF(AND(centreCountry.Tax_Rate__c != NULL, centreCountry.Tax_Rate__c > 0), TRUE, FALSE)}">
+                                                        <b>
+                                                            <span id="summarygstAmount">0</span>
+                                                        </b>
+                                                    </apex:outputPanel>
+                                                </td>
+
+                                            </tr>
+                                            <tr role="gridcell" class="slds-hint-parent">
+                                                <td colspan="7">
+                                                    <div class="slds-truncate slds-text-align_right">
+                                                        <b>Total:</b>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <b>
+                                                        <span id="summarytotalAmount">0</span>
+                                                    </b>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <footer class="slds-modal__footer">
+                                    <button class="slds-button slds-button_neutral" onclick="displaySummary();return false;">Close</button>
+                                </footer>
+                            </div>
+                        </section>
+                        <div class="slds-backdrop slds-backdrop_open"></div>
+                    </div>
+                    <!-- Modal End-->
+                </apex:outputPanel>
+            </apex:outputPanel>
+
+
+
+            <!-- Modal Start -->
+            <div id="PaymentPopup" class="slds-hide" style="height:600px;">
+                <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1"
+                    class="slds-modal slds-fade-in-open slds-modal_Small">
+                    <div class="slds-modal__container">
+                        <header class="slds-modal__header" style="background: #303a42;Color:white;">
+                            <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Payment Confirmation</h2>
+                        </header>
+                        <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-col slds-size_6-of-12 slds-p-top_large">
+                                    <span>
+                                        <b>School Name:</b> {!Account.name}</span>
+                                </div>
+
+                                <div class="slds-col slds-size_6-of-12 slds-p-top_large">
+                                    <b>Center Name:</b>&nbsp;
+                                    <span id="centerSummaryName"></span>
+                                </div>
+                                <div class="slds-col slds-size_6-of-12 slds-p-top_large">
+                                    <b>Amount to Be Paid:</b>&nbsp;
+                                    <span id="totalAmountSummary"></span>
+                                </div>
+                                <div class="slds-col slds-size_6-of-12 slds-p-top_large">
+                                    <fieldset class="slds-form-element">
+                                        <legend class="slds-form-element__legend slds-form-element__label">
+                                            <abbr class="slds-required" title="required">*</abbr>Please Select Payment Method
+                                        </legend>
+                                        <div class="slds-form-element__control">
+                                            <div class="slds-radio_button-group">
+                                                <span class="slds-button slds-radio_button">
+                                                    <input type="radio" name="example-unique-name-99" id="example-unique-id-101" value="Bank" />
+                                                    <label class="slds-radio_button__label" for="example-unique-id-101">
+                                                        <span class="slds-radio_faux">Bank transfer</span>
+                                                    </label>
+                                                </span>
+                                                <span class="slds-button slds-radio_button">
+                                                    <input type="radio" name="example-unique-name-99" id="example-unique-id-102" value="Cheque" />
+                                                    <label class="slds-radio_button__label" for="example-unique-id-102">
+                                                        <span class="slds-radio_faux">Cheque</span>
+                                                    </label>
+                                                </span>
+                                            </div>
+                                            <div id="Paymenterror" style="color:red;" class="slds-hide slds-form-element__help">Please Select Payment Method</div>
+                                        </div>
+                                    </fieldset>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <footer class="slds-modal__footer">
-                        <button class="slds-button slds-button_neutral" onclick="$('#PaymentPopup').addClass('slds-hide');return false;">Close</button>
-                        <button class="slds-button slds-button_brand" id="payNowBtn" onclick="validateAndPay();return false;">Pay Now</button>
+                        <footer class="slds-modal__footer">
+                            <button class="slds-button slds-button_neutral" onclick="$('#PaymentPopup').addClass('slds-hide');return false;">Close</button>
+                            <button class="slds-button slds-button_brand" id="payNowBtn" onclick="validateAndPay();return false;">Pay Now</button>
 
-                    </footer>
-                </div>
-            </section>
-            <div class="slds-backdrop slds-backdrop_open"></div>
+                        </footer>
+                    </div>
+                </section>
+                <div class="slds-backdrop slds-backdrop_open"></div>
+            </div>
         </div>
-</div>
 
         </html>
+
         <apex:actionFunction name="payNow" action="{!payAndRedirect}" reRender="paymentCompleted" status="spinner" oncomplete="$('#PaymentPopup').addClass('slds-hide');">
             <apex:param name="selectedMethod" value="" assignTo="{!selectedMethod}" />
         </apex:actionFunction>
@@ -545,11 +685,11 @@
                 //let gstPrice = total * GSTRate;
                 if (document.getElementById('gstAmount')) {
                     //document.getElementById('gstAmount').innerText = gstPrice.toFixed(2);
-                    document.getElementById('gstAmount').innerText = '$'+totalGstPrice.toFixed(2);
+                    document.getElementById('gstAmount').innerText = '$' + totalGstPrice.toFixed(2);
                 }
 
-                document.getElementById('totalAmount').innerText = '$'+(total).toFixed(2);
-                document.getElementById('totalAmountSummary').innerText = '$'+(total).toFixed(2);
+                document.getElementById('totalAmount').innerText = '$' + (total).toFixed(2);
+                document.getElementById('totalAmountSummary').innerText = '$' + (total).toFixed(2);
             }
             /*function calculateTotalAmount(taxRate) {
                 console.log('@@@taxRate' + taxRate);
@@ -632,49 +772,49 @@
                 displaySummaryModal();
                 //$("#SummaryPopup").Class('slds-hide');
             }
-            function selectteacher(teacherid,teachername,index){
-                console.log('teacherid'+teacherid);
-                console.log('teachername'+teachername);
-                console.log('index'+index);
-                $('#studentSelectContainer'+index).removeClass('slds-is-open');
-                $('#studentSelectContainer'+index).attr('aria-expanded', 'false');
-                $('#studentSearchList'+index).empty();
-                $('#studentInput'+index).val(teachername);
-                udpateTeacher(teacherid,teachername,index);
+            function selectteacher(teacherid, teachername, index) {
+                console.log('teacherid' + teacherid);
+                console.log('teachername' + teachername);
+                console.log('index' + index);
+                $('#studentSelectContainer' + index).removeClass('slds-is-open');
+                $('#studentSelectContainer' + index).attr('aria-expanded', 'false');
+                $('#studentSearchList' + index).empty();
+                $('#studentInput' + index).val(teachername);
+                udpateTeacher(teacherid, teachername, index);
             }
-            function getTeacherlist(index){
-                var student_name = $('#studentInput'+index).val();
-                console.log('student_name',student_name);
-                var centreCountry ='{!centreCountry.id}';
+            function getTeacherlist(index) {
+                var student_name = $('#studentInput' + index).val();
+                console.log('student_name', student_name);
+                var centreCountry = '{!centreCountry.id}';
                 var studentListItem = '';
                 setTimeout(function () {
                     Visualforce.remoting.Manager.invokeAction(
                         '{!$RemoteAction.GenerateContractAdhocInvoiceCtrl.getStudents}',
-                        student_name,centreCountry,
+                        student_name, centreCountry,
                         function (result, event) {
-                            console.log('result',result);
-                            if(result !='' && result != null && result != undefined){
-                                var ResultOfEvent = JSON.parse(result.replace(/(&quot\;)/g,"\""));
-                                console.log('ResultOfEvent',ResultOfEvent);
+                            console.log('result', result);
+                            if (result != '' && result != null && result != undefined) {
+                                var ResultOfEvent = JSON.parse(result.replace(/(&quot\;)/g, "\""));
+                                console.log('ResultOfEvent', ResultOfEvent);
                                 $(ResultOfEvent.listOfTeacherDetails).each(function (index3, value3) {
-                                    console.log('value3',value3);
-                                    studentListItem += '<li role="presentation" class="slds-listbox__item " id="' + value3.teacherid + '"><div id="option' + (index3 + 1) + '" class="slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_has-meta student-list" role="option" onclick="selectteacher(\''+value3.teacherid+'\',\''+value3.teachername+'\',\''+index+'\');return false"><span class="slds-media__body">';
+                                    console.log('value3', value3);
+                                    studentListItem += '<li role="presentation" class="slds-listbox__item " id="' + value3.teacherid + '"><div id="option' + (index3 + 1) + '" class="slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_has-meta student-list" role="option" onclick="selectteacher(\'' + value3.teacherid + '\',\'' + value3.teachername + '\',\'' + index + '\');return false"><span class="slds-media__body">';
                                     studentListItem += '<span class="slds-listbox__option-text slds-listbox__option-text_entity studentNameLabel">' + value3.teachername + '</span></span></div></li>';
                                 });
-                                console.log('studentListItem',studentListItem);
-                                $('#studentSelectContainer'+index).removeClass('slds-is-open');
-                                $('#studentSelectContainer'+index).attr('aria-expanded', 'false');
-                                $('#studentSearchList'+index).empty();
-                                $('#studentSearchList'+index).append(studentListItem);
-                                $('#studentSelectContainer'+index).addClass('slds-is-open');
-                                $('#studentSelectContainer'+index).attr('aria-expanded', 'true');
+                                console.log('studentListItem', studentListItem);
+                                $('#studentSelectContainer' + index).removeClass('slds-is-open');
+                                $('#studentSelectContainer' + index).attr('aria-expanded', 'false');
+                                $('#studentSearchList' + index).empty();
+                                $('#studentSearchList' + index).append(studentListItem);
+                                $('#studentSelectContainer' + index).addClass('slds-is-open');
+                                $('#studentSelectContainer' + index).attr('aria-expanded', 'true');
                             }
                         },
                         { escape: true }
                     );
                 }, 500);
             }
-            
+
         </script>
     </apex:form>
     <style>

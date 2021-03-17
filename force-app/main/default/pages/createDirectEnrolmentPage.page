@@ -449,7 +449,7 @@
             <apex:variable value="{!1}" var="stuIndex"/>
             <apex:repeat value="{!enrModelList}" var="enrTrial" id="trialEnrl">
                 <div class="container slds-p-around_small slds-large-p-around_large bg-white" style="padding-bottom:4rem !important; background-color:#fff;" >
-                    <h3 class="slds-text-heading_medium" style="font-weight:bold;">Trial Lesson {!stuIndex}</h3>
+                    <h3 class="slds-text-heading_medium" style="font-weight:bold;">Student Details</h3>
                     <hr style="margin-top: 25px;" />
                     
                     <apex:outputPanel id="sameAsChildPanel" rendered="{!stuIndex > 1}">

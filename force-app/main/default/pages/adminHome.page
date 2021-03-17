@@ -44,7 +44,7 @@
                     <!--@Juneid 18 Aug 2020, Color chnage as per organization wise -->
                     <a href="#" class="{!IF(org=='ossia','slds-button btn-red slds-p-around_x-small slds-m-bottom_large','slds-button btn-yellow slds-p-around_x-small slds-m-bottom_large')}"  onclick="redirectToTrial();"  style="">New Trial Lesson</a>
                     <a href="#" class="{!IF(org=='ossia','slds-button btn-red slds-p-around_x-small slds-m-bottom_large','slds-button btn-yellow slds-p-around_x-small slds-m-bottom_large')}" onclick="redirectToEnrolment();" style="">New Enrolment</a>
-                    <a href="#" class="{!IF(org=='ossia','slds-button btn-red slds-p-around_x-small slds-m-bottom_large','slds-button btn-yellow slds-p-around_x-small slds-m-bottom_large')}" style="">Re-Enrol Customer</a>
+                    <!-- <a href="#" class="{!IF(org=='ossia','slds-button btn-red slds-p-around_x-small slds-m-bottom_large','slds-button btn-yellow slds-p-around_x-small slds-m-bottom_large')}" style="">Re-Enrol Customer</a> -->
                      <a href="#" class="{!IF(org=='ossia','slds-button btn-red slds-p-around_x-small slds-m-bottom_large','slds-button btn-yellow slds-p-around_x-small slds-m-bottom_large')}" onclick="redirectToInstrumentRentalRequest();" style="">Piano Viewing Request</a>
                       <!--CH01 Karan Singh Soni 25 Aug 2020 changing the label
                     <a href="#" class="slds-button btn-yellow slds-p-around_x-small slds-m-bottom_large" onclick="redirectToInstrumentRental();" style="">Piano Rental or Purchase</a>-->

@@ -16,7 +16,12 @@
  //CH010: nishi: 13-Feb-2021: New Requirement: Promotion Structure for Retail Rental : Once the payment is completed for these specific instruments -> New Dynamic Public Page where parents can decide if they would like to take up the rental.
 // CH011: nishi: 15-Feb-2021: New Requirement: Promotion Structure for Retail Rental :Discount Criteria =Deposit + Y* months of rental free period, but we would like to show the value and the discount to result in a $0.00 dollar invoice. Deposit will still be billed in full.
                             example if signs up for 3 months of lessons they will be offered 3 months rental free period.
-*/
+// CH012: Nishi: 16-Mar-2021: New Requirement: Promotion Structure for Retail Rental : 
+                            As we discussed the delivery charges are the same for Promotional or Non-promotional insturements and can be defined as below:  
+                                Instrument	        Delivery	    Pickup
+                                Drum and Keyboard	70.09 +GST	    70.09 +GST
+                                Piano	            116.82 +GST	    116.82 +GST
+                            */
 public  class SearchInstrumentRental_IpadCntrl {
     public String slcdCenter{get;set;}
     public String slcdEnrId{get;set;}
@@ -128,7 +133,6 @@ public  class SearchInstrumentRental_IpadCntrl {
     //public static 
     public SearchInstrumentRental_IpadCntrl(){
         isSiteGuestUser =  (UserInfo.getName()).contains('Site');
-
         //CH09 Start
             if( String.isNotBlank( Label.Instrument_Type_for_the_Existing_Aureus_Students ) ){
                 
@@ -236,6 +240,28 @@ public  class SearchInstrumentRental_IpadCntrl {
         }
         //CH010: end
     }   
+    //CH012:start:
+    public decimal getdeliChargesAmount(string deliChargesLabel,string deliChargesWay,decimal gstAmount){
+        Decimal deliChargesAmount =0;
+        if(string.isnotBlank(deliChargesLabel) && deliChargesLabel.split(',') != null && deliChargesLabel.split(',').size() > 0){
+            list<string> listOfdeliCharges = deliChargesLabel.split(',');
+            for(string deliChargesDetail: listOfdeliCharges){
+                if(string.isnotBlank(deliChargesDetail) && deliChargesDetail.split('-') != null && deliChargesDetail.split('-').size() > 0){
+                    list<string> listOfdeliChargesDetail = deliChargesDetail.split('-');
+                    if(string.isnotBlank(deliChargesWay) && deliChargesWay.equalsIgnoreCase(listOfdeliChargesDetail[0])){
+                        deliChargesAmount = decimal.valueOf(listOfdeliChargesDetail[1]);
+                        system.debug('deliChargesAmount'+deliChargesAmount);
+                        decimal taxAmount = BillingUtility.roundOffAmount(deliChargesAmount * gstAmount/(100+gstAmount));
+                        deliChargesAmount -= taxAmount;          
+                        system.debug('taxAmount'+taxAmount);          
+                    }
+                }
+            }
+        } 
+        system.debug('deliChargesAmount'+deliChargesAmount);
+        return deliChargesAmount;
+    }
+    //CH012:end
 
     // added by nishi:10:Mar-2021 for new subscription created in promotional enrolment case so we set detault center if Aureus student is get free rental then we set 'Aureus HQ'
     //otherwise we set for ossia student 'Ossia HQ'
@@ -516,7 +542,8 @@ options.add(new SelectOption(str,str));*/
         return page.SearchInstrumentRentalDeliveryPage_Ipad3;
     }
     public PageReference nextBtnCmp3(){ 
-        fm.deliCharges = (Decimal.valueOf(Label.Delivery_Charges));
+        gstAmount = (gstAmount != null && gstAmount > 0) ?gstAmount: fm.gstTaxPer;
+        fm.deliCharges = Decimal.valueOf(Label.Delivery_Charges_For_Piano); //getdeliChargesAmount(Label.Delivery_Charges,'Oneway',gstAmount);//commented by nishi:CH012 :(Decimal.valueOf(Label.Delivery_Charges));
         fm.tuningFee = (Decimal.valueOf(Label.Tuning_Fee));
         fm.heatingRodInsFee = (Decimal.valueOf(Label.Heating_Rod_Installation_Fee));
       	//CH09 Start
@@ -554,12 +581,25 @@ options.add(new SelectOption(str,str));*/
         //CH08 : for Aureus Students Delivery fees
         if(/*commented by nishi: for check active enrolment isAlreadyStripCstmr != null && isAlreadyStripCstmr*/ isAnyActiveEnrolment != null && isAnyActiveEnrolment  && String.isNotBlank( Label.Delivery_Charges_for_Aureus_Students )){
             
-            fm.deliCharges = (Decimal.valueOf(Label.Delivery_Charges_for_Aureus_Students));
+            fm.deliCharges = Decimal.valueOf(Label.Delivery_Charges_For_Piano);//getdeliChargesAmount(Label.Delivery_Charges_for_Aureus_Students,'Oneway',gstAmount);//commented by nishi:CH012 :(Decimal.valueOf(Label.Delivery_Charges_for_Aureus_Students));
             //CH09 Start : Chainging the monthly rental for aureus students
             slcdPiano.monthlyRental = slcdPiano.studentPrice;
+            //added by nishi:CH012 start
+            /*if(isAureusNewEnolment && setMinimumRental_Termination_InstrumentTypes.contains( slcdPiano.inventoryType)){
+                if(slcdPiano.inventoryType.equalsIgnoreCase('Keyboard')){
+                    fm.deliCharges = getdeliChargesAmount(Label.Promotional_Instrument_Delivery_Charges_For_Keyboard,'Oneway',gstAmount); 
+                }else if(slcdPiano.inventoryType.equalsIgnoreCase('Drum')){
+                    fm.deliCharges = getdeliChargesAmount(Label.Promotional_Instrument_Delivery_Charges_For_Drum,'Oneway',gstAmount); 
+                }
+            }*/
+            //added by nishi:CH012 end
             //CH09
         }
-        gstAmount = (gstAmount != null && gstAmount > 0) ?gstAmount: fm.gstTaxPer;
+        //added by nishi:CH012 start
+        if(setMinimumRental_Termination_InstrumentTypes.contains( slcdPiano.inventoryType)){
+            fm.deliCharges = Decimal.valueOf(Label.Delivery_Charges_For_Drum_and_Keyboard);
+        }
+        //added by nishi:CH012 end
         //CH08 END
         //Start: nishi: 27-Jul-2020: Existing Student – one month (with any active enrolment) ; others – two months
         if(isAnyActiveEnrolment != null && isAnyActiveEnrolment){ //commented by nishi: for check active enrolment if(isAlreadyStripCstmr != null && isAlreadyStripCstmr){ 
@@ -617,8 +657,32 @@ options.add(new SelectOption(str,str));*/
             fm.stairDelCharges = ((fm.perStairCharges * nostairs)*isTwiceCharge);
         
         //Delivery charges twice for the Rental
-        fm.deliCharges = (fm.deliCharges*isTwiceCharge);
-        
+
+        //fm.deliCharges = (fm.deliCharges*isTwiceCharge);
+        //added by nishi:CH012 start
+        /*if(isAnyActiveEnrolment != null && isAnyActiveEnrolment){
+            if(isAureusNewEnolment && setMinimumRental_Termination_InstrumentTypes.contains( slcdPiano.inventoryType)){
+                if(slcdPiano.inventoryType.equalsIgnoreCase('Keyboard')){
+                    fm.deliCharges = getdeliChargesAmount(Label.Promotional_Instrument_Delivery_Charges_For_Keyboard,'Twoway',gstAmount); 
+                }else if(slcdPiano.inventoryType.equalsIgnoreCase('Drum')){
+                    fm.deliCharges = getdeliChargesAmount(Label.Promotional_Instrument_Delivery_Charges_For_Drum,'Twoway',gstAmount); 
+                }
+            }else{
+             fm.deliCharges = getdeliChargesAmount(Label.Delivery_Charges_for_Aureus_Students,'Twoway',gstAmount);
+            }
+        }else{
+            fm.deliCharges = getdeliChargesAmount(Label.Delivery_Charges,'Twoway',gstAmount);
+        }*/
+        //added by nishi:CH012 end
+
+        //added by nishi:CH012 start
+        if(setMinimumRental_Termination_InstrumentTypes.contains( slcdPiano.inventoryType)){
+            fm.deliCharges += Decimal.valueOf(Label.Pickup_Charges_For_Drum_and_Keyboard);
+        }else{
+            fm.deliCharges += Decimal.valueOf(Label.Pickup_Charges_For_Piano);
+        }
+        //added by nishi:CH012 end
+
         //Instrument charge will be zero During rent. it will be taken on the time of Delivery
         fm.instrumentChrg = 0;//BillingUtility.roundOffAmount(slcdPiano.rentalPrice);
         if(isRentalOrSellType.equalsIgnoreCase('Rent')){
@@ -2463,7 +2527,7 @@ slcdEnrolment.Selling_price__c = slcdPiano.salesPrice;*/
        public decimal  prmtnalPkgInMonth{get;set;}
        public FeeModel(){
             depFee           = Decimal.valueOf(Label.Piano_Rental_Deposit_Fee);
-            deliCharges      = Decimal.valueOf(Label.Delivery_Charges);
+            deliCharges      = Decimal.valueOf(Label.Delivery_Charges_For_Piano)+Decimal.valueOf(Label.Pickup_Charges_For_Piano);
             tuningFee        = Decimal.valueOf(Label.Tuning_Fee);
             heatingRodInsFee = Decimal.valueOf(Label.Heating_Rod_Installation_Fee);
             perStairCharges  = Decimal.valueOf(Label.Per_Stair_Charges);

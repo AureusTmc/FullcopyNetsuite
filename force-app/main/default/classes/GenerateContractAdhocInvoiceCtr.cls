@@ -196,7 +196,7 @@ public with Sharing class GenerateContractAdhocInvoiceCtr{
                 system.debug('@@listOfLineItems'+listOfLineItems);
                 isSucess = true;
                 errormessage ='Invoice Created Sucessfully..';
-                //createPayment(selectedMethod,objInvoice.id,totalAmount);
+                createPayment(selectedMethod,objInvoice.id,totalAmount);
                 if(isSucess){
                     invoiceId = objInvoice.id;
                 }
@@ -311,7 +311,7 @@ public with Sharing class GenerateContractAdhocInvoiceCtr{
                     }
                 }           
                 adjustDiscounts(new Set<String>{recordId},system.today());                                 
-                system.debug('invoiceList--->'+invoiceList);
+                /*system.debug('invoiceList--->'+invoiceList);
                 if(invoiceList.size() > 0 ){
                     payment__c objpayment = new payment__c();
                     Invoice__c invoice = invoiceList[0];
@@ -369,7 +369,7 @@ public with Sharing class GenerateContractAdhocInvoiceCtr{
                         UPSERT paymentsToUpsert;
                     if(invoiceList.size() > 0)
                         update  invoiceList[0];
-                }
+                }*/
             }catch(Exception e){
                 system.debug('error'+e.getStackTraceString()+'-'+e.getMessage());
                 isError = true;

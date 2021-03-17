@@ -17,6 +17,8 @@ public with Sharing class GenerateContractAdhocInvoiceCtrl{
     public String teacherId{get;set;}
     public String startDate{get;set;}
     public String enddate{get;set;}
+    public String invoiceDate{get;set;}
+    public Boolean isInvoiceDate{get;set;}
     public String totalLesson{get;set;}
     private Account objAcc;
     public Boolean isSummaryOpen{get;set;}
@@ -27,7 +29,11 @@ public with Sharing class GenerateContractAdhocInvoiceCtrl{
     public string errormessage{get;set;}
     public string selectedMethod{get;set;}
     public string invoiceId{get;set;}
+    Invoice__c objInvoice = new Invoice__c ();
+    public Boolean isAllowedPermissionToThisUser{get;set;}
     public GenerateContractAdhocInvoiceCtrl(ApexPages.StandardController sc){
+        isAllowedPermissionToThisUser = FeatureManagement.checkPermission('Add_Contract_Invoice') ? true : false;
+      
         centreCountry = new Country__c();
         isSummaryOpen = false;
         objAcc = (Account)sc.getRecord();
@@ -41,7 +47,11 @@ public with Sharing class GenerateContractAdhocInvoiceCtrl{
         if(string.isNotBlank(selectedCenter)){
             fetchCentreCountry();
         }
-        
+        objInvoice = new Invoice__c(Status__c=ConstantsClass.dueStatus,
+                                         Due_Date__c = system.today(),
+                                        Invoice_Date__c =system.today(), 
+                                        Parent_Account__c = objAcc.Id,
+                                        Invoice_Type__c ='Contract');
         //fillStudentList(objAcc);  
         addRow();      
     }
@@ -154,17 +164,14 @@ public with Sharing class GenerateContractAdhocInvoiceCtrl{
         isSucess = false;
         errormessage ='';
         invoiceId ='';
-        Invoice__c objInvoice;
         try{
             System.debug('objAcc'+objAcc);
             
             List<Invoice_Line_Item__c> listOfLineItems = new List<Invoice_Line_Item__c>();
-            objInvoice = new Invoice__c(Status__c=ConstantsClass.dueStatus, Due_Date__c = system.today().AddDays(ConstantsClass.addInvoiceDueDays),
-                                        Invoice_Date__c =system.today(), Parent_Account__c = objAcc.Id,Center__c=selectedCenter,
-                                        Invoice_Type__c ='Contract');
-            
             Decimal totalAmount = 0;
             if(listOfItems != null && listOfItems.size()> 0 ){
+                objInvoice.Center__c=selectedCenter;
+                                        
                 for(ItemWrapper objItem : listOfItems){
                     date startDateterm= string.isNotBlank(objItem.startDateterm) ?  date.newInstance(integer.valueOf(objItem.startDateterm.split('/')[2]), integer.valueOf(objItem.startDateterm.split('/')[0]), integer.valueOf(objItem.startDateterm.split('/')[1])) : System.today();//02/01/2021 
                     date endDateterm= string.isNotBlank(objItem.endDateterm) ?  date.newInstance(integer.valueOf(objItem.endDateterm.split('/')[2]), integer.valueOf(objItem.endDateterm.split('/')[0]), integer.valueOf(objItem.endDateterm.split('/')[1])) : System.today();//02/01/2021 
@@ -187,7 +194,7 @@ public with Sharing class GenerateContractAdhocInvoiceCtrl{
                     system.debug('@@@invItm.gstAmount'+gstAmount);
                     totalAmount+= BillingUtility.roundOffAmount((reduceAmount != null ? BillingUtility.roundOffAmount(reduceAmount) : 0) + gstAmount );    
                 }
-                    insert objInvoice;
+                insert objInvoice;
                 objInvoice = [SELECT Id,Name,Parent_Account__c FROM Invoice__c WHERE Id=: objInvoice.Id];
                 for(Invoice_Line_Item__c objItem : listOfLineItems){
                     objItem.Invoice__c = objInvoice.id;
@@ -197,7 +204,7 @@ public with Sharing class GenerateContractAdhocInvoiceCtrl{
                 system.debug('@@listOfLineItems'+listOfLineItems);
                 isSucess = true;
                 errormessage ='Invoice Created Sucessfully..';
-                //createPayment(selectedMethod,objInvoice.id,totalAmount);
+                createPayment(selectedMethod,objInvoice.id,totalAmount);
                 if(isSucess){
                     invoiceId = objInvoice.id;
                 }
@@ -211,7 +218,7 @@ public with Sharing class GenerateContractAdhocInvoiceCtrl{
     }
 
     // this method is used for adjusting credit notes on the parent.
-   /* private static void adjustDiscounts(Set<String> setOfInvIds,Date invDate){
+    private static void adjustDiscounts(Set<String> setOfInvIds,Date invDate){
         Map<String,Invoice__c> mapOfParentInv = new Map<String,Invoice__c>();
         Map<String,Customer_Adhoc_Discount__c> customerDiscountsMap = new Map<String,Customer_Adhoc_Discount__c>();
         List<Invoice_Line_Item__c> listOfLineItems = new List<Invoice_Line_Item__c>();
@@ -313,7 +320,7 @@ public with Sharing class GenerateContractAdhocInvoiceCtrl{
                 }           
                 adjustDiscounts(new Set<String>{recordId},system.today());                                 
                 system.debug('invoiceList--->'+invoiceList);
-                if(invoiceList.size() > 0 ){
+                /*if(invoiceList.size() > 0 ){
                     payment__c objpayment = new payment__c();
                     Invoice__c invoice = invoiceList[0];
                     boolean isOssia = false;
@@ -370,7 +377,7 @@ public with Sharing class GenerateContractAdhocInvoiceCtrl{
                         UPSERT paymentsToUpsert;
                     if(invoiceList.size() > 0)
                         update  invoiceList[0];
-                }
+                }*/
             }catch(Exception e){
                 system.debug('error'+e.getStackTraceString()+'-'+e.getMessage());
                 isError = true;
@@ -378,7 +385,7 @@ public with Sharing class GenerateContractAdhocInvoiceCtrl{
             }
            
         }
-    }
+    }/*
     private Double reduceGSTFromAmount(Decimal taxRate, Decimal amount){
         double gstAmount = 0.0;
         
@@ -420,9 +427,16 @@ public with Sharing class GenerateContractAdhocInvoiceCtrl{
         ItemWrapper itmWrap = listOfItems.get(Integer.valueOf(index)-1);
         itmWrap.startDateterm = startDate;
         itmWrap.endDateterm  = enddate;
-        itmWrap.noOflesson = totalLesson;
+        //itmWrap.noOflesson = totalLesson;
         listOfItems[Integer.valueOf(index)-1] = itmWrap;
         //fetchPkgAmount();
+    }
+    public void setInvoiceDate(){
+        if(isInvoiceDate){
+            objInvoice.Invoice_Date__c =  string.isNotBlank(invoiceDate) ?  date.newInstance(integer.valueOf(invoiceDate.split('/')[2]), integer.valueOf(invoiceDate.split('/')[0]), integer.valueOf(invoiceDate.split('/')[1])) : System.today();//02/01/2021 
+        }else{
+            objInvoice.Due_Date__c =  string.isNotBlank(invoiceDate) ?  date.newInstance(integer.valueOf(invoiceDate.split('/')[2]), integer.valueOf(invoiceDate.split('/')[0]), integer.valueOf(invoiceDate.split('/')[1])) : System.today();//02/01/2021 
+        }
     }
     public class ItemWrapper{
         public String itemName{get;set;}
@@ -441,14 +455,14 @@ public with Sharing class GenerateContractAdhocInvoiceCtrl{
         public ItemWrapper(){
             startDateterm = Datetime.newInstance(date.newInstance(System.now().year(),System.now().month(),1),System.now().time()).format('MM/dd/YYYY');
             endDateterm =  Datetime.newInstance(date.newInstance(System.now().year(),System.now().month(),date.daysInMonth(System.now().year(),System.now().month())), System.now().time()).format('MM/dd/YYYY');
-            noOflesson = string.valueOf(date.daysInMonth(System.now().year(),System.now().month()));
+            noOflesson = '10';
             slctdteacherName='';
         }
         public ItemWrapper(List<SelectOption> listOfTeacher){
             this.listOfTeacher = listOfTeacher;
             startDateterm = Datetime.newInstance(date.newInstance(System.now().year(),System.now().month(),1),System.now().time()).format('MM/dd/YYYY');
             endDateterm =  Datetime.newInstance(date.newInstance(System.now().year(),System.now().month(),date.daysInMonth(System.now().year(),System.now().month())), System.now().time()).format('MM/dd/YYYY');
-            noOflesson = string.valueOf(date.daysInMonth(System.now().year(),System.now().month()));
+            noOflesson = '10';
             slctdteacherName='';
         }
     }        

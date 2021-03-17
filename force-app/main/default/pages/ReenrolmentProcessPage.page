@@ -671,7 +671,7 @@
                                     <table class="slds-table slds-table_cell-buffer slds-no-row-hover slds-table_bordered slds-table_fixed-layout" role="grid">
                                         <thead>
                                             <tr class="slds-line-height_reset">
-                                                <th class="heading" scope="col">
+                                                <th class="heading" scope="col" style="width: 7%;">
                                                     <div class="slds-truncate" title="SR No">SR No.</div>
                                                 </th>
                                                 <th class="heading" scope="col">
@@ -689,10 +689,10 @@
                                                 <th class="heading" scope="col">
                                                     <div class="slds-truncate" title="Package">Package</div>
                                                 </th>
-                                                <th class="heading" scope="col">
+                                                <th class="heading" scope="col" style="width: 14%;">
                                                     <div class="slds-truncate" title="Status">Status</div>
                                                 </th>
-                                                <th class="heading" scope="col">
+                                                <th class="heading" scope="col" >
                                                     <div class="slds-truncate" title="Action">Action</div>
                                                 </th>
                                             </tr>
@@ -720,7 +720,14 @@
                                                         <div class="slds-truncate" title="Package">{!enrolment.Package__r.name}</div>
                                                     </th>
                                                     <th class="" scope="col">
-                                                        <div class="slds-truncate" title="Status">{!enrolment.Stage__c}</div>
+                                                        <div class="slds-truncate" title="Status">
+                                                            {!enrolment.Stage__c}
+                                                           - <apex:outputPanel rendered="{!if(enrolment.Stage__c == 'Enrolled',false,true)}">
+                                                                <apex:outputText value="{0, date, MMM dd yyyy}">
+                                                                    <apex:param value="{!enrolment.Effective_Date__c}" />
+                                                                </apex:outputText>
+                                                            </apex:outputPanel>
+                                                        </div>
                                                     </th>
                                                     <th class="" scope="col">
                                                         <apex:outputPanel rendered="{!if(enrolment.Stage__c == 'Enrolled',false,true)}">

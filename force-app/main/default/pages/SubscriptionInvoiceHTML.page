@@ -397,16 +397,17 @@
                                     </apex:outputPanel>
                                 </b>
                                 <br/>
-                                <span class="lightgray">{!invLineItm.Student_Name__c}
-                                    (For Contract {!invLineItm.Number_of_Lesson__c} Lessons on
-                                    <apex:outputText value="{0, date,MMM dd yyyy}">
+                                <apex:outputPanel rendered="{!!invLineItm.Is_Discount__c}">
+                                <span class="lightgray">
+                                    {!invLineItm.Student_Name__c} - Sessions : {!invLineItm.Number_of_Lesson__c} - Period : From 
+                                    <apex:outputText value="{0, date, MMM dd yyyy}">
                                         <apex:param value="{!invLineItm.Term_Start_Date__c}" />
-                                    </apex:outputText> - 
+                                    </apex:outputText> To  
                                     <apex:outputText value="{0, date, MMM dd yyyy}">
                                         <apex:param value="{!invLineItm.Term_End_Date__c}" />
                                     </apex:outputText>
-                                    )
                                 </span>
+                                </apex:outputPanel>
                             </apex:outputPanel>
                             <apex:outputPanel rendered="{!!isContractInvoice}" layout="none">
                                 <b>

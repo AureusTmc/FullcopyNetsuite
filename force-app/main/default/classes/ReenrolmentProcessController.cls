@@ -37,7 +37,7 @@ public with Sharing class ReenrolmentProcessController{
             mapOfEnrolment = new Map<Id,Enrolment__c>([SELECT Id, Name, Center__r.Organisation__c,Center__r.Name,Center__c, Lesson_Day__c, Lesson_Start_time__c, Package__r.name,Package__c, 
                                 Parent__r.name,Parent__c, Student__r.name,Student__c, Teacher__r.name, Teacher__c, type__C,Stage__c ,Center__r.Country__r.Name,
                                 student__r.Learning_Style__c,Parent__r.Learning_Style__c,Previous_Experience_if_any__c,I_want_to_receive_latest_newsletter__c,
-                                Center__r.Organisation__r.Name,Enrolment_Owner__c
+                                Center__r.Organisation__r.Name,Enrolment_Owner__c,Effective_Date__c
                                 FROM Enrolment__c
                                 where Parent__c =:parentAcc.id
                                 AND Type__c In: enrolTypes ]);
