@@ -542,6 +542,11 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
            //system.debug('@@@@@bookingList.size()--'+bookingList.size());
             map<id,String> packageInvoiceAmount = new Map<Id,String>();
             map<id,String> packageInvoiceNextMonthAmount = new Map<Id,String>();
+            /* 26-Apr-2021 Change Enrolment (Teacher Change) During a promo package was generated and the Credit Memo Line Item Amount for May was doubled so we added other map for old package amount calculation*/
+            map<id,String> packageInvoiceOldAmount = new Map<Id,String>();
+            map<id,String>packageInvoiceOldNextMonthAmount = new Map<Id,String>();
+            /* 26-Apr-2021 Change Enrolment (Teacher Change) During a promo package was generated and the Credit Memo Line Item Amount for May was doubled so we added other map for old package amount calculation*/
+
             Map<Id,Package__c> mapOfPackages =New Map<Id,Package__c>([Select Id,Unit_Fee__c from Package__c where Id In:packageIds]);
            //system.debug('@@@@@mapOfPackages'+mapOfPackages);
             date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1);
@@ -586,17 +591,23 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                     if(string.isNotBlank(booking.Package__c)){
                         if(mapOfPackages.containsKey(newPackage)){
                             packageInvoiceNextMonthAmount.put(newPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceNextMonthAmount,newPackage));    
-                        }if(mapOfPackages.containsKey(oldPackage)){
-                            packageInvoiceNextMonthAmount.put(oldPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceNextMonthAmount,oldPackage)); 
+                        }
+                        /* 26-Apr-2021 Change Enrolment (Teacher Change) During a promo package was generated and the Credit Memo Line Item Amount for May was doubled so we added other map for old package amount calculation*/
+                        if(mapOfPackages.containsKey(oldPackage)){
+                            packageInvoiceOldNextMonthAmount.put(oldPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceOldNextMonthAmount,oldPackage)); 
                         } 
+                        /* 26-Apr-2021 end Change Enrolment (Teacher Change) During a promo package was generated and the Credit Memo Line Item Amount for May was doubled so we added other map for old package amount calculation*/
                     }
                 }else{
                     if(string.isNotBlank(booking.Package__c)){
                         if(mapOfPackages.containsKey(newPackage)){
                             packageInvoiceAmount.put(newPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceAmount,newPackage));    
-                        }if(mapOfPackages.containsKey(oldPackage)){
-                            packageInvoiceAmount.put(oldPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceAmount,oldPackage)); 
+                        }
+                        /* 26-Apr-2021 Change Enrolment (Teacher Change) During a promo package was generated and the Credit Memo Line Item Amount for May was doubled so we added other map for old package amount calculation*/
+                        if(mapOfPackages.containsKey(oldPackage)){
+                            packageInvoiceOldAmount.put(oldPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceOldAmount,oldPackage)); 
                         } 
+                        /* 26-Apr-2021 end Change Enrolment (Teacher Change) During a promo package was generated and the Credit Memo Line Item Amount for May was doubled so we added other map for old package amount calculation*/
                     }
                 }
             }
@@ -608,13 +619,13 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                 newPackageTotalAmount += decimal.valueOf(packageInvoiceAmount.get(newPackage).split(';')[0]);
             }
             if(packageInvoiceAmount.containsKey(oldPackage)){
-                oldPackageTotalAmount += decimal.valueOf(packageInvoiceAmount.get(oldPackage).split(';')[0]);
+                oldPackageTotalAmount += decimal.valueOf(packageInvoiceOldAmount.get(oldPackage).split(';')[0]);
             }
             if(packageInvoiceNextMonthAmount.containsKey(newPackage)){
                 newPackageNextMonthTotalAmount += decimal.valueOf(packageInvoiceNextMonthAmount.get(newPackage).split(';')[0]);
             }
-            if(packageInvoiceNextMonthAmount.containsKey(oldPackage)){
-                oldPackageNextMonthTotalAmount += decimal.valueOf(packageInvoiceNextMonthAmount.get(oldPackage).split(';')[0]);
+            if(packageInvoiceOldNextMonthAmount.containsKey(oldPackage)){
+                oldPackageNextMonthTotalAmount += decimal.valueOf(packageInvoiceOldNextMonthAmount.get(oldPackage).split(';')[0]);
             }
             
            //system.debug('@@@@@packageInvoiceAmount'+packageInvoiceAmount);
@@ -659,10 +670,10 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                                                                         GST_Amount__c = gstAmount));
                         }
                     }
-                    if(packageInvoiceAmount.containsKey(oldPackage)){
-                        if(packageInvoiceAmount.get(oldPackage).split(';') != null && packageInvoiceAmount.get(oldPackage).split(';').size() >0){
-                            oldPackageTotalAmount = decimal.valueOf(packageInvoiceAmount.get(oldPackage).split(';')[0]);
-                            gstAmount = decimal.valueOf(packageInvoiceAmount.get(oldPackage).split(';')[1]);
+                    if(packageInvoiceOldAmount.containsKey(oldPackage)){
+                        if(packageInvoiceOldAmount.get(oldPackage).split(';') != null && packageInvoiceOldAmount.get(oldPackage).split(';').size() >0){
+                            oldPackageTotalAmount = decimal.valueOf(packageInvoiceOldAmount.get(oldPackage).split(';')[0]);
+                            gstAmount = decimal.valueOf(packageInvoiceOldAmount.get(oldPackage).split(';')[1]);
                             if(oldPackageTotalAmount != 0){
                                 oldPackageTotalAmount = BillingUtility.roundOffAmount(oldPackageTotalAmount);
                             }
@@ -733,10 +744,10 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                                                                         GST_Amount__c = gstAmount));
                         }
                     }
-                    if(packageInvoiceNextMonthAmount.containsKey(oldPackage)){
-                        if(packageInvoiceNextMonthAmount.get(oldPackage).split(';') != null && packageInvoiceNextMonthAmount.get(oldPackage).split(';').size() >0){
-                            oldPackageNextMonthTotalAmount = decimal.valueOf(packageInvoiceNextMonthAmount.get(oldPackage).split(';')[0]);
-                            gstAmount = decimal.valueOf(packageInvoiceNextMonthAmount.get(oldPackage).split(';')[1]);
+                    if(packageInvoiceOldNextMonthAmount.containsKey(oldPackage)){
+                        if(packageInvoiceOldNextMonthAmount.get(oldPackage).split(';') != null && packageInvoiceOldNextMonthAmount.get(oldPackage).split(';').size() >0){
+                            oldPackageNextMonthTotalAmount = decimal.valueOf(packageInvoiceOldNextMonthAmount.get(oldPackage).split(';')[0]);
+                            gstAmount = decimal.valueOf(packageInvoiceOldNextMonthAmount.get(oldPackage).split(';')[1]);
                             if(oldPackageNextMonthTotalAmount != 0){
                                 oldPackageNextMonthTotalAmount = BillingUtility.roundOffAmount(oldPackageNextMonthTotalAmount);
                             }

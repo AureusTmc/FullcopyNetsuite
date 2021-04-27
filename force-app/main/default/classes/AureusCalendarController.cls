@@ -3,7 +3,7 @@ Name    :
 Test Class  :        AureusCalendarControllerTest2
 Component   :		 AureusCalendarCMP
 */
-public with Sharing class AureusCalendarController{
+public class AureusCalendarController{/*commented by nishi: 25-Mar-2021 :with Sharing */
     public String centerName{get;set;}
     public String teacherName{get;set;}
     public String instrumentName{get;set;}
@@ -2551,11 +2551,11 @@ newBookingWrapperObj.studentList = sObjList;
                                 // nishi: 24-feb-2021 :start: check booking use available makeup mins or available Complimentary Credit hours 
                                 if(bookingMap.containsKey('isComplimentaryCredit')){
                                     if(Boolean.valueOf(bookingMap.get('isComplimentaryCredit'))){
-                                        bookingObj.Is_Complimentary_Credit__c = true;
                                         isComplimentaryCredit = true;
                                     }
                                     system.debug('isComplimentaryCredit'+bookingMap.get('isComplimentaryCredit'));
                                 }
+                                 system.debug('isComplimentaryCredit'+bookingMap.get('isComplimentaryCredit'));
                                 // nishi: 24-feb-2021 :start: check booking use available makeup mins or available Complimentary Credit hours 
                                 if(type == ConstantsClass.typeMakeup){
                                     status = ConstantsClass.statusScheduled;
@@ -2564,7 +2564,8 @@ newBookingWrapperObj.studentList = sObjList;
                                 status = ConstantsClass.statusPending;
                             }
                         }
-                        
+                        system.debug('isComplimentaryCredit'+isComplimentaryCredit);
+                        system.debug('bookingObj.Is_Complimentary_Credit__c'+bookingObj.Is_Complimentary_Credit__c);
                          // nishi: 24-feb-2021 :start: check booking use available makeup mins or available Complimentary Credit hours 
                         if(isComplimentaryCredit ){
                             if(bookingMap.containsKey('complentryHours') && Integer.valueOf(bookingMap.get('complentryHours')) > 0){
@@ -2622,7 +2623,15 @@ newBookingWrapperObj.studentList = sObjList;
                                  bookingObj.enrolment__c = enrolmentId;
                             }
                             // added by nishi: 23-Jul-2020: Start:if center is ossian then this enrolment id is exist
-                           
+                            // nishi: 24-feb-2021 :start: check booking use available makeup mins or available Complimentary Credit hours 
+                            if(bookingMap.containsKey('isComplimentaryCredit')){
+                                if(Boolean.valueOf(bookingMap.get('isComplimentaryCredit'))){
+                                    bookingObj.Is_Complimentary_Credit__c = true;
+                                }
+                                system.debug('isComplimentaryCredit'+bookingMap.get('isComplimentaryCredit'));
+                            }
+                            system.debug('isComplimentaryCredit'+bookingMap.get('isComplimentaryCredit'));
+                            // nishi: 24-feb-2021 :start: check booking use available makeup mins or available Complimentary Credit hours
                             bookingObj.Student__c = student;
                             bookingObj.Package__c = packageId;
                             bookingObj.Type__c = type;
@@ -2871,18 +2880,26 @@ newBookingWrapperObj.studentList = sObjList;
         if(String.isNotBlank(bookingParentId)){
             setOfParentStudent = getParentsChild(bookingParentId);
         }
+        system.debug('##setOfParentStudent '+setOfParentStudent);
         if(bookingObjList.size() > 0){
             studentId = bookingObjList[0].Student__c;
             for(Booking__c bObj : bookingObjList){
                 setOfBookings.add(bObj.Id);
             }
             if(setOfBookings.size() > 0){
+                 system.debug('##setOfBookings '+setOfBookings);
                  // Start:added By nishi:  12-aug-2020: according to new requiremnt While utilizing Make up credit, 
                 //it should consider those makeup minutes which are related to the booking with the cancellation reason – Teacher MC/Leave first.
-                Set<string> enrolmentIds = new Set<string>();                        
-                for(Booking__c objBook: [SELECT Id,Student__c, Duration__c,Enrolment__c, Make_up_Utilize_Bookings__c ,Center__r.Organisation__r.Name
+                Set<string> enrolmentIds = new Set<string>(); 
+                 system.debug('##setOfBookings '+[SELECT Id,Student__c, Duration__c,Enrolment__c, Make_up_Utilize_Bookings__c ,
+                                                   Center__r.Organisation__r.Name
+                                                  FROM Booking__c 
+                                                  WHERE Id IN:setOfBookings]);
+                for(Booking__c objBook: [SELECT Id,Student__c, Duration__c,Enrolment__c, Make_up_Utilize_Bookings__c ,
+                                         Center__r.Organisation__r.Name
                                         FROM Booking__c 
                                         WHERE Id IN:setOfBookings]){
+                                            system.debug('##objBook '+objBook);
                     if(String.isNotBlank(objBook.Center__c) && 
                         String.isNotBlank(objBook.Center__r.Organisation__c) && 
                         String.isNotBlank(objBook.Center__r.Organisation__r.Name) && 
@@ -4185,11 +4202,12 @@ getLastLessonDate method is use for getting last date of lesson on selecting the
         Decimal paymentDeposit = 0;
         Decimal depositToReturn = 0;
         Set<String> statusSet = new Set<String>{ConstantsClass.voidInvoiceStatus, ConstantsClass.cancelledInvoiceStatus};
-            for(Invoice_Line_Item__c objLineItem : [SELECT Id,Amount__c FROM Invoice_Line_Item__c 
+            for(Invoice_Line_Item__c objLineItem : [SELECT Id,Amount__c,Net_Amount__c FROM Invoice_Line_Item__c 
                                                     WHERE IS_Deposit__c = TRUE 
                                                     AND Enrolment__c =:enrolId 
                                                     AND Invoice__r.Status__c NOT IN :statusSet]){
-                invoiceDeposit += objLineItem.amount__c;
+               // invoiceDeposit += objLineItem.amount__c;commented by nishi: 26-Apr-2021
+                 invoiceDeposit += objLineItem.Net_Amount__c;
             }
         for(Payment__c payment : [SELECT Id, Payment_Amount__c 
                                     FROM Payment__c 

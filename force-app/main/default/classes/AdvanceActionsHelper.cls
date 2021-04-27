@@ -42,6 +42,7 @@ public without sharing class AdvanceActionsHelper {
                              Center__r.Country__r.Stripe_Secret_Key__c, Center__r.Country__r.Stripe_Base_Url__c,Center__r.Country__r.Id, 
                              New_Teacher__c,Teacher__c,Center__r.Organisation__r.Name,Available_Make_up_mins__c, // added by nishi for update new Teacher Id for ossia organization
                              Type_of_Package__c,prepayment_period_end_date__c,Package_To_Be_Change__c,Promotional_Period_End_Date__c,//added by nishi: update enrolment Prepayemnt end date and change package field
+                             Package__r.Promotion_period_In_months__c,Package__r.Promotion_Discount__c,
                              //start:added by @nishi 24 Aug 2020,Organisation wise charge as per new logic*/
                              Center__r.Organisation__r.Tax_Rate__c, Center__r.Organisation__r.Country__r.Currency_Code__c, 
                              Center__r.Organisation__r.Stripe_Secret_Key__c, Center__r.Organisation__r.Stripe_Base_Url__c,Center__r.Organisation__r.Id, 
@@ -187,6 +188,7 @@ public without sharing class AdvanceActionsHelper {
                                             Center__r.Country__r.Tax_Rate__c, Center__r.Country__r.Currency_Code__c, 
                                             Center__r.Country__r.Stripe_Secret_Key__c, Center__r.Country__r.Stripe_Base_Url__c,Center__r.Country__r.Id, 
                                             Type_of_Package__c,prepayment_period_end_date__c,Package_To_Be_Change__c,Promotional_Period_End_Date__c,//added by nishi: update enrolment Prepayemnt end date and change package field
+                                            Package__r.Promotion_period_In_months__c,Package__r.Promotion_Discount__c,
                                             //Start: added by nishi: 24-Aug-2020: for manage tax according to organisation
                                             Center__r.Organisation__r.Tax_Rate__c, Center__r.Organisation__r.Country__r.Currency_Code__c, 
                                             Center__r.Organisation__r.Stripe_Secret_Key__c, Center__r.Organisation__r.Stripe_Base_Url__c,Center__r.Organisation__r.Id, 
@@ -215,8 +217,9 @@ public without sharing class AdvanceActionsHelper {
         Decimal paymentDeposit = 0;
         Decimal depositToReturn = 0;
         Set<String> statusSet = new Set<String>{ConstantsClass.voidInvoiceStatus, ConstantsClass.cancelledInvoiceStatus};
-            for(Invoice_Line_Item__c objLineItem : [SELECT Id,Amount__c FROM Invoice_Line_Item__c WHERE IS_Deposit__c = TRUE AND Enrolment__c =:enrolId AND Invoice__r.Status__c NOT IN :statusSet]){
-                invoiceDeposit += objLineItem.amount__c;
+            for(Invoice_Line_Item__c objLineItem : [SELECT Id,Amount__c,Net_Amount__c FROM Invoice_Line_Item__c WHERE IS_Deposit__c = TRUE AND Enrolment__c =:enrolId AND Invoice__r.Status__c NOT IN :statusSet]){
+                //invoiceDeposit += objLineItem.amount__c;
+                invoiceDeposit += objLineItem.Net_Amount__c;
             }
         for(Payment__c payment : [SELECT Id, Payment_Amount__c FROM Payment__c WHERE Enrolment__c =: enrolId AND RecordType.Name =: ConstantsClass.paymentAsDepositRecordType]){
             paymentDeposit += payment.Payment_Amount__c;
@@ -563,9 +566,12 @@ public without sharing class AdvanceActionsHelper {
         return enroll;
     }
 */
-    private static Date getNextBillingDate(String enrolId){
+    public static Date getNextBillingDate(String enrolId){
         Date nextBillingDate;
-        List<Subscription_Line_Item__c> subscriptionLineItemList = [SELECT Id, Next_Bill_Date__c FROM Subscription_Line_Item__c WHERE Enrolment__c =: enrolId];
+        List<Subscription_Line_Item__c> subscriptionLineItemList = [SELECT Id, Next_Bill_Date__c 
+        FROM Subscription_Line_Item__c 
+        WHERE Enrolment__c =: enrolId 
+        and Status__c =: ConstantsClass.activeStatus];
         if(subscriptionLineItemList.size() > 0){
             nextBillingDate = subscriptionLineItemList[0].Next_Bill_Date__c;
         }

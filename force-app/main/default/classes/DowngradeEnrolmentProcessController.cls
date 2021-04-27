@@ -89,7 +89,8 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
             date nextBillDate = AdvanceActionsHelper.fetchNextBillDateFromEnrolment(enroll);
             // added by nishi: 22-Oct-2020: for some limited user can downgrade prepayment enrolment
             Boolean isPromotionalEnrolment=false;
-            if( String.isNotBlank(enroll.Type_of_Package__c) && (enroll.Type_of_Package__c == ConstantsClass.prePaymentType || enroll.Type_of_Package__c == ConstantsClass.PromoTypePayment)){
+            if( String.isNotBlank(enroll.Type_of_Package__c) && (enroll.Type_of_Package__c == ConstantsClass.prePaymentType
+                                                                 || enroll.Type_of_Package__c == ConstantsClass.PromoTypePayment)){
                 isPromotionalEnrolment= true;
             }
             // added by nishi: 22-Oct-2020: for some limited user can downgrade prepayment enrolment
@@ -358,7 +359,9 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                 newinvoiceLineItems.put('deposit',inlineItemForDeposit);
                 isTransaction = true;
                 if(String.isNotBlank(objInvoice.Id)){
-                        // added by nishi: 23-oct-2020: for check if enrolment has promotional then  This invoice is adjusted with a credit memo. If a credit memo adjustment amount is less then the invoice amount then we charged via Stripe.
+                        // added by nishi: 23-oct-2020: for check if enrolment has promotional then  
+                        // This invoice is adjusted with a credit memo. If a credit memo adjustment amount is 
+                        // less then the invoice amount then we charged via Stripe.
                     if(isPromotionalEnrolment && lastLessonDateObj < nextBillDate){
                         createprepayementCreditmemo = true;
                         mapOfParentPrepaymentCreditMemo =UpgradeDowngradeController.createCreditMemoForPrepaymentInvoice(listOfInvoice,objEnrol, lastLessonDateObj,'Downgrade Enrolment Adjustment');
@@ -410,7 +413,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
             Map<String, Payment__c> mapOfInvoicePayments = new Map<String, Payment__c>();
             List<Id> invoiceIds = NEW List<Id>();
             Map<Id,Invoice_Line_Item__c> invoicemap = NEW Map<Id,Invoice_Line_Item__c>();
-            for(Invoice_Line_Item__c lineItem : [SELECT Id, Invoice__c, Amount__c, Invoice__r.Parent_Account__c, Subscription_Line_Item__r.Next_Bill_Date__c ,Package__c,
+            for(Invoice_Line_Item__c lineItem : [SELECT Id, Invoice__c, Amount__c,Net_Amount__c, Invoice__r.Parent_Account__c, Subscription_Line_Item__r.Next_Bill_Date__c ,Package__c,
                                                 Credit_Memo_Amount__c,Credit_Memo_tax__c
                                                 FROM Invoice_Line_Item__c 
                                                 WHERE Enrolment__c =: objEnrol.id 
@@ -448,35 +451,49 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                                   Payment_Status__c = ConstantsClass.paymentPendingStatus,
                                                   Parent_Account__c = objEnrol.Parent__c, 
                                                   Enrolment__c = objEnrol.Id));   */
-                objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, null,  lastLessonDateObj,'Deposit Adjustment');
-                objCreditMemo.Credit_Memo_Date__c = lastLessonDateObj;
-                objCreditLineItem = BillingUtility.createCreditMemoLineRec(Math.abs(depositAmount),null,null,
-                                                            objEnrol.id,null,'Deposit Adjustment');
-                objCreditLineItem.Is_Deposit__c = true;
-                objCreditLineItem.Month__c = lastLessonDateObj;
+                Decimal creditMemodepositAmount =Math.abs(depositAmount);
                 if(mapOfInvoicePayments != null && mapOfInvoicePayments.size() > 0){
                     for( string invoiceId : mapOfInvoicePayments.keyset()){
-                        if(mapOfInvoicePayments.containsKey(invoiceId)){
+                        //26-apr-2021:Enrolments with multiple deposits meaning advancements at the time of downgrade should have a separate credit memo created for each line item that is equal to deposit. 
+                        if(mapOfInvoicePayments.containsKey(invoiceId) && invoicemap.containsKey(invoiceId) && creditMemodepositAmount > 0){
+                            depositAmount = (creditMemodepositAmount > invoicemap.get(invoiceId).Net_Amount__c ? //120 > 112
+                                             invoicemap.get(invoiceId).Net_Amount__c :
+                                             creditMemodepositAmount
+                                            ); 
+                            creditMemodepositAmount  =creditMemodepositAmount - invoicemap.get(invoiceId).Net_Amount__c; //120-112=8
+                            objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, invoiceId, 
+                                                                               lastLessonDateObj,'Deposit Adjustment');
+                            objCreditMemo.Credit_Memo_Date__c = lastLessonDateObj;
+                            
                             objCreditMemo.Payment_Method__c =   mapOfInvoicePayments.get(invoiceId).Method_of_Payment__c; 
                             objCreditMemo.From_Invoice__c = invoiceId;
+                            objCreditLineItem = BillingUtility.createCreditMemoLineRec(Math.abs(depositAmount),null,null,
+                                                                                       objEnrol.id,null,'Deposit Adjustment');
                             objCreditLineItem.Package__c = invoicemap.get(invoiceId).Package__c;
                             objCreditLineItem.Invoice_Line_Item__c = invoicemap.get(invoiceId).Id;
+                            objCreditLineItem.Is_Deposit__c = true;
+                            objCreditLineItem.Month__c = lastLessonDateObj;
+                            listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
+                            listOfCreditmemolineitem.add(objCreditLineItem);           
+                            system.debug('objCreditLineItem'+objCreditLineItem);                                         
+                            mapOfCreditmemolineitem.put('Deposit Adjustment'+invoiceId,listOfCreditmemolineitem);
+                            system.debug('objCreditMemo'+objCreditMemo);  
+                            newPendingCreditMemos.put('Deposit Adjustment'+invoiceId,objCreditMemo);
+                            //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
+                            if(string.isNotBlank(invoicemap.get(invoiceId).Id)){
+                                updateCreditMemoInvoiceLineItem.put(invoicemap.get(invoiceId).Id,
+                                                                    updateInvoiceLineItemMap( updateInvoiceLineItem,math.abs(depositAmount),
+                                                                                            0,invoicemap.get(invoiceId).Id));
+                            }
                         }
+                        //26-apr-2021:Enrolments with multiple deposits meaning advancements at the time of downgrade should have a separate credit memo created for each line item that is equal to deposit. 
+                      
                     }
                 }
-                listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
-                listOfCreditmemolineitem.add(objCreditLineItem);           
-                system.debug('objCreditLineItem'+objCreditLineItem);                                         
-                mapOfCreditmemolineitem.put('Deposit Adjustment',listOfCreditmemolineitem);
-                system.debug('objCreditMemo'+objCreditMemo);  
-                newPendingCreditMemos.put('Deposit Adjustment',objCreditMemo);
+                
                  //added by nishi: 6-Oct-2020 : start:for new requirement we Create a Credit Memo record with the status pending instead of the Payment as Deposit record.
 
-                //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
-                if(string.isNotBlank(objCreditLineItem.Invoice_Line_Item__c)){
-                    updateCreditMemoInvoiceLineItem.put(objCreditLineItem.Invoice_Line_Item__c,updateInvoiceLineItemMap( updateInvoiceLineItem,math.abs(depositAmount),
-                         0,objCreditLineItem.Invoice_Line_Item__c));
-                }
+               
             }
            //system.debug('@listOfPayments'+listOfPayments);
         }   
@@ -539,7 +556,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                     invoiceId = mapofinvoice.get('Current').id;
                 }
             }
-             objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, invoiceId,  system.today(),'Downgrade Enrolment Adjustment');
+            objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, invoiceId,  system.today(),'Downgrade Enrolment Adjustment');
             objCreditMemo.Status__c = ConstantsClass.creditMemoSuccessStatus;
             objCreditMemo.Invoice_Number__c = objInvoice.Id;
             

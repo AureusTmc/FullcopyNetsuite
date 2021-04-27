@@ -199,13 +199,7 @@
                 background: repeating-linear-gradient( 45deg, #e5a51600, #eb212100 10px, #5d6d7d 10px, #5d6d7d 20px ), linear-gradient( to bottom, #8ba9c8, #8ba9c8 );
              } */
             /*end: 30-Jul-20202:added by nishi : for show online class booking color different  */
-            /*nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.*/
-            .avlminsclass{
-                padding-left: 4px;
-                font-weight: 600;
-                color: #dc2d65
-            }
-            /*nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.*/
+           
             th.fc-day-header {      
             padding: 1px;  /*10px */    
             }       
@@ -651,6 +645,13 @@
             .enrolmentstatus:hover + .slds-popover.slds-popover_tooltip.slds-hide {
                 display : block!important;
             }
+             /*nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.*/
+            .avlminsclass{
+                padding-left: 4px;
+                font-weight: 600;
+                color: #dc2d65
+            }
+            /*nishi: 3-Feb-2021 :Aureus Q1 2021: show Avl makeup minutes on all future bookings.*/
             
         </style>
         <apex:form >
@@ -5465,7 +5466,7 @@ Enrol now
             $('#containerMessage').addClass('slds-hide');
         }else if(origin == 'createBooking'){
             var bookingDataStr = JSON.stringify(bookingData);
-            
+            console.log('bookingData'+bookingData);
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.AureusCalendarController.createBooking}',
                 bookingDataStr, 'false', caseId,lessonModes,
@@ -9046,6 +9047,12 @@ Enrol now
                                             createBookingProceed();     
                                         }   
                                     }else{  
+
+ 										console.log('ComplentryHoursLabel',parseInt($('#ComplentryHoursLabel').text().split(' ')[0]));
+                                        console.log('duration',parseInt(bookingData.duration));
+                                        console.log('isComplimentaryCredit',bookingData.isComplimentaryCredit);
+                                        console.log('makeupHoursLabel',parseInt($('#makeupHoursLabel').text().split(' ')[0]));
+                                        console.log('condition',parseInt(bookingData.duration) > parseInt($('#ComplentryHoursLabel').text().split(' ')[0]));         
                                         createBookingProceed(); 
                                     }   
                                     

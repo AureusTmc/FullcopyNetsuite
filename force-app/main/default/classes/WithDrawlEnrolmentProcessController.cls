@@ -261,7 +261,7 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
             Set<String> statusSet = new Set<String>{ConstantsClass.voidInvoiceStatus, ConstantsClass.cancelledInvoiceStatus};
             Map<Id,Invoice_Line_Item__c> invoicemap = NEW Map<Id,Invoice_Line_Item__c>();
             for(Invoice_Line_Item__c lineItem : [SELECT Id, Invoice__c, Amount__c, Invoice__r.Parent_Account__c, Subscription_Line_Item__r.Next_Bill_Date__c ,Package__c,
-                                                Credit_Memo_Amount__c,Credit_Memo_tax__c
+                                                Credit_Memo_Amount__c,Credit_Memo_tax__c,Net_Amount__c
                                                 FROM Invoice_Line_Item__c 
                                                 WHERE Enrolment__c =: objEnrol.id 
                                                 AND Is_Deposit__c = true 
@@ -314,34 +314,44 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
                 paymentList.add(paymentObj);*/
                 system.debug('depositAmount'+depositAmount);
                 //added by nishi: 6-Oct-2020 : start:for new requirement we Create a Credit Memo record with the status pending instead of the Payment as Deposit record.
-                Credit_Memo__c objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, null,  System.today(),'Deposit Adjustment');
-                   system.debug('objCreditMemo'+objCreditMemo);
-                Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(depositAmount,0,null,
-                    objEnrol.id,null,'Deposit Adjustment');
-                    objCreditLineItem.Is_Deposit__c = true;
-                if(isRefund){
-                    objCreditMemo.Credit_Memo_Date__c = System.today();
-                    objCreditLineItem.Month__c = System.today();
-                }else{
-                    objCreditMemo.Credit_Memo_Date__c = lastLessonDateObj;
-                    objCreditLineItem.Month__c = lastLessonDateObj;
-                }
+                 Decimal creditMemodepositAmount =Math.abs(depositAmount);
                 for( string invoiceId : mapOfInvoicePayments.keyset()){
-                    if(mapOfInvoicePayments.containsKey(invoiceId)){
+                    /* 26-Apr-2021  Enrolments with multiple deposits meaning advancements at the time of withdrawal should have a separate credit memo created for each line item that is equal to deposit. 
+                    Finance must refund the credit memos separately to their original charges.*/
+                    if(mapOfInvoicePayments.containsKey(invoiceId) && invoicemap.containsKey(invoiceId) && creditMemodepositAmount > 0){
+                        depositAmount = (creditMemodepositAmount > invoicemap.get(invoiceId).Net_Amount__c ? //120 > 112
+                                         invoicemap.get(invoiceId).Net_Amount__c :
+                                         creditMemodepositAmount); 
+                        creditMemodepositAmount  =creditMemodepositAmount - invoicemap.get(invoiceId).Net_Amount__c; //120-112=8
+                        Credit_Memo__c objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, null,  System.today(),'Deposit Adjustment');
+                        system.debug('objCreditMemo'+objCreditMemo);
+                        Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(depositAmount,0,null,
+                                                                                                            objEnrol.id,null,'Deposit Adjustment');
+                        objCreditLineItem.Is_Deposit__c = true;
+                        if(isRefund){
+                            objCreditMemo.Credit_Memo_Date__c = System.today();
+                            objCreditLineItem.Month__c = System.today();
+                        }else{
+                            objCreditMemo.Credit_Memo_Date__c = lastLessonDateObj;
+                            objCreditLineItem.Month__c = lastLessonDateObj;
+                        }
                         objCreditMemo.Payment_Method__c =   mapOfInvoicePayments.get(invoiceId).Method_of_Payment__c; 
                         objCreditMemo.From_Invoice__c = invoiceId;
                         objCreditLineItem.Package__c = invoicemap.get(invoiceId).Package__c;
                         objCreditLineItem.Invoice_Line_Item__c = invoicemap.get(invoiceId).Id;
+                        listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
+                        listOfCreditmemolineitem.add(objCreditLineItem);
+                        mapOfCreditmemolineitem.put('Deposit Adjustment'+invoiceId,listOfCreditmemolineitem);
+                        //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
+                        if(string.isNotBlank(objCreditLineItem.Invoice_Line_Item__c)){
+                            updateCreditMemoAmountInvoiceLineItem.put(objCreditLineItem.Invoice_Line_Item__c,updateInvoiceLineItemMap( updateInvoiceLineItem,depositAmount,0,objCreditLineItem.Invoice_Line_Item__c));
+                        }
+                        newPendingCreditMemos.put('Deposit Adjustment'+invoiceId,objCreditMemo);
+                         /* 26-Apr-2021 end: Enrolments with multiple deposits meaning advancements at the time of withdrawal should have a separate credit memo created for each line item that is equal to deposit. 
+                    Finance must refund the credit memos separately to their original charges.*/
                     }
                 }
-                listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
-                listOfCreditmemolineitem.add(objCreditLineItem);
-                mapOfCreditmemolineitem.put('Deposit Adjustment',listOfCreditmemolineitem);
-                //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
-                if(string.isNotBlank(objCreditLineItem.Invoice_Line_Item__c)){
-                    updateCreditMemoAmountInvoiceLineItem.put(objCreditLineItem.Invoice_Line_Item__c,updateInvoiceLineItemMap( updateInvoiceLineItem,depositAmount,0,objCreditLineItem.Invoice_Line_Item__c));
-                 }
-                newPendingCreditMemos.put('Deposit Adjustment',objCreditMemo);
+              
                 //added by nishi: 6-Oct-2020 : end:for new requirement Create a Credit Memo record with the status pending instead of the Payment as Deposit record.
             }/*Commented by jatin: 13-jan-2020: for now change requirement only multiple enrollment exist then we create payment record
             otherwise not
@@ -439,36 +449,46 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
                 }
             }
             refundPayments.add(refund);  */
-
-
-            Credit_Memo__c objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, null,  lastLessonDateObj,'Refund Deposit');
-                Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(depositAmount,0,null,
-                    objEnrol.id,null,'Refund Deposit');
-                    objCreditLineItem.Is_Deposit__c = true;
-                    objCreditLineItem.Month__c = lastLessonDateObj;
+              Map<string,QueueSObject > mapOfQueue = BillingUtility.getTaskQueueMap();
+          
+              Decimal creditMemodepositAmount =depositAmount;
+              
                 for( string invoiceId : mapOfInvoicePayments.keyset()){
-                    if(mapOfInvoicePayments.containsKey(invoiceId)){
+                     /* 26-Apr-2021  Enrolments with multiple deposits meaning advancements at the time of withdrawal should have a separate credit memo created for each line item that is equal to deposit. 
+                    Finance must refund the credit memos separately to their original charges.*/
+                    if(mapOfInvoicePayments.containsKey(invoiceId) && invoicemap.containsKey(invoiceId) && creditMemodepositAmount > 0){
+                        depositAmount = (creditMemodepositAmount > invoicemap.get(invoiceId).Net_Amount__c ? //120 > 112
+                                         invoicemap.get(invoiceId).Net_Amount__c :
+                                         creditMemodepositAmount
+                                        ); 
+                        creditMemodepositAmount  =creditMemodepositAmount - invoicemap.get(invoiceId).Net_Amount__c; //120-112=8
+                        Credit_Memo__c objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, null,  lastLessonDateObj,'Refund Deposit');
+                        Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(depositAmount,0,null,
+                                                                                                            objEnrol.id,null,'Refund Deposit');
+                        objCreditLineItem.Is_Deposit__c = true;
+                        objCreditLineItem.Month__c = lastLessonDateObj;
                         objCreditMemo.Payment_Method__c =   mapOfInvoicePayments.get(invoiceId).Method_of_Payment__c; 
                         objCreditMemo.From_Invoice__c = invoiceId;
                         objCreditLineItem.Package__c = invoicemap.get(invoiceId).Package__c;
                         objCreditLineItem.Invoice_Line_Item__c = invoicemap.get(invoiceId).Id;
+                        listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
+                        listOfCreditmemolineitem.add(objCreditLineItem);
+                        mapOfCreditmemolineitem.put('Refund Deposit'+invoiceId,listOfCreditmemolineitem);
+                        newPendingCreditMemos.put('Refund Deposit'+invoiceId,objCreditMemo);
+                        //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
+                        if(string.isNotBlank(objCreditLineItem.Invoice_Line_Item__c)){
+                            updateCreditMemoAmountInvoiceLineItem.put(objCreditLineItem.Invoice_Line_Item__c,updateInvoiceLineItemMap( updateInvoiceLineItem,depositAmount,0,objCreditLineItem.Invoice_Line_Item__c));
+                        }
+                        // added by nishi: 5-Nov-2020: for if we not found any active enrolment all enrolments are withdrwal then we create a task to finance team for refund reminder.
+                        if(mapOfQueue != null && mapOfQueue.size() > 0 && mapOfQueue.containskey('Finance Queue') && string.isNotBlank(mapOfQueue.get('Finance Queue').Queue.Id)){ 
+                            mapOfRefundReminderTasks.put('Refund Deposit'+invoiceId,BillingUtility.createNewTask('Refund Reminder',objEnrol.id,lastLessonDateObj,mapOfQueue.get('Finance Queue').Queue.Id));
+                        }
+                        // added by nishi: 5-Nov-2020: for if we not found any active enrolment all enrolments are withdrwal then we create a task to finance team for refund reminder.  
+                        /* 26-Apr-2021 end: rolments with multiple deposits meaning advancements at the time of withdrawal should have a separate credit memo created for each line item that is equal to deposit. 
+                    Finance must refund the credit memos separately to their original charges.*/ 
                     }
                 }
-                listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
-                listOfCreditmemolineitem.add(objCreditLineItem);
-                mapOfCreditmemolineitem.put('Refund Deposit',listOfCreditmemolineitem);
-                newPendingCreditMemos.put('Refund Deposit',objCreditMemo);
-                 //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
-                if(string.isNotBlank(objCreditLineItem.Invoice_Line_Item__c)){
-                    updateCreditMemoAmountInvoiceLineItem.put(objCreditLineItem.Invoice_Line_Item__c,updateInvoiceLineItemMap( updateInvoiceLineItem,depositAmount,0,objCreditLineItem.Invoice_Line_Item__c));
-                }
-                // added by nishi: 5-Nov-2020: for if we not found any active enrolment all enrolments are withdrwal then we create a task to finance team for refund reminder.
-            Map<string,QueueSObject > mapOfQueue = BillingUtility.getTaskQueueMap();
-            if(mapOfQueue != null && mapOfQueue.size() > 0 && mapOfQueue.containskey('Finance Queue') && string.isNotBlank(mapOfQueue.get('Finance Queue').Queue.Id)){ 
-                mapOfRefundReminderTasks.put('Refund Deposit',BillingUtility.createNewTask('Refund Reminder',objEnrol.id,lastLessonDateObj,mapOfQueue.get('Finance Queue').Queue.Id));
-            }
-            // added by nishi: 5-Nov-2020: for if we not found any active enrolment all enrolments are withdrwal then we create a task to finance team for refund reminder.  
-                
+                 
         }
        //system.debug('isRefund'+isRefund);
          // we need to refund current month amount if applicable
@@ -722,13 +742,18 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
             }
              // added by nishi: 5-Nov-2020: for if we not found any active enrolment all enrolments are withdrwal then we create a task to finance team for refund reminder.
             if(mapOfRefundReminderTasks != null && mapOfRefundReminderTasks.size() > 0){
-                 if(mapOfRefundReminderTasks.containskey('Refund Deposit')){
-                     task objtask = mapOfRefundReminderTasks.get('Refund Deposit');
-                     objtask.WhatId = newPendingCreditMemos.get('Refund Deposit').id;
-                     mapOfRefundReminderTasks.put('Refund Deposit',objtask);
-                 }
+                for( string invoiceId : mapOfInvoicePayments.keyset()){
+                    if(mapOfInvoicePayments.containsKey(invoiceId)){
+                        if(mapOfRefundReminderTasks.containskey('Refund Deposit'+invoiceId)){
+                            task objtask = mapOfRefundReminderTasks.get('Refund Deposit'+invoiceId);
+                            objtask.WhatId = newPendingCreditMemos.get('Refund Deposit'+invoiceId).id;
+                            mapOfRefundReminderTasks.put('Refund Deposit'+invoiceId,objtask);
+                        }
+                    }
+                }
                 insert mapOfRefundReminderTasks.values();
             }
+            system.debug('mapOfRefundReminderTasks'+mapOfRefundReminderTasks);
             // added by nishi: 5-Nov-2020: for if we not found any active enrolment all enrolments are withdrwal then we create a task to finance team for refund reminder.
           
         }

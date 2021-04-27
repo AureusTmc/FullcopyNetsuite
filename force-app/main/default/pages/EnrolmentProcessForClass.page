@@ -674,7 +674,7 @@
                                 </div>
                                 <div class="slds-grid slds-wrap">
                                     <div class="slds-col slds-large-size_2-of-3 slds-p-bottom_small">
-                                        <p>Desposit Fee</p>
+                                        <p>Deposit Fee</p>
                                     </div>
                                     <div class="slds-col slds-large-size_1-of-3 slds-text-align_right  slds-p-bottom_small">
                                         <p>${!enrolDetails.feeModelObj[enrolment].depFees}</p>

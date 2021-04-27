@@ -246,7 +246,8 @@ public without sharing class UpdateEnrolmentProcessController implements IAdvanc
         return totalAmount+';'+gstAmount;
     }
    @TestVisible
-    private static String getPrepaymentPackageInvoiceAmount(Enrolment__c objEnrol,Map<Id,Package__c> mapOfPackages,map<id,String> packageInvoiceAmount,string packageId,boolean isDiscount){
+    private static String getPrepaymentPackageInvoiceAmount(Enrolment__c objEnrol,Map<Id,Package__c> mapOfPackages,
+                                                            map<id,String> packageInvoiceAmount,string packageId,boolean isDiscount){
         decimal totalAmount = 0;
         decimal gstAmount = 0;
         Decimal noOfMonths = String.isNotBlank(mapOfPackages.get(packageId).Promotion_period_In_months__c) ? Integer.valueOf(mapOfPackages.get(packageId).Promotion_period_In_months__c) : 1;
@@ -254,13 +255,14 @@ public without sharing class UpdateEnrolmentProcessController implements IAdvanc
         if(packageInvoiceAmount.containsKey(packageId)){
             totalAmount = decimal.valueOf(packageInvoiceAmount.get(packageId).split(';')[0]);
         }
+        Integer lessondays = 4;
         if(isDiscount){
             if(mapOfPackages.get(packageId).Promotion_Discount__c != null){
-                preUnitDiscountAmount = ((mapOfPackages.get(packageId).Promotion_Discount__c / noOfMonths)/4);
+                preUnitDiscountAmount = ((mapOfPackages.get(packageId).Promotion_Discount__c / noOfMonths)/lessondays);
             }
         }else{
             if(mapOfPackages.get(packageId).Package_Fee__c != null){
-                preUnitDiscountAmount = ((mapOfPackages.get(packageId).Package_Fee__c / noOfMonths)/4);
+                preUnitDiscountAmount = ((mapOfPackages.get(packageId).Package_Fee__c / noOfMonths)/lessondays);
             }
         }
         totalAmount += preUnitDiscountAmount;
@@ -331,6 +333,10 @@ public without sharing class UpdateEnrolmentProcessController implements IAdvanc
             map<id,String> packageInvoiceAmount = new Map<Id,String>();
             map<id,String> packageInvoiceNextMonthAmount = new Map<Id,String>();
             map<id,String> packageInvoiceDiscountAmount = new Map<Id,String>();
+            /* 26-Apr-2021 Change Enrolment (Teacher Change) During a promo package was generated and the Credit Memo Line Item Amount for May was doubled so we added other map for old package amount calculation*/
+             map<id,String> packageInvoiceoldAmount = new Map<Id,String>();
+            map<id,String> packageInvoiceoldNextMonthAmount = new Map<Id,String>();
+            map<id,String> packageInvoiceoldDiscountAmount = new Map<Id,String>();
             Map<Id,Package__c> mapOfPackages =New Map<Id,Package__c>([Select Id,Unit_Fee__c,Is_Promotion_Discount__c,type_of_package__C, Package_after_Promotion__c,Package_Fee__c, Promotion_period_In_months__c, Promotion_Discount__c from Package__c where Id In:packageIds]);
             date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1);
            
@@ -393,11 +399,16 @@ public without sharing class UpdateEnrolmentProcessController implements IAdvanc
                     if(booking.Booking_date__c.month() == effectiveDate.month() && string.isNotBlank(booking.Package__c)){
                         if(mapOfPackages.containsKey(newPackage)){
                             packageInvoiceAmount.put(newPackage,getPrepaymentPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceAmount,newPackage,false));    
-                            packageInvoiceDiscountAmount.put(newPackage,getPrepaymentPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceDiscountAmount,newPackage,true)); 
-                        }if(mapOfPackages.containsKey(oldPackage)){
-                            packageInvoiceAmount.put(oldPackage,getPrepaymentPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceAmount,oldPackage,false)); 
-                            packageInvoiceDiscountAmount.put(oldPackage,getPrepaymentPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceDiscountAmount,oldPackage,true)); 
+                            packageInvoiceDiscountAmount.put(newPackage,getPrepaymentPackageInvoiceAmount(objEnrol,mapOfPackages,
+                                                                                                          packageInvoiceDiscountAmount,newPackage,true)); 
+                        }
+                        /* 26-Apr-2021 Change Enrolment (Teacher Change) During a promo package was generated and the Credit Memo Line Item Amount for May was doubled so we added other map for old package amount calculation*/
+                        if(mapOfPackages.containsKey(oldPackage)){
+                            packageInvoiceoldAmount.put(oldPackage,getPrepaymentPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceoldAmount,oldPackage,false)); 
+                            packageInvoiceoldDiscountAmount.put(oldPackage,getPrepaymentPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceoldDiscountAmount,oldPackage,true)); 
                         } 
+                        /* 26-Apr-2021 Change Enrolment (Teacher Change) During a promo package was generated and the Credit Memo Line Item Amount for May was doubled so we added other map for old package amount calculation*/
+            
                     }
                 }else{
                     // added by nishi: 21-sep-2020: for if next month invoice already generated then we create new invoice line item
@@ -406,9 +417,12 @@ public without sharing class UpdateEnrolmentProcessController implements IAdvanc
                         if(string.isNotBlank(booking.Package__c)){
                             if(mapOfPackages.containsKey(newPackage)){
                                 packageInvoiceNextMonthAmount.put(newPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceNextMonthAmount,newPackage));    
-                            }if(mapOfPackages.containsKey(oldPackage)){
-                                packageInvoiceNextMonthAmount.put(oldPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceNextMonthAmount,oldPackage)); 
+                            }
+                            /* 26-Apr-2021 Change Enrolment (Teacher Change) During a promo package was generated and the Credit Memo Line Item Amount for May was doubled so we added other map for old package amount calculation*/
+                            if(mapOfPackages.containsKey(oldPackage)){
+                                packageInvoiceoldNextMonthAmount.put(oldPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceoldNextMonthAmount,oldPackage)); 
                             } 
+                            /* 26-Apr-2021 Change Enrolment (Teacher Change) During a promo package was generated and the Credit Memo Line Item Amount for May was doubled so we added other map for old package amount calculation*/
                         }
                     }else{
                     //end: added by nishi: 21-sep-2020: for if next month invoice already generated then we create new invoice line item
@@ -416,9 +430,12 @@ public without sharing class UpdateEnrolmentProcessController implements IAdvanc
                         if(string.isNotBlank(booking.Package__c)){
                             if(mapOfPackages.containsKey(newPackage)){
                                 packageInvoiceAmount.put(newPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceAmount,newPackage));    
-                            }if(mapOfPackages.containsKey(oldPackage)){
-                                packageInvoiceAmount.put(oldPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceAmount,oldPackage)); 
+                            }
+                            /* 26-Apr-2021 Change Enrolment (Teacher Change) During a promo package was generated and the Credit Memo Line Item Amount for May was doubled so we added other map for old package amount calculation*/
+                            if(mapOfPackages.containsKey(oldPackage)){
+                                packageInvoiceoldAmount.put(oldPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceoldAmount,oldPackage)); 
                             } 
+                            /* 26-Apr-2021 Change Enrolment (Teacher Change) During a promo package was generated and the Credit Memo Line Item Amount for May was doubled so we added other map for old package amount calculation*/
                         }
                     }
                 }
@@ -433,14 +450,14 @@ public without sharing class UpdateEnrolmentProcessController implements IAdvanc
                  newPackageTotalAmount += decimal.valueOf(packageInvoiceAmount.get(newPackage).split(';')[0]);
              }
              if(packageInvoiceAmount.containsKey(oldPackage)){
-                 oldPackageTotalAmount += decimal.valueOf(packageInvoiceAmount.get(oldPackage).split(';')[0]);
+                 oldPackageTotalAmount += decimal.valueOf(packageInvoiceoldAmount.get(oldPackage).split(';')[0]);
              }
              // added by nishi: 21-sep-2020: for if next month invoice already generated then we add  invoice line item amount
              if(packageInvoiceNextMonthAmount.containsKey(newPackage)){
                 newPackageNextMonthTotalAmount += decimal.valueOf(packageInvoiceNextMonthAmount.get(newPackage).split(';')[0]);
             }
             if(packageInvoiceNextMonthAmount.containsKey(oldPackage)){
-                oldPackageNextMonthTotalAmount += decimal.valueOf(packageInvoiceNextMonthAmount.get(oldPackage).split(';')[0]);
+                oldPackageNextMonthTotalAmount += decimal.valueOf(packageInvoiceoldNextMonthAmount.get(oldPackage).split(';')[0]);
             }
             // added by nishi: 21-sep-2020: for if next month invoice already generated then  we add  invoice line item amount
            system.debug('@@@@@newPackageTotalAmount'+newPackageTotalAmount);
@@ -476,10 +493,11 @@ public without sharing class UpdateEnrolmentProcessController implements IAdvanc
                                 invoiceLineItem.add(inlineItemForupdate);
                             }
                         }
-                        if(packageInvoiceAmount.containsKey(oldPackage)){
-                            if(packageInvoiceAmount.get(oldPackage).split(';') != null && packageInvoiceAmount.get(oldPackage).split(';').size() >0){
-                                oldPackageTotalAmount = decimal.valueOf(packageInvoiceAmount.get(oldPackage).split(';')[0]);
-                                gstAmount = decimal.valueOf(packageInvoiceAmount.get(oldPackage).split(';')[1]);
+                        if(packageInvoiceoldAmount.containsKey(oldPackage)){
+                            if(packageInvoiceoldAmount.get(oldPackage).split(';') != null && 
+                               packageInvoiceoldAmount.get(oldPackage).split(';').size() >0){
+                                oldPackageTotalAmount = decimal.valueOf(packageInvoiceoldAmount.get(oldPackage).split(';')[0]);
+                                gstAmount = decimal.valueOf(packageInvoiceoldAmount.get(oldPackage).split(';')[1]);
                                 if(oldPackageTotalAmount != 0){
                                     oldPackageTotalAmount = BillingUtility.roundOffAmount(oldPackageTotalAmount);
                                 }
@@ -540,10 +558,11 @@ public without sharing class UpdateEnrolmentProcessController implements IAdvanc
                                     invoiceLineItem.add(inlineItemForupdate);
                                 }
                             }
-                            if(packageInvoiceDiscountAmount.containsKey(oldPackage)){
-                                if(packageInvoiceDiscountAmount.get(oldPackage).split(';') != null && packageInvoiceDiscountAmount.get(oldPackage).split(';').size() >0){
-                                    oldPackageTotalDiscountAmount = -BillingUtility.roundOffAmount(decimal.valueOf(packageInvoiceDiscountAmount.get(oldPackage).split(';')[0]));
-                                    gstAmount = -BillingUtility.roundOffAmount(decimal.valueOf(packageInvoiceDiscountAmount.get(oldPackage).split(';')[1]));
+                            if(packageInvoiceoldDiscountAmount.containsKey(oldPackage)){
+                                if(packageInvoiceoldDiscountAmount.get(oldPackage).split(';') != null && 
+                                   packageInvoiceoldDiscountAmount.get(oldPackage).split(';').size() >0){
+                                    oldPackageTotalDiscountAmount = -BillingUtility.roundOffAmount(decimal.valueOf(packageInvoiceoldDiscountAmount.get(oldPackage).split(';')[0]));
+                                    gstAmount = -BillingUtility.roundOffAmount(decimal.valueOf(packageInvoiceoldDiscountAmount.get(oldPackage).split(';')[1]));
                                     String invoicelineitemId = null;
                                     if(mapofinvoicelineitem.containskey('DiscountInvoice')){
                                         invoicelineitemId =mapofinvoicelineitem.get('DiscountInvoice').id; 
@@ -589,10 +608,10 @@ public without sharing class UpdateEnrolmentProcessController implements IAdvanc
                                     invoiceLineItem.add(inlineItemForupdate);
                                 }
                             }
-                            if(packageInvoiceNextMonthAmount.containsKey(oldPackage)){
-                                if(packageInvoiceNextMonthAmount.get(oldPackage).split(';') != null && packageInvoiceNextMonthAmount.get(oldPackage).split(';').size() >0){
-                                    oldPackageNextMonthTotalAmount = BillingUtility.roundOffAmount(decimal.valueOf(packageInvoiceNextMonthAmount.get(oldPackage).split(';')[0]));
-                                    gstAmount = BillingUtility.roundOffAmount(decimal.valueOf(packageInvoiceNextMonthAmount.get(oldPackage).split(';')[1]));
+                            if(packageInvoiceoldNextMonthAmount.containsKey(oldPackage)){
+                                if(packageInvoiceoldNextMonthAmount.get(oldPackage).split(';') != null && packageInvoiceoldNextMonthAmount.get(oldPackage).split(';').size() >0){
+                                    oldPackageNextMonthTotalAmount = BillingUtility.roundOffAmount(decimal.valueOf(packageInvoiceoldNextMonthAmount.get(oldPackage).split(';')[0]));
+                                    gstAmount = BillingUtility.roundOffAmount(decimal.valueOf(packageInvoiceoldNextMonthAmount.get(oldPackage).split(';')[1]));
                                     /*Commented by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
                                      oldPackageNextMonthTotalAmount = -oldPackageNextMonthTotalAmount;
                                     if(gstAmount > 0){
