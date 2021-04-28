@@ -14,27 +14,31 @@ trigger AccountTrigger on Account (before insert,before update,after insert, aft
                  if(string.isNotBlank(ac.Organisation_Sharing__c) && ac.RecordTypeId == customerRecordTypeId  ){
                     ac.Organisation_Name__pc = ac.Organisation_Sharing__c ;
                 }
-            if(ac.PI_to_SF_Sync__pc != null && ac.PI_to_SF_Sync__pc.equalsIgnoreCase('true') && (Trigger.isInsert || 
-                                        (Trigger.isUpdate && ac.PI_to_SF_Sync__pc != Trigger.oldMap.get(ac.Id).PI_to_SF_Sync__pc)) && String.isBlank(ac.Centre_Name__c) && String.isNotBlank(ac.Location_PI__pc)){
-                filterParAcList.add(ac);
-            }
         }
         
         if(filterParAcList.size() > 0)
             AccountTriggerHelper.populateCentre(filterParAcList);
     }else if(Trigger.isAfter){
         List<Account> filterParAcList = new List<Account>();
-        
+        List<Account> filterInstrumentAcList = new List<Account>();
         for(Account ac: Trigger.new){
             //Added by Rajesh on 30th Oct 2019, Add B2BMA Integration user condtion as per discussion with Prashant. To solve duplicate insertion case(sales enquiry) record
-            if(ac.LastModifiedById == Label.B2BMA_Integration_UserId && String.isNotBlank(ac.PI_to_SF_Sync__pc) && ac.PI_to_SF_Sync__pc.equalsIgnoreCase('true') && (Trigger.isInsert || 
+            if(/*ac.LastModifiedById == Label.B2BMA_Integration_UserId && */
+            String.isNotBlank(ac.PI_to_SF_Sync__pc) && ac.PI_to_SF_Sync__pc.equalsIgnoreCase('true') && (Trigger.isInsert || 
                                         (Trigger.isUpdate && ac.PI_to_SF_Sync__pc != Trigger.oldMap.get(ac.Id).PI_to_SF_Sync__pc))){
-                filterParAcList.add(ac);
+                if(string.isnotBlank( ac.UTM_Campaign__pc) && ac.UTM_Campaign__pc.equalsIgnoreCase('Instrument Rental Enquiry')){
+                    filterInstrumentAcList.add(ac);
+                }else{
+                    filterParAcList.add(ac);
+                }
             }
+            
+            // added by nishi
         }
-        
+        if(filterInstrumentAcList.size() > 0)
+            AccountTriggerHelper.createCaseForPIsyncAccounts(filterInstrumentAcList,false);
         if(filterParAcList.size() > 0)
-            AccountTriggerHelper.createCaseForPIsyncAccounts(filterParAcList);
+            AccountTriggerHelper.createCaseForPIsyncAccounts(filterParAcList,true);
     }
     
     //Sanjay Hrms 

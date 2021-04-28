@@ -721,12 +721,12 @@ public class InstrumentRental_IpadCntrl{
             if(parentAcc.PersonEmail != null){
                 List<Account> accList = [SELECT Id,Name FROM Account 
                                         WHERE PersonEmail =: parentAcc.PersonEmail
-                                        And Centre_Name__r.Organisation__c =: centrList.get(0).Organisation__c // Added by nishi: 30-nov-2020: for Change customer key from email address to email address+Organisation name
+                                     //  And Centre_Name__r.Organisation__c =: centrList.get(0).Organisation__c // Added by nishi: 30-nov-2020: for Change customer key from email address to email address+Organisation name
                                         ]; 
                 if(accList.size() > 0)
                     parentAcc.Id = accList.get(0).Id;
                 else{
-                    // Added by nishi:Start: 30-nov-2020: for Change customer key from email address to email address+Organisation name
+                    /*// Added by nishi:Start: 30-nov-2020: for Change customer key from email address to email address+Organisation name
                     string useremail=parentAcc.PersonEmail+'.';
                     if(centrList.get(0).Organisation__r.name == Label.Ossia_Organisation_Name){
                         useremail +='ossia'+centrList.get(0).name; 
@@ -734,7 +734,8 @@ public class InstrumentRental_IpadCntrl{
                         useremail += 'aureus'+centrList.get(0).name;
                     }
                     parentAcc.User_Email__c = useremail;
-                    // Added by nishi:end: 30-nov-2020: for Change customer key from email address to email address+Organisation name     
+                    // Added by nishi:end: 30-nov-2020: for Change customer key from email address to email address+Organisation name     */
+                    
                 }
             }
            /* if(isParAlsoAStudent){

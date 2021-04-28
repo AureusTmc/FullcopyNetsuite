@@ -1,8 +1,10 @@
 <aura:component controller="AccountController" implements="force:appHostable,flexipage:availableForRecordHome,force:hasRecordId" access="global" >
     <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
     <aura:attribute name="centerId" type="string" />
+    <aura:attribute name="isSalesEnquiery" type="Boolean" default="true"/><!-- // 28-Apr-2021: nishi: as per discussion with rajesh we shoq  piano rental or salesenquirey  list view according to isSalesEnquiery -->
+    <aura:attribute name="cardtitle" type="string" default="Sales Enquiry"/>
     <aura:attribute name="Cases" type="Case[]" />
-    <lightning:card variant="Narrow" title="Sales Enquiry" iconName="standard:case">
+    <lightning:card variant="Narrow" title="{!v.cardtitle}" iconName="standard:case">
          <aura:set attribute="actions">
              <a href="{! '/lightning/n/Home'}">  <lightning:button label="Back"/></a>
         </aura:set>

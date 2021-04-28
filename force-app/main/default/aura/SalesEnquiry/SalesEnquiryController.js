@@ -17,7 +17,8 @@
         evt.setParams({
             componentDef : "c:SalesViewAll",
             componentAttributes: {
-                centerId : component.get("v.centerId")
+                centerId : component.get("v.centerId"),
+                isSalesEnquiery :component.get('v.isSalesEnquiery') // 28-Apr-2021: nishi: as per discussion with rajesh we show  piano rental or salesenquirey  list view according to isSalesEnquiery 
             }
         });
         evt.fire();

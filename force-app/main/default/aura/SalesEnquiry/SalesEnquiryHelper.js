@@ -1,8 +1,11 @@
 ({
     callSalesCase:function(component,event,searchKeys){
     	var action = component.get("c.findSalesEnquiryCases");
+        // 28-Apr-2021: nishi: as per discussion with rajesh we shoq  piano rental or salesenquirey  list view according to isSalesEnquiery 
+        var isSalesEnquiery=component.get('v.isSalesEnquiery');
         action.setParams({
-          "searchKey": searchKeys
+          "searchKey": searchKeys,
+          "isSalesEnquiery":isSalesEnquiery,
         });
         action.setCallback(this, function(response) {
             var result = response.getState();

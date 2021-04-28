@@ -8,9 +8,19 @@
     <aura:attribute name="removeCheckBox" type="string"/>
     <aura:attribute name="Cases" type="Case[]"/>
     <aura:attribute name="totalCount" type="integer"/>
+    <aura:attribute name="isSalesEnquiery" type="Boolean" default="true"/><!-- 28-Apr-2021: nishi: as per discussion with rajesh we show piano rental list view-->
     <lightning:card title="">
         <aura:set attribute="title">
-            <b>Sales Enquiry&nbsp;({!v.totalCount})</b>
+            <b>
+                <!-- 28-Apr-2021: nishi: as per discussion with rajesh we show piano rental list view-->
+                <aura:if isTrue="{!v.isSalesEnquiery}">
+                 Service Request
+                    <aura:set attribute="else">
+                        Instrument Rental Enquiry
+                    </aura:set>
+                 </aura:if> 
+                 <!-- 28-Apr-2021: nishi: as per discussion with rajesh we show piano rental list view-->
+            &nbsp;({!v.totalCount})</b>
         </aura:set>
         <div class="c-container slds-scrollable">
                     <lightning:layout multipleRows="true">

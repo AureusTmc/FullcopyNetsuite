@@ -43,6 +43,8 @@ public class ConstantsClass {
     public static String ClosedStatus      = 'Closed';
     public static String NewStatus         = 'New';
     public static String caseServiceEnqRecTypeName = 'Service Request';
+    public static String InstrumentRentalEnquiryRecordType ='Instrument Rental Enquiry';// added by nishi: 28-Apr-2021: for piano rental enquiry recordtype
+    
     public static String cancelType = 'Cancel';
     public static String casePendingStatus  = 'Pending';
     public static String caseOpenStatus = 'Open';
@@ -172,7 +174,16 @@ public class ConstantsClass {
                                                                                       'Trial No-Show'   => 'Trial No Show',
         																			  'Trial Transferred'   => 'Transferred',
                                                                                       'Regular Enrolled'=> 'Enrolled',
-        																			  'Trial Lost'   => 'Lost'};
+        																			  'Trial Lost'   => 'Lost',
+                                                                                      // 28-Apr-2021:added by Nishi: need to build this functionality from enrolment as per discussion with Rajesh or Alex 
+                                                                                      'Piano Viewing Booked' => 'Piano Viewing Booked',
+                                                                                      'Piano Viewing Completed' =>'Piano Viewing Completed',
+                                                                                      'Piano Rental Active' =>'Piano Rental Active',
+                                                                                      'Piano Termination In-Progress' =>'Piano Termination-In Progress',
+                                                                                      'Piano Rental Terminated'=>'Piano Rental Terminated',
+                                                                                      'Piano Sold'=>'Piano Sold',
+                                                                                      'Not Interested'=>'Not Interested'
+                                                                                    };
     public static String trialLost = 'Trial Lost';  
     public static String caseLost = 'Lost'; 
     public static String caseSalesEnqRecTypeName = 'Sales Enquiry';

@@ -90,12 +90,15 @@ trigger EnrolmentTrigger on Enrolment__c (before Insert, after Insert,before Upd
         if(trigger.isInsert){
             //By Rajesh (Date 6-4-2019), This process is used to manage case(Sales Enquiry) for the trial request
             List<Enrolment__c> processEnrList = new List<Enrolment__c>();
-             
+            List<Enrolment__c> processPianoRentalEnrList = new List<Enrolment__c>(); 
              String enrollmentInstrumentRecTypeId = Schema.SObjectType.Enrolment__c.getRecordTypeInfosByName().get(ConstantsClass.enrollmentInstrumentRecTypeName).getRecordTypeId();
        
             for(Enrolment__c enrol: trigger.new){
                 if(enrol.Parent__c != null && enrol.Type__c == ConstantsClass.trialStatus && enrol.Stage__c == ConstantsClass.requestedSubStatus)
                     processEnrList.add(enrol);
+                if(enrol.Parent__c != null && enrol.recordtypeId==enrollmentInstrumentRecTypeId ){
+                    processPianoRentalEnrList.add(enrol);
+                } 
               //  else if(enrol.Parent__c != null && enrol.Type__c == ConstantsClass.enrollmentTypeInstrument && enrol.Stage__c == ConstantsClass.enrollmentPianoViewingBookedStage)
                    // processEnrList.add(enrol);
                 //Start: added by nishi: 5-Aug-2020: for rollup referredBy Ids
@@ -106,9 +109,13 @@ trigger EnrolmentTrigger on Enrolment__c (before Insert, after Insert,before Upd
                  //commented by nishi: 7-aug: for deploy Only resource CHnages
                 //end added by nishi: 5-Aug-2020: for rollup referredBy Ids  
             }
-             
-            if(processEnrList.size() > 0)   
-                EnrolmentTriggerHandler.manageSalesEnquiryCase(processEnrList);
+            system.debug('processEnrList'+processEnrList); 
+            if(processEnrList != null && processEnrList.size() > 0)   
+                EnrolmentTriggerHandler.manageSalesEnquiryCase(processEnrList,true);
+             //added by nishi: 28-apr-2021:  we create instrument rental case records     
+            if(processPianoRentalEnrList != null && processPianoRentalEnrList.size() > 0)   
+                EnrolmentTriggerHandler.manageSalesEnquiryCase(processPianoRentalEnrList,false); 
+           //added by nishi: 28-apr-2021:  we create instrument rental case records     
             //new EnrolmentTriggerHandler().manageSalesEnquiry();
             //Merge the Code of 2nd Trigger UpdateEnrolmentNo
 
@@ -138,14 +145,33 @@ trigger EnrolmentTrigger on Enrolment__c (before Insert, after Insert,before Upd
             
             //@By Rajesh (Date 03-04-2019), Update Lead Case and opportunity stages for the Sales enquiry process
             list<Enrolment__c> enrList = new list<Enrolment__c>();
+             //added by nishi: 28-apr-2021: according to isCreateSalesEnquiery we create salesenquiery or instrument rental records
+            list<Enrolment__c> enrpianorentalList = new list<Enrolment__c>();
+            String enrollmentInstrumentRecTypeId = Schema.SObjectType.Enrolment__c.getRecordTypeInfosByName().get(ConstantsClass.enrollmentInstrumentRecTypeName).getRecordTypeId();
+             //added by nishi: 28-apr-2021:end: according to isCreateSalesEnquiery we create salesenquiery or instrument rental records
             for(Enrolment__c enrol:trigger.new){
                 if((String.isNotBlank(enrol.Type__c) && String.isNotBlank(enrol.Stage__c)) && enrol.Type__c != Trigger.oldMap.get(enrol.Id).Type__c || enrol.Stage__c != Trigger.oldMap.get(enrol.Id).Stage__c)
+                    //added by nishi: 28-apr-2021: according to isCreateSalesEnquiery we create salesenquiery or instrument rental records
+                    if(enrol.RecordTypeId == enrollmentInstrumentRecTypeId){
+                        enrpianorentalList.add(enrol);
+                   }else{
+                    //added by nishi: 28-apr-2021:end: according to isCreateSalesEnquiery we create salesenquiery or instrument rental records    
                     enrList.add(enrol);
+                   }
             } 
-            if(enrList.size() > 0 && EnrolmentTriggerHandler.isFirstTime){
-                EnrolmentTriggerHandler.isFirstTime = False;
-                EnrolmentTriggerHandler.updateStatusForSalesProcess(enrList);
+            if(EnrolmentTriggerHandler.isFirstTime){
+                if(enrList != null && enrList.size() > 0 ){
+                    EnrolmentTriggerHandler.isFirstTime = False;
+                    EnrolmentTriggerHandler.updateStatusForSalesProcess(enrList,true);
+                }
+                 //added by nishi: 28-apr-2021:  we create instrument rental case records
+                if(enrpianorentalList != null && enrpianorentalList.size() > 0){
+                    EnrolmentTriggerHandler.isFirstTime = False;
+                    EnrolmentTriggerHandler.updateStatusForSalesProcess(enrpianorentalList,false);
+                }
+                 //added by nishi: 28-apr-2021:  we create  instrument rental case records
             }
+           
             
             Map<String,Enrolment__c> mapOfCancelEnrol = new Map<String,Enrolment__c>();
             /*
