@@ -20,23 +20,28 @@ trigger AccountTrigger on Account (before insert,before update,after insert, aft
             AccountTriggerHelper.populateCentre(filterParAcList);
     }else if(Trigger.isAfter){
         List<Account> filterParAcList = new List<Account>();
-        List<Account> filterInstrumentAcList = new List<Account>();
+        List<Account> filterInstrumentAcList = new List<Account>();//added by 28-Apr-2021: Nishi: On the bases of UTM Campaign parameters, We will identify the customer for the Instrument Rental Enquiry process.
         for(Account ac: Trigger.new){
             //Added by Rajesh on 30th Oct 2019, Add B2BMA Integration user condtion as per discussion with Prashant. To solve duplicate insertion case(sales enquiry) record
-            if(/*ac.LastModifiedById == Label.B2BMA_Integration_UserId && */
+            if(ac.LastModifiedById == Label.B2BMA_Integration_UserId && 
             String.isNotBlank(ac.PI_to_SF_Sync__pc) && ac.PI_to_SF_Sync__pc.equalsIgnoreCase('true') && (Trigger.isInsert || 
                                         (Trigger.isUpdate && ac.PI_to_SF_Sync__pc != Trigger.oldMap.get(ac.Id).PI_to_SF_Sync__pc))){
-                if(string.isnotBlank( ac.UTM_Campaign__pc) && ac.UTM_Campaign__pc.equalsIgnoreCase('Instrument Rental Enquiry')){
+                //added by 28-Apr-2021:start: Nishi: On the bases of UTM Campaign parameters, We will identify the customer for the Instrument Rental Enquiry process.
+                if(string.isnotBlank( ac.UTM_Campaign__pc) && (ac.UTM_Campaign__pc.containsIgnoreCase('Rental')  || ac.UTM_Campaign__pc.containsIgnoreCase('Purchase'))){
                     filterInstrumentAcList.add(ac);
                 }else{
+                //28-Apr-2021: Nishi:end: On the bases of UTM Campaign parameters, We will identify the customer for the Instrument Rental Enquiry process.
                     filterParAcList.add(ac);
                 }
             }
             
             // added by nishi
         }
+        //added by 28-Apr-2021:start: Nishi: On the bases of UTM Campaign parameters, We will identify the customer for the Instrument Rental Enquiry process and create  Instrument Rental  case records.
         if(filterInstrumentAcList.size() > 0)
             AccountTriggerHelper.createCaseForPIsyncAccounts(filterInstrumentAcList,false);
+        //added by 28-Apr-2021:start: Nishi: On the bases of UTM Campaign parameters, We will identify the customer for the Instrument Rental Enquiry process and create  Instrument Rental  case records.
+                
         if(filterParAcList.size() > 0)
             AccountTriggerHelper.createCaseForPIsyncAccounts(filterParAcList,true);
     }

@@ -1,6 +1,6 @@
 ({
     callSalesCase:function(component,event,searchKeys){
-    	var action = component.get("c.findSalesEnquiryCases");
+    	var action = component.get("c.findinstrumentRentalCases");
         action.setParams({
           "searchKey": searchKeys,
         });

@@ -1,10 +1,8 @@
 ({
 	 callSalesCase:function(component,event,searchKeys){
     	var action = component.get("c.findSalesEnquiryCases");
-        var isSalesEnquiery=component.get('v.isSalesEnquiery');
         action.setParams({
           "searchKey": searchKeys,
-          "isSalesEnquiery":isSalesEnquiery,
         });
         action.setCallback(this, function(response) {
             var result = response.getState();

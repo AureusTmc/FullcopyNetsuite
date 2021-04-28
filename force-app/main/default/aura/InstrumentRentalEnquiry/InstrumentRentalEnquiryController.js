@@ -15,7 +15,7 @@
     OpenMegaPage:function(component,event){
         var evt = $A.get("e.force:navigateToComponent");
         evt.setParams({
-            componentDef : "c:SalesViewAll",
+            componentDef : "c:InstrumentRentalViewAll",
             componentAttributes: {
                 centerId : component.get("v.centerId")
             }

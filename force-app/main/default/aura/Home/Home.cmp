@@ -9,10 +9,9 @@
             <c:MakeUPBooking/>
             <c:RegularEnrolment/>
             <c:CustomerRequest/>
+            <c:SalesEnquiry/>
             <!-- 28-Apr-2021: nishi: as per discussion with rajesh we show piano rental list view-->
-            <!--<c:SalesEnquiry-->
-            <c:SalesEnquiry isSalesEnquiery="true"/>
-            <c:SalesEnquiry isSalesEnquiery="false"/>
+            <c:InstrumentRentalEnquiry/>
             <!-- 28-Apr-2021: nishi: as per discussion with rajesh we show piano rental list view-->
             <c:AdminServiceRequest/>
         </div>

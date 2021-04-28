@@ -274,10 +274,9 @@ public class AccountController {
     }   
     // 28-Apr-2021: Nishi:show Case accoridng to  isSalesEnquiery if its true then we show salesEnquiryRecordType records otherwise Instrument Rental Enquiry records
     @AuraEnabled
-    public static List<Case> findSalesEnquiryCases(String searchKey,Boolean isSalesEnquiery) {
-        Id recorId = isSalesEnquiery ? Schema.SObjectType.case.getRecordTypeInfosByName().get(salesEnquiryRecordType).getRecordTypeId():Schema.SObjectType.case.getRecordTypeInfosByName().get(InstrumentRentalEnquiryRecordType).getRecordTypeId();
+    public static List<Case> findinstrumentRentalCases(String searchKey) {
+        Id recorId = Schema.SObjectType.case.getRecordTypeInfosByName().get(InstrumentRentalEnquiryRecordType).getRecordTypeId();
         return [SELECT Id,CaseNumber,Channel__c,LastModifiedDate,Status_Image__c,OwnerId,Stage__c,Last_Inbound_Email__c,Account.Name,Contact.Name,Subject,ParentId,Type,Reason,CreatedDate,ClosedDate,Status,Owner.Name FROM Case where Centre_Name__c =:searchKey AND Status IN ('New','Open') AND RecordTypeId=:recorId  ORDER BY LastModifiedDate DESC];
-          
     }
     @AuraEnabled
     public static List<InvoiceWrapperClass> findInvoices(String searchKey,Boolean FrontPage) {

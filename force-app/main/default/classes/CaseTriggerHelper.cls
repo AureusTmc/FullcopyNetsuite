@@ -52,7 +52,7 @@ public class CaseTriggerHelper {
                             accObj.Id=accObjNew.Id;
                             accObj.Location__c=centerLocation;
                             accObj.Centre_Name__c=CustomersId;
-                            string useremail=accObj.PersonEmail+'.';
+                            /*string useremail=accObj.PersonEmail+'.';
                             if(String.isNotBlank(CustomersId)){
                                 if(centerlist[0].Organisation__r.name == Label.Ossia_Organisation_Name){
                                     useremail +='ossia'+centerlist.get(0).country__r.name; 
@@ -60,7 +60,7 @@ public class CaseTriggerHelper {
                                     useremail += 'aureus'+centerlist.get(0).country__r.name;
                                 }
                                 accObj.User_Email__c=useremail;
-                            }
+                            }*/
                             accntUpdate.add(accObj);
                         }
                     }
@@ -91,7 +91,7 @@ public class CaseTriggerHelper {
                         if(SuppName.size()==2){
                             Account ac= new Account(FirstName=SuppName[0],LastName=SuppName[1],PersonEmail=cs.SuppliedEmail,RecordTypeId=Schema.SObjectType.Account.getRecordTypeInfosByName().get(custRec).getRecordTypeId(),OwnerId=UserInfo.getUserId());
                             // Added by nishi:Start: 30-nov-2020: for Change customer key from email address to email address+Organisation name
-                            if(centerlist != null && centerlist.size() > 0){
+                            /*if(centerlist != null && centerlist.size() > 0){
                                 string useremail=cs.SuppliedEmail+'.';
                                 if(String.isNotBlank(CustomersId)){
                                     if(centerlist[0].Organisation__r.name == Label.Ossia_Organisation_Name){
@@ -102,7 +102,7 @@ public class CaseTriggerHelper {
                                     
                                     ac.User_Email__c=useremail;
                                 }
-                            }
+                            }*/
                             // Added by nishi:end: 30-nov-2020: for Change customer key from email address to email address+Organisation name 
                             maptoAccount.put(ac.PersonEmail,ac);
                             accnt.add(ac);

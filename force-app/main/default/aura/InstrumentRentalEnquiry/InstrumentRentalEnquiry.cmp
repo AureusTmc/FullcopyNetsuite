@@ -11,7 +11,7 @@
     <lightning:card title="">
         <aura:set attribute="title">
             <b>
-                Sales Enquiry&nbsp;({!v.totalCount})</b>
+           Instrument Rental Enquiry &nbsp;({!v.totalCount})</b>
         </aura:set>
         <div class="c-container slds-scrollable">
                     <lightning:layout multipleRows="true">
