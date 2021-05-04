@@ -1035,7 +1035,8 @@ public class AureusHRManagementUtil{
         }
     }
     
-    //Sick Leave: calls calcLossAndCreatePayItemForUnpaidLeave to create PayItem records if the current month Leave Requests are approved. Called from LeaveRequestTrigger.
+    //Sick Leave: calls calcLossAndCreatePayItemForUnpaidLeave to create PayItem records if the current month Leave Requests are approved.
+    // Called from LeaveRequestTrigger.
     private static void createPayItemForUnpaidLeave(List<Leave_Request__c> unpaidSickLeaveRequestList, Map<Id, Leave_Request__c> newMap){
         /*Date todayDate = system.today();
         Date currMonthStartDate = todayDate.toStartOfMonth();
@@ -1065,7 +1066,8 @@ public class AureusHRManagementUtil{
         }
     }
     
-    //NSMen Leave: calls createPayItemWithoutPLR to create PayItem records if the current month NS Men Leave Requests are approved. Called from LeaveRequestTrigger.
+    //NSMen Leave: calls createPayItemWithoutPLR to create PayItem records if the current month NS Men Leave Requests are approved.
+    // Called from LeaveRequestTrigger.
     public static void createPayItemForNSMen(List<Leave_Request__c> nsMenLeaveRequestList, Map<Id, Leave_Request__c> newMap){
         /*Date todayDate = system.today();
         Date currMonthStartDate = todayDate.toStartOfMonth();
@@ -1244,18 +1246,22 @@ public class AureusHRManagementUtil{
     
     //Sick Leave: calculates Loss of Income in case of Unpaid Leave Request. Called from LeaveRequestTrigger and a batch class that creates Payout records.
     public static void calcLossAndCreatePayItemForUnpaidLeave(Set<Id> payoutIdSet, Map<Id, Leave_Request__c> unpaidLeaveRequestMap, Date processDate, Set<Id> empIdSet){  
-        List<Payitem_Master__c> unpaidPayitemMasterObj = [SELECT Id FROM Payitem_Master__c WHERE Name = 'Unpaid Sick Leave' AND Active__c = TRUE];
+        List<Payitem_Master__c> unpaidPayitemMasterObj = [SELECT Id FROM Payitem_Master__c WHERE Name = 'Unpaid Sick Leave' 
+                                                          AND Active__c = TRUE];
         Id sickLeaveRcTypeId = Schema.SObjectType.Leave_Request__c.getRecordTypeInfosByDeveloperName().get('Sick_Leave').getRecordTypeId();
         Set<Id> setPayoutId = new Set<Id>();
         Set<Id> employeeIdSet = new Set<Id>();
         
         if(unpaidPayitemMasterObj != NULL && unpaidPayitemMasterObj.size()>0){            
             List<Payout__c> payoutList;
+            system.debug('empIdSet'+empIdSet);
             if(empIdSet != NULL && empIdSet.size()>0)
-                payoutList = [SELECT Id, Year__c, Month__c, Salary__c, Total_OW_Amount__c, Monthly_Working_Days__c, Employee_Name__c, Daily_Rate__c FROM Payout__c WHERE Employee_Name__c IN: empIdSet];
+                payoutList = [SELECT Id, Year__c, Month__c, Salary__c, Total_OW_Amount__c, Monthly_Working_Days__c, Employee_Name__c,
+                              Daily_Rate__c FROM Payout__c WHERE Employee_Name__c IN: empIdSet];
             else
-                payoutList = [SELECT Id, Year__c, Month__c, Salary__c, Total_OW_Amount__c, Monthly_Working_Days__c, Employee_Name__c, Daily_Rate__c FROM Payout__c WHERE Id IN: payoutIdSet];
-            
+                payoutList = [SELECT Id, Year__c, Month__c, Salary__c, Total_OW_Amount__c, Monthly_Working_Days__c, Employee_Name__c, 
+                              Daily_Rate__c FROM Payout__c WHERE Id IN: payoutIdSet];
+             system.debug('payoutList'+payoutList);
             if(payoutList != NULL && payoutList.size() > 0){
                 Date todayDate = system.today();
                 if(processDate != NULL)
@@ -1280,16 +1286,19 @@ public class AureusHRManagementUtil{
                     employeeIdSet.add(payoutObj.Employee_Name__c);
                     setPayoutId.add(payoutObj.Id);
                 }
-                
+                 system.debug('setPayoutId'+setPayoutId);
+                   system.debug('unpaidPayitemMasterObj'+unpaidPayitemMasterObj[0].Id);
                 //get existing PayItem records
-                for(PayItem__c payitemObj: [SELECT Id, Payout__c, Notes__c, No_of_Days__c, Payitem__c, System_Generated__c, Type__c, Value__c FROM PayItem__c WHERE Payout__c IN: setPayoutId AND Payitem__c =: unpaidPayitemMasterObj[0].Id]){
+                for(PayItem__c payitemObj: [SELECT Id, Payout__c, Notes__c, No_of_Days__c, Payitem__c, System_Generated__c, 
+                                            Type__c, Value__c FROM PayItem__c WHERE Payout__c IN: setPayoutId AND Payitem__c =: 
+                                            unpaidPayitemMasterObj[0].Id]){
                     mapPayoutToPayItem.put(payitemObj.Payout__c, payitemObj);
                 }
-                
+                 system.debug('mapPayoutToPayItem'+mapPayoutToPayItem);
                 List<Payitem_Leave_Request__c> plrList = [SELECT Id, Leave_Request__c, Month__c, Year__c, Unpaid_Leaves__c, Leave_Request__r.Employee__c, PayItem__c FROM Payitem_Leave_Request__c WHERE Leave_Request__r.Employee__c IN: employeeIdSet AND PayItem__c = NULL];
                 Set<Id> leaveReqIdSet = new Set<Id>();
                 Map<String, Payitem_Leave_Request__c> mapYearMonthToPLR = new Map<String, Payitem_Leave_Request__c>();
-                
+                 system.debug('plrList'+plrList);
                 for(Payitem_Leave_Request__c plrObj: plrList){
                     leaveReqIdSet.add(plrObj.Leave_Request__c);
                     mapYearMonthToPLR.put(plrObj.Month__c+'-'+plrObj.Year__c+'-'+plrObj.Leave_Request__c, plrObj);
@@ -1301,12 +1310,16 @@ public class AureusHRManagementUtil{
                 
                 if(unpaidLeaveRequestMap != NULL){
                     System.debug(unpaidLeaveRequestMap);
-                    leaveReqList = [SELECT Id, Name, Employee__c, Leave_Start_Date__c, Leave_End_Date__c FROM Leave_Request__c WHERE Id IN: unpaidLeaveRequestMap.KeySet()];
+                    leaveReqList = [SELECT Id, Name, Employee__c, Leave_Start_Date__c, Leave_End_Date__c FROM Leave_Request__c WHERE
+                                    Id IN: unpaidLeaveRequestMap.KeySet()];
                 }
                 else{
-                    leaveReqList = [SELECT Id, Name, Employee__c, Leave_Start_Date__c, Leave_End_Date__c FROM Leave_Request__c WHERE (Leave_End_Date__c >=: currMonthStartDate AND Leave_Start_Date__c <=: currMonthEndDate) AND RecordTypeId =: sickLeaveRcTypeId AND Employee__c IN: mapEmpToPayoutObj.KeySet() AND (Status__c = 'Approved' OR Status__c = 'Rejected')];
+                    leaveReqList = [SELECT Id, Name, Employee__c, Leave_Start_Date__c, Leave_End_Date__c FROM Leave_Request__c 
+                                    WHERE (Leave_End_Date__c >=: currMonthStartDate AND Leave_Start_Date__c <=: currMonthEndDate)
+                                    AND RecordTypeId =: sickLeaveRcTypeId AND 
+                                    Employee__c IN: mapEmpToPayoutObj.KeySet() AND (Status__c = 'Approved' OR Status__c = 'Rejected')];
                 }
-                System.debug(leaveReqList);
+                System.debug('leaveReqList'+leaveReqList);
                 Set<String> validMonthYearLeaveReq = new Set<String>();
                 if(!leaveReqList.isEmpty()){
                     System.debug(leaveReqList);
@@ -1356,7 +1369,7 @@ public class AureusHRManagementUtil{
                     }
                 }
                 
-                System.debug(mapPayoutToPayItem);
+                System.debug('mapPayoutToPayItem'+mapPayoutToPayItem);
                 
                 if(!mapPayoutToPayItem.isEmpty()){
                     upsert mapPayoutToPayItem.values();
@@ -1369,7 +1382,7 @@ public class AureusHRManagementUtil{
                             }
                         }
                     }
-                    
+                     System.debug('plrList'+plrList);
                     if(!plrList.isEmpty()){
                         update plrList;
                     }
@@ -1471,6 +1484,147 @@ public class AureusHRManagementUtil{
         }
     }
     
+	//Nishi : 9-Apr-2021:get teacher active hrs. according to booking 
+    public static List<Booking__c> getBookingsOnSelectedDates(Set<id> teacherIds,date currentDate){
+        date monthStartdate = Date.newInstance(currentDate.year(),currentDate.month(),1);
+        date monthEndDate = Date.newInstance(monthStartdate.year(), monthStartdate.month(), date.daysInMonth(monthStartdate.year(),monthStartdate.month()));
+        Set<Date> dates = new Set<Date>();
+        for(Integer i = 0; i < date.daysInMonth(monthStartdate.year(),monthStartdate.month()); i++){
+            dates.add(monthStartdate.addDays(i)); 
+        }
+        Set<string> recordTypeSet = new Set<String>{ConstantsClass.recordTypeLesson};//,ConstantsClass.groupLessonBookingRecordType
+        Set<string> bookingStatus = new Set<String>{ConstantsClass.statusPending,  ConstantsClass.statusScheduled, ConstantsClass.statusReScheduled, ConstantsClass.statusCompleted,'Canceled'};
+        Set<String> bookTypeSet = new Set<String>{ConstantsClass.typeTrial,  ConstantsClass.typeMakeup,ConstantsClass.typeAdhoc};
+        set<string> bookingValidType =  new Set<String>{ConstantsClass.typeRegular};//, ConstantsClass.groupLessonTypeBooking
+        Set<String> busyStatusSet  = new Set<String>{ConstantsClass.leaveCategory, ConstantsClass.holidayCategory}; 
+        string cancelledEnrolment ='Cancelled';   
+        string fixedpayout ='Fixed';    
+        Date dt, endDt;
+        String busyType = ConstantsClass.typeBusy;
+        string packageProcessType = ConstantsClass.enrollmentProcessCancelType;
+        String weekDay;
+        String queryStr = 'SELECT Id, Name, start_Time__c, End_Time__c, status__c, type__c,Teacher_Account__r.Tiered_Salary__c , RecordType.Name, Center__c, Teacher_Account__c, Booking_Date__c,Duration__c FROM Booking__c';
+        queryStr += ' WHERE RecordType.Name in: recordTypeSet AND Start_Time__c != NULL AND End_Time__c != NULL';
+        if(teacherIds != null && teacherIds.size() > 0){
+            queryStr += ' AND Teacher_Account__c In: teacherIds';
+            queryStr += ' AND Teacher_Account__r.Payout_Type__c =: fixedpayout';
+        	//queryStr += ' AND Teacher_Account__r.Tiered_Salary__c = true';
+        }
+        queryStr += ' AND Booking_Date__c >=: monthStartdate AND Booking_Date__c <= :monthEndDate';
+        queryStr += ' AND status__c IN: bookingStatus AND (Type__c IN: bookingValidType And (Enrolment__r.Stage__c !=: cancelledEnrolment Or (Enrolment__r.Package_Process_Status__c !=: packageProcessType and Booking_Date__c > :monthEndDate)))';
+        return Database.query(queryStr);
+    }
+
+    //Nishi : 9-Apr-2021:Add Pay Item For Salary Payroll accding to employee  working hrs.
+   
+    public static void createPayItemForSalaryPayroll(Set<id> employeeIds,date currentdate,Set<Id> payoutIdSet){
+        list<booking__c> listOfBookings = getBookingsOnSelectedDates(employeeIds,currentdate);
+        Set<Id> empIdSet = new Set<Id>();
+        Map<string,decimal> employeeWorkingHrs = new Map<string,decimal>();
+        set<string> employeetiredIds = new Set<string>();
+        if( listOfBookings != null && listOfBookings.size()> 0){
+            for(booking__c bookingObj: listOfBookings){
+                empIdSet.add(bookingObj.Teacher_Account__c);
+                decimal totalworkingHrs  = 0;
+                if(bookingObj.Teacher_Account__r.Tiered_Salary__c){
+                    employeetiredIds.add(bookingObj.Teacher_Account__c);
+                }
+                if(employeeWorkingHrs.containsKey(bookingObj.Teacher_Account__c)){
+                    totalworkingHrs = employeeWorkingHrs.get(bookingObj.Teacher_Account__c);
+                }
+                totalworkingHrs += (bookingObj.Duration__c);
+                employeeWorkingHrs.put(bookingObj.Teacher_Account__c,totalworkingHrs);
+            }
+            System.debug(empIdSet);
+        }
+        
+        List<Payitem_Master__c> unpaidPayitemMasterObj = [SELECT Id,CPF__c  FROM Payitem_Master__c WHERE Name =: label.Salary_Tier_Master_Payitem_Name 
+                                                          AND Active__c = TRUE];
+        Set<Id> setPayoutId = new Set<Id>();
+        Set<Id> employeeIdSet = new Set<Id>();
+        
+        if(unpaidPayitemMasterObj != NULL && unpaidPayitemMasterObj.size()>0){            
+            List<Payout__c> payoutList;
+            system.debug('empIdSet'+empIdSet);
+            if(payoutIdSet != NULL && payoutIdSet.size()>0)
+                payoutList = [SELECT Id, Year__c, Month__c, Salary__c, Total_OW_Amount__c, Monthly_Working_Days__c, Employee_Name__c, 
+                              Daily_Rate__c FROM Payout__c WHERE Id IN: payoutIdSet];
+            else
+            payoutList = [SELECT Id, Year__c, Month__c, Salary__c, Total_OW_Amount__c, Monthly_Working_Days__c, Employee_Name__c,
+                            Daily_Rate__c FROM Payout__c WHERE Employee_Name__c IN: empIdSet]; 
+            system.debug('payoutList'+payoutList);
+            if(payoutList != NULL && payoutList.size() > 0 && employeeWorkingHrs != null && employeeWorkingHrs.size()> 0){
+                Date todayDate = system.today();
+                if(currentdate != NULL)
+                    todayDate = currentdate;
+                Date currMonthStartDate = todayDate.toStartOfMonth();
+                Date currMonthEndDate = currMonthStartDate.addDays(date.daysInMonth(currMonthStartDate.year(), currMonthStartDate.month())-1);
+                
+                String currentMonth = numberToMonthMap.get(currMonthStartDate.month());
+                String currentYear = currMonthStartDate.year()+'';
+                Map<Id, List<Payout__c>> mapEmpToPayoutObj = new Map<Id, List<Payout__c>>();
+                Map<String, PayItem__c> mapPayoutToPayItem = new Map<String, PayItem__c>();
+                Map<String, PayItem__c> mapPayoutToPayItemToInsert = new Map<String, PayItem__c>();
+                Map<Id, Id> mapLeaveReqToPayout = new Map<Id, Id>();
+                
+                
+                system.debug('payoutIdSet'+payoutIdSet);
+                system.debug('unpaidPayitemMasterObj'+unpaidPayitemMasterObj[0].Id);
+                //get existing PayItem records
+                for(PayItem__c payitemObj: [SELECT Id, Payout__c, Notes__c, No_of_Days__c, Payitem__c, System_Generated__c, 
+                                            Type__c, Value__c FROM PayItem__c WHERE Payout__c IN: payoutIdSet 
+                                            AND Payitem__c =: unpaidPayitemMasterObj[0].Id]){
+                                                mapPayoutToPayItem.put(payitemObj.Payout__c, payitemObj);
+                                            }
+                system.debug('mapPayoutToPayItem'+mapPayoutToPayItem);
+                Set<String> validMonthYearLeaveReq = new Set<String>();
+                if(!payoutList.isEmpty()){
+                    System.debug(payoutList);
+                    for(Payout__c payoutObj: payoutList){
+                        Integer yearInt = Integer.valueOf(payoutObj.Year__c);
+                        Integer monthInt = monthMap.get(payoutObj.Month__c);
+                        Date payoutStartDate = Date.newInstance(yearInt, monthInt, 1);
+                        Date payoutEndDate = payoutStartDate.addDays(date.daysInMonth(payoutStartDate.year(), payoutStartDate.month())-1);
+                        
+                        //if leave request is for this payout
+                        PayItem__c payItemObj;
+                        if(employeeWorkingHrs.containsKey(payoutObj.Employee_Name__c)){
+                            Decimal noOfHours = employeeWorkingHrs.get(payoutObj.Employee_Name__c);
+                            noOfHours = noOfHours != NULL? (noOfHours/60) : 0;
+                            if(mapPayoutToPayItem.containsKey(payoutObj.Id)){ //if PayItem is already created for the month year
+                                payItemObj = mapPayoutToPayItem.get(payoutObj.Id);
+                                if(employeetiredIds.contains(payoutObj.Employee_Name__c)){
+                                    payItemObj.Value__c = noOfHours;
+                                }
+                            }
+                            else{
+                                if(employeetiredIds.contains(payoutObj.Employee_Name__c)){
+                                    payItemObj = new PayItem__c(Payitem__c = unpaidPayitemMasterObj[0].Id, Payout__c = payoutObj.Id);
+                                    payItemObj.Value__c = noOfHours;
+                                    payItemObj.Notes__c = 'Calculated on the basis of all Regular bookings.';
+                                }
+                            }
+                            if(payItemObj != NULL){
+                                payItemObj.Type__c = 'Hours';
+                                payItemObj.CPF__c =unpaidPayitemMasterObj[0].CPF__c;
+                                payItemObj.System_Generated__c = TRUE;
+                                mapPayoutToPayItem.put(payoutObj.Id, payItemObj);
+                            }
+                            
+                        }
+                    }
+                }
+                
+                System.debug('mapPayoutToPayItem'+mapPayoutToPayItem);
+                
+                if(!mapPayoutToPayItem.isEmpty()){
+                    upsert mapPayoutToPayItem.values();
+                    
+                }
+            }
+        }
+    }
+
     //Other Leave: Create PayItem record for unpaid leave in this month
     public static void createPayItemForOtherLeave(List<Leave_Request__c> otherLeaveRequestList, Map<Id, Leave_Request__c> newMap){
         System.debug('createPayItemForOtherLeave');
@@ -1528,7 +1682,7 @@ public class AureusHRManagementUtil{
                 unpaidMasterObj = payitemMaster;
             payitemMasterSet.add(payitemMaster.Id);
         }       
-        
+        system.debug('##payitemMasterSet'+payitemMasterSet);
         List<Payout__c> payoutList;
         
         if(empIdSet != NULL && empIdSet.size()>0)
@@ -1536,7 +1690,7 @@ public class AureusHRManagementUtil{
         else
             payoutList = [SELECT Id, Year__c, Month__c, Salary__c, Total_OW_Amount__c, Monthly_Working_Days__c, Employee_Name__c, Daily_Rate__c FROM Payout__c WHERE Id IN: payoutIdSet];
         
-        System.debug(payoutList);   
+        system.debug('##payoutList'+payoutList);
         if(payoutList != NULL && payoutList.size() > 0){
             System.debug('IN');
             Map<Id, List<Payout__c>> mapEmpToPayoutObj = new Map<Id, List<Payout__c>>();
@@ -1564,8 +1718,11 @@ public class AureusHRManagementUtil{
                 employeeIdSet.add(payoutObj.Employee_Name__c);
                 setPayoutId.add(payoutObj.Id);
             }
+            system.debug('##setPayoutId'+setPayoutId);
+            system.debug('##payitemMasterSet'+payitemMasterSet);
             //get existing PayItem records
-            for(PayItem__c payitemObj: [SELECT Id, Payout__c, Amount__c, Notes__c, No_of_Days__c, Payitem__c, System_Generated__c, Type__c, Value__c FROM PayItem__c WHERE Payout__c IN: setPayoutId AND Payitem__c IN: payitemMasterSet]){
+            for(PayItem__c payitemObj: [SELECT Id, Payout__c, Amount__c, Notes__c, No_of_Days__c, Payitem__c, System_Generated__c, Type__c, Value__c
+                                        FROM PayItem__c WHERE Payout__c IN: setPayoutId AND Payitem__c IN: payitemMasterSet]){
                 mapPayoutToPayItem.put(payitemObj.Payout__c+'-'+payitemObj.Payitem__c, payitemObj);
             }
             
@@ -1576,14 +1733,20 @@ public class AureusHRManagementUtil{
                 leaveReqList = [SELECT Id, Name, Employee__c, Leave_Start_Date__c, Leave_End_Date__c, RecordTypeId, Paid_Week__c, Unpaid_Week__c, Employee__r.Employee_Duty_Type__c, Employee__r.Organisation__c FROM Leave_Request__c WHERE Id IN: newMap.KeySet()];
             }
             else{
-                leaveReqList = [SELECT Id, Name, Employee__c, Leave_Start_Date__c, Leave_End_Date__c, RecordTypeId, Paid_Week__c, Unpaid_Week__c, Employee__r.Employee_Duty_Type__c, Employee__r.Organisation__c FROM Leave_Request__c WHERE (Leave_End_Date__c >=: currMonthStartDate AND Leave_Start_Date__c <=: currMonthEndDate) AND (RecordTypeId =: nsMenRcTypeId OR RecordTypeId =: maternityRcTypeId OR RecordTypeId =: otherRcTypeId) AND Employee__c IN: employeeIdSet AND Status__c = 'Approved'];
+                leaveReqList = [SELECT Id, Name, Employee__c, Leave_Start_Date__c, Leave_End_Date__c, RecordTypeId, Paid_Week__c, 
+                                Unpaid_Week__c, Employee__r.Employee_Duty_Type__c, Employee__r.Organisation__c FROM Leave_Request__c
+                                WHERE (Leave_End_Date__c >=: currMonthStartDate AND Leave_Start_Date__c <=: currMonthEndDate) 
+                                AND (RecordTypeId =: nsMenRcTypeId OR RecordTypeId =: maternityRcTypeId OR RecordTypeId =: otherRcTypeId) 
+                                AND Employee__c IN: employeeIdSet AND Status__c = 'Approved'];
             }
-            
+            system.debug('##leaveReqList'+leaveReqList);
             Map<Id, String> mapLeaveReqToPayoutPayItemMaster = new Map<Id, String>();
             Map<String, Payitem_Leave_Request__c> mapYearMonthToPLR = new Map<String, Payitem_Leave_Request__c>();
             Map<Id, List<Payitem_Leave_Request__c>> mapLeaveReqToPLR = new Map<Id, List<Payitem_Leave_Request__c>>();
             
-            List<Payitem_Leave_Request__c> plrList = [SELECT Id, Leave_Request__c, Month__c, Year__c, Unpaid_Leaves__c, Leave_Request__r.Employee__c, PayItem__c FROM Payitem_Leave_Request__c WHERE Leave_Request__r.Employee__c IN: employeeIdSet AND PayItem__c = NULL];
+            List<Payitem_Leave_Request__c> plrList = [SELECT Id, Leave_Request__c, Month__c, Year__c, Unpaid_Leaves__c,
+                                                      Leave_Request__r.Employee__c, PayItem__c FROM Payitem_Leave_Request__c
+                                                      WHERE Leave_Request__r.Employee__c IN: employeeIdSet AND PayItem__c = NULL];
 
             for(Payitem_Leave_Request__c plrObj: plrList){
                 List<Payitem_Leave_Request__c> tempList = new List<Payitem_Leave_Request__c>();
@@ -1594,7 +1757,8 @@ public class AureusHRManagementUtil{
                 tempList.add(plrObj);
                 mapLeaveReqToPLR.put(plrObj.Leave_Request__c, tempList);
             }
-            
+            system.debug('##mapLeaveReqToPLR'+mapLeaveReqToPLR);
+            system.debug('##leaveReqList'+leaveReqList);
             Set<String> validMonthYearLeaveReq = new Set<String>();
             if(!leaveReqList.isEmpty()){
                 for(Leave_Request__c leaveReqObj: leaveReqList){
@@ -1652,8 +1816,9 @@ public class AureusHRManagementUtil{
                     }
                 }
             }
-            System.debug(validMonthYearLeaveReq);
-            System.debug(mapPayoutToPayItemToInsert);
+             system.debug('##validMonthYearLeaveReq'+validMonthYearLeaveReq);
+             system.debug('##mapPayoutToPayItemToInsert'+mapPayoutToPayItemToInsert);
+            system.debug('##plrList'+plrList);
             if(!mapPayoutToPayItemToInsert.isEmpty()){
                 upsert mapPayoutToPayItemToInsert.values();
                 
@@ -1665,9 +1830,8 @@ public class AureusHRManagementUtil{
                         }
                     }
                 }
-                
+                system.debug('##plrList'+plrList);
                 if(!plrList.isEmpty()){
-                    System.debug(plrList);
                     update plrList;
                 }
             }

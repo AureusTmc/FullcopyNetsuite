@@ -107,12 +107,17 @@ public class ReCalculatePayoutActionController{
                     if(processDate != NULL){
                         AureusHRManagementUtil.createPayItemWithoutPLR(payoutIdSet, null, processDate, null);
                         AureusHRManagementUtil.calcLossAndCreatePayItemForUnpaidLeave(payoutIdSet, null, processDate, null); 
+                        //Nishi : 9-Apr-2021:Add Pay Item For Salary Payroll according to employee  working hrs.
+                        AureusHRManagementUtil.createPayItemForSalaryPayroll(accToPayoutMap.keyset(),processDate,payoutIdSet);
+                        //Database.executeBatch(new createPayItemForSalaryPayrollBatch(processDate, accToPayoutMap.keyset(),payoutIdSet));
+                        //Nishi : 9-Apr-2021:end:Add Pay Item For Salary Payroll according to employee  working hrs.
                     }
                     //creating PayItems for approved leave requests for the Payouts - End
                 }
             }
             return true;
         }catch(Exception e){
+            system.debug(''+e.getmessage());
             return false;
         }
     }

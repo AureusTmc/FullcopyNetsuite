@@ -90,9 +90,9 @@ public class AureusHRUtility{
         if(wd.dateToDailyWorkDayMap!=null && wd.dateToDailyWorkDayMap.size()>0 && wd.workingDays>0){
             for(Salary_Detail__c sd: salDetList){
                 decimal tempDailyRate = sd.Total_Salary__c/wd.workingDays;
-                decimal basicSalaryRate= sd.Basic_Salary__c / wd.workingDays;
-                decimal housingAllowanceRate= sd.Housing_Allowance__c / wd.workingDays;
-                decimal transportAllowanceRate= sd.Transport_Allowance__c / wd.workingDays;
+                decimal basicSalaryRate= (sd.Basic_Salary__c>0?(sd.Basic_Salary__c / wd.workingDays):0);
+                decimal housingAllowanceRate= (sd.Housing_Allowance__c>0?(sd.Housing_Allowance__c / wd.workingDays):0);
+                decimal transportAllowanceRate= (sd.Transport_Allowance__c>0?(sd.Transport_Allowance__c / wd.workingDays):0);
                 
                 if(sd.Effective_Date__c.year()==currYear && sd.Effective_Date__c.month()==currMonth && sd.Effective_Date__c.day()!=1 && salDetSize>1){
                     decimal countProRateDays = 0;
@@ -215,8 +215,25 @@ public class AureusHRUtility{
             calculatePayout(idSet);      
         }
     }
+    
+    //added by nishi:18-Feb-2021:start after Discuss with Rajesh if batch class call trigger then we don't all future mathod
     @future
+    public static void calculateFuturePayout(Set<Id> idSet){
+        calculateWithoutFuturePayout(idSet);
+    }
+    
     public static void calculatePayout(Set<Id> idSet){
+        if(system.isFuture() || system.isBatch()|| createEmployeePayoutBatch.inFutureContext == false){
+            calculateWithoutFuturePayout(idSet);
+         }else{
+             calculateFuturePayout(idSet);
+         }
+    }
+    //@future
+    //added by nishi:18-Feb-2021:end after Discuss with Rajesh if batch class call trigger then we don't all future mathod
+    
+    public static void calculateWithoutFuturePayout(Set<Id> idSet){//calculatePayout
+        
         /*for(String cId : idSet){
             ReCalculatePayoutActionController.getCalculatePayout(cId);
         }*/
@@ -244,6 +261,7 @@ public class AureusHRUtility{
             mString = dateTimeOfToday.format('MMMM');
             yString = dateTimeOfToday.format('yyyy');
         }
+        system.debug('!!accToPayoutMap'+accToPayoutMap);
         Map<Id,List<Employee_Work_Week__c>> accToWorkWeekMap = AureusHRUtility.getEmployeeWorkWeek(accToPayoutMap.keyset(), lastMonthDate);
         Map<Id,List<Salary_Detail__c>> accToSalaryMap = AureusHRUtility.getEmployeeSalary(accToPayoutMap.keyset(), lastMonthDate);
         
@@ -309,6 +327,7 @@ public class AureusHRUtility{
             payout = CalculatePayoutService.calculateEmployeeCPF(acc,payout);
             payoutList.add(payout);
         } 
+         system.debug('!!payoutList'+payoutList);
         if(!payoutList.isEmpty()){
             update payoutList;
         }

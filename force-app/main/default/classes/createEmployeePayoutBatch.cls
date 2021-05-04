@@ -8,12 +8,17 @@ global without sharing class createEmployeePayoutBatch implements Database.Batch
     Date startMonthDate = date.newInstance(currYear,currMonth,1); 
     Date lastMonthDate = date.newInstance(currYear,currMonth,Date.DaysInMonth(currYear,currMonth));
     Set<Id> empIdSet = new Set<Id>();
+    global Set<Id> allEmpIdSet;
+    global  Set<Id> allPayoutIdSet;
     global Payroll_Batch__c payrollBatch = new Payroll_Batch__c();
+    public static boolean inFutureContext = true;
     public createEmployeePayoutBatch(){
-        
+        allEmpIdSet = new Set<Id>();
+        allPayoutIdSet = new Set<Id>();
     }
-    
     public createEmployeePayoutBatch(Date processDate, set<Id>employeeIdSet, Payroll_Batch__c payrollBth){
+        allEmpIdSet = new Set<Id>();
+        allPayoutIdSet = new Set<Id>();
         empIdSet = employeeIdSet;
         payrollBatch = payrollBth;
         currentDate = processDate;
@@ -36,15 +41,15 @@ global without sharing class createEmployeePayoutBatch implements Database.Batch
     }
     
     global void execute(Database.BatchableContext BC, List<Account> accounts){
-        
+        inFutureContext = false;
         Set<Id> accIds = new Set<Id>();
-        
         for(Account acc:accounts){
             accIds.add(acc.Id);
         }
-        
+        system.debug('@@accIds'+accIds);
         Map<Id,List<Employee_Work_Week__c>> accToWorkWeekMap = new Map<Id,List<Employee_Work_Week__c>>();
-        for(Employee_Work_Week__c eww: [Select id,Employee__c ,Effective_Date__c,Monday__c,Tuesday__c,Wednesday__c,Thursday__c,Friday__c,Saturday__c,Sunday__c from Employee_Work_Week__c where Employee__c in:accIds and Effective_Date__c!=null and Effective_Date__c<=:lastMonthDate order by Effective_Date__c desc]){
+        for(Employee_Work_Week__c eww: [Select id,Employee__c ,Effective_Date__c,Monday__c,Tuesday__c,Wednesday__c,Thursday__c,Friday__c,Saturday__c,Sunday__c from Employee_Work_Week__c 
+                            where Employee__c in:accIds and Effective_Date__c!=null and Effective_Date__c<=:lastMonthDate order by Effective_Date__c desc]){
             List<Employee_Work_Week__c> tempList = new List<Employee_Work_Week__c>();
             if(accToWorkWeekMap.containsKey(eww.Employee__c)){
                 tempList.addAll(accToWorkWeekMap.get(eww.Employee__c));
@@ -53,7 +58,9 @@ global without sharing class createEmployeePayoutBatch implements Database.Batch
             
             accToWorkWeekMap.put(eww.Employee__c,tempList);
         }
+
         
+        system.debug('@@accToWorkWeekMap'+accToWorkWeekMap);
         Map<Id,List<Salary_Detail__c>> accToSalaryMap = new Map<Id,List<Salary_Detail__c>>();
         for(Salary_Detail__c salDet: [select id,Total_Salary__c,Effective_Date__c,Employee_Name__c, Basic_Salary__c, Housing_Allowance__c, Transport_Allowance__c from Salary_Detail__c where Employee_Name__c in:accIds and Total_Salary__c>0 and Effective_Date__c!=null and Effective_Date__c<=:lastMonthDate and Status__c='Active' order by Effective_Date__c desc]){
             List<Salary_Detail__c> tempList = new List<Salary_Detail__c>();
@@ -63,7 +70,7 @@ global without sharing class createEmployeePayoutBatch implements Database.Batch
             tempList.add(salDet);
             accToSalaryMap.put(salDet.Employee_Name__c,tempList);
         }
-        
+        system.debug('@@accToSalaryMap'+accToSalaryMap);
         Map<Id,Payout__c> accToPayoutMap = new Map<Id,Payout__c>(); 
         
         for(Payout__c pt: [SELECT Id, Name, Month__c, Year__c, Salary__c, Total_Amount__c, Employee_CPF_Amount__c, Employer_CPF_Amount__c, 
@@ -72,7 +79,7 @@ global without sharing class createEmployeePayoutBatch implements Database.Batch
                             Monthly_Working_Days__c, Monthly_Salary__c, Basic_Salary__c, Housing_Allowance__c, Transport_Allowance__c from Payout__c where Employee_Name__c in:accIds and month__c=:strCurrMonth and year__c=:''+currYear+'']){            
                accToPayoutMap.put(pt.Employee_Name__c,pt);
         }
-        
+        system.debug('@@accToPayoutMap'+accToPayoutMap);
         List<Payout__c> payoutList = new List<Payout__c>();
         // CPF Details for calculate cpf data
         CalculatePayoutService.cpfDetailsMap = CalculatePayoutService.getEmpCPFDetails();
@@ -86,6 +93,7 @@ global without sharing class createEmployeePayoutBatch implements Database.Batch
             if(pi.Name.indexOf('Employee') != -1) payitemMasterMap.put('Employee', pi.Id);
             if(pi.Name.indexOf('Employer') != -1) payitemMasterMap.put('Employer', pi.Id);
         }
+         system.debug('@@payitemMasterMap'+payitemMasterMap);
         for(Account acc:accounts){
             decimal workingDays = 0;
             decimal empSalary = 0;
@@ -179,27 +187,40 @@ global without sharing class createEmployeePayoutBatch implements Database.Batch
                 updateAccountList.add(acc);             
            }
         } 
+          system.debug('@@payoutList'+payoutList);
         upsert payoutList;
         if(!updateAccountList.isEmpty()){
             update updateAccountList;
         }
+         system.debug('@@updateAccountList'+updateAccountList);
         if(!payitemList.isEmpty()){
             for(Payitem__c pi : payitemList){
                 pi.Payout__c = pi.Payout__r.id;
             }
             insert payitemList;
         }
+        system.debug('@@payitemList'+payitemList);
         //----------------
         //creating PayItems for approved leave requests for the Payouts - Start
         Set<Id> payoutIdSet = new Set<Id>();
         for(Payout__c payout: payoutList){
             payoutIdSet.add(payout.Id);
         }
+        allEmpIdSet.addAll(accIds);
+        allPayoutIdSet.addAll(payoutIdSet);
+        system.debug('@@payoutIdSet'+payoutIdSet);
         AureusHRManagementUtil.createPayItemWithoutPLR(payoutIdSet, null, currentDate, null);
         AureusHRManagementUtil.calcLossAndCreatePayItemForUnpaidLeave(payoutIdSet, null, currentDate, null); 
-        //creating PayItems for approved leave requests for the Payouts - End
+         //creating PayItems for approved leave requests for the Payouts - End
     }
     
-    global void finish(Database.BatchableContext BC){}
+    global void finish(Database.BatchableContext BC){
+        system.debug('accIds'+allEmpIdSet);
+        system.debug('payoutIdSet'+allPayoutIdSet);
+        ////Nishi : 9-Apr-2021:Acreating PayItems for approved working Hrs requests for the Payouts - Start
+        //AureusHRManagementUtil.createPayItemForSalaryPayroll(accIds,currentDate,payoutIdSet);
+        Database.executeBatch(new createPayItemForSalaryPayrollBatch(currentDate, allEmpIdSet,allPayoutIdSet),100);
+         ////Nishi : 9-Apr-2021:Acreating PayItems for approved working Hrs requests for the Payouts - end
+    }
      
 }
