@@ -27,7 +27,8 @@ trigger AccountTrigger on Account (before insert,before update,after insert, aft
             String.isNotBlank(ac.PI_to_SF_Sync__pc) && ac.PI_to_SF_Sync__pc.equalsIgnoreCase('true') && (Trigger.isInsert || 
                                         (Trigger.isUpdate && ac.PI_to_SF_Sync__pc != Trigger.oldMap.get(ac.Id).PI_to_SF_Sync__pc))){
                 //added by 28-Apr-2021:start: Nishi: On the bases of UTM Campaign parameters, We will identify the customer for the Instrument Rental Enquiry process.
-                if(string.isnotBlank( ac.UTM_Campaign__pc) && (ac.UTM_Campaign__pc.containsIgnoreCase('Rental')  || ac.UTM_Campaign__pc.containsIgnoreCase('Purchase'))){
+                if(string.isnotBlank( ac.UTM_Campaign__pc) && (ac.UTM_Campaign__pc.containsIgnoreCase('Rental')  
+                                                               || ac.UTM_Campaign__pc.containsIgnoreCase('Purchase'))){
                     filterInstrumentAcList.add(ac);
                 }else{
                 //28-Apr-2021: Nishi:end: On the bases of UTM Campaign parameters, We will identify the customer for the Instrument Rental Enquiry process.

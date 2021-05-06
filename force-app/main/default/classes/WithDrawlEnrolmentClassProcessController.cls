@@ -252,7 +252,7 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
         List<Id> invoiceIds = NEW List<Id>();
         Map<Id,Invoice_Line_Item__c> invoicemap = NEW Map<Id,Invoice_Line_Item__c>();
         for(Invoice_Line_Item__c lineItem : [SELECT Id, Invoice__c, Amount__c, Invoice__r.Parent_Account__c, Subscription_Line_Item__r.Next_Bill_Date__c ,Package__c,
-                                            Credit_Memo_Amount__c,Credit_Memo_tax__c
+                                            Credit_Memo_Amount__c,Credit_Memo_tax__c,Net_Amount__c
                                             FROM Invoice_Line_Item__c 
                                             WHERE Enrolment__c =: objEnrol.id 
                                             AND Is_Deposit__c = true 
@@ -267,9 +267,10 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
                                         FROM Payment__c 
                                         WHERE Invoice__c IN: invoiceIds AND 
                                         RecordType.Name =:ConstantsClass.paymentTransactionRecType]){
-                                        if(string.isNotBlank( payment.Transaction_ID__c)){
+                                       //6-May-2021: commented by nishi: after diciussion with alex and ashish  without transation id we create credit memo 
+                                       // if(string.isNotBlank( payment.Transaction_ID__c)){
                                             mapOfInvoicePayments.put(payment.Invoice__c, payment);
-                                        }
+                                        //}
                                     }
         }
         if(depositAmount > 0){

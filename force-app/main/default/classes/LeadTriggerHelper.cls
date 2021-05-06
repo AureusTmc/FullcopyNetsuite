@@ -54,7 +54,7 @@ public class LeadTriggerHelper {
         }
     }
     
-    public static void automateWebLeadProcess(List<Lead> webLeadList){
+    public static void automateWebLeadProcess(List<Lead> webLeadList,Boolean isCreateSalesEnquiery){//commented by nishi: 6-may-2021:for  we create salesenquiery or instrument rental records (List<Lead> webLeadList){
         Map<String, Id> accEmailMap = new Map<String, Id>();
         
         for(Lead l: webLeadList)
@@ -69,7 +69,11 @@ public class LeadTriggerHelper {
                     
             
             String cstmrRecId = Schema.SObjectType.Account.getRecordTypeInfosByName().get(ConstantsClass.customerRecTypeName).getRecordTypeId();
-            String salesRecId = Schema.SObjectType.Case.getRecordTypeInfosByName().get('Sales Enquiry').getRecordTypeId();
+            
+            //added and commented by nishi: 28-apr-2021:start: according to isCreateSalesEnquiery we create salesenquiery or instrument rental records
+            //String salesRecId = Schema.SObjectType.Case.getRecordTypeInfosByName().get('Sales Enquiry').getRecordTypeId();
+            String caseRecName =isCreateSalesEnquiery ? ConstantsClass.caseSalesEnqRecTypeName  :ConstantsClass.InstrumentRentalEnquiryRecordType; 
+            //added and commented by nishi: 28-apr-2021:end: according to isCreateSalesEnquiery we create salesenquiery or instrument rental records
             for(Lead l: webLeadList){
                 Account parentAcc = new Account();
                 
@@ -82,7 +86,11 @@ public class LeadTriggerHelper {
                 parAccList.add(parentAcc);
                 
                 
-                Case cs = fillCase(salesRecId, l);
+                Case cs = fillCase(caseRecName, l);
+                //added  by nishi: 28-apr-2021:start according to isCreateSalesEnquiery we added stage and type values for instrument rental records
+                cs.stage__c = isCreateSalesEnquiery ? ''  :'Piano Rental Enquiry';
+                cs.Type = isCreateSalesEnquiery ? ''  :'Instrument Rental Enquiry';
+                //added  by nishi: 28-apr-2021:end according to isCreateSalesEnquiery we added stage and type values for instrument rental records
                 cs.Account 	 = parentAcc;
                 caseAccList.add(cs);
             }
@@ -105,15 +113,18 @@ public class LeadTriggerHelper {
     }
     
     public static Account fillParentAccount(String recId, Lead l){
+        // Added LeadSource,UTM_Campaign__pc,Country_PI__pc on 30 sept 2020..By Ravi as per discussion with prashant sir
         Account acc = new Account(RecordTypeId = recId, Lead__c = l.Id, FirstName = l.FirstName, LastName = l.Lastname, PersonEmail = l.Email,
-                                  PersonMobilePhone = l.MobilePhone, Phone = l.Phone, Instrument__c = l.Instrument__c, Location__c = l.Location__c);	 
+                                  PersonMobilePhone = l.MobilePhone, Phone = l.Phone, Instrument__c = l.Instrument__c, Location__c = l.Location__c,
+                                 AccountSource=l.LeadSource,UTM_Campaign__pc=l.UTM_Campaign__c,Country_PI__pc=l.Country_PI__c,Pardot_Source__pc=l.Pardot_Source__c);	 
         
         return acc;
     }
     
-    public static Case fillCase(String recId, Lead l){
+    public static Case fillCase(String caseRecName, Lead l){
+        String recId = Schema.SObjectType.Case.getRecordTypeInfosByName().get(caseRecName).getRecordTypeId();
         Case cas = new Case(RecordTypeId = recId);
-        cas.Subject		  = 'Sales Enquiry';
+        cas.Subject		  = caseRecName;//commented by nishi: 6-May-2021: As per discussion with rajesh we add subject according to record type 'Sales Enquiry';
         cas.Lead__c   	  = l.Id;
         cas.Centre_Name__c= l.Center__c;
         cas.Location__c   = l.Location__c;
@@ -135,6 +146,7 @@ public class LeadTriggerHelper {
         //Added by Rajesh: 13th Aug 2020, Set for facebook lead
         cas.Pardot_Source__c = l.Pardot_Source__c;
         cas.UTM_Campaign__c = l.UTM_Campaign__c;
+        cas.Country_PI__c=l.Country_PI__c;// added By Ravi on 5th oct 2020 as discussed with prashant sir 
         return cas;
     }
     

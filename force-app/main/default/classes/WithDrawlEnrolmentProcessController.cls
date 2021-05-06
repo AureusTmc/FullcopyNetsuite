@@ -258,30 +258,33 @@ public without sharing class WithDrawlEnrolmentProcessController implements IAdv
                                       }
         }*/
         List<Id> invoiceIds = NEW List<Id>();
-            Set<String> statusSet = new Set<String>{ConstantsClass.voidInvoiceStatus, ConstantsClass.cancelledInvoiceStatus};
-            Map<Id,Invoice_Line_Item__c> invoicemap = NEW Map<Id,Invoice_Line_Item__c>();
-            for(Invoice_Line_Item__c lineItem : [SELECT Id, Invoice__c, Amount__c, Invoice__r.Parent_Account__c, Subscription_Line_Item__r.Next_Bill_Date__c ,Package__c,
-                                                Credit_Memo_Amount__c,Credit_Memo_tax__c,Net_Amount__c
-                                                FROM Invoice_Line_Item__c 
-                                                WHERE Enrolment__c =: objEnrol.id 
-                                                AND Is_Deposit__c = true 
-                                                AND Subscription_Line_Item__c != NULL
-                                                AND Invoice__r.Status__c NOT IN :statusSet]){
-                invoiceIds.add(lineItem.Invoice__c);
-                invoicemap.put(lineItem.Invoice__c,lineItem);
-                updateInvoiceLineItem.put(lineItem.id,lineItem);
-            }
-        
+        Set<String> statusSet = new Set<String>{ConstantsClass.voidInvoiceStatus, ConstantsClass.cancelledInvoiceStatus};
+        Map<Id,Invoice_Line_Item__c> invoicemap = NEW Map<Id,Invoice_Line_Item__c>();
+        for(Invoice_Line_Item__c lineItem : [SELECT Id, Invoice__c, Amount__c, Invoice__r.Parent_Account__c, Subscription_Line_Item__r.Next_Bill_Date__c ,Package__c,
+                                            Credit_Memo_Amount__c,Credit_Memo_tax__c,Net_Amount__c
+                                            FROM Invoice_Line_Item__c 
+                                            WHERE Enrolment__c =: objEnrol.id 
+                                            AND Is_Deposit__c = true 
+                                            AND Subscription_Line_Item__c != NULL
+                                            AND Invoice__r.Status__c NOT IN :statusSet]){
+            invoiceIds.add(lineItem.Invoice__c);
+            invoicemap.put(lineItem.Invoice__c,lineItem);
+            updateInvoiceLineItem.put(lineItem.id,lineItem);
+        }
+        system.debug('invoiceIds'+invoiceIds);
+        system.debug('invoicemap'+invoicemap);
+        system.debug('updateInvoiceLineItem'+updateInvoiceLineItem);
         if(invoiceIds.size() > 0){
             for(Payment__c payment : [SELECT Id, Transaction_ID__c, Invoice__c ,Method_of_Payment__c 
                                         FROM Payment__c 
                                         WHERE Invoice__c IN: invoiceIds AND 
                                         RecordType.Name =:ConstantsClass.paymentTransactionRecType]){
-                                        if(string.isNotBlank( payment.Transaction_ID__c)){
+                                        //if(string.isNotBlank( payment.Transaction_ID__c)){
                                             mapOfInvoicePayments.put(payment.Invoice__c, payment);
-                                        }
+                                        //}
                                     }
         }
+        system.debug('mapOfInvoicePayments'+mapOfInvoicePayments);
         if(depositAmount > 0){
              paymentObj = new Payment__c();
              

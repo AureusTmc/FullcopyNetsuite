@@ -427,9 +427,9 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                                         FROM Payment__c 
                                         WHERE Invoice__c In: invoiceIds AND 
                                         RecordType.Name =:ConstantsClass.paymentTransactionRecType]){
-                                           if(string.isNotBlank(payment.Transaction_ID__c)){
+                                          // if(string.isNotBlank(payment.Transaction_ID__c)){
                                                 mapOfInvoicePayments.put(payment.Invoice__c, payment);
-                                            }
+                                            //}
                                         }
             
             if(depositAmount != 0){

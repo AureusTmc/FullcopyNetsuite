@@ -449,14 +449,14 @@ public without sharing class UpdateEnrolmentProcessController implements IAdvanc
              if(packageInvoiceAmount.containsKey(newPackage)){
                  newPackageTotalAmount += decimal.valueOf(packageInvoiceAmount.get(newPackage).split(';')[0]);
              }
-             if(packageInvoiceAmount.containsKey(oldPackage)){
+             if(packageInvoiceoldAmount.containsKey(oldPackage)){
                  oldPackageTotalAmount += decimal.valueOf(packageInvoiceoldAmount.get(oldPackage).split(';')[0]);
              }
              // added by nishi: 21-sep-2020: for if next month invoice already generated then we add  invoice line item amount
              if(packageInvoiceNextMonthAmount.containsKey(newPackage)){
                 newPackageNextMonthTotalAmount += decimal.valueOf(packageInvoiceNextMonthAmount.get(newPackage).split(';')[0]);
             }
-            if(packageInvoiceNextMonthAmount.containsKey(oldPackage)){
+            if(packageInvoiceoldNextMonthAmount.containsKey(oldPackage)){
                 oldPackageNextMonthTotalAmount += decimal.valueOf(packageInvoiceoldNextMonthAmount.get(oldPackage).split(';')[0]);
             }
             // added by nishi: 21-sep-2020: for if next month invoice already generated then  we add  invoice line item amount

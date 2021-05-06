@@ -22,7 +22,7 @@ global without sharing class createPayItemForSalaryPayrollBatch implements Datab
         createEmployeePayoutBatch.inFutureContext = false;
         empIdSet = employeeIdSet;
         currentDate = processDate;
-        payoutIdSet =payoutIdSet;
+        this.payoutIdSet =payoutIdSet;
         currentDate = processDate;
         currYear = currentDate.Year();
         currMonth = currentDate.month();
@@ -49,12 +49,23 @@ global without sharing class createPayItemForSalaryPayrollBatch implements Datab
         for(Account acc:accounts){
             accIds.add(acc.Id);
         }
-        Map<Id,Payout__c> accToPayoutMap = new Map<Id,Payout__c>([SELECT Id from Payout__c
-                                                                    where Employee_Name__c in:accIds 
-                                                                    and month__c=:strCurrMonth 
-                                                                    and year__c=:''+currYear+''
-                                                                    and id=:payoutIdSet]);
-        AureusHRManagementUtil.createPayItemForSalaryPayroll(accIds,currentDate,accToPayoutMap.keyset());
+        system.debug('payoutIdSet'+payoutIdSet);
+        List<String> listOfpayoutIds = new List<String>();
+        for(Id payoutId:payoutIdSet){
+            listOfpayoutIds.add(payoutId);
+        }
+        Map<Id,Payout__c> mapOfPayout = AureusHRUtility.getEmployeePayout(listOfpayoutIds);
+        Map<Id,Payout__c> mapOfaccToPayout = new Map<Id,Payout__c>();
+        
+        for(Payout__c pt: mapOfPayout.values()){            
+               mapOfaccToPayout.put(pt.id,pt);
+        }
+        system.debug('accIds'+accIds);
+        system.debug('accToPayoutMap'+mapOfaccToPayout);
+       
+        AureusHRManagementUtil.createPayItemForSalaryPayroll(accIds,currentDate,mapOfaccToPayout.keyset());
+
+        AureusHRManagementUtil.calcualterPayoutCPFAmount(accounts,payoutIdSet,currentDate);
     }
     
     global void finish(Database.BatchableContext BC){

@@ -1485,6 +1485,7 @@ public class AureusHRManagementUtil{
     }
     
 	//Nishi : 9-Apr-2021:get teacher active hrs. according to booking 
+    /* Commented by nishi 5-May-2021: after discussion alex want to get active enrolment hrs not a booking hrs
     public static List<Booking__c> getBookingsOnSelectedDates(Set<id> teacherIds,date currentDate){
         date monthStartdate = Date.newInstance(currentDate.year(),currentDate.month(),1);
         date monthEndDate = Date.newInstance(monthStartdate.year(), monthStartdate.month(), date.daysInMonth(monthStartdate.year(),monthStartdate.month()));
@@ -1513,31 +1514,59 @@ public class AureusHRManagementUtil{
         queryStr += ' AND Booking_Date__c >=: monthStartdate AND Booking_Date__c <= :monthEndDate';
         queryStr += ' AND status__c IN: bookingStatus AND (Type__c IN: bookingValidType And (Enrolment__r.Stage__c !=: cancelledEnrolment Or (Enrolment__r.Package_Process_Status__c !=: packageProcessType and Booking_Date__c > :monthEndDate)))';
         return Database.query(queryStr);
+    }*/
+    public static List<Enrolment__c> getAllActiveEnrolments(Set<id> teacherIds,date currentDate){
+        String enrolledEnrolmentStage ='Enrolled';
+        String regularEnrolmenttype ='Regular';
+        string cancelledEnrolment ='Cancelled';   
+        string fixedpayout ='Fixed';    
+        string cancelProcessType = ConstantsClass.enrollmentProcessCancelType;
+        String weekDay;
+        date monthStartdate = Date.newInstance(currentDate.year(),currentDate.month(),1);
+        date monthEndDate = Date.newInstance(monthStartdate.year(), monthStartdate.month(), date.daysInMonth(monthStartdate.year(),monthStartdate.month()));
+        String queryStr = 'SELECT Id,Teacher__r.Tiered_Salary__c ,Duration_Min__c,Package_Process_Type__c,Effective_Date__c FROM Enrolment__c ';
+        queryStr += ' WHERE Stage__c =: enrolledEnrolmentStage And Type__c =:regularEnrolmenttype ';
+        if(teacherIds != null && teacherIds.size() > 0){
+            queryStr += ' AND Teacher__c In: teacherIds';
+            queryStr += ' AND Teacher__r.Payout_Type__c =: fixedpayout';
+        	//queryStr += ' AND Teacher_Account__r.Tiered_Salary__c = true';
+        }
+        //queryStr += ' And (Package_Process_Type__c = null OR (Package_Process_Type__c != null And Package_Process_Type__c =: cancelProcessType AND Effective_Date__c <: monthStartdate AND Effective_Date__c >:monthEndDate))';
+        return Database.query(queryStr);
     }
 
     //Nishi : 9-Apr-2021:Add Pay Item For Salary Payroll accding to employee  working hrs.
    
     public static void createPayItemForSalaryPayroll(Set<id> employeeIds,date currentdate,Set<Id> payoutIdSet){
-        list<booking__c> listOfBookings = getBookingsOnSelectedDates(employeeIds,currentdate);
+        list<Enrolment__c> listOfAllActiveEnrolments = getAllActiveEnrolments(employeeIds,currentdate);//getBookingsOnSelectedDates(employeeIds,currentdate);
+        System.debug('$$$listOfAllActiveEnrolments'+listOfAllActiveEnrolments);
         Set<Id> empIdSet = new Set<Id>();
         Map<string,decimal> employeeWorkingHrs = new Map<string,decimal>();
         set<string> employeetiredIds = new Set<string>();
-        if( listOfBookings != null && listOfBookings.size()> 0){
-            for(booking__c bookingObj: listOfBookings){
-                empIdSet.add(bookingObj.Teacher_Account__c);
-                decimal totalworkingHrs  = 0;
-                if(bookingObj.Teacher_Account__r.Tiered_Salary__c){
-                    employeetiredIds.add(bookingObj.Teacher_Account__c);
+        if(listOfAllActiveEnrolments != null && listOfAllActiveEnrolments.size()> 0){
+            for(Enrolment__c enrolmentObj: listOfAllActiveEnrolments){
+                if(string.isblank(enrolmentObj.Package_Process_Type__c) || 
+                    (string.isNotblank(enrolmentObj.Package_Process_Type__c)  &&
+                        (enrolmentObj.Package_Process_Type__c != 'Cancellation' ||
+                            (enrolmentObj.Package_Process_Type__c == 'Cancellation' && enrolmentObj.Effective_Date__c.month() != currentdate.month())
+                        )
+                    )
+                ){
+                    empIdSet.add(enrolmentObj.Teacher__c);
+                    decimal totalworkingHrs  = 0;
+                    if(enrolmentObj.Teacher__r.Tiered_Salary__c){
+                        employeetiredIds.add(enrolmentObj.Teacher__c);
+                    }
+                    if(employeeWorkingHrs.containsKey(enrolmentObj.Teacher__c)){
+                        totalworkingHrs = employeeWorkingHrs.get(enrolmentObj.Teacher__c);
+                    }
+                    totalworkingHrs += enrolmentObj.Duration_Min__c;
+                    employeeWorkingHrs.put(enrolmentObj.Teacher__c,totalworkingHrs);
                 }
-                if(employeeWorkingHrs.containsKey(bookingObj.Teacher_Account__c)){
-                    totalworkingHrs = employeeWorkingHrs.get(bookingObj.Teacher_Account__c);
-                }
-                totalworkingHrs += (bookingObj.Duration__c);
-                employeeWorkingHrs.put(bookingObj.Teacher_Account__c,totalworkingHrs);
             }
-            System.debug(empIdSet);
+           
         }
-        
+        System.debug('$$$employeeWorkingHrs'+employeeWorkingHrs);
         List<Payitem_Master__c> unpaidPayitemMasterObj = [SELECT Id,CPF__c  FROM Payitem_Master__c WHERE Name =: label.Salary_Tier_Master_Payitem_Name 
                                                           AND Active__c = TRUE];
         Set<Id> setPayoutId = new Set<Id>();
@@ -1545,15 +1574,21 @@ public class AureusHRManagementUtil{
         
         if(unpaidPayitemMasterObj != NULL && unpaidPayitemMasterObj.size()>0){            
             List<Payout__c> payoutList;
-            system.debug('empIdSet'+empIdSet);
+            Datetime dtm = (datetime) currentDate;
+            string strCurrMonth = dtm.format('MMMM');
+            system.debug('$$$empIdSet'+empIdSet);
             if(payoutIdSet != NULL && payoutIdSet.size()>0)
-                payoutList = [SELECT Id, Year__c, Month__c, Salary__c, Total_OW_Amount__c, Monthly_Working_Days__c, Employee_Name__c, 
-                              Daily_Rate__c FROM Payout__c WHERE Id IN: payoutIdSet];
+                payoutList = [SELECT Id, Year__c, Month__c, Salary__c, Total_OW_Amount__c, Monthly_Working_Days__c, Employee_Name__c, Employee_Name__r.Weekly_Contract_Working_Hours__c ,
+                              Daily_Rate__c FROM Payout__c WHERE Id IN: payoutIdSet  and Month__c =:  strCurrMonth   and year__c=:''+currentDate.year()+''];
             else
-            payoutList = [SELECT Id, Year__c, Month__c, Salary__c, Total_OW_Amount__c, Monthly_Working_Days__c, Employee_Name__c,
-                            Daily_Rate__c FROM Payout__c WHERE Employee_Name__c IN: empIdSet]; 
-            system.debug('payoutList'+payoutList);
+                payoutList = [SELECT Id, Year__c, Month__c, Salary__c, Total_OW_Amount__c, Monthly_Working_Days__c, Employee_Name__c,Employee_Name__r.Weekly_Contract_Working_Hours__c ,
+                                Daily_Rate__c FROM Payout__c WHERE Employee_Name__c IN: empIdSet and Month__c =:  strCurrMonth   and year__c=:''+currentDate.year()+'']; 
+            system.debug('$$$payoutList'+payoutList);
             if(payoutList != NULL && payoutList.size() > 0 && employeeWorkingHrs != null && employeeWorkingHrs.size()> 0){
+                set<string> payoutlistIds = new set<string>();
+                for(Payout__c payoutObj: payoutList){
+                    payoutlistIds.add(payoutObj.id);
+                }
                 Date todayDate = system.today();
                 if(currentdate != NULL)
                     todayDate = currentdate;
@@ -1568,15 +1603,15 @@ public class AureusHRManagementUtil{
                 Map<Id, Id> mapLeaveReqToPayout = new Map<Id, Id>();
                 
                 
-                system.debug('payoutIdSet'+payoutIdSet);
-                system.debug('unpaidPayitemMasterObj'+unpaidPayitemMasterObj[0].Id);
+                system.debug('$$$payoutIdSet'+payoutIdSet);
+                system.debug('$$$unpaidPayitemMasterObj'+unpaidPayitemMasterObj[0].Id);
                 //get existing PayItem records
                 for(PayItem__c payitemObj: [SELECT Id, Payout__c, Notes__c, No_of_Days__c, Payitem__c, System_Generated__c, 
-                                            Type__c, Value__c FROM PayItem__c WHERE Payout__c IN: payoutIdSet 
+                                            Type__c, Value__c FROM PayItem__c WHERE Payout__c IN: payoutlistIds 
                                             AND Payitem__c =: unpaidPayitemMasterObj[0].Id]){
                                                 mapPayoutToPayItem.put(payitemObj.Payout__c, payitemObj);
                                             }
-                system.debug('mapPayoutToPayItem'+mapPayoutToPayItem);
+                system.debug('$$$mapPayoutToPayItem'+mapPayoutToPayItem);
                 Set<String> validMonthYearLeaveReq = new Set<String>();
                 if(!payoutList.isEmpty()){
                     System.debug(payoutList);
@@ -1590,7 +1625,10 @@ public class AureusHRManagementUtil{
                         PayItem__c payItemObj;
                         if(employeeWorkingHrs.containsKey(payoutObj.Employee_Name__c)){
                             Decimal noOfHours = employeeWorkingHrs.get(payoutObj.Employee_Name__c);
+                            system.debug('$$$noOfHours'+noOfHours);
                             noOfHours = noOfHours != NULL? (noOfHours/60) : 0;
+                            system.debug('$$$noOfHours'+noOfHours);
+                            noOfHours += (payoutObj.Employee_Name__r.Weekly_Contract_Working_Hours__c != null ? payoutObj.Employee_Name__r.Weekly_Contract_Working_Hours__c :0);
                             if(mapPayoutToPayItem.containsKey(payoutObj.Id)){ //if PayItem is already created for the month year
                                 payItemObj = mapPayoutToPayItem.get(payoutObj.Id);
                                 if(employeetiredIds.contains(payoutObj.Employee_Name__c)){
@@ -1615,7 +1653,7 @@ public class AureusHRManagementUtil{
                     }
                 }
                 
-                System.debug('mapPayoutToPayItem'+mapPayoutToPayItem);
+                System.debug('$$$mapPayoutToPayItem'+mapPayoutToPayItem);
                 
                 if(!mapPayoutToPayItem.isEmpty()){
                     upsert mapPayoutToPayItem.values();
@@ -1624,6 +1662,139 @@ public class AureusHRManagementUtil{
             }
         }
     }
+
+    // added by nishi: 6-may-2021: for calculate CPF amount after payitem records created
+    public static void calcualterPayoutCPFAmount(List<Account> accounts,set<Id> payoutIdSet, date processDate){
+        date currentDate = processDate;
+        Integer currYear = currentDate.Year();
+        Integer currMonth = currentDate.month();
+        Datetime dtm = (datetime) currentDate;
+        string strCurrMonth = dtm.format('MMMM');
+        Integer currDay = currentDate.day();
+        Date startMonthDate = date.newInstance(currYear,currMonth,1); 
+        Date lastMonthDate = date.newInstance(currYear,currMonth,Date.DaysInMonth(currYear,currMonth));
+        Set<Id> accIds = new Set<Id>();
+        
+        for(Account acc:accounts){
+            accIds.add(acc.Id);
+        }
+        List<String> listOfpayoutIds = new List<String>();
+        for(Id payoutId:payoutIdSet){
+            listOfpayoutIds.add(payoutId);
+        }
+        Map<Id,Payout__c> mapOfPayout = AureusHRUtility.getEmployeePayout(listOfpayoutIds);
+        Map<Id,Payout__c> accToPayoutMap = new Map<Id,Payout__c>(); 
+        AureusHRUtility.calledOnce = false;
+        for(Payout__c pt: mapOfPayout.values()){            
+            accToPayoutMap.put(pt.Employee_Name__c,pt);
+        }
+        system.debug('accToPayoutMap'+accToPayoutMap);
+        Map<Id,List<Employee_Work_Week__c>> accToWorkWeekMap = new Map<Id,List<Employee_Work_Week__c>>();
+        for(Employee_Work_Week__c eww: [Select id,Employee__c ,Effective_Date__c,Monday__c,Tuesday__c,Wednesday__c,Thursday__c,Friday__c,Saturday__c,Sunday__c from Employee_Work_Week__c 
+                            where Employee__c in:accIds and Effective_Date__c!=null and Effective_Date__c<=:lastMonthDate order by Effective_Date__c desc]){
+            List<Employee_Work_Week__c> tempList = new List<Employee_Work_Week__c>();
+            if(accToWorkWeekMap.containsKey(eww.Employee__c)){
+                tempList.addAll(accToWorkWeekMap.get(eww.Employee__c));
+            }
+            tempList.add(eww);
+            
+            accToWorkWeekMap.put(eww.Employee__c,tempList);
+        }
+
+        
+        system.debug('@@accToWorkWeekMap'+accToWorkWeekMap);
+        Map<Id,List<Salary_Detail__c>> accToSalaryMap = new Map<Id,List<Salary_Detail__c>>();
+        for(Salary_Detail__c salDet: [select id,Total_Salary__c,Effective_Date__c,Employee_Name__c, Basic_Salary__c, Housing_Allowance__c, Transport_Allowance__c from Salary_Detail__c where Employee_Name__c in:accIds and Total_Salary__c>0 and Effective_Date__c!=null and Effective_Date__c<=:lastMonthDate and Status__c='Active' order by Effective_Date__c desc]){
+            List<Salary_Detail__c> tempList = new List<Salary_Detail__c>();
+            if(accToSalaryMap.containsKey(salDet.Employee_Name__c)){
+                tempList.addAll(accToSalaryMap.get(salDet.Employee_Name__c));
+            }
+            tempList.add(salDet);
+            accToSalaryMap.put(salDet.Employee_Name__c,tempList);
+        }
+        system.debug('@@accToSalaryMap'+accToSalaryMap);
+       
+        system.debug('@@accToPayoutMap'+accToPayoutMap);
+        List<Payout__c> payoutList = new List<Payout__c>();
+        // CPF Details for calculate cpf data
+        CalculatePayoutService.cpfDetailsMap = CalculatePayoutService.getEmpCPFDetails();
+        CalculatePayoutService.employeeWeekMap = accToWorkWeekMap;
+        CalculatePayoutService.employeeRecords  = accounts;
+        CalculatePayoutService.setupEmployeeWeekData();
+        List<Account> updateAccountList = new List<Account>();
+        List<Payitem__c> payitemList = new List<Payitem__c>();
+        
+        for(Account acc:accounts){
+            decimal workingDays = 0;
+            decimal empSalary = 0;
+            Date startDate = startMonthDate;
+            Date endDate = lastMonthDate;
+            AureusHRUtility.workingDaysWrapper wd = new AureusHRUtility.workingDaysWrapper();
+            if(accToWorkWeekMap.containsKey(acc.Id)){
+                //Method to calculate employees working days in a month
+                wd = AureusHRUtility.calcEmpWorkingDaysInaMonth(currYear,currMonth,startDate,endDate,accToWorkWeekMap.get(acc.Id));
+                workingDays = wd.workingDays;
+            }
+            
+            system.debug('WorkingDays==='+workingDays);
+            AureusHRUtility.EmployeeSalaryWrapper sw = new AureusHRUtility.EmployeeSalaryWrapper();
+            if(accToSalaryMap.containsKey(acc.Id)){
+                sw = AureusHRUtility.calcEmployeeSalaryInaMonth(currYear,currMonth,startDate,endDate,accToSalaryMap.get(acc.Id),wd,acc.Joining_Date__c,acc.Last_Working_Date__c);    
+            }
+            
+            Payout__c payout = new Payout__c();
+            if(accToPayoutMap.containsKey(acc.Id)){
+                //payout.Id =  accToPayoutMap.get(acc.Id).Id;   
+                payout =  accToPayoutMap.get(acc.Id);   
+            
+                If(sw.monthlySalary>0){
+                    payout.Monthly_Salary__c = sw.monthlySalary.setScale(2);
+                }
+                payout.Monthly_Working_Days__c = workingDays;
+                
+                if(sw.actualSalary>0){
+                    payout.Salary__c = sw.actualSalary.setScale(2);
+                }else{
+                    payout.Salary__c = 0;
+                }
+                
+                if(sw.basicSalary > 0){
+                    payout.Basic_Salary__c = sw.basicSalary.setScale(2);
+                }else{
+                    payout.Basic_Salary__c = 0;
+                }
+                
+                if(sw.housingAllowance > 0){
+                    payout.Housing_Allowance__c = sw.housingAllowance.setScale(2);
+                }else{
+                    payout.Housing_Allowance__c = 0;
+                }
+                
+                if(sw.transportAllowance  > 0){
+                    payout.Transport_Allowance__c = sw.transportAllowance .setScale(2);
+                }else{
+                    payout.Transport_Allowance__c = 0;
+                }
+                
+                payout.No_of_working_days__c = sw.actualWorkingDays;
+                
+                payout.Month__c = strCurrMonth;
+                payout.Year__c = ''+currYear+'';
+                
+                payout.Employer_CPF_Amount__c = 0;
+                payout.Employee_CPF_Amount__c = 0;
+                // calculate CPF
+                payout = CalculatePayoutService.calculateEmployeeCPF(acc,payout);
+                payoutList.add(payout);
+                
+               
+            }
+        } 
+          system.debug('@@payoutList'+payoutList);
+        if(payoutList != null && payoutList.size()> 0){
+            update payoutList;
+        }
+    } 
 
     //Other Leave: Create PayItem record for unpaid leave in this month
     public static void createPayItemForOtherLeave(List<Leave_Request__c> otherLeaveRequestList, Map<Id, Leave_Request__c> newMap){

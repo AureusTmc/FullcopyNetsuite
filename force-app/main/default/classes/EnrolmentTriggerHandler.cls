@@ -248,7 +248,7 @@ WHERE Id IN: parIds AND Lead__c != null AND Lead__r.IsConverted = False]);
     }
     
     //By Rajesh (Date 6-4-2019), This process is used to manage case(Sales Enquiry)
-    public static void manageSalesEnquiryCase(List<Enrolment__c> processEnrList,boolean isSalesEnquiry){
+    public static void manageSalesEnquiryCase(List<Enrolment__c> processEnrList,boolean isSalesEnquiry){////commented by nishi: 28-apr-2021: As per discussion with rajesh  according to isCreateSalesEnquiery we create salesenquiery or instrument rental records(List<Enrolment__c> processEnrList){
         Map<Id, Case> accCaseMap      = new Map<Id, Case>();
         
         //Filling case account map
@@ -260,13 +260,16 @@ WHERE Id IN: parIds AND Lead__c != null AND Lead__r.IsConverted = False]);
                                                                   Parent__r.Pardot_Source__pc,Parent__r.UTM_Adgroup__pc
                                                                   FROM Enrolment__c 
                                                                   WHERE Id IN:processEnrList]);
+        
         //added by nishi: 28-apr-2021: according to isCreateSalesEnquiery we create salesenquiery or instrument rental records
         String salesRecName =isSalesEnquiry ? ConstantsClass.caseSalesEnqRecTypeName  :ConstantsClass.InstrumentRentalEnquiryRecordType;
-       
+        //added by nishi: 28-apr-2021:end: according to isCreateSalesEnquiery we create salesenquiery or instrument rental records
+        
         for(Case c : [SELECT Id, Status, AccountId FROM Case 
                       WHERE AccountId IN: accCaseMap.keySet() AND Status !=: ConstantsClass.ClosedStatus AND
-                      //RecordType.Name =:  ConstantsClass.caseSalesEnqRecTypeName
-                      RecordType.Name =: salesRecName 
+                       //commented by nishi: 28-apr-2021: As per discussion with rajesh  according to isCreateSalesEnquiery we get salesenquiery or instrument rental records
+                      //RecordType.Name =:  ConstantsClass.caseSalesEnqRecTypeName 
+                      RecordType.Name =: salesRecName
                       AND Enrolment__c = null ORDER BY CreatedDate DESC]){
                           if(accCaseMap.get(c.AccountId) == null)
                               accCaseMap.put(c.AccountId, c);          
@@ -289,7 +292,7 @@ WHERE Id IN: parIds AND Lead__c != null AND Lead__r.IsConverted = False]);
                     updCaseList.add(salesEnqCase);
                 }
             }else{
-                salesEnqCase.Type = isSalesEnquiry ? ''  :'Piano Rental Enquiry';
+                salesEnqCase.Type = isSalesEnquiry ? ''  :'Instrument Rental Enquiry';
                 salesEnqCase.AccountId      = enrol.Parent__c;  
                 salesEnqCase.Status         = ConstantsClass.NewStatus;
                 salesEnqCase.Priority       = 'High';
@@ -345,7 +348,7 @@ WHERE Id IN: parIds AND Lead__c != null AND Lead__r.IsConverted = False]);
         
     }
     
-    public static Case fillCase(Enrolment__c l, Enrolment__c enrParenInfo,Boolean isSalesEnquiery){
+    public static Case fillCase(Enrolment__c l, Enrolment__c enrParenInfo,Boolean isSalesEnquiery){//commented by nishi: 28-Apr-2021:Enrolment__c l, Enrolment__c enrParenInfo){
          //added by nishi: 28-apr-2021: according to isCreateSalesEnquiery we create salesenquiery or instrument rental records
         String salesRecName =isSalesEnquiery ? ConstantsClass.caseSalesEnqRecTypeName  :ConstantsClass.InstrumentRentalEnquiryRecordType;
         String salesRecId = Schema.SObjectType.Case.getRecordTypeInfosByName().get(salesRecName).getRecordTypeId();
@@ -353,7 +356,7 @@ WHERE Id IN: parIds AND Lead__c != null AND Lead__r.IsConverted = False]);
          
         Case cas = new Case(RecordTypeId = salesRecId);
         cas.Subject        = salesRecName;
-        cas.Stage__c       = isSalesEnquiery? 'Trial Requested' :enrParenInfo.Stage__c;  // 28-Apr-2021:added by Nishi: need to build this functionality from enrolment as per discussion with Rajesh or Alex 
+        cas.Stage__c       = isSalesEnquiery? 'Trial Requested' :enrParenInfo.Stage__c;  // 28-Apr-2021:added by Nishi: need to build this functionality from enrolment as per discussion with Rajesh  
                                                                                        
       //  if(enrParenInfo.Stage__c == ConstantsClass.enrollmentPianoViewingBookedStage)
         //    cas.Stage__c       = ConstantsClass.enrollmentPianoViewingBookedStage; 
