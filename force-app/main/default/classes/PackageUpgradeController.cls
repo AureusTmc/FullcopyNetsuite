@@ -40,8 +40,33 @@ public class PackageUpgradeController implements PackageProcessInterface{
                 listOfInvoiceLineItems.add(createInvoiceLineItem(objInvoice.id,objSubLineItem,depositeFee ,objSubLineItem.Enrolment__r.New_Package_Id__c,true,''));
             }*/
             if(countWithOldPackage >= 1){
-                listOfInvoiceLineItems.add(createInvoiceLineItem(objInvoice.id,objSubLineItem,oldPackageUnitPrice ,objSubLineItem.Enrolment__r.Package__c,FALSE,objSubLineItem.Enrolment__r.Teacher__c));
-                 //added by nishi: 21-Aug-2020: for manage Facility Fee if its ossia organistion 
+                if(objSubLineItem.Enrolment__r.Type_of_Package__c != ConstantsClass.PromoTypePayment){
+                    listOfInvoiceLineItems.add(createInvoiceLineItem(objInvoice.id,objSubLineItem,oldPackageUnitPrice ,objSubLineItem.Enrolment__r.Package__c,FALSE,objSubLineItem.Enrolment__r.Teacher__c));
+                }else{
+                     // added by nishi: 10-May-2021:start: If the next billing date is less than the effective date and the package is the promo package then we will check that the invoice line item month matches the month of the next billing date, 
+                    //if it exists then we will create promo period credit memo and remove promotional package end date on enrolment record. the next month invoice generation we create invoice with new teacher or package and adjust this credit memo.
+           
+                    Date effectivePromotionalDate = objSubLineItem.Enrolment__r.Promotional_Period_End_Date__c;       
+                    if(effectivePromotionalDate != NULL && (effectivePromotionalDate > effectiveDate  &&
+                        String.isNotBlank(objSubLineItem.Enrolment__r.Lesson_Day__c) && 
+                        mapOfDates.containsKey(objSubLineItem.Enrolment__r.Lesson_Day__c))){
+                            countWithOldPackage =0;
+                        for(Date objDate : listOfDates){
+                            if( objDate<=objSubLineItem.Enrolment__r.Promotional_Period_End_Date__c && objSubLineItem.Enrolment__r.Promotional_Period_End_Date__c > effectiveDate){
+                                if(objDate < effectiveDate){
+                                    countWithOldPackage+=1;
+                                }
+                            }
+                        }   
+                        oldPackageUnitPrice = (objSubLineItem.Enrolment__r.Package_To_Be_Change__r.Unit_Fee__c)*countWithOldPackage;
+                        listOfInvoiceLineItems.add(PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,oldPackageUnitPrice ,objSubLineItem.Enrolment__r.Package_To_Be_Change__c,FALSE,objSubLineItem.Enrolment__r.Teacher__c));
+                          // added by nishi: 10-May-2021:end: If the next billing date is less than the effective date and the package is the promo package then we will check that the invoice line item month matches the month of the next billing date, 
+                        //if it exists then we will create promo period credit memo and remove promotional package end date on enrolment record. the next month invoice generation we create invoice with new teacher or package and adjust this credit memo.
+           
+                   
+                    }
+                }
+                    //added by nishi: 21-Aug-2020: for manage Facility Fee if its ossia organistion 
                 //  if(string.isNotBlank(objSubLineItem.Enrolment__r.Center__c) && string.isNotBlank(objSubLineItem.Enrolment__r.Center__r.Organisation__c) &&
                 //  string.isNotBlank(objSubLineItem.Enrolment__r.Center__r.Organisation__r.Name)&& 
                 //  objSubLineItem.Enrolment__r.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
@@ -82,7 +107,7 @@ public class PackageUpgradeController implements PackageProcessInterface{
         Invoice_Line_Item__c invLineItm = new Invoice_Line_Item__c();
         invLineItm.Enrolment__c = objSubLineItem.Enrolment__c;
         invLineItm.Subscription_Line_Item__c = objSubLineItem.Id;
-        if(amount > 0){
+        if(amount != null){
         	invLineItm.Amount__c = BillingUtility.roundOffAmount(amount);                                                               
         }                                                           
          //objSubLineItem.Amount__c;
@@ -94,8 +119,10 @@ public class PackageUpgradeController implements PackageProcessInterface{
         }
         if(!isDeposit){
             if(String.isNotBlank(objSubLineItem.Enrolment__r.Center__c) && String.isNotBlank(objSubLineItem.Enrolment__r.Center__r.Country__c) && 
-                objSubLineItem.Enrolment__r.Center__r.Country__r.Tax_Rate__c > 0 && amount > 0){
-                    Double gstAmount = BillingUtility.roundOffAmount(Double.valueOf(amount) * (objSubLineItem.Enrolment__r.Center__r.Country__r.Tax_Rate__c / 100));
+                objSubLineItem.Enrolment__r.Center__r.Country__r.Tax_Rate__c > 0 && amount != null){
+                    system.debug('amount'+amount);
+                    Double gstAmount = BillingUtility.roundOffAmount(amount * (objSubLineItem.Enrolment__r.Center__r.Country__r.Tax_Rate__c / 100));
+                    system.debug('gstAmount'+gstAmount);
                     invLineItm.gst_Amount__c = gstAmount;
             }
         }

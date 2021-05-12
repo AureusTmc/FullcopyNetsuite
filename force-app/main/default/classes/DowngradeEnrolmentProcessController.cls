@@ -102,7 +102,16 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
             }
         //system.debug('isSuccess'+isSuccess); 
             downgradeSavePoint = Database.setSavepoint();
-            
+            // added by nishi: 10-May-2021:start: If the next billing date is less than the effective date and the package is the promo package then we will check that the invoice line item month matches the month of the next billing date, 
+            //if it exists then we will create promo period credit memo and remove promotional package end date on enrolment record. the next month invoice generation we create invoice with new teacher or package and adjust this credit memo.
+            if(isPromotionalEnrolment){
+                if(effectiveDate >= nextBillDate && enroll.Type_of_Package__c == ConstantsClass.PromoTypePayment){
+                    map<string,Credit_Memo__c> newPendingCreditMemos = upgradeDowngradeController.createCreditMemoNextBillingDateForPromoPackage(enroll.Id,oldPackageId,effectiveDate,'Downgrade Enrolment Adjustment');
+                }
+            }
+            // added by nishi: 10-May-2021:end: If the next billing date is less than the effective date and the package is the promo package then we will check that the invoice line item month matches the month of the next billing date, 
+            //if it exists then we will create promo period credit memo and remove promotional package end date on enrolment record. the next month invoice generation we create invoice with new teacher or package and adjust this credit memo.
+                
             if(isSuccess){
                 if(String.isNotBlank(enrollmentId)){
                     enroll.Id = enrollmentId;
@@ -134,6 +143,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
                     enroll.Next_Lesson_Start_time__c = timeslot;
                     enroll.Advance_Action_Requested_By__c = Userinfo.getUserId();
                     enroll.Package_Process_Request_Date__c = System.today();
+                    
                 }
                 
                 if(enroll != NULL){
@@ -163,6 +173,7 @@ public without sharing class DowngradeEnrolmentProcessController implements IAdv
             }
              // 21-Oct-2020 : @@nishi  :if Enrolment package type is Prepayemnt or promo thenChange the next bill dates in Subs line items and Subscription to the first day of the next month
              if(isPromotionalEnrolment){
+                enroll = AdvanceActionsHelper.fetchEnrolment(enrollmentId);
                 enroll = AdvanceActionsHelper.updateSubscriptionNextBillDate(enroll,effectiveDate,nextBillDate);
             }
             // 21-Oct-2020 : @@nishi  End::if Enrolment package type is Prepayemnt or promo thenChange the next bill dates in Subs line items and Subscription to the first day of the next month

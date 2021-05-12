@@ -27,9 +27,13 @@ trigger AccountTrigger on Account (before insert,before update,after insert, aft
             String.isNotBlank(ac.PI_to_SF_Sync__pc) && ac.PI_to_SF_Sync__pc.equalsIgnoreCase('true') && (Trigger.isInsert || 
                                         (Trigger.isUpdate && ac.PI_to_SF_Sync__pc != Trigger.oldMap.get(ac.Id).PI_to_SF_Sync__pc))){
                 //added by 28-Apr-2021:start: Nishi: On the bases of UTM Campaign parameters, We will identify the customer for the Instrument Rental Enquiry process.
+                 /*commented and added by nishi :start: 12-May-2021: On the bases of Instrument Custom values(Piano Rental,Piano Sales), We will identify the customer for the Instrument Rental Enquiry process.
                 if(string.isnotBlank( ac.UTM_Campaign__pc) && (ac.UTM_Campaign__pc.containsIgnoreCase('Rental')  
-                                                               || ac.UTM_Campaign__pc.containsIgnoreCase('Purchase'))){
-                    filterInstrumentAcList.add(ac);
+                                                               || ac.UTM_Campaign__pc.containsIgnoreCase('Purchase'))){*/
+                if(string.isnotBlank( ac.Instrument_PI__pc) && (ac.Instrument_PI__pc.containsIgnoreCase('Piano Rental')  
+                                                                || ac.Instrument_PI__pc.containsIgnoreCase('Piano Sales'))){
+                 //commented and added by nishi :end 12-May-2021: On the bases of Instrument Custom values(Piano Rental,Piano Sales), We will identify the customer for the Instrument Rental Enquiry process.
+                                    filterInstrumentAcList.add(ac);
                 }else{
                 //28-Apr-2021: Nishi:end: On the bases of UTM Campaign parameters, We will identify the customer for the Instrument Rental Enquiry process.
                     filterParAcList.add(ac);
@@ -121,7 +125,8 @@ trigger AccountTrigger on Account (before insert,before update,after insert, aft
                     }
                 }
                 
-                if(acc.Probation_End_Date__c != null && trigger.oldmap.get(acc.Id).Probation_End_Date__c != acc.Probation_End_Date__c){
+                if(acc.Probation_End_Date__c != null && 
+                   trigger.oldmap.get(acc.Id).Probation_End_Date__c != acc.Probation_End_Date__c){
                     accForProbationList.add(acc);
                 }
                 

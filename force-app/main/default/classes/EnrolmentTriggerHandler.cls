@@ -1029,5 +1029,49 @@ accList.add(accObj);
         Map<String,List<Credit_Memo__c>> mapOfParentCreditMemo = BillingUtility.getParentCreditMemo(setOfParentIds,lastDate);
         BillingUtility.adjustPendingCreditMemoDeposit(listOfInv, mapOfInvoiceId.keySet(), setOfParentIds, mapOfParentEnrolmentLastDate,isGetTotalAmount,mapOfParentCreditMemo,mapOfActiveParent);
     }
-    
+
+    public static void updateTeacherFortotalActiveEnrolments(set<id> teacherIds){
+        list<Enrolment__c> listOfAllActiveEnrolments = AureusHRManagementUtil.getAllActiveEnrolments(teacherIds,system.today());
+        System.debug('$$$listOfAllActiveEnrolments'+listOfAllActiveEnrolments);
+        Set<Id> empIdSet = new Set<Id>();
+        Map<string,decimal> employeeWorkingHrs = new Map<string,decimal>();
+        set<string> employeetiredIds = new Set<string>();
+        if(listOfAllActiveEnrolments != null && listOfAllActiveEnrolments.size()> 0){
+            List<Account> accList= new List<Account>();
+        
+            for(Enrolment__c enrolmentObj: listOfAllActiveEnrolments){
+                if(string.isblank(enrolmentObj.Package_Process_Type__c) || 
+                    (string.isNotblank(enrolmentObj.Package_Process_Type__c)  &&
+                        (enrolmentObj.Package_Process_Type__c != 'Cancellation' ||
+                            (enrolmentObj.Package_Process_Type__c == 'Cancellation' && enrolmentObj.Effective_Date__c.month() != system.today().month())
+                        )
+                    )
+                ){
+                    empIdSet.add(enrolmentObj.Teacher__c);
+                    decimal totalworkingHrs  = 0;
+                    if(enrolmentObj.Teacher__r.Tiered_Salary__c){
+                        employeetiredIds.add(enrolmentObj.Teacher__c);
+                    }
+                    if(employeeWorkingHrs.containsKey(enrolmentObj.Teacher__c)){
+                        totalworkingHrs = employeeWorkingHrs.get(enrolmentObj.Teacher__c);
+                    }
+                    totalworkingHrs += enrolmentObj.Duration_Min__c;
+                    employeeWorkingHrs.put(enrolmentObj.Teacher__c,totalworkingHrs);
+                }
+            }
+            for(String teacherId : teacherIds){
+                if(employeeWorkingHrs.containsKey(teacherId)){
+                    Decimal noOfHours = employeeWorkingHrs.get(teacherId);
+                    system.debug('$$$noOfHours'+noOfHours);
+                    noOfHours = noOfHours != NULL? (noOfHours/60) : 0;
+                    accList.add(new Account(Id = teacherId, Weekly_Actual_Enrolment_Hours__c = noOfHours));
+                }else{
+                    accList.add(new Account(Id = teacherId, Weekly_Actual_Enrolment_Hours__c = 0));
+                }
+            }
+            if(accList.size()>0){
+                update accList;
+            }
+        }
+    }
 }

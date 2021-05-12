@@ -270,7 +270,7 @@ public class UpgradeDowngradeController{
         system.debug('invoiceAdjustmentMap'+invoiceAdjustmentMap);
         system.debug('totalAmount'+totalAmount);
         system.debug('depositeFee'+depositeFee);
-        if(totalAmount > 0){
+        if(totalAmount != 0){
             /*if(isPromotionalEnrolment){
                 upgradePackageCaseDetails = invoiceForupgradePromotionalPackages( upgradePackageCaseDetails, enrolmentObj,
                                                 stripeId,   currencyCode, baseUrl, apiKey, objSubLineItem , depositeFee,
@@ -363,6 +363,7 @@ public class UpgradeDowngradeController{
                                                         Map<string,Decimal> invoiceAdjustmentMap,Decimal totalAmount,Boolean isPromotionalEnrolment, List<Invoice__c> listOfInvoice,Boolean isossiaOrganisation){
             Payment__c objPayment = new Payment__c();
             Invoice__c objInvoice = new Invoice__c();
+            system.debug('totalAmount'+totalAmount);
             if(totalAmount > 0){
                 if(string.isNotBlank(stripeId)){
                     BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId,totalAmount, currencyCode, baseUrl, apiKey); 
@@ -424,7 +425,20 @@ public class UpgradeDowngradeController{
                 } 
             }else{
                 upgradePackageCaseDetails.isSuccess = false;
+                system.debug('isPromotionalEnrolment'+isPromotionalEnrolment);
+                if(isPromotionalEnrolment){
+                    Map<String,List<Credit_Memo__c>>  mapOfParentCreditMemo = createCreditMemoForCurrentMonthUpgradeProcess(listOfInvoice,invoiceAdjustmentMap,enrolmentObj,effectDate,objSubLineItem, taxRate, isPromotionalEnrolment,oldPackg.id);
+                    upgradePackageCaseDetails =  createUpgradedAmountInvoice(listOfInvoice,objSubLineItem, depositeFee,oldPackg,  newPackg,  effectDate,  taxRate, newTeacherId, enrolmentObj,mapOfParentCreditMemo,upgradePackageCaseDetails,invoiceAdjustmentMap,isPromotionalEnrolment);
+                    if(string.isNotBlank(upgradePackageCaseDetails.invoiceId)){
+                        upgradePackageCaseDetails.isSuccess = true;
+                    }
+                    if(objInvoice != NULL){
+                        BillingUtility.createAttachment(new Set<String>{objInvoice.Id});
+                    }
+                }
+               
             } 
+            system.debug('upgradePackageCaseDetails'+upgradePackageCaseDetails);
             return upgradePackageCaseDetails;
     }
 
@@ -709,7 +723,7 @@ public static Map<String,List<Credit_Memo__c>> createCreditMemoForPrepaymentInvo
         for(Invoice_Line_Item__c objInvLine : [SELECT ID,Invoice__c FROM Invoice_Line_Item__c
                                     where Enrolment__C =:enrolmentObj.id
                                     And Month__c >=: effectiveDate 
-                                    and Month__c <=:objSubLineItem.Next_Bill_Date__c
+                                    //and Month__c <=:objSubLineItem.Next_Bill_Date__c
                                     And Subscription_Line_Item__c=: objSubLineItem.id
                                     And Is_Deposit__c = false
                                     And package__r.type__c != 'Adhoc']){
@@ -742,8 +756,8 @@ public static Map<String,List<Credit_Memo__c>> createCreditMemoForPrepaymentInvo
          // added by nishi: 24-oct-2020:  We have created a new invoice for additional deposits and full lesson fees for the enhanced package for the remaining period in the current invoice. we create a credit memo for  the previous package for the remaining period
         // and then adjust this credit memo to the newly upgraded package invoice And the remaining invoice amount we charged via Stripe.                                                                
             List<Invoice__c> listOfInvoice = isPromotionalEnrolment ? getInvoiceDetails(objEnrol,effectDate.addmonths(1),objSubLineItem) : new  List<Invoice__c>();
-                                                                           
-            if(totalAmount > 0){
+            upgradePackageCaseDetails.isSuccess = true;                                                     
+            if(totalAmount != 0){
                 upgradePackageCaseDetails= createChargeForCustomer(upgradePackageCaseDetails, objEnrol,
                                         stripeId,   currencyCode, baseUrl, apiKey, objSubLineItem , depositeFee,
                                         oldPackg,  newPackg,  effectDate,  timeslot,  taxRate, newTeacherId, invoiceAdjustmentMap,totalAmount,isPromotionalEnrolment,listOfInvoice,isOssiaOrganization);
@@ -755,6 +769,169 @@ public static Map<String,List<Credit_Memo__c>> createCreditMemoForPrepaymentInvo
                 upgradePackageCaseDetails.isSuccess = false;
             }
         return upgradePackageCaseDetails;
+    }
+
+    // added by nishi: 10-May-2021: If the next billing date is less than the effective date and the package is the promo package then
+    // we will check that the invoice line item month matches the month of the next billing date, 
+    //if it exists then we will create promo period credit memo and remove promotional package end date on enrolment record.
+    // the next month invoice generation we create invoice with new teacher or package and adjust this credit memo.
+    public static map<string,Credit_Memo__c> createCreditMemoNextBillingDateForPromoPackage(String enrolmentId,string oldPackage, Date effectiveDate,string creditMemoRemarks ){
+        enrolment__c objEnrol = fetchEnrolment(enrolmentId);
+        Subscription_Line_Item__c objSubLineItem = fetchSubsLineItem(enrolmentId);
+        List<Invoice__c> listOfInvoice = getInvoiceDetails(objEnrol,effectiveDate,objSubLineItem);
+        map<string,Credit_Memo__c> newPendingCreditMemos = new map<string,Credit_Memo__c>();
+        map<string,List<Credit_memo_line_item__c>> mapOfCreditmemolineitem = new map<string,List<Credit_memo_line_item__c>>();
+        List<Credit_memo_line_item__c> listOfCreditmemolineitem = new List<Credit_memo_line_item__c>(); 
+        //Credit_memo_line_item__c objCreditLineItem = new  Credit_memo_line_item__c();    
+        list<Invoice_Line_Item__c> updateInvoiceLineItem = new list<Invoice_Line_Item__c>();
+        List<Booking__c> bookingList = [SELECT Id, Package__c, center__c, Teacher_Account__c, Package__r.Unit_Fee__c, Student__c, Student__r.Parent__c,Booking_date__c FROM Booking__c WHERE 
+                                        Enrolment__c =: objEnrol.id AND Booking_Date__c >= :effectiveDate AND 
+                                        Booking_Date__c <= :objEnrol.Promotional_Period_End_Date__c
+                                        AND Type__c =: ConstantsClass.typeRegular 
+                                        ORDER BY Booking_Date__c ];
+        
+        system.debug('bookingList'+bookingList);
+        if(bookingList != null && bookingList.size() > 0){
+            Map<Id,Package__c> mapOfPackages =New Map<Id,Package__c>([Select Id,Unit_Fee__c,Is_Promotion_Discount__c,type_of_package__C,
+                                            Package_after_Promotion__c,Package_Fee__c, Promotion_period_In_months__c, 
+                                            Promotion_Discount__c from Package__c where Id =:oldPackage]);
+            map<id,String> packageInvoiceAmount = new Map<Id,String>();
+            map<id,String> packageInvoiceDiscountAmount = new Map<Id,String>();
+            for(Booking__c booking : bookingList){
+                packageInvoiceAmount.put(oldPackage,getPrepaymentPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceAmount,oldPackage,false));    
+                packageInvoiceDiscountAmount.put(oldPackage,getPrepaymentPackageInvoiceAmount(objEnrol,mapOfPackages,
+                                                                                                            packageInvoiceDiscountAmount,oldPackage,true)); 
+            }
+            map<String,Invoice_Line_Item__c> updateCreditMemoInvoiceLineItem = new map<String,Invoice_Line_Item__c>();
+            Map<String,Invoice__c> mapofinvoice = new Map<String,Invoice__c>();
+            Map<String,Invoice_line_item__c> mapofinvoicelineitem = new Map<String,Invoice_line_item__c>();
+            for(Invoice__c invoiceobj : listOfInvoice){
+                for(Invoice_line_item__c objlineitem: invoiceobj.Invoice_line_items__r){
+                    if(objlineitem.month__c.month() >= effectiveDate.month()){
+                        mapofinvoice.put('Current',invoiceobj);
+                            if(!objlineitem.Is_Discount__c)
+                                mapofinvoicelineitem.put('Current',objlineitem);
+                            else if(objlineitem.Is_Discount__c)
+                                mapofinvoicelineitem.put('DiscountInvoice',objlineitem);
+                    }
+                }
+            }
+            if((packageInvoiceAmount.containskey(oldPackage) && decimal.valueOf(packageInvoiceAmount.get(oldPackage).split(';')[0]) > 0) && 
+                ((packageInvoiceDiscountAmount.containskey(oldPackage) && decimal.valueOf(packageInvoiceDiscountAmount.get(oldPackage).split(';')[0]) > 0))){
+
+                String invoiceId = null;
+                if(mapofinvoice != null && mapofinvoice.size() > 0 ){
+                    if(mapofinvoice.containskey('Current')){
+                        invoiceId = mapofinvoice.get('Current').id;
+                    }
+                
+                    Credit_Memo__c  objCreditMemo = new     Credit_Memo__c();
+                    objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, invoiceId, effectiveDate,creditMemoRemarks);
+                    newPendingCreditMemos.put(creditMemoRemarks,objCreditMemo);  
+                    
+                    if(packageInvoiceAmount.containsKey(oldPackage)){
+                        if(packageInvoiceAmount.get(oldPackage).split(';') != null && 
+                        packageInvoiceAmount.get(oldPackage).split(';').size() >0){
+                        decimal oldPackageTotalAmount = decimal.valueOf(packageInvoiceAmount.get(oldPackage).split(';')[0]);
+                            decimal gstAmount = decimal.valueOf(packageInvoiceAmount.get(oldPackage).split(';')[1]);
+                            if(oldPackageTotalAmount != 0){
+                                oldPackageTotalAmount = BillingUtility.roundOffAmount(oldPackageTotalAmount);
+                            }
+                            if(gstAmount != 0){
+                                gstAmount = BillingUtility.roundOffAmount(gstAmount);
+                            }
+                            String invoicelineitemId = null;
+                            if(mapofinvoicelineitem.containskey('Current')){
+                                invoicelineitemId =mapofinvoicelineitem.get('Current').id; 
+                            }
+                            
+                            Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(oldPackageTotalAmount,gstAmount,oldPackage,
+                            objEnrol.id,invoicelineitemId,'',effectiveDate);
+                            listOfCreditmemolineitem.add(objCreditLineItem);                                                  
+                            if(string.isNotBlank(invoicelineitemId)){
+                                updateCreditMemoInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( mapofinvoicelineitem,oldPackageTotalAmount,gstAmount,invoicelineitemId));
+                            }
+                        }                 
+                    }
+                    if(packageInvoiceDiscountAmount.containsKey(oldPackage)){
+                        if(packageInvoiceDiscountAmount.get(oldPackage).split(';') != null && 
+                            packageInvoiceDiscountAmount.get(oldPackage).split(';').size() >0){
+                            decimal oldPackageTotalDiscountAmount = -BillingUtility.roundOffAmount(decimal.valueOf(packageInvoiceDiscountAmount.get(oldPackage).split(';')[0]));
+                            decimal gstAmount = -BillingUtility.roundOffAmount(decimal.valueOf(packageInvoiceDiscountAmount.get(oldPackage).split(';')[1]));
+                            String invoicelineitemId = null;
+                            if(mapofinvoicelineitem.containskey('DiscountInvoice')){
+                                invoicelineitemId =mapofinvoicelineitem.get('DiscountInvoice').id; 
+                            }
+                            Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(oldPackageTotalDiscountAmount,gstAmount,oldPackage,
+                            objEnrol.id,invoicelineitemId,'',effectiveDate);
+                            objCreditLineItem.Is_Discount__c = true; 
+                            listOfCreditmemolineitem.add(objCreditLineItem);                                                  
+                        if(string.isNotBlank(invoicelineitemId)){
+                                updateCreditMemoInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( mapofinvoicelineitem,oldPackageTotalDiscountAmount,gstAmount,invoicelineitemId));
+                            }
+                        }                 
+                    }
+                
+                    mapOfCreditmemolineitem.put(creditMemoRemarks,listOfCreditmemolineitem);
+                    set<string> creditmemoIds = new set<string>();
+                    if(newPendingCreditMemos.size() > 0){
+                    Insert newPendingCreditMemos.values();  
+                    system.debug('newPendingCreditMemos'+newPendingCreditMemos);
+                    system.debug('mapOfCreditmemolineitem'+mapOfCreditmemolineitem);
+                    List<Credit_memo_line_item__c> listOfnewCreditmemolineitem = new list<Credit_memo_line_item__c>();
+                        for(string creditMemoRemark : newPendingCreditMemos.keyset()){
+                            if(mapOfCreditmemolineitem.containskey(creditMemoRemark)){
+                                for(Credit_memo_line_item__c creditLineItemobj: mapOfCreditmemolineitem.get(creditMemoRemark)){
+                                    creditmemoIds.add(newPendingCreditMemos.get(creditMemoRemark).id);
+                                    creditLineItemobj.Credit_Memo_Number__c = newPendingCreditMemos.get(creditMemoRemark).id;
+                                    listOfnewCreditmemolineitem.add(creditLineItemobj);
+                                }
+                            }
+                        } 
+                        if(listOfnewCreditmemolineitem != null && listOfnewCreditmemolineitem.size() > 0){
+                            insert listOfnewCreditmemolineitem;
+                        }
+                                                
+                    }
+                    if(updateCreditMemoInvoiceLineItem != null && updateCreditMemoInvoiceLineItem.size() > 0){
+                        update updateCreditMemoInvoiceLineItem.values();
+                    }
+                }
+            }
+        }
+        return newPendingCreditMemos;
+    } 
+
+    // may-11-20201: nishi: get paid invoice amount and tax according to enrolment promotional packages end date
+    private static String getPrepaymentPackageInvoiceAmount(Enrolment__c objEnrol,Map<Id,Package__c> mapOfPackages,
+        map<id,String> packageInvoiceAmount,string packageId,boolean isDiscount){
+        decimal totalAmount = 0;
+        decimal gstAmount = 0;
+        Decimal noOfMonths = String.isNotBlank(mapOfPackages.get(packageId).Promotion_period_In_months__c) ? Integer.valueOf(mapOfPackages.get(packageId).Promotion_period_In_months__c) : 1;
+        Decimal preUnitDiscountAmount = 0;    
+        if(packageInvoiceAmount.containsKey(packageId)){
+            totalAmount = decimal.valueOf(packageInvoiceAmount.get(packageId).split(';')[0]);
+        }
+        Integer lessondays = 4;
+        if(isDiscount){
+            if(mapOfPackages.get(packageId).Promotion_Discount__c != null){
+                preUnitDiscountAmount = ((mapOfPackages.get(packageId).Promotion_Discount__c / noOfMonths)/lessondays);
+            }
+        }else{
+            if(mapOfPackages.get(packageId).Package_Fee__c != null){
+                 preUnitDiscountAmount = ((mapOfPackages.get(packageId).Package_Fee__c / noOfMonths)/lessondays);
+            }
+        }
+        totalAmount += preUnitDiscountAmount;
+        if(String.isNotBlank(objEnrol.Id) &&  String.isNotBlank(objEnrol.Center__c)
+        && String.isNotBlank(objEnrol.Center__r.Country__c) && objEnrol.Center__r.Country__r.Tax_Rate__c > 0
+        && preUnitDiscountAmount  > 0 ){
+            if(packageInvoiceAmount.containsKey(packageId)){
+                gstAmount = decimal.valueOf(packageInvoiceAmount.get(packageId).split(';')[1]);
+            }
+            gstAmount += (preUnitDiscountAmount * objEnrol.Center__r.Country__r.Tax_Rate__c)/100;
+        }
+        return totalAmount+';'+gstAmount;
     }
 
     // 23-Oct-2020:nishi: We have created a new invoice for additional deposits and full lesson fees for the enhanced package for the remaining period in the current invoice. we create a credit memo for  the previous package for the remaining period and then adjust this credit memo to the newly upgraded package invoice
@@ -1039,6 +1216,7 @@ public static Map<String,List<Credit_Memo__c>> createCreditMemoForPrepaymentInvo
     }
     public static Enrolment__c fetchEnrolment(String enrolId){
         List<Enrolment__c> enrolList = [SELECT Id, effective_Date__c, Center__c, Parent__c, Package__c, Package_Process_Status__c,Lesson_Start_time__c,Type_of_Package__c,
+                                        Promotional_Period_End_Date__c,Center__r.Country__r.Tax_Rate__c,Lesson_Day__c,
                                         New_Package_Id__c, Package_Process_Type__c, Next_Lesson_Start_time__c FROM Enrolment__c WHERE Id =: enrolId];
         Enrolment__c enrolObj = new Enrolment__c();
         if(enrolList.size() > 0){

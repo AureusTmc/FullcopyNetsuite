@@ -89,10 +89,13 @@ public without sharing class AdvanceActionsHelper {
     }
     // 21-Oct-2020 : @@nishi  : update enrolment Prepayemnt end date and change package field
     Public static void updatePromotionalEnrolment(Enrolment__c objEnrol,Date effectiveDate,date nextBillDate){
-        objEnrol.Package_To_Be_Change__c = null;
-        if(effectiveDate <= nextBillDate){
-            objEnrol.prepayment_period_end_date__c = effectiveDate;
-            objEnrol.Promotional_Period_End_Date__c = effectiveDate;
+        if(objEnrol.prepayment_period_end_date__c >= effectiveDate){
+            objEnrol.prepayment_period_end_date__c = null;
+            objEnrol.Package_To_Be_Change__c = null;
+        }
+        if(objEnrol.Promotional_Period_End_Date__c  >= effectiveDate){
+            objEnrol.Promotional_Period_End_Date__c = null;
+            objEnrol.Package_To_Be_Change__c = null;
         }
         update objEnrol;
        //system.debug('@@@updateEnrolment - updated enrolment -- '+enrolment);

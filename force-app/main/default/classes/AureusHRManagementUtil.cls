@@ -1528,7 +1528,7 @@ public class AureusHRManagementUtil{
         queryStr += ' WHERE Stage__c =: enrolledEnrolmentStage And Type__c =:regularEnrolmenttype ';
         if(teacherIds != null && teacherIds.size() > 0){
             queryStr += ' AND Teacher__c In: teacherIds';
-            queryStr += ' AND Teacher__r.Payout_Type__c =: fixedpayout';
+           // queryStr += ' AND Teacher__r.Payout_Type__c =: fixedpayout';
         	//queryStr += ' AND Teacher_Account__r.Tiered_Salary__c = true';
         }
         //queryStr += ' And (Package_Process_Type__c = null OR (Package_Process_Type__c != null And Package_Process_Type__c =: cancelProcessType AND Effective_Date__c <: monthStartdate AND Effective_Date__c >:monthEndDate))';
@@ -1545,7 +1545,7 @@ public class AureusHRManagementUtil{
         set<string> employeetiredIds = new Set<string>();
         if(listOfAllActiveEnrolments != null && listOfAllActiveEnrolments.size()> 0){
             for(Enrolment__c enrolmentObj: listOfAllActiveEnrolments){
-                if(string.isblank(enrolmentObj.Package_Process_Type__c) || 
+                if(enrolmentObj.Teacher__r.Payout_Type__c =='Fixed' && string.isblank(enrolmentObj.Package_Process_Type__c) || 
                     (string.isNotblank(enrolmentObj.Package_Process_Type__c)  &&
                         (enrolmentObj.Package_Process_Type__c != 'Cancellation' ||
                             (enrolmentObj.Package_Process_Type__c == 'Cancellation' && enrolmentObj.Effective_Date__c.month() != currentdate.month())
@@ -1578,10 +1578,10 @@ public class AureusHRManagementUtil{
             string strCurrMonth = dtm.format('MMMM');
             system.debug('$$$empIdSet'+empIdSet);
             if(payoutIdSet != NULL && payoutIdSet.size()>0)
-                payoutList = [SELECT Id, Year__c, Month__c, Salary__c, Total_OW_Amount__c, Monthly_Working_Days__c, Employee_Name__c, Employee_Name__r.Weekly_Contract_Working_Hours__c ,
+                payoutList = [SELECT Id, Year__c, Month__c, Salary__c, Total_OW_Amount__c, Monthly_Working_Days__c, Employee_Name__c, Employee_Name__r.Weekly_International_School_Hours__c ,
                               Daily_Rate__c FROM Payout__c WHERE Id IN: payoutIdSet  and Month__c =:  strCurrMonth   and year__c=:''+currentDate.year()+''];
             else
-                payoutList = [SELECT Id, Year__c, Month__c, Salary__c, Total_OW_Amount__c, Monthly_Working_Days__c, Employee_Name__c,Employee_Name__r.Weekly_Contract_Working_Hours__c ,
+                payoutList = [SELECT Id, Year__c, Month__c, Salary__c, Total_OW_Amount__c, Monthly_Working_Days__c, Employee_Name__c,Employee_Name__r.Weekly_International_School_Hours__c ,
                                 Daily_Rate__c FROM Payout__c WHERE Employee_Name__c IN: empIdSet and Month__c =:  strCurrMonth   and year__c=:''+currentDate.year()+'']; 
             system.debug('$$$payoutList'+payoutList);
             if(payoutList != NULL && payoutList.size() > 0 && employeeWorkingHrs != null && employeeWorkingHrs.size()> 0){
@@ -1628,7 +1628,7 @@ public class AureusHRManagementUtil{
                             system.debug('$$$noOfHours'+noOfHours);
                             noOfHours = noOfHours != NULL? (noOfHours/60) : 0;
                             system.debug('$$$noOfHours'+noOfHours);
-                            noOfHours += (payoutObj.Employee_Name__r.Weekly_Contract_Working_Hours__c != null ? payoutObj.Employee_Name__r.Weekly_Contract_Working_Hours__c :0);
+                            noOfHours += (payoutObj.Employee_Name__r.Weekly_International_School_Hours__c != null ? payoutObj.Employee_Name__r.Weekly_International_School_Hours__c :0);
                             if(mapPayoutToPayItem.containsKey(payoutObj.Id)){ //if PayItem is already created for the month year
                                 payItemObj = mapPayoutToPayItem.get(payoutObj.Id);
                                 if(employeetiredIds.contains(payoutObj.Employee_Name__c)){

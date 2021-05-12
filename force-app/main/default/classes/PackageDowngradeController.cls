@@ -47,7 +47,31 @@ public class PackageDowngradeController implements PackageProcessInterface{
                 listOfInvoiceLineItems.add(PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,depositeFee ,objSubLineItem.Enrolment__r.New_Package_Id__c,true,''));
             }*/
             if(countWithOldPackage >= 1){
-                listOfInvoiceLineItems.add(PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,oldPackageUnitPrice ,objSubLineItem.Enrolment__r.Package__c,FALSE,objSubLineItem.Enrolment__r.Teacher__c));
+                if(objSubLineItem.Enrolment__r.Type_of_Package__c != ConstantsClass.PromoTypePayment){
+                    listOfInvoiceLineItems.add(PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,oldPackageUnitPrice ,objSubLineItem.Enrolment__r.Package__c,FALSE,objSubLineItem.Enrolment__r.Teacher__c));
+                }else{
+                      // added by nishi: 10-May-2021:start: If the next billing date is less than the effective date and the package is the promo package then we will check that the invoice line item month matches the month of the next billing date, 
+                    //if it exists then we will create promo period credit memo and remove promotional package end date on enrolment record. the next month invoice generation we create invoice with new teacher or package and adjust this credit memo.
+                    Date effectivePromotionalDate = objSubLineItem.Enrolment__r.Promotional_Period_End_Date__c;       
+                    if(effectivePromotionalDate != NULL && (effectivePromotionalDate > effectiveDate  &&
+                        String.isNotBlank(objSubLineItem.Enrolment__r.Lesson_Day__c) && 
+                        mapOfDates.containsKey(objSubLineItem.Enrolment__r.Lesson_Day__c))){
+                            countWithOldPackage =0;
+                        for(Date objDate : listOfDates){
+                            if( objDate<=objSubLineItem.Enrolment__r.Promotional_Period_End_Date__c && objSubLineItem.Enrolment__r.Promotional_Period_End_Date__c > effectiveDate){
+                                if(objDate < effectiveDate){
+                                    countWithOldPackage+=1;
+                                }
+                            }
+                        }   
+                        oldPackageUnitPrice = (objSubLineItem.Enrolment__r.Package_To_Be_Change__r.Unit_Fee__c)*countWithOldPackage;
+                        listOfInvoiceLineItems.add(PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,oldPackageUnitPrice ,objSubLineItem.Enrolment__r.Package_To_Be_Change__c,FALSE,objSubLineItem.Enrolment__r.Teacher__c));
+                          // added by nishi: 10-May-2021:end: If the next billing date is less than the effective date and the package is the promo package then we will check that the invoice line item month matches the month of the next billing date, 
+                    //if it exists then we will create promo period credit memo and remove promotional package end date on enrolment record. the next month invoice generation we create invoice with new teacher or package and adjust this credit memo.
+           
+                  
+                    }
+                }
             }
             if(countWithNewPackage >= 1){
                 listOfInvoiceLineItems.add(PackageUpgradeController.createInvoiceLineItem(objInvoice.id,objSubLineItem,newPackageUnitPrice ,objSubLineItem.Enrolment__r.New_Package_Id__c,FALSE,objSubLineItem.Enrolment__r.Teacher__c));

@@ -109,8 +109,12 @@ public without sharing class UpdateEnrolmentProcessController implements IAdvanc
             enrolmentObj.Advance_Action_Requested_By__c = UserInfo.getUserId();
             // 28-Oct-2020 : @@nishi  :check  Enrolment package type is Prepayemnt or promo or is normal packages       
             Boolean isPromotionalEnrolment=false;
+            Boolean isPromoPackageEnrolment=false;
             if( String.isNotBlank(enrolmentObj.Type_of_Package__c) && (enrolmentObj.Type_of_Package__c == ConstantsClass.prePaymentType || enrolmentObj.Type_of_Package__c == ConstantsClass.PromoTypePayment)){
                 isPromotionalEnrolment= true;
+                if(enrolmentObj.Type_of_Package__c == ConstantsClass.PromoTypePayment){
+                    isPromoPackageEnrolment = true;
+                }
             }
             // 28-Oct-2020 : @@nishi  :check  Enrolment package type is Prepayemnt or promo or is normal packages
               
@@ -191,8 +195,18 @@ public without sharing class UpdateEnrolmentProcessController implements IAdvanc
                     }*/
                 }
                 system.debug('isSameMonth'+isSameMonth);
-                if(saveResult.isSuccess() && isSameMonth && teacherPackageChange){
-                    invoiceId =  createInvoiceAndLineItemsChangeEnrol(enrolmentObj, effectiveDate, nextBillDate, oldTeacher,oldPackage,teacherId,packageId,isPromotionalEnrolment);
+                if(saveResult.isSuccess() && teacherPackageChange){
+                    if(isSameMonth){
+                        invoiceId =  createInvoiceAndLineItemsChangeEnrol(enrolmentObj, effectiveDate, nextBillDate, oldTeacher,oldPackage,teacherId,packageId,isPromotionalEnrolment);
+                    }else{
+                         // added by nishi: 12-May-2021:start If enrolment Package is promo and Promotional_Period_End_Date is greated then next billing date then we get that month then we calculate paid invoice amount
+                        if(isPromoPackageEnrolment){
+                            map<string,Credit_Memo__c> newPendingCreditMemos = upgradeDowngradeController.createCreditMemoNextBillingDateForPromoPackage(enrolmentObj.Id,oldPackage, effectiveDate,'Update Enrolment invoice Adjustment');
+                            AdvanceActionsHelper.updatePromotionalEnrolment(enrolmentObj,effectiveDate,nextBillDate);
+                        }
+                         // added by nishi: 12-May-2021:start If enrolment Package is promo and Promotional_Period_End_Date is greated then next billing date then we get that month then we calculate paid invoice amount
+                
+                    }
                 }
                 
                 error = false;

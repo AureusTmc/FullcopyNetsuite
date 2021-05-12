@@ -66,8 +66,13 @@ public without sharing class UpgradeEnrolmentProcessController implements IAdvan
             Set<String> setOfBookings = new Set<String>();
             Map<String, Booking__c> mapOfMakeupBooking = new Map<String, Booking__c>();
             Boolean isPromotionalEnrolment=false;
+            Boolean isPromoPackageEnrolment=false;
             if( String.isNotBlank(enrolmentObj.Type_of_Package__c) && (enrolmentObj.Type_of_Package__c == ConstantsClass.prePaymentType || enrolmentObj.Type_of_Package__c == ConstantsClass.PromoTypePayment)){
                 isPromotionalEnrolment= true;
+                if(enrolmentObj.Type_of_Package__c == ConstantsClass.PromoTypePayment){
+                    isPromoPackageEnrolment= true;
+                    
+                }
             }
             //Fetch Next Bill Date From Enrolment
             nextBillDate = AdvanceActionsHelper.fetchNextBillDateFromEnrolment(enrolmentObj);
@@ -87,7 +92,8 @@ enrolmentObj = upgradeDetails.enrolObj;
 }*/
             //end:commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic*/
             if(effectiveDate < nextBillDate && String.isNotBlank(enrolmentObj.Id) && String.isNotBlank(organisationObj.Id)){
-                upgradeDetails = updatePackageNextDateIsGreater(enrolmentObj.Id, effectiveDate, nextBillDate, newPackage, oldPackage, timeslot, organisationObj,newTeacherId,isPromotionalEnrolment);
+                date updatednextBillDate= isPromoPackageEnrolment &&  enrolmentObj.Promotional_Period_End_Date__c != null && enrolmentObj.Promotional_Period_End_Date__c >= nextBillDate ? enrolmentObj.Promotional_Period_End_Date__c : nextBillDate;
+                upgradeDetails = updatePackageNextDateIsGreater(enrolmentObj.Id, effectiveDate, updatednextBillDate, newPackage, oldPackage, timeslot, organisationObj,newTeacherId,isPromotionalEnrolment);
                 enrolmentObj = upgradeDetails.enrolObj;
             }
             // New Effective date   is greated then next Billing date
@@ -95,8 +101,19 @@ enrolmentObj = upgradeDetails.enrolObj;
             else if(String.isNotBlank(enrolmentObj.Id) && String.isNotBlank(organisationObj.Id)){
                 // upgradeDetails = updatePackageEffectiveDateIsGreater(enrolmentObj, oldPackage, newPackage, countryObj, effectiveDate,newTeacherId);
                 upgradeDetails = updatePackageEffectiveDateIsGreater(enrolmentObj, oldPackage, newPackage, organisationObj, effectiveDate,newTeacherId);
+             
                 if(upgradeDetails.isSuccess){
-                    
+                     // added by nishi: 10-May-2021:start: If the next billing date is less than the effective date and the package is the promo package then we will check that the invoice line item month matches the month of the next billing date, 
+                    //if it exists then we will create promo period credit memo and remove promotional package end date on enrolment record. the next month invoice generation we create invoice with new teacher or package and adjust this credit memo.
+                    if(isPromotionalEnrolment){
+                        if(isPromoPackageEnrolment && effectiveDate >= nextBillDate  && enrolmentObj.Promotional_Period_End_Date__c >= nextBillDate){
+                            map<string,Credit_Memo__c> newPendingCreditMemos = upgradeDowngradeController.createCreditMemoNextBillingDateForPromoPackage(enrolmentObj.Id,oldPackage, effectiveDate,'Upgrade Enrolment Adjustment');
+                        }
+                        AdvanceActionsHelper.updatePromotionalEnrolment(enrolmentObj,effectiveDate,nextBillDate);
+                    }
+                    // added by nishi: 10-May-2021:end: If the next billing date is less than the effective date and the package is the promo package then we will check that the invoice line item month matches the month of the next billing date, 
+                    //if it exists then we will create promo period credit memo and remove promotional package end date on enrolment record. the next month invoice generation we create invoice with new teacher or package and adjust this credit memo.
+                
                     // added by nishi:start-11-Aug-2020: for manage ossia organisation new teacher
                     if(string.isNotBlank(newTeacherId)){
                         enrolmentObj.New_Teacher__c = newTeacherId;
@@ -223,7 +240,8 @@ enrolmentObj = upgradeDetails.enrolObj;
             //    countryObj.Currency_Code__c, countryObj.Stripe_Base_Url__c, countryObj.Stripe_Secret_Key__c, countryObj.Tax_Rate__c,newTeacherId);
             //commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic*/
                  upgradeCaseDetails = upgradeDowngradeController.upgradePackage(enrolmentId, effectiveDate, newPackageId, oldPackageId, newTimeSlot, 
-                organisationObj.country__r.Currency_Code__c, organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c, organisationObj.Tax_Rate__c,newTeacherId,isPromotionalEnrolment);
+                organisationObj.country__r.Currency_Code__c, organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c, organisationObj.Tax_Rate__c,newTeacherId,
+                isPromotionalEnrolment);
            }
         return upgradeCaseDetails;
     }
@@ -329,7 +347,11 @@ enrolmentObj = upgradeDetails.enrolObj;
                 if(isOssiaOrganization){
                     upgradePackageCaseDetails = createDueInvoiceWithLineItem(enrolmentObj,parentId,upgradePackageCaseDetails,depositeFee,newPackage,effectiveDate);
                     if(String.isNotBlank(upgradePackageCaseDetails.invoiceId)){
-                        BillingUtility.sendEmailsForOssiaNonStripeCustomers(new Set<string>{upgradePackageCaseDetails.invoiceId});
+                        Invoice__c objInvoice = [SELECT Id,Name,Total_Amount__c,Parent_Account__c, status__c FROM Invoice__c WHERE Id =:upgradePackageCaseDetails.invoiceId];
+                        if(objInvoice != NULL){
+                            BillingUtility.createAttachment(new Set<String>{objInvoice.Id});
+                        }
+                        BillingUtility.sendEmailsForOssiaNonStripeCustomers(new Set<string>{objInvoice.Id});
                         upgradePackageCaseDetails.isSuccess = true;
                     }
                 }
