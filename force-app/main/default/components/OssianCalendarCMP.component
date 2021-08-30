@@ -1,6 +1,10 @@
 <apex:component controller="OssiaCenterCalendarController" allowDML="true">
     <script>  
+<<<<<<< HEAD
         //nishi
+=======
+        //nishi jain
+>>>>>>> 387fe3c8ce74d764ea87c32d1e206c069f372149
         function showGroupClassGradepackages(centreId,teacherId,grade,duration){
             $('#newOssiaClassBookingDetailsHeader').html('Select Grade Packages');
             $('#newGroupClassModal').addClass('slds-hide');
