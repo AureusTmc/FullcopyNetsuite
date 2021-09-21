@@ -117,7 +117,10 @@
             /*Start: 30-Jul-20202:added by nishi : for show online class booking color different  */
             .TrialClass {//done
                 color: black;
-                background :repeating-linear-gradient( 45deg, #e5a51600, #eb212100 10px, #f5e08cf7 10px, #f5e08cf7 20px ), linear-gradient( to bottom, #f7ecc2, #f7ecc2 );
+            	/*background :repeating-linear-gradient( 45deg, #e5a51600, #eb212100 10px, #f5e08cf7 10px, #f5e08cf7 20px ), linear-gradient( to bottom, #f7ecc2, #f7ecc2 ); */
+                /* 18-06-2021 : added by nishi : background color dark green*/
+                background :repeating-linear-gradient( 45deg, #e5a51600, #eb212100 10px, #90EE90 10px, #90EE90 20px ), linear-gradient( to bottom, #006400, #006400 );
+                
              }
             
              .Make_upClass { /done

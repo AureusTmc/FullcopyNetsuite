@@ -72,7 +72,7 @@ public class AureusCalendarController{/*commented by nishi: 25-Mar-2021 :with Sh
         if(String.isBlank(centerName) && accListForCenter.size() > 0){
             centerName = accListForCenter[0].Id;
         }
-        accListForTeacher  = AureusCalendarControllerHelper.getListOfTeacher(centerName);
+        accListForTeacher = AureusCalendarControllerHelper.getListOfTeacher(centerName);
         getResources();
     }
     
@@ -128,7 +128,7 @@ public class AureusCalendarController{/*commented by nishi: 25-Mar-2021 :with Sh
     }
      /*Commented by jatin: 11-mar-2020: for employee Calendar not Deploye*/
     public void getEmployeeByCenter(){
-        if(String.isBlank(centerName) && accListForCenter.size() > 0){
+        if(String.isBlank(centerName) && accListForCenter != null && accListForCenter.size() > 0){
             centerName = accListForCenter[0].Id;
         }
         accListForEmployee  = PianoRentalEditCalendarController.getListOfEmployee(centerName,new set<string>());
@@ -2089,8 +2089,9 @@ update parentList;
                 enrolmentObj.Id = eventId;
                 enrolmentObj.Lesson_Mode__c = lessonMode=='In Centre'?'Online':'In Centre';
                 if(enrolmentObj.Lesson_Mode__c == ConstantsClass.Online){
-                    enrolmentObj.Online_Lesson_URL__c=System.Label.Twilio_Meeting_URL+enrolmentObj.Name;
-                    enrolmentObj.Online_Lesson_Passcode__c= AureusUtility.getRandomSixDigit(); 
+                    //commented by arpit on 17th May 2021, as per disccusion with Prashant
+                    //enrolmentObj.Online_Lesson_URL__c=System.Label.Twilio_Meeting_URL+enrolmentObj.Name;
+                    //enrolmentObj.Online_Lesson_Passcode__c= AureusUtility.getRandomSixDigit(); 
                     
                 }else if(enrolmentObj.Lesson_Mode__c ==ConstantsClass.InCentre){
                     enrolmentObj.Online_Lesson_URL__c='';
@@ -2099,7 +2100,7 @@ update parentList;
                 update enrolmentObj;
                 DateTime dateChange = DateTime.newInstance(Date.valueOf(changedate.split('T')[0]), Time.newInstance(0, 0, 0, 0));
                //system.Debug('dateChange'+dateChange);
-                List<Booking__c> updateBookingList = [SELECT Id, Type__c,Lesson_Type__c,Online_Lesson_URL__c,Online_Lesson_Passcode__c
+                List<Booking__c> updateBookingList = [SELECT Id,Name, Type__c,Lesson_Type__c,Online_Lesson_URL__c,Online_Lesson_Passcode__c
                                                          FROM Booking__c 
                                                         WHERE Enrolment__c = :eventId
                                                         AND Booking_Date__c >= :dateChange.date()
@@ -2121,7 +2122,8 @@ update parentList;
             for(Booking__c book:updateBookingList){
                 book.Lesson_Type__c = lessonMode;
                 if(book.Lesson_Type__c == ConstantsClass.Online){
-                    book.Online_Lesson_URL__c=onlineLessonURL;
+                    //book.Online_Lesson_URL__c= onlineLessonURL; commented by arpit on 17th May 2021 As per disucssion with Prashant.
+                    book.Online_Lesson_URL__c = System.Label.Twilio_Meeting_URL+book.Name;
                     book.Online_Lesson_Passcode__c= AureusUtility.getRandomSixDigit();//passcode; 
                     
                 }else if(book.Lesson_Type__c ==ConstantsClass.InCentre){
