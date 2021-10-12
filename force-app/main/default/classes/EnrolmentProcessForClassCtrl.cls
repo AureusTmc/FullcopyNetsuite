@@ -616,12 +616,12 @@ public class EnrolmentProcessForClassCtrl {
         Decimal totTemp = fm.regiFees + fm.prgFees /*+(fm.facilityFee > 0 ?  fm.facilityFee : 0)*/;
         Decimal TempDisTot  =  (fm.regiFeesDis + fm.pkgFeesPromtnalDis);
         Decimal tempTot = totTemp - TempDisTot;
-        
+        // Commented by nishi : 27-Aug-2021: Refferal invoice amount and payment amount is different: fm.totAmt = totTemp + fm.gstAmount;
         //Commented and added by Rajesh on 21st oct 2019. For calcuate individual gst amount for the line items
         //Decimal gstAmt = BillingUtility.roundOffAmount((tempTot > 0 ? ((tempTot * gstTaxPer) / 100):0));        
         //Decimal gstAmt = (tempTot > 0 ? ((tempTot * gstTaxPer) / 100):0);        
         //fm.totAmt = totTemp + gstAmt;
-        fm.totAmt = totTemp + fm.gstAmount;
+        
         /*
         fm.depFees = BillingUtility.roundOffAmount(fm.depFees);
         fm.prgFees = BillingUtility.roundOffAmount(fm.prgFees);
@@ -649,9 +649,11 @@ public class EnrolmentProcessForClassCtrl {
                 }
             }
         }
-                                
-       
-        
+        system.debug('totTemp'+totTemp);
+        system.debug('fm.gstAmount'+fm.gstAmount);
+        fm.totAmt = totTemp + fm.gstAmount; // added by nishi : 27-Aug-2021: Refferal invoice amount and payment amount is different: we added gst amount with reduced refferal tax amount 
+        system.debug('fm.totAmt'+fm.totAmt);
+        system.debug('fm'+fm);
                                 
         
         return fm;
@@ -757,6 +759,7 @@ public class EnrolmentProcessForClassCtrl {
             billDetails.grandTotal = BillingUtility.roundOffAmount(billDetails.total + billDetails.gst);
         }
         */
+        system.debug('billDetails'+billDetails);
         return billDetails;
     }
     
@@ -785,7 +788,8 @@ public class EnrolmentProcessForClassCtrl {
                     cusName += parentAcc.LastName;
                     //BillingUtility.initConnection(countryId);
                     
-                    BillingUtility.StripeCustomer sCstmr = BillingUtility.createStripeCustomer(stripeToken, cusName, parentAcc.PersonEmail, 'Parent customer', stripeBaseUrl, stripeApiSecKey); 
+                    BillingUtility.StripeCustomer sCstmr = BillingUtility.createStripeCustomer(stripeToken, cusName, parentAcc.PersonEmail, 'Parent customer',
+                                                                                               stripeBaseUrl, stripeApiSecKey); 
                     
                     if(sCstmr.statusCode == 200 && String.isNotBlank(sCstmr.id)){ 
                         stripeCstmrId = sCstmr.id;
@@ -2900,11 +2904,11 @@ public class EnrolmentProcessForClassCtrl {
         documentDetails = new PandaDocUtility.CreateDocument();
         if(String.isNotBlank(enrolDetails.parent.id)){
             String body ='';
-            // added by nishi: 23-Nov-2020: for aureus Panda doc template is changed
-            if(isOssia){
+            // added by nishi: 23-Nov-2020: for aureus Panda doc template is changed according to center we show panda doc
+            if(isOssia || cntryName != 'SG'){
                 body = fillCreateAureusDocumentWrapper(enrolDetails); //fillCreateDocumentWrapper(enrolDetails);  
             }else{
-                body = fillCreateAureusDocumentWrapper(enrolDetails);  
+                body = fillCreateAureusDocumentV2Wrapper(enrolDetails);  
             }
 
             if(string.isnotBlank(body)){
@@ -2962,6 +2966,7 @@ public class EnrolmentProcessForClassCtrl {
         }
     }
     // added by nishi: 23-Nov-2020: for Aureus student panda doc template is changes now
+    @TestVisible
     private String fillCreateAureusDocumentWrapper(EnrolDetails enrolDetail){        
         String jsonBody = '';       
         DocumentWrapper.Fields field;    
@@ -3010,6 +3015,77 @@ public class EnrolmentProcessForClassCtrl {
             sections.add(new DocumentWrapper.Sections('Sample Title', rows));       
             pricingTables.add(new DocumentWrapper.PricingTable('PricingTable1', sections));     
             createDocWrapper.pricing_tables = new List<DocumentWrapper.PricingTable>();     
+            createDocWrapper.pricing_tables = pricingTables;        
+            createDocWrapper.name += 'StudentPolicy';       
+                    
+        }       
+                
+        if(String.isNotBlank(createDocWrapper.name)){       
+            jsonBody = JSON.Serialize(createDocWrapper).replaceAll('pandadoc_Default_Section_XYZ','default');   
+            jsonBody = jsonBody.replaceAll('pandadoc_Currency_Code_XYZ','currency'); 
+            //jsonBody = jsonBody.replaceAll('parentGuardianName','Parent/Guardian Name'); 
+            //jsonBody = jsonBody.replaceAll('Selectdate','Select date');     
+            System.debug('createDocWrapper '+createDocWrapper);     
+            System.debug('createDocWrapper '+createDocWrapper.metadata);        
+            jsonBody = jsonBody.replaceAll('salesforceAccount_id','salesforce.account_id');     
+            JSONBody = jsonBody;        
+        }       
+                
+        System.debug('@@@jsonBody'+jsonBody);       
+                
+            
+                
+        return jsonBody;        
+    } 
+     // added by nishi: 9-Aug-2021: for Aureus student panda doc template V2 is changes now
+    private String fillCreateAureusDocumentV2Wrapper(EnrolDetails enrolDetail){        
+        String jsonBody = '';       
+        DocumentWrapperForAureusVersion2.Fields field;    
+        DocumentWrapperForAureusVersion2.Fields parentName;
+        DocumentWrapperForAureusVersion2.Fields enrolmentdate;       
+        DocumentWrapperForAureusVersion2.recipients recipient = new DocumentWrapperForAureusVersion2.recipients();  
+        DocumentWrapperForAureusVersion2.Tokens token = new DocumentWrapperForAureusVersion2.Tokens();        
+        List<DocumentWrapperForAureusVersion2.Rows> rows = new List<DocumentWrapperForAureusVersion2.Rows>();     
+        List<DocumentWrapperForAureusVersion2.Sections> sections = new List<DocumentWrapperForAureusVersion2.Sections>();     
+        List<DocumentWrapperForAureusVersion2.PricingTable> pricingTables = new List<DocumentWrapperForAureusVersion2.PricingTable>();        
+        DocumentWrapperForAureusVersion2.CreateDocument createDocWrapper = new DocumentWrapperForAureusVersion2.CreateDocument();     
+                
+        createDocWrapper.template_uuid = templateId;   
+        createDocWrapper.folder_uuid = folderId;
+        if(String.isNotBlank(enrolDetail.parent.Id)){       
+            createDocWrapper.metadata.salesforceAccount_id = enrolDetail.parent.Id;     
+            recipient.first_name = enrolDetail.parent.firstName;        
+            recipient.last_name = enrolDetail.parent.lastName;      
+            recipient.email = enrolDetail.parent.email;     
+            parentName =  new DocumentWrapperForAureusVersion2.Fields(enrolDetail.parent.firstName +' '+enrolDetail.parent.lastName, 'Parent/Guardian Name');  
+            enrolmentdate =  new DocumentWrapperForAureusVersion2.Fields(string.valueof(system.now()), 'DateField1');
+            createDocWrapper.fields = new DocumentWrapperForAureusVersion2.CustomField(parentName,enrolmentdate);       
+            recipient.role = 'Client';  
+            token.name='Parent Name';
+            token.value=enrolDetail.parent.firstName +' '+enrolDetail.parent.lastName;
+            createDocWrapper.tokens = new List<DocumentWrapperForAureusVersion2.Tokens>();       
+            createDocWrapper.tokens.add(token);      
+
+            createDocWrapper.recipients = new List<DocumentWrapperForAureusVersion2.Recipients>();       
+            createDocWrapper.recipients.add(recipient);     
+        }       
+        if(enrolDetail.enrolments.size() > 0){      
+            DateTime enrolmentDateTime;     
+            createDocWrapper.name = '';     
+            DocumentWrapperForAureusVersion2.Rows row;  
+            for(Enrolment__c enrolmentObj:[SELECT Id, Name, Lessons_Start_Date__c, Lesson_Start_time__c, Student__r.FirstName, Student__r.LastName, Package__r.Name 
+                                           FROM Enrolment__c WHERE Id IN: enrolDetail.enrolments.keySet()]){
+                enrolmentDateTime = DateTime.newInstance(enrolmentObj.Lessons_Start_Date__c, enrolmentObj.Lesson_Start_time__c);  
+                createDocWrapper.name += enrolmentObj.name + '-';       
+                row = new DocumentWrapperForAureusVersion2.Rows(new DocumentWrapperForAureusVersion2.Data(enrolmentObj.Student__r.FirstName + ' ' + enrolmentObj.Student__r.LastName), 
+                                                new DocumentWrapperForAureusVersion2.CustomFields(enrolmentObj.Package__r.Name, enrolmentDateTime.format('EEE @ hh:mm a'),  enrolmentDateTime.format('dd-MM-yyyy'),
+                                                                                enrolmentObj.Package__r.Name, enrolmentDateTime.format('EEE @ hh:mm a'),  enrolmentDateTime.format('dd-MM-yyyy')));      
+                rows.add(row);   
+            }    
+                
+            sections.add(new DocumentWrapperForAureusVersion2.Sections('Sample Title', rows));       
+            pricingTables.add(new DocumentWrapperForAureusVersion2.PricingTable('StudentTable', sections));     
+            createDocWrapper.pricing_tables = new List<DocumentWrapperForAureusVersion2.PricingTable>();     
             createDocWrapper.pricing_tables = pricingTables;        
             createDocWrapper.name += 'StudentPolicy';       
                     
@@ -3173,7 +3249,10 @@ public class EnrolmentProcessForClassCtrl {
         return false;
     }
     //@Juneid 07 Aug 2020 , Send Mail to refrel
+    @TestVisible
     private void sendMailToReffrel(Enrolment__c enrol){
+        system.debug('@@ enrol.Referred_by__c - '+enrol.Referred_by__c);
+        system.debug('@@ enrol.Referral_code_used__c - '+enrol.Referral_code_used__c);
         if(enrol.Id !=Null){
             if(enrol.Referred_by__c !=Null && String.isNotBlank(enrol.Referral_code_used__c)){
                 sendMobileNotification(enrol);
