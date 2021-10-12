@@ -67,29 +67,29 @@ public class AccountController {
     }
     public class TaskWrapperClass{
         @AuraEnabled
-        Id id{get;set;}
+        Public Id id{get;set;}
         @AuraEnabled
-        string Subject{get;set;}
+        Public string Subject{get;set;}
         @AuraEnabled
-        Date ActivityDate{get;set;}
+        Public Date ActivityDate{get;set;}
         @AuraEnabled
-        string Name{get;set;}
+        Public string Name{get;set;}
         @AuraEnabled
-        string Center{get;set;}
+        Public string Center{get;set;}
         @AuraEnabled
-        string Priority{get;set;}
+        Public string Priority{get;set;}
         @AuraEnabled
-        string Owner{get;set;}
+        Public string Owner{get;set;}
         @AuraEnabled
-        string Status{get;set;}
+        Public string Status{get;set;}
         @AuraEnabled
-        string overDue{get;set;}
+        Public string overDue{get;set;}
         @AuraEnabled
-        string imageClass{get;set;}
+        Public string imageClass{get;set;}
         @AuraEnabled
-        string WhoId{get;set;}
+        Public string WhoId{get;set;}
         @AuraEnabled
-        string What{get;set;}
+        Public string What{get;set;}
     }
      @AuraEnabled
     public static void updatePendingEnrolmentStage(string actVal,string bkgId){
