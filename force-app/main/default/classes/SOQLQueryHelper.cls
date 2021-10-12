@@ -15,7 +15,7 @@ public class SOQLQueryHelper{
     }
     // get account records related emailid and Password 
     public Static List<Account> getExistingParentAccount(String emailId,String password){
-        return [SELECT id,Name,FirstName,LastName,PersonEmail,Phone,Nationality__c,BillingStreet, BillingCity,Customer_Password__c,
+        return [SELECT id,Name,DeviceType__c,FirstName,LastName,PersonEmail,Phone,Nationality__c,BillingStreet, BillingCity,Customer_Password__c,
                 BillingState, BillingCountry,BillingpostalCode,Gender__c,Available_Make_up_Units__c,Card_Number__c,Card_Type__c,Expiration__c,
                 Profile_Pic_URL__c, Invoice_Paid_Notification__c,Booking_Reminded_Notification__c ,American_club__c,Membership_Type__c,Centre_Name__c, Centre_Name__r.Country__c,
                 Centre_Name__r.Country__r.Currency_Code__c,Centre_Name__r.Country__r.name, 
@@ -31,6 +31,14 @@ public class SOQLQueryHelper{
                 WHERE Customer_Password__c =:password
                 AND PersonEmail =: emailId.tolowercase() 
                 AND recordtype.name = 'Customer'];
+    }
+    // get account records related emailid and Password  -- Added By Nitin 
+    public Static List<Account> getExistingTeacherAccount(String emailId,String password){
+        return [SELECT id,Name
+                FROM Account 
+                WHERE Customer_Password__c =:password
+                AND PersonEmail =: emailId.tolowercase() 
+                AND recordtype.name = 'Teacher'];
     }
     
     // get account accrdingt to email address
@@ -162,7 +170,8 @@ public class SOQLQueryHelper{
     public static List<Booking__c> getCancelBooking(String actObjId){
         return [SELECT id, Booking_Date__c,Teacher_Account__c,Center__c,Teacher_Account__r.name,Instrument__c , Student__r.Name, Enrolment__c,
                 Student__c,Appointment_Day__c, Package__r.Name,Package__r.type__c, Duration__c, start_time__c, Center__r.Name,Status__c,Is_Reschedule_Booking__c,
-                type__c,Cancellation_Reason__c,Available_Make_up_Units__c,Make_up_Expiry_Date__c,Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c
+                type__c,Cancellation_Reason__c,Available_Make_up_Units__c,Make_up_Expiry_Date__c,Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c,
+                Parent__c, Parent__r.Available_Complementary_Credit_mins__c,Is_Complimentary_Credit__c //Added By : Nishi : 04-10-2021 : To get complimentry minutes
                 FROM booking__c 
                 WHERE  RecordType.Name =: ConstantsClass.recordTypeLesson 
                 AND type__c != :ConstantsClass.typeBusy 
@@ -179,7 +188,9 @@ public class SOQLQueryHelper{
                                               String busyType,String centerId, String teacherId ){
                                                   String recordTypeLesson = ConstantsClass.recordTypeLesson;
                                                   return [SELECT Id, Name, start_Time__c, End_Time__c, status__c, type__c, RecordType.Name, 
-                                                          Center__c, Teacher_Account__c, Booking_Date__c, Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c FROM Booking__c 
+                                                          Center__c, Teacher_Account__c, Booking_Date__c, Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c,
+                                                          Parent__c, Parent__r.Available_Complementary_Credit_mins__c,Is_Complimentary_Credit__c //Added By : Nishi : 04-10-2021
+                                                          FROM Booking__c 
                                                           WHERE RecordType.Name =: ConstantsClass.recordTypeLesson AND Center__c =:centerId AND Teacher_Account__c =: teacherId 
                                                           AND Booking_Date__c In: dateList 
                                                            AND type__c != :ConstantsClass.typeBusy 
@@ -193,7 +204,9 @@ public class SOQLQueryHelper{
                                                              String busyType,String centerId, List<String> teacherIds ){
                                                                  String recordTypeLesson = ConstantsClass.recordTypeLesson;
                                                                  return [SELECT Id, Name, start_Time__c, End_Time__c, status__c, type__c, RecordType.Name, 
-                                                                         Center__c, Teacher_Account__c, Booking_Date__c, Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c FROM Booking__c 
+                                                                         Center__c, Teacher_Account__c, Booking_Date__c, Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c,
+                                                                         Parent__c, Parent__r.Available_Complementary_Credit_mins__c ,Is_Complimentary_Credit__c//Added By : Nishi : 04-10-2021
+                                                                         FROM Booking__c 
                                                                          WHERE RecordType.Name =: recordTypeLesson AND Center__c =:centerId AND Teacher_Account__c In: teacherIds 
                                                                          AND Booking_Date__c In: dateList
                                                                          AND Start_Time__c != NULL 
@@ -207,6 +220,7 @@ public class SOQLQueryHelper{
     // get Booking records with Instrument__c
     public static List<Booking__c> getBookingInstruments(String bookingId){
         return [SELECT id,Instrument__c,Is_Reschedule_Booking__c,Center__c
+                ,Parent__c, Parent__r.Available_Complementary_Credit_mins__c,Is_Complimentary_Credit__c //Added By : Nishi : 04-10-2021
                 FROM Booking__c
                 WHERE RecordType.Name =: ConstantsClass.recordTypeLesson AND Id=: bookingId AND type__c != :ConstantsClass.typeBusy];
     }
@@ -215,7 +229,8 @@ public class SOQLQueryHelper{
         if(type.equalsIgnoreCase('upcoming')){
             return  [SELECT ID, Teacher_Account__c,Center__c,Name,Enrolment__c, Instrument__c, Student__c,Teacher_Account__r.Name, Student__r.Name, Booking_Date__c,Appointment_Day__c,
                      Package__r.Name, Package__r.Type__c,Duration__c, Center__r.Name, Center_Name__c,start_time__c ,Status__c,Is_Reschedule_Booking__c,type__c
-                     ,Cancellation_Reason__c,Available_Make_up_Units__c, Make_up_Expiry_Date__c, Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c
+                     ,Cancellation_Reason__c,Available_Make_up_Units__c, Make_up_Expiry_Date__c, Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c,
+                     Parent__c, Parent__r.Available_Complementary_Credit_mins__c,Is_Complimentary_Credit__c //Added By : Nishi : 04-10-2021
                      FROM booking__c 
                      WHERE  RecordType.Name =: ConstantsClass.recordTypeLesson 
                      AND Enrolment__c =: enrollmentId 
@@ -229,7 +244,8 @@ public class SOQLQueryHelper{
         }else if(type.equalsIgnoreCase('historical')){
             return  [SELECT ID, Teacher_Account__c,Center__c,Name, Enrolment__c,Instrument__c, Student__c,Teacher_Account__r.Name, Student__r.Name,Booking_Date__c,Appointment_Day__c,
                      Package__r.Name, Package__r.Type__c,Duration__c, Center__r.Name, Center_Name__c,start_time__c,Status__c ,Is_Reschedule_Booking__c,Createddate,type__c
-                     ,Cancellation_Reason__c,Available_Make_up_Units__c , Make_up_Expiry_Date__c, Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c
+                     ,Cancellation_Reason__c,Available_Make_up_Units__c , Make_up_Expiry_Date__c, Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c,
+                     Parent__c, Parent__r.Available_Complementary_Credit_mins__c,Is_Complimentary_Credit__c //Added By : Nishi : 04-10-2021
                      FROM booking__c 
                      WHERE  RecordType.Name =: ConstantsClass.recordTypeLesson 
                      AND Enrolment__c =: enrollmentId
@@ -243,7 +259,8 @@ public class SOQLQueryHelper{
         }else{
             return  [SELECT ID, Teacher_Account__c,Center__c,Name, Enrolment__c,Instrument__c, Student__c,Teacher_Account__r.Name, Student__r.Name,Booking_Date__c,Appointment_Day__c,
                      Package__r.Name, Duration__c,Package__r.Type__c, Center__r.Name, Center_Name__c,start_time__c,Status__c ,Is_Reschedule_Booking__c,Createddate,type__c
-                     ,Cancellation_Reason__c,Available_Make_up_Units__c , Make_up_Expiry_Date__c, Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c
+                     ,Cancellation_Reason__c,Available_Make_up_Units__c , Make_up_Expiry_Date__c, Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c,
+                     Parent__c, Parent__r.Available_Complementary_Credit_mins__c,Is_Complimentary_Credit__c //Added By : Nishi : 04-10-2021
                      FROM booking__c 
                      WHERE  RecordType.Name =: ConstantsClass.recordTypeLesson 
                      AND Enrolment__c =: enrollmentId
@@ -327,7 +344,8 @@ ANd Status__c !='Canceled'
                 Make_up_Credit_Note__c, Start_Time__c, Duration__c, Student__c, Student__r.Name, 
                 Student__r.Parent__c, End_Time__c, Available_Make_up_Units__c, Cancellation_Reason__c,  
                 RecordtypeId, RecordType.Name, Category__c, Appointment_Day__c,Is_Reschedule_Booking__c,
-                Instrument__c,Center__r.Location__c, Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c
+                Instrument__c,Center__r.Location__c, Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c,
+                 Parent__r.Available_Complementary_Credit_mins__c,Is_Complimentary_Credit__c //Added By : Nishi : 04-10-2021
                 FROM Booking__c 
                 WHERE Id in: bookingId.split(',')
                 And type__c !=: ConstantsClass.typeBusy AND Category__c != 'Placeholder'
@@ -340,17 +358,29 @@ ANd Status__c !='Canceled'
                 Make_up_Credit_Note__c, Start_Time__c, Duration__c, Student__c, Student__r.Name, 
                 Student__r.Parent__c, End_Time__c, Available_Make_up_Units__c, Cancellation_Reason__c,  
                 RecordtypeId, RecordType.Name, Category__c, Appointment_Day__c,Is_Reschedule_Booking__c,
-                Instrument__c,Center__r.Location__c, Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c
+                Instrument__c,Center__r.Location__c, Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c,
+                Parent__r.Available_Complementary_Credit_mins__c, //Added By : Nishi : 04-10-2021 : For calculate complimentary mins   
+                Is_Complimentary_Credit__c //Added By : Nishi : 07-10-2021 : For updating complimentary mins            
                 FROM Booking__c 
                 WHERE Id in: bookingId.split(',')
                 Order By Booking_Date__c DESC];
     }
+    //Added By : Nishi : 07-10-2021 : For update complimentary mins after cancellation : start
+    // get Complimentry Bookings records according to ids 
+    public Static list<Complementary_Credit__c> getListOfComplimentaryBookingWithId(String bookingId){
+        return [SELECT Id, Available_credit_Min__c, Is_Active__c
+                FROM Complementary_Credit__c  
+                WHERE Is_Active__c = TRUE
+                AND Id in: bookingId.split(',') ];
+    }
+    //Added By : Nishi : 07-10-2021 : For update complimentary mins after cancellation : end
     public static List<Booking__c> getBookingsOnSelectedDates(String centerId, List<String> teacherIds, Set<Date> dates){
         String recordTypeLesson = ConstantsClass.recordTypeLesson;
         system.debug(dates);
         List<Booking__c> bookingList = new List<Booking__c>();
         bookingList = [SELECT Id, Name, start_Time__c, End_Time__c, status__c, type__c, RecordType.Name, 
-                       Center__c, Teacher_Account__c, Booking_Date__c, Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c 
+                       Center__c, Teacher_Account__c, Booking_Date__c, Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c,
+                       Parent__c, Parent__r.Available_Complementary_Credit_mins__c,Is_Complimentary_Credit__c //Added By : Nishi : 04-10-2021
                        FROM Booking__c WHERE RecordType.Name =: recordTypeLesson 
                        AND Center__c =: centerId 
                        AND type__c != :ConstantsClass.typeBusy 
@@ -364,7 +394,8 @@ ANd Status__c !='Canceled'
     // 27-JUL : for get cancel Booking records used in deductMakeupHours function 
     public static  List<Booking__c> getCancelBooking(Set<string> setOfParentStudent ){
         return [SELECT Id, Student__r.Name,Parent__r.Name,Available_Make_up_Units__c, Status__c, Make_up_Expiry_Date__c, 
-                Student__c, Type__c, Duration__c, Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c
+                Student__c, Type__c, Duration__c, Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c,
+                Parent__c, Parent__r.Available_Complementary_Credit_mins__c,Is_Complimentary_Credit__c //Added By : Nishi : 04-10-2021
                 FROM Booking__c 
                 WHERE  RecordType.Name =: ConstantsClass.recordTypeLesson AND 
                 Status__c =: ConstantsClass.statusCanceled
@@ -374,6 +405,22 @@ ANd Status__c !='Canceled'
                 AND (Available_Make_up_Units__c > 0 AND Available_Make_up_Units__c != NULL) 
                 ORDER BY Make_up_Expiry_Date__c];
     }
+    
+    // 11-10-2021 : Added by nishi : To get complimentary credit records : start
+    public static  List<Complementary_Credit__c> getComplimentaryBooking(String actObjId){
+        return [SELECT Id, Name, Credit_Apply_date__c, Credit_Expiry_date__c, Credit_Reason__c, Enrolment__c, Teacher_Name__c, 
+                Parent__c, Available_credit_Min__c, Package_Name__c, Is_Active__c,Package_Name__r.Name,Teacher_Name__r.Name,
+                enrolment__r.Student__r.Name, enrolment__r.Student__c, enrolment__r.Lesson_Day__c, enrolment__r.Lesson_Start_time__c,
+                enrolment__r.Instrument__c, enrolment__r.Center__r.Name,enrolment__r.Center__c,enrolment__r.Duration__c,enrolment__r.Type__c,
+                enrolment__r.Lesson_Mode__c,enrolment__r.Online_Lesson_Passcode__c,enrolment__r.Online_Lesson_URL__c,Package_Name__r.type__c
+                FROM Complementary_Credit__c 
+                WHERE Is_Active__c = TRUE
+                AND Parent__c =: actObjId 
+                AND Credit_Expiry_date__c >= TODAY 
+                AND (Available_credit_Min__c > 0 AND Available_credit_Min__c != NULL) 
+                ORDER BY Credit_Expiry_date__c];
+    }
+    // 11-10-2021 : Added by nishi : To get complimentary credit records : end
     /*---  end Booking__c query function */
     
     /*--Booking History query function*/
@@ -506,7 +553,8 @@ ANd Status__c !='Canceled'
                 (
                     SELECT id, Booking_Date__c,Teacher_Account__c,Center__c,Teacher_Account__r.name,Instrument__c , Student__r.Name, Enrolment__c,
                     Student__c,Appointment_Day__c, Package__r.Name, Package__r.Type__c, Duration__c, start_time__c, Center__r.Name,Status__c,Is_Reschedule_Booking__c, 
-                    type__c,Cancellation_Reason__c,Available_Make_up_Units__c, Make_up_Expiry_Date__c, Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c 
+                    type__c,Cancellation_Reason__c,Available_Make_up_Units__c, Make_up_Expiry_Date__c, Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c,
+                    Parent__c, Parent__r.Available_Complementary_Credit_mins__c,Is_Complimentary_Credit__c //Added By : Nishi : 04-10-2021 : To get complimentry minutes
                     FROM Bookings__r
                     WHERE parent__c=: actObjId 
                     AND Booking_Date__c >= TODAY 
@@ -540,7 +588,8 @@ ANd Status__c !='Canceled'
                 (
                     SELECT id, Booking_Date__c,Teacher_Account__c,Center__c,Teacher_Account__r.name,Instrument__c , Student__r.Name, Enrolment__c,
                     Student__c,Appointment_Day__c, Package__r.Name, Package__r.Type__c,Duration__c, start_time__c, Center__r.Name,Status__c,Is_Reschedule_Booking__c, 
-                    type__c,Cancellation_Reason__c,Available_Make_up_Units__c, Make_up_Expiry_Date__c,Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c 
+                    type__c,Cancellation_Reason__c,Available_Make_up_Units__c, Make_up_Expiry_Date__c,Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c,
+                    Parent__c, Parent__r.Available_Complementary_Credit_mins__c ,Is_Complimentary_Credit__c//Added By : Nishi : 04-10-2021 : To get complimentry minutes
                     FROM Bookings__r
                     WHERE parent__c=: actObjId 
                     AND Booking_Date__c < TODAY 
@@ -571,7 +620,8 @@ ANd Status__c !='Canceled'
     public static List<Booking__c> getBookingWithoutEnrolment(String actObjId){
         return [SELECT id, Booking_Date__c,Teacher_Account__c,Center__c,Teacher_Account__r.name,Instrument__c , Student__r.Name, Enrolment__c,
                     Student__c,Appointment_Day__c, Package__r.Name, Package__r.Type__c,Duration__c, start_time__c, Center__r.Name,Status__c,Is_Reschedule_Booking__c, 
-                    type__c,Cancellation_Reason__c,Available_Make_up_Units__c, Make_up_Expiry_Date__c,Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c 
+                    type__c,Cancellation_Reason__c,Available_Make_up_Units__c, Make_up_Expiry_Date__c,Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c ,
+                Parent__c, Parent__r.Available_Complementary_Credit_mins__c ,Is_Complimentary_Credit__c//Added By : Nishi : 04-10-2021
                     FROM Booking__c
                     WHERE parent__c=: actObjId 
                     AND type__c != :ConstantsClass.typeBusy
@@ -623,7 +673,8 @@ ANd Status__c !='Canceled'
         return [SELECT Id,Student__r.Name, Student__c,Instrument__c,Package__r.Duration__c,Package__r.Type__c,
                 (SELECT ID, Teacher_Account__c,Center__c,Name, Instrument__c, Student__c,Teacher_Account__r.Name, Student__r.Name,Enrolment__c, Booking_Date__c,Appointment_Day__c,
                  Package__r.Name,Package__r.Type__c, Duration__c, Center__r.Name, Center_Name__c,start_time__c,Status__c ,Is_Reschedule_Booking__c,
-                 type__C,Cancellation_Reason__c,Available_Make_up_Units__c, Make_up_Expiry_Date__c, Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c
+                 type__C,Cancellation_Reason__c,Available_Make_up_Units__c, Make_up_Expiry_Date__c, Lesson_Type__c, Online_Lesson_Passcode__c, Online_Lesson_URL__c,
+                 Parent__c, Parent__r.Available_Complementary_Credit_mins__c,Is_Complimentary_Credit__c //Added By : Nishi : 04-10-2021 : To get complimentry minutes
                  FROM Bookings__r 
                  WHERE Booking_Date__c =NEXT_90_DAYS 
                  AND type__c != :ConstantsClass.typeBusy
@@ -772,7 +823,7 @@ ANd Status__c !='Canceled'
     // get invoice and related child 'Success' payment records 
     public static List<Invoice__c> getInvoice(String accountId){
         return [SELECT Id, Invoice_Date__c, Due_Date__c, Balance_Amount__c, Status__c, Gross_Total__c, Sub_Total__c, GST_Tax__c,
-                GST_Tax_Amount__c, Discount_Amount__c, Deposit__c, Total_Amount__c,name,Card_Number__c,Card_Type__c,
+                GST_Tax_Amount__c, Discount_Amount__c, Deposit__c, Total_Amount__c,Total_Payable__c, Credit_Memo_Amount__c, name,Card_Number__c,Card_Type__c,
                 (SELECT Id, Payment_Date__c, Payment_Amount__c, Method_of_Payment__c
                  FROM Payments__r 
                  WHERE   Payment_Status__c= 'Success' )
@@ -787,7 +838,7 @@ ANd Status__c !='Canceled'
     // get invoice records
     public static List<Invoice__c> getPaymentInvoice(String InvoiceId){
         return [Select Id,Name,Parent_Account__c,Parent_Account__r.PersonContactId,Parent_Account__r.Stripe_Customer_Id__c, 
-                Total_Amount__c,subscription__c,Balance_Amount__c,Center__c,Center__r.Country__c FROM Invoice__c WHERE 
+                Total_Amount__c,subscription__c,Balance_Amount__c,Center__c,Center__r.Country__c, Center__r.Organisation__c, Center__r.Organisation__r.Id FROM Invoice__c WHERE 
                 Parent_Account__r.Stripe_Customer_Id__c != NULL AND Id= :InvoiceId
                 AND Status__c=:ConstantsClass.dueStatus];
     }
@@ -881,7 +932,8 @@ ANd Status__c !='Canceled'
     
     /*-- Mobile Notification query function*/
     public Static List<Mobile_Notification__c > getListOfParentMobileNotification(String parentId){
-        return [SELECT Id, Customer_Name__c, Body__c, Title__c, Status__c, Deleted_by_user__c, createddate 
+        // added Is_Read__c,Isimportant__c in query on 16 sept 2020 by Ravi..as per discussion with nitin
+        return [SELECT Id,Is_Read__c, Image_Url__c, Button_URL__c, Isimportant__c, Customer_Name__c, Body__c, Title__c, Status__c, Deleted_by_user__c, createddate 
                 FROM Mobile_Notification__c 
                 where Customer_Name__c =: parentId 
                 AND Deleted_by_user__c =False 
