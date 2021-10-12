@@ -1,4 +1,4 @@
-<apex:page id="pg" showHeader="false" controller="SearchInstrumentRental_IpadCntrl"  standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False" action="{!getProducts1}"> <!-- CH02 action="{!getProducts1}" -->
+<apex:page id="pg" showHeader="false" controller="SearchInstrumentRental_IpadCntrl"  standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False" action="{!getPromoAndAllProducts}"><!--"{!getProducts1} // Added by nishi: 11-Oct-2021:Start: As discussed with Rajesh we use string and create data table data using javascript--> <!-- CH02 action="{!getProducts1}" -->
    <!-- CH02 Karan Singh As Netsuite integration is used of Sage integration so changing the fetch piano list and slcd piano details -->
     <!-- CH05 Karan Singh 24 Sep 2020 : showing the type of the instrument in the page and storing the type of the instrument in the enrolment which can be piano,keyboard etc -->
     <!-- CH06 Karan Singh 24 Sep 2020 : Making the data table optimized for the Ipad -->
@@ -48,7 +48,10 @@
             background-color:#ffbf2f;
             color:#fff;
             }
-            
+             .btn-red, .btn-red:hover, .btn-red:focus {
+            background-color:#ed1c24;
+            color:#fff;
+            }
             .slds-button_success{
             color:#fff !important;
             padding-left:12px;
@@ -183,6 +186,47 @@
                 }
                 console.log(packageInstrument);
                 */
+                // Added by nishi: 11-Oct-2021:Start: As discussed with Rajesh we use string and create data table data using javascript
+                if({!isAureusNewEnolment}){ 
+                     var result =  {!allNetSuiteProducts};
+                     console.log(result);
+                    var netSuiteProducts ='';
+                      $(result.netSuitePromotionalProducts).each(function(index, value){
+                         netSuiteProducts +=' <tr class="slds-hint-parent"><td><span class="slds-radio"><input type="radio" id="radio-'+value.srNo+'" value="'+value.srNo+'" onchange="setSlcdPianoIndx(\''+value.srNo+'\'); return false;" name="slcdPianoOptions" checked="" />';
+                          netSuiteProducts +='<label class="slds-radio__label" for="radio-'+value.srNo+'"><span class="slds-radio_faux"></span><span class="slds-form-element__label"></span></label></span></td>'; 
+                          netSuiteProducts +='                <td>'+value.srNo+'</td>';
+                          netSuiteProducts +='                <td>'+value.brand+'</td>';
+                          netSuiteProducts +='                <td>'+value.model+'</p></td>';
+                          netSuiteProducts +='                <td>'+value.inventoryType+'</td> ';
+                          netSuiteProducts +='                <td>'+value.serialNumber+'</td>';
+                          netSuiteProducts +='                <td>'+value.location+'</td>';
+                          netSuiteProducts +='                <td>'+value.studentPrice+'&nbsp;/&nbsp;'+value.monthlyRental+'</td> ';
+                          netSuiteProducts +='                <td>'+value.listPrice+'</td>';
+                          netSuiteProducts +='                <td>'+value.status+'</td>';
+                          netSuiteProducts +='                </tr>';
+                    }); 
+                    $('#netSuitePromotionalProducts').append(netSuiteProducts);
+                }else{
+                    var result =  {!allNetSuiteProducts};
+                     console.log(result);
+                    var netSuiteProducts ='';
+                      $(result.allNetSuiteProducts).each(function(index, value){
+                          netSuiteProducts +=' <tr class="slds-hint-parent"><td><span class="slds-radio"><input type="radio" id="radio-'+value.srNo+'" value="'+value.srNo+'" onchange="setSlcdPianoIndx(\''+value.srNo+'\'); return false;" name="slcdPianoOptions" checked="" />';
+                          netSuiteProducts +='<label class="slds-radio__label" for="radio-'+value.srNo+'"><span class="slds-radio_faux"></span><span class="slds-form-element__label"></span></label></span></td>'; 
+                          netSuiteProducts +='                <td>'+value.srNo+'</td>';
+                          netSuiteProducts +='                <td>'+value.brand+'</td>';
+                          netSuiteProducts +='                <td>'+value.model+'</p></td>';
+                          netSuiteProducts +='                <td>'+value.inventoryType+'</td> ';
+                          netSuiteProducts +='                <td>'+value.serialNumber+'</td>';
+                          netSuiteProducts +='                <td>'+value.location+'</td>';
+                          netSuiteProducts +='                <td>'+value.studentPrice+'&nbsp;/&nbsp;'+value.monthlyRental+'</td> ';
+                          netSuiteProducts +='                <td>'+value.listPrice+'</td>';
+                          netSuiteProducts +='                <td>'+value.status+'</td>';
+                          netSuiteProducts +='                </tr>';
+                    }); 
+                    $('#netSuiteProducts').append(netSuiteProducts);
+                }
+                // Added by nishi: 11-Oct-2021:end: As discussed with Rajesh we use string and create data table data using javascript
                 var accTable = j$('[id$="accTable"]').removeAttr('width').DataTable({
                         "pageLength": 10, //"pageLength": 30, CH02 showing only 10 results  
                         "bInfo": false,
@@ -509,14 +553,15 @@
                                     <th scope="col">Cond.</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <apex:repeat value="{!netSuiteProducts}" var="net"><!--   <apex:repeat value="{!sageProducts}" var="sag"> -->
+                            <tbody id="netSuiteProducts">
+                               <!--// Added by nishi: 11-Oct-2021:Start: As discussed with Rajesh we use string and create data table data using javascript
+								<apex:repeat value="{!netSuiteProducts}" var="net"><!--   <apex:repeat value="{!sageProducts}" var="sag"> -?->
                                     <tr class="slds-hint-parent">
                                         <td>
                                             <span class="slds-radio">
-                                            <!-- CH02 <input type="radio" id="radio-{!sag.srNo}" value="{!sag.srNo}" onchange="setSlcdPianoIndx('{!sag.srNo}'); return false;" name="slcdPianoOptions" checked="" /> -->
+                                            <!-- CH02 <input type="radio" id="radio-{!sag.srNo}" value="{!sag.srNo}" onchange="setSlcdPianoIndx('{!sag.srNo}'); return false;" name="slcdPianoOptions" checked="" /> -?->
                                                 <input type="radio" id="radio-{!net.srNo}" value="{!net.srNo}" onchange="setSlcdPianoIndx('{!net.srNo}'); return false;" name="slcdPianoOptions" checked="" />
-                                                <!--CH02  <label class="slds-radio__label" for="radio-{!sag.srNo}">-->
+                                                <!--CH02  <label class="slds-radio__label" for="radio-{!sag.srNo}">-?->
                                                 <label class="slds-radio__label" for="radio-{!net.srNo}">
                                                     <span class="slds-radio_faux"></span>
                                                     <span class="slds-form-element__label"></span>
@@ -533,18 +578,19 @@
                                         <td>{!sag.salesPrice}</td>
                                         <td>{!sag.condi}</td>
                                         
-                                        -->
+                                        -?->
                                         <td>{!net.srNo}</td>
                                         <td>{!net.brand}</td>
                                         <td><p>{!net.model}</p></td>
-                                        <td>{!net.inventoryType}</td><!-- CH05 added new column -->
+                                        <td>{!net.inventoryType}</td><!-- CH05 added new column -?->
                                         <td>{!net.serialNumber}</td>
                                         <td>{!net.location}</td>
-                                        <td>{!net.studentPrice}&nbsp;/&nbsp;{!net.monthlyRental}</td> <!-- CH09 now will show both the fields : <td>{!net.monthlyRental}</td> -->
+                                        <td>{!net.studentPrice}&nbsp;/&nbsp;{!net.monthlyRental}</td> <!-- CH09 now will show both the fields : <td>{!net.monthlyRental}</td>-?->
                                         <td>{!net.listPrice}</td>
                                         <td>{!net.status}</td>
                                     </tr>
                                 </apex:repeat>
+								// Added by nishi: 11-Oct-2021:end: As discussed with Rajesh we use string and create data table data using javascript-->
                             </tbody>
                         </table> 
                     </div>
@@ -565,14 +611,15 @@
                                     <th scope="col">Cond.</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <apex:repeat value="{!netSuitePromotionalProducts}" var="net"><!--   <apex:repeat value="{!sageProducts}" var="sag"> -->
+                            <tbody id="netSuitePromotionalProducts">
+                              <!-- // Added by nishi: 11-Oct-2021:Start: As discussed with Rajesh we use string and create data table data using javascript
+									<apex:repeat value="{!netSuitePromotionalProducts}" var="net"><!--   <apex:repeat value="{!sageProducts}" var="sag"> -?->
                                     <tr class="slds-hint-parent">
                                         <td>
                                             <span class="slds-radio">
-                                            <!-- CH02 <input type="radio" id="radio-{!sag.srNo}" value="{!sag.srNo}" onchange="setSlcdPianoIndx('{!sag.srNo}'); return false;" name="slcdPianoOptions" checked="" /> -->
+                                            <!-- CH02 <input type="radio" id="radio-{!sag.srNo}" value="{!sag.srNo}" onchange="setSlcdPianoIndx('{!sag.srNo}'); return false;" name="slcdPianoOptions" checked="" /> -?->
                                                 <input type="radio" id="radio-{!net.srNo}" value="{!net.srNo}" onchange="setSlcdPianoIndx('{!net.srNo}'); return false;" name="slcdPianoOptions" checked="" />
-                                                <!--CH02  <label class="slds-radio__label" for="radio-{!sag.srNo}">-->
+                                                <!--CH02  <label class="slds-radio__label" for="radio-{!sag.srNo}">-?->
                                                 <label class="slds-radio__label" for="radio-{!net.srNo}">
                                                     <span class="slds-radio_faux"></span>
                                                     <span class="slds-form-element__label"></span>
@@ -589,18 +636,20 @@
                                         <td>{!sag.salesPrice}</td>
                                         <td>{!sag.condi}</td>
                                         
-                                        -->
+                                        -?->
                                         <td>{!net.srNo}</td>
                                         <td>{!net.brand}</td>
                                         <td><p>{!net.model}</p></td>
-                                        <td>{!net.inventoryType}</td><!-- CH05 added new column -->
+                                        <td>{!net.inventoryType}</td><!-- CH05 added new column -?->
                                         <td>{!net.serialNumber}</td>
                                         <td>{!net.location}</td>
-                                        <td>{!net.studentPrice}&nbsp;/&nbsp;{!net.monthlyRental}</td> <!-- CH09 now will show both the fields : <td>{!net.monthlyRental}</td> -->
+                                        <td>{!net.studentPrice}&nbsp;/&nbsp;{!net.monthlyRental}</td> <!-- CH09 now will show both the fields : <td>{!net.monthlyRental}</td> -?->
                                         <td>{!net.listPrice}</td>
                                         <td>{!net.status}</td>
                                     </tr>
                                 </apex:repeat>
+// Added by nishi: 11-Oct-2021:END: As discussed with Rajesh we use string and create data table data using javascript
+-->
                             </tbody>
                         </table> 
                     </div>
@@ -610,8 +659,13 @@
                     <div class="slds-medium-size_1-of-2 slds-p-bottom_small" -->
                      <div class="slds-medium-size_1-of-3 slds-p-bottom_small"/>
                      <div class="slds-medium-size_1-of-3 slds-p-bottom_small">
-                      <a class="slds-button btn-yellow slds-p-horizontal_xx-large slds-m-bottom_large" onclick="prcToRentalOnclick('Rent');return false;">Proceed to Rental</a>    
-                    </div>
+                         <apex:outputPanel rendered="{!isOssia}">
+                             <a class="slds-button btn-red slds-p-horizontal_xx-large slds-m-bottom_large" onclick="prcToRentalOnclick('Rent');return false;">Proceed to Rental</a>    
+                         </apex:outputPanel>
+                         <apex:outputPanel rendered="{!!isOssia}">
+                             <a class="slds-button btn-yellow slds-p-horizontal_xx-large slds-m-bottom_large" onclick="prcToRentalOnclick('Rent');return false;">Proceed to Rental</a>    
+                         </apex:outputPanel>
+                     </div>
                      <!-- karan Singh 24 aug 2020 commented this button as now we are not doing the purchase process
                     <div class="slds-medium-size_1-of-2 slds-p-bottom_small">
                         <a class="slds-button btn-yellow slds-p-horizontal_xx-large  slds-m-bottom_large" onclick="prcToRentalOnclick('Sell');return false;">Proceed to Purchase</a>  
