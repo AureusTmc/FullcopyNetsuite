@@ -33,12 +33,15 @@ trigger CaseTrigger on Case (Before Insert, After Insert, After Update) {
         Map<Id, Id> caseEnrMap = new Map<Id, Id>();
         Map<String,String> changeStatusMap = new Map<String,String>();
         Firebase_Settings__c settings = Firebase_Settings__c.getValues('setting');
-        
-        Id recTypeId = Schema.SObjectType.Case.getRecordTypeInfosByName().get('Sales Enquiry').getRecordTypeId();
+        // added by nishi: 28-Apr-2021:start:  To add sales enquiry  or Instrument Rental Enquiry recordtype condition
+        set<string> caseRecordtypeIds = new Set<string>();
+        caseRecordtypeIds.add(Schema.SObjectType.Case.getRecordTypeInfosByName().get(ConstantsClass.caseSalesEnqRecTypeName).getRecordTypeId());
+        caseRecordtypeIds.add(Schema.SObjectType.Case.getRecordTypeInfosByName().get(ConstantsClass.InstrumentRentalEnquiryRecordType).getRecordTypeId());
+        // added by nishi: 28-Apr-2021:end:  To add sales enquiry  or Instrument Rental Enquiry recordtype condition
         for(Case c : Trigger.new){
              //if(c.Enrolment__c != null && (Trigger.isInsert || (Trigger.isUpdate && Trigger.oldMap.get(c.Id).Enrolment__c != c.Enrolment__C)))
              //Added by Rajesh on 21st Oct 2019, To add sales enquiry recordtype condition
-             if(c.Enrolment__c != null && c.Booking__c == null && c.RecordTypeId == recTypeId && c.Status != ConstantsClass.ClosedStatus && 
+             if(c.Enrolment__c != null && c.Booking__c == null && caseRecordtypeIds.contains( c.RecordTypeId) && c.Status != ConstantsClass.ClosedStatus &&  //commented by nishi: 28-apr-2021 : c.RecordTypeId = Schema.SObjectType.Case.getRecordTypeInfosByName().get(ConstantsClass.caseSalesEnqRecTypeName).getRecordTypeId()
                (Trigger.isInsert || (Trigger.isUpdate && Trigger.oldMap.get(c.Id).Enrolment__c != c.Enrolment__C))){
                  caseEnrMap.put(c.Id, c.Enrolment__c);
              }

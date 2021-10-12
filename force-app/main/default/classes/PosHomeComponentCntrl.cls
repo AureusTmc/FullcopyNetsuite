@@ -1,5 +1,13 @@
 public class PosHomeComponentCntrl {
+    public Boolean isAllowedPermissionToThisUser{get;set;}
+    public Enrolment__c objEnrolment{get;set;}
+    public PosHomeComponentCntrl(Apexpages.StandardController stdController){
+        isAllowedPermissionToThisUser = FeatureManagement.checkPermission('Charge_Additional_Services') ? true : false;
+        objEnrolment =  new Enrolment__c();
+        objEnrolment = (Enrolment__c)stdController.getRecord();
        
+    }
+    
      @AuraEnabled
 	 public static InitWrapper getCenters(){
         InitWrapper initWrap = new InitWrapper();
@@ -578,7 +586,7 @@ public class PosHomeComponentCntrl {
     }*/
     
     @AuraEnabled
-    public static String payAndRedirect(String selectedCenter, String cstmrId, String slcdPayType, List<SageProductItems> sgPrdItms){
+    public static String payAndRedirect(String selectedCenter, String cstmrId, String slcdPayType, List<SageProductItems> sgPrdItms,string enrolmentId){
         String strMsg = '';
         Savepoint sp;
          System.debug('@@@wareHouseId   '+selectedCenter);
@@ -614,6 +622,9 @@ public class PosHomeComponentCntrl {
                                                                            Remarks__c = objItem.item, 
                                                                            month__c = System.today());
                     invItm.Quantity__c = Integer.valueOf(objItem.quantity);
+                    if(string.isnotBlank(enrolmentId)){
+                        invItm.enrolment__c = enrolmentId;
+                    }
                     if(objItem.price > 0 && centreSlcd.Country__r.Tax_Rate__c > 0)
                         invItm.GST_Amount__c = BillingUtility.roundOffAmount(objItem.price) * (BillingUtility.roundOffAmount(centreSlcd.Country__r.Tax_Rate__c) / 100);
                     listOfLineItems.add(invItm);

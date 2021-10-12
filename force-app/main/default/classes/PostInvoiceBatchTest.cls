@@ -24,9 +24,24 @@ public class PostInvoiceBatchTest {
         country.Stripe_Publishable_Key__c = 'ABC';
         country.Stripe_Secret_Key__c = 'deede';
         insert country;
+          /**added by nishi: 25-Sep-2020: for added organisation*/
+        // create organisation
+        Organisation__c organisationRecord = new Organisation__c();
+        organisationRecord.Name = 'Aureus Academy Singapore';
+        organisationRecord.Bank_Account_Number__c = '1123456789';
+        organisationRecord.Branch_Code__c = 'test';
+        organisationRecord.Country__c = country.id;
+        organisationRecord.Stripe_Base_Url__c = 'www.test.com';
+        organisationRecord.Stripe_Publishable_Key__c = 'ABC';
+        organisationRecord.Stripe_Secret_Key__c = 'test_key';
+        organisationRecord.Sage_Company__c = 'AGP';
+        Insert organisationRecord;  
         
         Account objCentr=TestUtil.createAccount('Centre',false,false);
         objCentr.Country__c=country.id;
+        //add by @nishi 25 sep 2020
+        objCentr.Organisation__c = organisationRecord.id;
+        objCentr.Organisation_Sharing__c ='Aureus Academy Singapore';
         insert objCentr;
         Account objTchr=TestUtil.createAccount('Teacher',false,true);
         Program__C objProg=TestUtil.createProgram('Active','Piano',true);

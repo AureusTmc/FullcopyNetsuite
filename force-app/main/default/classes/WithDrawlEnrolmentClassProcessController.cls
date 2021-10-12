@@ -16,96 +16,104 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
     public WithDrawlEnrolmentClassProcessController(String bookingId, String endDate, String lastLessonDate, 
                                                 String myCase, String redirectCase) {
         this.bookingId = bookingId;
-        if(String.isNotBlank(endDate)){
-            this.endDate = Date.valueOf(endDate);
-        }
-        if(String.isNotBlank(lastLessonDate)){
-            this.lastLessonDate = Date.valueOf(lastLessonDate);
-        }
-        this.myCase =myCase;
-        this.redirectCase =redirectCase;
-        enrolObj = new Enrolment__c();
-        bookingListToDelete = new List<Booking__c>();
-    }
+                                                    if(String.isNotBlank(endDate)){
+                                                        this.endDate = Date.valueOf(endDate);
+                                                    }
+                                                    if(String.isNotBlank(lastLessonDate)){
+                                                        this.lastLessonDate = Date.valueOf(lastLessonDate);
+                                                    }
+                                                    this.myCase =myCase;
+                                                    this.redirectCase =redirectCase;
+                                                    enrolObj = new Enrolment__c();
+                                                    bookingListToDelete = new List<Booking__c>();
+                                                }
     //Init Method where all the process gets Start...
     Public String initProcess(){
         Boolean isSuccess = true;
         String caseIdToReturn;
-        Country__c countryObj = new Country__c();
-        string enrollmentId;
-        if(String.isNotBlank(bookingId)){
-            enrolObj = AdvanceActionsHelper.fetchEnrolmentDetailsFromBooking(bookingId);
-            if(String.isNotBlank(enrolObj.Center__r.Country__r.Id)){
-            countryObj = enrolObj.Center__r.Country__r;
-        }
-             enrollmentId = enrolObj.Id;
-        }
-        date nextBillDate =   AdvanceActionsHelper.fetchNextBillDateFromEnrolment(enrolObj);
-        system.debug('@@@enrolmentObj.id'+enrolObj.id);
-        Enrolment__c enroll = new Enrolment__c();
-         if(String.isNotBlank(enrollmentId) && endDate != NULL && lastLessonDate  != NULL){
-            enroll.Id = enrollmentId;
-            enroll = AdvanceActionsHelper.initEnroll(enroll);
-            enroll.Package_Process_Type__c = ConstantsClass.enrollmentProcessCancelType;
-            enroll.Effective_Date__c = lastLessonDate;
-            enroll.Package_Process_Request_Date__c = System.today();
-            enroll.Notice_Period_Start_Date__c = endDate.addDays(-30);
-            enroll.Notice_Period_End_Date__c = endDate;
-            enroll.Advance_Action_Requested_By__c = Userinfo.getUserId();
-            if(lastLessonDate >= nextBillDate){
-                enroll.Package_Process_Status__c = ConstantsClass.enrollmentProcessPendingStatus;
+        Savepoint withdrawalSavePoint;
+        try{
+            withdrawalSavePoint = Database.setSavepoint();
+            Country__c countryObj = new Country__c();
+            string enrollmentId;
+            if(String.isNotBlank(bookingId)){
+                enrolObj = AdvanceActionsHelper.fetchEnrolmentDetailsFromBooking(bookingId);
+                if(String.isNotBlank(enrolObj.Center__r.Country__r.Id)){
+                    countryObj = enrolObj.Center__r.Country__r;
+                }
+                enrollmentId = enrolObj.Id;
+            }
+            date nextBillDate =   AdvanceActionsHelper.fetchNextBillDateFromEnrolment(enrolObj);
+            //system.debug('@@@enrolmentObj.id'+enrolObj.id);
+            Enrolment__c enroll = new Enrolment__c();
+            if(String.isNotBlank(enrollmentId) && endDate != NULL && lastLessonDate  != NULL){
+                enroll.Id = enrollmentId;
+                enroll = AdvanceActionsHelper.initEnroll(enroll);
+                enroll.Package_Process_Type__c = ConstantsClass.enrollmentProcessCancelType;
+                enroll.Effective_Date__c = lastLessonDate;
+                enroll.Package_Process_Request_Date__c = System.today();
+                enroll.Notice_Period_Start_Date__c = endDate.addDays(-30);
+                enroll.Notice_Period_End_Date__c = endDate;
+                enroll.Advance_Action_Requested_By__c = Userinfo.getUserId();
+                if(lastLessonDate >= nextBillDate){
+                    enroll.Package_Process_Status__c = ConstantsClass.enrollmentProcessPendingStatus;
+                }else{
+                    enroll.Package_Process_Status__c = ConstantsClass.enrollmentProcessCompletedStatus;
+                    enroll.Stage__c = 'Cancelled';
+                }
+                
+            }
+            if(enroll != NULL){
+                //system.debug('enroll '+enroll);
+                Database.SaveResult saveResult = Database.Update(enroll, false);
+                if(saveResult.isSuccess()){
+                    isSuccess = true;
+                    //Called method for attach WithdrawlSummaryPdf Attchment on enroll parent
+                    attachWithdrawlSummaryPdf(enrolObj.Name,enrolObj.id,enrolObj.Parent__c);
+                }
+            }
+            
+            //system.debug('@@@isSuccess'+isSuccess);
+            if(String.isNotBlank(enroll.id)){
+                enroll = AdvanceActionsHelper.fetchEnrolment(enroll.id);                
+            }
+            
+            //system.debug('@@@enrolmentObj'+enroll);
+            if(isSuccess && String.isNotBlank(enrollmentId)){
+                createPaymentRecordForWithdrawalProcess(enrolObj, lastLessonDate,nextBillDate);
+                
+                bookingListToDelete.addAll([SELECT ID FROM Booking__c 
+                                            WHERE Booking_Date__c > :enroll.Effective_Date__c AND 
+                                            Enrolment__c = :enroll.Id 
+                                            AND Status__c != :ConstantsClass.statusCanceled 
+                                            AND Type__c =: ConstantsClass.groupLessonTypeBooking]);
+                
+                processFutureMakeupBookingsForWithdrawal(enroll, bookingListToDelete);
+                
+                if(String.isNotBlank(enrolObj.Parent__c)){
+                    markMakeupExpiryDateAsLastLessonDate(enrolObj.Parent__c);
+                }
+            }
+            //system.debug('@@isSuccess'+isSuccess);
+            if(!isSuccess){
+                caseIdToReturn = 'error';
+            }
+            
+            if(isSuccess && redirectCase == 'true'){
+                Case objCase =  AureusCalendarControllerHelper.createCaseForEnrolment(myCase, enroll.Id, 'withdrawal', true);
+                //system.debug('@@caseObj'+objCase);
+                caseIdToReturn = objCase.Id;
+            }else if(isSuccess){
+                caseIdToReturn = '';
             }else{
-                enroll.Package_Process_Status__c = ConstantsClass.enrollmentProcessCompletedStatus;
-                enroll.Stage__c = 'Cancelled';
+                caseIdToReturn = 'error';
             }
-
-         }
-         if(enroll != NULL){
-            System.debug('enroll '+enroll);
-            Database.SaveResult saveResult = Database.Update(enroll, false);
-            if(saveResult.isSuccess()){
-                isSuccess = true;
-                //Called method for attach WithdrawlSummaryPdf Attchment on enroll parent
-                attachWithdrawlSummaryPdf(enrolObj.Name,enrolObj.id,enrolObj.Parent__c);
-            }
-        }
-
-        system.debug('@@@isSuccess'+isSuccess);
-       if(String.isNotBlank(enroll.id)){
-            enroll = AdvanceActionsHelper.fetchEnrolment(enroll.id);                
-        }
-        
-            system.debug('@@@enrolmentObj'+enroll);
-        if(isSuccess && String.isNotBlank(enrollmentId)){
-            createPaymentRecordForWithdrawalProcess(enrolObj, lastLessonDate,nextBillDate);
-            
-            bookingListToDelete.addAll([SELECT ID FROM Booking__c 
-                                        WHERE Booking_Date__c > :enroll.Effective_Date__c AND 
-                                        Enrolment__c = :enroll.Id 
-                                        AND Status__c != :ConstantsClass.statusCanceled 
-                                        AND Type__c =: ConstantsClass.groupLessonTypeBooking]);
-
-            processFutureMakeupBookingsForWithdrawal(enroll, bookingListToDelete);
-            
-            if(String.isNotBlank(enrolObj.Parent__c)){
-                markMakeupExpiryDateAsLastLessonDate(enrolObj.Parent__c);
-            }
-        }
-        system.debug('@@isSuccess'+isSuccess);
-        if(!isSuccess){
+        }catch (Exception e){
             caseIdToReturn = 'error';
-        }
-        
-        if(isSuccess && redirectCase == 'true'){
-            Case objCase =  AureusCalendarControllerHelper.createCaseForEnrolment(myCase, enroll.Id, 'withdrawal', true);
-            System.debug('@@caseObj'+objCase);
-            caseIdToReturn = objCase.Id;
-        }else if(isSuccess){
-            caseIdToReturn = '';
-        }else{
-            caseIdToReturn = 'error';
-        }
-        
+            System.debug('@@caseIdToReturn'+e.getStackTraceString()+'-'+e.getMessage() +';');
+            //On 14-Oct-2020: Nishi to Add Custom Save Points so If Error Occures we can trace that.
+            Database.rollback(withdrawalSavePoint);
+        }        
         return caseIdToReturn;
     }
 
@@ -177,7 +185,7 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
         if(needToMakeupChange && String.isNotBlank(parentId)){
             Date maxDate = findMaxDate(enrolListForMaxDate);
             if(String.isNotBlank(parentId) && maxDate != NULL){
-                system.debug('parentId'+parentId);
+               //system.debug('parentId'+parentId);
                 updateAllBookingForParent(parentId, maxDate);
             }
         }
@@ -195,7 +203,7 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
     
     private static void updateAllBookingForParent(String parentId, Date maxDate){
         List<Booking__c> bookingList = new List<Booking__c>();
-        system.debug('maxDate'+maxDate);
+       //system.debug('maxDate'+maxDate);
         for(Booking__c bookingObj : [SELECT Id, Make_up_Expiry_Date__c 
                                     FROM Booking__c
                                      WHERE RecordType.Name =: ConstantsClass.groupLessonBookingRecordType
@@ -223,45 +231,53 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
         String payAsCredit = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get('Payment As Credit').getRecordTypeId();
         String refundRecType = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get('Refund').getRecordTypeId();
         
-        
+        Map<string,task> mapOfRefundReminderTasks = new Map<string,task>();
+        Map<string,QueueSObject > mapOfQueue = BillingUtility.getTaskQueueMap();
         Boolean hasMoreEnrolment = checkParentHasMultipleEnrolments(objEnrol.parent__c);
         List<Payment__c> paymentList = new List<Payment__c>();
         List<Payment__c> refundPayments = new List<Payment__c>();
-        
+        map<string,Credit_Memo__c> newPendingCreditMemos = new map<string,Credit_Memo__c>();
+        List<Credit_memo_line_item__c> listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
+        map<string,List<Credit_memo_line_item__c>> mapOfCreditmemolineitem = new map<string,List<Credit_memo_line_item__c>>();
         Payment__c paymentObj  = new Payment__c();
         
        //for add transaction id in payment reocrds
         Map<String, Payment__c> mapOfInvoicePayments = new Map<String, Payment__c>();
-        
-
+        map<String,Invoice_Line_Item__c> updateInvoiceLineItem = new map<String,Invoice_Line_Item__c>();
+        map<String,Invoice_Line_Item__c> updateCreditMemoAmountInvoiceLineItem = new map<String,Invoice_Line_Item__c>();
         Decimal depositAmount = 0;
         if(String.isNotBlank(objEnrol.Id)){
             depositAmount = AureusCalendarController.getDepositFromFile(objEnrol.Id);
         }
-
+        List<Id> invoiceIds = NEW List<Id>();
+        Map<Id,Invoice_Line_Item__c> invoicemap = NEW Map<Id,Invoice_Line_Item__c>();
+        for(Invoice_Line_Item__c lineItem : [SELECT Id, Invoice__c, Amount__c, Invoice__r.Parent_Account__c, Subscription_Line_Item__r.Next_Bill_Date__c ,Package__c,
+                                            Credit_Memo_Amount__c,Credit_Memo_tax__c,Net_Amount__c
+                                            FROM Invoice_Line_Item__c 
+                                            WHERE Enrolment__c =: objEnrol.id 
+                                            AND Is_Deposit__c = true 
+                                            AND Subscription_Line_Item__c != NULL]){
+                                                invoiceIds.add(lineItem.Invoice__c);
+                                                invoicemap.put(lineItem.Invoice__c,lineItem);
+                                                updateInvoiceLineItem.put(lineItem.id,lineItem);
+                                            }
+        
+        if(invoiceIds.size() > 0){
+            for(Payment__c payment : [SELECT Id, Transaction_ID__c, Invoice__c ,Method_of_Payment__c 
+                                        FROM Payment__c 
+                                        WHERE Invoice__c IN: invoiceIds AND 
+                                        RecordType.Name =:ConstantsClass.paymentTransactionRecType]){
+                                       //6-May-2021: commented by nishi: after diciussion with alex and ashish  without transation id we create credit memo 
+                                       // if(string.isNotBlank( payment.Transaction_ID__c)){
+                                            mapOfInvoicePayments.put(payment.Invoice__c, payment);
+                                        //}
+                                    }
+        }
         if(depositAmount > 0){
              paymentObj = new Payment__c();
-            List<Id> invoiceIds = NEW List<Id>();
-            for(Invoice_Line_Item__c lineItem : [SELECT Id, Invoice__c, Amount__c, Invoice__r.Parent_Account__c, Subscription_Line_Item__r.Next_Bill_Date__c 
-                                                FROM Invoice_Line_Item__c 
-                                                WHERE Enrolment__c =: objEnrol.id 
-                                                AND Is_Deposit__c = true 
-                                                AND Subscription_Line_Item__c != NULL]){
-                                                    invoiceIds.add(lineItem.Invoice__c);
-                                                }
-            
-            if(invoiceIds.size() > 0){
-                for(Payment__c payment : [SELECT Id, Transaction_ID__c, Invoice__c  
-                                            FROM Payment__c 
-                                            WHERE Invoice__c IN: invoiceIds AND 
-                                            RecordType.Name =:ConstantsClass.paymentTransactionRecType]){
-                                            if(string.isNotBlank( payment.Transaction_ID__c)){
-                                                mapOfInvoicePayments.put(payment.Invoice__c, payment);
-                                            }
-                                        }
-            }
             if(hasMoreEnrolment){
-                 paymentObj = BillingUtility.fillPayment(objEnrol.Parent__c,null, depositAmount, ConstantsClass.paymentPendingStatus);
+                 /*//commented by nishi: 6-Oct-2020 : for new requirement we Create a Credit Memo record with the status pending instead of the Payment as Deposit record.
+                  paymentObj = BillingUtility.fillPayment(objEnrol.Parent__c,null, depositAmount, ConstantsClass.paymentPendingStatus);
                 if(isRefund){
                     paymentObj.Payment_Date__c = System.today();
                 }else{
@@ -270,25 +286,67 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
                 for( string invoiceId : mapOfInvoicePayments.keyset()){
                     if(mapOfInvoicePayments.containsKey(invoiceId)){
                         paymentObj.Transaction_ID__c = mapOfInvoicePayments.get(invoiceId).Transaction_ID__c;    
+                        // added by nishi: 10-Sep-2020: if the deposit was paid by card then we can set it to Card and vice-versa
+                        paymentObj.Method_of_Payment__c =   mapOfInvoicePayments.get(invoiceId).Method_of_Payment__c; 
                     }
                 }
                 paymentObj.RecordTypeId =  paymentRecordTypeId;
                 paymentObj.Enrolment__c = objEnrol.id;
                 paymentObj.last_lesson_date__c = lastLessonDateObj;
-                system.debug('paymentObj'+paymentObj);
-                paymentList.add(paymentObj);
-            }/*/*Commented by jatin: 13-jan-2020: for now change requirement only multiple enrollment exist then we create payment record
+               //system.debug('paymentObj'+paymentObj);
+                paymentList.add(paymentObj);*/
+                Decimal creditMemodepositAmount =Math.abs(depositAmount);
+                for( string invoiceId : mapOfInvoicePayments.keyset()){
+                     /* 26-Apr-2021  Enrolments with multiple deposits meaning advancements at the time of withdrawal should have a separate credit memo created for each line item that is equal to deposit. 
+                    Finance must refund the credit memos separately to their original charges.*/
+                    if(mapOfInvoicePayments.containsKey(invoiceId) && invoicemap.containsKey(invoiceId) && creditMemodepositAmount > 0){
+                        depositAmount = (creditMemodepositAmount > invoicemap.get(invoiceId).Net_Amount__c ? //120 > 112
+                                         invoicemap.get(invoiceId).Net_Amount__c :
+                                         creditMemodepositAmount); 
+                        creditMemodepositAmount  =creditMemodepositAmount - invoicemap.get(invoiceId).Net_Amount__c; //120-112=8
+                        Credit_Memo__c objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, null,  System.today(),'Deposit Adjustment');
+                        system.debug('objCreditMemo'+objCreditMemo);
+                        Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(depositAmount,0,null,
+                                                                                                            objEnrol.id,null,'Deposit Adjustment');
+                        objCreditLineItem.Is_Deposit__c = true;
+                        if(isRefund){
+                            objCreditMemo.Credit_Memo_Date__c = System.today();
+                            objCreditLineItem.Month__c = System.today();
+                        }else{
+                            objCreditMemo.Credit_Memo_Date__c = lastLessonDateObj;
+                            objCreditLineItem.Month__c = lastLessonDateObj;
+                        }
+                        objCreditMemo.Payment_Method__c =   mapOfInvoicePayments.get(invoiceId).Method_of_Payment__c; 
+                        objCreditMemo.From_Invoice__c = invoiceId;
+                        objCreditLineItem.Package__c = invoicemap.get(invoiceId).Package__c;
+                        objCreditLineItem.Invoice_Line_Item__c = invoicemap.get(invoiceId).Id;
+                        listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
+                        listOfCreditmemolineitem.add(objCreditLineItem);
+                        mapOfCreditmemolineitem.put('Deposit Adjustment'+invoiceId,listOfCreditmemolineitem);
+                        //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
+                        if(string.isNotBlank(objCreditLineItem.Invoice_Line_Item__c)){
+                            updateCreditMemoAmountInvoiceLineItem.put(objCreditLineItem.Invoice_Line_Item__c,updateInvoiceLineItemMap( updateInvoiceLineItem,depositAmount,0,objCreditLineItem.Invoice_Line_Item__c));
+                        }
+                        newPendingCreditMemos.put('Deposit Adjustment'+invoiceId,objCreditMemo);
+                         /* 26-Apr-2021 end: Enrolments with multiple deposits meaning advancements at the time of withdrawal should have a separate credit memo created for each line item that is equal to deposit. 
+                    Finance must refund the credit memos separately to their original charges.*/
+                    }
+                }
+                
+                
+                
+                /*/*Commented by jatin: 13-jan-2020: for now change requirement only multiple enrollment exist then we create payment record
             otherwise not
             else{
                 paymentObj = BillingUtility.fillPayment(objEnrol.Parent__c,null, depositAmount, ConstantsClass.paymentSuccessStatus);
             }*/
 
             
-            
+            }
         }
         
-        if(!hasMoreEnrolment){
-            system.debug('paymentObj'+paymentList);
+        if(!hasMoreEnrolment && depositAmount!= null){
+           //system.debug('paymentObj'+paymentList);
             /*for(Payment__c objPay : paymentList){
                 Payment__c refund = objPay.clone(false,false,false,false);
                 refund.Payment_amount__c = -1*refund.Payment_amount__c;
@@ -298,7 +356,10 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
                 refundPayments.add(refund);
             } */  
              //14-jan-2020: for create refund amount
-            Payment__c  refund = BillingUtility.fillPayment(objEnrol.Parent__c,null, depositAmount, ConstantsClass.paymentPendingStatus);
+             /*
+         Commented by nishi: 15-Oct-2020:start:for new requirement Create a Credit Memo record with the status pending instead of the pending Payment as credit record.
+          
+             Payment__c  refund = BillingUtility.fillPayment(objEnrol.Parent__c,null, depositAmount, ConstantsClass.paymentPendingStatus);
             refund.Payment_amount__c = -1*refund.Payment_amount__c;
             refund.recordTypeId = refundRecType;
             refund.Payment_Date__c = lastLessonDateObj;
@@ -306,49 +367,320 @@ public without sharing class WithDrawlEnrolmentClassProcessController implements
             refund.Enrolment__c = objEnrol.Id;
             for( string invoiceId : mapOfInvoicePayments.keyset()){
                 if(mapOfInvoicePayments.containsKey(invoiceId)){
-                    paymentObj.Transaction_ID__c = mapOfInvoicePayments.get(invoiceId).Transaction_ID__c;    
+                    paymentObj.Transaction_ID__c = mapOfInvoicePayments.get(invoiceId).Transaction_ID__c;  
                 }
             }
-            refundPayments.add(refund);   
-        }
+            refundPayments.add(refund);   */
+             
+              Decimal creditMemodepositAmount =depositAmount;
+              
+                for( string invoiceId : mapOfInvoicePayments.keyset()){
+                     /* 26-Apr-2021  Enrolments with multiple deposits meaning advancements at the time of withdrawal should have a separate credit memo created for each line item that is equal to deposit. 
+                    Finance must refund the credit memos separately to their original charges.*/
+                    if(mapOfInvoicePayments.containsKey(invoiceId) && invoicemap.containsKey(invoiceId) && creditMemodepositAmount > 0){
+                        depositAmount = (creditMemodepositAmount > invoicemap.get(invoiceId).Net_Amount__c ? //120 > 112
+                                         invoicemap.get(invoiceId).Net_Amount__c :
+                                         creditMemodepositAmount
+                                        ); 
+                        creditMemodepositAmount  =creditMemodepositAmount - invoicemap.get(invoiceId).Net_Amount__c; //120-112=8
+                        Credit_Memo__c objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, null,  lastLessonDateObj,'Refund Deposit');
+                        Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(depositAmount,0,null,
+                                                                                                            objEnrol.id,null,'Refund Deposit');
+                        objCreditLineItem.Is_Deposit__c = true;
+                        objCreditLineItem.Month__c = lastLessonDateObj;
+                        objCreditMemo.Payment_Method__c =   mapOfInvoicePayments.get(invoiceId).Method_of_Payment__c; 
+                        objCreditMemo.From_Invoice__c = invoiceId;
+                        objCreditLineItem.Package__c = invoicemap.get(invoiceId).Package__c;
+                        objCreditLineItem.Invoice_Line_Item__c = invoicemap.get(invoiceId).Id;
+                        listOfCreditmemolineitem = new List<Credit_memo_line_item__c>();
+                        listOfCreditmemolineitem.add(objCreditLineItem);
+                        mapOfCreditmemolineitem.put('Refund Deposit'+invoiceId,listOfCreditmemolineitem);
+                        newPendingCreditMemos.put('Refund Deposit'+invoiceId,objCreditMemo);
+                        //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
+                        if(string.isNotBlank(objCreditLineItem.Invoice_Line_Item__c)){
+                            updateCreditMemoAmountInvoiceLineItem.put(objCreditLineItem.Invoice_Line_Item__c,updateInvoiceLineItemMap( updateInvoiceLineItem,depositAmount,0,objCreditLineItem.Invoice_Line_Item__c));
+                        }
+                        // added by nishi: 5-Nov-2020: for if we not found any active enrolment all enrolments are withdrwal then we create a task to finance team for refund reminder.
+                        if(mapOfQueue != null && mapOfQueue.size() > 0 && mapOfQueue.containskey('Finance Queue') && string.isNotBlank(mapOfQueue.get('Finance Queue').Queue.Id)){ 
+                            mapOfRefundReminderTasks.put('Refund Deposit'+invoiceId,BillingUtility.createNewTask('Refund Reminder',objEnrol.id,lastLessonDateObj,mapOfQueue.get('Finance Queue').Queue.Id));
+                        }
+                        // added by nishi: 5-Nov-2020: for if we not found any active enrolment all enrolments are withdrwal then we create a task to finance team for refund reminder.  
+                         /* 26-Apr-2021 end:  Enrolments with multiple deposits meaning advancements at the time of withdrawal should have a separate credit memo created for each line item that is equal to deposit. 
+                    Finance must refund the credit memos separately to their original charges.*/
+                    }
+                }
+                 
+            }
 
          // we need to refund current month amount if applicable
         if(isRefund){
-            String chargeId =  AureusCalendarController.fetchCurrentMonthPaymentEntry(objEnrol,lastLessonDateObj);
-            
+            listOfCreditmemolineitem = new list<Credit_memo_line_item__c>();
+            String chargeId =  WithDrawlEnrolmentProcessController.fetchCurrentMonthPaymentEntry(objEnrol,lastLessonDateObj);
             Decimal refundAmount = classEditController.getLessonRefundAmount(objEnrol,lastLessonDateObj);
-            if(refundAmount > 0){
-                    Payment__c objPay = new Payment__c();
-                if(hasMoreEnrolment){
-                        objPay = BillingUtility.fillPayment(objEnrol.Parent__c,null, refundAmount, ConstantsClass.paymentPendingStatus);
+            string refundAmountWithTax = getLessonRefundAmountWithTax(objEnrol,lastLessonDateObj);
+            // added by nishi: 21-Sep-2020: for if next month invoice already generated then we create next month payment records
+            date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1); // 1-10-2020
+            //added by nishi: 15-Oct-2020 : start:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+            Map<String,Invoice__c> mapofinvoice = new Map<String,Invoice__c>();
+            /*for(Invoice__c objInvoice : [Select id,Invoice_Date__c,
+                                            (Select id,Credit_Memo_Amount__c,Credit_Memo_tax__c
+                                            from Invoice_Line_Items__r 
+                                            where Enrolment__C =:objEnrol.id)
+                                        From Invoice__C 
+                                        Where  Parent_Account__c =: objEnrol.Parent__c
+                                        And invoice_type__c = 'Recurring']){
+                if(nextBillDate >= nextMonthDate && lastLessonDateObj.month() < nextMonthDate.addMonths(-1).month() && objInvoice.Invoice_Date__c.month() == nextMonthDate.addMonths(-1).month() ){
+                        mapofinvoice.put('Next Month',objInvoice);
                 }else{
-                        objPay = BillingUtility.fillPayment(objEnrol.Parent__c,null, refundAmount, ConstantsClass.paymentSuccessStatus);
+                    if(objInvoice.Invoice_Date__c.month() == system.today().month()){
+                        mapofinvoice.put('Current',objInvoice);
+                    }
+                }*/
+                List<Subscription_Line_Item__c> listSubLineItem = UpgradeDowngradeController.fetchSubsLineItems(objEnrol.Subscription_Line_Items__r[0].id);
+                Subscription_Line_Item__c objSubLineItem;
+                if(listSubLineItem != null && listSubLineItem.size() > 0 ){
+                    objSubLineItem  = listSubLineItem[0];
                 }
-                objPay.RecordTypeId =  payAsCredit ;
-                objPay.Payment_Date__c = lastLessonDateObj;
-                if(String.isNotBlank(chargeId)){
-                        objPay.Transaction_ID__c = chargeId;
-                }// If current month payment is not get then we send error .
-                else{
-                    throw new RefundException('Refund Failed. Charge Id Not found');
+            for(Invoice__c invoiceobj : UpgradeDowngradeController.getInvoiceDetails(objEnrol,lastLessonDateObj,objSubLineItem)){
+                system.debug('invoiceobj'+invoiceobj);
+                if(invoiceobj.invoice_type__c == 'Recurring'){
+                    for(Invoice_line_item__c objlineitem: invoiceobj.Invoice_line_items__r){
+                        string invoiceMonth ='';
+                        if(objlineitem.month__c.month() == lastLessonDateObj.month())
+                            invoiceMonth = 'Current';
+                        if(nextBillDate >= nextMonthDate && lastLessonDateObj.month() < nextMonthDate.addMonths(-1).month() && objlineitem.month__c.month() == nextMonthDate.addMonths(-1).month() )
+                            invoiceMonth = 'Next Month';
+                        if(string.isnotBlank(invoiceMonth)){
+                            mapofinvoice.put(invoiceMonth,invoiceobj);
+                        }
+                        updateInvoiceLineItem.put(objlineitem.id,objlineitem);
+                    }
                 }
-                objPay.last_lesson_date__c = lastLessonDateObj;
+            }
 
-                paymentList.add(objPay);
+
+             //added by nishi: 15-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+             
+            // 1-10-2020 >= 1-10-2020 && 8<9
+           //system.debug('nextBillDate'+nextBillDate);
+           //system.debug('nextMonthDate'+nextMonthDate);
+           //system.debug('lastLessonDateObj'+lastLessonDateObj);
+           //system.debug('nextMonthDate.addMonths(-1).Month()'+nextMonthDate.addMonths(-1).Month());
+            if(nextBillDate >= nextMonthDate && lastLessonDateObj.Month() < nextMonthDate.addMonths(-1).Month()){ 
+                Decimal refundNextMonthAmount = classEditController.getLessonRefundAmount(objEnrol,nextMonthDate.addMonths(-1)); // 1-9-2020
+                string refundNextMontAmountWithTax = getLessonRefundAmountWithTax(objEnrol,nextMonthDate.addMonths(-1));
+                if(refundNextMonthAmount > 0){
+                   
+                    String invoicelineitemId = null;
+                    if(mapofinvoice != null && mapofinvoice.size() > 0 ){
+                        if(mapofinvoice.containskey('Next Month')){
+                            if(mapofinvoice.get('Next Month').Invoice_Line_Items__r != null && mapofinvoice.get('Next Month').Invoice_Line_Items__r.size()>0){
+                                invoicelineitemId =mapofinvoice.get('Next Month').Invoice_Line_Items__r[0].id; 
+                            }
+                        }
+                    }
+                      //added by nishi: 15-Oct-2020 : start:for new requirement Create a Credit Memo record with the status pending instead of the success Payment as credit record.
+                    if(refundNextMontAmountWithTax.split('@') != null &&  refundNextMontAmountWithTax.split('@').size() > 0){
+                        Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(Decimal.valueOf(refundNextMontAmountWithTax.split('@')[0]),
+                                                        Decimal.valueOf(refundNextMontAmountWithTax.split('@')[1]),null,
+                                                        objEnrol.id,invoicelineitemId,'Refund  (Next month invoice amount)');
+                                                        objCreditLineItem.Month__c = lastLessonDateObj;
+                        listOfCreditmemolineitem.add(objCreditLineItem);                                                        
+                        //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
+                        if(string.isNotBlank(invoicelineitemId)){
+                            updateCreditMemoAmountInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,Decimal.valueOf(refundNextMontAmountWithTax.split('@')[0]),
+                                                        Decimal.valueOf(refundNextMontAmountWithTax.split('@')[1]),invoicelineitemId));
+                        }
+                    } 
+                      //added by nishi: 15-Oct-2020 : start:for new requirement Create a Credit Memo record with the status pending instead of the success Payment as credit record.
+                         
+                     //added by nishi: 6-Oct-2020 : start:for new requirement Create a Credit Memo record with the status pending instead of the pending Payment as credit record.
+                    /*    
+                    Payment__c objPay = new Payment__c();
+                    if(hasMoreEnrolment){
+                        objPay = BillingUtility.fillPayment(objEnrol.Parent__c,null, refundNextMonthAmount, ConstantsClass.paymentPendingStatus);
+                    }else{
+                         //added by nishi: 15-Oct-2020 : start:for new requirement Create a Credit Memo record with the status pending instead of the success Payment as credit record.
+                        
+                            objPay = BillingUtility.fillPayment(objEnrol.Parent__c,null, refundNextMonthAmount, ConstantsClass.paymentSuccessStatus);
+                            objPay.RecordTypeId =  payAsCredit ;
+                            objPay.Payment_Date__c = lastLessonDateObj;
+                            if(String.isNotBlank(chargeId)){
+                                    objPay.Transaction_ID__c = chargeId;
+                            }//14-Jan:2020 If current month payment is not get then we send error .
+                            else{
+                                throw new RefundException('Refund Failed. Charge Id Not found');
+                            }
+                            objPay.Remarks__c ='Refund  (Next month invoice amount)';
+                            objPay.last_lesson_date__c = lastLessonDateObj;
+                           //system.debug('objPay'+objPay);
+                            paymentList.add(objPay);
+                    }*/
+                }
+               //system.debug('refundNextMonthAmount'+refundNextMonthAmount);
+               //system.debug('paymentList'+paymentList);
+            }
+             //end: added by nishi: 21-Sep-2020: for if next month invoice already generated then we create next month payment records
+            if(refundAmount > 0){
+                String invoicelineitemId = null;
+                if(mapofinvoice != null && mapofinvoice.size() > 0 ){
+                    if(mapofinvoice.containskey('Current')){
+                        if(mapofinvoice.get('Current').Invoice_Line_Items__r != null && mapofinvoice.get('Current').Invoice_Line_Items__r.size()>0){
+                            invoicelineitemId =mapofinvoice.get('Current').Invoice_Line_Items__r[0].id; 
+                        }
+                    }
+                }
+                if(refundAmountWithTax.split('@') != null &&  refundAmountWithTax.split('@').size() > 0){
+                    Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(Decimal.valueOf(refundAmountWithTax.split('@')[0]),
+                                                    Decimal.valueOf(refundAmountWithTax.split('@')[1]),null,
+                                                    objEnrol.id,invoicelineitemId,'Refund  (Effective month invoice amount)');
+                                                    objCreditLineItem.Month__c = lastLessonDateObj;
+                                                    listOfCreditmemolineitem.add(objCreditLineItem);     
+                   
+                        //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
+                    if(string.isNotBlank(invoicelineitemId)){
+                        updateCreditMemoAmountInvoiceLineItem.put(invoicelineitemId,updateInvoiceLineItemMap( updateInvoiceLineItem,Decimal.valueOf(refundAmountWithTax.split('@')[0]),
+                        Decimal.valueOf(refundAmountWithTax.split('@')[1]),invoicelineitemId));
+                    }
+                }
+
+                //commented by nishi: 6-Oct-2020 : start:for new requirement Create a Credit Memo record with the status pending instead of the pending Payment as credit record.
+                   /* 
+                Payment__c objPay = new Payment__c();
+                if(hasMoreEnrolment){
+                    objPay = BillingUtility.fillPayment(objEnrol.Parent__c,null, refundAmount, ConstantsClass.paymentPendingStatus);
+                   
+                }else{
+                    
+                        objPay = BillingUtility.fillPayment(objEnrol.Parent__c,null, refundAmount, ConstantsClass.paymentSuccessStatus);
+                        objPay.RecordTypeId =  payAsCredit ;
+                        objPay.Payment_Date__c = lastLessonDateObj;
+                        if(String.isNotBlank(chargeId)){
+                                objPay.Transaction_ID__c = chargeId;
+                        }// If current month payment is not get then we send error .
+                        else{
+                            throw new RefundException('Refund Failed. Charge Id Not found');
+                        }
+                        objPay.last_lesson_date__c = lastLessonDateObj;
+                        if(isNextMonthInvoicCreated){
+                            objPay.Remarks__c ='Refund  (Effective month invoice amount)';
+                        }
+                        paymentList.add(objPay);
+                    }*/
+
+                }
+                if(listOfCreditmemolineitem  != null && listOfCreditmemolineitem.size() > 0 ){
+                    String invoiceId = null;
+                    if(mapofinvoice != null && mapofinvoice.size() > 0 ){
+                        if(mapofinvoice.containskey('Current')){
+                            invoiceId = mapofinvoice.get('Current').id;
+                        }
+                    }
+                    Credit_Memo__c objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, invoiceId,  lastLessonDateObj,'Refund  (Effective month invoice amount)');
+                    mapOfCreditmemolineitem.put('Refund  (Effective month invoice amount)',listOfCreditmemolineitem);
+                    newPendingCreditMemos.put('Refund  (Effective month invoice amount)',objCreditMemo);
+                }
+
             }
                                                                      
-        }
+        
         
         if(refundPayments.size() > 0){
             paymentList.addAll(refundPayments);
         }
         
-        if(paymentList.size() > 0){
+        //added by nishi: 6-Oct-2020 : start:for new requirement Create a Credit Memo record with the status pending instead of the Payment as Deposit record.
+        if(newPendingCreditMemos.size() > 0){
+            Insert newPendingCreditMemos.values();  
+            system.debug('newPendingCreditMemos'+newPendingCreditMemos);
+            system.debug('mapOfCreditmemolineitem'+mapOfCreditmemolineitem);
+             List<Credit_memo_line_item__c> listOfnewCreditmemolineitem = new list<Credit_memo_line_item__c>();
+             for(string creditMemoRemark : newPendingCreditMemos.keyset()){
+                 if(mapOfCreditmemolineitem.containskey(creditMemoRemark)){
+                     for(Credit_memo_line_item__c creditLineItemobj: mapOfCreditmemolineitem.get(creditMemoRemark)){
+                         creditLineItemobj.Credit_Memo_Number__c = newPendingCreditMemos.get(creditMemoRemark).id;
+                         listOfnewCreditmemolineitem.add(creditLineItemobj);
+                     }
+                 }
+             } 
+             if(listOfnewCreditmemolineitem != null && listOfnewCreditmemolineitem.size() > 0){
+                 insert listOfnewCreditmemolineitem;
+             }
+            // added by nishi: 5-Nov-2020: for if we not found any active enrolment all enrolments are withdrwal then we create a task to finance team for refund reminder.
+            if(mapOfRefundReminderTasks != null && mapOfRefundReminderTasks.size() > 0){
+                for( string invoiceId : mapOfInvoicePayments.keyset()){
+                    if(mapOfInvoicePayments.containsKey(invoiceId)){
+                        if(mapOfRefundReminderTasks.containskey('Refund Deposit'+invoiceId)){
+                            task objtask = mapOfRefundReminderTasks.get('Refund Deposit'+invoiceId);
+                            objtask.WhatId = newPendingCreditMemos.get('Refund Deposit'+invoiceId).id;
+                            mapOfRefundReminderTasks.put('Refund Deposit'+invoiceId,objtask);
+                        }
+                    }
+                }
+                insert mapOfRefundReminderTasks.values();
+            }
+            // added by nishi: 5-Nov-2020: for if we not found any active enrolment all enrolments are withdrwal then we create a task to finance team for refund reminder.
+            
+        }
+        if(updateCreditMemoAmountInvoiceLineItem != null && updateCreditMemoAmountInvoiceLineItem.size() > 0){
+            update updateCreditMemoAmountInvoiceLineItem.values();
+        }
+         //added by nishi: 6-Oct-2020 : end:for new requirement Create a Credit Memo record with the status pending instead of the Payment as Deposit record.
+         if(paymentList.size() > 0){
             insert paymentList;
         }
-        system.debug('paymentList'+paymentList);
+       //system.debug('paymentList'+paymentList);
     }
 
+    private static  Invoice_Line_Item__c updateInvoiceLineItemMap(Map<string,Invoice_Line_Item__c> updateInvoiceLineItem,decimal amount,decimal tax,string invoicelineitemId){
+        decimal invoicelineItemCreditAmount=0;
+        decimal invoicelineItemCreditGst=0;
+        
+        if(updateInvoiceLineItem.containskey(invoicelineitemId)){
+            invoicelineItemCreditAmount = updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_Amount__c != null ?updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_Amount__c :0;
+            invoicelineItemCreditGst = updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_tax__c != null ?updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_tax__c :0;
+        }
+
+        return new Invoice_Line_Item__c(id=invoicelineitemId,
+                                    Credit_Memo_Amount__c =invoicelineItemCreditAmount+(amount),
+                                    Credit_Memo_tax__c=invoicelineItemCreditGst+tax);
+    }
+
+     // @@nishi:6-Oct-2020 for withdrawal group lesson get Lesson Refund Amount according to group lesson bookings
+     public static String getLessonRefundAmountWithTax(Enrolment__c objEnrol,Date lastLessonDate){
+        Decimal amount = 0;
+        Decimal taxamount = 0;
+        List<Booking__c> bookings = getCurrentBilledBooking(objEnrol.id,lastLessonDate);
+        Integer count= 0;
+        for(Booking__c objBook : bookings){
+            if(objBook.booking_date__c > lastLessonDate){
+                count+=1;
+            }
+        }
+        if(count >0){
+            amount = count * objEnrol.package__r.unit_fee__c;
+            if(objEnrol.Center__r != null 
+            && objEnrol.Center__r.Country__r != null 
+            && objEnrol.Center__r.Country__r.Tax_Rate__c != null
+            && objEnrol.Center__r.Country__r.Tax_Rate__c > 0){
+                taxamount+= (amount  * objEnrol.Center__r.Country__r.Tax_Rate__c)  / 100;
+            }
+            
+        }
+        return amount+'@'+taxamount;
+    }
+        // @@nishi:6-Oct-2020 return currentBilledBookings
+         private static List<Booking__c> getCurrentBilledBooking(String enrolId,Date lastLessonDate){
+            Date firstDate = Date.newInstance(lastLessonDate.year(),lastLessonDate.month(),01);
+            Date lastDate = firstDate.addMonths(1).addDays(-1);
+            return [SELECT Booking_Date__c 
+                    FROM Booking__c
+                    WHERE Enrolment__c=: enrolId 
+                    AND Booking_Date__c >=: firstDate 
+                    AND Booking_Date__c <=: lastDate
+                    AND (Type__c =: ConstantsClass.groupLessonTypeBooking) 
+            ];
+        }  
     
     //check that the Parent Has other Enrolment or Not
     private static Boolean checkParentHasMultipleEnrolments(String parentId){

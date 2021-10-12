@@ -248,7 +248,7 @@ WHERE Id IN: parIds AND Lead__c != null AND Lead__r.IsConverted = False]);
     }
     
     //By Rajesh (Date 6-4-2019), This process is used to manage case(Sales Enquiry)
-    public static void manageSalesEnquiryCase(List<Enrolment__c> processEnrList){
+    public static void manageSalesEnquiryCase(List<Enrolment__c> processEnrList,boolean isSalesEnquiry){////commented by nishi: 28-apr-2021: As per discussion with rajesh  according to isCreateSalesEnquiery we create salesenquiery or instrument rental records(List<Enrolment__c> processEnrList){
         Map<Id, Case> accCaseMap      = new Map<Id, Case>();
         
         //Filling case account map
@@ -261,26 +261,38 @@ WHERE Id IN: parIds AND Lead__c != null AND Lead__r.IsConverted = False]);
                                                                   FROM Enrolment__c 
                                                                   WHERE Id IN:processEnrList]);
         
+        //added by nishi: 28-apr-2021: according to isCreateSalesEnquiery we create salesenquiery or instrument rental records
+        String salesRecName =isSalesEnquiry ? ConstantsClass.caseSalesEnqRecTypeName  :ConstantsClass.InstrumentRentalEnquiryRecordType;
+        //added by nishi: 28-apr-2021:end: according to isCreateSalesEnquiery we create salesenquiery or instrument rental records
+        
         for(Case c : [SELECT Id, Status, AccountId FROM Case 
                       WHERE AccountId IN: accCaseMap.keySet() AND Status !=: ConstantsClass.ClosedStatus AND
-                      RecordType.Name =: ConstantsClass.caseSalesEnqRecTypeName AND Enrolment__c = null ORDER BY CreatedDate DESC]){
+                       //commented by nishi: 28-apr-2021: As per discussion with rajesh  according to isCreateSalesEnquiery we get salesenquiery or instrument rental records
+                      //RecordType.Name =:  ConstantsClass.caseSalesEnqRecTypeName 
+                      RecordType.Name =: salesRecName
+                      AND Enrolment__c = null ORDER BY CreatedDate DESC]){
                           if(accCaseMap.get(c.AccountId) == null)
                               accCaseMap.put(c.AccountId, c);          
                       }
         
         List<Case> insCaseList = new List<Case>();
-        List<Case> updCaseList = new List<Case>();        
+        List<Case> updCaseList = new List<Case>();       
+        Set<Id> caseIds = new  Set<Id>();
         for(Enrolment__c enrol: processEnrList){
             Enrolment__c enrParenInfo = enrMap.get(enrol.Id);
-            Case salesEnqCase = fillCase(enrol, enrParenInfo);
+            Case salesEnqCase = fillCase(enrol, enrParenInfo,isSalesEnquiry);
             
             if(accCaseMap.get(enrol.Parent__c) != null){
-                salesEnqCase.Id  = accCaseMap.get(enrol.Parent__c).Id;
-                // salesEnqCase.Stage__c       = 'Trial Requested';    
-                //salesEnqCase.Opportunity__c = enrol.Opportunity__c;
-                //salesEnqCase.Enrolment__c   = enrol.Id; 
-                updCaseList.add(salesEnqCase);
+                if(!caseIds.contains(accCaseMap.get(enrol.Parent__c).Id)){
+                    salesEnqCase.Id  = accCaseMap.get(enrol.Parent__c).Id;
+                    caseIds.add(accCaseMap.get(enrol.Parent__c).Id); // added by nishi: 25-nov-2020: for updated case uniqueness
+                    // salesEnqCase.Stage__c       = 'Trial Requested';    
+                    //salesEnqCase.Opportunity__c = enrol.Opportunity__c;
+                    //salesEnqCase.Enrolment__c   = enrol.Id; 
+                    updCaseList.add(salesEnqCase);
+                }
             }else{
+                salesEnqCase.Type = isSalesEnquiry ? ''  :'Instrument Rental Enquiry';
                 salesEnqCase.AccountId      = enrol.Parent__c;  
                 salesEnqCase.Status         = ConstantsClass.NewStatus;
                 salesEnqCase.Priority       = 'High';
@@ -336,12 +348,16 @@ WHERE Id IN: parIds AND Lead__c != null AND Lead__r.IsConverted = False]);
         
     }
     
-    public static Case fillCase(Enrolment__c l, Enrolment__c enrParenInfo){
-        String salesRecId = Schema.SObjectType.Case.getRecordTypeInfosByName().get('Sales Enquiry').getRecordTypeId();
-        
+    public static Case fillCase(Enrolment__c l, Enrolment__c enrParenInfo,Boolean isSalesEnquiery){//commented by nishi: 28-Apr-2021:Enrolment__c l, Enrolment__c enrParenInfo){
+         //added by nishi: 28-apr-2021: according to isCreateSalesEnquiery we create salesenquiery or instrument rental records
+        String salesRecName =isSalesEnquiery ? ConstantsClass.caseSalesEnqRecTypeName  :ConstantsClass.InstrumentRentalEnquiryRecordType;
+        String salesRecId = Schema.SObjectType.Case.getRecordTypeInfosByName().get(salesRecName).getRecordTypeId();
+         //added by nishi: 28-apr-2021:end: according to isCreateSalesEnquiery we create salesenquiery or instrument rental records
+         
         Case cas = new Case(RecordTypeId = salesRecId);
-        cas.Subject        = 'Sales Enquiry';
-        cas.Stage__c       = 'Trial Requested';    
+        cas.Subject        = salesRecName;
+        cas.Stage__c       = isSalesEnquiery? 'Trial Requested' :enrParenInfo.Stage__c;  // 28-Apr-2021:added by Nishi: need to build this functionality from enrolment as per discussion with Rajesh  
+                                                                                       
       //  if(enrParenInfo.Stage__c == ConstantsClass.enrollmentPianoViewingBookedStage)
         //    cas.Stage__c       = ConstantsClass.enrollmentPianoViewingBookedStage; 
         cas.Student_Name__c= l.Student__c;
@@ -374,11 +390,19 @@ WHERE Id IN: parIds AND Lead__c != null AND Lead__r.IsConverted = False]);
     
     
     //@By Rajesh(Date 03-04-2019), Update Lead Case and opportunity stages for the Sales enquiry process
-    public static void updateStatusForSalesProcess(List<Enrolment__c> enrList){
+    public static void updateStatusForSalesProcess(List<Enrolment__c> enrList,Boolean isSalesEnquiery){
         Map<String, String> salesProcessStatusMap = ConstantsClass.salesProcessStatusMap; 
-        
+         //added by nishi: 28-apr-2021: according to isCreateSalesEnquiery we create salesenquiery or instrument rental records
+        String salesRecName =isSalesEnquiery ? ConstantsClass.caseSalesEnqRecTypeName  :ConstantsClass.InstrumentRentalEnquiryRecordType;
+        String salesRecId = Schema.SObjectType.Case.getRecordTypeInfosByName().get(salesRecName).getRecordTypeId();
+         //added by nishi: 28-apr-2021:end: according to isCreateSalesEnquiery we create salesenquiery or instrument rental records
+       
         Map<Id, Id> enrSalesEnqCaseMap = new Map<Id, Id>();
-        for(Case c: [SELECT Id,Enrolment__c FROM Case WHERE Enrolment__c IN: enrList AND RecordType.Name =: ConstantsClass.caseSalesEnqRecTypeName ORDER BY CreatedDate DESC]){
+       
+        for(Case c: [SELECT Id,Enrolment__c FROM Case 
+                        WHERE Enrolment__c IN: enrList 
+                         AND RecordType.Name =: salesRecName // AND RecordType.Name =: ConstantsClass.caseSalesEnqRecTypeName
+                        ORDER BY CreatedDate DESC]){
             if(!enrSalesEnqCaseMap.containsKey(c.Enrolment__c))
                 enrSalesEnqCaseMap.put(c.Enrolment__c, c.Id);
         }
@@ -411,7 +435,7 @@ WHERE Id IN: parIds AND Lead__c != null AND Lead__r.IsConverted = False]);
         List<OpportunityContactRole> newcrolelist = new List<OpportunityContactRole>();
         List<Lead> leadUpdList       = new List<Lead>();
         for(Enrolment__c enr : enrList){
-            String mapkey = enr.Type__c +' '+enr.Stage__c;
+            String mapkey = isSalesEnquiery ? enr.Type__c +' '+enr.Stage__c :enr.Stage__c;
             
             //Commented or Added by Rajesh on (17-06-2020), need to build trial lost functionality on enrolment instead of case as per discussion with Ashish or Alex instead of case    Lost' by Rajesh on (17-06-2020), need to build this functionality from enrolment as per discussion with Ashish or Alex instead of case   
           //  if(mapkey != ConstantsClass.trialLost && salesProcessStatusMap.containsKey(mapkey)){
@@ -783,25 +807,32 @@ accList.add(accObj);
     //via email along with the confirmed timeslot
     public static void  generateRentalInvoice(Set<String> enrolmentIds){
         Map<String,Invoice__c> mapOfInvoice = New Map<String,Invoice__c>();
-        Map<String,Invoice_Line_Item__c> mapOfInvoiceLineItem = New Map<String,Invoice_Line_Item__c>();
+        Map<String,List<Invoice_Line_Item__c>> mapOfInvoiceLineItem = New Map<String,List<Invoice_Line_Item__c>>();
+        List<Invoice_Line_Item__c> listOfInvoiceLineItem = new List<Invoice_Line_Item__c>();
         system.debug('enrolmentIds'+enrolmentIds); 
         list<Subscription_Line_Item__c> listOfSubsLineItem = new LIst<Subscription_Line_Item__c>();
-        
-        map<Id,Date> subscriptionMap = new  map<Id,Date> ();
+        Set<string> invIds = new Set<string>();
+        Set<String> parentIds = new Set<String>();
+        map<Id,string> subscriptionupdateMap = new  map<Id,string> ();
         List<Enrolment__c> listOfEnrolment = new List<Enrolment__c>();
         for(Enrolment__c objEnrolment :  PianoRentalHelperController.getRentalEnrolmentList(enrolmentIds)){
             if(string.isNotBlank(objEnrolment.center__r.id) && string.isNotBlank(objEnrolment.center__r.country__r.id) &&
                 objEnrolment.Subscription_Line_Items__r != null && objEnrolment.Subscription_Line_Items__r.size() >0){
+                    date subscriptionNextBilldate = date.newInstance(objEnrolment.Final_Delivery_date__c.addMonths(1).year(),objEnrolment.Final_Delivery_date__c.addMonths(1).month(),1);
+                    Enrolment__c objNewEnrolment = new Enrolment__c(id= objEnrolment.id,Rental_Start_date__c = objEnrolment.Final_Delivery_date__c.addDays(1));
+                    listOfInvoiceLineItem = new List<Invoice_Line_Item__c>();
                     Country__c countryObj = objEnrolment.center__r.country__r;
                     if(objEnrolment.Subscription_Line_Items__r[0].Amount__c != null && objEnrolment.Final_Delivery_date__c != null){
-                        Integer remainingDays = date.daysInMonth(objEnrolment.Final_Delivery_date__c.year(), objEnrolment.Final_Delivery_date__c.month()) - objEnrolment.Final_Delivery_date__c.day();
+                        Integer remainingDays = date.daysInMonth(objEnrolment.Final_Delivery_date__c.year(), objEnrolment.Final_Delivery_date__c.month()) - objEnrolment.Final_Delivery_date__c.AddDays(-1).day();
                         system.debug(remainingDays);
                         
                         Decimal rentalTotalAmount = remainingDays * (objEnrolment.Subscription_Line_Items__r[0].Amount__c /  date.daysInMonth(objEnrolment.Final_Delivery_date__c.year(), objEnrolment.Final_Delivery_date__c.month()));
                         system.debug(rentalTotalAmount);
                         
                         Subscription_Line_Item__c  objSubLineItem = objEnrolment.Subscription_Line_Items__r[0];
-                        
+                        if(string.isNotBlank(objEnrolment.Parent__c)){
+                            parentIds.add(objEnrolment.Parent__c);
+                        }
                         Invoice__c objInvoice = BillingUtility.fillInvoice(objSubLineItem.Subscription__c,objEnrolment.Parent__c,ConstantsClass.dueStatus);
                         objInvoice.Center__c = objEnrolment.Center__c;
                         objInvoice.Invoice_Type__c =ConstantsClass.recurringInvoiceType;
@@ -809,43 +840,77 @@ accList.add(accObj);
                        // objInvoice.Invoice_Date__c =objEnrolment.Final_Delivery_date__c;
                        // objInvoice.Due_Date__c=objEnrolment.Final_Delivery_date__c;
                         mapOfInvoice.put(objEnrolment.Id,objInvoice);
-                        Invoice_Line_Item__c inlineItemForChange = new Invoice_Line_Item__c();
-                        inlineItemForChange.Enrolment__c = objEnrolment.id;
-                        inlineItemForChange.Subscription_Line_Item__c = objSubLineItem.Id;
-                        if(rentalTotalAmount > 0){
-                            inlineItemForChange.Amount__c = BillingUtility.roundOffAmount(rentalTotalAmount);                                                               
-                        } 
-                        inlineItemForChange.Package__c = objEnrolment.Package__c;
-                        inlineItemForChange.Is_Deposit__c = false;        
-                        inlineItemForChange.Remarks__C = 'Rental Invoice';                                             
-                        if(countryObj.Tax_Rate__c >  0 && rentalTotalAmount > 0 ){
-                            Double gstAmount = BillingUtility.roundOffAmount(Double.valueOf(rentalTotalAmount) * (countryObj.Tax_Rate__c / 100));
-                            inlineItemForChange.gst_Amount__c = gstAmount;
+                        // 4-Mar-2021: Aureus Q1 2021: piano rental : If we found Free_Rental_Month__c then we create all invoices as per months and added Complimentary discount invoice line items  
+                        if(objEnrolment.Free_Rental_Month__c != null && objEnrolment.Free_Rental_Month__c > 0){
+                            date freeRentalExpirationDate = Datetime.newInstance(objEnrolment.Final_Delivery_date__c,time.newInstance(0, 0,0,0)).addMonths(integer.valueOf(objEnrolment.Free_Rental_Month__c)).date();
+                            objNewEnrolment.Free_Rental_Expiration_Date__c = freeRentalExpirationDate;
+                            subscriptionNextBilldate = date.newInstance(freeRentalExpirationDate.addMonths(1).year(),freeRentalExpirationDate.addMonths(1).month(),1);
+                            Date effectiveFreeRentalDate = objNewEnrolment.Free_Rental_Expiration_Date__c.AddDays(-1);  //15- apr 
+                            Date startFreeRentalDate = objEnrolment.Final_Delivery_date__c;  //15- apr 
+                            Integer startmonth =0;
+                            while(startFreeRentalDate <= effectiveFreeRentalDate){
+                                system.debug('startFreeRentalDate'+startFreeRentalDate);
+                                date invoicedate = objEnrolment.Final_Delivery_date__c;
+                                date lastdate = date.newInstance(invoicedate.year(), invoicedate.month(),date.daysInMonth(invoicedate.year(), invoicedate.month()));
+                                if(startFreeRentalDate !=  objEnrolment.Final_Delivery_date__c){
+                                    invoicedate=  date.newInstance(startFreeRentalDate.addmonths(1).year(), startFreeRentalDate.addmonths(1).month(),1);
+                                    lastdate = date.newInstance(invoicedate.year(), invoicedate.month(),date.daysInMonth(invoicedate.year(), invoicedate.month()));
+                                    listOfInvoiceLineItem.add(createInvoiceLineItem(objEnrolment,objSubLineItem.Id, objEnrolment.Subscription_Line_Items__r[0].Amount__c , countryObj.Tax_Rate__c, false,'Rental Invoice',
+                                    invoicedate,invoicedate,lastdate));
+                                      if(effectiveFreeRentalDate != NULL && invoicedate.daysBetween(effectiveFreeRentalDate) > 0 ){
+                                        if((effectiveFreeRentalDate >= invoicedate || effectiveFreeRentalDate.month() < invoicedate.month()) && effectiveFreeRentalDate <= lastDate){
+                                            rentalTotalAmount = effectiveFreeRentalDate.day() * ( objEnrolment.Subscription_Line_Items__r[0].Amount__c  /  date.daysInMonth(effectiveFreeRentalDate.year(), effectiveFreeRentalDate.month()));
+                                            listOfInvoiceLineItem.add(createInvoiceLineItem(objEnrolment,objSubLineItem.Id, rentalTotalAmount, countryObj.Tax_Rate__c, true,'Complimentary Rental Invoice',
+                                            invoicedate,invoicedate,effectiveFreeRentalDate));
+                                        }else{
+                                            listOfInvoiceLineItem.add(createInvoiceLineItem(objEnrolment,objSubLineItem.Id,objEnrolment.Subscription_Line_Items__r[0].Amount__c , countryObj.Tax_Rate__c, 
+                                            true,'Complimentary Rental Invoice',invoicedate,invoicedate,lastdate));
+                                        }
+                                    }  
+                                }else{
+                                    listOfInvoiceLineItem.add(createInvoiceLineItem(objEnrolment,objSubLineItem.Id, rentalTotalAmount, countryObj.Tax_Rate__c, false,'Rental Invoice',
+                                        objEnrolment.Final_Delivery_date__c,objEnrolment.Final_Delivery_date__c,lastdate));
+                                    listOfInvoiceLineItem.add(createInvoiceLineItem(objEnrolment,objSubLineItem.Id, rentalTotalAmount, countryObj.Tax_Rate__c, true,'Complimentary Rental Invoice',
+                                    objEnrolment.Final_Delivery_date__c,objEnrolment.Final_Delivery_date__c,lastdate));
+                                }
+                                startFreeRentalDate=lastdate;
+                            }
                         }
-                        inlineItemForChange.month__c = objEnrolment.Final_Delivery_date__c;
-                        mapOfInvoiceLineItem.put(objEnrolment.Id,inlineItemForChange);
+                        // 4-Mar-2021: Aureus Q1 2021: piano rental : If we found Free_Rental_Month__c then we create all invoices as per months and added Complimentary discount invoice line items
+                        else{
+                            listOfInvoiceLineItem.add(createInvoiceLineItem(objEnrolment,objSubLineItem.Id, rentalTotalAmount, countryObj.Tax_Rate__c, false,'Rental Invoice',
+                            objEnrolment.Final_Delivery_date__c,objEnrolment.Final_Delivery_date__c,objEnrolment.Final_Delivery_date__c.addDays(remainingDays)));
+                        }
+                        
+                        mapOfInvoiceLineItem.put(objEnrolment.Id,listOfInvoiceLineItem);
+
                         system.debug('mapOfInvoice'+mapOfInvoice); 
                         system.debug('mapOfInvoiceLineItem'+mapOfInvoiceLineItem);
 
                         // 5-Feb:2020: for update subscription_line_item next bill date and start date
-                        if(objSubLineItem.Subscription__r.Next_Bill_Date__c == null 
-                        && objSubLineItem.Subscription__r.Subscription_Start_Date__c == null){
-                            subscriptionMap.put(objSubLineItem.Subscription__c,objEnrolment.Final_Delivery_date__c.addDays(1));
-                            listOfSubsLineItem.add(new Subscription_Line_Item__c(id=objSubLineItem.id,
-                                Next_Bill_Date__c =  date.newInstance(objEnrolment.Final_Delivery_date__c.addMonths(1).year(),objEnrolment.Final_Delivery_date__c.addMonths(1).month(),1),
-                                Subscription_Start_Date__c =  objEnrolment.Final_Delivery_date__c.addDays(1)));
-                        }
                         //Start:added by nishi: 27-Jul-2020: for already subscription start date and next bill date exist then we 
-                        // added subscription Next bill date as a line Item date.
-                        else{
+                         // added subscription Next bill date as a line Item date.
+                       
+                        if(objSubLineItem.Subscription__r.Next_Bill_Date__c != null 
+                        && objSubLineItem.Subscription__r.Subscription_Start_Date__c != null){
+                            system.debug('subscriptionNextBilldate'+subscriptionNextBilldate);
+                            system.debug('objSubLineItem.Subscription__r.Next_Bill_Date__c'+objSubLineItem.Subscription__r.Next_Bill_Date__c);
+                            if(objSubLineItem.Subscription__r.Next_Bill_Date__c > subscriptionNextBilldate){
+                                subscriptionupdateMap.put(objSubLineItem.Subscription__c,objSubLineItem.Subscription__r.Subscription_Start_Date__c+'#'+subscriptionNextBilldate);
+                            }
                             listOfSubsLineItem.add(new Subscription_Line_Item__c(id=objSubLineItem.id,
-                                Next_Bill_Date__c =  objSubLineItem.Subscription__r.Next_Bill_Date__c,
+                                Next_Bill_Date__c =  subscriptionNextBilldate,
                                 Subscription_Start_Date__c =  objEnrolment.Final_Delivery_date__c.addDays(1)));
+                        }  //ENd:added by nishi: 27-Jul-2020: for already subscription start date and next bill date exist then we 
+                        else{
+                            subscriptionupdateMap.put(objSubLineItem.Subscription__c,objEnrolment.Final_Delivery_date__c.addDays(1)+'#'+subscriptionNextBilldate);
+                            listOfSubsLineItem.add(new Subscription_Line_Item__c(id=objSubLineItem.id,
+                                Next_Bill_Date__c =  subscriptionNextBilldate,//date.newInstance(objEnrolment.Final_Delivery_date__c.addMonths(1).year(),objEnrolment.Final_Delivery_date__c.addMonths(1).month(),1),
+                                Subscription_Start_Date__c =  objEnrolment.Final_Delivery_date__c.addDays(1)));    
                         }
-                         //ENd:added by nishi: 27-Jul-2020: for already subscription start date and next bill date exist then we 
                        system.debug('@@listOfSubsLineItem'+listOfSubsLineItem);
                         //10-Feb-2020: add Rental start date 
-                        listOfEnrolment.add(new Enrolment__c(id= objEnrolment.id,Rental_Start_date__c = objEnrolment.Final_Delivery_date__c.addDays(1)));
+                        listOfEnrolment.add(objNewEnrolment);
                     }           
                 }
         } 
@@ -859,14 +924,18 @@ accList.add(accObj);
             insert mapOfInvoice.values();
             system.debug('mapOfInvoice'+mapOfInvoice);
             Map<String,String> mapOfInvoiceId = new  Map<String,String>();
+            List<Invoice_Line_Item__c> listOfInsertInvoiceLineItem = new List<Invoice_Line_Item__c>();
             if(mapOfInvoiceLineItem != null && mapOfInvoiceLineItem.Size() > 0){
-                for(Invoice_Line_Item__c inlineItemForChange : mapOfInvoiceLineItem.values()){
-                    if(mapOfInvoice.containsKey(inlineItemForChange.Enrolment__c)){
-                        inlineItemForChange.Invoice__c = mapOfInvoice.get(inlineItemForChange.Enrolment__c).id;
-                        mapOfInvoiceId.put(mapOfInvoice.get(inlineItemForChange.Enrolment__c).id,inlineItemForChange.Enrolment__c); 
+                for(string  enrolmentId : mapOfInvoiceLineItem.keyset()){
+                    for(Invoice_Line_Item__c inlineItemForChange  : mapOfInvoiceLineItem.get(enrolmentId)){
+                        if(mapOfInvoice.containsKey(enrolmentId)){
+                            inlineItemForChange.Invoice__c = mapOfInvoice.get(enrolmentId).id;
+                            mapOfInvoiceId.put(mapOfInvoice.get(enrolmentId).id,enrolmentId); 
+                        }
+                        listOfInsertInvoiceLineItem.add(inlineItemForChange);
                     }
                 }
-                Insert  mapOfInvoiceLineItem.values();
+                Insert  listOfInsertInvoiceLineItem;
             }
             system.debug('mapOfInvoiceLineItem'+mapOfInvoiceLineItem);
              // 5-Feb:2020: for update subscription_line_item or subscription next bill date and start date
@@ -874,23 +943,54 @@ accList.add(accObj);
                 update listOfSubsLineItem;
             }
             system.debug('W@@listOfSubsLineItem'+listOfSubsLineItem);
-            system.debug('W@@subscriptionMap'+subscriptionMap);
-            if(subscriptionMap != null && subscriptionMap.size() > 0){
+            system.debug('W@@subscriptionMap'+subscriptionupdateMap);
+            if(subscriptionupdateMap != null && subscriptionupdateMap.size() > 0){
                 List<Subscription__c> listOfSubscription = new List<Subscription__c>();
-                for(Id subscriptionId :subscriptionMap.keySet()){
+                for(Id subscriptionId :subscriptionupdateMap.keySet()){
                     listOfSubscription.add(new Subscription__c(id= subscriptionId, 
-                                            Subscription_Start_Date__c = subscriptionMap.get(subscriptionId),
-                                            Next_Bill_Date__c = date.newInstance(subscriptionMap.get(subscriptionId).addMonths(1).year(),subscriptionMap.get(subscriptionId).addMonths(1).month(),1)));
+                                            Subscription_Start_Date__c = date.valueOf(subscriptionupdateMap.get(subscriptionId).split('#')[0]),
+                                            Next_Bill_Date__c = date.valueOf(subscriptionupdateMap.get(subscriptionId).split('#')[1])));
                 }
                 if(listOfSubscription != null && listOfSubscription.size() > 0){
                     update listOfSubscription;
                 }
                 system.debug('W@@listOfSubscription'+listOfSubscription);
             }
-           
+            
+           // Nishi: 15-Feb-2021: We have given Complimentary Loan Discount. We offer a rental period so we create an invoice but the invoice amount is adjusted in the credit memo so we created an invoice of 0 amount.   
+            // List<Credit_Memo__c> listOfCreditMemos  =PaymentComponentController.generateCreditMemoQuery(parentIds);
+            // if(listOfCreditMemos != null && listOfCreditMemos.size()>0){
+            //     Date lastDate = listOfCreditMemos[0].Credit_Memo_Date__c;
+            //     adjustCreditMemoDeposit( mapOfInvoiceId, parentIds, lastDate, true);
+            // }
+            // Nishi: 15-Feb-2021: We have given Complimentary Loan Discount. We offer a rental period so we create an invoice but the invoice amount is adjusted in the credit memo so we created an invoice of 0 amount.                                                    
             getPaymentForInvoices(mapOfInvoiceId);  
+            
         }
         
+    }
+
+    private static Invoice_Line_Item__c createInvoiceLineItem(enrolment__c objEnrolment,string subLineItemId,Decimal rentalTotalAmount,Decimal taxRate, boolean isDiscount,
+    string remarks,date invoiceDate,date startDateterm,date endDateterm){
+        Invoice_Line_Item__c inlineItemForChange = new Invoice_Line_Item__c();
+        inlineItemForChange.Enrolment__c = objEnrolment.id;
+        inlineItemForChange.Subscription_Line_Item__c = subLineItemId;
+        if(rentalTotalAmount > 0){
+            inlineItemForChange.Amount__c = BillingUtility.roundOffAmount(isDiscount ?  rentalTotalAmount * -1: rentalTotalAmount);                                                               
+        } 
+        inlineItemForChange.Is_Discount__c= isDiscount;
+        inlineItemForChange.Package__c = objEnrolment.Package__c;
+        inlineItemForChange.Is_Deposit__c = false;        
+        inlineItemForChange.Remarks__C = remarks;       
+        inlineItemForChange.Teacher_Id__c = objEnrolment.Teacher__c;   
+        inlineItemForChange.Term_Start_Date__c = startDateterm;
+        inlineItemForChange.Term_End_Date__c= endDateterm;    
+        if(taxRate >  0 && rentalTotalAmount > 0 ){
+            Double gstAmount = BillingUtility.roundOffAmount(Double.valueOf(rentalTotalAmount) * (taxRate / 100));
+            inlineItemForChange.gst_Amount__c = BillingUtility.roundOffAmount(isDiscount ?  gstAmount * -1: gstAmount);    
+        }
+        inlineItemForChange.month__c = invoiceDate;
+        return inlineItemForChange;
     }
     @future (callout=true)
     public static void getPaymentForInvoices(Map<String,String> mapOfInvoiceId){
@@ -899,5 +999,79 @@ accList.add(accObj);
         } 
     }
     
-   
+    // Nishi: 15-Feb-2021: We have given Complimentary Loan Discount. We offer a rental period so we create an invoice but the invoice amount is adjusted in the credit memo so we created an invoice of 0 amount.   
+    Private static void adjustCreditMemoDeposit(Map<String,String> mapOfInvoiceId,Set<String> setOfParentIds,
+    Date lastDate, boolean isGetTotalAmount){
+         List<Invoice__c> listOfInv = new List<Invoice__c>();
+        Map<String, Date> mapOfParentEnrolmentLastDate = new Map<String, Date>();
+        //@Jatin on 21st Nov 2019 commented due to refund record not created
+        //Map<String, Set<String>> mapOfParentEnrolments = new Map<String, Set<String>>();
+        for(Invoice__c invoiceObj : [SELECT Id, Name,Parent_Account__c,Total_Amount__c, Remarks__c,Invoice_Date__c,Parent_Account__r.Centre_Name__c,
+        Center__r.Country__r.Tax_Rate__c,Credit_Memo_Amount__c,Balance_Amount__c,
+                                            (SELECT Id, Enrolment__r.id,Enrolment__r.Package_Process_Type__c ,
+                                            Enrolment__r.Effective_Date__c ,Package__c
+                                            FROM Invoice_Line_Items__r) 
+                                        FROM Invoice__c 
+                                    WHERE Id IN : mapOfInvoiceId.keySet()]){
+            listOfInv.add(invoiceObj);
+            for(Invoice_Line_Item__c  lineItemObj : invoiceObj.Invoice_Line_Items__r){
+                if(mapOfParentEnrolmentLastDate.containsKey(invoiceObj.Parent_Account__c) && 
+                    mapOfParentEnrolmentLastDate.get(invoiceObj.Parent_Account__c) < lineItemObj.Enrolment__r.Effective_Date__c){
+                    mapOfParentEnrolmentLastDate.put(invoiceObj.Parent_Account__c, lineItemObj.Enrolment__r.Effective_Date__c);
+                }else if(String.isNotBlank(lineItemObj.Enrolment__c) && lineItemObj.Enrolment__r.Package_Process_Type__c == ConstantsClass.enrollmentProcessCancelType 
+                            && lineItemObj.Enrolment__r.Effective_Date__c != NULL){
+                    mapOfParentEnrolmentLastDate.put(invoiceObj.Parent_Account__c, lineItemObj.Enrolment__r.Effective_Date__c);
+                }
+            }
+        }
+        Map<String, Boolean> mapOfActiveParent = new Map<String, Boolean>();
+        mapOfActiveParent = BillingUtility.checkParentHasMultipleEnrolments(setOfParentIds, lastDate);
+        Map<String,List<Credit_Memo__c>> mapOfParentCreditMemo = BillingUtility.getParentCreditMemo(setOfParentIds,lastDate);
+        BillingUtility.adjustPendingCreditMemoDeposit(listOfInv, mapOfInvoiceId.keySet(), setOfParentIds, mapOfParentEnrolmentLastDate,isGetTotalAmount,mapOfParentCreditMemo,mapOfActiveParent);
+    }
+
+    public static void updateTeacherFortotalActiveEnrolments(set<id> teacherIds){
+        list<Enrolment__c> listOfAllActiveEnrolments = AureusHRManagementUtil.getAllActiveEnrolments(teacherIds,system.today());
+        System.debug('$$$listOfAllActiveEnrolments'+listOfAllActiveEnrolments);
+        Set<Id> empIdSet = new Set<Id>();
+        Map<string,decimal> employeeWorkingHrs = new Map<string,decimal>();
+        set<string> employeetiredIds = new Set<string>();
+        if(listOfAllActiveEnrolments != null && listOfAllActiveEnrolments.size()> 0){
+            List<Account> accList= new List<Account>();
+        
+            for(Enrolment__c enrolmentObj: listOfAllActiveEnrolments){
+                if(string.isblank(enrolmentObj.Package_Process_Type__c) || 
+                    (string.isNotblank(enrolmentObj.Package_Process_Type__c)  &&
+                        (enrolmentObj.Package_Process_Type__c != 'Cancellation' ||
+                            (enrolmentObj.Package_Process_Type__c == 'Cancellation' && enrolmentObj.Effective_Date__c.month() != system.today().month())
+                        )
+                    )
+                ){
+                    empIdSet.add(enrolmentObj.Teacher__c);
+                    decimal totalworkingHrs  = 0;
+                    if(enrolmentObj.Teacher__r.Tiered_Salary__c){
+                        employeetiredIds.add(enrolmentObj.Teacher__c);
+                    }
+                    if(employeeWorkingHrs.containsKey(enrolmentObj.Teacher__c)){
+                        totalworkingHrs = employeeWorkingHrs.get(enrolmentObj.Teacher__c);
+                    }
+                    totalworkingHrs += enrolmentObj.Duration_Min__c;
+                    employeeWorkingHrs.put(enrolmentObj.Teacher__c,totalworkingHrs);
+                }
+            }
+            for(String teacherId : teacherIds){
+                if(employeeWorkingHrs.containsKey(teacherId)){
+                    Decimal noOfHours = employeeWorkingHrs.get(teacherId);
+                    system.debug('$$$noOfHours'+noOfHours);
+                    noOfHours = noOfHours != NULL? (noOfHours/60) : 0;
+                    accList.add(new Account(Id = teacherId, Weekly_Actual_Enrolment_Hours__c = noOfHours));
+                }else{
+                    accList.add(new Account(Id = teacherId, Weekly_Actual_Enrolment_Hours__c = 0));
+                }
+            }
+            if(accList.size()>0){
+                update accList;
+            }
+        }
+    }
 }

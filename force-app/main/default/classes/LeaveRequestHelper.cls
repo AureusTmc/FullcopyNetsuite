@@ -28,6 +28,15 @@ public class LeaveRequestHelper {
             list<Booking__c> updateMakeupList = new list<Booking__c>();
             // defined to map to working hour
             map<string,string> mapToworkinghour = new map<string,string>();
+            // added by nishi: 23-Nov-2020: for manage group class and group lesson bookings
+            Set<String> bookingType = new Set<String>{'Trial','Regular','Make-up','Ad-hoc','Busy',ConstantsClass.groupTypeBooking,ConstantsClass.groupLessonTypeBooking};
+            // defined to get the lesson record type of booking 
+            string groupLessonRecordType = Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get(ConstantsClass.groupLessonBookingRecordType).getRecordTypeId();
+            string groupClassRecordType = Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get(ConstantsClass.groupBookingRecordType).getRecordTypeId();
+             // defined to store the case list when group lesson booking is cancelled
+             List<Case> groupCaseList = new List<Case>();
+              // defined to store the other than sick type record case list when group lesson  booking is cancelled
+            List<Case> notSickGroupcaseList = new List<Case>();
             // update leave request Calendar_Update_Process__c with true
             List<Leave_Request__c> leaveUpdateList= new List<Leave_Request__c>();
             for(Leave_Request__c reqLeavObj:leaveReqList){
@@ -52,11 +61,14 @@ public class LeaveRequestHelper {
                                 Available_Make_up_Units__c,Make_up_Utilize_Bookings__c ,
                                 // added by nishi : 22-jul-2020:start: for manage ossia oranization students 
                                 Center__r.Name,Center__r.Organisation__r.Name
-                                // added by nishi : 22-jul-2020:start: for manage ossia oranization students 
+                                // added by nishi : 22-jul-2020:end: for manage ossia oranization students 
+                                 // added by nishi : 23-Nov-2020:start: for manage group class or group lesson bookings
+                                ,RecordtypeId,Class__r.name,Class__c,Group_Class__c
+                                // added by nishi : 23-Nov-2020:end: for manage group class or group lesson bookings
                                 from Booking__c 
                                 where Teacher_Account__c in:mapToTeacherDate.keySet() 
                                 and Booking_Date__c>=today 
-                                and  Type__c in ('Trial','Regular','Make-up','Ad-hoc','Busy') 
+                                and  Type__c in :bookingType 
                                 And Status__c in ('Pending','Scheduled') 
                                 AND Category__c Not in ('Leave','Placeholder','Holiday')
                                 ]){
@@ -65,36 +77,52 @@ public class LeaveRequestHelper {
                     Leave_Request__c reqLeavObj = mapToTeacherDate.get(bkgObj.Teacher_Account__c);
                     if(bkgObj.Booking_Date__c >= reqLeavObj.Leave_Start_Date__c && bkgObj.Booking_Date__c <= reqLeavObj.Leave_End_Date__c){
                         // Creating Case For each Booking except Busy and Trial
-                            if(bkgObj.Type__c != 'Busy' && bkgObj.Type__c != 'Trial' && reqLeavObj.RecordTypeId==sickRecordTypeId  && reqLeavObj.Sick_leave_start_Time__c != null){
+                            if(bkgObj.Type__c != 'Busy' && bkgObj.Type__c != 'Trial' && bkgObj.Type__c != ConstantsClass.groupTypeBooking  && reqLeavObj.RecordTypeId==sickRecordTypeId  && reqLeavObj.Sick_leave_start_Time__c != null){
                                
                                 if( (bkgObj.Start_Time__c>=reqLeavObj.Sick_leave_start_Time__c && reqLeavObj.Leave_Start_Date__c ==bkgObj.Booking_Date__c )
                                    || reqLeavObj.Leave_Start_Date__c !=bkgObj.Booking_Date__c){
                                        Case casObj = new Case(Status='Closed',Type=bkgObj.Type__c,Origin='Automation',Priority='Medium',Booking__c=bkgObj.Id,
                                                               Centre_Name__c=bkgObj.Center__c,Student_Name__c=bkgObj.Student__c,AccountId=bkgObj.Parent__c,
                                                               Location__c=bkgObj.Center__r.Location__c,Leave_Start_Date__c=reqLeavObj.Leave_Start_Date__c,Leave_End_Date__c=reqLeavObj.Leave_End_Date__c);
-                                       casList.add(casObj);
+                                        if(bkgObj.RecordtypeId == groupLessonRecordType){
+                                            groupCaseList.add(casObj);
+                                        }else{
+                                            casList.add(casObj);
+                                        }
                                    }
-                            }else if(bkgObj.Type__c !='Trial' && bkgObj.Type__c != 'Busy' && reqLeavObj.RecordTypeId==sickRecordTypeId  && reqLeavObj.Sick_leave_start_Time__c == null){
+                            }else if(bkgObj.Type__c !='Trial' && bkgObj.Type__c != 'Busy' && bkgObj.Type__c != ConstantsClass.groupTypeBooking && reqLeavObj.RecordTypeId==sickRecordTypeId  && reqLeavObj.Sick_leave_start_Time__c == null){
                                 Case casObj = new Case(Status='Closed',Type=bkgObj.Type__c,Origin='Automation',Priority='Medium',Booking__c=bkgObj.Id,
                                                        Centre_Name__c=bkgObj.Center__c,Student_Name__c=bkgObj.Student__c,AccountId=bkgObj.Parent__c,
                                                        Location__c=bkgObj.Center__r.Location__c,Leave_Start_Date__c=reqLeavObj.Leave_Start_Date__c,Leave_End_Date__c=reqLeavObj.Leave_End_Date__c);
-                                casList.add(casObj);  
+                                if(bkgObj.RecordtypeId == groupLessonRecordType){
+                                    groupCaseList.add(casObj);
+                                }else{
+                                    casList.add(casObj);
+                                }
                             }
                         // added on 4th dec will create case accordingly time in Sick_leave_start_Time__c
-                            if(bkgObj.Type__c != 'Busy' && bkgObj.Type__c != 'Trial' && reqLeavObj.RecordTypeId !=sickRecordTypeId && reqLeavObj.Sick_leave_start_Time__c != null){
+                            if(bkgObj.Type__c != 'Busy' && bkgObj.Type__c != 'Trial' && bkgObj.Type__c != ConstantsClass.groupTypeBooking && reqLeavObj.RecordTypeId !=sickRecordTypeId && reqLeavObj.Sick_leave_start_Time__c != null){
                                 
                                 if( (bkgObj.Start_Time__c>=reqLeavObj.Sick_leave_start_Time__c && reqLeavObj.Leave_Start_Date__c ==bkgObj.Booking_Date__c )
                                    || reqLeavObj.Leave_Start_Date__c !=bkgObj.Booking_Date__c){
                                        Case casObj = new Case(Status='Closed',Type=bkgObj.Type__c,Origin='Automation',Priority='Medium',Booking__c=bkgObj.Id,
                                                               Centre_Name__c=bkgObj.Center__c,Student_Name__c=bkgObj.Student__c,AccountId=bkgObj.Parent__c,
                                                               Location__c=bkgObj.Center__r.Location__c,Leave_Start_Date__c=reqLeavObj.Leave_Start_Date__c,Leave_End_Date__c=reqLeavObj.Leave_End_Date__c);
-                                       notSickcasList.add(casObj);  
+                                        if(bkgObj.RecordtypeId == groupLessonRecordType){
+                                            notSickGroupcaseList.add(casObj);
+                                        }else{
+                                            notSickcasList.add(casObj);
+                                        } 
                                    }
-                            }else if(bkgObj.Type__c !='Trial' && bkgObj.Type__c != 'Busy' && reqLeavObj.RecordTypeId !=sickRecordTypeId  && reqLeavObj.Sick_leave_start_Time__c == null){
+                            }else if(bkgObj.Type__c !='Trial' && bkgObj.Type__c != 'Busy' && bkgObj.Type__c != ConstantsClass.groupTypeBooking && reqLeavObj.RecordTypeId !=sickRecordTypeId  && reqLeavObj.Sick_leave_start_Time__c == null){
                                 Case casObj = new Case(Status='Closed',Type=bkgObj.Type__c,Origin='Automation',Priority='Medium',Booking__c=bkgObj.Id,
                                                        Centre_Name__c=bkgObj.Center__c,Student_Name__c=bkgObj.Student__c,AccountId=bkgObj.Parent__c,
                                                        Location__c=bkgObj.Center__r.Location__c,Leave_Start_Date__c=reqLeavObj.Leave_Start_Date__c,Leave_End_Date__c=reqLeavObj.Leave_End_Date__c);
-                                notSickcasList.add(casObj);  
+                                if(bkgObj.RecordtypeId == groupLessonRecordType){
+                                    notSickGroupcaseList.add(casObj);
+                                }else{
+                                    notSickcasList.add(casObj);
+                                }
                             }
                         // Updating Booking Status To Cancel except for Trial
                         // added on 4th dec 2019 it will cancel the booking as per time in Sick Leave Start Time
@@ -159,13 +187,79 @@ public class LeaveRequestHelper {
                             placeholdeBooking.add(placIns);
                             system.debug('bkgObj'+bkgObj);
                         }
-                        // upating Available Make up min to sum of total given Credit for Regular and Ad-hoc  
-                        if((bkgObj.Type__c=='Regular' || bkgObj.Type__c=='Ad-hoc') && bkgObj.Duration__c != null && reqLeavObj.Sick_leave_start_Time__c != null){
+
+                         // Added by nishi: 23-Nov-2020:Start: for group students booking will cancel then check organisaiton if ossia student then we added expiry date 180  otherwise we added 120 days for other students
+                        if((bkgObj.Type__c==ConstantsClass.groupLessonTypeBooking || bkgObj.Type__c==  ConstantsClass.groupTypeBooking) && reqLeavObj.Sick_leave_start_Time__c != null){
+                            system.debug('bkgObj.Start_Time__c'+bkgObj.Start_Time__c +'====>'+reqLeavObj.Sick_leave_start_Time__c );
+                            if( (bkgObj.Start_Time__c>=reqLeavObj.Sick_leave_start_Time__c && reqLeavObj.Leave_Start_Date__c ==bkgObj.Booking_Date__c )
+                               || reqLeavObj.Leave_Start_Date__c !=bkgObj.Booking_Date__c){
+                               if( bkgObj.Type__c==ConstantsClass.groupLessonTypeBooking){
+                                    if(String.isNotBlank(bkgObj.Center__c) && 
+                                    String.isNotBlank(bkgObj.Center__r.Organisation__c) && 
+                                    String.isNotBlank(bkgObj.Center__r.Organisation__r.Name) && 
+                                    bkgObj.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){ 
+                                        if(listOfOssia_Organisation_Settings != null && listOfOssia_Organisation_Settings.size() > 0){
+                                            bkgObj.Make_up_Expiry_Date__c=bkgObj.Booking_Date__c.addDays(Integer.valueOf((listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days_Teacher__c)));
+                                        }
+                                    }else{
+                                        bkgObj.Make_up_Expiry_Date__c=bkgObj.Booking_Date__c.addDays(120);
+                                    }
+                                    string description='placeholder booking for cancelling '+ bkgObj.Student__r.Name +' booking';
+                                    Booking__c placIns= new Booking__c(Center__c=bkgObj.Center__c,RecordTypeId=groupLessonRecordType,
+                                                                        Teacher_Account__c=bkgObj.Teacher_Account__r.Id,Type__c='Busy',Category__c='Placeholder',Remarks__c=description,
+                                                                        Booking_Date__c=bkgObj.Booking_Date__c,Start_Time__c=bkgObj.Start_Time__c,End_Time__c=bkgObj.End_Time__c,Status__c='Scheduled',
+                                                                        Group_Class__c = bkgObj.Group_Class__c);
+                                    placeholdeBooking.add(placIns);
+                                }else{
+                                    string description='placeholder booking for cancelling Group Class -'+ bkgObj.Class__r.Name +' booking';
+                                    Booking__c placIns= new Booking__c(Center__c=bkgObj.Center__c,RecordTypeId=groupClassRecordType,
+                                                                        Teacher_Account__c=bkgObj.Teacher_Account__r.Id,Type__c='Busy',Category__c='Placeholder',Remarks__c=description,
+                                                                        Booking_Date__c=bkgObj.Booking_Date__c,Start_Time__c=bkgObj.Start_Time__c,End_Time__c=bkgObj.End_Time__c,Status__c='Scheduled',
+                                                                        Class__c = bkgObj.Class__c);
+                                    placeholdeBooking.add(placIns);
+                                }
+                               
+                               }
+                                system.debug('bkgObj'+bkgObj);
+                        }else if((bkgObj.Type__c==ConstantsClass.groupLessonTypeBooking || bkgObj.Type__c==  ConstantsClass.groupTypeBooking)&& reqLeavObj.Sick_leave_start_Time__c == null){
+                            if( bkgObj.Type__c==ConstantsClass.groupLessonTypeBooking){
+                                if(String.isNotBlank(bkgObj.Center__c) && 
+                                    String.isNotBlank(bkgObj.Center__r.Organisation__c) && 
+                                    String.isNotBlank(bkgObj.Center__r.Organisation__r.Name) && 
+                                    bkgObj.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){ 
+                                        if(listOfOssia_Organisation_Settings != null && listOfOssia_Organisation_Settings.size() > 0){
+                                            bkgObj.Make_up_Expiry_Date__c=bkgObj.Booking_Date__c.addDays(Integer.valueOf((listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days_Teacher__c)));
+                                        }
+                                }else{
+                                    bkgObj.Make_up_Expiry_Date__c=bkgObj.Booking_Date__c.addDays(120);
+                                }
+                                string description='placeholder booking for cancelling '+ bkgObj.Student__r.Name +' booking';
+                                Booking__c placIns= new Booking__c(Center__c=bkgObj.Center__c,RecordTypeId=groupLessonRecordType,
+                                                                   Teacher_Account__c=bkgObj.Teacher_Account__r.Id,Type__c='Busy',Category__c='Placeholder',Remarks__c=description,
+                                                                   Booking_Date__c=bkgObj.Booking_Date__c,Start_Time__c=bkgObj.Start_Time__c,End_Time__c=bkgObj.End_Time__c,Status__c='Scheduled',
+                                                                   Group_Class__c = bkgObj.Group_Class__c);
+                                placeholdeBooking.add(placIns);
+                                system.debug('bkgObj'+bkgObj);
+                            }else{
+                                string description='placeholder booking for cancelling Group Class -'+ bkgObj.Class__r.Name +' booking';
+                                Booking__c placIns= new Booking__c(Center__c=bkgObj.Center__c,RecordTypeId=groupClassRecordType,
+                                                                Teacher_Account__c=bkgObj.Teacher_Account__r.Id,Type__c='Busy',Category__c='Placeholder',Remarks__c=description,
+                                                                Booking_Date__c=bkgObj.Booking_Date__c,Start_Time__c=bkgObj.Start_Time__c,End_Time__c=bkgObj.End_Time__c,Status__c='Scheduled',
+                                                                Class__c = bkgObj.Class__c);
+                                placeholdeBooking.add(placIns);
+                            }
+                            system.debug('bkgObj'+bkgObj);
+                        }
+                        // Added by nishi: 23-Nov-2020:end: for group students booking will cancel then check organisaiton if ossia student then we added expiry date 180  otherwise we added 120 days for other students
+                       
+
+                        // upating Available Make up min to sum of total given Credit for Regular and Ad-hoc  and group lesson
+                        if((bkgObj.Type__c=='Regular' || bkgObj.Type__c=='Ad-hoc' ||bkgObj.Type__c==ConstantsClass.groupLessonTypeBooking) && bkgObj.Duration__c != null && reqLeavObj.Sick_leave_start_Time__c != null){
                             if( (bkgObj.Start_Time__c>=reqLeavObj.Sick_leave_start_Time__c && reqLeavObj.Leave_Start_Date__c ==bkgObj.Booking_Date__c )
                                || reqLeavObj.Leave_Start_Date__c !=bkgObj.Booking_Date__c){
                                  bkgObj.Available_Make_up_Units__c= bkgObj.Duration__c;
                                }  
-                        }else if( (bkgObj.Type__c=='Regular' || bkgObj.Type__c=='Ad-hoc') && bkgObj.Duration__c != null  && reqLeavObj.Sick_leave_start_Time__c == null){
+                        }else if( (bkgObj.Type__c=='Regular' || bkgObj.Type__c=='Ad-hoc' || bkgObj.Type__c==ConstantsClass.groupLessonTypeBooking) && bkgObj.Duration__c != null  && reqLeavObj.Sick_leave_start_Time__c == null){
                             bkgObj.Available_Make_up_Units__c= bkgObj.Duration__c;
                         }
                         if(bkgObj.Type__c =='Make-up' && bkgObj.Make_up_Utilize_Bookings__c != null && reqLeavObj.Sick_leave_start_Time__c != null){
@@ -199,6 +293,8 @@ public class LeaveRequestHelper {
                 
             } 
             system.debug('cancelBookingList'+cancelBookingList);
+            system.debug('groupCaseList'+groupCaseList);
+            system.debug('notSickGroupcaseList'+notSickGroupcaseList);
             if(bookingMakeUpMap.size()>0){
                 update bookingMakeUpMap.values();
             }
@@ -210,15 +306,43 @@ public class LeaveRequestHelper {
             if(notSickcasList.size()>0){
                 insert notSickcasList;
             }
-            
+
+            //23-Nov-2020: nishi: inserting group lesson case for each booking except for trial
+            if(groupCaseList.size()>0){
+                insert groupCaseList;
+                list<Id> groupcaseIds = new List<Id>();
+                for(Case CasObj:groupCaseList){
+                    groupcaseIds.add(CasObj.Id);
+                }
+                if(groupcaseIds.size()>0){
+                    sendGroupCaseEmail(groupcaseIds,'Teacher MC'); 
+                }
+            }
+            // inserting the record of group case when record type id is not sick leave
+            if(notSickGroupcaseList.size()>0){
+                insert notSickGroupcaseList;
+                list<Id> othrgroupIdCase = new List<Id>();
+                for(Case CasObj:notSickGroupcaseList){
+                    othrgroupIdCase.add(CasObj.Id);
+                }
+                system.debug('othrgroupIdCase'+othrgroupIdCase);
+                if(othrgroupIdCase.size()>0){
+                    sendGroupCaseEmail(othrgroupIdCase,'Teacher Leave');
+                }
+            }
+            //23-Nov-2020: nishi:end: inserting group lesson case for each booking except for trial
+
+            system.debug('updateMakeupList'+updateMakeupList);
             // Inserting Makeup Booking list
             if(updateMakeupList.size()>0){
                 update updateMakeupList;
             }
+            system.debug('placeholdeBooking'+placeholdeBooking);
             // creating placeholder booking for the Regular  booking
             if(placeholdeBooking.size()>0){
                 insert placeholdeBooking;
             }
+           
             // calling future method to send mail on case to respective parent
             list<Id> Ids = new List<Id>();
             for(Case CasObj:casList){
@@ -235,6 +359,7 @@ public class LeaveRequestHelper {
             if(othrIdCase.size()>0){
                 sendCaseEmail(othrIdCase,'Teacher Leave');
             }
+
             // updating the Booking 
             if(cancelBookingList.size()>0){
                 update cancelBookingList;
@@ -315,32 +440,169 @@ public class LeaveRequestHelper {
             Database.rollback(sp);
         } 
     }
-    
+    @testVisible
     @future
     private static void sendCaseEmail(list<Id> Ids,string leaveType){
         // Savepoint sp = Database.setSavepoint();
         string templateId ='';
         list<EmailTemplate> templateList= new list<EmailTemplate>();
+        map<string,EmailTemplate> templatemap= new map<string,EmailTemplate>();
         // list<string> personEmailList = new list<string>();
         if(leaveType =='Teacher MC'){
             // template when teacher is on medical leave
-            templateList = [Select Id from EmailTemplate where name = 'Teacher MC' limit 1];  
+            //templateList = [Select Id from EmailTemplate where name = 'Teacher MC' limit 1];  
+            //added by nishi: 12-Oct-2020:start: for send email according to organisation
+            for(EmailTemplate objEmailTemplate :[Select Id,name from EmailTemplate 
+            where name = 'Teacher MC' 
+            or name = 'Ossia_Teacher MC' 
+            ]){
+                templatemap.put(objEmailTemplate.name,objEmailTemplate);
+            }
+            //added by nishi: 12-Oct-2020:end: for send email according to organisation
         }else{
             // template when teacher is on Holiday
-            templateList = [Select Id from EmailTemplate where name = 'Teacher Leave' limit 1];
-        }
-        if(templateList[0].Id != null){
-            templateId = templateList[0].Id;  
+            //templateList = [Select Id from EmailTemplate where name = 'Teacher Leave' limit 1];
+            //added by nishi: 12-Oct-2020:start: for send email according to organisation
+            for(EmailTemplate objEmailTemplate :[Select Id,name from EmailTemplate 
+            where name = 'Teacher Leave' 
+            or name = 'Ossia_Teacher Leave' 
+            ]){
+                templatemap.put(objEmailTemplate.name,objEmailTemplate);
+            }
+            //added by nishi: 12-Oct-2020:end: for send email according to organisation
         }
         
         List<Messaging.SingleEmailMessage> emailList = new List<Messaging.SingleEmailMessage>();
-        for(Case CasObject:[select Id,Booking__r.Type__c,Booking__r.Status__c,Booking__r.Start_Time__c,Booking__r.Parent__r.PersonContactId,Booking__r.Parent__r.personEmail,Booking__r.Center__c,Booking__r.Center__r.Location__c,Booking__r.Teacher_Account__c from Case where Id in:Ids]){
-            system.debug('CasObject---'+CasObject.Booking__r.Parent__r.PersonEmail);
-            if(String.isNotBlank(templateId) && String.isNotBlank(CasObject.Booking__r.Parent__r.PersonEmail) && (CasObject.Booking__r.Type__c =='Regular' || CasObject.Booking__r.Type__c =='Ad-hoc' ||  CasObject.Booking__r.Type__c =='Make-up' ) ){
+        for(Case CasObject:[select Id,Booking__r.Type__c,Booking__r.Status__c,Booking__r.Start_Time__c,Booking__r.Parent__r.PersonContactId,Booking__r.Parent__r.personEmail,
+                        Booking__r.Center__c,Booking__r.Center__r.Location__c,Booking__r.Teacher_Account__c,Booking__r.Center__r.Organisation__r.Name 
+                            from Case where Id in:Ids]){
+                                system.debug('CasObject---'+CasObject.Booking__r.Parent__r.PersonEmail);
+                                system.debug('CasObject---'+CasObject.Booking__r.Center__r.Organisation__r.Name);
+                                system.debug('CasObject---'+CasObject.Booking__r.Type__c);
+            if( String.isNotBlank(CasObject.Booking__r.Parent__r.PersonEmail) 
+               && (CasObject.Booking__r.Type__c =='Regular' || CasObject.Booking__r.Type__c =='Ad-hoc' ||  CasObject.Booking__r.Type__c =='Make-up' ) ){
                 //personEmailList.add(CasObject.Booking__r.Parent__r.personEmail);
-                Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templateId, CasObject.Booking__r.Parent__r.PersonContactId, CasObject.Id, CasObject.Booking__r.Center__r.Location__c);
                 //mail.setToAddresses(personEmailList);
-                emailList.add(mail);
+                //added by nishi: 12-Oct-2020:start: for send email according to organisation
+                if(templatemap != null && templatemap.size() > 0){
+                    if(leaveType =='Teacher MC'){
+                        if(String.isNotBlank(CasObject.Booking__c) && String.isNotBlank(CasObject.Booking__r.Center__c) && String.isNotBlank(CasObject.Booking__r.Center__r.Organisation__c)
+                           && String.isNotBlank(CasObject.Booking__r.Center__r.Organisation__r.Name) && CasObject.Booking__r.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                            if(templateMap.containsKey('Ossia_Teacher MC')){
+                            Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Ossia_Teacher MC').id, CasObject.Booking__r.Parent__r.PersonContactId, CasObject.Id, CasObject.Booking__r.Center__r.Location__c);
+                            emailList.add(mail); 
+                            }
+                        }else{
+                            if(templateMap.containsKey('Teacher MC')){
+                                Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Teacher MC').id, CasObject.Booking__r.Parent__r.PersonContactId, CasObject.Id, CasObject.Booking__r.Center__r.Location__c);
+                                emailList.add(mail); 
+                            }
+                        } 
+                    }else{
+                        if(String.isNotBlank(CasObject.Booking__c) && String.isNotBlank(CasObject.Booking__r.Center__c) && String.isNotBlank(CasObject.Booking__r.Center__r.Organisation__c)
+                           && CasObject.Booking__r.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                            if(templateMap.containsKey('Ossia_Teacher Leave')){
+                                Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Ossia_Teacher Leave').id, CasObject.Booking__r.Parent__r.PersonContactId, CasObject.Id, CasObject.Booking__r.Center__r.Location__c);
+                                emailList.add(mail); 
+                            }
+                        }else{
+                            if(templateMap.containsKey('Teacher Leave')){
+                                Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Teacher Leave').id, CasObject.Booking__r.Parent__r.PersonContactId, CasObject.Id, CasObject.Booking__r.Center__r.Location__c);
+                                emailList.add(mail); 
+                            }
+                        } 
+                    }
+                }
+                /*Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templateId, CasObject.Booking__r.Parent__r.PersonContactId, CasObject.Id, CasObject.Booking__r.Center__r.Location__c);
+                emailList.add(mail);*/
+                //added by nishi: 12-Oct-2020:end: for send email according to organisation
+            }
+        }
+        system.debug('emailList'+emailList);
+        if(!test.isRunningTest())
+            for(Messaging.SendEmailResult results :Messaging.sendEmail(emailList,false)){
+                if(!results.isSuccess())
+                    system.debug(results.getErrors());
+            }    
+    }
+
+    // nishi: 23-nov-2020: for send emails to inform teacher leave according to group case 
+    @testVisible
+    @future
+    private static void sendGroupCaseEmail(list<Id> Ids,string leaveType){
+        // Savepoint sp = Database.setSavepoint();
+        string templateId ='';
+        list<EmailTemplate> templateList= new list<EmailTemplate>();
+        map<string,EmailTemplate> templatemap= new map<string,EmailTemplate>();
+        // list<string> personEmailList = new list<string>();
+        if(leaveType =='Teacher MC'){
+            // template when teacher is on medical leave
+            //templateList = [Select Id from EmailTemplate where name = 'Teacher MC' limit 1];  
+            //added by nishi: 12-Oct-2020:start: for send email according to organisation
+            for(EmailTemplate objEmailTemplate :[Select Id,name from EmailTemplate 
+            where name = 'Group Teacher MC' 
+            or name = 'Ossia Group Teacher MC' 
+            ]){
+                templatemap.put(objEmailTemplate.name,objEmailTemplate);
+            }
+            //added by nishi: 12-Oct-2020:end: for send email according to organisation
+        }else{
+            // template when teacher is on Holiday
+            //templateList = [Select Id from EmailTemplate where name = 'Teacher Leave' limit 1];
+            //added by nishi: 12-Oct-2020:start: for send email according to organisation
+            for(EmailTemplate objEmailTemplate :[Select Id,name from EmailTemplate 
+            where name = 'Group Teacher Leave' 
+            or name = 'Ossia Group Teacher Leave' 
+            ]){
+                templatemap.put(objEmailTemplate.name,objEmailTemplate);
+            }
+            //added by nishi: 12-Oct-2020:end: for send email according to organisation
+        }
+        
+        List<Messaging.SingleEmailMessage> emailList = new List<Messaging.SingleEmailMessage>();
+        for(Case CasObject:[select Id,Booking__r.Type__c,Booking__r.Status__c,Booking__r.Start_Time__c,Booking__r.Parent__r.PersonContactId,Booking__r.Parent__r.personEmail,
+                        Booking__r.Center__c,Booking__r.Center__r.Location__c,Booking__r.Teacher_Account__c,Booking__r.Center__r.Organisation__r.Name 
+                            from Case where Id in:Ids]){
+                                system.debug('CasObject---'+CasObject.Booking__r.Parent__r.PersonEmail);
+                                system.debug('CasObject---'+CasObject.Booking__r.Center__r.Organisation__r.Name);
+                                system.debug('CasObject---'+CasObject.Booking__r.Type__c);
+            if( String.isNotBlank(CasObject.Booking__r.Parent__r.PersonEmail) 
+               && (CasObject.Booking__r.Type__c ==ConstantsClass.groupLessonTypeBooking || CasObject.Booking__r.Type__c =='Ad-hoc' ||  CasObject.Booking__r.Type__c =='Make-up' ) ){
+                //personEmailList.add(CasObject.Booking__r.Parent__r.personEmail);
+                //mail.setToAddresses(personEmailList);
+                //added by nishi: 12-Oct-2020:start: for send email according to organisation
+                if(templatemap != null && templatemap.size() > 0){
+                    if(leaveType =='Teacher MC'){
+                        if(String.isNotBlank(CasObject.Booking__c) && String.isNotBlank(CasObject.Booking__r.Center__c) && String.isNotBlank(CasObject.Booking__r.Center__r.Organisation__c)
+                           && String.isNotBlank(CasObject.Booking__r.Center__r.Organisation__r.Name) && CasObject.Booking__r.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                            if(templateMap.containsKey('Ossia Group Teacher MC')){
+                            Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Ossia Group Teacher MC').id, CasObject.Booking__r.Parent__r.PersonContactId, CasObject.Id, CasObject.Booking__r.Center__r.Location__c);
+                            emailList.add(mail); 
+                            }
+                        }else{
+                            if(templateMap.containsKey('Group Teacher MC')){
+                                Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Group Teacher MC').id, CasObject.Booking__r.Parent__r.PersonContactId, CasObject.Id, CasObject.Booking__r.Center__r.Location__c);
+                                emailList.add(mail); 
+                            }
+                        } 
+                    }else{
+                        if(String.isNotBlank(CasObject.Booking__c) && String.isNotBlank(CasObject.Booking__r.Center__c) && String.isNotBlank(CasObject.Booking__r.Center__r.Organisation__c)
+                           && CasObject.Booking__r.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                            if(templateMap.containsKey('Ossia Group Teacher Leave')){
+                                Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Ossia Group Teacher Leave').id, CasObject.Booking__r.Parent__r.PersonContactId, CasObject.Id, CasObject.Booking__r.Center__r.Location__c);
+                                emailList.add(mail); 
+                            }
+                        }else{
+                            if(templateMap.containsKey('Group Teacher Leave')){
+                                Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Group Teacher Leave').id, CasObject.Booking__r.Parent__r.PersonContactId, CasObject.Id, CasObject.Booking__r.Center__r.Location__c);
+                                emailList.add(mail); 
+                            }
+                        } 
+                    }
+                }
+                /*Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templateId, CasObject.Booking__r.Parent__r.PersonContactId, CasObject.Id, CasObject.Booking__r.Center__r.Location__c);
+                emailList.add(mail);*/
+                //added by nishi: 12-Oct-2020:end: for send email according to organisation
             }
         }
         system.debug('emailList'+emailList);

@@ -9,109 +9,154 @@ public class CaseTriggerHelper {
         
         List<EmailMessage> messages= [select id, ParentId, FromName, FromAddress, ToAddress from EmailMessage where ParentId IN: CaseId];
         list<Case> CaseListing = new list<Case>([Select Id, OwnerId,IsDeleted, CaseNumber, ContactId, AccountId, AssetId, SourceId, BusinessHoursId, ParentId, SuppliedName, SuppliedEmail, SuppliedPhone, SuppliedCompany, Type, RecordTypeId, Status, Reason, Origin, Subject, Priority, Description From Case where id in :CaseId]);
+        Id centerId = Schema.SObjectType.Account.getRecordTypeInfosByName().get(CentreRec).getRecordTypeId();
         set<string> ids = new set<string>();
         List<Case> caseList= new List<Case>();
         List<EmailMessage> emailList= new List<EmailMessage>();
         List<Account> accnt= new List<Account>();
         List<Account> accntUpdate= new List<Account>();
         map<string,Account> maptoAccount= new map<string,account>();
-        
         for(Case cs:CaseListing){
             if(cs.SuppliedEmail != null){
                 ids.add(cs.SuppliedEmail);   
             }
         }
         Id customerId = Schema.SObjectType.Account.getRecordTypeInfosByName().get(custRec).getRecordTypeId();
-        list<Account> acc=[Select id,Name,Location__c,(Select id From Contacts),PersonEmail From Account where RecordTypeId =:customerId and PersonEmail in :ids];
-        if(acc.size()>0){
-            String QueIds;
-            String CustomersId;
-            string centerLocation;
-            if(messages.size()>0){
-                Id centerId = Schema.SObjectType.Account.getRecordTypeInfosByName().get(CentreRec).getRecordTypeId();
-                List<Account> center = [Select id,Name,Location__c,Center_Email__c From Account where RecordTypeId =:centerId and Center_Email__c =:messages[0].ToAddress limit 1];
-                
-                if(center.size()>0){
-                    CustomersId=center[0].id;
-                    centerLocation = center[0].Location__c;
-                }
-                
-            }
-            map<string,Account> mapToAccnt = new map<string,Account>();
-            for(Account getAcc:acc){
-                mapToAccnt.put(getAcc.PersonEmail,getAcc);
-            }
-            set<id> caseidSet= new set<id>();
-            // Changes on 4th Oct by Ravi as Updated Account with center and Location
-            for(Account accObjNew:acc){
-                Account accObj = new Account();
-                accObj.Id=accObjNew.Id;
-                accObj.Location__c=centerLocation;
-                accObj.Centre_Name__c=CustomersId;
-                accntUpdate.add(accObj);
-            }
-            for(Case caseobj:CaseListing){
-                Case caseRec = new Case();
-                caseRec.id=caseobj.id;
-                caseRec.ContactId=mapToAccnt.get(caseobj.SuppliedEmail).Contacts[0].id;
-                caseRec.Location__c=centerLocation;
-                caseRec.Centre_Name__c=CustomersId;
-                caseidSet.add(caseRec.id);
-                caseList.add(caseRec);
-            }
-            update caseList;
-            if(accntUpdate.size()>0){
-                update accntUpdate;
-            }
-            
-        }else{
-            for(Case cs:CaseListing){
-                String[] SuppName=String.isNotBlank(cs.SuppliedName)?cs.SuppliedName.split(' ',2):new List<String>();
-                
-                if(SuppName.size()==2){
-                    Account ac= new Account(FirstName=SuppName[0],LastName=SuppName[1],PersonEmail=cs.SuppliedEmail,RecordTypeId=Schema.SObjectType.Account.getRecordTypeInfosByName().get(custRec).getRecordTypeId(),OwnerId=UserInfo.getUserId());
-                    maptoAccount.put(ac.PersonEmail,ac);
-                    accnt.add(ac);
-                }
-            }
-            if(accnt.size()!=null){
-                insert accnt;
-            }
-            map<string,Contact> mapAccToContact = new map<string,Contact>();
-            for(Contact getCon:[Select Email,id from Contact where AccountId in : accnt]){
-                mapAccToContact.put(getCon.Email,getCon);
-            }
-            for(Case casobj:CaseListing){
-                if(maptoAccount.containsKey(casobj.SuppliedEmail)){
-                    
+        String CustomersId;
+        string centerLocation;
+        List<Account> centerlist = new  List<Account>();
+        list<Account> acc = new  list<Account>();
+        if(messages.size()>0){
+            centerlist = [Select id,Name,Location__c,Center_Email__c,Organisation__c,country__r.name,Organisation__r.name From Account where RecordTypeId =:centerId and Center_Email__c =:messages[0].ToAddress limit 1];
+            if(centerlist.size()>0){
+                CustomersId=centerlist[0].id;
+                centerLocation = centerlist[0].Location__c;
+                acc = [Select id,Name,Location__c,(Select id From Contacts),PersonEmail
+                            From Account 
+                            where RecordTypeId =:customerId
+                            and PersonEmail in :ids 
+                            and Centre_Name__r.Organisation__c =: centerlist.get(0).Organisation__c];
+                if(acc != null && acc.size()>0){
                     String QueIds;
-                    String CustomersId;
-                    string centerLocation;
-                    if(messages.size()>0){
-                        Id centerId = Schema.SObjectType.Account.getRecordTypeInfosByName().get(CentreRec).getRecordTypeId();
-                        List<Account> center = [Select id,Name,Location__c,Center_Email__c From Account where RecordTypeId =:centerId and Center_Email__c =:messages[0].ToAddress limit 1];
-                        if(center.size()>0){
-                            CustomersId=center[0].id;
-                            centerLocation = center[0].Location__c; 
+                    map<string,Account> mapToAccnt = new map<string,Account>();
+                    for(Account getAcc:acc){
+                        mapToAccnt.put(getAcc.PersonEmail,getAcc);
+                    }
+                    set<id> caseidSet= new set<id>();
+                    // Changes on 4th Oct by Ravi as Updated Account with center and Location
+                    // Added Null check By Ravi..on 15 sept 2020 as per discussion with Sanjay,Rajesh,Deepak.
+                    // admin mail doesnot contain any center so needed to put null check.
+                    if(CustomersId != NULL && String.isNotBlank(CustomersId)){
+                        for(Account accObjNew:acc){
+                            Account accObj = new Account();
+                            accObj.Id=accObjNew.Id;
+                            accObj.Location__c=centerLocation;
+                            accObj.Centre_Name__c=CustomersId;
+                            /*string useremail=accObj.PersonEmail+'.';
+                            if(String.isNotBlank(CustomersId)){
+                                if(centerlist[0].Organisation__r.name == Label.Ossia_Organisation_Name){
+                                    useremail +='ossia'+centerlist.get(0).country__r.name; 
+                                }else{
+                                    useremail += 'aureus'+centerlist.get(0).country__r.name;
+                                }
+                                accObj.User_Email__c=useremail;
+                            }*/
+                            accntUpdate.add(accObj);
+                        }
+                    }
+                    
+                    for(Case caseobj:CaseListing){
+                        Case caseRec = new Case();
+                        caseRec.id=caseobj.id;
+                        caseRec.ContactId=mapToAccnt.get(caseobj.SuppliedEmail).Contacts[0].id;// Commented by nishi:Start: 30-nov-2020: for Change customer key from email address to email address+Organisation name
+                        // Added Null check By Ravi..on 15 sept 2020 as per discussion with Sanjay,Rajesh,Deepak.
+                        // admin mail doesnot contain any center so needed to put null check.
+                        if(CustomersId != NULL && String.isNotBlank(CustomersId)){
+                            caseRec.Centre_Name__c=CustomersId;
+                            caseRec.Location__c=centerLocation;
+                        }
+                        // end : Added Null check as per discusssion on 15 sept 2020
+                        caseidSet.add(caseRec.id);
+                        caseList.add(caseRec);
+                    }
+                    update caseList;
+                    if(accntUpdate.size()>0){
+                        update accntUpdate;
+                    }
+                    
+                }else{
+                    for(Case cs:CaseListing){
+                        String[] SuppName=String.isNotBlank(cs.SuppliedName)?cs.SuppliedName.split(' ',2):new List<String>();
+                        
+                        if(SuppName.size()==2){
+                            Account ac= new Account(FirstName=SuppName[0],LastName=SuppName[1],PersonEmail=cs.SuppliedEmail,RecordTypeId=Schema.SObjectType.Account.getRecordTypeInfosByName().get(custRec).getRecordTypeId(),OwnerId=UserInfo.getUserId());
+                            // Added by nishi:Start: 30-nov-2020: for Change customer key from email address to email address+Organisation name
+                            /*if(centerlist != null && centerlist.size() > 0){
+                                string useremail=cs.SuppliedEmail+'.';
+                                if(String.isNotBlank(CustomersId)){
+                                    if(centerlist[0].Organisation__r.name == Label.Ossia_Organisation_Name){
+                                        useremail +='ossia'+centerlist.get(0).country__r.name; 
+                                    }else{
+                                        useremail += 'aureus'+centerlist.get(0).country__r.name;
+                                    }
+                                    
+                                    ac.User_Email__c=useremail;
+                                }
+                            }*/
+                            // Added by nishi:end: 30-nov-2020: for Change customer key from email address to email address+Organisation name 
+                            maptoAccount.put(ac.PersonEmail,ac);
+                            accnt.add(ac);
+                        }
+                    }
+                    if(accnt.size()!=null){
+                        insert accnt;
+                    }
+                    map<string,Contact> mapAccToContact = new map<string,Contact>();
+                    for(Contact getCon:[Select Email,id from Contact where AccountId in : accnt]){
+                        mapAccToContact.put(getCon.Email,getCon);
+                    }
+                    for(Case casobj:CaseListing){
+                        if(maptoAccount.containsKey(casobj.SuppliedEmail)){
+                            
+                            /*Commented by nishi: 30-nov-2020: we get CustomersId and centerLocation on starting.
+                            String QueIds;
+                            String CustomersId;
+                            string centerLocation;
+                            if(messages.size()>0){
+                                Id centerId = Schema.SObjectType.Account.getRecordTypeInfosByName().get(CentreRec).getRecordTypeId();
+                                List<Account> center = [Select id,Name,Location__c,Center_Email__c From Account where RecordTypeId =:centerId and Center_Email__c =:messages[0].ToAddress limit 1];
+                                if(center.size()>0){
+                                    CustomersId=center[0].id;
+                                    centerLocation = center[0].Location__c; 
+                                }
+                                
+                            }Commented by nishi: 30-nov-2020: we get CustomersId and centerLocation on starting.*/
+                            Case cscObj = new Case();
+                            cscObj.id=casobj.id;
+                            cscObj.AccountId=maptoAccount.get(casobj.SuppliedEmail).id;
+                            cscObj.ContactId=mapAccToContact.get(casobj.SuppliedEmail).id;
+                            //cscObj.RecordTypeId=Schema.SObjectType.Case.getRecordTypeInfosByName().get('Sales Enquiry').getRecordTypeId();
+                            // Added Null check By Ravi..on 15 sept 2020 as per discussion with Sanjay,Rajesh,Deepak.
+                            // admin mail doesnot contain any center so needed to put null check.
+                            if(CustomersId != NULL && String.isNotBlank(CustomersId)){
+                                cscObj.Centre_Name__c=CustomersId;
+                                cscObj.Location__c=centerLocation;
+                            }
+                            caseList.add(cscObj);
+                            // Changes on 4th Oct by Ravi as Updated Account with center and Location
+                            // Added Null check By Ravi..on 15 sept 2020 as per discussion with Sanjay,Rajesh,Deepak.
+                            // admin mail doesnot contain any center so needed to put null check.
+                            if(CustomersId != NULL && String.isNotBlank(CustomersId)){
+                                for(Account accObj:accnt){
+                                    accObj.Location__c=centerLocation;
+                                    accObj.Centre_Name__c=CustomersId;
+                                    accntUpdate.add(accObj);
+                                }
+                            }
                         }
                         
                     }
-                    Case cscObj = new Case();
-                    cscObj.id=casobj.id;
-                    cscObj.AccountId=maptoAccount.get(casobj.SuppliedEmail).id;
-                    cscObj.ContactId=mapAccToContact.get(casobj.SuppliedEmail).id;
-                    //cscObj.RecordTypeId=Schema.SObjectType.Case.getRecordTypeInfosByName().get('Sales Enquiry').getRecordTypeId();
-                    cscObj.Location__c=centerLocation;
-                    cscObj.Centre_Name__c=CustomersId;
-                    caseList.add(cscObj);
-                     // Changes on 4th Oct by Ravi as Updated Account with center and Location
-                    for(Account accObj:accnt){
-                        accObj.Location__c=centerLocation;
-                        accObj.Centre_Name__c=CustomersId;
-                        accntUpdate.add(accObj);
-                    }
                 }
-                
             }
             if(accntUpdate.size()>0){
                 update accntUpdate;

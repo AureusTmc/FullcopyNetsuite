@@ -42,7 +42,9 @@ global class BatchClsToUpdateAccConOnChatCase implements  Database.Batchable<sOb
                     Case casetoupdate = new Case();
                     casetoupdate.id = cse.id;
                     casetoupdate.AccountId = mapOfEmailWithAccount.get(cse.Email__c).Id;
-                    casetoupdate.ContactId = mapOfEmailWithAccount.get(cse.Email__c).Contacts[0].Id;  
+                    if(mapOfEmailWithAccount.get(cse.Email__c).Contacts != null && mapOfEmailWithAccount.get(cse.Email__c).Contacts.size() > 0 && string.isNotBlank(mapOfEmailWithAccount.get(cse.Email__c).Contacts[0].id)){
+                        casetoupdate.ContactId =  mapOfEmailWithAccount.get(cse.Email__c).Contacts[0].Id;  
+                    }
                     caseListToUpdate.add(casetoupdate);  
                 }
                 else{
@@ -101,7 +103,9 @@ global class BatchClsToUpdateAccConOnChatCase implements  Database.Batchable<sOb
                     Case casetoupdate = new Case();
                     casetoupdate.id = cse.id;
                     casetoupdate.AccountId = mapOfEmailWithAccount.get(cse.Email__c).Id;
-                    casetoupdate.ContactId = mapOfEmailWithAccount.get(cse.Email__c).contacts[0].Id;  
+                    if(mapOfEmailWithAccount.get(cse.Email__c).Contacts != null && mapOfEmailWithAccount.get(cse.Email__c).Contacts.size() > 0 && string.isNotBlank(mapOfEmailWithAccount.get(cse.Email__c).Contacts[0].id)){
+                        casetoupdate.ContactId = mapOfEmailWithAccount.get(cse.Email__c).contacts[0].Id;  
+                    }
                     caseListToUpdatewithnewAccounnts.add(casetoupdate);  
                 }
                 

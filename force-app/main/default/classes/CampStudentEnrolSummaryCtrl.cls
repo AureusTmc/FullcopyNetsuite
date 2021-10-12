@@ -56,12 +56,26 @@ public without sharing class CampStudentEnrolSummaryCtrl {
         CampDetailsForEnrolStudentController.AccountModal newStudentDetails = studentSummaryDetails.studentDetails ;
         map<string,Account> mapOfStudentAndParentAccount = new map<string,Account>();
         newStudentDetails.parentAccDetails.Centre_Name__c = newStudentDetails.centerId;
+        
+        List<Account> centerlist =  [Select id,Name,Organisation__c,country__r.name,Organisation__r.name from account where id=:newStudentDetails.centerId and recordtype.Name=:ConstantsClass.centerRecTypeName];
         String customerRecId =  Schema.SObjectType.Account.getRecordTypeInfosByName().get(ConstantsClass.customerRecTypeName).getRecordTypeId();
         //Check that customer is already exist or not on the bases of email
         if(newStudentDetails.parentAccDetails.PersonEmail != null){
-            List<Account> accList = [SELECT Id,Name FROM Account WHERE PersonEmail =: newStudentDetails.parentAccDetails.PersonEmail]; 
+            List<Account> accList = [SELECT Id,Name FROM Account 
+                                    WHERE PersonEmail =: newStudentDetails.parentAccDetails.PersonEmail
+                                    And Centre_Name__r.Organisation__c =: centerlist.get(0).Organisation__c // Added by nishi: 30-nov-2020: for Change customer key from email address to email address+Organisation name
+                                    ]; 
             if(accList.size() > 0)
                 newStudentDetails.parentAccDetails.Id = accList.get(0).Id;
+             // Added by nishi:Start: 30-nov-2020: for Change customer key from email address to email address+Organisation name
+             string useremail=newStudentDetails.parentAccDetails.PersonEmail+'.';
+             if(centerlist.get(0).Organisation__r.name == Label.Ossia_Organisation_Name){
+                 useremail +='ossia'+centerlist.get(0).country__r.name; 
+             }else{
+                 useremail += 'aureus'+centerlist.get(0).country__r.name;
+             }
+             newStudentDetails.parentAccDetails.User_Email__c = useremail;
+             // Added by nishi:end: 30-nov-2020: for Change customer key from email address to email address+Organisation name     
         }
         newStudentDetails.parentAccDetails.Enroled__c     = false;
         newStudentDetails.parentAccDetails.Enroled_Date__c= System.today();
@@ -313,15 +327,20 @@ system.debug(bookList);
         DateTime now = DateTime.now();
         system.debug('@@@invoices'+invoices);
         system.debug('@@@enrolmentId'+enrolmentId);
+        Boolean isOssia = false;
         if(string.isNotBlank(invoices)){
             List<Invoice__c> invoiceList = [SELECT Id,Name,Total_Amount__c,
                                             Center__r.Location__c,Parent_Account__r.personContactId,
+                                            Center__r.Organisation__r.Name,
                                             status__c FROM Invoice__c 
                                             WHERE Id =:invoices];
             map<String ,Blob> mapOfAttachment = new map<String,Blob>();
             List<Attachment> listOfAttachment = new List<Attachment>();
             if(invoiceList != null && invoiceList.size() > 0){
                 Invoice__c inv = invoiceList[0];
+                if(string.isNotBlank(inv.Center__r.Organisation__r.Name) && inv.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                    isOssia= true;
+                }
                 map<string,Attachment> mapOfInvoiceAttachment  = PianoRentalHelperController.createInvoiceAttachment(invoiceList);
                 if(string.isnotBlank(pandaDocAttachmentName)){
                     pandaDocAttachmentName ='%'+pandaDocAttachmentName+'%';
@@ -344,7 +363,13 @@ system.debug(bookList);
                     // 21-feb-2020: manage send email and invoice attachment 
                     //PianoRentalHelperController.sendEmailWithInvoiceAttachment(new Map<string,map<String ,Blob>>{inv.id =>mapOfAttachment}, invoiceList,'Camp Class Enrolment Confirmation');
                     // 3-Mar-2020: for send email for enrolmentid
-                    CampClassUtilityController.sendEmailWithInvoiceAttachment(new Map<string,map<String ,Blob>>{enrolmentId=>mapOfAttachment},'Camp_Enrolment');
+                    //added by nishi: 12-Oct-2020: for send email according to organisation
+                    if(isOssia){
+                        CampClassUtilityController.sendEmailWithInvoiceAttachment(new Map<string,map<String ,Blob>>{enrolmentId=>mapOfAttachment},'Ossia_Camp_Enrolment');
+                    }else{
+                        CampClassUtilityController.sendEmailWithInvoiceAttachment(new Map<string,map<String ,Blob>>{enrolmentId=>mapOfAttachment},'Camp_Enrolment');
+                    }
+                    //added by nishi: 12-Oct-2020: for send email according to organisation
                     
                 }
             }

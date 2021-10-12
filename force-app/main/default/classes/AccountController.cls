@@ -10,6 +10,7 @@ public class AccountController {
     private static string OpenStat =constantsClass.OpenStatus;
     private static string salesEnquiryRecordType=ConstantsClass.caseSalesEnqRecTypeName;
     private static string serviceEnquiryRecordType=ConstantsClass.caseServiceEnqRecTypeName;
+    private static string InstrumentRentalEnquiryRecordType=ConstantsClass.InstrumentRentalEnquiryRecordType;
     @AuraEnabled
     public static  List<Account> fetchAccount() {
         return [Select Id,Name from Account Where RecordType.Name=:Centre ORDER BY Name DESC];
@@ -66,29 +67,29 @@ public class AccountController {
     }
     public class TaskWrapperClass{
         @AuraEnabled
-        Id id{get;set;}
+        Public Id id{get;set;}
         @AuraEnabled
-        string Subject{get;set;}
+        Public string Subject{get;set;}
         @AuraEnabled
-        Date ActivityDate{get;set;}
+        Public Date ActivityDate{get;set;}
         @AuraEnabled
-        string Name{get;set;}
+        Public string Name{get;set;}
         @AuraEnabled
-        string Center{get;set;}
+        Public string Center{get;set;}
         @AuraEnabled
-        string Priority{get;set;}
+        Public string Priority{get;set;}
         @AuraEnabled
-        string Owner{get;set;}
+        Public string Owner{get;set;}
         @AuraEnabled
-        string Status{get;set;}
+        Public string Status{get;set;}
         @AuraEnabled
-        string overDue{get;set;}
+        Public string overDue{get;set;}
         @AuraEnabled
-        string imageClass{get;set;}
+        Public string imageClass{get;set;}
         @AuraEnabled
-        string WhoId{get;set;}
+        Public string WhoId{get;set;}
         @AuraEnabled
-        string What{get;set;}
+        Public string What{get;set;}
     }
      @AuraEnabled
     public static void updatePendingEnrolmentStage(string actVal,string bkgId){
@@ -159,7 +160,8 @@ public class AccountController {
             }else{
              	dateFilter='LAST_N_DAYS:0';   
             }
-            string str='SELECT Id,Student__r.Name,Parent__r.Name,Enrolment_Created_Date__c,Teacher__r.Name,Package__r.Name,Lessons_Start_Date__c,Lesson_Start_time__c FROM Enrolment__c WHERE  Center__c =:searchKey  AND DAY_ONLY(Enrolment_Created_Date__c)='+ dateFilter +' And Type__c= \'Regular\' AND Stage__c=\'Enrolled\' ORDER BY Lessons_Start_Date__c DESC';
+            set<string> enrolmenttypes = new set<string>{'Regular','Group'};
+            string str='SELECT Id,Student__r.Name,Parent__r.Name,Enrolment_Created_Date__c,Teacher__r.Name,Package__r.Name,Lessons_Start_Date__c,Lesson_Start_time__c FROM Enrolment__c WHERE  Center__c =:searchKey  AND DAY_ONLY(Enrolment_Created_Date__c)='+ dateFilter +' And Type__c IN: enrolmenttypes AND Stage__c=\'Enrolled\' ORDER BY Lessons_Start_Date__c DESC';
             
             list<Enrolment__c> regEnr = Database.query(str);
             if(regEnr.size() >0){
@@ -250,9 +252,9 @@ public class AccountController {
     public static List<Case> findCases(String searchKey) {
         Id recorId = Schema.SObjectType.case.getRecordTypeInfosByName().get(serviceEnquiryRecordType).getRecordTypeId();
         return [SELECT Id,CaseNumber,Channel__c,LastModifiedDate,Status_Image__c,Last_Inbound_Email__c,OwnerId,Account.Name,Contact.Name,Subject,ParentId,Type,Reason,CreatedDate,ClosedDate,Status,Owner.Name FROM Case where Centre_Name__c =:searchKey AND Status IN ('New','Open') AND RecordTypeId=:recorId  ORDER BY LastModifiedDate DESC];
-     
-           
     }
+
+  
     @AuraEnabled
     public static List<Case> findAllNullCases(string searchKeys) {
         List<Case> caseList = new List<Case>();
@@ -269,7 +271,13 @@ public class AccountController {
         Id recorId = Schema.SObjectType.case.getRecordTypeInfosByName().get(salesEnquiryRecordType).getRecordTypeId();
         return [SELECT Id,CaseNumber,Channel__c,LastModifiedDate,Status_Image__c,OwnerId,Stage__c,Last_Inbound_Email__c,Account.Name,Contact.Name,Subject,ParentId,Type,Reason,CreatedDate,ClosedDate,Status,Owner.Name FROM Case where Centre_Name__c =:searchKey AND Status IN ('New','Open') AND RecordTypeId=:recorId  ORDER BY LastModifiedDate DESC];
        
-    }    
+    }   
+    // 28-Apr-2021: Nishi:show Case accoridng to  isSalesEnquiery if its true then we show salesEnquiryRecordType records otherwise Instrument Rental Enquiry records
+    @AuraEnabled
+    public static List<Case> findinstrumentRentalCases(String searchKey) {
+        Id recorId = Schema.SObjectType.case.getRecordTypeInfosByName().get(InstrumentRentalEnquiryRecordType).getRecordTypeId();
+        return [SELECT Id,CaseNumber,Channel__c,LastModifiedDate,Status_Image__c,OwnerId,Stage__c,Last_Inbound_Email__c,Account.Name,Contact.Name,Subject,ParentId,Type,Reason,CreatedDate,ClosedDate,Status,Owner.Name FROM Case where Centre_Name__c =:searchKey AND Status IN ('New','Open') AND RecordTypeId=:recorId  ORDER BY LastModifiedDate DESC];
+    }
     @AuraEnabled
     public static List<InvoiceWrapperClass> findInvoices(String searchKey,Boolean FrontPage) {
         List<InvoiceWrapperClass> InvoicWrapList = new List<InvoiceWrapperClass>();

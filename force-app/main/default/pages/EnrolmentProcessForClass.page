@@ -172,6 +172,20 @@
                 height: 260px;
     			overflow-y: scroll;
             }
+                      .siteLable{
+                          font-size: 15px; 
+                          background-color: #ffbf2f; 
+                          text-align:center;
+                          color:#fff;
+                          font-weight:bold;
+                      }
+                      .ossiaSiteLabel{
+                          font-size: 15px; 
+                          background-color: #ed1c24; 
+                          text-align:center;
+                          color:#fff;
+                          font-weight:bold;
+                      }
         </style>      
         <script>
             //CH01 Karan Singh	
@@ -207,7 +221,7 @@
     <body class="">
     	 <apex:outputPanel rendered="{!isSiteGuestUser}">     
              <!--@Juneid 20,Aug 2020, Organization wise condition -->
-             <div  class="slds-p-around_medium" style="font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;">{!IF(isOssia,'Ossia Music School','Aureus Academy Enrolment')} Process       
+             <div  class="{!IF(isOssia,'ossiaSiteLabel slds-p-around_medium','siteLable slds-p-around_medium')}">{!IF(isOssia,'Ossia Music School','Aureus Academy Enrolment')} Process       
              </div>
              <p style="text-align:center;"><apex:image url="{!iF(isOssia,$Resource.Osia_Logo,$Resource.Aureus_logo_png)}" /></p>
          </apex:outputPanel>    
@@ -625,22 +639,42 @@
                                     <p class="slds-text-heading_small"><strong>{!enrolDetails.students[enrolDetails.enrolments[enrolment].Student__c].firstName} {!enrolDetails.students[enrolDetails.enrolments[enrolment].Student__c].lastName} Fees</strong></p>
                                 </div>
                                 <div class="slds-grid slds-wrap">
-                                    <div class="slds-col slds-large-size_2-of-3 slds-p-bottom_small">
-                                        <p>{!enrolDetails.enrolments[enrolment].Package__r.Name} (Commencement of Lessons - 
-                                             <apex:outputText value="{0, date, dd MMMM, yyyy}">
-                                                <apex:param value="{!enrolDetails.enrolments[enrolment].Lessons_Start_Date__c}"/>
-                                            </apex:outputText>)
-                                         </p>
-                                    </div>
-                                    <div class="slds-col slds-large-size_1-of-3 slds-text-align_right  slds-p-bottom_small">
-                                        <p>${!enrolDetails.feeModelObj[enrolment].prgFees} 
-                                           <span style="{!IF(enrolDetails.billingDetails.gstTot > 0,'','display:none;')}">(T)</span>
-                                		</p>
-                                    </div>
+                                    <apex:outputPanel rendered="{!enrolDetails.feeModelObj[enrolment].isPromitionalPackage}" layout="none">
+                                        <apex:repeat value="{!enrolDetails.feeModelObj[enrolment].listOfpromotinalPackages}" var="promotinalPackage">
+                                            <apex:outputPanel rendered="{!!promotinalPackage.isDiscount}" layout="none">
+                                                <div class="slds-col slds-large-size_2-of-3 slds-p-bottom_small">
+                                                    <p>{!promotinalPackage.packageName} (Commencement of Lessons - 
+                                                        <apex:outputText value="{0, date,MMM','  yyyy}">
+                                                            <apex:param value="{!promotinalPackage.invoiceDate}"/>
+                                                        </apex:outputText>)
+                                                    </p>
+                                                </div>
+                                                <div class="slds-col slds-large-size_1-of-3 slds-text-align_right  slds-p-bottom_small">
+                                                    <p>${!promotinalPackage.amount} 
+                                                    <span style="{!IF(enrolDetails.billingDetails.gstTot > 0,'','display:none;')}">(T)</span>
+                                                    </p>
+                                                </div>
+                                            </apex:outputPanel>
+                                        </apex:repeat>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!!enrolDetails.feeModelObj[enrolment].isPromitionalPackage}" layout="none">
+                                        <div class="slds-col slds-large-size_2-of-3 slds-p-bottom_small">
+                                            <p>{!enrolDetails.enrolments[enrolment].Package__r.Name} (Commencement of Lessons - 
+                                                <apex:outputText value="{0, date, dd MMMM, yyyy}">
+                                                    <apex:param value="{!enrolDetails.enrolments[enrolment].Lessons_Start_Date__c}"/>
+                                                </apex:outputText>)
+                                            </p>
+                                        </div>
+                                        <div class="slds-col slds-large-size_1-of-3 slds-text-align_right  slds-p-bottom_small">
+                                            <p>${!enrolDetails.feeModelObj[enrolment].prgFees} 
+                                            <span style="{!IF(enrolDetails.billingDetails.gstTot > 0,'','display:none;')}">(T)</span>
+                                            </p>
+                                        </div>
+                                    </apex:outputPanel>
                                 </div>
                                 <div class="slds-grid slds-wrap">
                                     <div class="slds-col slds-large-size_2-of-3 slds-p-bottom_small">
-                                        <p>Desposit Fee</p>
+                                        <p>Deposit Fee</p>
                                     </div>
                                     <div class="slds-col slds-large-size_1-of-3 slds-text-align_right  slds-p-bottom_small">
                                         <p>${!enrolDetails.feeModelObj[enrolment].depFees}</p>
@@ -652,7 +686,7 @@
                                             <p style="Color:#3ECF8E">Referral Discount</p>
                                         </div>
                                         <div class="slds-col slds-large-size_1-of-3 slds-text-align_right  slds-p-bottom_small">
-                                            <p style="Color:#3ECF8E">(${!enrolDetails.feeModelObj[enrolment].refrelDiscount}) </p>
+                                            <p style="Color:#3ECF8E">(${!enrolDetails.feeModelObj[enrolment].refrelDiscount} (T)) </p>
                                         </div>
                                     </div>
                                 </apex:outputPanel>
@@ -676,6 +710,37 @@
                       					</p>
                                     </div>
                                 </div>
+                                <div class="slds-grid slds-wrap" style="{!IF(enrolDetails.feeModelObj[enrolment].pkgFeesPromtnalDis > 0,'','display:none;')}">
+                                    <!-- <div class="slds-col slds-large-size_2-of-3 slds-p-bottom_small">
+                                        <p>{!enrolDetails.enrolments[enrolment].Package__r.Name} (Discount)</p>
+                                    </div>
+                                    <div class="slds-col slds-large-size_1-of-3 slds-text-align_right  slds-p-bottom_small">
+                                        <p>(${!enrolDetails.feeModelObj[enrolment].pkgFeesPromtnalDis} 
+                                            <span style="{!IF(enrolDetails.feeModelObj[enrolment].pkgFeesPromtnalDis > 0,'','display:none;')}"> (T))</span>
+                                        </p>
+                                    </div>
+                                     -->
+
+                                    <apex:outputPanel rendered="{!enrolDetails.feeModelObj[enrolment].isPromitionalPackage}" layout="none">
+                                        <apex:repeat value="{!enrolDetails.feeModelObj[enrolment].listOfpromotinalPackages}" var="promotinalPackage">
+                                            <apex:outputPanel rendered="{!promotinalPackage.isDiscount}" layout="none">
+                                                <div class="slds-col slds-large-size_2-of-3 slds-p-bottom_small">
+                                                    <p>{!promotinalPackage.packageName} - 
+                                                        <apex:outputText value="{0, date,MMM','  yyyy}">
+                                                            <apex:param value="{!promotinalPackage.invoiceDate}"/>
+                                                        </apex:outputText>
+                                                    </p>
+                                                </div>
+                                                <div class="slds-col slds-large-size_1-of-3 slds-text-align_right  slds-p-bottom_small">
+                                                    <p>(${!promotinalPackage.amount} 
+                                                    <span style="{!IF(enrolDetails.billingDetails.gstTot > 0,'','display:none;')}">(T)</span>)
+                                                    </p>
+                                                </div>
+                                            </apex:outputPanel>
+                                        </apex:repeat>
+                                    </apex:outputPanel>
+                                </div>
+                                    
                                 <hr class="slds-m-vertical_x-large" />
                             </apex:repeat>
                         
@@ -690,8 +755,10 @@
                                                 </div>-->
                                 </div>
                                 <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
-                                   <p class="font-bold box-info slds-m-bottom_small" style="{!IF(enrolDetails.billingDetails.gstTot > 0,'','display:none;')}">GST <span class="slds-float_right">${!enrolDetails.billingDetails.gstTot}</span></p>  
-                                   <p style="{!IF(enrolDetails.billingDetails.disTot > 0,'','display:none;')}" class="font-bold box-info slds-m-bottom_small">Discount <span class="slds-float_right">${!enrolDetails.billingDetails.disTot}</span></p>
+                                    <p style="{!IF(enrolDetails.billingDetails.disTot > 0,'','display:none;')}" class="font-bold box-info slds-m-bottom_small">Sub Total <span class="slds-float_right">${!enrolDetails.billingDetails.totalAmt}</span></p>
+                                    <p style="{!IF(enrolDetails.billingDetails.disTot > 0,' color: red;','display:none;')}" class="font-bold box-info slds-m-bottom_small">Discount <span class="slds-float_right">-${!enrolDetails.billingDetails.disTot}</span></p>
+                                    <p style="{!IF(enrolDetails.billingDetails.disTot > 0,'','display:none;')}" class="font-bold box-info slds-m-bottom_small">Total Amount <span class="slds-float_right">${!enrolDetails.billingDetails.subsTot}</span></p>
+                                    <p class="font-bold box-info slds-m-bottom_small" style="{!IF(enrolDetails.billingDetails.gstTot > 0,'','display:none;')}">GST <span class="slds-float_right">${!enrolDetails.billingDetails.gstTot}</span></p>  
                                    <p class="font-bold box-info slds-m-bottom_small">Grand Total <span class="slds-float_right">${!enrolDetails.billingDetails.grandTot}</span></p>
                                                                            
                                 </div> 

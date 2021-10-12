@@ -23,9 +23,16 @@ public class DocumentWrapper{
     
     Public Class CustomField{
         Public Fields ParentName;
-        
+        public Parent_Guardian_Name parentGuardianName {get;set;} 
+        public Parent_Guardian_Name Selectdate {get;set;} 
         Public CustomField(Fields ParentName){
             this.ParentName = ParentName;
+            parentGuardianName = new Parent_Guardian_Name();
+            Selectdate = new Parent_Guardian_Name();
+        }
+        Public CustomField(Parent_Guardian_Name parentGuardianName, Parent_Guardian_Name Selectdate){
+            this.parentGuardianName = parentGuardianName;
+            this.Selectdate = Selectdate;
         }
     }
     
@@ -134,10 +141,21 @@ public class DocumentWrapper{
         Public String EnrolmentPackage;
         Public String DayTime;
         Public String CommencementDate;
+        public String Text {get;set;} 
+        public String Text1 {get;set;} 
+        public String Text2 {get;set;}
         Public CustomFields(String EnrolmentPackage, String DayTime, String CommencementDate){
             this.EnrolmentPackage = EnrolmentPackage;
             this.DayTime = DayTime;
             this.CommencementDate = CommencementDate;
+        }
+        Public CustomFields(String EnrolmentPackage, String DayTime, String CommencementDate,String Text, String Text1, String Text2){
+            this.EnrolmentPackage = EnrolmentPackage;
+            this.DayTime = DayTime;
+            this.CommencementDate = CommencementDate;
+            this.Text = Text;
+            this.Text1 = Text1;
+            this.Text2 = Text2;
         }
     }
     
@@ -147,6 +165,18 @@ public class DocumentWrapper{
         Public SendDocument(String message, Boolean silent){
             this.message = message;
             this.silent = silent;
+        }
+    }
+    public class Parent_Guardian_Name {
+        public String value {get;set;} 
+        public String title {get;set;}
+        public Parent_Guardian_Name(String value, String title){
+            this.value = value;
+            this.title = title;
+        }
+        public Parent_Guardian_Name(){
+            this.value = '';
+            this.title = '';
         }
     }
 }

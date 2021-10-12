@@ -25,6 +25,9 @@
             if(result == 'SUCCESS'){
                 console.log('====Regular Booking>'+response.getReturnValue().length);
                 console.log(response.getReturnValue());
+                console.log('searchKeys',searchKeys);
+                console.log('dateFilter',dateFilter);
+                console.log(response.getReturnValue());
                 component.set("v.totalCount", response.getReturnValue().length);
                 component.set("v.Bookings", response.getReturnValue());
                 component.set("v.centerId",searchKeys);

@@ -26,7 +26,7 @@ global class PublicHolidayProcess  implements Database.Batchable<sObject>, Datab
          set<string> status = new set<String>{'Pending','Scheduled'};
          set<string> type = new set<String>{'Trial','Regular','Make-up','Ad-hoc','Busy'};
          set<string> Category = new set<string>{'Leave','Holiday','Placeholder'};
-        String query = 'select Id,Package__c, Center__r.Organisation__c,Center__r.Organisation__r.Name,Teacher_Account__r.Employee_Duty_Type__c,End_Time__c,Teacher_Account__r.Name,Teacher_Account__r.Id,Duration__c,Type__c,Status__c,Booking_Date__c,Start_Time__c,Parent__c,Student__c,Parent__r.PersonContactId,Parent__r.personEmail,Center__c,Center__r.Location__c,Student__r.Name,Teacher_Account__c,Enrolment__c,Available_Make_up_Units__c,Make_up_Utilize_Bookings__c  from Booking__c where  Booking_Date__c in: holidayDate  And Type__c in:type   And Status__c in:status AND Category__c Not in:Category and RecordTypeId=:lessonTypeId and Center__r.Organisation__c in:organisationId';
+        String query = 'select Id,Package__c, Center__r.Organisation__c,Center__r.Organisation__r.Name,Teacher_Account__r.Employee_Duty_Type__c,End_Time__c,Teacher_Account__r.Name,Teacher_Account__r.Id,Duration__c,Type__c,Status__c,Booking_Date__c,Start_Time__c,Parent__c,Student__c,Parent__r.PersonContactId,Parent__r.personEmail,Center__c,Center__r.Location__c,Student__r.Name,Teacher_Account__c,Enrolment__c,Available_Make_up_Units__c,Make_up_Utilize_Bookings__c,Is_Complimentary_Credit__c  from Booking__c where  Booking_Date__c in: holidayDate  And Type__c in:type   And Status__c in:status AND Category__c Not in:Category and RecordTypeId=:lessonTypeId and Center__r.Organisation__c in:organisationId';
         return Database.getQueryLocator(query);
     }
     
@@ -39,7 +39,9 @@ global class PublicHolidayProcess  implements Database.Batchable<sObject>, Datab
         list<Booking__c> placeholdeBooking = new list<Booking__c>();
         // store the Makeup booking  Id with the offered Min 
         Map<Id,Integer> makeupId= new Map<Id,Integer>();
-        list<Booking__c> updateMakeupList = new list<Booking__c>();
+        Map<Id,Integer> makeupComplimentaryId= new Map<Id,Integer>();
+        Map<id,Booking__c> updateMakeupList = new Map<id,Booking__c>();
+        Map<id,Complementary_Credit__c> updateComplimentaryMap = new Map<id,Complementary_Credit__c>();
         //List<Case> casList = new List<Case>();
          
         // added by nishi: 29-Jul-2020: for manage ossia organization student we added Makeup expiry days will be 365 days.
@@ -64,7 +66,7 @@ global class PublicHolidayProcess  implements Database.Batchable<sObject>, Datab
                     mapToHolidatDate.put(bkgo.Booking_Date__c +'/'+ bkgo.Center__r.Organisation__c,bokObj);
                 }
             }
-            for(Public_Holiday__c holidayObj : [SELECT Id,Organisation__c,Name,Public_Holiday_Date__c,Organisation_Status__c,Execution_Date__c,Status__c FROM Public_Holiday__c where Organisation_Status__c != null and Execution_Date__c = today]){ 
+            for(Public_Holiday__c holidayObj : [SELECT Id,Organisation__c,Name,Public_Holiday_Date__c,Organisation_Status__c,Execution_Date__c,Status__c FROM Public_Holiday__c where Organisation_Status__c != null and Execution_Date__c = today and Status__c='Pending for execution' and Public_Holiday_Date__c <> null]){ 
                 if(mapToHolidatDate.containsKey(holidayObj.Public_Holiday_Date__c + '/'+ holidayObj.Organisation__c )){
                     for(Booking__c bkgObj :mapToHolidatDate.get(holidayObj.Public_Holiday_Date__c + '/'+ holidayObj.Organisation__c)){
                         if( (holidayObj.Organisation_Status__c == 'Closed' && bkgObj.Teacher_Account__r.Employee_Duty_Type__c != null) || (holidayObj.Organisation_Status__c == 'Open' && bkgObj.Teacher_Account__r.Employee_Duty_Type__c=='Duty')){
@@ -111,13 +113,25 @@ global class PublicHolidayProcess  implements Database.Batchable<sObject>, Datab
                                 if(bkgObj.Make_up_Utilize_Bookings__c != null){
                                     list<string> makeUpString=bkgObj.Make_up_Utilize_Bookings__c.split(';');
                                     for(String makeInstID:makeUpString){
-                                        //added on 7 nov 2019 
-                                        ////Adding the Make up bkg id with the offered min
-                                        if(makeupId.containsKey(makeInstID.split('-')[0])){
-                                            integer offrMin=makeupId.get(makeInstID.split('-')[0]) + integer.valueOf(makeInstID.split('-')[1]);
-                                            makeupId.put(string.valueOf(makeInstID.split('-')[0]), offrMin);
+                                        // added by nishi: 26-apr-2021:End : Cancelling a complimentary credit will add back the complimentary credit on the same record
+                                        if(bkgObj.Is_Complimentary_Credit__c){
+                                            if(makeupComplimentaryId.containsKey(makeInstID.split('-')[0])){
+                                                integer offrMin=makeupComplimentaryId.get(makeInstID.split('-')[0]) + integer.valueOf(makeInstID.split('-')[1]);
+                                                makeupComplimentaryId.put(string.valueOf(makeInstID.split('-')[0]), offrMin);
+                                            }else{
+                                                makeupComplimentaryId.put(string.valueOf(makeInstID.split('-')[0]),integer.valueOf(makeInstID.split('-')[1]));  
+                                            }
                                         }else{
-                                          makeupId.put(string.valueOf(makeInstID.split('-')[0]),integer.valueOf(makeInstID.split('-')[1]));  
+                                        // added by nishi: 26-apr-2021:End : Cancelling a complimentary credit will add back the complimentary credit on the same record
+                          
+                                            //added on 7 nov 2019 
+                                            ////Adding the Make up bkg id with the offered min
+                                            if(makeupId.containsKey(makeInstID.split('-')[0])){
+                                                integer offrMin=makeupId.get(makeInstID.split('-')[0]) + integer.valueOf(makeInstID.split('-')[1]);
+                                                makeupId.put(string.valueOf(makeInstID.split('-')[0]), offrMin);
+                                            }else{
+                                                makeupId.put(string.valueOf(makeInstID.split('-')[0]),integer.valueOf(makeInstID.split('-')[1]));  
+                                            }
                                         }
                                         // end added on 7 nov 2019
                                     } 
@@ -130,18 +144,40 @@ global class PublicHolidayProcess  implements Database.Batchable<sObject>, Datab
                 }
                 
             }
-            // New Code End
-            for(Booking__c book:[select Id,Make_up_Utilize_Bookings__c,Available_Make_up_Units__c from Booking__c where Id in :makeupId.keySet()]){
-                if(makeupId.containsKey(book.Id)){
-                    book.Available_Make_up_Units__c=makeupId.get(book.Id);                    
+            // added by nishi: 26-apr-2021:start : Cancelling a complimentary credit will add back the complimentary credit on the same record
+            if(makeupComplimentaryId != null && makeupComplimentaryId.size()  > 0){
+                // New Code End
+                for(Complementary_Credit__c book:[SELECT Credit_Apply_date__c, Credit_Expiry_date__c, Credit_Reason__c, Enrolment__c, Teacher_Name__c, Parent__c, Available_credit_Min__c, Package_Name__c, Is_Active__c, Name, Id 
+                                     FROM Complementary_Credit__c
+                                     WHERE Id IN: makeupComplimentaryId.keySet()]){
+                    if(makeupComplimentaryId.containsKey(book.Id)){
+                        book.Available_credit_Min__c=makeupComplimentaryId.get(book.Id);                    
+                    }
+                    
+                    updateComplimentaryMap.put(book.id,book);                
                 }
-                
-                updateMakeupList.add(book);                
+                system.debug('===>updateMakeupList.size()'+updateMakeupList.size());
+                // Inserting Makeup Booking list
+                if(updateComplimentaryMap != null && updateComplimentaryMap.size()>0){
+                    update updateComplimentaryMap.values();
+                }
             }
-            system.debug('===>updateMakeupList.size()'+updateMakeupList.size());
-            // Inserting Makeup Booking list
-            if(updateMakeupList.size()>0){
-                update updateMakeupList;
+            // added by nishi: 26-apr-2021:End : Cancelling a complimentary credit will add back the complimentary credit on the same record
+                          
+            if(makeupId != null && makeupId.size() > 0){
+                // New Code End
+                for(Booking__c book:[select Id,Make_up_Utilize_Bookings__c,Available_Make_up_Units__c from Booking__c where Id in :makeupId.keySet()]){
+                    if(makeupId.containsKey(book.Id)){
+                        book.Available_Make_up_Units__c=makeupId.get(book.Id);                    
+                    }
+                    
+                    updateMakeupList.put(book.id,book);                
+                }
+                system.debug('===>updateMakeupList.size()'+updateMakeupList.size());
+                // Inserting Makeup Booking list
+                if(updateMakeupList != null && updateMakeupList.size()>0){
+                    update updateMakeupList.values();
+                }
             }
             system.debug('===>placeholdeBooking.size()'+placeholdeBooking.size());
             // creating placeholder booking for the Regular  booking
@@ -161,31 +197,78 @@ global class PublicHolidayProcess  implements Database.Batchable<sObject>, Datab
         string templateListOpenId ='';
         List<Messaging.SingleEmailMessage> emailList = new List<Messaging.SingleEmailMessage>();
         list<EmailTemplate> templateList= new list<EmailTemplate>();
+        map<string,EmailTemplate> templatemap= new map<string,EmailTemplate>();
         // template when teacher is on Holiday
+        /*Commented by nishi: 12-Oct-2020: for send email according to organisation
         templateList = [Select Id from EmailTemplate where name = 'Public Holiday Closed Cancellation Execution' limit 1];
-        if(templateList[0].Id != null){
+         if(templateList[0].Id != null){
             templateId = templateList[0].Id;  
-        }
-        list<EmailTemplate> templateListOpen= new list<EmailTemplate>();
+        }*/
+        //add by nishi: 12-Oct-2020:Start for send email according to organisation
+        for(EmailTemplate objEmailTemplate :[Select Id,name from EmailTemplate 
+                                            where name = 'Public Holiday Closed Cancellation Execution' 
+                                            or name = 'Ossia_Public Holiday Closed Cancellation Execution' 
+                                            ]){
+                                                templatemap.put(objEmailTemplate.name,objEmailTemplate);
+                                            }
+       //add by nishi: 12-Oct-2020:end: for send email according to organisation
+       /*Commented by nishi: 12-Oct-2020: for send email according to organisation list<EmailTemplate> templateListOpen= new list<EmailTemplate>();
         // template when teacher is on Holiday
         templateListOpen = [Select Id from EmailTemplate where name = 'Public Holiday Open' limit 1];
         if(templateListOpen[0].Id != null){
             templateListOpenId = templateListOpen[0].Id;  
-        }
-            
+        }*/
+        //add by nishi: 12-Oct-2020:Start for send email according to organisation
+        map<string,EmailTemplate> templateMapOpen= new map<string,EmailTemplate>();
+        for(EmailTemplate objEmailTemplate :[Select Id,name from EmailTemplate 
+        where name = 'Public Holiday Open' 
+        or name = 'Ossia_Public Holiday Open' 
+        ]){
+            templateMapOpen.put(objEmailTemplate.name,objEmailTemplate);
+        }   
+        //add by nishi: 12-Oct-2020:end: for send email according to organisation 
         if(Ids.size()>0){
-            for(Booking__c bkgiList:[Select Id,Public_Holiday_Status__c,Parent__r.PersonContactId,Center__r.Location__c,Parent__r.PersonEmail,Booking_Date__c,Teacher_Account__c from Booking__c where Id in:Ids and Status__c='Canceled' and Cancellation_Reason__c='Holidays']){
+            for(Booking__c bkgiList:[Select Id,Public_Holiday_Status__c,Parent__r.PersonContactId,Center__r.Location__c,Parent__r.PersonEmail,
+                                    Booking_Date__c,Teacher_Account__c ,Center__r.Organisation__r.name
+                                    from Booking__c where Id in:Ids and Status__c='Canceled' and Cancellation_Reason__c='Holidays']){
                 //system.debug('----'+bkgiList.Id);
-                if(String.isNotBlank(templateId) && bkgiList.Parent__r.PersonContactId != null && bkgiList.Parent__r.PersonEmail != null && bkgiList.Public_Holiday_Status__c=='Closed'){
+                if(templatemap!= null && templatemap.size() > 0 && String.isNotBlank(bkgiList.Center__r.Organisation__r.Name) && bkgiList.Parent__r.PersonContactId != null && bkgiList.Parent__r.PersonEmail != null && bkgiList.Public_Holiday_Status__c=='Closed'){
                     //system.debug('=bkgList.Id' + bkgiList.Id );
-                    Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templateId, bkgiList.Parent__r.PersonContactId, bkgiList.Id, bkgiList.Center__r.Location__c);
-                    emailList.add(mail);
-                }else if(String.isNotBlank(templateListOpenId) && bkgiList.Parent__r.PersonContactId != null && bkgiList.Parent__r.PersonEmail != null && bkgiList.Public_Holiday_Status__c=='Open'){
+                    //add by nishi: 12-Oct-2020:Start for send email according to organisation
+                    if(bkgiList.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                        if(templatemap.containsKey('Ossia_Public Holiday Closed Cancellation Execution')){
+                            Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Ossia_Public Holiday Closed Cancellation Execution').id, bkgiList.Parent__r.PersonContactId, bkgiList.Id, bkgiList.Center__r.Location__c);
+                            emailList.add(mail);
+                        }
+                    }else{
+                        if(templatemap.containsKey('Public Holiday Closed Cancellation Execution')){
+                            Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Public Holiday Closed Cancellation Execution').id, bkgiList.Parent__r.PersonContactId, bkgiList.Id, bkgiList.Center__r.Location__c);
+                            emailList.add(mail);
+                        }
+                    }
+                    //add by nishi: 12-Oct-2020:end: for send email according to organisation
+                        /* Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templateId, bkgiList.Parent__r.PersonContactId, bkgiList.Id, bkgiList.Center__r.Location__c);
+                    emailList.add(mail);*/    
+                }else if(templateMapOpen!= null && templateMapOpen.size() > 0 && String.isNotBlank(bkgiList.Center__r.Organisation__r.Name)  /*String.isNotBlank(templateListOpenId)*/ && bkgiList.Parent__r.PersonContactId != null && bkgiList.Parent__r.PersonEmail != null && bkgiList.Public_Holiday_Status__c=='Open'){
+                    //add by nishi: 12-Oct-2020:Start for send email according to organisation
+                    if(bkgiList.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                        if(templatemap.containsKey('Ossia_Public Holiday Open')){
+                            Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Ossia_Public Holiday Open').id, bkgiList.Parent__r.PersonContactId, bkgiList.Id, bkgiList.Center__r.Location__c);
+                            emailList.add(mail);
+                        }
+                    }else{
+                        if(templatemap.containsKey('Public Holiday Open')){
+                            Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Public Holiday Open').id, bkgiList.Parent__r.PersonContactId, bkgiList.Id, bkgiList.Center__r.Location__c);
+                            emailList.add(mail);
+                        }
+                    }
+                    //add by nishi: 12-Oct-2020:end: for send email according to organisation
                     //system.debug('=bkgList.Id' + bkgiList.Id );
-                    Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templateListOpenId, bkgiList.Parent__r.PersonContactId, bkgiList.Id, bkgiList.Center__r.Location__c);
-                    emailList.add(mail);
+                    /*Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templateListOpenId, bkgiList.Parent__r.PersonContactId, bkgiList.Id, bkgiList.Center__r.Location__c);
+                    emailList.add(mail);*/
                 }
             }
+            
             system.debug('--->'+emailList);
             if(!test.isRunningTest())
                 for(Messaging.SendEmailResult results :Messaging.sendEmail(emailList,false)){
@@ -220,7 +303,7 @@ global class PublicHolidayProcess  implements Database.Batchable<sObject>, Datab
                     mapToFifthHolidatDate.put(fifthObj.Booking_Date__c +'/'+ fifthObj.Center__r.Organisation__c,fifObj);
                 }
             }
-            for(Public_Holiday__c holidayObj : [SELECT Id,Organisation__c,Name,Public_Holiday_Date__c,Organisation_Status__c,Execution_Date__c,Status__c FROM Public_Holiday__c where Organisation_Status__c != null and Execution_Date__c =today]){ 
+            for(Public_Holiday__c holidayObj : [SELECT Id,Organisation__c,Name,Public_Holiday_Date__c,Organisation_Status__c,Execution_Date__c,Status__c FROM Public_Holiday__c where Organisation_Status__c != null and Execution_Date__c =today and Status__c='Pending for execution' and Public_Holiday_Date__c <> null]){ 
                 if(mapToFifthHolidatDate.containsKey(holidayObj.Public_Holiday_Date__c +'/'+ holidayObj.Organisation__c)){
                     for(Fifth_Lesson__c fifthObj :mapToFifthHolidatDate.get(holidayObj.Public_Holiday_Date__c + +'/'+ holidayObj.Organisation__c)){
                         if( (holidayObj.Organisation_Status__c == 'Closed' && fifthObj.Teacher_Account__r.Employee_Duty_Type__c != null) || (holidayObj.Organisation_Status__c == 'Open' && fifthObj.Teacher_Account__r.Employee_Duty_Type__c=='Duty')){

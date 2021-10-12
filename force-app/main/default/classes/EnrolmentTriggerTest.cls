@@ -22,9 +22,23 @@ public class EnrolmentTriggerTest {
         country.Stripe_Publishable_Key__c = 'ABC';
         country.Stripe_Secret_Key__c = 'deede';
         insert country;
-        
+        //added by nishi:25-sep-2020: create organisation
+        Organisation__c organisationRecord = new Organisation__c();
+        organisationRecord.Name = 'Aureus Academy Singapore';
+        organisationRecord.Bank_Account_Number__c = '1123456789';
+        organisationRecord.Branch_Code__c = 'test';
+        organisationRecord.Country__c = country.id;
+        organisationRecord.Stripe_Base_Url__c = 'www.test.com';
+        organisationRecord.Stripe_Publishable_Key__c = 'ABC';
+        organisationRecord.Stripe_Secret_Key__c = 'test_key';
+        organisationRecord.Sage_Company__c = 'AGP';
+        Insert organisationRecord;  
         Account objCentr=TestUtil.createAccount('Centre',false,FALSE);
         objCentr.Country__c = country.Id;
+        //added by @nishi 25 sep 2020
+        objCentr.Organisation__c = organisationRecord.id;
+        objCentr.Organisation_Sharing__c ='Aureus Academy Singapore';
+        //updated by @nishi 25 sep 2020
         insert objCentr;
         Account objTchr=TestUtil.createAccount('Teacher',false,false);
         insert objTchr;
@@ -162,7 +176,7 @@ public class EnrolmentTriggerTest {
     }
     
     // Nishi: 4-aug:2020: for cover enrolment trigger resource Id realted Changes
-     //  @Nishi :1-Aur2020 :  for test testChangeLesson_Type
+    //  @Nishi :1-Aur2020 :  for test testChangeLesson_Type
     public static testMethod void testChangeLesson_Type(){
         CampEnrolmentTestHelper.createCampData();
         Country__c country = new Country__c(); 
@@ -175,7 +189,19 @@ public class EnrolmentTriggerTest {
         country.Stripe_Publishable_Key__c = 'ABC'; 
         country.Stripe_Secret_Key__c = 'deede'; 
         insert country;
-
+        
+        //added by nishi:25-sep-2020: create organisation
+        Organisation__c organisationRecord = new Organisation__c();
+        organisationRecord.Name = 'Aureus Academy Singapore';
+        organisationRecord.Bank_Account_Number__c = '1123456789';
+        organisationRecord.Branch_Code__c = 'test';
+        organisationRecord.Country__c = country.id;
+        organisationRecord.Stripe_Base_Url__c = 'www.test.com';
+        organisationRecord.Stripe_Publishable_Key__c = 'ABC';
+        organisationRecord.Stripe_Secret_Key__c = 'test_key';
+        organisationRecord.Sage_Company__c = 'AGP';
+        Insert organisationRecord;  
+        
         Firebase_Settings__c settings = New Firebase_Settings__c(name= 'setting',API_Key__c='Key=AAAAnpwAoa0:APA91bED0q97GSDONF-R-KvOr3ZPQM3Iid5O6Lq00ysF7XvZYwFZ8y2U6kF_loirGYtoNF6rgQPSTQFtYisty4GB_6w5xFf9cXDTRI8eXSulk6KX8cFjCgDEvf7KjnH4tu27V65Y0WEN',
                                                                  Endpoint__c='https://fcm.googleapis.com/fcm/send',Enable_Logs__c=true,Enable_Notifications__c= true);
         insert settings;
@@ -191,6 +217,10 @@ public class EnrolmentTriggerTest {
         
         Account objCentr=TestUtil.createAccount('Centre',False,false);
         objCentr.Country__c = country.Id;
+         //added by @nishi 25 sep 2020
+        objCentr.Organisation__c = organisationRecord.id;
+        objCentr.Organisation_Sharing__c ='Aureus Academy Singapore';
+        //updated by @nishi 25 sep 2020
         INSERT objCentr;
         
         Account objtechr=TestUtil.createAccount('Teacher',False,true);
@@ -215,7 +245,7 @@ public class EnrolmentTriggerTest {
         objEnrol.Lesson_Start_time__c=listOfTeacherWorkingHours[0].Start_Time__c;
         objEnrol.Lessons_Start_Date__c=date.today().addDays(1);
         objEnrol.Referral_code_used__c = objCustmr.Unique_Referral_Code__c;
-            objEnrol.Referred_by__c = objCustmr.Id;
+        objEnrol.Referred_by__c = objCustmr.Id;
         update objENrol; 
         objEnrol.Lesson_Day__c=DateTime.newInstance(objEnrol.Lessons_Start_Date__c.addDays(1), objEnrol.Lesson_Start_time__c).format('EEEE');
         update objENrol;

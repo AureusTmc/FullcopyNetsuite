@@ -22,6 +22,7 @@ public without sharing class RescheduleAllCenterBookings {
     Public Boolean isOssia; // added by nishi: 24-Aug-2020: if teacher Leave is found and we update  Ossia org enrolment then we added 180 expiry days otherwise we added 120 days for other students
     Public Enrolment__c enrolObj;
     Public Date effectiveDate;
+    Public Date effectivestartDate;
     Public Map<String, Booking__c> mapOfBooking = new Map<String, Booking__c>();
     Public Map<String, Fifth_Lesson__c> mapOfFifthLesson = new Map<String, Fifth_Lesson__c>();
     Public String centreOrgId;
@@ -33,10 +34,12 @@ public without sharing class RescheduleAllCenterBookings {
          Language, NamespacePrefix,Makeup_Expiry_Days_For_Public_Holiday__c, Label, QualifiedApiName, Makeup_Expiry_Days__c,
          Makeup_Expiry_Days_Teacher__c FROM Ossia_Organisation_Settings__mdt
          WHERE Label =:System.Label.Ossia_Organisation_Name];
-         system.debug('listOfOssia_Organisation_Settings'+listOfOssia_Organisation_Settings);
+        //System.debug('listOfOssia_Organisation_Settings'+listOfOssia_Organisation_Settings);
          // added by nishi: 22-Aug-2020: for manage ossia organization student  we added 180 days in expiry dates
         this.enrolObj = enrolObj;
         this.effectiveDate = effectiveDate;
+        //11-Sep-2020: Nishi:user can change lesson day so we manage this new lesson so we delete all future booking with the start of effective month
+        this.effectivestartDate = Date.newInstance(effectiveDate.year(),effectiveDate.month(),1);
         this.isOssia = false;
         // Added by nishi: 24-Aug-2020:Start: for ossia students booking will cancel then we added expiry date 180
         // otherwise we added 120 days for other students
@@ -48,8 +51,8 @@ public without sharing class RescheduleAllCenterBookings {
         } 
         if(enrolObj.Center__r != null && string.isNotBlank(enrolObj.Center__r.Organisation__c))
             centreOrgId = enrolObj.Center__r.Organisation__c;
-        system.debug('@@@centreOrgId'+centreOrgId);
-        dayIsChanged(enrolObj, effectiveDate);
+       //System.debug('@@@centreOrgId'+centreOrgId);
+        dayIsChanged(enrolObj, effectiveDate,effectivestartDate);
         
     }
 
@@ -62,7 +65,7 @@ public without sharing class RescheduleAllCenterBookings {
      *  o	All future placeholder related to 5th week will be cancelled 
      *  o	Remove all 5th lesson record
      */
-    private void dayIsChanged(Enrolment__c enrolmentObj, Date effectiveDate){
+    private void dayIsChanged(Enrolment__c enrolmentObj, Date effectiveDate,Date effectivestartDate){
 
         Set<String> makeupBookingSet = new Set<String>();
         Set<String> adhocBookingSet = new Set<String>();
@@ -71,7 +74,7 @@ public without sharing class RescheduleAllCenterBookings {
         List<Fifth_Lesson__c> allFifthLessonsToDelete = new List<Fifth_Lesson__c>();
 
         //Fifth Lesson Section
-        for(Fifth_Lesson__c fifthLesson : fetchAllFutureFifthLesson(enrolmentObj.Id, effectiveDate)){
+        for(Fifth_Lesson__c fifthLesson : fetchAllFutureFifthLesson(enrolmentObj.Id, effectivestartDate)){
             if((!fifthLesson.isActive__c) && String.isNotBlank(fifthLesson.Booking__c) && fifthLesson.Booking__r.Package__r.Type__c == ConstantsClass.pakageTypeMakeup){
                 makeupBookingSet.add(fifthLesson.Booking__c);
             }else if((!fifthLesson.isActive__c) && String.isNotBlank(fifthLesson.Booking__c) && fifthLesson.Booking__r.Package__r.Type__c == ConstantsClass.adhocPackageType){
@@ -81,9 +84,9 @@ public without sharing class RescheduleAllCenterBookings {
             }
             allFifthLessonsToDelete.add(fifthLesson);
         }
-        // system.debug('@@dayIsChanged all future makeupBooking =='+makeupBookingSet );
-        // system.debug('@@dayIsChanged all future adhocBookingSet  =='+adhocBookingSet );
-        // system.debug('@@dayIsChanged all future placeholderBookingSet  =='+placeholderBookingSet );
+        ////System.debug('@@dayIsChanged all future makeupBooking =='+makeupBookingSet );
+        ////System.debug('@@dayIsChanged all future adhocBookingSet  =='+adhocBookingSet );
+        ////System.debug('@@dayIsChanged all future placeholderBookingSet  =='+placeholderBookingSet );
        
         //Delete all future Placeholder Type Bookings for the Enrolment.
         if(placeholderBookingSet.size() > 0){
@@ -105,9 +108,10 @@ public without sharing class RescheduleAllCenterBookings {
             maxDate = getMaxDateOfEnrolmentBookings(enrolmentObj.Id);
             Integer lastDayOfMonth = Date.daysInMonth(maxDate.year(), maxDate.month());
             maxDate = Date.newInstance(maxDate.year(), maxDate.month(), lastDayOfMonth);
-            processOldRegularBookings(enrolmentObj.Id, effectiveDate);
+            //11-Sep-2020: Nishi:user can change lesson day so we manage this new lesson so we delete all future booking with the start of effective month
+            processOldRegularBookings(enrolmentObj.Id, effectivestartDate);
         }
-         system.debug('@@dayIsChanged all future FifthLessons To Delete =='+allFifthLessonsToDelete );
+        //System.debug('@@dayIsChanged all future FifthLessons To Delete =='+allFifthLessonsToDelete );
         if(allFifthLessonsToDelete.size() > 0){
             DELETE allFifthLessonsToDelete;
         }
@@ -120,7 +124,7 @@ public without sharing class RescheduleAllCenterBookings {
         if(maxDate != NULL && String.isNotBlank(enrolmentObj.Id) && String.isNotBlank(enrolmentObj.New_Teacher__c) && effectiveDate != NULL){
             processTeacherLeaves(enrolmentObj.New_Teacher__c, effectiveDate,  maxDate);
         }
-        system.debug('enrolmentObj.New_Teacher__c'+enrolmentObj.New_Teacher__c);
+       //System.debug('enrolmentObj.New_Teacher__c'+enrolmentObj.New_Teacher__c);
         if(maxDate != NULL && String.isNotBlank(enrolmentObj.Id) && String.isNotBlank(enrolmentObj.New_Teacher__c) && effectiveDate != NULL && String.isNotBlank(centreOrgId)){
             List<Account> teacherlist = [select id,Employee_Duty_Type__c from Account where Id =: enrolmentObj.New_Teacher__c]; 
             if(teacherlist != null && teacherlist.size() > 0)
@@ -170,7 +174,7 @@ public without sharing class RescheduleAllCenterBookings {
                 maxDate = (Date)agg.get('maxDate');
             }
         }
-        system.debug('@@regular booking maxDate =='+maxDate);
+       //System.debug('@@regular booking maxDate =='+maxDate);
         return maxDate;
     }
 
@@ -182,7 +186,7 @@ public without sharing class RescheduleAllCenterBookings {
         for(String placeholder : bookingIds){
             fifthPlacholder.add(new Booking__c(Id = placeholder));
         }
-        system.debug('@@ deleted fifthPlacholder bookings are =' +fifthPlacholder);
+       //System.debug('@@ deleted fifthPlacholder bookings are =' +fifthPlacholder);
         if(fifthPlacholder.size() > 0){
             DELETE fifthPlacholder;
         }
@@ -198,7 +202,7 @@ public without sharing class RescheduleAllCenterBookings {
         if(bookingIds.size() > 0){
             makeupBooking = fetchAllBookings(bookingIds);
         }
-        system.debug('@@ for  update makeup Booking  are =' +makeupBooking);
+       //System.debug('@@ for  update makeup Booking  are =' +makeupBooking);
         if(makeupBooking.size() > 0){
             AureusCalendarControllerHelper.cancelAllFutureMakeupBookings(makeupBooking);
         }
@@ -217,7 +221,7 @@ public without sharing class RescheduleAllCenterBookings {
             bookObj.Available_Make_up_Units__c = bookObj.Duration__c;
             if(isOssia){
                 if(listOfOssia_Organisation_Settings != null && listOfOssia_Organisation_Settings.size() > 0){
-                    bookObj.Make_up_Expiry_Date__c=bookObj.Booking_Date__c.addDays(Integer.valueOf((listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days_Teacher__c)));
+                    bookObj.Make_up_Expiry_Date__c=bookObj.Booking_Date__c.addDays(Integer.valueOf((listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days__c)));
                 }
             }else{
                 bookObj.Make_up_Expiry_Date__c  = bookObj.Booking_Date__c.addDays(120);
@@ -225,7 +229,7 @@ public without sharing class RescheduleAllCenterBookings {
             bookObj.status__c = ConstantsClass.statusCanceled;
             bookingList.add(bookObj);
         }
-        system.debug('@@@ updated process Adhoc Bookings are == '+bookingList);
+       //System.debug('@@@ updated process Adhoc Bookings are == '+bookingList);
         if(bookingList.size() > 0){
             UPDATE bookingList;
         }
@@ -240,7 +244,7 @@ public without sharing class RescheduleAllCenterBookings {
         if(String.isNotBlank(enrolId) && effectiveDate != NULL){
             List<Booking__c> bookingListToDelete = new List<Booking__c>();
             List<Booking__c> bookingsToUpsert = new List<Booking__c>();
-            system.debug('@@@processOldRegularBookings effectiveDate'+effectiveDate);
+           //System.debug('@@@processOldRegularBookings effectiveDate'+effectiveDate);
             for(Booking__c bookObj : fetchAllFutureRegularBookings(enrolId, effectiveDate)){
                 if(bookObj.Type__c == ConstantsClass.typeRegular && bookObj.Status__c == ConstantsClass.statusCanceled && bookObj.Available_Make_up_Units__c != NULL && bookObj.Available_Make_up_Units__c > 0){
                     bookingsToUpsert.add(new Booking__c(Id = bookObj.Id, Available_Make_up_Units__c = bookObj.Available_Make_up_Units__c - bookObj.Duration__c));
@@ -248,11 +252,11 @@ public without sharing class RescheduleAllCenterBookings {
                     bookingListToDelete.add(new Booking__c(Id = bookObj.Id));
                 }
             }
-            system.debug('@@processOldRegularBookings bookingsToUpsert'+bookingsToUpsert);
+           //System.debug('@@processOldRegularBookings bookingsToUpsert'+bookingsToUpsert);
             if(bookingsToUpsert.size() > 0){
                 UPDATE bookingsToUpsert;
             }
-            system.debug('@@processOldRegularBookings bookingListToDelete'+bookingListToDelete);
+           //System.debug('@@processOldRegularBookings bookingListToDelete'+bookingListToDelete);
             if(bookingListToDelete.size() > 0){
                 DELETE bookingListToDelete;
             }
@@ -266,10 +270,12 @@ public without sharing class RescheduleAllCenterBookings {
     private void reCreateRegularBookingsAndFifthLesson(Enrolment__c  enrolmentObj, Date effectiveDate, Date maxDate){
         List<Booking__c> bookingsToInsert = new List<Booking__c>();
         List<Fifth_Lesson__c> fifthLessonToInsert = new List<Fifth_Lesson__c>();
-        System.debug('@@@@reCreateRegularBookingsAndFifthLesson maxDate'+maxDate);
-        System.debug('@@@@reCreateRegularBookingsAndFifthLesson enrolmentObj'+enrolmentObj);
-        System.debug('@@@@reCreateRegularBookingsAndFifthLesson effectiveDate'+effectiveDate);
+       //System.debug('@@@@reCreateRegularBookingsAndFifthLesson maxDate'+maxDate);
+       //System.debug('@@@@reCreateRegularBookingsAndFifthLesson enrolmentObj'+enrolmentObj);
+       //System.debug('@@@@reCreateRegularBookingsAndFifthLesson effectiveDate'+effectiveDate);
         if(String.isNotBlank(enrolmentObj.Id)){
+            // get new active subscription invoice 
+            List<Subscription_Line_Item__c> sublineItemList = ChangeCenterEnrolmentProcessController.fetchsublineItemList(enrolmentObj.id);
             Booking__c bookingObj = new Booking__c();
             Fifth_Lesson__c fifthLesson = new Fifth_Lesson__c();
             while(effectiveDate <= maxdate){
@@ -354,9 +360,9 @@ public without sharing class RescheduleAllCenterBookings {
                         bookingObj.End_Time__c =  bookingObj.Start_Time__c.addMinutes(Integer.valueOf(enrolmentObj.Package__r.Duration__c));       
                     }
 
-                    if(enrolmentObj.Subscription_Line_Items__r != null && enrolmentObj.Subscription_Line_Items__r.size() > 0 && 
-                       enrolmentObj.Subscription_Line_Items__r[0].Next_Bill_Date__c != null && effectiveDate != null && 
-                       effectiveDate >= enrolmentObj.Subscription_Line_Items__r[0].Next_Bill_Date__c){
+                    if(sublineItemList != null && sublineItemList.size() > 0 && 
+                    sublineItemList[0].Next_Bill_Date__c != null && effectiveDate != null && 
+                       effectiveDate >= sublineItemList[0].Next_Bill_Date__c){
                        bookingObj.Status__c = ConstantsClass.pendingStatus;
                     }else{
                         bookingObj.Status__c = ConstantsClass.scheduledStatus;
@@ -365,27 +371,27 @@ public without sharing class RescheduleAllCenterBookings {
                 }
                 
                 effectiveDate = effectiveDate.addDays(7);
-                system.debug('@@@new effectiveDate'+effectiveDate);
+               //System.debug('@@@new effectiveDate'+effectiveDate);
             }       
         }
 
         if(bookingsToInsert.size() > 0){
             INSERT bookingsToInsert;
-            system.debug('@@@New Bookings are Inserted '+bookingsToInsert);
+           //System.debug('@@@New Bookings are Inserted '+bookingsToInsert);
 
             for(Booking__c bookingObj : bookingsToInsert){
                 mapOfBooking.put(bookingObj.Booking_Date__c + '-' + bookingObj.Teacher_Account__c, bookingObj);
             }
         }
-        System.debug('@@@@mapOfBooking --'+mapOfBooking);
+       //System.debug('@@@@mapOfBooking --'+mapOfBooking);
         if(fifthLessonToInsert.size() > 0){
             INSERT fifthLessonToInsert;
-            system.debug('@@@New fifthLesson are Inserted '+fifthLessonToInsert);
+           //System.debug('@@@New fifthLesson are Inserted '+fifthLessonToInsert);
             for(Fifth_Lesson__c lessonFifth : fifthLessonToInsert){
                 mapOfFifthLesson.put(lessonFifth.Booking_Date__c + '-' + lessonFifth.Teacher_Account__c, lessonFifth);
             }
         }
-        System.debug('@@@@mapOfFifthLesson --'+mapOfFifthLesson);
+       //System.debug('@@@@mapOfFifthLesson --'+mapOfFifthLesson);
     }
    
   
@@ -398,9 +404,9 @@ public without sharing class RescheduleAllCenterBookings {
 
         Map<String, Booking__c> updatedBookingMap = new Map<String, Booking__c>(); 
         Map<String, Fifth_Lesson__c> updatedLessonMap = new Map<String, Fifth_Lesson__c>();
-        system.debug('@@@processTeacherLeaves teacherId -'+teacherId);
-        system.debug('@@@processTeacherLeaves effectiveDate -'+effectiveDate);
-        system.debug('@@@processTeacherLeaves maxDate -'+maxDate);
+       //System.debug('@@@processTeacherLeaves teacherId -'+teacherId);
+       //System.debug('@@@processTeacherLeaves effectiveDate -'+effectiveDate);
+       //System.debug('@@@processTeacherLeaves maxDate -'+maxDate);
         if(String.isNotBlank(teacherId) && effectiveDate != NULL && maxDate != NULL){
             setOfTeachersLeaves = fetchTeacherLeavesRequestDateSet(teacherId, effectiveDate, maxDate);
         }
@@ -423,7 +429,7 @@ public without sharing class RescheduleAllCenterBookings {
                 updatedBookingMap.put(keySetValue, bookObj);
             }
         }
-        system.debug('@@@@ teacher leave then cancel booking and updated booking are =='+bookingtoUpdate);
+       //System.debug('@@@@ teacher leave then cancel booking and updated booking are =='+bookingtoUpdate);
         for(String keySetValue : mapOfFifthLesson.keySet()){
             if(setOfTeachersLeaves.contains(keySetValue)){
                 Fifth_Lesson__c lesson = mapOfFifthLesson.get(keySetValue);
@@ -440,18 +446,18 @@ public without sharing class RescheduleAllCenterBookings {
         }
         if(fifthLessonToUpdate.size() > 0){
             fifthLessonToUpdate = createPlaceholderBookingFromFifthLesson(fifthLessonToUpdate);
-            system.debug('@@ create Placeholder booking for fifth lesson  '+fifthLessonToUpdate);
+           //System.debug('@@ create Placeholder booking for fifth lesson  '+fifthLessonToUpdate);
             for(Fifth_Lesson__c fifthLesson : fifthLessonToUpdate){
                 fifthLesson.Booking__c = fifthLesson.Booking__r.Id;
             }
             UPDATE fifthLessonToUpdate;
         }
-        system.debug('@@@upated fifth bookings are  fifthLessonToUpdate'+fifthLessonToUpdate);
+       //System.debug('@@@upated fifth bookings are  fifthLessonToUpdate'+fifthLessonToUpdate);
         if(bookingtoUpdate.size() > 0){
             
             List<Case> caseList = AureusUtility.createCase(bookingtoUpdate);
             insert caseList;
-            system.debug('@@ inserted case for bookings are =='+caseList);
+           //System.debug('@@ inserted case for bookings are =='+caseList);
             bookingtoUpdate.addAll(createPlaceholderFromBooking(bookingtoUpdate));
             UPSERT bookingtoUpdate;
             Set<Id> csIds = new Set<Id>();
@@ -469,11 +475,11 @@ public without sharing class RescheduleAllCenterBookings {
 
         Map<String, Booking__c> updatedBookingMap = new Map<String, Booking__c>(); 
         Map<String, Fifth_Lesson__c> updatedLessonMap = new Map<String, Fifth_Lesson__c>();
-        system.debug('@@processPublicHolidays effectiveDate'+effectiveDate);
-        system.debug('@@processPublicHolidays teacherObj'+teacherObj);
-        system.debug('@@processPublicHolidays centreOrgId'+centreOrgId);
-        system.debug('@@processPublicHolidays maxDate'+maxDate);
-        system.debug('@@processPublicHolidays teacherObj.id'+teacherObj.Id);
+       //System.debug('@@processPublicHolidays effectiveDate'+effectiveDate);
+       //System.debug('@@processPublicHolidays teacherObj'+teacherObj);
+       //System.debug('@@processPublicHolidays centreOrgId'+centreOrgId);
+       //System.debug('@@processPublicHolidays maxDate'+maxDate);
+       //System.debug('@@processPublicHolidays teacherObj.id'+teacherObj.Id);
         if(effectiveDate != NULL && maxDate != NULL && teacherObj != NULL && String.isNotBlank(centreOrgId) && String.isNotBlank(teacherObj.Id)){
             mapOfPublicLeaves = fetchPublicHolidaysDateMap(effectiveDate, maxDate, centreOrgId, teacherObj);
         }
@@ -498,7 +504,7 @@ public without sharing class RescheduleAllCenterBookings {
                 updatedBookingMap.put(keySetValue, bookObj);
             }
         }
-        system.debug('@@@cancel booking for public holiday to Update'+bookingtoUpdate);
+       //System.debug('@@@cancel booking for public holiday to Update'+bookingtoUpdate);
 
         for(String keySetValue : mapOfFifthLesson.keySet()){
             if(mapOfPublicLeaves.containsKey(keySetValue)){
@@ -508,7 +514,7 @@ public without sharing class RescheduleAllCenterBookings {
                 updatedLessonMap.put(keySetValue, lesson);
             }
         }
-        system.debug('@@@deActivate Fifth bookings '+fifthLessonToUpdate);
+       //System.debug('@@@deActivate Fifth bookings '+fifthLessonToUpdate);
         if(updatedBookingMap.size() > 0){
             mapOfBooking.putAll(updatedBookingMap);
         }
@@ -523,15 +529,15 @@ public without sharing class RescheduleAllCenterBookings {
             }
             UPDATE fifthLessonToUpdate;
         }
-        system.debug('@@@updated  fifthLessonToUpdate '+fifthLessonToUpdate);
+       //System.debug('@@@updated  fifthLessonToUpdate '+fifthLessonToUpdate);
         if(bookingtoUpdate.size() > 0){
             
             List<Case> caseList = AureusUtility.createCase(bookingtoUpdate);
             insert caseList;
-            system.debug('@@ create case for bookings '+caseList);
+           //System.debug('@@ create case for bookings '+caseList);
             bookingtoUpdate.addAll(createPlaceholderFromBooking(bookingtoUpdate));
             UPSERT bookingtoUpdate;
-            system.debug('@@@processPublicHolidays bookingtoUpdate '+bookingtoUpdate);
+           //System.debug('@@@processPublicHolidays bookingtoUpdate '+bookingtoUpdate);
             Set<Id> csIds = new Set<Id>();
             for(Case c : caseList)
                 csIds.add(c.Id);
@@ -551,7 +557,7 @@ public without sharing class RescheduleAllCenterBookings {
                 startDateLeave = startDateLeave.addDays(1);
             }
         }
-         System.debug('@@@@@setOfTeachersLeave'+setOfTeachersLeave);
+        //System.debug('@@@@@setOfTeachersLeave'+setOfTeachersLeave);
         return setOfTeachersLeave;
     }
 
@@ -565,10 +571,11 @@ public without sharing class RescheduleAllCenterBookings {
                     mapOfHolidaysLeave.put(holiday.Public_Holiday_Date__c + '-' + teacherObj.Id, holiday);
                 }
         }
-        system.debug('@@@ mapOfHolidaysLeave dates are ='+mapOfHolidaysLeave);
+       //System.debug('@@@ mapOfHolidaysLeave dates are ='+mapOfHolidaysLeave);
         return mapOfHolidaysLeave;
     }
-
+    // update 21 09 2020 @nishi jain 
+	@TestVisible
     private List<Fifth_Lesson__c> createPlaceholderBookingFromFifthLesson(List<Fifth_Lesson__c> fifthLessons){
         List<Booking__c> bookList = new List<Booking__c>();  
         Booking__c bookObj;
@@ -596,7 +603,7 @@ public without sharing class RescheduleAllCenterBookings {
         if(bookList.size() > 0){
             INSERT bookList;
         }
-        system.debug('@@@ inserted placeholder bookings are  ='+bookList);
+       //System.debug('@@@ inserted placeholder bookings are  ='+bookList);
 
         return fifthLessons;
     }
@@ -631,7 +638,7 @@ public without sharing class RescheduleAllCenterBookings {
             placeholderObj.Package__c  = bookingCurrentObj.Package__c;
             placeholderList.add(placeholderObj);
         }
-        system.debug('@@@ create new Placeholder for bookings =='+placeholderList);
+       //System.debug('@@@ create new Placeholder for bookings =='+placeholderList);
         return placeholderList;
     }
 

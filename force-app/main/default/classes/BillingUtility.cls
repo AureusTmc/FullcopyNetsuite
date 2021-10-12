@@ -61,11 +61,11 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
     }
     
     //method is used in creating invoice for subscription
-    public static Set<string> createInvoiceFromSubscription(List<Subscription__c> subscriptions, String invId,Date invDate){
+    public static Set<string> createInvoiceFromSubscription(List<Subscription__c> subscriptions, String invId,Date invDate,boolean isNextMonthInvoice){
         List<Invoice__c> invList = new List<Invoice__c>();
-        System.debug('@@@subscriptions'+subscriptions.size());
-        System.debug('@@invId'+invId);
-        System.debug('@@invDate'+invDate);
+       //system.debug('@@@subscriptions'+subscriptions.size());
+       //system.debug('@@invId'+invId);
+       //system.debug('@@invDate'+invDate);
         Set<string> invIds = new Set<string>();
         Set<String> parentIds = new Set<String>();
         List<Invoice_Line_Item__c> invLineItmList = new List<Invoice_Line_Item__c>();
@@ -78,16 +78,16 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
         Date lastDate = Date.newInstance(currentDate.year(), currentDate.month(), daysInMonth);
         Map<String,List<Date>> mapOfDates = getDateMap(firstDate,lastDate);
             
-        System.debug('@@mapOfSubInvoice'+subscriptions);
-        System.debug('@@mapOfDates'+mapOfDates);
+       //system.debug('@@mapOfSubInvoice'+subscriptions);
+       //system.debug('@@mapOfDates'+mapOfDates);
         for(Subscription__c sub:subscriptions){
-            System.debug('@@sub'+sub.Subscription_Line_Items__r.size());
+           //system.debug('@@sub'+sub.Subscription_Line_Items__r.size());
             if(sub.Subscription_Line_Items__r.size() > 0){
                 Invoice__c inv = fillInvoice(sub.Id,sub.Parent__c,constantsClass.dueStatus);   //new Invoice__c();
                 inv.Center__c = sub.Center__c;
-                inv.Invoice_Date__c = invDate;
-                System.debug('@@sub'+sub);
-                inv.Due_Date__c = invDate.addDays(Integer.valueOf(Label.Invoice_Due_Day));
+                inv.Invoice_Date__c = isNextMonthInvoice ? System.today() :invDate; //commented by nishi: 17-Nov-2020: for Invoice date set to the date when invoice was generated.
+               //system.debug('@@sub'+sub);
+                inv.Due_Date__c =  isNextMonthInvoice ? System.today() : invDate.addDays(Integer.valueOf(Label.Invoice_Due_Day));
                 inv.invoice_type__c = 'Recurring';
                 mapOfSubInvoice.put(sub, inv);   
                 // fill parentIds set, used in subsequent process i.e. adjustDeposit
@@ -97,10 +97,10 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
                 
             }
         }
-        System.debug('@@mapOfSubInvoice'+mapOfSubInvoice);
+       //system.debug('@@mapOfSubInvoice'+mapOfSubInvoice);
         if(mapOfSubInvoice.size() > 0){
             INSERT mapOfSubInvoice.values();
-            System.debug('@@mapOfSubInvoice'+mapOfSubInvoice);
+           //system.debug('@@mapOfSubInvoice'+mapOfSubInvoice);
             for(Subscription__c objSub : mapOfSubInvoice.keySet()){
                 invIds.add(mapOfSubInvoice.get(objSub).Id);
                 listOfPackageToProcess.add(new PackageProcessHandler(mapOfSubInvoice.get(objSub),objSub.Subscription_Line_Items__r,firstDate,lastDate));        
@@ -121,42 +121,60 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
                 }
                 INSERT invLineItmList;
             }
-            system.debug('@@@invLineItmList'+invLineItmList);
-            List<Invoice__c> invoices = new List<Invoice__c>();
-            Map<String, Date> mapOfParentEnrolmentLastDate = new Map<String, Date>();
-            //@Jatin on 21st Nov 2019 commented due to refund record not created
-            //Map<String, Set<String>> mapOfParentEnrolments = new Map<String, Set<String>>();
-            for(Invoice__c invoiceObj : [SELECT Id, Name,Parent_Account__c,Total_Amount__c, Remarks__c,Invoice_Date__c,
-                                             (SELECT Id, Enrolment__r.id,Enrolment__r.Package_Process_Type__c, 
-                                                Enrolment__r.Effective_Date__c 
-                                                FROM Invoice_Line_Items__r) 
-                                            FROM Invoice__c 
-                                        WHERE Id IN : invIds]){
-                invoices.add(invoiceObj);
-                for(Invoice_Line_Item__c  lineItemObj : invoiceObj.Invoice_Line_Items__r){
-                    if(mapOfParentEnrolmentLastDate.containsKey(invoiceObj.Parent_Account__c) && 
-                        mapOfParentEnrolmentLastDate.get(invoiceObj.Parent_Account__c) < lineItemObj.Enrolment__r.Effective_Date__c){
-                        mapOfParentEnrolmentLastDate.put(invoiceObj.Parent_Account__c, lineItemObj.Enrolment__r.Effective_Date__c);
-                    }else if(String.isNotBlank(lineItemObj.Enrolment__c) && lineItemObj.Enrolment__r.Package_Process_Type__c == ConstantsClass.enrollmentProcessCancelType && lineItemObj.Enrolment__r.Effective_Date__c != NULL){
-                        mapOfParentEnrolmentLastDate.put(invoiceObj.Parent_Account__c, lineItemObj.Enrolment__r.Effective_Date__c);
-                    }
-                }
-            }
-            system.debug('@@@mapOfParentEnrolmentLastDate'+mapOfParentEnrolmentLastDate);
-            system.debug('@@@mapOfParentEnrolmentLastDate'+mapOfSubInvoice.keySet());
-            system.debug('@@@mapOfParentEnrolmentLastDate'+mapOfSubInvoice.values());
-            system.debug('@@@mapOfParentEnrolmentLastDate'+invIds);
-            system.debug('@@@mapOfParentEnrolmentLastDate'+invDate);
-            system.debug('@@@mapOfParentEnrolmentLastDate'+mapOfParentEnrolmentLastDate);
-            
-
+           system.debug('@@@invIds'+invIds);
             updateSubscriptionNextDate(mapOfSubInvoice.keySet());
             adjustDiscounts(mapOfSubInvoice.values(),invIds,invDate);
-            adjustDeposit(invoices, invIds, parentIds, firstDate, lastDate, mapOfParentEnrolmentLastDate);
+            //adjustDeposit(invoices, invIds, parentIds, firstDate, lastDate, mapOfParentEnrolmentLastDate); //commented by nishi: 16-Sep-2020 : for new requirement we adjust pending credit memo not payment
+           // adjustCreditMemoDeposit(invoices, invIds, parentIds, firstDate, lastDate, mapOfParentEnrolmentLastDate,true);
+             adjustCreditMemoDeposit( invIds, parentIds, firstDate, lastDate, true);
+            //sendEmailsForOssiaNonStripeCustomers(invIds);
+            System.enqueueJob(new OssiaNonStripeCustomerQueueableClass(invIds)); 
         }
         return invIds;
     }
     
+    // added by nishi: 13-nov-2020: for send email if customer is belongs to Ossia organisation and Non stripe customers  
+    @future(callout=true)
+    public static void sendEmailsForOssiaNonStripeCustomers(Set<string> setOfInvIds){
+        EmailsForOssiaNonStripeCustomers(setOfInvIds);
+    }
+    public static void EmailsForOssiaNonStripeCustomers(Set<string> setOfInvIds){
+         system.debug('setOfInvIds'+setOfInvIds);
+        if(setOfInvIds != null && setOfInvIds.size() > 0){
+            Map<string,Invoice__c> mapOfinvoice = new Map<string,Invoice__c>();                                            
+            List<Messaging.SingleEmailMessage> sendSingleEmailMessage = new List<Messaging.SingleEmailMessage>();
+            for(Invoice__c invObject : [SELECT Id,Name,Center__r.Organisation__r.name, Parent_Account__r.Centre_Name__r.Organisation__r.Tax_Rate__c,
+                                    Parent_Account__r.Centre_Name__r.Location__c,Parent_Account__r.PersonContactId, Center__r.Location__c,
+                                    Parent_Account__r.Stripe_Customer_Id__c,Parent_Account__r.Card_Number__c,Parent_Account__r.Card_Type__c
+                                    FROM Invoice__c WHERE Id IN : setOfInvIds
+                                    And status__c =: constantsClass.dueStatus
+                                    And Center__r.Organisation__r.name =: System.Label.Ossia_Organisation_Name]){
+                if(string.isBlank(invObject.Parent_Account__r.Stripe_Customer_Id__c) && string.isBlank(invObject.Parent_Account__r.Card_Number__c) && string.isBlank(invObject.Parent_Account__r.Card_Type__c)){
+                    mapOfinvoice.put(invObject.id,invObject);
+                }
+            }
+            system.debug('mapOfinvoice'+mapOfinvoice);
+            map<string,Attachment> mapOfInvoiceAttachment  = PianoRentalHelperController.createInvoiceAttachment(mapOfinvoice.values());
+            Map<string,map<String ,Blob>> mapOfInvoiceBlobList = new Map<string,map<String ,Blob>>();
+            map<String ,Blob> mapOfInvoiceBlob = new map<String ,Blob>();
+            system.debug('mapOfInvoiceAttachment'+mapOfInvoiceAttachment);
+            for(string invoiceid : mapOfInvoiceAttachment.keySet()){
+                if(mapOfinvoice.containsKey(invoiceid)){
+                    mapOfInvoiceBlob = new map<String ,Blob>();
+                    if(mapOfInvoiceBlobList.containsKey(invoiceid)){
+                        mapOfInvoiceBlob = mapOfInvoiceBlobList.get(invoiceid);
+                    }
+                    mapOfInvoiceBlob.put(mapOfinvoice.get(invoiceid).Name+'.pdf',mapOfInvoiceAttachment.get(invoiceid).body);
+                    mapOfInvoiceBlobList.put(invoiceid,mapOfInvoiceBlob);
+                }
+            }
+            system.debug('mapOfInvoiceBlobList'+mapOfInvoiceBlobList);
+            if(mapOfInvoiceBlobList != null && mapOfInvoiceBlobList.size() > 0){
+                PianoRentalHelperController.sendEmailWithInvoiceAttachment(mapOfInvoiceBlobList, mapOfinvoice.values(),'Ossia Invoice Generation For Ossia Non Stripe Customers');
+            }
+        }
+
+    }
     //@ 22-05-2019 this method is used for adjusting credit notes on the parent.
     private static void adjustDiscounts(List<Invoice__c> listOfInv,Set<String> setOfInvIds,Date invDate){
         Map<String,Invoice__c> mapOfParentInv = new Map<String,Invoice__c>();
@@ -210,7 +228,7 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
                
                 Invoice_Line_Item__c discountItem = fillInvLnItm(invId,null,null, roundOffAmount(-1*discount.Discount_Amount__c), remarks,'');
                 discountItem.Month__c = invDate;
-                
+                discountItem.is_Discount__c = true;   // added by nishi: 4-Nov-2020: for If we get referral discount then mark discount field true
                 //@Jatin on 20th Nov 2019 to apply tax on discount invoice line item...
                 discountItem.GST_Amount__c = roundOffAmount(taxAmount);
 
@@ -265,10 +283,438 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
         }*/
         
     }
+    
+     //@Nishi on 16-Sep:2020 Due to refund record not created for Deposit Adjust.
+    // adjust deposit in invoice
+  /*pplying a credit memo to the next invoice [Invoice generation process & Next month invoice]
+        a.	Comment the previous handling of payments with the status =’Pending’ 
+        b.	Check if there is any pending credit memo available with the customer account.
+        c.	If yes, then if the credit memo amount <= invoice amount then
+                i.	Credit Memo: Update the Invoice number field of the pending credit memo
+                ii.	Credit Memo: Status = success
+                iii.	Credit Memo: Invoice number = to invoice number
+                iv.	Invoice: Update the Prev Adjustment field with the amount
+        d.	if the credit memo amount >  invoice amount then
+        .	break the original credit memo to two credit memos - One equivalent to the invoice amount and other the balance with the status pending
+                i.	Credit Memo: Update the Invoice number field of the pending credit memo (equivalent to the invoice amount)
+                ii.	Credit Memo: Status = success
+                iii.	Credit Memo: Invoice number = to invoice number
+                iv.	Invoice: Update the Prev Adjustment field with the amount
+                v.	Balance credit memo will be utilized in the subsequent invoice  
+    */
+    Private static void adjustCreditMemoDeposit(Set<String> setOfInvIds,Set<String> setOfParentIds,
+    Date firstDate,Date lastDate, boolean isGetTotalAmount){
+         List<Invoice__c> listOfInv = new List<Invoice__c>();
+        Map<String, Date> mapOfParentEnrolmentLastDate = new Map<String, Date>();
+        //@Jatin on 21st Nov 2019 commented due to refund record not created
+        //Map<String, Set<String>> mapOfParentEnrolments = new Map<String, Set<String>>();
+        for(Invoice__c invoiceObj : [SELECT Id, Name,Parent_Account__c,Total_Amount__c, Remarks__c,Invoice_Date__c,Parent_Account__r.Centre_Name__c,
+        Center__r.Country__r.Tax_Rate__c,Credit_Memo_Amount__c,Balance_Amount__c,
+                                            (SELECT Id, Enrolment__r.id,Enrolment__r.Package_Process_Type__c ,
+                                            Enrolment__r.Effective_Date__c ,Package__c
+                                            FROM Invoice_Line_Items__r) 
+                                        FROM Invoice__c 
+                                    WHERE Id IN : setOfInvIds]){
+            listOfInv.add(invoiceObj);
+            for(Invoice_Line_Item__c  lineItemObj : invoiceObj.Invoice_Line_Items__r){
+                if(mapOfParentEnrolmentLastDate.containsKey(invoiceObj.Parent_Account__c) && 
+                    mapOfParentEnrolmentLastDate.get(invoiceObj.Parent_Account__c) < lineItemObj.Enrolment__r.Effective_Date__c){
+                    mapOfParentEnrolmentLastDate.put(invoiceObj.Parent_Account__c, lineItemObj.Enrolment__r.Effective_Date__c);
+                }else if(String.isNotBlank(lineItemObj.Enrolment__c) && lineItemObj.Enrolment__r.Package_Process_Type__c == ConstantsClass.enrollmentProcessCancelType 
+                            && lineItemObj.Enrolment__r.Effective_Date__c != NULL){
+                    mapOfParentEnrolmentLastDate.put(invoiceObj.Parent_Account__c, lineItemObj.Enrolment__r.Effective_Date__c);
+                }
+            }
+        }
+        Map<String, Boolean> mapOfActiveParent = new Map<String, Boolean>();
+        mapOfActiveParent = checkParentHasMultipleEnrolments(setOfParentIds, lastDate);
+        // system.debug('@@@mapOfParentEnrolmentLastDate'+mapOfParentEnrolmentLastDate);
+        // system.debug('@@@mapOfParentEnrolmentLastDate'+mapOfSubInvoice.keySet());
+        // system.debug('@@@mapOfParentEnrolmentLastDate'+mapOfSubInvoice.values());
+        // system.debug('@@@mapOfParentEnrolmentLastDate'+invIds);
+        // system.debug('@@@mapOfParentEnrolmentLastDate'+invDate);
+        // system.debug('@@@mapOfParentEnrolmentLastDate'+mapOfParentEnrolmentLastDate);
+        Map<String,List<Credit_Memo__c>> mapOfParentCreditMemo = getParentCreditMemo(setOfParentIds,lastDate);
+        adjustPendingCreditMemoDeposit(listOfInv, setOfInvIds, setOfParentIds, mapOfParentEnrolmentLastDate,isGetTotalAmount,mapOfParentCreditMemo,mapOfActiveParent);
+    }
+
+    public static Map<string,QueueSObject > getTaskQueueMap(){
+        Set<string> queueName = new Set<string>{'Finance Queue','Retail Queue'};
+        Map<string,QueueSObject > mapOfQueue = new Map<string,QueueSObject >();
+        for(QueueSObject objQueueSObject :   [Select Queue.Id, Queue.Name, Queue.Type 
+                                                from QueueSObject 
+                                                WHERE Queue.Type ='Queue' 
+                                                AND Queue.Name In :queueName 
+                                                AND sObjectType='Task']){
+                                                    mapOfQueue.put(objQueueSObject.Queue.Name,objQueueSObject);  
+                                                }
+                                                system.debug('mapOfQueue'+mapOfQueue);
+                                                return mapOfQueue;
+    }
+    // create new task and set owner id is queue id
+    public static task createNewTask(string subject,string whatId,date activityDate,string queueId){
+        task objtask = new task(subject=subject,
+                        Description = subject,
+                        Priority = 'Medium',
+                        WhatId =  whatId,
+                        Status='Open',
+                        ActivityDate =activityDate,
+                        Type= 'Other',
+                        ownerId = queueId
+                    );
+    return objtask;
+    }
+    public static void adjustPendingCreditMemoDeposit(List<Invoice__c> listOfInv, Set<String> setOfInvIds,Set<String> setOfParentIds,Map<String, Date> mapOfParentEnrolmentLastDate,boolean isGetTotalAmount,
+                                        Map<String,List<Credit_Memo__c>> mapOfParentCreditMemo,Map<String, Boolean> mapOfActiveParent ){
+        List<Invoice__c> invListToUpdate = new List<Invoice__c>();
+        Map<String, Credit_Memo__c> mapOfCreditMemos = new Map<String, Credit_Memo__c>();
+        List<Credit_Memo__c> newPendingCreditMemos = new List<Credit_Memo__c>();
+        Map<String,Decimal> parentCreditMemoTotal = getParentCreditMemoMap(mapOfParentCreditMemo);
+        Map<String,List<Credit_memo_line_item__c>> creditNoteAmountAdjustment = new Map<String,List<Credit_memo_line_item__c>>(); 
+        Map<String, Credit_Memo__c > creditNotepreviousDetails = new Map<String, Credit_Memo__c>(); 
+        map<string,String> mapofAdjustmentCreditNoteAmount = new  map<string,String>();
+        List<Credit_memo_line_item__c> listOfDeletedCreditmemolineitem  = new  List<Credit_memo_line_item__c>();
+        List<Credit_memo_line_item__c> listOfUpdatedCreditmemolineitem  = new  List<Credit_memo_line_item__c>();
+        Map<String,Credit_memo_line_item__c> frominvoiceids = new Map<String,Credit_memo_line_item__c>();
+        Map<String,Decimal> creditmemoDiscounttotalAmount = getcreditmemoDiscounttotalAmount(mapOfParentCreditMemo,setOfParentIds);
+        Map<string,QueueSObject > mapOfQueue = getTaskQueueMap();
+        Map<string,task> mapOfRefundReminderTasks = new Map<string,task>();
+        for(Invoice__c invoice : listOfInv){
+            decimal existingCreditMemoAmount = (invoice.Credit_Memo_Amount__c != null && invoice.Credit_Memo_Amount__c>0) ? invoice.Credit_Memo_Amount__c :0;
+            Credit_Memo__c newCreditMemo = new Credit_Memo__c();
+            Decimal totalCreditMemoLineItemAmount =0;
+            Boolean finding = TRUE;
+            Decimal invoiceTotalAmount = isGetTotalAmount ? invoice.Total_Amount__c : invoice.Balance_Amount__c; // 235
+            Decimal accumulatedCreditMemoAmount = (parentCreditMemoTotal.containsKey(invoice.parent_account__c)) ? parentCreditMemoTotal.get(invoice.parent_account__c) : 0;
+            Decimal adjustedAmount = 0;
+            Decimal adjustedPaymentAmount = 0;
+              if(String.isNotBlank(invoice.Parent_Account__c) && mapOfParentCreditMemo.containsKey(invoice.parent_account__c)){
+                for(Credit_Memo__c objCreditMemo : mapOfParentCreditMemo.get(invoice.parent_account__c)){
+                    if(!mapOfCreditMemos.containsKey(objCreditMemo.Id)){
+                        if(accumulatedCreditMemoAmount <= invoiceTotalAmount && finding){ // run if the credit memo amount <= invoice amount then
+                            objCreditMemo =updateCreditmemo(invoice,'Adjusted against '+invoice.Name,objCreditMemo);
+                            mapOfCreditMemos.put(objCreditMemo.Id, objCreditMemo);
+                            existingCreditMemoAmount+=objCreditMemo.Total_Amount__c;
+                            invoice.Credit_Memo_Amount__c = existingCreditMemoAmount;
+                            if(accumulatedCreditMemoAmount == invoiceTotalAmount){
+                                invoice.status__c = 'Paid';
+                            }
+                            //commented by nishi: for use 1 to many credit memo in one time  finding = FALSE;
+                        }else if(accumulatedCreditMemoAmount > invoiceTotalAmount ){//if the credit memo amount >  invoice amount then break the original credit memo to two credit memos - One equivalent to the invoice amount and other the balance with the status pending  for manage invoice and payment per amount  
+                            if(finding){
+                                if(objCreditMemo.Total_Amount__c  > invoiceTotalAmount ){ //235.00 > 219.63 
+                                    adjustedPaymentAmount =  adjustedPaymentAmount + objCreditMemo.Total_Amount__c; 
+                                }else if(objCreditMemo.Total_Amount__c == invoiceTotalAmount){
+                                    adjustedPaymentAmount = adjustedPaymentAmount + invoiceTotalAmount; 
+                                }else if(objCreditMemo.Total_Amount__c < invoiceTotalAmount  ){
+                                    adjustedPaymentAmount = adjustedPaymentAmount + objCreditMemo.Total_Amount__c; //2000 = 1000+1000
+                                }
+                                if(invoiceTotalAmount < adjustedPaymentAmount){// if invoice Total Amount is greater then  Adjust payment then we remove extra amount and create new payment record 
+                                    Decimal remainingAmount = adjustedPaymentAmount - invoiceTotalAmount; 
+                                    adjustedPaymentAmount = adjustedPaymentAmount - remainingAmount;
+                                    Double adjustmentCreditMemoLineItemAmount = objCreditMemo.Total_Amount__c - remainingAmount; 
+                                    if(objCreditMemo.Credit_memo_line_items__r != null && objCreditMemo.Credit_memo_line_items__r.size() > 0){
+                                        // 26-Oct-2020:nishi: for if any dicount negative amount is found then we added this amount to total amount.
+                                        if(creditmemoDiscounttotalAmount.containskey(objCreditMemo.id)){
+                                            system.debug('creditmemoDiscounttotalAmount.get(objCreditMemo.id)'+creditmemoDiscounttotalAmount.get(objCreditMemo.id));
+                                            adjustmentCreditMemoLineItemAmount = adjustmentCreditMemoLineItemAmount + math.abs(creditmemoDiscounttotalAmount.get(objCreditMemo.id)) ; 
+                                        }
+                                        // 26-Oct-2020:nishi:end: for if any dicount negative amount is found then we added this amount to total amount.
+
+                                        //One equivalent to the invoice amount and other the balance with the status pending
+                                        for(Credit_memo_line_item__c objCreditmemolineitem : objCreditMemo.Credit_memo_line_items__r){
+                                            
+                                            decimal totalCreditMemoLineItemAmountWithoutTax=(objCreditmemolineitem.Amount__c != null ?objCreditmemolineitem.Amount__c : 0);
+                                            decimal totalCreditMemoLineItemTax= (objCreditmemolineitem.Tax_Amount__c != null ?objCreditmemolineitem.Tax_Amount__c : 0); 
+                                            totalCreditMemoLineItemAmount =  totalCreditMemoLineItemAmountWithoutTax+totalCreditMemoLineItemTax; 
+                                            if(totalCreditMemoLineItemAmount > 0){
+                                                system.debug('adjustmentCreditMemoLineItemAmount'+adjustmentCreditMemoLineItemAmount);
+                                                if(adjustmentCreditMemoLineItemAmount <= 0.00){
+                                                    List<Credit_memo_line_item__c> listOfCreditmemolineitem  = new  List<Credit_memo_line_item__c>();
+                                                    if(creditNoteAmountAdjustment.containsKey(invoice.id)){
+                                                        listOfCreditmemolineitem =  creditNoteAmountAdjustment.get(invoice.id);
+                                                    } 
+                                                    Credit_memo_line_item__c objcreateCreditMemoLine = createCreditMemoLineRec(objCreditmemolineitem.Amount__c,objCreditmemolineitem.Tax_Amount__c,objCreditmemolineitem.Package__c,objCreditmemolineitem.enrolment__c,objCreditmemolineitem.Invoice_Line_Item__c,objCreditmemolineitem.remarks__c,objCreditmemolineitem.month__c);
+                                                    objcreateCreditMemoLine.Is_Deposit__c =objCreditmemolineitem.Is_Deposit__c;
+                                                    listOfCreditmemolineitem.add(objcreateCreditMemoLine);       
+                                                    creditNoteAmountAdjustment.put(invoice.id,listOfCreditmemolineitem);
+                                                    creditNotepreviousDetails.put(invoice.id,objCreditMemo);
+                                                    listOfDeletedCreditmemolineitem.add(objCreditmemolineitem);
+                                                    if(!mapofAdjustmentCreditNoteAmount.containsKey(invoice.id) ){
+                                                        mapofAdjustmentCreditNoteAmount.put(invoice.id,objCreditMemo.From_Invoice__c);
+                                                    }
+                                                }else{
+                                                    if(totalCreditMemoLineItemAmount > adjustmentCreditMemoLineItemAmount){
+                                                        Decimal taxAmount = 0;
+                                                        if(!objCreditmemolineitem.Is_Deposit__c && invoice.Center__r.Country__r.Tax_Rate__c != null && invoice.Center__r.Country__r.Tax_Rate__c != 0){
+                                                            taxAmount = BillingUtility.roundOffAmount(adjustmentCreditMemoLineItemAmount * invoice.Center__r.Country__r.Tax_Rate__c/(100+invoice.Center__r.Country__r.Tax_Rate__c));
+                                                        }
+                                                         //17-dec-2020:nishi:start: as per Sanjay discussion if remaining amount is less then or equals to 0 then we delete this credit memo line item
+                                                        if(roundOffAmount(adjustmentCreditMemoLineItemAmount -  taxAmount) > 0){
+                                                            objCreditmemolineitem.Amount__c =adjustmentCreditMemoLineItemAmount -  taxAmount; 
+                                                            objCreditmemolineitem.Tax_Amount__c = taxAmount;
+                                                            listOfUpdatedCreditmemolineitem.add(objCreditmemolineitem);
+                                                        }else{
+                                                            listOfDeletedCreditmemolineitem.add(objCreditmemolineitem);
+                                                        }
+                                                        //17-dec-2020:nishi:end: as per Sanjay discussion if remaining amount is less then or equals to 0 then we delete this credit memo line item
+                                                        adjustmentCreditMemoLineItemAmount = adjustmentCreditMemoLineItemAmount - totalCreditMemoLineItemAmount ;
+                                                        Decimal creditMemoTotalAmount = 0;
+                                                        Decimal creditMemoTotaltaxAmount = 0;
+                                                        /*if(mapofAdjustmentCreditNoteAmount.containsKey(invoice.id)){
+                                                            creditMemoTotalAmount = Decimal.valueOf(mapofAdjustmentCreditNoteAmount.get(invoice.id).split('@')[0]);
+                                                            creditMemoTotaltaxAmount =Decimal.valueOf(mapofAdjustmentCreditNoteAmount.get(invoice.id).split('@')[1]);
+                                                        }*/
+                                                        creditMemoTotalAmount += (totalCreditMemoLineItemAmountWithoutTax - objCreditmemolineitem.Amount__c);
+                                                        creditMemoTotaltaxAmount += (totalCreditMemoLineItemTax - objCreditmemolineitem.Tax_Amount__c);
+                                                        // 9-Oct-2020:nishi: start at the time of dividing the credit memo From Invoice number was similar changes are required in Credit memo line item.
+                                                        //mapofAdjustmentCreditNoteAmount.put(invoice.id,creditMemoTotalAmount+'@'+creditMemoTotaltaxAmount);
+                                                        if(!mapofAdjustmentCreditNoteAmount.containsKey(invoice.id) ){
+                                                            mapofAdjustmentCreditNoteAmount.put(invoice.id,objCreditMemo.From_Invoice__c);
+                                                        }
+                                                        // 9-Oct-2020:nishi: start at the time of dividing the credit memo From Invoice number was similar changes are required in Credit memo line item.
+                                                        if(roundOffAmount(creditMemoTotalAmount) > 0){
+                                                            if(frominvoiceids.containsKey(invoice.id)){
+                                                                creditMemoTotalAmount += frominvoiceids.get(invoice.id).Amount__c;
+                                                                creditMemoTotaltaxAmount +=frominvoiceids.get(invoice.id).Tax_Amount__c;
+                                                            }
+                                                            Credit_memo_line_item__c objcreateCreditMemoLine = createCreditMemoLineRec(creditMemoTotalAmount,creditMemoTotaltaxAmount,objCreditmemolineitem.Package__c,objCreditmemolineitem.enrolment__c,objCreditmemolineitem.Invoice_Line_Item__c,objCreditmemolineitem.remarks__c,objCreditmemolineitem.month__c);
+                                                            if(creditMemoTotaltaxAmount == 0){
+                                                                objcreateCreditMemoLine.Is_Deposit__c =objCreditmemolineitem.Is_Deposit__c;
+                                                            }
+                                                            frominvoiceids.put(invoice.id,objcreateCreditMemoLine);
+                                                        }
+                                                        
+                                                    }else if(totalCreditMemoLineItemAmount <= adjustmentCreditMemoLineItemAmount){
+                                                        adjustmentCreditMemoLineItemAmount = adjustmentCreditMemoLineItemAmount - totalCreditMemoLineItemAmount ; 
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                string remark = 'Total Deposit '+String.valueOf(accumulatedCreditMemoAmount)+' adjusted with the final invoice to the extent of '+String.valueOf(invoiceTotalAmount) + ' and balance '+String.valueOf(accumulatedCreditMemoAmount - invoiceTotalAmount)+' become pending deposit.';
+                                objCreditMemo =updateCreditmemo(invoice,remark,objCreditMemo);
+                                mapOfCreditMemos.put(objCreditMemo.Id, objCreditMemo);
+                                invoice.Credit_Memo_Amount__c = existingCreditMemoAmount+invoiceTotalAmount;
+                                invoice.status__c = 'Paid';
+                                    // Run if the Adjust payment is equals to total invoice Amount
+                                if(adjustedPaymentAmount ==  invoiceTotalAmount){ // 100 ==100
+                                    adjustedAmount = accumulatedCreditMemoAmount - invoiceTotalAmount; // 400 = 500 - 100
+                                    finding = FALSE;
+                                }
+                            }else{
+                                // 8-Dec-2020: Nishi: if Credit memo record is exist and adjusted Credit memo Amount is equal to invoice amount then we not creating new record
+                                // and if not any active enrolment then we create refund task records
+                                if(mapOfActiveParent.containsKey(invoice.parent_account__c)
+                                && mapOfActiveParent.get(invoice.parent_account__c)){
+                                    if(adjustedAmount >= objCreditMemo.Total_Amount__c ){
+                                        adjustedAmount = adjustedAmount - objCreditMemo.Total_Amount__c;
+                                    }
+                                }else{
+                                    mapOfRefundReminderTasks.put(objCreditMemo.id,createNewTask('Refund Reminder',objCreditMemo.id,mapOfParentEnrolmentLastDate.get(invoice.parent_account__c),mapOfQueue.get('Finance Queue').Queue.Id));
+                                }
+                            }
+                        }
+                    }
+                }
+                system.debug('adjustedAmount'+adjustedAmount);
+                system.debug('mapofAdjustmentCreditNoteAmount'+mapofAdjustmentCreditNoteAmount);
+                system.debug('creditNoteAmountAdjustment'+creditNoteAmountAdjustment);
+                if(adjustedAmount > 0){
+                    Boolean isRefundReminder = false;
+                    // if credit Memo total is greater then invoice total then we check this adjusted payment record type  and  create new payment according to previous adjusted credit Memo object 
+                    string remarks = '';
+                    if(mapOfActiveParent.containsKey(invoice.parent_account__c)
+                         && mapOfActiveParent.get(invoice.parent_account__c)){
+						remarks = 'Total Deposit '+String.valueOf(accumulatedCreditMemoAmount)+' adjusted with the final invoice to the extent of '+String.valueOf(invoiceTotalAmount) + ' and balance '+adjustedAmount+' become pending deposit.';
+                    }else{
+                        isRefundReminder = true;
+                        remarks = 'Total Deposit '+String.valueOf(accumulatedCreditMemoAmount)+' adjusted with the final invoice to the extent of '+String.valueOf(invoiceTotalAmount) + ' and balance '+adjustedAmount+' refunded.';
+                    }
+                    String creditMemoFromId =invoice.parent_account__c+'-'+remarks;
+                   
+                    newCreditMemo = createCreditMemoRec(invoice.parent_account__c,invoice.center__c,invoice.id,System.today(),remarks);
+                    if(creditNotepreviousDetails.containsKey(invoice.id))
+                        newCreditMemo=manageCreditmemoAccordingtoPreviousCreditMemo(creditNotepreviousDetails, newCreditMemo,invoice.id);
+                    if(mapofAdjustmentCreditNoteAmount.containsKey(invoice.id)){
+                        creditMemoFromId =mapofAdjustmentCreditNoteAmount.get(invoice.id);
+                        if(string.isnotBlank(creditMemoFromId)){
+                            newCreditMemo.From_Invoice__c = creditMemoFromId;
+                        }else{
+                            newCreditMemo.From_Invoice__c = null;
+                        }
+                    }
+                    // 9-Oct-2020:end: start at the time of dividing the credit memo From Invoice number was similar changes are required in Credit memo line item.
+                    List<Credit_memo_line_item__c> listOfCreditmemolineitem  = new  List<Credit_memo_line_item__c>();
+                    if(creditNoteAmountAdjustment.containsKey(invoice.id)){
+                        listOfCreditmemolineitem = creditNoteAmountAdjustment.get(invoice.id);
+                    } 
+                    if(frominvoiceids.containsKey(invoice.id)){
+                        listOfCreditmemolineitem.add(frominvoiceids.get(invoice.id));
+                    }
+                    if(listOfCreditmemolineitem != null && listOfCreditmemolineitem.size() > 0){
+                        creditNoteAmountAdjustment.put(creditMemoFromId,listOfCreditmemolineitem);
+                        newPendingCreditMemos.add(newCreditMemo);
+                    
+                        // added by nishi: 5-Nov-2020: for if we not found any active enrolment all enrolments are withdrwal then we create a task to finance team for refund reminder.
+                        if(isRefundReminder){
+                            string enrolmentId = null;
+                            for(Invoice_Line_Item__c lineitem: invoice.Invoice_Line_Items__r){
+                                if(string.isNotBlank(lineitem.enrolment__c)){
+                                    enrolmentId = lineitem.enrolment__c;
+                                    break;
+                                }
+                            }  
+                           if(mapOfParentEnrolmentLastDate.containskey(invoice.parent_account__c) && mapOfQueue != null && mapOfQueue.size() > 0 && mapOfQueue.containskey('Finance Queue') && string.isNotBlank(mapOfQueue.get('Finance Queue').Queue.Id)){               
+                                mapOfRefundReminderTasks.put(creditMemoFromId,createNewTask('Refund Reminder',enrolmentId,mapOfParentEnrolmentLastDate.get(invoice.parent_account__c),mapOfQueue.get('Finance Queue').Queue.Id));
+                            }
+                        }
+                    }
+                }
+                invListToUpdate.add(invoice);
+            }
+        }
+        // update old credit memo and insert new credit memo and related line item id credit memo amount is greated then invoice
+        insertCreditmemoAndLineItem(newPendingCreditMemos,creditNoteAmountAdjustment,listOfDeletedCreditmemolineitem,listOfUpdatedCreditmemolineitem,mapOfCreditMemos,mapOfRefundReminderTasks);
+        if(invListToUpdate.size() > 0){
+            UPDATE invListToUpdate;     
+        }
+       
+    }
+
+    
+    // update old credit memo and insert new credit memo and related line item id credit memo amount is greated then invoice
+    private static void insertCreditmemoAndLineItem(List<Credit_Memo__c> newPendingCreditMemos,Map<String,List<Credit_memo_line_item__c>> creditNoteAmountAdjustment,
+     List<Credit_memo_line_item__c> listOfDeletedCreditmemolineitem,List<Credit_memo_line_item__c> listOfUpdatedCreditmemolineitem,Map<String, Credit_Memo__c> mapOfCreditMemos,
+     Map<string,task> mapOfRefundReminderTasks){
+       system.debug('newPendingCreditMemos'+newPendingCreditMemos);
+       system.debug('creditNoteAmountAdjustment'+creditNoteAmountAdjustment);
+       system.debug('listOfDeletedCreditmemolineitem'+listOfDeletedCreditmemolineitem);
+       system.debug('listOfUpdatedCreditmemolineitem'+listOfUpdatedCreditmemolineitem);
+       system.debug('mapOfCreditMemos'+mapOfCreditMemos);
+       system.debug('mapOfRefundReminderTasks'+mapOfRefundReminderTasks);
+        if(newPendingCreditMemos.size() > 0){
+            Insert newPendingCreditMemos;  
+            system.debug('newPendingCreditMemos'+newPendingCreditMemos);
+            List<Credit_memo_line_item__c> listOfNewCreditmemolineitem = new List<Credit_memo_line_item__c>();  
+            
+            for(Credit_Memo__c objCreditMemo : newPendingCreditMemos){
+                if(creditNoteAmountAdjustment != null && creditNoteAmountAdjustment.size() > 0){
+                    if(string.isnotBlank(objCreditMemo.From_Invoice__c)){
+                        if(creditNoteAmountAdjustment.containsKey(objCreditMemo.From_Invoice__c)){
+                            List<Credit_memo_line_item__c> listOfCreditmemolineitem  = creditNoteAmountAdjustment.get(objCreditMemo.From_Invoice__c);
+                            for(Credit_memo_line_item__c objCreditLineItem: listOfCreditmemolineitem){
+                                objCreditLineItem.Credit_Memo_Number__c = objCreditMemo.id;
+                                listOfNewCreditmemolineitem.add(objCreditLineItem);
+                            }
+                        }
+                        if(mapOfRefundReminderTasks.containsKey(objCreditMemo.From_Invoice__c)){
+                           task objtask = mapOfRefundReminderTasks.get(objCreditMemo.From_Invoice__c);
+                           objtask.WhatId = objCreditMemo.id;
+                           mapOfRefundReminderTasks.put(objCreditMemo.From_Invoice__c,objtask);
+                        }
+                    }else{
+                        if(creditNoteAmountAdjustment.containsKey(objCreditMemo.Parent_Account__c+'-'+objCreditMemo.Comments__c)){
+                            List<Credit_memo_line_item__c> listOfCreditmemolineitem  = creditNoteAmountAdjustment.get(objCreditMemo.Parent_Account__c+'-'+objCreditMemo.Comments__c);
+                            for(Credit_memo_line_item__c objCreditLineItem: listOfCreditmemolineitem){
+                                objCreditLineItem.Credit_Memo_Number__c = objCreditMemo.id;
+                                listOfNewCreditmemolineitem.add(objCreditLineItem);
+                            }
+                        }
+                        if(mapOfRefundReminderTasks.containsKey(objCreditMemo.Parent_Account__c+'-'+objCreditMemo.Comments__c)){
+                            task objtask = mapOfRefundReminderTasks.get(objCreditMemo.Parent_Account__c+'-'+objCreditMemo.Comments__c);
+                            objtask.WhatId = objCreditMemo.id;
+                            mapOfRefundReminderTasks.put(objCreditMemo.Parent_Account__c+'-'+objCreditMemo.Comments__c,objtask);
+                        }
+                    }
+                }
+            } 
+            system.debug('listOfNewCreditmemolineitem'+listOfNewCreditmemolineitem);
+            if(listOfNewCreditmemolineitem != null && listOfNewCreditmemolineitem.size() > 0){
+                upsert listOfNewCreditmemolineitem;
+            }
+        }
+        if(listOfDeletedCreditmemolineitem != null && listOfDeletedCreditmemolineitem.size() > 0){
+            Delete listOfDeletedCreditmemolineitem;
+        }
+        if(listOfUpdatedCreditmemolineitem != null && listOfUpdatedCreditmemolineitem.size() > 0){
+            update listOfUpdatedCreditmemolineitem;
+        }
+        if(mapOfCreditMemos.size() > 0){
+            update mapOfCreditMemos.values();
+        }
+         if(mapOfRefundReminderTasks != null && mapOfRefundReminderTasks.size() > 0){
+            insert mapOfRefundReminderTasks.values();
+        }
+    }
+
+    private static Credit_Memo__c manageCreditmemoAccordingtoPreviousCreditMemo(map<string,Credit_Memo__c> mapOfCreditmemodetilas,Credit_Memo__c newCreditMemo,string invoiceid){
+        if(mapOfCreditmemodetilas != null && mapOfCreditmemodetilas.size() >0 &&  mapOfCreditmemodetilas.containskey(invoiceid)){
+            newCreditMemo.From_Invoice__c= mapOfCreditmemodetilas.get(invoiceid).From_Invoice__c;
+            newCreditMemo.Payment_Method__c=  mapOfCreditmemodetilas.get(invoiceid).Payment_Method__c;
+            newCreditMemo.Refund_ID__c=  mapOfCreditmemodetilas.get(invoiceid).Refund_ID__c;
+            newCreditMemo.Stripe_Payout_Id__c=  mapOfCreditmemodetilas.get(invoiceid).Stripe_Payout_Id__c;
+            newCreditMemo.Stripe_Fee__c=  mapOfCreditmemodetilas.get(invoiceid).Stripe_Fee__c;
+            newCreditMemo.Cheque_Date__c=  mapOfCreditmemodetilas.get(invoiceid).Cheque_Date__c;
+            newCreditMemo.Cheque_No__c=  mapOfCreditmemodetilas.get(invoiceid).Cheque_No__c;
+            newCreditMemo.Bank_Name__c=  mapOfCreditmemodetilas.get(invoiceid).Bank_Name__c;
+            newCreditMemo.NETS_Code__c=  mapOfCreditmemodetilas.get(invoiceid).NETS_Code__c;
+        }
+        return newCreditMemo;
+    }
+    
+    private static Credit_Memo__c updateCreditmemo(invoice__c invoice,string remark ,Credit_Memo__c objCreditMemo){
+        objCreditMemo.Status__c = ConstantsClass.creditMemoSuccessStatus;
+        objCreditMemo.Invoice_Number__c = invoice.Id;
+        objCreditMemo.Credit_Memo_Date__c = invoice.Invoice_Date__c; 
+        objCreditMemo.Comments__c = remark;
+        return objCreditMemo;
+    }
+
+    // create credit memo line item records
+    public static Credit_memo_line_item__c createCreditMemoLineRec(Decimal amount,Decimal taxAmount,Id packageId,Id enrolmentId, Id invoiceLineItemId,String reasons) {
+        Credit_memo_line_item__c objCreditLineItem = new Credit_memo_line_item__c();
+        objCreditLineItem.Amount__c = amount;
+        objCreditLineItem.Tax_Amount__c = taxAmount;
+        objCreditLineItem.Package__c = packageId;
+        objCreditLineItem.Enrolment__c = enrolmentId;
+        objCreditLineItem.Invoice_Line_Item__c = invoiceLineItemId;
+        objCreditLineItem.Remarks__c = reasons;
+        //system.debug('objCreditLineItem'+objCreditLineItem);
+        return objCreditLineItem;
+        }
+
+     // create credit memo line item records
+      public static Credit_memo_line_item__c createCreditMemoLineRec(Decimal amount,Decimal taxAmount,Id packageId,Id enrolmentId, Id invoiceLineItemId,String reasons,date creditMemoDate) {
+        Credit_memo_line_item__c objCreditLineItem = new Credit_memo_line_item__c();
+        objCreditLineItem.Amount__c = amount;
+        objCreditLineItem.Tax_Amount__c = taxAmount;
+        objCreditLineItem.Package__c = packageId;
+        objCreditLineItem.Enrolment__c = enrolmentId;
+        objCreditLineItem.Invoice_Line_Item__c = invoiceLineItemId;
+        objCreditLineItem.Remarks__c = reasons;
+        objCreditLineItem.Month__c = creditMemoDate;
+        return objCreditLineItem;
+      }
+
+     // create credit memo  records
+     public static Credit_Memo__c createCreditMemoRec(string parentAccount,string center,string frominvoiceid,date creditMemoDate,string remarks) {
+        Credit_Memo__c objCreditMemo = new Credit_Memo__c();
+        objCreditMemo.Parent_Account__c = parentAccount;
+        objCreditMemo.Center__c = center;
+        objCreditMemo.From_Invoice__c = frominvoiceid;
+        objCreditMemo.Credit_Memo_Date__c = creditMemoDate;
+        objCreditMemo.Status__c = ConstantsClass.creditMemoPendingStatus;
+        objCreditMemo.Comments__c = remarks;
+        return objCreditMemo;
+      }
+
 
     //@Jatin on 21st November 2019 Due to refund record not created for Deposit Adjust.
     // adjust deposit in invoice
-    private static void adjustDeposit(List<Invoice__c> listOfInv, Set<String> setOfInvIds,Set<String> setOfParentIds,
+    /*//commented by nishi: 16-Sep-2020 : for new requirement we adjust pending credit memo not payment
+     * private static void adjustDeposit(List<Invoice__c> listOfInv, Set<String> setOfInvIds,Set<String> setOfParentIds,
                                         Date firstDate,Date lastDate, Map<String, Date> mapOfParentEnrolmentLastDate){
     
         List<Invoice__c> invListToUpdate = new List<Invoice__c>();
@@ -287,7 +733,7 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
 
         Payment__c newPayment = new Payment__c();
         Map<String,String> paymentAmountRecType = new Map<String,String>(); 
-        system.debug('listOfInv'+listOfInv);                                 
+       //system.debug('listOfInv'+listOfInv);                                 
         for(Invoice__c invoice : listOfInv){
 
             newPayment = new Payment__c();
@@ -305,8 +751,8 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
                 for(Payment__c objPay : mapOfParentDeposit.get(invoice.parent_account__c)){
                 
                     if(!mapOfPayments.containsKey(objPay.Id)){
-                            system.debug('invoiceTotalAmount'+invoiceTotalAmount);
-                            system.debug('accumulatedDepositAmount'+accumulatedDepositAmount);
+                           //system.debug('invoiceTotalAmount'+invoiceTotalAmount);
+                           //system.debug('accumulatedDepositAmount'+accumulatedDepositAmount);
                             if(invoiceTotalAmount == accumulatedDepositAmount){
                                 //Run if the total Invoice Amount is equal to the Total of Payment deposits
                                 if(finding){
@@ -428,7 +874,7 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
                         newPayment.Remarks__c = 'Total Deposit '+String.valueOf(accumulatedDepositAmount)+' adjusted with the final invoice to the extent of '+String.valueOf(invoiceTotalAmount) + ' and balance '+adjustedAmount+' refunded.';
                     
                     }
-                    system.debug('newPayment'+newPayment);
+                   //system.debug('newPayment'+newPayment);
                     newRefundPayments.add(newPayment);
                 }
                 invListToUpdate.add(invoice);
@@ -437,20 +883,20 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
         
         if(invListToUpdate.size() > 0){
             UPDATE invListToUpdate;     
-             system.debug('invListToUpdate'+invListToUpdate);                                   
+            //system.debug('invListToUpdate'+invListToUpdate);                                   
         }
         
         if(mapOfPayments.size() > 0){
             newRefundPayments.addAll(mapOfPayments.values());
             UPSERT newRefundPayments; 
-            System.debug('@@@@newRefundPayments'+newRefundPayments); 
+           //system.debug('@@@@newRefundPayments'+newRefundPayments); 
 
         }
         //calculateRefundAmount(listOfInv, mapOfParentDeposit);                                   
-    }
+    }*/
 
     //check that the Parent Has other Enrolments or Not
-    private static Map<String, Boolean> checkParentHasMultipleEnrolments(Set<String> parentIds, Date lastDate){
+    public static Map<String, Boolean> checkParentHasMultipleEnrolments(Set<String> parentIds, Date lastDate){
         Map<String, Boolean> mapOfParentActiveEnrolment = new Map<String, Boolean>();
         Boolean flag = false;
         Set<String>  enrolTypes = New Set<String>{ConstantsClass.enrolRegularStatus,ConstantsClass.enrolGroupType};
@@ -472,7 +918,8 @@ public static set<string> getInvoiceLineItemEnrollmentIds(Set<string> invoiceIds
     }
 
     // make refund if any
-    /*private static void calculateRefundAmount(List<invoice__c> listOfInvoice,Map<String,List<Payment__c>> mapOfPayments){
+    /*//commented by nishi: 16-Sep-2020 : for new requirement we adjust pending credit memo not payment
+     * private static void calculateRefundAmount(List<invoice__c> listOfInvoice,Map<String,List<Payment__c>> mapOfPayments){
         String refundRecType = Schema.SObjectType.Payment__c.getRecordTypeInfosByName().get('Refund').getRecordTypeId();
         Map<String,Decimal> parentTotalPayment = new Map<String,Decimal>();
         List<Payment__c> refundPayments = new List<Payment__c>();
@@ -561,7 +1008,7 @@ List<Task> listOftask = new List<Task>();
     
     public static void emailInvoiceToParent(List<Invoice__c> invList){
         if(invList!=null && invList.size()>0){
-            System.debug('invList'+invList);
+           //system.debug('invList'+invList);
             deleteAttachment(invList);
             List<EmailTemplate> templateList = [Select Id from EmailTemplate where Name='Subscription Invoice' limit 1];
             if(templateList.size()>0){                
@@ -656,20 +1103,45 @@ List<Task> listOftask = new List<Task>();
         if(String.isNotBlank(mailfor)){
             Email_Settings__mdt[] declinedEmail = [SELECT DeveloperName, Id, Template_Id__c FROM Email_Settings__mdt WHERE DeveloperName =: mailfor];
             List<EmailTemplate> templateList = new List<EmailTemplate>();
+            map<string,EmailTemplate> templatemap= new map<string,EmailTemplate>();
             String emailTemplateId = '';
             if(mailfor == 'Declined'){
                 if(declinedEmail.size() > 0){
                     emailTemplateId = declinedEmail[0].Template_Id__c;
                 }
             }else if(mailfor== '3'){
-                templateList = [Select Id from EmailTemplate where Name='PaymentReminderFor3Days' limit 1];
-                emailTemplateId = templateList[0].Id;
+                //added by nishi: 12-Oct-2020:start: for send email according to organisation
+                for(EmailTemplate objEmailTemplate :[Select Id,name from EmailTemplate 
+									where name = 'PaymentReminderFor3Days' 
+									or name = 'Ossia_PaymentReminderFor3Days' 
+									]){
+										templatemap.put(objEmailTemplate.name,objEmailTemplate);
+									}
+               /* templateList = [Select Id from EmailTemplate where Name='PaymentReminderFor3Days' limit 1];
+                emailTemplateId = templateList[0].Id;*/
+                  //added by nishi: 12-Oct-2020:end: for send email according to organisation
             }else if(mailfor== '5'){
-                templateList = [Select Id from EmailTemplate where Name='PaymentReminderFor5Days' limit 1];
-                emailTemplateId = templateList[0].Id;
+                //added by nishi: 12-Oct-2020:start: for send email according to organisation
+                for(EmailTemplate objEmailTemplate :[Select Id,name from EmailTemplate 
+									where name = 'PaymentReminderFor5Days' 
+									or name = 'Ossia_PaymentReminderFor5Days' 
+									]){
+										templatemap.put(objEmailTemplate.name,objEmailTemplate);
+									}
+               /* templateList = [Select Id from EmailTemplate where Name='PaymentReminderFor5Days' limit 1];
+                emailTemplateId = templateList[0].Id;*/
+                  //added by nishi: 12-Oct-2020:end: for send email according to organisation
             }else if(mailfor== '7'){
-                templateList = [Select Id from EmailTemplate where Name='PaymentReminderFor7Days' limit 1];
-                emailTemplateId = templateList[0].Id;
+                //added by nishi: 12-Oct-2020:start: for send email according to organisation
+                for(EmailTemplate objEmailTemplate :[Select Id,name from EmailTemplate 
+									where name = 'PaymentReminderFor7Days' 
+									or name = 'Ossia_PaymentReminderFor7Days' 
+									]){
+										templatemap.put(objEmailTemplate.name,objEmailTemplate);
+									}
+                /*templateList = [Select Id from EmailTemplate where Name='PaymentReminderFor7Days' limit 1];
+                emailTemplateId = templateList[0].Id;*/
+                  //added by nishi: 12-Oct-2020:end: for send email according to organisation
             }
             
             
@@ -683,9 +1155,61 @@ List<Task> listOftask = new List<Task>();
                     mail.setWhatId(inv.Parent_Account__c);
                     mail.setTemplateId(emailTemplateId);  
                     */
-                    Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(emailTemplateId,
+                    //added by nishi: 12-Oct-2020:start: for send email according to organisation
+                    if(mailfor == 'Declined'){
+                        Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(emailTemplateId,
+                                                inv.Parent_Account__r.personContactId, inv.Id,inv.Center__r.Location__c);
+                        emailList.add(mail);  
+                    }
+                    else if(mailfor== '3'){
+                        if(string.isnotBlank( inv.Center__r.Organisation__r.Name) &&  inv.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                            if(templateMap.containsKey('Ossia_PaymentReminderFor3Days')){
+                            Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Ossia_PaymentReminderFor3Days').id,
                                                         inv.Parent_Account__r.personContactId, inv.Id,inv.Center__r.Location__c);
-                    emailList.add(mail);     
+                                                        emailList.add(mail);  
+                            }
+                        }else{
+                            if(templateMap.containsKey('PaymentReminderFor3Days')){
+                            Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('PaymentReminderFor3Days').id,
+                                                        inv.Parent_Account__r.personContactId, inv.Id,inv.Center__r.Location__c);
+                                                        emailList.add(mail);  
+                            }
+                        }
+                    }else if(mailfor== '5'){
+                        if(string.isnotBlank( inv.Center__r.Organisation__r.Name) &&  inv.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                            if(templateMap.containsKey('Ossia_PaymentReminderFor5Days')){
+                            Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Ossia_PaymentReminderFor5Days').id,
+                                                        inv.Parent_Account__r.personContactId, inv.Id,inv.Center__r.Location__c);
+                                                        emailList.add(mail); 
+                            } 
+                        }else{
+                            if(templateMap.containsKey('PaymentReminderFor5Days')){
+                            Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('PaymentReminderFor5Days').id,
+                                                        inv.Parent_Account__r.personContactId, inv.Id,inv.Center__r.Location__c);
+                                                        emailList.add(mail);  
+                            }
+                        }       
+                                   
+                    }else if(mailfor== '7'){
+                        if(string.isnotBlank( inv.Center__r.Organisation__r.Name) &&  inv.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                            if(templateMap.containsKey('Ossia_PaymentReminderFor7Days')){
+                                Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('Ossia_PaymentReminderFor7Days').id,
+                                                        inv.Parent_Account__r.personContactId, inv.Id,inv.Center__r.Location__c);
+                                                        emailList.add(mail);  
+                            }
+                        }else{
+                            if(templateMap.containsKey('PaymentReminderFor7Days')){
+                                Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templatemap.get('PaymentReminderFor7Days').id,
+                                                        inv.Parent_Account__r.personContactId, inv.Id,inv.Center__r.Location__c);
+                                                        emailList.add(mail);  
+                            }
+                        }  
+                    }
+
+                    /*Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(emailTemplateId,
+                                                        inv.Parent_Account__r.personContactId, inv.Id,inv.Center__r.Location__c);
+                    emailList.add(mail);     */
+                    //added by nishi: 12-Oct-2020:end: for send email according to organisation
                 }
                 Messaging.sendEmail(emailList);
             }
@@ -753,7 +1277,7 @@ List<Task> listOftask = new List<Task>();
         
         statusCode = hs.getStatusCode();
         
-        system.debug('Response===='+hs.getBody());
+       //system.debug('Response===='+hs.getBody());
         string response = hs.getBody();
         response = BillingUtility.cleanJson(response);
         
@@ -845,7 +1369,7 @@ List<Task> listOftask = new List<Task>();
         
         String response = hs.getBody();
         response = BillingUtility.cleanJson(response);
-        system.debug('@response'+response);
+       //system.debug('@response'+response);
         StripeCharge sc = (StripeCharge) System.JSON.deserialize(response, StripeCharge.class);
         
         sc.statusCode = statusCode;
@@ -853,7 +1377,7 @@ List<Task> listOftask = new List<Task>();
     }
     
     
-    public static stripeCharge createOneTimeCharge(string token,Decimal amount,string currencyCode,String baseUrl,String apiKey){
+    public static stripeCharge createOneTimeCharge(string token,Decimal amount,string invoiceName,string currencyCode,String baseUrl,String apiKey){
         string chargeUrl = baseurl + '/v1/charges';
         amount = ((amount)*100);
         Integer stripeAmt = Integer.valueOf(amount);
@@ -867,7 +1391,9 @@ List<Task> listOftask = new List<Task>();
         string url = '&' + EncodingUtil.urlEncode('source', 'UTF-8') + '=' + EncodingUtil.urlEncode(token, 'UTF-8') + '&';
         url += EncodingUtil.urlEncode('amount', 'UTF-8') + '=' + EncodingUtil.urlEncode(string.valueOf(stripeAmt), 'UTF-8') + '&';
         url += EncodingUtil.urlEncode('currency', 'UTF-8') + '=' + EncodingUtil.urlEncode(string.valueOf(currencyCode), 'UTF-8') + '&';
-        
+        if(String.isNotBlank(invoiceName)){
+            url += EncodingUtil.urlEncode('description', 'UTF-8') + '=' + EncodingUtil.urlEncode(invoiceName, 'UTF-8') + '&';
+        }
         http.setBody(url);
         
         Integer statusCode;
@@ -878,7 +1404,7 @@ List<Task> listOftask = new List<Task>();
         
         statusCode = hs.getStatusCode();
         
-        system.debug('Response===='+hs.getBody());
+       //system.debug('Response===='+hs.getBody());
         string response = hs.getBody();
         response = BillingUtility.cleanJson(response);
         
@@ -919,7 +1445,7 @@ List<Task> listOftask = new List<Task>();
         StripeCard sc = (StripeCard) System.JSON.deserialize(response, StripeCard.class);
         
         sc.statusCode = statusCode;
-        System.debug('Stripe Card '+sc);
+       //system.debug('Stripe Card '+sc);
         return sc;
     }
     
@@ -942,14 +1468,14 @@ List<Task> listOftask = new List<Task>();
         
         statusCode = hs.getStatusCode();
         
-        system.debug('Carrd Response===='+hs.getBody());
+       //system.debug('Carrd Response===='+hs.getBody());
         string response = hs.getBody();
         response = BillingUtility.cleanJson(response);
         
         StripeCustomer sc = (StripeCustomer) System.JSON.deserialize(response, StripeCustomer.class);
         
         sc.statusCode = statusCode;
-        System.debug('Stripe Card '+sc);
+       //system.debug('Stripe Card '+sc);
         return sc;
     }
     
@@ -984,7 +1510,7 @@ List<Task> listOftask = new List<Task>();
         StripeCard sc = (StripeCard) System.JSON.deserialize(response, StripeCard.class);
         
         sc.statusCode = statusCode;
-        System.debug('Stripe Card '+sc);
+       //system.debug('Stripe Card '+sc);
         return sc;
     }
     
@@ -1003,7 +1529,7 @@ List<Task> listOftask = new List<Task>();
         HttpResponse hs = new HttpResponse();
         hs = con.send(http);
         statusCode = hs.getStatusCode();
-        system.debug('Response===='+hs.getBody());
+       //system.debug('Response===='+hs.getBody());
         string response = hs.getBody();
         response = BillingUtility.cleanJson(response);
         StripeCharge sc = (StripeCharge) System.JSON.deserialize(response, StripeCharge.class);
@@ -1035,7 +1561,7 @@ List<Task> listOftask = new List<Task>();
         string response = hs.getBody();
         response = BillingUtility.cleanJson(response);
         StripeCharge sc = (StripeCharge) System.JSON.deserialize(response, StripeCharge.class);
-        sc.statusCode = statusCode; System.debug('@@@Update Charge'+sc);
+        sc.statusCode = statusCode;//system.debug('@@@Update Charge'+sc);
         //return sc;
         
     }
@@ -1057,7 +1583,64 @@ List<Task> listOftask = new List<Task>();
         blog.Description__c = Description;
         insert blog;
     }
-    
+     //16-dec-2020: nishi: create batch Job Log records
+     public static string createBatchJobLog(String jobName,DateTime startTime,DateTime endTime,Integer noOfRecords,string Description){
+        Batch_Job_Log__c blog = new Batch_Job_Log__c();
+        blog.Name = jobName;
+        blog.Start_Time__c = startTime;
+        blog.End_Time__c = endTime;
+        blog.No_of_records_proceeds__c = noOfRecords;
+        blog.Description__c = Description;
+        insert blog;
+        return blog.id;
+    }
+    // nishi: 16-dec-2020: for track any errors in the batch class in any chunk.
+    public class MonthlyBatchClassChunkError{
+        public String errorDescription{get;set;}
+        public set<string> invoiceIds{get;set;}
+        public Integer processRecords{get;set;}
+        public Integer failRecords{get;set;}
+        public Map<string,MonthlyPaymentBatchHelper.paymentErrorWrapper>  mapOfPaymentErrorWrapper;
+        public MonthlyBatchClassChunkError(){
+            errorDescription ='';
+            invoiceIds = new set<string>();
+            processRecords =0;
+            failRecords =0;
+            mapOfPaymentErrorWrapper = new Map<string,MonthlyPaymentBatchHelper.paymentErrorWrapper>();
+        }
+        public MonthlyBatchClassChunkError(String errorDescription,Integer processRecords,Integer failRecords){
+            this.errorDescription =errorDescription;
+            this.invoiceIds = new set<string>();
+            this.processRecords =processRecords;
+            this.failRecords =failRecords;
+            mapOfPaymentErrorWrapper = new Map<string,MonthlyPaymentBatchHelper.paymentErrorWrapper>();
+        }
+    }
+
+    //16-dec-2020: nishi: create batch chunk error  Log records
+    public static void createBatchChunkErrorLogs(List<MonthlyBatchClassChunkError> listOfBatchChunkError,string batchjoblogrecordId){
+        if(string.isNotBlank(batchjoblogrecordId) && listOfBatchChunkError != null && listOfBatchChunkError.size() > 0){
+            List<Batch_Chunk_Error_Log__c>  listofChunkErrorlogs = new List<Batch_Chunk_Error_Log__c> ();
+            for(MonthlyBatchClassChunkError objMonthlyBatchClassChunkError : listOfBatchChunkError){
+                listofChunkErrorlogs.add(createBatchChunkErrorLog(batchjoblogrecordId,objMonthlyBatchClassChunkError.processRecords,objMonthlyBatchClassChunkError.failRecords,objMonthlyBatchClassChunkError.errorDescription));
+            }
+            if(listofChunkErrorlogs != null && listofChunkErrorlogs.size()> 0 ){
+                insert listofChunkErrorlogs;
+            }
+        }
+    }
+
+     //16-dec-2020: nishi: create batch chunk error  Log records
+     public static Batch_Chunk_Error_Log__c createBatchChunkErrorLog(String batchjobId,Integer noOfRecords,Integer noOffailRecords,string Description){
+        Batch_Chunk_Error_Log__c blog = new Batch_Chunk_Error_Log__c();
+        blog.Batch_Job_Log__c = batchjobId;
+        blog.Number_of_Failure_Records__c = noOffailRecords;
+        blog.Number_of_Records__c = noOfRecords;
+        blog.Error_Description__c = Description;
+        return blog;
+    }
+
+
     Public static Decimal calculateCurrentMonthPckFees(Date lessDate, Decimal unitFees) {
         Date tempDt = lessDate;        
         Integer noOfLessInCurrMonth = 0;
@@ -1067,7 +1650,7 @@ List<Task> listOftask = new List<Task>();
             tempDt = tempDt.addDays(7);
         }
         Decimal packFee = unitFees * noOfLessInCurrMonth;
-        system.debug('packFee'+packFee);
+       //system.debug('packFee'+packFee);
         return packFee;
     }
     
@@ -1183,7 +1766,7 @@ List<Task> listOftask = new List<Task>();
        // commented by :18-dec:2019 jatin for manage regular and group lesson bookings available mins 
        //Map<String, Decimal> mapOfParentAggregate = new Map<String, Decimal>();
         Map<String, String> mapOfParentAggregate = new Map<String, String>();
-        Map<String, String> mapOfEnrolmentAggregate = new Map<String, String>();
+        Map<String, Decimal> mapOfEnrolmentAggregate = new Map<String, Decimal>();
         Map<String, String> mapOfStudentAndParent = new Map<String,String>();
         Map<String,String> mapOfSelfParent = new Map<String,String>();
         List<Account> listOfAccountsToUpdate = new List<Account>();
@@ -1209,7 +1792,7 @@ List<Task> listOftask = new List<Task>();
                 setOfAccIds.add(objAcc.Parent__c);
             }
         }
-        system.debug('@@@setOfAccIds'+setOfAccIds);
+       //system.debug('@@@setOfAccIds'+setOfAccIds);
         for( AggregateResult agrResult : [SELECT SUM(Available_Make_up_Units__c) creditSum, Student__c,Enrolment__c enrollId,Center__r.Organisation__r.Name orgName FROM Booking__c 
                                         WHERE Student__c IN :setOfAccIds  
                                         AND RecordTypeId =:lessonTypeId   
@@ -1222,18 +1805,20 @@ List<Task> listOftask = new List<Task>();
            // added by Nishi: 20-Jul-2020:Start: for Ossia student requirement :
             // Makeup minutes will needs to be managed at enrolment level instead of parent level
             String orgName = (String) agrResult.get('orgName');
-            system.debug('orgName'+orgName);
+           //system.debug('orgName'+orgName);
             String enrollId = (String) agrResult.get('enrollId');
-            if(String.isNotBlank(enrollId) &&String.isNotBlank(orgName) &&  orgName.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
-                string availableMakeupMins =mapOfEnrolmentAggregate.containsKey(enrollId)
-                                        ? mapOfEnrolmentAggregate.get(enrollId) : '0-0';
-                    Decimal sumToAddAvailableMakeupMins = decimal.valueOf(availableMakeupMins.split('-')[0]);
+            if(String.isNotBlank(orgName) &&  orgName.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                if(String.isNotBlank(enrollId)){
+                    Decimal availableMakeupMins =mapOfEnrolmentAggregate.containsKey(enrollId)
+                                        ? mapOfEnrolmentAggregate.get(enrollId) : 0;
+                    Decimal sumToAddAvailableMakeupMins = availableMakeupMins;//decimal.valueOf(availableMakeupMins.split('-')[0]);
                     if(creditSum!= NULL){
                         sumToAddAvailableMakeupMins += creditSum;
                     }
-                    availableMakeupMins = sumToAddAvailableMakeupMins+'-'+ availableMakeupMins.split('-')[1];
-                    mapOfEnrolmentAggregate.put(enrollId, availableMakeupMins);
-                    system.debug('mapOfEnrolmentAggregate'+mapOfEnrolmentAggregate);
+                    //availableMakeupMins = sumToAddAvailableMakeupMins;//+'-'+ availableMakeupMins.split('-')[1];
+                    mapOfEnrolmentAggregate.put(enrollId, sumToAddAvailableMakeupMins);
+                   //system.debug('mapOfEnrolmentAggregate'+mapOfEnrolmentAggregate);
+                }
             }
             // added by Nishi: 20-Jul-2020:End: for Ossia student requirement 
             else{
@@ -1253,7 +1838,7 @@ List<Task> listOftask = new List<Task>();
                 }   
             }
         }
-        System.debug('@@@mapOfParentAggregate'+mapOfParentAggregate);
+       //system.debug('@@@mapOfParentAggregate'+mapOfParentAggregate);
         // 20-dec-2019 : added by jatin for Add bookingTypes group lesson for calculate Available_Make_up_Units_for group lesson
         Set<String> bookingGroupTypes = new Set<String>{ConstantsClass.groupLessonTypeBooking};
         for( AggregateResult agrResult : [SELECT SUM(Available_Make_up_Units__c) creditSum, Student__c, Enrolment__c enrollId,
@@ -1269,18 +1854,20 @@ List<Task> listOftask = new List<Task>();
             // added by Nishi: 21-Aug-2020:Start: for Ossia student requirement :
             // Makeup minutes will needs to be managed at enrolment level instead of parent level
             String orgName = (String) agrResult.get('orgName');
-            system.debug('orgName'+orgName);
+           //system.debug('orgName'+orgName);
             String enrollId = (String) agrResult.get('enrollId');
-            if(String.isNotBlank(enrollId) &&String.isNotBlank(orgName) &&  orgName.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
-                string availableMakeupMins =mapOfEnrolmentAggregate.containsKey(enrollId)
-                                        ? mapOfEnrolmentAggregate.get(enrollId) : '0-0';
-                    Decimal sumToAddAvailableMakeupMins = decimal.valueOf(availableMakeupMins.split('-')[0]);
+            if( String.isNotBlank(orgName) &&  orgName.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                if(String.isNotBlank(enrollId)){
+                    Decimal availableMakeupMins =mapOfEnrolmentAggregate.containsKey(enrollId)
+                                        ? mapOfEnrolmentAggregate.get(enrollId) : 0;
+                    Decimal sumToAddGroupLessonAvailableMakeupMins = availableMakeupMins;//decimal.valueOf(availableMakeupMins.split('-')[1]);
                     if(creditSum!= NULL){
-                        sumToAddAvailableMakeupMins += creditSum;
+                        sumToAddGroupLessonAvailableMakeupMins += creditSum;
                     }
-                    availableMakeupMins = sumToAddAvailableMakeupMins+'-'+ availableMakeupMins.split('-')[1];
-                    mapOfEnrolmentAggregate.put(enrollId, availableMakeupMins);
-                    system.debug('mapOfEnrolmentAggregate'+mapOfEnrolmentAggregate);
+                    //availableMakeupMins = availableMakeupMins.split('-')[0]+'-'+sumToAddGroupLessonAvailableMakeupMins;
+                    mapOfEnrolmentAggregate.put(enrollId, sumToAddGroupLessonAvailableMakeupMins);
+                   //system.debug('mapOfEnrolmentAggregate'+mapOfEnrolmentAggregate);
+                }
             }else{
                 // added by Nishi: 21-Aug-2020:End: for Ossia student requirement
                 String parentId = mapOfStudentAndParent.get(studentId);
@@ -1301,13 +1888,13 @@ List<Task> listOftask = new List<Task>();
         }
         // added by Nishi: 20-Jul-2020:Start: for Ossia student requirement :
         // Makeup minutes will needs to be managed at enrolment level instead of parent level
-        System.debug('@@@mapOfParentAggregate'+listOfEnrolmentToUpdate);
+       //system.debug('@@@mapOfParentAggregate'+listOfEnrolmentToUpdate);
         for(String enrolmentId : mapOfEnrolmentAggregate.keySet()){
-            string availableMakeupMins = mapOfEnrolmentAggregate.get(enrolmentId);
-            Enrolment__C objenrolment = new Enrolment__C(Id =enrolmentId, Available_Make_up_mins__c = decimal.valueOf(availableMakeupMins.split('-')[0]));
+            Decimal availableMakeupMins = mapOfEnrolmentAggregate.get(enrolmentId);
+            Enrolment__C objenrolment = new Enrolment__C(Id =enrolmentId, Available_Make_up_mins__c = availableMakeupMins);//decimal.valueOf(availableMakeupMins.split('-')[0]));
             listOfEnrolmentToUpdate.add(objenrolment);
         }
-        System.debug('@@@listOfEnrolmentToUpdate'+listOfEnrolmentToUpdate);
+       //system.debug('@@@listOfEnrolmentToUpdate'+listOfEnrolmentToUpdate);
         if(listOfEnrolmentToUpdate.size() > 0){
             update listOfEnrolmentToUpdate;
         }
@@ -1320,11 +1907,11 @@ List<Task> listOftask = new List<Task>();
             Available_Make_up_mins_For_Group__c =  decimal.valueOf(availableMakeupMins.split('-')[1]));
             listOfAccountsToUpdate.add(objAcc);
         }
-        System.debug('@@@listOfAccountsToUpdate'+listOfAccountsToUpdate);
+       //system.debug('@@@listOfAccountsToUpdate'+listOfAccountsToUpdate);
         if(listOfAccountsToUpdate.size() > 0){
             update listOfAccountsToUpdate;
         }
-        System.debug('@@@listOfAccountsToUpdate'+listOfAccountsToUpdate);
+       //system.debug('@@@listOfAccountsToUpdate'+listOfAccountsToUpdate);
     }
     
     // @ 26 March 2019 By Arpit
@@ -1353,23 +1940,23 @@ List<Task> listOftask = new List<Task>();
         
         statusCode = hs.getStatusCode();
         
-        system.debug('Response===='+hs.getBody());
+       //system.debug('Response===='+hs.getBody());
         string response = hs.getBody();
         response = BillingUtility.cleanJson(response);
         
         StripeRefund sc = (StripeRefund) System.JSON.deserialize(response, StripeRefund.class);
         sc.statusCode = statusCode;
-        System.debug('sc '+sc );
+       //system.debug('sc '+sc );
         return sc;
     }
     
     // @ 13 May 2019 By Arpit
     public static void createInvoiceAttachment(List<Invoice__c> invList){
-        system.debug('@@@invList'+invList);
+       //system.debug('@@@invList'+invList);
         if(invList.size()>0){
             List<Attachment> attList = new List<Attachment>();
             for(Invoice__c inv:invList){
-                system.debug('@@@inv.Id call --'+inv.Id);    
+               //system.debug('@@@inv.Id call --'+inv.Id);    
                 PageReference pdf =   new pageReference('/apex/SubscriptionInvoicePdfClone?Id='+inv.Id); //new pageReference('/apex/testpdf?Id='+inv.Id);     //new pageReference('/apex/SubscriptionInvoicePDF?Id='+inv.Id);
                 blob bdy = null;
                 if(!test.isRunningTest()){
@@ -1377,7 +1964,7 @@ List<Task> listOftask = new List<Task>();
                 }else{
                     bdy = blob.valueOf('Sample Body');
                 }
-                system.debug('@@bdy'+bdy);
+               //system.debug('@@bdy'+bdy);
                 Attachment att = new Attachment();
                 att.Name = inv.Name+'.pdf';
                 att.parentId = inv.Id;
@@ -1409,7 +1996,8 @@ List<Task> listOftask = new List<Task>();
     }
 
     //Get parent Map and its list of Invoices
-    /*Private static Map<String, List<Invoice__c>> getMapOfInvoices(List<Invoice__c> listOfInv){
+    /*//commented by nishi: 16-Sep-2020 : for new requirement we adjust pending credit memo not payment
+     * Private static Map<String, List<Invoice__c>> getMapOfInvoices(List<Invoice__c> listOfInv){
         Map<String, List<Invoice__c>> mapOfInvoices = new Map<String, List<Invoice__c>>();
         for(Invoice__c invObj : listOfInv){
             if(mapOfInvoices.containsKey(invObj.Parent_Account__c)){
@@ -1421,7 +2009,8 @@ List<Task> listOftask = new List<Task>();
         return mapOfInvoices;
     }*/
 
-    private static Map<String,List<Payment__c>> getParentPayments(Set<String> setOfParentIds, string type,Date firstDate,Date lastDate){
+   /* //commented by nishi: 16-Sep-2020 : for new requirement we adjust pending credit memo not payment
+    * private static Map<String,List<Payment__c>> getParentPayments(Set<String> setOfParentIds, string type,Date firstDate,Date lastDate){
         Map<String,List<Payment__c>>  parentPayments = new Map<String,List<Payment__c>>();
         String query = generatePaymentQuery(setOfParentIds,type,firstDate,lastDate);
         for(Payment__c objPay : Database.query(query)){
@@ -1431,10 +2020,75 @@ List<Task> listOftask = new List<Task>();
             parentPayments.put(objPay.Parent_Account__c,paymentList);
         }
         return parentPayments;
+    }*/
+
+    // get if there is any pending credit memo available with the customer account
+    public static Map<String,List<Credit_Memo__c>> getParentCreditMemo(Set<String> setOfParentIds, Date lastDate){
+        Map<String,List<Credit_Memo__c>>  parentCreditMemos = new Map<String,List<Credit_Memo__c>>();
+        String query = generateCreditMemoQuery(setOfParentIds,lastDate);
+        for(Credit_Memo__c objPay : Database.query(query)){
+            List<Credit_Memo__c> listOfCreditMemos = parentCreditMemos.containsKey(objPay.Parent_Account__c) ? 
+                                                    parentCreditMemos.get(objPay.Parent_Account__c) : new List<Credit_Memo__c>();
+            listOfCreditMemos.add(objPay);
+            parentCreditMemos.put(objPay.Parent_Account__c,listOfCreditMemos);
+        }
+        return parentCreditMemos;
+    }
+
+// get  pending credit memo available with the customer account
+    public static string generateCreditMemoQuery(Set<String> setOfParentIds, Date lastDate){
+        String pendingStatus = ConstantsClass.creditMemoPendingStatus;
+        String query = 'SELECT From_Invoice__c, Parent_Account__c, Organisations_Name__c, Comments__c, Currency_Code__c, Total_Amount__c, Payment_Method__c, Invoice_Number__c, ';
+        query+= ' Credit_Memo_Date__c, Status__c, Refund_ID__c, Stripe_Payout_Id__c, Stripe_Fee__c, Cheque_Date__c, Cheque_No__c, Bank_Name__c, NETS_Code__c, Amount_Exl_tax_Rollup__c, ';
+        query+= ' (SELECT Transaction_ID__c, Credit_Memo_Number__c, Enrolment__c, Amount__c, Netsuite_GST_Code__c, Tax_Amount__c, Month__c, Remarks__c, Package__c, Is_Deposit__c, Is_Discount__c, ';
+        query+= '  Invoice_Line_Item__c, Package_Name__c, Netsuite_Product_Name__c, Name, Id FROM Credit_memo_line_items__r order by Amount__c Desc),';
+        query+= ' Tax_Amount_Rollup__c, Center__c, Netsuite_Payment_Method__c, Id, Name FROM Credit_Memo__c ';
+        query+= ' WHERE Status__c =\''+pendingStatus +'\'';
+        query+= ' AND Credit_Memo_Date__c <=:lastDate';
+        query+= ' AND Parent_Account__c IN :setOfParentIds order by Total_Amount__c Desc';
+       //system.debug('Query '+query);
+        return query;
+    }
+
+     // this method is used for filling sum of Credit memo of parent
+     public static Map<String,Decimal> getParentCreditMemoMap(Map<String,List<Credit_Memo__c>> mapOfCreditMemos){
+        Map<String,Decimal> parentWithCreditMemos = new Map<String,Decimal>();
+        for(String parentId : mapOfCreditMemos.keySet()){
+            for(Credit_Memo__c objCreditMemos : mapOfCreditMemos.get(parentId)){
+                Decimal total = parentWithCreditMemos.containsKey(parentId) ? parentWithCreditMemos.get(parentId) : 0;
+                total+= objCreditMemos.Total_Amount__c;
+                parentWithCreditMemos.put(parentId,total);
+            }     
+        }
+        return parentWithCreditMemos;
+    }
+
+     // 26-Oct-2020:nishi: for if any dicount negative amount is found then we sum of Credit memo line item of credit memo
+    public static Map<String,Decimal> getcreditmemoDiscounttotalAmount(Map<String,List<Credit_Memo__c>> mapOfCreditMemos,Set<String> setOfParentIds){
+        Map<String,Decimal> mapOfcreditmemoDiscounttotalAmount = new Map<String,Decimal>();
+        for(String parentId : mapOfCreditMemos.keySet()){
+            for(Credit_Memo__c objCreditMemo : mapOfCreditMemos.get(parentId)){
+                Decimal total = mapOfcreditmemoDiscounttotalAmount.containsKey(objCreditMemo.id) ? mapOfcreditmemoDiscounttotalAmount.get(objCreditMemo.id) : 0;
+                if(objCreditMemo.Credit_memo_line_items__r != null && objCreditMemo.Credit_memo_line_items__r.size() > 0){
+                    //One equivalent to the invoice amount and other the balance with the status pending
+                    for(Credit_memo_line_item__c objCreditmemolineitem : objCreditMemo.Credit_memo_line_items__r){
+                        decimal totalCreditMemoLineItemAmountWithoutTax=(objCreditmemolineitem.Amount__c != null ?objCreditmemolineitem.Amount__c : 0);
+                        decimal totalCreditMemoLineItemTax= (objCreditmemolineitem.Tax_Amount__c != null ?objCreditmemolineitem.Tax_Amount__c : 0); 
+                        decimal totalCreditMemoLineItemAmount =  totalCreditMemoLineItemAmountWithoutTax+totalCreditMemoLineItemTax; 
+                        if(objCreditmemolineitem.Is_Discount__c && totalCreditMemoLineItemAmount <= 0){
+                            total+= totalCreditMemoLineItemAmount;
+                            mapOfcreditmemoDiscounttotalAmount.put(objCreditMemo.id,total);
+                        }
+                    }
+                }
+            }     
+        }
+        return mapOfcreditmemoDiscounttotalAmount;
     }
 
     // this method is used for filling sum of payment of parent
-    private static Map<String,Decimal> getParentPaymentMap(Map<String,List<Payment__c>> mapOfPayments){
+    /*//commented by nishi: 16-Sep-2020 : for new requirement we adjust pending credit memo not payment
+     * private static Map<String,Decimal> getParentPaymentMap(Map<String,List<Payment__c>> mapOfPayments){
         Map<String,Decimal> parentWithPayment = new Map<String,Decimal>();
         for(String parentId : mapOfPayments.keySet()){
             for(Payment__c payment : mapOfPayments.get(parentId)){
@@ -1444,10 +2098,11 @@ List<Task> listOftask = new List<Task>();
             }     
         }
         return parentWithPayment;
-    }
+    }*/
 
     //get Total of Parent Invoices...
-    /*private static Map<String, Decimal> getParentInvoiceTotalMap(Map<String, List<Invoice__c>> mapOfParentInvoice){
+    /*//commented by nishi: 16-Sep-2020 : for new requirement we adjust pending credit memo not payment
+     * private static Map<String, Decimal> getParentInvoiceTotalMap(Map<String, List<Invoice__c>> mapOfParentInvoice){
         Map<String, Decimal> mapOfParentTotal = new  Map<String, Decimal>();
         for(String parentId : mapOfParentInvoice.keySet()){
             for(Invoice__c invoice : mapOfParentInvoice.get(parentId)){
@@ -1459,7 +2114,8 @@ List<Task> listOftask = new List<Task>();
         return mapOfParentTotal;
     }*/
 
-    private static string generatePaymentQuery(Set<String> setOfParentIds, string type,Date firstDate,Date lastDate){
+    /*//commented by nishi: 16-Sep-2020 : for new requirement we adjust pending credit memo not payment
+     * private static string generatePaymentQuery(Set<String> setOfParentIds, string type,Date firstDate,Date lastDate){
         String pendingStatus = ConstantsClass.paymentPendingStatus;
         String query = 'SELECT Id,Payment_Amount__c,Parent_Account__c,Transaction_Id__c,Payment_Date__c,last_lesson_Date__c,RecordTypeId FROM Payment__c';
         query+= ' WHERE Payment_Status__c =\''+pendingStatus +'\'';
@@ -1471,9 +2127,9 @@ List<Task> listOftask = new List<Task>();
             query+= ' AND Payment_Date__c <=:lastDate';
         }
         query+= ' AND Parent_Account__c IN :setOfParentIds order by Payment_Amount__c Desc';
-        System.debug('Query '+query);
+       //system.debug('Query '+query);
         return query;
-    }
+    }*/
     
     //@Juneid 19 Aug 2020, Organization wise stripe Caluclation
     public static Map<String,Organisation__c> getOrganisationMap(String orgId){

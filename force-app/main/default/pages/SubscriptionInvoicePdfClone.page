@@ -270,7 +270,20 @@
                         <apex:outputPanel rendered="{!If(isOssia, FALSE, TRUE)}">
                             <apex:image url="{!$Resource.Aureus_logo}" />
                         </apex:outputPanel>
-                        <!-- added by nishi: 18-aug-2020: for if center is Ossia then we show ossiaLogo otherwise Aureus logo--></td>
+                        <!-- added by nishi: 18-aug-2020: for if center is Ossia then we show ossiaLogo otherwise Aureus logo-->
+                    </td>
+                    <td >
+                        <!-- added by nishi:  14-Oct-2020: for show credit memo logo for indicate invoice paid and its patial credit memo or full-->
+                        <apex:outputPanel rendered="{!If(isShowCreditMemo, true, false)}">
+                            <apex:outputPanel rendered="{!If(isPartial, true, false)}">
+                                <apex:image style="margin-left:30px;" width="190" title="Partially Used Amount  in Credit Memo" url="{!URLFOR($Resource.Credit_Memo_Logo, 'Credit_Memo_partial.png')}"  alt="Partially Used Amount in Credit Memo"/>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!If(isPartial, FALSE, TRUE)}">
+                                <apex:image style="margin-left:30px;" width="190" title="Full Used Amount in Credit Memo" url="{!URLFOR($Resource.Credit_Memo_Logo, 'Credit_Memo_full.png')}"  alt="Full Used Amount in Credit Memo"/>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        <!-- added by nishi: 14-Oct-2020: for show credit memo logo for indicate invoice paid and its patial credit memo or full-->
+                    </td>
                     <td>
                         <table width="100%">
                             <!-- Color Class Applied By Bhawna On 19-08-20 --->
@@ -306,6 +319,8 @@
                         </table>
                     </td>
                 </tr>
+            </table>
+            <table class="header" style="width:100%" cellpadding="0" cellspacing="0" >
                 <tr>
                     <td>
                         <br/><br/><br/><br/>
@@ -314,19 +329,30 @@
                             <b class="{!IF(isOssia==true,'color_Ossia','color')}">Invoice To</b><br/>
                             <b style="color:rgb(79,79,78)">{!invoice.Parent_Account__r.Name}</b><br/>
                             <b class="invoice">A:</b><span class="grayColor"> {!invoice.Parent_Account__r.Billingstreet} {!invoice.Parent_Account__r.BillingCountry} {!invoice.Parent_Account__r.BillingPostalcode}</span><br/>
-                            <b class="invoice">E:</b><span class="grayColor"> {!invoice.Parent_Account__r.personEmail} <b class="invoice">P:</b> {!invoice.Parent_Account__r.personMobilePhone}</span><br/>
+
+                            <b class="invoice">E:</b><span class="grayColor"> 
+                                <apex:outputPanel rendered="{!isContractInvoice}" layout="none">{!invoice.Parent_Account__r.Personal_Email__c}</apex:outputPanel>
+                                <apex:outputPanel rendered="{!!isContractInvoice}" layout="none">{!invoice.Parent_Account__r.personEmail}</apex:outputPanel>
+                                <b class="invoice">P:</b>
+                                 <apex:outputPanel rendered="{!isContractInvoice}" layout="none">{!invoice.Parent_Account__r.Phone}</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!isContractInvoice}" layout="none">{!invoice.Parent_Account__r.personMobilePhone}</apex:outputPanel>
+                                </span><br/>
                         </div>
                     </td>
                     <td>
                         <br/><br/><br/><br/>
-                        <div class="invoice-from">
-                            <!--Color Class Applied By Bhawna On 19-8-20 ---> 
-                            <b class="{!IF(isOssia==true,'color_Ossia','color')}">Invoice From</b><br/>
-                            <b style="color:rgb(79,79,78)">{!center.name}</b><br/>
-                            <b class="invoice">A:</b><span class="grayColor"> {!center.address}</span><br/>
-                             <!-- added on 14 july 2020 hardcoded '(Aureus Group Pte. Ltd.)'-->
-                            <b class="invoice">GST Reg:</b><span class="grayColor"> {!invoice.Center__r.GST_Number__c} {!IF(invoice.Center__r.GST_Number__c!='',' (Aureus Group Pte. Ltd.)','')}</span><br/>
-                        </div>
+                        <!-- nishi: 24-Feb-2021: aureus -Q1-2021: start:we check which invoice type is contract then we not showing center details -->
+                        <apex:outputPanel rendered="{!!isContractInvoice}" layout="none">
+                            <div class="invoice-from">
+                                <!--Color Class Applied By Bhawna On 19-8-20 ---> 
+                                <b class="{!IF(isOssia==true,'color_Ossia','color')}">Invoice From</b><br/>
+                                <b style="color:rgb(79,79,78)">{!center.name}</b><br/>
+                                <b class="invoice">A:</b><span class="grayColor"> {!center.address}</span><br/>
+                                <!-- added on 14 july 2020 hardcoded '(Aureus Group Pte. Ltd.)'-->
+                                <b class="invoice">GST Reg:</b><span class="grayColor"> {!invoice.Center__r.GST_Number__c} {!IF(invoice.Center__r.GST_Number__c!='',' (Aureus Group Pte. Ltd.)','')}</span><br/>
+                            </div>
+                        </apex:outputPanel>
+                        <!-- nishi: 24-Feb-2021: aureus -Q1-2021: end:we check which invoice type is contract then we not showing center details -->
                     </td>
                 </tr>
                 <tr>
@@ -361,31 +387,78 @@
                     <apex:repeat value="{!invoice.Invoice_Line_Items__r}" var="invLineItm">
                         <tr class="border_bottom">
                             <td >
-                                <div class="item-Name"><b style="color:rgb(79,79,78);">{!invLineItm.Package_Name__c}</b><br/>
-                                    <span class="grayColor">
-                                        <apex:outputPanel rendered="{!If(invLineItm.Package__r.Type__c == 'Adhoc', FALSE, TRUE)}">
-                                                {!invLineItm.Subscription_Line_Item__r.Student__r.Name}
-                                                (<apex:outputText value="{0, date,MMM','  yyyy}">
-                                                    <apex:param value="{!invLineItm.Month__c}" /> 
-                                                 </apex:outputText>)
+                                <!-- nishi: 24-Feb-2021: aureus -Q1-2021: start:we check which invoice type is contract then we show student different details -->
+                                <apex:outputPanel rendered="{!isContractInvoice}" layout="none">
+                                    <div class="item-Name"><b style="color:rgb(79,79,78);">
+                                        <apex:outputPanel rendered="{!invLineItm.Is_Discount__c}">
+                                            Discount - 
                                         </apex:outputPanel>
-                                        <apex:outputPanel rendered="{!If(invLineItm.Package__r.Type__c == 'Adhoc', TRUE, FALSE)}">
-                                                (For Ad-hoc booking on <apex:outputText value="{0, date, dd MMM yyyy}">
-                                                        <apex:param value="{!invLineItm.Month__c}" /> 
-                                                        </apex:outputText>)
-                                        </apex:outputPanel>                                       
-                                    </span>
-                                </div>
+                                        {!invLineItm.Package_Name__c} 
+                                        <apex:outputPanel rendered="{!If(NOT(ISNULL(invLineItm.Teacher_Id__r.name)), true,false)}">
+                                                - {!invLineItm.Teacher_Id__r.name}
+                                            </apex:outputPanel>
+                                        </b><br/>
+                                        <apex:outputPanel rendered="{!!invLineItm.Is_Discount__c}">
+                                            <span class="grayColor">
+                                                {!invLineItm.Student_Name__c} - Sessions : {!invLineItm.Number_of_Lesson__c} - Period : From 
+                                                <apex:outputText value="{0, date, MMM dd yyyy}">
+                                                    <apex:param value="{!invLineItm.Term_Start_Date__c}" />
+                                                </apex:outputText> To <apex:outputText value="{0, date, MMM dd yyyy}">
+                                                    <apex:param value="{!invLineItm.Term_End_Date__c}" />
+                                                </apex:outputText>
+                                            </span>
+                                        </apex:outputPanel>
+                                    </div>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!!isContractInvoice}" layout="none">
+                                    <div class="item-Name"><b style="color:rgb(79,79,78);">
+                                        <apex:outputPanel rendered="{!invLineItm.Is_Discount__c}">
+                                            Discount - 
+                                        </apex:outputPanel>
+                                        {!invLineItm.Package_Name__c}</b><br/>
+                                        <span class="grayColor">
+                                            <apex:outputPanel rendered="{!If(invLineItm.Package__r.Type__c == 'Adhoc', FALSE, TRUE)}">
+                                                <apex:outputPanel rendered="{!If(NOT(ISNULL(invLineItm.Subscription_Line_Item__r.Student__r.Name)), true,false)}">
+                                                    {!invLineItm.Subscription_Line_Item__r.Student__r.Name}
+                                               </apex:outputPanel>
+                                               <apex:outputPanel rendered="{!If(NOT(ISNULL(invLineItm.Subscription_Line_Item__r.Student__r.Name)), false,true)}">
+                                                   {!invLineItm.Student__c}
+                                              </apex:outputPanel>
+                                                    (  <apex:outputPanel rendered="{!!isPianoRentalEnrolment}">
+                                                        <apex:outputText value="{0, date,MMM','  yyyy}">
+                                                            <apex:param value="{!invLineItm.Month__c}" />
+                                                        </apex:outputText>
+                                                    </apex:outputPanel>
+                                                    <!-- // nishi: 24-Feb-2021: aureus -Q1-2021: we check which enrolment  is promotional piano rental  then we show piano rent start and end dates -->
+                                                    <apex:outputPanel rendered="{!isPianoRentalEnrolment}">
+                                                        <apex:outputText value="{0, date,MMM dd yyyy}">
+                                                            <apex:param value="{!invLineItm.Term_Start_Date__c}" />
+                                                        </apex:outputText> - <apex:outputText value="{0, date, MMM dd yyyy}">
+                                                            <apex:param value="{!invLineItm.Term_End_Date__c}" />
+                                                        </apex:outputText>
+                                                    </apex:outputPanel>
+                                                       <!-- // nishi: 24-Feb-2021: aureus -Q1-2021: we check which enrolment  is promotional piano rental  then we show piano rent start and end dates -->
+                                                    )
+                                            </apex:outputPanel>
+                                            <apex:outputPanel rendered="{!If(invLineItm.Package__r.Type__c == 'Adhoc', TRUE, FALSE)}">
+                                                    (For Ad-hoc booking on <apex:outputText value="{0, date, dd MMM yyyy}">
+                                                            <apex:param value="{!invLineItm.Month__c}" /> 
+                                                            </apex:outputText>)
+                                            </apex:outputPanel>                                       
+                                        </span>
+                                    </div>
+                                </apex:outputPanel> 
+                                <!-- nishi: 24-Feb-2021: aureus -Q1-2021: start:we check which invoice type is contract then we show student different details -->
                             </td>
                             <td><div class="PQT grayColor"><apex:outputField value="{!invLineItm.Amount__c}"/></div></td>
                             <td><div class="PQT1 grayColor">01</div></td>
                             <td class="center PQT2">
                                 <div class="invoice">
                                     <b><apex:outputField value="{!invLineItm.Amount__c}"/></b>
-                                    <apex:outputPanel rendered="{!IF(invoice.Center__r.country__r.Tax_Rate__c > 0, IF(invLineItm.Is_Deposit__c, FALSE, TRUE), FALSE)}" layout="none">
+                                    <apex:outputPanel rendered="{!IF(and (invoice.Center__r.country__r.Tax_Rate__c != null,invoice.Center__r.country__r.Tax_Rate__c > 0), IF(invLineItm.Is_Deposit__c, FALSE, TRUE), FALSE)}" layout="none">
                                         (T)
                                     </apex:outputPanel>
-                                    <apex:outputPanel rendered="{!IF(invoice.Center__r.country__r.Tax_Rate__c < 0, IF(invLineItm.Is_Deposit__c, TRUE, FALSe), FALSE)}" layout="none" >
+                                    <apex:outputPanel rendered="{!IF(and (invoice.Center__r.country__r.Tax_Rate__c != null,invoice.Center__r.country__r.Tax_Rate__c < 0), IF(invLineItm.Is_Deposit__c, TRUE, FALSe), FALSE)}" layout="none" >
                                         <span style="padding-right:17px;"></span>
                                     </apex:outputPanel>
                                 </div>
@@ -421,6 +494,34 @@
                                         </apex:outputPanel>
                                     </td>
                                 </tr>
+                                <!--nishi:start: 15-Sep-2020: for new requirement in netsuite we adjust discount as a line item -->
+                                <tr style="font-size:12px;">
+                                   <td><apex:outputPanel rendered="{!IF(AND(subTotal != NULL,subTotal != 0), TRUE,FALSE)}" layout="block"><div class="taxbox border-none" ><b>Sub Total</b></div> </apex:outputPanel></td>
+                                   <td>
+                                       <apex:outputPanel rendered="{!IF(AND(subTotal != NULL,subTotal != 0), TRUE,FALSE)}" layout="block">
+                                           <div class="taxbox taxbox-right border-none">
+                                                <b><apex:outputText value="{0, number, $###,###,###.00}"><apex:param value="{!subTotal}" /></apex:outputText></b>
+                                            </div>
+                                         </apex:outputPanel>
+                                    </td>
+                                </tr>
+                                <tr style="font-size:12px;">
+                                  
+                                   <td><apex:outputPanel rendered="{!IF(AND(invoice.Discount_LineItem_Amount__c != NULL,invoice.Discount_LineItem_Amount__c != 0), TRUE,FALSE)}" layout="block">
+                                       <div class="taxbox text-right" style="color:red;padding-right:22px;padding-bottom:5px;padding-top:5px;border-bottom: solid 0.5px #DCDCDC;text-align:left;">Discount</div> </apex:outputPanel></td>
+                                   <td><apex:outputPanel rendered="{!IF(AND(invoice.Discount_LineItem_Amount__c != NULL,invoice.Discount_LineItem_Amount__c != 0), TRUE,FALSE)}" layout="block">
+                                       <div class="discValue"><apex:outputField value="{!invoice.Discount_LineItem_Amount__c}"/></div> </apex:outputPanel></td>
+                                </tr>
+                                <tr style="font-size:12px;">
+                                   <td><apex:outputPanel rendered="{!IF(AND(totalAmount!= NULL,totalAmount != 0), TRUE,FALSE)}" layout="block"><div class="taxbox border-none" ><b> Total Amount</b></div> </apex:outputPanel></td>
+                                   <td><apex:outputPanel rendered="{!IF(AND(totalAmount != NULL,totalAmount != 0), TRUE,FALSE)}" layout="block">
+                                        <div class="taxbox taxbox-right border-none">
+                                        <b> <apex:outputText value="{0, number, $###,###,###.00}"><apex:param value="{!totalAmount}" /></apex:outputText>    </b>
+                                            </div> 
+                                        </apex:outputPanel>
+                                    </td>
+                                </tr>
+                                <!--nishi:end: 15-Sep-2020: for new requirement in netsuite we adjust discount as a line item -->
                                 <tr style="font-size:12px;" >
                                     <td width="50%" style="text-align:left;"><apex:outputPanel rendered="{!IF(AND(invoice.Center__r.country__r.Tax_Rate__c != NULL, invoice.Center__r.country__r.Tax_Rate__c > 0), TRUE,FALSE)}"><div class="taxbox tax lightgray">Tax GST({!invoice.Center__r.country__r.Tax_Rate__c}%)</div></apex:outputPanel></td>
                                     <td width="50%" >
@@ -433,11 +534,12 @@
                                     </td>
                                 </tr>
                                 
-                                <tr style="font-size:12px;">
+                                <!--commented by nishi: 15-Sep-2020: for new requirement in netsuite we adjust discount as a line item 
+                                    <tr style="font-size:12px;">
                                     <td>
                                         <apex:outputPanel rendered="{!IF(AND(invoice.Discount_Amount__c != 0,invoice.Discount_Amount__c != NULL), TRUE,FALSE)}"><div class="taxbox text-right" style="color:red;padding-right:22px;padding-bottom:5px;padding-top:5px;border-bottom: solid 0.5px #DCDCDC;text-align:left;">Discount</div></apex:outputPanel></td>
                                     <td><apex:outputPanel rendered="{!IF(AND(invoice.Discount_Amount__c != 0,invoice.Discount_Amount__c != NULL), TRUE,FALSE)}"><div class="discValue"><apex:outputField value="{!invoice.Discount_Amount__c}"/></div></apex:outputPanel></td>
-                                </tr>
+                                </tr> -->
                                 
                                 <tr style="font-size:12px;">
                                     <td style="border-bottom: solid 0.5px #DCDCDC;text-align:left;"><div class="taxbox border-none"><b class="grandTotal">Grand Total:</b></div></td>
@@ -449,7 +551,28 @@
                                         </div>
                                     </td>
                                 </tr>
-                                <tr style="font-size:12px;">
+
+                                 <!--15-Sep-2020:start: Credit Memo  handling we show Credit_Memo_Amount__c amount after showing  payableAmount (grand total duction amount)-->
+                                <tr  style="font-size:12px;">
+                          
+                                    <td style="text-align:left;"><apex:outputPanel rendered="{!IF(AND(invoice.Credit_Memo_Amount__c != NULL,invoice.Credit_Memo_Amount__c != 0), TRUE,FALSE)}" layout="block">
+                                        <div class="taxbox  border-none" style="color:red;">Credit Memo Amount</div> </apex:outputPanel></td>
+                                    <td><apex:outputPanel rendered="{!IF(AND(invoice.Credit_Memo_Amount__c != NULL,invoice.Credit_Memo_Amount__c != 0), TRUE,FALSE)}" layout="block">
+                                        <div class="taxValue border-none" style="color:red;"><apex:outputField value="{!invoice.Credit_Memo_Amount__c}"/></div> </apex:outputPanel></td>
+                                 </tr>
+                                 <tr  style="font-size:12px;">
+                                    <td style="border-bottom: solid 0.5px #DCDCDC;text-align:left;">
+                                        <apex:outputPanel rendered="{!IF(AND(invoice.Credit_Memo_Amount__c!= NULL,invoice.Credit_Memo_Amount__c != 0), TRUE,FALSE)}" layout="block"><div class="taxbox  border-none" ><b>Total Payable</b></div> </apex:outputPanel></td>
+                                    <td><apex:outputPanel rendered="{!IF(AND(invoice.Credit_Memo_Amount__c!= NULL,invoice.Credit_Memo_Amount__c != 0), TRUE,FALSE)}" layout="block">
+                                         <div class="taxValue">
+                                         <b> <apex:outputText value="{0, number, $###,###,###.00}"><apex:param value="{!payableAmount}" /></apex:outputText>    </b>
+                                             </div> 
+                                         </apex:outputPanel>
+                                     </td>
+                                 </tr>
+                                  <!--end:15-Sep-2020: Credit Memo  handling we show Credit_Memo_Amount__c amount after showing  payableAmount (grand total duction amount)-->
+                                
+                                  <tr style="font-size:12px;">
                                     <td style="border-bottom: solid 0.5px #DCDCDC;text-align:left;"><div class="taxbox border-none"><b class="grandTotal">Total Paid:</b></div></td>
                                     <td>
                                         <div class="taxValue">
@@ -511,7 +634,9 @@
                             <apex:outputPanel rendered="{!OR(InvoiceStatus=='Due', InvoiceStatus=='Overdue')}">
                                 <div style="float: right;">
                                     <!--<button type="button" class="button"><a href="{!customLabelValue +'/apex/PayNowDetail?id='+InvoiceId}" style="color: white;font-weight: bold;text-decoration: none;font-size: medium;" target="_blank">Pay Now</a> </button>-->
-                                    <button type="button" style="background-color: #f6901e;color: white;padding: 11px;border-radius: 5px;margin-right: 9%;float: right;"><apex:outputLink value="{!customLabelValue +'/apex/PayNowDetail?id='+InvoiceId}" style="color: white;font-weight: bold;text-decoration: none;font-size: medium;" id="theLink">Pay Now</apex:outputLink></button>
+                                    <button type="button" class="{!IF(isOssia==true,'backgroundcolor_ossia','backgroundcolor')}" style="color: white;padding: 11px;border-radius: 5px;margin-right: 9%;float: right;">
+                                    <apex:outputLink value="{!customLabelValue +'/apex/PayNowDetail?id='+InvoiceId}" style="color: white;font-weight: bold;text-decoration: none;font-size: medium;" id="theLink">Pay Now</apex:outputLink>
+                                    </button>
                                 </div>
                             </apex:outputPanel>
                             

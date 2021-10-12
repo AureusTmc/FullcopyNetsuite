@@ -8,15 +8,24 @@ global class CreateMonthlyInvoiceAmcClubBatch implements Database.Batchable<sObj
 	
 	global Invoice__c consolidatedInv;    
     global Set<String> invSet; 
-    global CreateMonthlyInvoiceAmcClubBatch(){
+    global Integer invoiceYear ;
+    global Integer invoicemonth ; 
+    // Zakir 2-12-2020 : pass two parametre ie . invoiceYear &  invoicemonth
+    global CreateMonthlyInvoiceAmcClubBatch(Integer invoiceYear,Integer invoicemonth ){
     	consolidatedInv = new Invoice__c();
         invSet 		    = new Set<String>();
+        this.invoiceYear = invoiceYear;
+        this.invoicemonth = invoicemonth;
         
         //Inserting consolidated invoice
         List<Account> amcCluList =  [SELECT Id,Name FROM Account WHERE Name =:constantsClass.amcClubMember  AND Membership_Type__c =: ConstantsClass.amcClubMember LIMIT 1]; 
         if(amcCluList.size() > 0){
             consolidatedInv = BillingUtility.fillInvoice(null, amcCluList.get(0).Id, ConstantsClass.dueStatus);
-            consolidatedInv.Due_Date__c = System.today().addDays(14);
+            
+            Integer daysInMonth = Date.daysInMonth(this.invoiceYear, this.invoicemonth);
+            Date lastDateOfMonth =  Date.newInstance(this.invoiceYear, this.invoicemonth, daysInMonth) ;
+            consolidatedInv.Invoice_Date__c =   lastDateOfMonth;  //  Zakir 2-12-2020 : Pass the Last date of the current year month 
+            consolidatedInv.Due_Date__c = lastDateOfMonth.addDays(14);//Commented by zakir:2-Dec-2020: for now Due date is changed. System.today().addDays(14);
             
             List<Account> pianoCentreList =  [SELECT Id,Name FROM Account WHERE Name =: ConstantsClass.centreNameForAmcClubInvoice AND RecordType.Name =: ConstantsClass.centerRecTypeName LIMIT 1]; 
             if(pianoCentreList.size() > 0)
@@ -33,7 +42,8 @@ global class CreateMonthlyInvoiceAmcClubBatch implements Database.Batchable<sObj
                                                  Month__c, Package__c, Remarks__c, Subscription_Line_Item__c, Teacher_Id__c, Field_1__c
                                                  FROM Invoice_Line_Items__r)
                                          FROM Invoice__c 
-                                         WHERE Parent_Account__r.Stripe_Customer_Id__c = NULL AND Invoice_Date__c = THIS_MONTH
+                                         WHERE Parent_Account__r.Stripe_Customer_Id__c = NULL AND CALENDAR_YEAR(Invoice_Date__c) =: invoiceYear and CALENDAR_Month(Invoice_Date__c) =: invoicemonth
+                                         //AND Invoice_Date__c = This_Month//Updated by Zakir, 2th Dec, 2020. Change condition invoice year and month to This_Month, As per discussion with Rajesh
                                          AND Parent_Account__r.Is_Club_Member__c = true AND Parent_Account__r.Membership_Type__c =: ConstantsClass.amcClubMember 
                                          AND Status__c=:ConstantsClass.dueStatus]);
     }

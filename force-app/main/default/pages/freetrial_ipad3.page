@@ -194,22 +194,43 @@
             function validatePage(trialSize){
                 var isSlotSameTime = false;
                 var mySet = new Set();
+                var isSlotBothGroup = false;
+                var myGroupClassSet = new Set();  // check both enrolment is group type or not
                 <apex:repeat value="{!enrModelList}" var="enrTrial">
                     var tSlot = '{!enrTrial.slcdFullSlot}' +':'+'{!enrTrial.slcdDate}';//alert(tSlot);
                     if(mySet.has(tSlot))
                         isSlotSameTime = true;                    
                     mySet.add(tSlot);
+                    if(myGroupClassSet.has('{!enrTrial.slcdLsnType}'))
+                        isSlotBothGroup = true;                    
+                    myGroupClassSet.add('{!enrTrial.slcdLsnType}');
                 </apex:repeat>
-               
-                
+                console.log('trialSize',trialSize);
+                console.log('{!enrModelList}');
                 if(trialSize > 0){
                     var isSuccess = true;
                     var isSameTchr = false;
-                    
+                    var isSameGroupClass = false;
                     var slcdTchrSet = new Set();
+                    var slcdClassSet = new Map();
                     for(var i=1; i<=trialSize; i++){
                         var optIndx = 'teacherOpt'+i;
-                        var slcdInst = $("input[name='"+optIndx+"']:checked").val();
+                        var slcdInst =  $("input[name='"+optIndx+"']:checked").val();
+                        /*start: 14-Sep-2020:nishi: If a user added two enrolment and both enrolment types were grouped then we allowed the user to select the same teacher, time slot
+                       // otherwise the enrolment type is individual then we showed an error message*/
+           
+                        console.log('slcdInst'+slcdInst);
+                        console.log('test '+"#"+slcdInst+''+optIndx);
+                        var classId = $("#"+slcdInst+''+i).attr('data-classid');
+                        if(classId != null && classId !='' && classId != undefined){
+                            var classavailablecapacity = $("#"+slcdInst+''+i).attr('data-classavailablecapacity');
+                            if(slcdClassSet.has(classId))
+                                isSameGroupClass = true;                    
+                            slcdClassSet.set(classId,classavailablecapacity);  
+                        }
+                         /*end:// 14-Sep-2020:nishi: If a user added two enrolment and both enrolment types were grouped then we allowed the user to select the same teacher, time slot
+                         // otherwise the enrolment type is individual then we showed an error message*/
+           
                         if(!slcdInst){
                             isSuccess = false;
                             break;
@@ -217,17 +238,32 @@
                          if(slcdTchrSet.has(slcdInst))
                             isSameTchr = true;                    
                         slcdTchrSet.add(slcdInst);
+                          
                     }
                     if(!isSuccess){
                         $('.cmpErrDiv').removeClass('slds-hide');
                         $('.contentDiv').html('Please select the teacher.');
                         return;
                     }
-                    
-                    if(isSlotSameTime && isSameTchr){
-                        $('.cmpErrDiv').removeClass('slds-hide');
-                        $('.contentDiv').html('You can\'t book the same Teacher for \'the Same Time\'.');
-                        return;
+                     /*// 14-Sep-2020:nishi: If a user added two enrolment and both enrolment types were grouped then we allowed the user to select the same teacher, time slot
+                         // otherwise the enrolment type is individual then we showed an error message*/
+                    if(isSlotBothGroup && isSameGroupClass){
+                        console.log('slcdClassSet',slcdClassSet);
+                        for (let slcdClassid of slcdClassSet.keys()) {
+                            console.log('slcdClassid',slcdClassid);
+                            console.log('slcdClassSet.get(slcdClassid)',slcdClassSet.get(slcdClassid));
+                            if(parseInt( slcdClassSet.get(slcdClassid)) < 2){
+                                $('.cmpErrDiv').removeClass('slds-hide');
+                                $('.contentDiv').html('You can\'t book the same Teacher for \'the Same Time\'.');
+                                return;
+                            }
+                        }
+                    }else{
+                        if(isSlotSameTime && isSameTchr){
+                            $('.cmpErrDiv').removeClass('slds-hide');
+                            $('.contentDiv').html('You can\'t book the same Teacher for \'the Same Time\'.');
+                            return;
+                        }
                     }
                     
                     $('.cmpErrDiv').addClass('slds-hide');
@@ -330,7 +366,7 @@
                         <fieldset class="slds-form-element bg-white slds-m-bottom_medium" style="border-radius: 10px;  border: solid 1px #dcdcdc;">
                             <div class="slds-form-element__control">
                                 <span class="slds-radio">
-                                    <input type="radio" id="{!teachMod.tecId}{!stuIndex}" value="{!teachMod.tecId}" onChange="setTeacher('{!stuIndex}');"  name="teacherOpt{!stuIndex}" />
+                                    <input type="radio" id="{!teachMod.tecId}{!stuIndex}" value="{!teachMod.tecId}" onChange="setTeacher('{!stuIndex}');"  name="teacherOpt{!stuIndex}" data-classid='{!teachMod.classId}' data-classavailablecapacity='{!teachMod.classAvailableCapacity}' />
                                     <label class="{!IF(org=='osia','slds-radio__label__Osia slds-p-around_medium','slds-radio__label slds-p-around_medium')}" for="{!teachMod.tecId}{!stuIndex}" >
                                         <div class="slds-grid slds-wrap ">
                                             <div class="slds-col slds-medium-size_3-of-12" style="align-self:top;">

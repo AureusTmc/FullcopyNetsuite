@@ -10,6 +10,9 @@
             <c:RegularEnrolment/>
             <c:CustomerRequest/>
             <c:SalesEnquiry/>
+            <!-- 28-Apr-2021: nishi: as per discussion with rajesh we show piano rental list view-->
+            <c:InstrumentRentalEnquiry/>
+            <!-- 28-Apr-2021: nishi: as per discussion with rajesh we show piano rental list view-->
             <c:AdminServiceRequest/>
         </div>
         <div class="slds-col slds-size_1-of-1 slds-medium-size_5-of-12 slds-large-size_4-of-12">

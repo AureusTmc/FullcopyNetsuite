@@ -1,127 +1,193 @@
-<apex:page showHeader="false"  standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False" controller="SearchInstrumentRental_IpadCntrl" >
-    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">      
-        <head>
-            <title>Piano Rental Delivery Page</title>
-            <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}"/> 
-            <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0"/>
-            <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700&display=swap" rel="stylesheet" />
-            <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous" />
-            <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery/jquery.js')}"/> 
-            <style>
-                /*By Reena on 23/01/2020*/
-                .dropdown {
-                  z-index:12;
-                  background: #fff;
-                  padding:0.8rem;
-                  border:1px solid #dddbda;
-                  position: relative;
-                  margin: 0 2.9rem;
-                }
-                .dropdown-overlay{
-                 position:fixed;
-                 background-color: rgba(0,0,0,0.4); 
-                 z-index:10;
-                 top:0px;
-                 left:0px;
-                 bottom:0px;
-                 right:0px;
-                }
-            
-                .dropdown-content {
-                    position: absolute;
-                    background:#fff;
-                    min-width: auto;
-                    box-shadow: 0px 8px 16px 0px
-                    rgba(0,0,0,0.2);
-                    z-index: 1;
-                    left: 0px;
-                    right: 0px;
-                    top: 51px;
-                    font-weight:light;
-                }
-                .box-info{
-                    box-shadow: 0 1px 0 0 #ececee;
-                    background-color:#fff;
-                    margin-bottom:4px;
-                }                        
-                /*end*/
-                
-                body a:hover {text-decoration:none;}
-                body, html {
+<apex:page id="pg" showHeader="false" controller="SearchInstrumentRental_IpadCntrl" standardStylesheets="true" docType="html-5.0"
+    applyBodyTag="False" applyHtmlTag="False">
+    <!-- CH02 Karan Singh As Netsuite integration is used of Sage integration so changing slcd piano details -->
+
+    <head>
+        <title>Piano Rental Delivery Page</title>
+        <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0" />
+        <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700&display=swap" rel="stylesheet" />
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/"
+            crossorigin="anonymous" />
+        <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery/jquery.js')}" />
+        <style>
+            /*By Reena on 23/01/2020*/
+
+            .dropdown {
+                z-index: 12;
+                background: #fff;
+                padding: 0.8rem;
+                border: 1px solid #dddbda;
+                position: relative;
+                margin: 0 2.9rem;
+            }
+
+            .dropdown-overlay {
+                position: fixed;
+                background-color: rgba(0, 0, 0, 0.4);
+                z-index: 10;
+                top: 0px;
+                left: 0px;
+                bottom: 0px;
+                right: 0px;
+            }
+
+            .dropdown-content {
+                position: absolute;
+                background: #fff;
+                min-width: auto;
+                box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+                z-index: 1;
+                left: 0px;
+                right: 0px;
+                top: 51px;
+                font-weight: light;
+            }
+
+            .box-info {
+                box-shadow: 0 1px 0 0 #ececee;
+                background-color: #fff;
+                margin-bottom: 4px;
+            }
+
+            /*end*/
+
+            body a:hover {
+                text-decoration: none;
+            }
+
+            body,
+            html {
                 font-size: 16px !important;
                 font-family: 'Lato', sans-serif !important;
                 font-weight: 300 !important;
-                }
-                .btn-gray, .btn-gray:hover, .btn-gray:focus {
-                background-color:#ccced0;
-                color:#fff;
-                }
-                .btn-yellow, .btn-yellow:hover, .btn-yellow:focus {
+            }
+
+            .btn-gray,
+            .btn-gray:hover,
+            .btn-gray:focus {
+                background-color: #ccced0;
+                color: #fff;
+            }
+
+            .btn-yellow,
+            .btn-yellow:hover,
+            .btn-yellow:focus {
                 background-color: #ffbf2f;
                 color: #fff;
-                }
-                .bg_white{background-color:#fff;}
-                @media screen and (min-width:778px){
+            }
+
+            .bg_white {
+                background-color: #fff;
+            }
+
+            @media screen and (min-width:778px) {
                 .slds-large-p-horizontal_xx-large {
-                padding-left: 3rem;
-                padding-right: 3rem;
+                    padding-left: 3rem;
+                    padding-right: 3rem;
                 }
                 .m-lg-right {
-                margin-right: .75rem;
+                    margin-right: .75rem;
                 }
-                }
-                input {
+            }
+
+            input {
                 height: calc(1.875rem + (1px * 10));
-                }
-                .sticky {
+            }
+
+            .sticky {
                 position: fixed;
                 bottom: 0;
                 width: 100%;
                 z-index: 99;
-                }
-                .slds-form-element__control .slds-checkbox, .slds-form-element__control .slds-radio {
+            }
+
+            .slds-form-element__control .slds-checkbox,
+            .slds-form-element__control .slds-radio {
                 display: inline-block;
-                }
-                .radio-new .slds-radio [type="radio"]:focus + .slds-radio__label .slds-radio_faux{
-                border-color:#ffbf2f; box-shadow: 0 0 3px #ffbf2f;}
-                .radio-new .slds-radio .slds-radio_faux {
-                border: 2px solid #dddbda;}
-                .radio-new .slds-radio [type="radio"]:checked .slds-radio_faux {
-                border: 2px solid #ffbf2f;}
-                .radio-new .slds-radio [type="radio"]:checked + .slds-radio__label .slds-radio_faux::after{background: #ffbf2f;}
-                .slds-radio{padding:8px 15px; border-radius:6px;}
-                .time-list label.slds-radio_button__label {
+            }
+
+            .radio-new .slds-radio [type="radio"]:focus+.slds-radio__label .slds-radio_faux {
+                border-color: #ffbf2f;
+                box-shadow: 0 0 3px #ffbf2f;
+            }
+
+            .radio-new .slds-radio .slds-radio_faux {
+                border: 2px solid #dddbda;
+            }
+
+            .radio-new .slds-radio [type="radio"]:checked .slds-radio_faux {
+                border: 2px solid #ffbf2f;
+            }
+
+            .radio-new .slds-radio [type="radio"]:checked+.slds-radio__label .slds-radio_faux::after {
+                background: #ffbf2f;
+            }
+
+            .slds-radio {
+                padding: 8px 15px;
+                border-radius: 6px;
+            }
+
+            .time-list label.slds-radio_button__label {
                 width: 100%;
                 text-align: center;
-                padding:5px 0px;
-                border-radius:3px;
-                }
-                .date-list{max-height:320px; overflow-y:auto;}
-                .time-list {
+                padding: 5px 0px;
+                border-radius: 3px;
+            }
+
+            .date-list {
+                max-height: 320px;
+                overflow-y: auto;
+            }
+
+            .time-list {
                 width: calc(100% - 15px);
                 margin: 0 auto 10px;
-                }
-                .time-list .active{
+            }
+
+            .time-list .active {
                 background-color: #ffbf2f;
                 color: #fff;
-                }
-                .time-list .active .slds-form-element__label{
+            }
+
+            .time-list .active .slds-form-element__label {
                 color: #fff;
-                }
-                
-                .slds-radio .slds-radio--faux, .slds-radio .slds-radio_faux {
+            }
+
+            .slds-radio .slds-radio--faux,
+            .slds-radio .slds-radio_faux {
                 width: 1.3rem;
                 height: 1.1em;
-                }
-                .slds-radio .slds-form-element__label {
+            }
+
+            .slds-radio .slds-form-element__label {
                 font-size: .9125rem;
-                }
-                .slds-radio--button + .slds-radio--button, .slds-radio--button + .slds-radio_button, .slds-radio_button + .slds-radio--button, .slds-radio_button + .slds-radio_button {
+            }
+
+            .slds-radio--button+.slds-radio--button,
+            .slds-radio--button+.slds-radio_button,
+            .slds-radio_button+.slds-radio--button,
+            .slds-radio_button+.slds-radio_button {
                 border-left: 0px solid #dddbda;
-                }
-                .slds-radio [type="radio"]:checked + .slds-radio--faux::after, .slds-radio [type="radio"]:checked + .slds-radio__label .slds-radio--faux::after, .slds-radio [type="radio"]:checked + .slds-radio__label .slds-radio_faux::after, .slds-radio [type="radio"]:checked + .slds-radio_faux::after, .slds-radio [type="radio"]:checked ~ .slds-radio--faux::after, .slds-radio [type="radio"]:checked ~ .slds-radio_faux::after {background-color: #fff; border:2px solid #ffbf2f;}
-                .slds-radio .slds-radio--faux, .slds-radio .slds-radio_faux {transition: none;}
-                .time-list span.slds-button.slds-radio_button {
+            }
+
+            .slds-radio [type="radio"]:checked+.slds-radio--faux::after,
+            .slds-radio [type="radio"]:checked+.slds-radio__label .slds-radio--faux::after,
+            .slds-radio [type="radio"]:checked+.slds-radio__label .slds-radio_faux::after,
+            .slds-radio [type="radio"]:checked+.slds-radio_faux::after,
+            .slds-radio [type="radio"]:checked~.slds-radio--faux::after,
+            .slds-radio [type="radio"]:checked~.slds-radio_faux::after {
+                background-color: #fff;
+                border: 2px solid #ffbf2f;
+            }
+
+            .slds-radio .slds-radio--faux,
+            .slds-radio .slds-radio_faux {
+                transition: none;
+            }
+
+            .time-list span.slds-button.slds-radio_button {
                 width: 100%;
                 margin-bottom: 15px;
                 border-radius: 4px;
@@ -129,310 +195,426 @@
                 background-color: #ffffff;
                 color: #ffbf2f;
                 font-weight: bold;
-                }
-                .slds-radio_button [type="radio"]:checked + .slds-radio_button__label:focus, .slds-radio_button [type="radio"]:checked + .slds-radio_button__label, .slds-radio_button [type="radio"]:checked + .slds-radio_button__label:hover{background-color: #ffbf2f;}
-                .slds-radio_button:first-child > .slds-radio_button__label, .slds-radio_button:first-child > .slds-radio_faux {
+            }
+
+            .slds-radio_button [type="radio"]:checked+.slds-radio_button__label:focus,
+            .slds-radio_button [type="radio"]:checked+.slds-radio_button__label,
+            .slds-radio_button [type="radio"]:checked+.slds-radio_button__label:hover {
+                background-color: #ffbf2f;
+            }
+
+            .slds-radio_button:first-child>.slds-radio_button__label,
+            .slds-radio_button:first-child>.slds-radio_faux {
                 border-radius: .25rem;
+            }
+
+            .slds-pill,
+            .slds-pill__action {
+                display: block;
+                font-size: 18px;
+            }
+
+            .slds-pill__action {
+                padding: 10px 14px;
+                color: #000;
+            }
+
+            .slds-pill_link .slds-pill__remove {
+                right: 1rem;
+            }
+
+            .slds-pill:hover {
+                background-color: #fff;
+            } //added by uzair
+            .table-parent {
+                overflow-x: auto;
+                max-width: 100%;
+            } // .table-parent{overflow-x:scroll !important; max-width:100%;}
+            .table-parent table thead {
+                display: inline-block;
+                width: 100%
+            }
+
+            .table-parent table tbody {
+                height: 300px;
+                overflow: auto;
+                -webkit-overflow: auto;
+                display: inline-block;
+                width: 100%;
+            }
+
+            .table-parent tbody tr,
+            .table-parent thead tr {
+                width: 100%;
+                display: table;
+            }
+
+            .table-parent table tbody {
+                height: 200px;
+                overflow: auto !important;
+                -webkit-overflow: auto !important;
+            }
+
+            table.date-list .time-list {
+                width: 100%;
+            }
+
+            .slds-grid.date-list {
+                padding-bottom: 30px;
+            }
+
+            .requiredInput {
+                border-left: 2px solid #F44336;
+            }
+
+            @media(min-width:991px) {
+                .new-container.class-true {
+                    width: 80%;
+                    margin: 0 auto;
+                    background-color: #fff;
                 }
-                .slds-pill, .slds-pill__action{display:block; font-size:18px;}
-                .slds-pill__action{padding: 10px 14px; color:#000;}
-                .slds-pill_link .slds-pill__remove {right: 1rem;}
-                .slds-pill:hover {
-                background-color:#fff;
+                .class-true .sticky {
+                    width: 80%;
+                    left: 10%;
                 }
-                
-                //added by uzair
-                .table-parent{overflow-x:auto; max-width:100%;}
-                // .table-parent{overflow-x:scroll !important; max-width:100%;}
-                .table-parent table thead{display:inline-block; width:100%}
-                .table-parent table tbody{height:300px; overflow:auto; -webkit-overflow:auto; display:inline-block; width:100%;}
-                .table-parent tbody tr, .table-parent thead tr {    width: 100%;  display: table;}
-                .table-parent table tbody{height:200px; overflow:auto !important; -webkit-overflow:auto !important; }
-                table.date-list .time-list {width:100%;}
-                .slds-grid.date-list{padding-bottom:30px;}
-                
-                .requiredInput{border-left: 2px solid #F44336;} 
-            </style>
-        </head>
-        <body>
-            <apex:form id="frm">
-                
-                <script>
-                
-                    function nextWeek(){
-                        nextWeek();
-                    }
-                    function preWeek(){
-                        var strtDate = '{!calStartDate}';
-                        prevWeek();
-                    }
-                    function HandleYes() {
-                        //alert(document.getElementById('radio-41').checked);
-                        //alert(document.getElementById('radio-42').checked);
-                        //alert(document.getElementById('radio-43').style.display);
-                        
-                        if(document.getElementById('radio-41').checked) {
-                            document.getElementById('radio-43').style.display = 'none'; 
-                            document.getElementById('chgiddiv').style.display = 'none'; 
-                            //document.getElementById('stpid').value = 0;
-                             $('[id$=stpid]').val(0);
-                            document.getElementById('chargeid').value = 0
-                            
-                            $('[id$=stpid]').removeClass('requiredInput');
-                        }else{                        
-                            document.getElementById('radio-43').style.display = 'block';
-                            if(document.getElementById('chargeid').value > 0)
-                                document.getElementById('chgiddiv').style.display = 'block';    
-                            
-                            $('[id$=stpid]').addClass('requiredInput');
-                        }
-                    }
-                    function calculatecharge(nostairs){
-                        //var nostairs = document.getElementById('stpid').value;
-                        document.getElementById('chargeid').value = nostairs*'{!fm.perStairCharges}';
+            }
+
+            /*ch:011: show piano rental process for  site guest user*/
+        </style>
+
+        <script>
+
+            function nextWeekfunction() {
+                nextWeek();
+            }
+            function preWeekfunction() {
+                var strtDate = '{!calStartDate}';
+                prevWeek();
+            }
+            function HandleYes() {
+                //alert(document.getElementById('radio-41').checked);
+                //alert(document.getElementById('radio-42').checked);
+                //alert(document.getElementById('radio-43').style.display);
+
+                if (document.getElementById('radio-41').checked) {
+                    document.getElementById('radio-43').style.display = 'none';
+                    document.getElementById('chgiddiv').style.display = 'none';
+                    //document.getElementById('stpid').value = 0;
+                    $('[id$=stpid]').val(0);
+                    document.getElementById('chargeid').value = 0
+
+                    $('[id$=stpid]').removeClass('requiredInput');
+                } else {
+                    document.getElementById('radio-43').style.display = 'block';
+                    if (document.getElementById('chargeid').value > 0)
                         document.getElementById('chgiddiv').style.display = 'block';
+
+                    $('[id$=stpid]').addClass('requiredInput');
+                }
+            }
+            function calculatecharge(nostairs) {
+                //var nostairs = document.getElementById('stpid').value;
+                document.getElementById('chargeid').value = nostairs * '{!fm.perStairCharges}';
+                document.getElementById('chgiddiv').style.display = 'block';
+            }
+
+            function nextPrcBtn() {
+                $('.cmpErrDiv').addClass('slds-hide');
+                var checkErr = validateData();
+
+                if (!checkErr) {
+                    checkErr = validateDeliveryOpt();
+                    if (!checkErr) {
+                        nextBtn();
                     }
-                    
-                    function nextPrcBtn(){
-                        $('.cmpErrDiv').addClass('slds-hide');
-                        var checkErr = validateData();
-                        
-                        if(!checkErr){                            
-                            checkErr = validateDeliveryOpt();
-                            if(!checkErr){
-                                nextBtn();
-                            }
-                        }
+                }
+            }
+
+            function validateData() {
+                var isErr = false;
+
+                $('.errortxt').remove();
+                $('.requiredInput').each(function () {
+                    $(this).css('border-left', '1px solid #dddbda');
+                    $(this).css('border-left', '1px solid #F44336');
+                    if (!$(this).val()) {
+                        $(this).after('<div class="slds-form-element__help errortxt" style="color:#F44336">This field is required</div>');
+                        $(this).css('border', '1px solid #F44336');
+                        isErr = true;
                     }
-                
-                    function validateData(){
-                        var isErr = false;
-                        
-                        $('.errortxt').remove();
-                        $('.requiredInput').each(function(){
-                            $(this).css('border-left','1px solid #dddbda');
-                            $(this).css('border-left','1px solid #F44336');
-                            if(!$(this).val()){
-                                $(this).after('<div class="slds-form-element__help errortxt" style="color:#F44336">This field is required</div>');
-                                $(this).css('border','1px solid #F44336');
-                                isErr = true;
-                            }
-                        });
-                        
-                        if(isErr){
+                });
+
+                if (isErr) {
+                    $('.cmpErrDiv').removeClass('slds-hide');
+                    $('.contentErrorDiv').html('Please fill all mandatory fields.');
+                } else {
+                    /*var isSelectedTime = $("input[name='slcdPianoOptions']:checked").val();
+                    if(!isSelectedTime){
+                        isErr = true;   
+                        $('.cmpErrDiv').removeClass('slds-hide');
+                        $('.contentErrorDiv').html('Please select a piano.');
+                    }*/
+                    var isStairs = $("input[name='stairOptions']:checked").val();
+                    if (isStairs == 'Yes') {
+                        var numberOfStair = $('[id$=stpid]').val();
+                        if (!numberOfStair || parseInt(numberOfStair) <= 0) {
+                            isErr = true;
                             $('.cmpErrDiv').removeClass('slds-hide');
-                            $('.contentErrorDiv').html('Please fill all mandatory fields.');
-                        }else{
-                            /*var isSelectedTime = $("input[name='slcdPianoOptions']:checked").val();
-                            if(!isSelectedTime){
-                                isErr = true;   
-                                $('.cmpErrDiv').removeClass('slds-hide');
-                                $('.contentErrorDiv').html('Please select a piano.');
-                            }*/
-                            var isStairs = $("input[name='stairOptions']:checked").val();
-                            if(isStairs == 'Yes'){
-                                var numberOfStair = $('[id$=stpid]').val();
-                                if(!numberOfStair || parseInt(numberOfStair)<=0){
-                                     isErr = true;   
-                                     $('.cmpErrDiv').removeClass('slds-hide');
-                                     $('.contentErrorDiv').html('Please Enter No of Stairs.');
-                                 }
-                            }
+                            $('.contentErrorDiv').html('Please Enter No of Stairs.');
                         }
-                        
-                        return isErr;
                     }
-                </script>
-                <apex:actionFunction name="setTime" action="{!setSlots}" reRender="rendr" status="spinner">
-                    <apex:param name="slcdSlot" value="" assignTo="{!slcdSlot}"/> 
-                    <apex:param name="slcdSlotDate" value="" assignTo="{!slcdSlotDate}"/> 
-                    <apex:param name="htmtxt" value="" assignTo="{!htmtxt}"/> 
-                </apex:actionFunction>
-                <apex:actionFunction name="processBack" action="{!backBtnCmp3}"/> 
-                <apex:actionFunction name="removeEle" action="{!detSlots}" reRender="rendr" status="spinner">
-                    <apex:param name="slcdSlot" value="" assignTo="{!slcdSlotDate}"/> 
-                </apex:actionFunction>
-                
-                <apex:actionFunction name="nextWeek" action="{!nextWeek}" reRender="frm" status="spinner"/>
-                <apex:actionFunction name="prevWeek" action="{!prevWeek}" reRender="frm" status="spinner"/>
-                
-                <apex:actionFunction name="fetchFullAddress" action="{!fetchFullAddress}" status="spinner" reRender="parentDetailsPanel">
-                    <apex:param id="postCode" name="postalCode" value="" />
-                </apex:actionFunction>
-                
-                <apex:actionFunction name="nextBtn" action="{!nextBtnCmp3}"/>                   
-                <apex:actionStatus id="spinner" styleClass="status">
-                    <apex:facet name="start">
-                        <div class="demo-only demo--inverse " style="height:100%;width:100%;z-index:200;position:fixed">
-                            <div class="slds-spinner_container" style="height:100%;width:100%;">
-                                <div role="status" class="slds-spinner slds-spinner_large slds-spinner_brand">
-                                    <span class="slds-assistive-text">Loading</span>
-                                    <div class="slds-spinner__dot-a"></div>
-                                    <div class="slds-spinner__dot-b"></div>
+                }
+
+                return isErr;
+            }
+        </script>
+    </head>
+
+    <body>
+        <!--ch:011: show piano rental process for  site guest user-->
+        <apex:outputPanel rendered="{!isSiteGuestUser}">
+            <!--@Juneid 11 AUg 202 -->
+            <div class="slds-p-around_medium" style="{!iF(isOssia,'font-size:15px; background-color: #ed1c24; text-align:center; color:#fff; font-weight:bold;','font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;')}">{!IF(isOssia,'Ossia Piano Rental Process','Aureus Academy Piano Rental Process')}
+            </div>
+            <p style="text-align:center;">
+                <apex:image url="{!iF(isOssia,$Resource.Osia_Logo,$Resource.Aureus_logo_png)}" />
+            </p>
+
+        </apex:outputPanel>
+        <!--ch:011: show piano rental process for  site guest user-->
+        <apex:form id="frm">
+            <apex:actionStatus id="spinner" styleClass="status">
+                <apex:facet name="start">
+                    <div class="demo-only demo--inverse " style="height:100%;width:100%;z-index:200;position:fixed">
+                        <div class="slds-spinner_container" style="height:100%;width:100%;">
+                            <div role="status" class="slds-spinner slds-spinner_large slds-spinner_brand">
+                                <span class="slds-assistive-text">Loading</span>
+                                <div class="slds-spinner__dot-a"></div>
+                                <div class="slds-spinner__dot-b"></div>
+                            </div>
+                        </div>
+                    </div>
+                </apex:facet>
+            </apex:actionStatus>
+            <apex:actionFunction name="setTime" action="{!setSlots}" reRender="rendr" status="spinner" >
+                <apex:param name="slcdSlot" value="" assignTo="{!slcdSlot}" />
+                <apex:param name="slcdSlotDate" value="" assignTo="{!slcdSlotDate}" />
+                <apex:param name="htmtxt" value="" assignTo="{!htmtxt}" />
+            </apex:actionFunction>
+            <apex:actionFunction name="processBack" action="{!backBtnCmp3}" />
+            <apex:actionFunction name="removeEle" action="{!detSlots}" reRender="rendr" status="spinner">
+                <apex:param name="slcdSlot" value="" assignTo="{!slcdSlotDate}" />
+            </apex:actionFunction>
+
+            <apex:actionFunction name="nextWeek" action="{!nextWeek}" reRender="frm" status="spinner" />
+            <apex:actionFunction name="prevWeek" action="{!prevWeek}" reRender="frm" status="spinner"/>
+
+            <apex:actionFunction name="fetchFullAddress" action="{!fetchFullAddress}" status="spinner" reRender="parentDetailsPanel"
+                >
+                <apex:param id="postCode" name="postalCode" value="" />
+            </apex:actionFunction>
+
+            <apex:actionFunction name="nextBtn" action="{!nextBtnCmp3}"  />
+
+
+
+            <div class="slds-text-heading_large  slds-p-around_small slds-text-align_center" style="font-weight:bold;">Delivery Questionnaire</div>
+            <div class="slds-grid slds-wrap slds-p-around_small sticky " id="myHeader" style="background-color:#f9f9fb; transition:all 0.3s ease-out;">
+                <div class="slds-size_1-of-2 ">
+                    <span>
+
+                        <a class="slds-button btn-gray slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-p-horizontal_large slds-m-bottom_small"
+                            id="back_step1" onclick="processBack(); return false;">Back</a>
+                    </span>
+                </div>
+
+                <div class="slds-size_1-of-2 slds-text-align_right">
+                    <span id="#">
+                        <a class="slds-button btn-yellow slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-m-bottom_small slds-p-horizontal_large"
+                            id="next_step3" onclick="nextPrcBtn(); return false;">Next</a>
+                    </span>
+                </div>
+            </div>
+            <div class="slds-form-element slds-p-bottom_small  slds-p-vertical_small ">
+
+                <div class="dropdown-overlay slds-hide"></div>
+                <div class="dropdown">
+                    <div style="font-weight:bold;">Your Selection So Far
+                        <i class="fa fa-chevron-down" style="float:right;"></i>
+                    </div>
+                    <div class="dropdown-content slds-p-around_large slds-hide">
+                        <p style="font-weight:bold;">Customers Details</p>
+                        <hr style="margin:10px 0px;" />
+
+                        <div class="slds-grid slds-wrap date-list">
+                            <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                <p class="">
+                                    <strong>First Name</strong>
+                                </p>
+                                <div class="box-info m-lg-right">
+                                    {!parentAcc.firstName}
+                                </div>
+                            </div>
+
+                            <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                <p class="">
+                                    <strong>Last Name</strong>
+                                </p>
+                                <div class="box-info">
+                                    {!parentAcc.lastName}
+                                </div>
+                            </div>
+                            <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                <p class="">
+                                    <strong>Email</strong>
+                                </p>
+                                <div class="box-info m-lg-right">
+                                    {!parentAcc.PersonEmail}
+                                </div>
+                            </div>
+
+                            <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                <p class="">
+                                    <strong>Phone</strong>
+                                </p>
+                                <div class="box-info">
+                                    {!parentAcc.Phone}
                                 </div>
                             </div>
                         </div>
-                    </apex:facet>
-                </apex:actionStatus> 
-                
-                <div class="slds-text-heading_large  slds-p-around_small slds-text-align_center" style="font-weight:bold;">Delivery Questionnaire</div>
-                <div class="slds-grid slds-wrap slds-p-around_small sticky " id="myHeader" style="background-color:#f9f9fb; transition:all 0.3s ease-out;">
-                    <div class="slds-size_1-of-2 "><span>
-                        <a class="slds-button btn-gray slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-p-horizontal_large slds-m-bottom_small" href="javascript:void(0)" id="back_step1" onclick="processBack();">Back</a></span>  
-                    </div>
-                    
-                    <div class="slds-size_1-of-2 slds-text-align_right"><span id="#">
-                        <a class="slds-button btn-yellow slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-m-bottom_small slds-p-horizontal_large" href="javascript:void(0)" id="next_step3" onclick="nextPrcBtn();">Next</a></span>
-                    </div>
-                </div>
-                <div class="slds-form-element slds-p-bottom_small  slds-p-vertical_small ">
-                  
-                    <div class="dropdown-overlay slds-hide"></div>
-                    <div class="dropdown">
-                        <div style="font-weight:bold;">Your Selection So Far<i class="fa fa-chevron-down" style="float:right;"></i></div>
-                        <div class="dropdown-content slds-p-around_large slds-hide">
-                            <p style="font-weight:bold;">Customers Details</p>
-                            <hr style="margin:10px 0px;" />
-                            
-                            <div class="slds-grid slds-wrap date-list">
-                                <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
-                                    <p class=""><strong>First Name</strong></p>
-                                    <div class="box-info m-lg-right">
-                                        {!parentAcc.firstName}
-                                    </div> 
-                                </div>
-                                
-                                <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
-                                    <p class=""><strong>Last Name</strong></p>
-                                    <div class="box-info" >
-                                        {!parentAcc.lastName}
-                                    </div> 
-                                </div>
-                                <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
-                                    <p class=""><strong>Email</strong></p>
-                                    <div class="box-info m-lg-right">
-                                        {!parentAcc.PersonEmail}
-                                    </div> 
-                                </div>
-                                
-                                <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
-                                    <p class=""><strong>Phone</strong></p>
-                                    <div class="box-info" >
-                                        {!parentAcc.Phone}
-                                    </div> 
+
+
+                        <p style="font-weight:bold;">Instrument Details</p>
+                        <hr style="margin:10px 0px;" />
+
+                        <div class="slds-grid slds-wrap date-list">
+                            <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                <p class="">
+                                    <strong>Brand</strong>
+                                </p>
+                                <div class="box-info m-lg-right">
+                                    <!--CH02 {!slcdPiano.brand} -->{!slcdPiano.brand}
                                 </div>
                             </div>
-                            
-                            
-                            <p style="font-weight:bold;">Instrument Details</p>
-                            <hr style="margin:10px 0px;"/>
-                            
-                            <div class="slds-grid slds-wrap date-list">
-                                <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
-                                    <p class=""><strong>Brand</strong></p>
-                                    <div class="box-info m-lg-right">
-                                        {!slcdPiano.brand}
-                                    </div> 
-                                </div>
-                                
-                                <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
-                                    <p class=""><strong>Model</strong></p>
-                                    <div class="box-info" >
-                                        {!slcdPiano.modelNo}
-                                    </div> 
-                                </div>
-                                <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
-                                    <p class=""><strong>Serial No.</strong></p>
-                                    <div class="box-info m-lg-right">
-                                        {!slcdPiano.serNo}
-                                    </div> 
-                                </div>
-                                
-                                <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
-                                    <p class=""><strong>Rental/Sale Price(Gst Inc.)</strong></p>
-                                    <div class="box-info" >
-                                        ${!slcdPiano.rentalPrice}/{!slcdPiano.salesPrice}
-                                    </div> 
+
+                            <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                <p class="">
+                                    <strong>Model</strong>
+                                </p>
+                                <div class="box-info">
+                                    <!--CH02 {!slcdPiano.modelNo} -->{!slcdPiano.model}
                                 </div>
                             </div>
-                         <!--   <p>By signing up for a trial lesson at Aureus Academy, you will be subscribed to our latest news and updates. By signing up for a trial lesson at Aureus Academy, you will be subscribed to our latest news and updates.</p>
+                            <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                <p class="">
+                                    <strong>Serial No.</strong>
+                                </p>
+                                <div class="box-info m-lg-right">
+                                    <!--CH02  {!slcdPiano.serNo} -->{!slcdPiano.serialNumber}
+                                </div>
+                            </div>
+
+                            <div class="slds-size_1-of-1 slds-large-size_1-of-2 slds-p-bottom_small">
+                                <p class="">
+                                    <strong>Rental/Sale Price(Gst Inc.)</strong>
+                                </p>
+                                <div class="box-info">
+                                    <!--CH02   ${!slcdPiano.rentalPrice}/{!slcdPiano.salesPrice} -->${!slcdPiano.monthlyRental}/{!slcdPiano.listPrice}
+                                </div>
+                            </div>
+                        </div>
+                        <!--   <p>By signing up for a trial lesson at Aureus Academy, you will be subscribed to our latest news and updates. By signing up for a trial lesson at Aureus Academy, you will be subscribed to our latest news and updates.</p>
                             <br/>
                             <p style="font-weight:bold;">Instrument Inspection Report</p>
                             <hr style="margin:10px 0px;" />-->
-                        </div>
                     </div>
                 </div>
-                <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error slds-hide cmpErrDiv"  style="width:50%; display:flex; margin: 0 auto;"  role="alert">
-                    <span class="slds-assistive-text">error</span>
-                    <span class="slds-icon_container slds-icon-utility-error slds-m-right_x-small" title="Description of icon when needed">
-                        <h2 class="slds-text-heading_small contentErrorDiv"></h2>
-                    </span>
-                    <div class="slds-notify__close">
-                        <button class="slds-button slds-button_icon slds-button_icon-inverse" title="Close" onclick="$('.cmpErrDiv').addClass('slds-hide');return false;">
-                            X
-                            <span class="slds-assistive-text" >Close</span>  
-                        </button>
+            </div>
+            <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error slds-hide cmpErrDiv" style="width:50%; display:flex; margin: 0 auto;"
+                role="alert">
+                <span class="slds-assistive-text">error</span>
+                <span class="slds-icon_container slds-icon-utility-error slds-m-right_x-small" title="Description of icon when needed">
+                    <h2 class="slds-text-heading_small contentErrorDiv"></h2>
+                </span>
+                <div class="slds-notify__close">
+                    <button class="slds-button slds-button_icon slds-button_icon-inverse" title="Close" onclick="$('.cmpErrDiv').addClass('slds-hide'); return false;">
+                        X
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="slds-p-horizontal_small bg_white" style="padding-top:0px; padding-bottom:75px;">
+                <hr style="margin:0px 0px 20px;" />
+                <div class="slds-grid slds-wrap">
+                    <div class="slds-size_1-of-2 ">
+                        <h3 class="slds-text-heading_medium slds-text-align_center" style="font-weight:bold;">Delivery Address</h3>
                     </div>
-                </div> 
-                
-                <div class="slds-p-horizontal_small bg_white" style="padding-top:0px; padding-bottom:75px;">
-                    <hr style="margin:0px 0px 20px;" />
-                    <div class="slds-grid slds-wrap">
-                        <div class="slds-size_1-of-2 ">
-                            <h3 class="slds-text-heading_medium slds-text-align_center" style="font-weight:bold;">Delivery Address</h3> 
-                        </div>
-                        
-                        <div class="slds-size_1-of-2 slds-text-align_right">
-                           <!-- <a class="slds-button btn-yellow slds-p-vertical_xxx-small  slds-m-bottom_small slds-p-horizontal_large" href="javascript:void(0)" >Enter Address</a>-->
-                        </div>
+
+                    <div class="slds-size_1-of-2 slds-text-align_right">
+                        <!-- <a class="slds-button btn-yellow slds-p-vertical_xxx-small  slds-m-bottom_small slds-p-horizontal_large" href="javascript:void(0)" >Enter Address</a>-->
                     </div>
-                    <hr style="margin: 10px 0px 20px;" />
-                    <apex:outputPanel id="parentDetailsPanel">
+                </div>
+                <hr style="margin: 10px 0px 20px;" />
+                <apex:outputPanel id="parentDetailsPanel">
                     <div class="slds-grid slds-wrap date-list ">
                         <div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
-                            <p class="slds-m-bottom_small"><strong>Postal Code</strong></p>
+                            <p class="slds-m-bottom_small">
+                                <strong>Postal Code</strong>
+                            </p>
                             <p class="m-lg-right">
                                 <!--<input id="#" type="text" name="" class="slds-input inputtxt parNameCls requiredInput" style="width:83.3333333333%" /> -->
-                                <apex:inputText value="{!parentAcc.BillingPostalCode}" styleclass="slds-input inputtxt requiredInput" onblur="fetchFullAddress(this.value);return false;"  style="width:83.3333333333%" id="postalCode"/>
+                                <apex:input type="text" value="{!BillingPostalCode}" styleclass="slds-input inputtxt requiredInput" onblur="fetchFullAddress(this.value); return false;"
+                                    style="width:83.3333333333%" id="postalCode" />
                                 <!--<button class="slds-button slds-button_success slds-m-left_medium" style="color:#fff; font-size: 19px; padding: 3px 13px; vertical-align:top;"><i class="fa fa-search"></i></button>-->
                             </p>
                         </div>
                         <div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
-                            <p class="slds-m-bottom_small"><strong>City</strong></p>
+                            <p class="slds-m-bottom_small">
+                                <strong>City</strong>
+                            </p>
                             <!--<input id="#" type="text" name="#" class="slds-input inputtxt parNameCls requiredInput" />-->
-                            <apex:inputText value="{!parentAcc.BillingCity}" styleclass="slds-input inputtxt requiredInput" id="billCity"/>
+                            <apex:input type="text" value="{!BillingCity}" styleclass="slds-input inputtxt requiredInput" id="billCity" />
                         </div>
                     </div>
-                    
+
                     <div class="slds-grid slds-wrap date-list ">
                         <div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
                             <div class="slds-grid slds-wrap">
                                 <div class="slds-size_9-of-12">
-                                    <p class="slds-m-bottom_small"><strong>Address</strong></p>
+                                    <p class="slds-m-bottom_small">
+                                        <strong>Address</strong>
+                                    </p>
                                     <p class="m-lg-right">
                                         <!--<input id="#" type="text" name="" class="slds-input inputtxt parNameCls requiredInput" /> -->
-                                        <apex:inputText value="{!parentAcc.BillingStreet}" styleclass="slds-input inputtxt parNameCls requiredInput" style="width:83.3333333333%" id="billingStreet"/>
+                                        <apex:input type="text" value="{!BillingStreet}" styleclass="slds-input inputtxt parNameCls requiredInput" style="width:83.3333333333%"
+                                            id="billingStreet" />
                                     </p>
                                 </div>
                                 <div class="slds-size_3-of-12 slds-medium-size_2-of-12">
-                                    <p class="slds-m-bottom_small slds-p-horizontal_small"><strong>Unit</strong></p>
+                                    <p class="slds-m-bottom_small slds-p-horizontal_small">
+                                        <strong>Unit</strong>
+                                    </p>
                                     <p class="slds-p-horizontal_small">
                                         <!--<input id="#" type="text" name="" class="slds-input" value="Unit" /> -->
-                                        <apex:inputText value="{!slcdEnrolment.Block__c}" styleclass="slds-input inputtxt unitCls requiredInput" id="unit"/>                                        
+                                        <apex:input type="text"  value="{!block}" styleclass="slds-input inputtxt unitCls requiredInput" id="unit" />
                                     </p>
                                 </div>
                             </div>
                         </div>
                         <div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
-                            <p class="slds-m-bottom_small"><strong>Contry</strong></p>
+                            <p class="slds-m-bottom_small">
+                                <strong>Contry</strong>
+                            </p>
                             <div class="slds-form-element slds-p-bottom_large">
                                 <div class="slds-form-element__control">
                                     <div class="slds-select_container">
                                         <!--<select name="" class="slds-select" style="height: calc(1.875rem + (1px * 10));"> 
                                         <option value="" >Singapore</option>
                                         </select>-->
-                                        <apex:selectList styleClass="slds-select requiredInput" value="{!parentAcc.BillingCountryCode}" style="height: calc(1.875rem + (1px * 10));" size="1">
-                                            <apex:selectOptions value="{!countries}"/> 
+                                        <apex:selectList styleClass="slds-select requiredInput" value="{!BillingCountryCode}" style="height: calc(1.875rem + (1px * 10));"
+                                            size="1">
+                                            <apex:selectOptions value="{!countries}" />
                                         </apex:selectList>
                                     </div>
                                     <div class="slds-form-element__help slds-hide errortxt">This field is required</div>
@@ -440,33 +622,25 @@
                             </div>
                         </div>
                     </div>
-                   </apex:outputPanel>
-                    <div class="slds-grid slds-wrap date-list ">
-                        <div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
-                            <div class="slds-grid">
-                                <div class="slds-size_10-of-12">
-                                    <p class="m-lg-right">
-                                        <div class="slds-form-element">
-                                            <p class="slds-m-bottom_small"><strong>Resident Type</strong></p>
-                                            <div class="slds-form-element__control">
-                                                <div class="slds-select_container">
-                                                    <apex:selectList size="1" value="{!slcdEnrolment.House_type__c}"  styleClass="slds-select requiredInput" > 
-                                                        <apex:selectOptions value="{!Type}"/>  
-                                                    </apex:selectList>
-                                                </div>
+                </apex:outputPanel>
+                <div class="slds-grid slds-wrap date-list ">
+                    <div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                        <div class="slds-grid">
+                            <div class="slds-size_10-of-12">
+                                <p class="m-lg-right">
+                                    <div class="slds-form-element">
+                                        <p class="slds-m-bottom_small">
+                                            <strong>Resident Type</strong>
+                                        </p>
+                                        <div class="slds-form-element__control">
+                                            <div class="slds-select_container">
+                                                <apex:selectList size="1" value="{!Housetype}" styleClass="slds-select requiredInput">
+                                                    <apex:selectOptions value="{!Type}" />
+                                                </apex:selectList>
                                             </div>
+                                        </div>
                                     </div>
-                                    
-                                    <!--<div class="slds-form-element slds-p-bottom_large">
-<div class="slds-form-element__control">
-<select name="" class="slds-select" style="height: calc(1.875rem + (1px * 10));"> 
-<apex:selectList size="1" value="{!residenttype}"> 
-<apex:selectOptions value="{!Type}"/>  
-</apex:selectList>
-</select>
-<div class="slds-form-element__help slds-hide errortxt">This field is required</div>
-</div>
-</div> -->
+
                                 </p>
                             </div>
                         </div>
@@ -474,17 +648,19 @@
                     <div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
                         <div class="slds-grid">
                             <div class="slds-size_4-of-12 radio-new">
-                                <p class="slds-m-bottom_small"><strong>Stairs</strong></p>
+                                <p class="slds-m-bottom_small">
+                                    <strong>Stairs</strong>
+                                </p>
                                 <div class="slds-form-element__control" style="font-size:18px;">
                                     <span class="slds-radio">
-                                        <input type="radio" id="radio-41" name="stairOptions" checked="true" value="No" onchange="HandleYes();"/>
+                                        <input type="radio" id="radio-41" name="stairOptions" checked="true" value="No" onchange="HandleYes(); return false;" />
                                         <label class="slds-radio__label" for="radio-41">
                                             <span class="slds-radio_faux"></span>
-                                            <span class=""  style="font-weight:400;">No</span>
+                                            <span class="" style="font-weight:400;">No</span>
                                         </label>
                                     </span>
                                     <span class="slds-radio slds-m-left_large slds-p-left_large">
-                                        <input type="radio" id="radio-42" name="stairOptions" checked="false" value="Yes" onchange="HandleYes();"/>
+                                        <input type="radio" id="radio-42" name="stairOptions" checked="false" value="Yes" onchange="HandleYes(); return false;" />
                                         <label class="slds-radio__label" for="radio-42">
                                             <span class="slds-radio_faux"></span>
                                             <span class="" style="font-weight:400;">Yes</span>
@@ -493,38 +669,50 @@
                                 </div>
                             </div>
                             <div class="slds-size_4-of-12" id="radio-43">
-                                <p class="slds-m-bottom_small"><strong># of Steps</strong></p>
+                                <p class="slds-m-bottom_small">
+                                    <strong># of Steps</strong>
+                                </p>
                                 <div>
                                     <!--<input  type="text" id="stpid" name="" class="slds-input" style="display:block;" value="{!nostairs}" onchange="calculatecharge()"/>  -->
-                                    <apex:input type="number" value="{!nostairs}" styleclass="slds-input inputtxt unitCls requiredInput" onchange="calculatecharge($(this).val())" id="stpid"/>    
-                                </div> 
+                                    <apex:input type="number" value="{!nostairs}" styleclass="slds-input inputtxt unitCls requiredInput" onchange="calculatecharge($(this).val()); return false;"
+                                        id="stpid" />
+                                </div>
                             </div>
                             <div class="slds-size_4-of-12 slds-hide">
-                                <br/><br/>
+                                <br/>
+                                <br/>
                                 <div style="padding-left:10px;display:none;" id="chgiddiv">
                                     <output name="result" id="chargeid"> {!fm.perStairCharges}</output>
-                                </div> 
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-               
-                <p><!--If you cnan't find your address, Please select the "Enter Address" button above to manually key in your delivery location. -->If your residence has steps that are required for delivery inside or outside of the delivery area, Please note there will be an additional charge of ${!fm.perStairCharges}/step added.</p>
-                <br/><br/>
-                
+
+                <p>
+                    <!--If you cnan't find your address, Please select the "Enter Address" button above to manually key in your delivery location. -->If your residence has steps that are required for delivery inside or outside of the delivery area, Please
+                    note there will be an additional charge of ${!fm.perStairCharges}/step added.</p>
+                <br/>
+                <br/>
+
                 <h3 class="slds-text-heading_medium slds-text-align_center" style="font-weight:bold;">Delivery Window</h3>
                 <hr style="margin:10px 0px 10px;" />
-                <p>For the delivery of your instrument, please select 3 possible options from the timing below. The actual delivery time will be confirmed later on upon by our logistics team as these are subject to avalilability.</p>
-                
+                <p>For the delivery of your instrument, please select 3 possible options from the timing below. The actual delivery
+                    time will be confirmed later on upon by our logistics team as these are subject to avalilability.</p>
+
                 <h3 class="slds-p-bottom_x-large slds-p-top_large" style="font-weight:bold; color:#ffbf2f; display:block; text-align:center; font-size: 1.2em;">
-                    <a href="#"  onclick="preWeek();"><span style="float:left; color:#000;" class="fa fa-angle-left"></span></a>
+                    <a href="#" onclick="preWeekfunction(); return false;">
+                        <span style="float:left; color:#000;" class="fa fa-angle-left"></span>
+                    </a>
                     <apex:outputText value="{0, date, d MMMM}">
-                        <apex:param value="{!calStartDate}" /> 
-                    </apex:outputText> - 
+                        <apex:param value="{!calStartDate}" />
+                    </apex:outputText> -
                     <apex:outputText value="{0, date, d MMMM  yyyy}">
-                        <apex:param value="{!calEndDate}" /> 
-                    </apex:outputText> 
-                    <a href="#" onclick="nextWeek();"><span style="float:right; color:#000;" class="fa fa-angle-right"></span></a>
+                        <apex:param value="{!calEndDate}" />
+                    </apex:outputText>
+                    <a href="#" onclick="nextWeekfunction(); return false;">
+                        <span style="float:right; color:#000;" class="fa fa-angle-right"></span>
+                    </a>
                 </h3>
                 <apex:outputPanel id="tSlotId">
                     <div class="table-parent ">
@@ -540,20 +728,21 @@
                                                             <apex:param value="{!dateKey}" />
                                                         </apex:outputText>
                                                     </strong>
-                                                </p> 
+                                                </p>
                                             </div>
-                                        </th>         
+                                        </th>
                                     </apex:repeat>
                                 </tr>
                             </thead>
-                            <tbody style="z-index:3;"> 
+                            <tbody style="z-index:3;">
                                 <tr class="">
                                     <apex:repeat value="{!dateslotmap}" var="dateKey">
                                         <td class="showInMobile" style="vertical-align:top;">
                                             <div class="time-list" style="width: calc(100% - 15px) !important;">
                                                 <apex:repeat value="{!dateslotmap[dateKey]}" var="tslot">
-                                                    <span class="slds-button slds-radio_button slds-m-bottom_medium">        
-                                                        <input id="{!dateKey}{!tslot}" name="{!dateKey}{!tslot}"  type="radio" value="{!tslot}"  onchange="enablebtn('{!dateKey}','{!tslot}');" />
+                                                    <span class="slds-button slds-radio_button slds-m-bottom_medium">
+                                                        <input id="{!dateKey}{!tslot}" name="{!dateKey}{!tslot}" type="radio" value="{!tslot}" onchange="enablebtn('{!dateKey}','{!tslot}'); return false;"
+                                                        />
                                                         <label class="slds-radio_button__label" for="{!dateKey}{!tslot}">
                                                             <span class="slds-radio_faux">{!tslot}</span>
                                                         </label>
@@ -569,113 +758,89 @@
                 </apex:outputPanel>
                 <apex:outputPanel id="rendr">
                     <script>
-                    
-                        function enablebtn(slcdSlotDate,sldcslot){
-                            
+
+                        function enablebtn(slcdSlotDate, sldcslot) {
+
                             var lstsize = '{!dtimeslot.size}';
-                            
-                            if(lstsize==3){
+
+                            if (lstsize == 3) {
                                 var wrplst = '{!dtimeslot}';
-                                var k =0;
-                                $("input[name='"+slcdSlotDate+sldcslot+"']").attr('checked', false);
+                                var k = 0;
+                                $("input[name='" + slcdSlotDate + sldcslot + "']").attr('checked', false);
                                 alert('You cannot select more than 3');
                                 return;
                             }
                             var res = slcdSlotDate.split(":")[0].split(" ");
-                            var showhtml = res[0]+', '+res[2]+' '+res[1];
-                            showhtml=showhtml+'@@'+slcdSlotDate;
-                            console.log('sldcslot == '+sldcslot);
+                            var showhtml = res[0] + ', ' + res[2] + ' ' + res[1];
+                            showhtml = showhtml + '@@' + slcdSlotDate;
+                            console.log('sldcslot == ' + sldcslot);
                             var myDate = new Date(slcdSlotDate);
-                            
-                            var str = myDate.getDate()+ '/' + (myDate.getMonth()+1) + '/' +myDate.getFullYear() ;
-                           // var str = myDate.getDate()+ '/' + myDate.getMonth() + '/' +myDate.getFullYear() ;
+
+                            var str = myDate.getDate() + '/' + (myDate.getMonth() + 1) + '/' + myDate.getFullYear();
+                            // var str = myDate.getDate()+ '/' + myDate.getMonth() + '/' +myDate.getFullYear() ;
                             // alert('@@@@--->'+myDate+'-----'+str);
                             //alert('@@@@--->'+sldcslot+' --- '+str+'  ----   '+showhtml);
-                            setTime(sldcslot,str,showhtml);
-                            
-                            
+                            setTime(sldcslot, str, showhtml);
+
+
                         }
-                        function disablebtn(slcdSlotDate){
-                            $("input[name='"+slcdSlotDate+"']").attr('checked', false);
+                        function disablebtn(slcdSlotDate) {
+                            $("input[name='" + slcdSlotDate + "']").attr('checked', false);
                             removeEle(slcdSlotDate);
                         }
-                        
-                        function validateDeliveryOpt(){
+
+                        function validateDeliveryOpt() {
                             var isErr = false;
                             var lstsize = '{!dtimeslot.size}';
-                            
-                            if(lstsize==0){
-                                isErr = true;   
+
+                            if (lstsize == 0) {
+                                isErr = true;
                                 $('.cmpErrDiv').removeClass('slds-hide');
                                 $('.contentErrorDiv').html('Please select at least one delivery option from Delivery window.');
                             }
                             return isErr;
                         }
                     </script>
-                    <apex:variable value="{!1}" var="index"/>
+                    <apex:variable value="{!1}" var="index" />
                     <div class="slds-grid slds-wrap date-list ">
                         <apex:repeat value="{!dtimeslot}" var="dslot">
-                            <div class="slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small remove_col1 slds-show" >
-                                <p class="slds-m-vertical_small"><strong>Option {!index}</strong></p>
+                            <div class="slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small remove_col1 slds-show">
+                                <p class="slds-m-vertical_small">
+                                    <strong>Option {!index}</strong>
+                                </p>
                                 <span class="slds-pill slds-pill_link  m-lg-right">
                                     <a href="javascript:void(0);" class="slds-pill__action" title="Full pill label verbiage mirrored here">
                                         <span class="slds-pill__label" style="font-weight:bold;">{!dslot.dttime}</span>
                                     </a>
-                                    <button class="slds-button slds-button_icon slds-button_icon slds-pill__remove close" title="Remove" onclick="disablebtn('{!dslot.appid}');return false;">
+                                    <button class="slds-button slds-button_icon slds-button_icon slds-pill__remove close" title="Remove" onclick="disablebtn('{!dslot.appid}'); return false;">
                                         <i class="fa fa-times"></i>
                                     </button>
                                 </span>
                             </div>
-                            <apex:variable value="{!index+1}" var="index"/>
+                            <apex:variable value="{!index+1}" var="index" />
                         </apex:repeat>
                     </div>
                 </apex:outputPanel>
-                <!--
-<div class="slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small remove_col2 slds-hide">
-<p class="slds-m-vertical_small"><strong>Option 2</strong></p>
-<span class="slds-pill slds-pill_link m-lg-right" >
-<a href="javascript:void(0);" class="slds-pill__action" title="Full pill label verbiage mirrored here">
-<span class="slds-pill__label" style="font-weight:bold;"></span>
-</a>
-<button class="slds-button slds-button_icon slds-button_icon slds-pill__remove" title="Remove">
-<i class="fa fa-times"></i>
-<span class="slds-assistive-text">Remove</span>
-</button>
-</span>
-</div>
-
-<div class="slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-bottom_small remove_col3 slds-hide">
-<p class="slds-m-vertical_small"><strong>Option 3</strong></p>
-<span class="slds-pill slds-pill_link">
-<a href="javascript:void(0);" class="slds-pill__action" title="Full pill label verbiage mirrored here">
-<span class="slds-pill__label" style="font-weight:bold;"></span>
-</a>
-<button class="slds-button slds-button_icon slds-button_icon slds-pill__remove" title="Remove">
-<i class="fa fa-times"></i>
-<span class="slds-assistive-text">Remove</span>
-</button>
-</span>
-</div>
-
-</div> -->
-                
-                <p class="slds-m-vertical_small"><strong>Additional Delivery Comments</strong></p>
+                <p class="slds-m-vertical_small">
+                    <strong>Additional Delivery Comments</strong>
+                </p>
                 <div class="slds-form-element__control">
                     <!--<textarea id="textarea-id-01" class="slds-textarea" ></textarea>-->
-                    
-                    <apex:inputTextarea id="textarea-id-01" styleclass="slds-textarea" value="{!slcdEnrolment.Additional_Delivery_comments__c}"/>
+
+                    <apex:inputTextarea id="textarea-id-01" styleclass="slds-textarea" value="{!slcdEnrolment.Additional_Delivery_comments__c}"
+                    />
                 </div>
             </div>
         </apex:form>
-        
-         <script>
-        $('.dropdown .fa-chevron-down').click(function(){
-            $('.dropdown-content').toggleClass("slds-hide slds-show");
-            $('.dropdown-overlay').toggleClass("slds-hide slds-show");
-            $(".dropdown i").toggleClass("fa-chevron-down fa-chevron-up");
-        });
+
+        <script>
+            $('.dropdown .fa-chevron-down').click(function () {
+                $('.dropdown-content').toggleClass("slds-hide slds-show");
+                $('.dropdown-overlay').toggleClass("slds-hide slds-show");
+                $(".dropdown i").toggleClass("fa-chevron-down fa-chevron-up");
+            });
         </script>
     </body>
-    
-</html>
+
+
 </apex:page>

@@ -24,7 +24,9 @@ public class ClassTriggerHelper{
                     bookingListForClass.addAll(createBookingsForClass(objClass, startTime, endTime));
                 } else{
                     DateTime endTime = DateTime.newInstance(objClass.Class_Date__c, objClass.Start_Time__c).addMonths(ConstantsClass.periodOfClassesInMonths + 1);
-                    endTime = DateTime.newInstance(Date.newInstance(endTime.year(), endTime.month(), 1), objClass.Start_Time__c);
+                    // commented  by nishi: 9-sep-2020: for we added date is end of the month not 1st or next month 
+                    //endTime = DateTime.newInstance(Date.newInstance(endTime.year(), endTime.month(),1)), objClass.Start_Time__c);
+                    endTime = DateTime.newInstance(Date.newInstance(endTime.year(), endTime.month(), Date.daysInMonth(endTime.month(),endTime.year())), objClass.Start_Time__c);
                     bookingListForClass.addAll(createBookingsForClass(objClass, startTime, endTime));
                     //commented by jatin: 17-Mar-2020: according to new requirement  Class_End_Date__c field  is only update manually 
                     //listOfClass.add(new Class__c (id=objClass.id,Class_End_Date__c = endTime.date()));
@@ -33,15 +35,33 @@ public class ClassTriggerHelper{
         }
         System.debug('@@@@bookingListForClass'+bookingListForClass);
         if(bookingListForClass != null && bookingListForClass.size() > 0){
-            insert	bookingListForClass;     
+            upsert	bookingListForClass;     
         }
         /*if(listOfClass != null && listOfClass.size() > 0){
             update	listOfClass;     
         }*/
     }
+
+    public  static Map<Date,Booking__c> getmapOfEffectiveDateGroupLesson(Date startDate, string classId){
+        Map<Date,Booking__c> mapOfEffectiveDateGroupLesson = New  Map<Date,Booking__c>();
+        for(Booking__c objBook : [SELECT Id, Start_Time__c, Group_Class__c,end_time__c, Booking_Date__c, Teacher_Account__c, Student__r.Name, Enrolment__c, Enrolment__r.new_package_Id__c, 
+                                  Enrolment__r.new_package_Id__r.Duration__c, Enrolment__r.Next_Lesson_Start_time__c, Center__c, Enrolment__r.Parent__c, Enrolment__r.Lesson_Day__c, 
+                                  Enrolment__r.New_Teacher__c,Enrolment__r.new_Lesson_Day__c, Enrolment__r.Lesson_Start_time__c,package__c, package__r.Duration__c, Is_Fifth_Booking__c 
+                                  FROM Booking__c 
+                                  WHERE Type__c = :ConstantsClass.groupTypeBooking
+                                  AND Status__c != :ConstantsClass.statusCanceled
+                                  AND Booking_Date__c >= :startDate
+                                  AND Class__c =:classId]){
+                                      mapOfEffectiveDateGroupLesson.put(objBook.Booking_Date__c ,objBook);
+                                  }
+        return mapOfEffectiveDateGroupLesson;
+    }
     
     //This method will create 12 Months booking for per class.
     Public static List<Booking__c> createBookingsForClass(Class__c classObj,DateTime startTime,datetime endTime){
+        // added by nishi: 9-Sep-2020: for if group lesson instance creates.
+        //we firslty check the group lesson booking is already created or not is group lesson booking already exist then we are not creating. 
+        Map<Date,Booking__c> mapOfEffectiveDateGroupLesson = getmapOfEffectiveDateGroupLesson(startTime.date(),classObj.id); 
     	List<Booking__c> bookingListForClass = new List<Booking__c>();
         String groupClassBookingType = Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get(ConstantsClass.groupBookingRecordType).getRecordTypeId();
         // 7-jan-2020:Change the Record Type of the placeholder in the class creation process to "Lesson"
@@ -57,34 +77,44 @@ public class ClassTriggerHelper{
            // startTime = DateTime.newInstance(classObj.Class_Date__c, classObj.Start_Time__c);
            /* endTime = startTime.addMonths(ConstantsClass.periodOfClassesInMonths + 1);
             endTime = DateTime.newInstance(Date.newInstance(endTime.year(), endTime.month(), 1), classObj.Start_Time__c);
-            */endTime = endTime.addDays(-1);
+            */
+            //endTime = endTime.addDays(-1); 
             //Create Bookings for 12 Months
             while(startTime <= endTime){
-                //system.debug('startTime.day()'+startTime.day());
-                if(startTime.day() <= 28){
-                   //Create Group Class Type bookings
-                   Booking__c regularGroupClassObj = new Booking__c(Class__c = classObj.Id, Booking_Date__c = startTime.date(), 
-                                                         Start_Time__c = classObj.Start_Time__c, End_Time__c = classObj.End_Time__c,
-                                                         Teacher_Account__c = classObj.Teacher__c, Center__c = classObj.Centre_Name__c, 
-                                                         Type__c = ConstantsClass.groupTypeBooking, Status__c = ConstantsClass.scheduledStatus,
-                                                         Package__c = classObj.Package__c, RecordTypeId = groupClassBookingType);
-                   bookingListForClass.add(regularGroupClassObj);
-               }
-               // @jatin: 2Jan-2020 : for add plachoder for 5th lesson group class
-                if(startTime.day() > 28){
-                    Booking__c placeholderObj = new Booking__c();
-                    placeholderObj.Type__c = ConstantsClass.typeBusy;
-                    placeholderObj.Booking_Date__c = startTime.date();
-                    placeholderObj.Start_Time__c = classObj.Start_Time__c;
-                    placeholderObj.End_Time__c = classObj.End_Time__c;
-                    placeholderObj.status__c = ConstantsClass.scheduledStatus;
-                    placeholderObj.Teacher_Account__c = classObj.Teacher__c;
-                    placeholderObj.Center__c = classObj.Centre_Name__c;
-                    placeholderObj.remarks__c = 'placeholder booking for Group Class - '+ classObj.name;
-                    placeholderObj.recordTypeId = lessonBookingType;
-                    placeholderObj.Category__c = ConstantsClass.bookingCategoryPlaceHolder;
-                    placeholderObj.Class__c = classObj.Id;
-                    bookingListForClass.add(placeholderObj);
+                 // added by nishi: 9-Sep-2020: for if group lesson instance creates.
+                //start:we firslty check the group lesson booking is already created or not is group lesson booking already exist then we are not creating.
+                if(mapOfEffectiveDateGroupLesson != null && mapOfEffectiveDateGroupLesson.size() > 0 && mapOfEffectiveDateGroupLesson.containsKey(startTime.date())){
+                    bookingListForClass.add( mapOfEffectiveDateGroupLesson.get(startTime.date()));
+                }
+                 //end: added by nishi: 9-Sep-2020: for if group lesson instance creates.
+                //we firslty check the group lesson booking is already created or not is group lesson booking already exist then we are not creating.
+                else{
+                    //system.debug('startTime.day()'+startTime.day());
+                    if(startTime.day() <= 28){
+                        //Create Group Class Type bookings
+                        Booking__c regularGroupClassObj = new Booking__c(Class__c = classObj.Id, Booking_Date__c = startTime.date(), 
+                                                                Start_Time__c = classObj.Start_Time__c, End_Time__c = classObj.End_Time__c,
+                                                                Teacher_Account__c = classObj.Teacher__c, Center__c = classObj.Centre_Name__c, 
+                                                                Type__c = ConstantsClass.groupTypeBooking, Status__c = ConstantsClass.scheduledStatus,
+                                                                Package__c = classObj.Package__c, RecordTypeId = groupClassBookingType);
+                        bookingListForClass.add(regularGroupClassObj);
+                    }
+                 // @jatin: 2Jan-2020 : for add plachoder for 5th lesson group class
+                    if(startTime.day() > 28){
+                        Booking__c placeholderObj = new Booking__c();
+                        placeholderObj.Type__c = ConstantsClass.typeBusy;
+                        placeholderObj.Booking_Date__c = startTime.date();
+                        placeholderObj.Start_Time__c = classObj.Start_Time__c;
+                        placeholderObj.End_Time__c = classObj.End_Time__c;
+                        placeholderObj.status__c = ConstantsClass.scheduledStatus;
+                        placeholderObj.Teacher_Account__c = classObj.Teacher__c;
+                        placeholderObj.Center__c = classObj.Centre_Name__c;
+                        placeholderObj.remarks__c = 'placeholder booking for Group Class - '+ classObj.name;
+                        placeholderObj.recordTypeId = lessonBookingType;
+                        placeholderObj.Category__c = ConstantsClass.bookingCategoryPlaceHolder;
+                        placeholderObj.Class__c = classObj.Id;
+                        bookingListForClass.add(placeholderObj);
+                    }
                 }
                 
                 startTime = startTime.addDays(7);

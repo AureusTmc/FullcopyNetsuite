@@ -1,7 +1,11 @@
 <apex:page controller="WithdrawController" standardStylesheets="false" lightningStylesheets="true" showHeader="false" sidebar="false" >
     <head>
-        
-        <title>Aureus Academy – Withdrawal Summary</title>
+        <apex:outputPanel rendered="{!isOssia}">
+            <title>Ossia Music School – Withdrawal Summary</title>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!!isOssia}">
+            <title>Aureus Academy – Withdrawal Summary</title>
+        </apex:outputPanel>
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery/jquery.js')}"/>
         <apex:includeScript value="{!URLFOR($Resource.Jquery_plugin, '/Jquery_plugin/jquery-ui.js')}"/>
@@ -16,7 +20,7 @@
                             <div class="slds-col">           
                                 <div class="header slds-col">
                                     <div class="slds-col" style="text-align:center;">
-                                        <td><apex:image style="width:50%;" url="{!$Resource.Aureus_logo}"/></td>
+                                        <td><apex:image style="width:50%;" url="{!iF(isOssia,$Resource.Osia_Logo,$Resource.Aureus_logo_png)}"/></td>
                                     </div>
                                 </div>
                             </div>
@@ -328,7 +332,7 @@
                                     </div>
                                 </apex:outputPanel>
                                 <div class="slds-col slds-size_1-of-1  slds-p-horizontal_medium">
-                                    <apex:commandButton styleClass="slds-button slds-button_neutral custom-btn" value="Submit" action="{!saveEnrollment}"/>
+                                    <apex:commandButton styleClass="{!iF(isOssia,'slds-button slds-button_neutral ossia_custom-btn','slds-button slds-button_neutral custom-btn')}" value="Submit" action="{!saveEnrollment}"/>
                                     <!--<a href="{!$Label.Aureus_Site}apex/EnrollmentCancellationProcess?id={!bookingId}&refund={!withdrawSummary.refund}" class="slds-button custom-btn">Give Feedback</a>-->
                                 </div>
                             </div>
@@ -360,7 +364,7 @@
         } 
         
         body{       
-        background-image: url("{!$Resource.music}") !important;     
+        /*background-image: url("{!$Resource.music}") !important; */    
         background-size:100% 100% !important;       
         background-repeat:no-repeat !important;     
         background-position:left !important;        
@@ -400,6 +404,17 @@
         padding: 5px 10px 3px !important;
         color: #fff !important;
         background: #f79c1a !important;
+        font-size: 16px !important;
+        text-transform: uppercase;
+        line-height: 20px !important;
+        margin: 15px 0 20px;
+        float:right;
+        margin-bottom: 10px !important;
+        }
+        .ossia_custom-btn {
+        padding: 5px 10px 3px !important;
+        color: #fff !important;
+        background: #ed1c24 !important;
         font-size: 16px !important;
         text-transform: uppercase;
         line-height: 20px !important;

@@ -43,6 +43,8 @@ public class ConstantsClass {
     public static String ClosedStatus      = 'Closed';
     public static String NewStatus         = 'New';
     public static String caseServiceEnqRecTypeName = 'Service Request';
+    public static String InstrumentRentalEnquiryRecordType ='Instrument Rental Enquiry';// added by nishi: 28-Apr-2021: for piano rental enquiry recordtype
+    
     public static String cancelType = 'Cancel';
     public static String casePendingStatus  = 'Pending';
     public static String caseOpenStatus = 'Open';
@@ -88,6 +90,8 @@ public class ConstantsClass {
     public static string recordTypeCenter = 'Centre'; 
     public static string typeBusy = 'Busy';
     public static string typeTrial = 'Trial';
+    public static string typeGroup = 'Group';   // added by Zakir : Add Type Group in the site .
+    public static string typeAdhocGroup = 'Group Adhoc'; // added by nishi: 2-Nov-2020: for group lesson adhoc package type
     public static string typeAdhoc = 'Ad-hoc';
     public static string typeMakeup = 'Make-up';
     public static string typePianoViewing = 'Piano Viewing'; //add by jatin: 20-jan-2020 : for show piano viewing type bookings
@@ -107,7 +111,7 @@ public class ConstantsClass {
     public static string calendarMinTime = '07:00:00';
     public static string teacherRecordType = 'Teacher'; 
     public static string teacherWorkingStatus = 'Working';
-   
+    public static Set<String> teacherPartTimeEngagementStatus = new Set<string> {'Commission'/*,'Part-Time'*/}; // added by nishi : 18-Sep-2020: for manage Commission type teacher in ossia organisation
     public static string teacherProfileName = '%Profile Image%';
     public static string makeupReasonOther = 'Other';
     public static string makeupAdminException = 'Admin/CM Exception';
@@ -170,7 +174,16 @@ public class ConstantsClass {
                                                                                       'Trial No-Show'   => 'Trial No Show',
         																			  'Trial Transferred'   => 'Transferred',
                                                                                       'Regular Enrolled'=> 'Enrolled',
-        																			  'Trial Lost'   => 'Lost'};
+        																			  'Trial Lost'   => 'Lost',
+                                                                                      // 28-Apr-2021:added by Nishi: need to build this functionality from enrolment as per discussion with Rajesh or Alex 
+                                                                                      'Piano Viewing Booked' => 'Piano Viewing Booked',
+                                                                                      'Piano Viewing Completed' =>'Piano Viewing Completed',
+                                                                                      'Piano Rental Active' =>'Piano Rental Active',
+                                                                                      'Piano Termination In-Progress' =>'Piano Termination-In Progress',
+                                                                                      'Piano Rental Terminated'=>'Piano Rental Terminated',
+                                                                                      'Piano Sold'=>'Piano Sold',
+                                                                                      'Not Interested'=>'Not Interested'
+                                                                                    };
     public static String trialLost = 'Trial Lost';  
     public static String caseLost = 'Lost'; 
     public static String caseSalesEnqRecTypeName = 'Sales Enquiry';
@@ -185,7 +198,11 @@ public class ConstantsClass {
     public static String paymentTransactionRecType = 'Payment Transaction';
     public static String paymentPendingStatus = 'Pending';
     public static String paymentSuccessStatus = 'Success';
-    
+
+    // Credit Memo Constants :nishi: 16-Sep-2020
+    public static String creditMemoPendingStatus = 'Pending';
+    public static String creditMemoSuccessStatus = 'Success';
+
     //Activated center Name
     //Enrolment mapping values with Case and Opportunity for the Sales process
     public static Set<String> activatedCenNames = new Set<String>{'Aureus 112 Katong','Aureus Suntec',
@@ -222,5 +239,6 @@ public class ConstantsClass {
     
     //by uzair 14/01/2020
     public static Decimal chargerate = 10;
-    
+    public static Set<String> excludedPayoutItemsbonus = new Set<string> {'Bonus (AW)','Bonus (OW)','Bonus (NON-CPF)','Referral Bonus','NS Make-up Pay'}; // added by uzair : 18-Nov-2020
+    public static String enrolWaitingStatus = 'Waiting';
 }

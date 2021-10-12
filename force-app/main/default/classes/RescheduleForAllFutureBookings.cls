@@ -31,18 +31,32 @@ public without sharing class RescheduleForAllFutureBookings {
     Public Map<String, Booking__c> mapOfBooking = new Map<String, Booking__c>();
     Public Map<String, Fifth_Lesson__c> mapOfFifthLesson = new Map<String, Fifth_Lesson__c>();
     Public String centreOrgId;
-
+    Public Boolean isOssia; // added by nishi: 24-Aug-2020: if teacher Leave is found and we update  Ossia org enrolment then we added 180 expiry days otherwise we added 120 days for other students
+    public List<Ossia_Organisation_Settings__mdt> listOfOssia_Organisation_Settings;
     //Constructor or start point of the functionality
     public RescheduleForAllFutureBookings(Boolean dayChange, Enrolment__c enrolObj, Date effectiveDate, Date startDate) {
-
+         // added by nishi: 22-Aug-2020: for manage ossia organization student we added 180 days in expiry dates
+        listOfOssia_Organisation_Settings = [SELECT Id, DeveloperName, MasterLabel, 
+                                            Language, NamespacePrefix,Makeup_Expiry_Days_For_Public_Holiday__c, Label, QualifiedApiName, Makeup_Expiry_Days__c,
+                                            Makeup_Expiry_Days_Teacher__c FROM Ossia_Organisation_Settings__mdt
+                                            WHERE Label =:System.Label.Ossia_Organisation_Name];
+         // added by nishi: 22-Aug-2020: for manage ossia organization student we added 180 days in expiry dates
         this.dayChange = dayChange;
         this.enrolObj = enrolObj;
         this.effectiveDate = effectiveDate;
         this.startDate = startDate;
-
+         // Added by nishi: 24-Aug-2020:Start: for ossia students booking will cancel then we added expiry date 180
+        // otherwise we added 120 days for other students
+        this.isOssia = false;
+        if(String.isNotBlank(enrolObj.Center__c) && 
+        String.isNotBlank(enrolObj.Center__r.Organisation__c) && 
+        String.isNotBlank(enrolObj.Center__r.Organisation__r.Name) && 
+        enrolObj.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){ 
+            this.isOssia= true;
+        } 
         if(this.dayChange && String.isNotBlank(enrolObj.Id) && effectiveDate != NULL && startDate != NULL){
             //Day Change
-            System.debug('@@@effectiveDate'+effectiveDate);
+           //System.debug('@@@effectiveDate'+effectiveDate);
             centreOrgId = enrolObj.Center__r.Organisation__c;
             dayIsChanged(enrolObj, effectiveDate, startDate);
         }else{
@@ -242,7 +256,18 @@ public without sharing class RescheduleForAllFutureBookings {
         for(Booking__c bookObj : fetchAllBookings(bookingIds)){
             //if(checkAdhocIsPaidMap.containsKey(bookObj.Id)){
                 bookObj.Available_Make_up_Units__c = bookObj.Duration__c;
-                bookObj.Make_up_Expiry_Date__c = bookObj.Booking_date__c.addDays(120);
+                // Added by nishi: 24-AUg-2020:Start: for ossia students booking will cancel then we added expiry date 180
+                // otherwise we added 120 days for other students
+                if(isOssia){
+                    if(listOfOssia_Organisation_Settings != null && listOfOssia_Organisation_Settings.size() > 0){
+                        bookObj.Make_up_Expiry_Date__c=bookObj.Booking_Date__c.addDays(Integer.valueOf((listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days__c)));
+                    }
+                }else{
+                    bookObj.Make_up_Expiry_Date__c = bookObj.Booking_date__c.addDays(120);
+                }
+                // Added by nishi: 24-AUg-2020:Start: for ossia students booking will cancel then we added expiry date 180
+                // otherwise we added 120 days for other students
+               
             //}
             bookObj.status__c = ConstantsClass.statusCanceled;
             bookingList.add(bookObj);
@@ -283,11 +308,11 @@ public without sharing class RescheduleForAllFutureBookings {
     private void reCreateRegularBookingsAndFifthLesson(Enrolment__c  enrolmentObj, Date effectiveDate, Date maxDate){
         List<Booking__c> bookingsToInsert = new List<Booking__c>();
         List<Fifth_Lesson__c> fifthLessonToInsert = new List<Fifth_Lesson__c>();
-        System.debug('@@@@maxDate'+maxDate);
+       //System.debug('@@@@maxDate'+maxDate);
         if(String.isNotBlank(enrolmentObj.Id)){
             Booking__c bookingObj = new Booking__c();
             Fifth_Lesson__c fifthLesson = new Fifth_Lesson__c();
-            System.debug('@@@@effectiveDate'+effectiveDate);
+           //System.debug('@@@@effectiveDate'+effectiveDate);
             while(effectiveDate <= maxdate){
                 if(effectiveDate.day() > 28){
                     fifthLesson = new Fifth_Lesson__c();
@@ -351,14 +376,14 @@ public without sharing class RescheduleForAllFutureBookings {
                 mapOfBooking.put(bookingObj.Booking_Date__c + '-' + bookingObj.Teacher_Account__c, bookingObj);
             }
         }
-        System.debug('@@@@bookingsToInsert'+bookingsToInsert);
+       //System.debug('@@@@bookingsToInsert'+bookingsToInsert);
         if(fifthLessonToInsert.size() > 0){
             INSERT fifthLessonToInsert;
             for(Fifth_Lesson__c lessonFifth : fifthLessonToInsert){
                 mapOfFifthLesson.put(lessonFifth.Booking_Date__c + '-' + lessonFifth.Teacher_Account__c, lessonFifth);
             }
         }
-        System.debug('@@@@fifthLessonToInsert'+fifthLessonToInsert);
+       //System.debug('@@@@fifthLessonToInsert'+fifthLessonToInsert);
     }
 
     private void updateExistingBookingsAndLesson(List<Booking__c> bookingList, List<Fifth_Lesson__c> fifthLessons, Enrolment__c enrolObj){
@@ -418,7 +443,19 @@ public without sharing class RescheduleForAllFutureBookings {
                 Booking__c bookObj = mapOfBooking.get(keySetValue);
                 bookObj.Status__c = ConstantsClass.statusCanceled;
                 bookObj.Available_Make_up_Units__c = bookObj.Duration__c; 
-                bookObj.Make_up_Expiry_Date__c  = bookObj.Booking_Date__c.addDays(120);
+                
+                  // Added by nishi: 24-AUg-2020:Start: for ossia students booking will cancel then we added expiry date 180
+                // otherwise we added 120 days for other students
+                if(isOssia){
+                    if(listOfOssia_Organisation_Settings != null && listOfOssia_Organisation_Settings.size() > 0){
+                        bookObj.Make_up_Expiry_Date__c=bookObj.Booking_Date__c.addDays(Integer.valueOf((listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days_Teacher__c)));
+                    }
+                }else{
+                    bookObj.Make_up_Expiry_Date__c  = bookObj.Booking_Date__c.addDays(120);
+                }
+                // Added by nishi: 24-AUg-2020:Start: for ossia students booking will cancel then we added expiry date 180
+                // otherwise we added 120 days for other students
+
                 bookObj.Makeup_Reason__c = 'Teacher Mc';
                 bookObj.Cancellation_Reason__c = 'Teacher Mc';
                 bookObj.Remarks__c = 'Teacher Leave';
@@ -477,7 +514,19 @@ public without sharing class RescheduleForAllFutureBookings {
                 Booking__c bookObj = mapOfBooking.get(keySetValue);
                 bookObj.Status__c = ConstantsClass.statusCanceled;
                 bookObj.Available_Make_up_Units__c = bookObj.Duration__c; 
-                bookObj.Make_up_Expiry_Date__c  = bookObj.Booking_Date__c.addDays(120);
+               
+                 // Added by nishi: 24-AUg-2020:Start: for ossia students booking will cancel then we added expiry date 180
+                // otherwise we added 120 days for other students
+                if(isOssia){
+                    if(listOfOssia_Organisation_Settings != null && listOfOssia_Organisation_Settings.size() > 0){
+                        bookObj.Make_up_Expiry_Date__c=bookObj.Booking_Date__c.addDays(Integer.valueOf((listOfOssia_Organisation_Settings[0].Makeup_Expiry_Days_For_Public_Holiday__c)));
+                    }
+                }else{
+                    bookObj.Make_up_Expiry_Date__c  = bookObj.Booking_Date__c.addDays(120);
+                }
+                // Added by nishi: 24-AUg-2020:Start: for ossia students booking will cancel then we added expiry date 180
+                // otherwise we added 120 days for other students
+
                 bookObj.Remarks__c = 'Public Holiday';
                 bookObj.Cancellation_Reason__c   = 'Holidays';
                 bookObj.Public_Holiday_Status__c = mapOfPublicLeaves.get(keySetValue).Organisation_Status__c;
@@ -523,8 +572,8 @@ public without sharing class RescheduleForAllFutureBookings {
     }
 
     private Set<String> fetchTeacherLeavesRequestDateSet(String teacherId, Date startDate, Date maxDate){
-        System.debug('@@@@@startDate'+startDate);
-        System.debug('@@@@@maxDate'+maxDate);
+       //System.debug('@@@@@startDate'+startDate);
+       //System.debug('@@@@@maxDate'+maxDate);
         Set<String> setOfTeachersLeave = new Set<String>();
         for(Leave_Request__c leaveRequest : [SELECT Id, Name, Leave_Type__c, Employee__c, Leave_Start_Date__c, Leave_End_Date__c 
                                              FROM Leave_Request__c WHERE Employee__c = :teacherId AND Leave_Start_Date__c >= :startDate AND 
@@ -535,7 +584,7 @@ public without sharing class RescheduleForAllFutureBookings {
                 startDateLeave = startDateLeave.addDays(1);
             }
         }
-         System.debug('@@@@@setOfTeachersLeave'+setOfTeachersLeave);
+        //System.debug('@@@@@setOfTeachersLeave'+setOfTeachersLeave);
         return setOfTeachersLeave;
     }
 

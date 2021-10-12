@@ -1,5 +1,9 @@
-<apex:page id="pg" showHeader="false" controller="SearchInstrumentRental_IpadCntrl"  standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False"  action="{!getProducts}">
-    <head>
+<apex:page id="pg" showHeader="false" controller="SearchInstrumentRental_IpadCntrl"  standardStylesheets="true" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False" action="{!getPromoAndAllProducts}"><!--"{!getProducts1} // Added by nishi: 11-Oct-2021:Start: As discussed with Rajesh we use string and create data table data using javascript--> <!-- CH02 action="{!getProducts1}" -->
+   <!-- CH02 Karan Singh As Netsuite integration is used of Sage integration so changing the fetch piano list and slcd piano details -->
+    <!-- CH05 Karan Singh 24 Sep 2020 : showing the type of the instrument in the page and storing the type of the instrument in the enrolment which can be piano,keyboard etc -->
+    <!-- CH06 Karan Singh 24 Sep 2020 : Making the data table optimized for the Ipad -->
+    <!-- CH09 Karan Singh 16 Oct 2020 : Need to show both the Aureus / Non Aureus Student Price in the Rental Column in UI. -->
+    <head> 
         <title>Aureus Academy</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0"/>
         <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}"/>      
@@ -44,7 +48,10 @@
             background-color:#ffbf2f;
             color:#fff;
             }
-            
+             .btn-red, .btn-red:hover, .btn-red:focus {
+            background-color:#ed1c24;
+            color:#fff;
+            }
             .slds-button_success{
             color:#fff !important;
             padding-left:12px;
@@ -109,6 +116,18 @@
             background-color: #fff;
             padding:5px;
             }
+            #accPromotinalTable_length{display:none !important;}
+            #accPromotinalTable_filter{
+            float:none; 
+            text-align:center; 
+            margin:0 auto; 
+            padding:40px 25px 20px;}
+            #accPromotinalTable_filter input{height: calc(1.875rem + (1px )); width:55rem; border-radius: 4px;
+            box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0);
+            border: solid 1px #ececee;
+            background-color: #fff;
+            padding:5px;
+            }
             /*#accTable_filter label{position:relative;}
             #accTable_filter label:after{
             position:absolute;
@@ -133,31 +152,229 @@
             table.dataTable.stripe tbody tr.odd, table.dataTable.display tbody tr.odd, table.dataTable.display tbody tr.odd > .sorting_1, table.dataTable.order-column.stripe tbody tr.odd > .sorting_1, table.dataTable.display tbody tr.even > .sorting_1, table.dataTable.order-column.stripe tbody tr.even > .sorting_1   {
                 background-color: #fff;
             }
-        </style>
+            /*Reena on 06/10/2020*/
+            
+             table.dataTable {table-layout: fixed;white-space: word-wrap: break-word;}
+            table.dataTable tr td{
+            word-break: break-word;
+            }
+            table.dataTable tr td,table.dataTable tr th{white-space: normal !important;}
+            .slds-table_cell-buffer tr > th:first-child, .slds-table_cell-buffer tr > td:first-child {padding-left:15px;}
+            
+            @media(min-width:991px){.new-container.class-true{width:80%; margin:0 auto; background-color:#fff;} .class-true .sticky{width:80%; left:10%;}}/*ch:011: show piano rental process for  site guest user*/
+        
+        </style> 
         
         <script>
-            $(document).ready(function() {      
+            $(document).ready(function() {   
+                 
                 var cntryCode = '{!countryCode}';
                 $('[id$=inputMobileId]').intlInputPhone({preferred_country: [cntryCode]}); 
                 var mobNumber = '{!PersonMobilePhoneCustom}';
                 $('[id$=phoneNumber]').val(mobNumber.replace(/^\+[0-9]{2}/,'')); 
-                
+                if({!isAureusNewEnolment}){   
+                    $('[id$=phoneNumber]').prop('disabled',true); 
+                }
                 // var accTable = $('[id$="accTable"]').DataTable({});
             }); 
-        
+            var isShowAllProduct = {!isShowAllInstrument};
             j$ = jQuery.noConflict();
-            j$(document).ready( function () {
-                var accTable = j$('[id$="accTable"]').DataTable({
-                "pageLength": 30,
-                "bInfo" : false,
-                 "lengthChange": false,
-                "language": {
-                    "search": "_INPUT_",
-                    "searchPlaceholder": "Search Brand, Model, Serial No., or Type"
+            j$(document).ready(function () {
+               /* var packageInstrument = '{!packageInstrument}';
+                if(packageInstrument == 'Piano'){
+                    packageInstrument = 'Keyboard';
                 }
+                console.log(packageInstrument);
+                */
+                // Added by nishi: 11-Oct-2021:Start: As discussed with Rajesh we use string and create data table data using javascript
+                if({!isAureusNewEnolment}){ 
+                     var result =  {!allNetSuiteProducts};
+                     console.log(result);
+                    var netSuiteProducts ='';
+                      $(result.netSuitePromotionalProducts).each(function(index, value){
+                         netSuiteProducts +=' <tr class="slds-hint-parent"><td><span class="slds-radio"><input type="radio" id="radio-'+value.srNo+'" value="'+value.srNo+'" onchange="setSlcdPianoIndx(\''+value.srNo+'\'); return false;" name="slcdPianoOptions" checked="" />';
+                          netSuiteProducts +='<label class="slds-radio__label" for="radio-'+value.srNo+'"><span class="slds-radio_faux"></span><span class="slds-form-element__label"></span></label></span></td>'; 
+                          netSuiteProducts +='                <td>'+value.srNo+'</td>';
+                          netSuiteProducts +='                <td>'+value.brand+'</td>';
+                          netSuiteProducts +='                <td>'+value.model+'</p></td>';
+                          netSuiteProducts +='                <td>'+value.inventoryType+'</td> ';
+                          netSuiteProducts +='                <td>'+value.serialNumber+'</td>';
+                          netSuiteProducts +='                <td>'+value.location+'</td>';
+                          netSuiteProducts +='                <td>'+value.studentPrice+'&nbsp;/&nbsp;'+value.monthlyRental+'</td> ';
+                          netSuiteProducts +='                <td>'+value.listPrice+'</td>';
+                          netSuiteProducts +='                <td>'+value.status+'</td>';
+                          netSuiteProducts +='                </tr>';
+                    }); 
+                    $('#netSuitePromotionalProducts').append(netSuiteProducts);
+                }else{
+                    var result =  {!allNetSuiteProducts};
+                     console.log(result);
+                    var netSuiteProducts ='';
+                      $(result.allNetSuiteProducts).each(function(index, value){
+                          netSuiteProducts +=' <tr class="slds-hint-parent"><td><span class="slds-radio"><input type="radio" id="radio-'+value.srNo+'" value="'+value.srNo+'" onchange="setSlcdPianoIndx(\''+value.srNo+'\'); return false;" name="slcdPianoOptions" checked="" />';
+                          netSuiteProducts +='<label class="slds-radio__label" for="radio-'+value.srNo+'"><span class="slds-radio_faux"></span><span class="slds-form-element__label"></span></label></span></td>'; 
+                          netSuiteProducts +='                <td>'+value.srNo+'</td>';
+                          netSuiteProducts +='                <td>'+value.brand+'</td>';
+                          netSuiteProducts +='                <td>'+value.model+'</p></td>';
+                          netSuiteProducts +='                <td>'+value.inventoryType+'</td> ';
+                          netSuiteProducts +='                <td>'+value.serialNumber+'</td>';
+                          netSuiteProducts +='                <td>'+value.location+'</td>';
+                          netSuiteProducts +='                <td>'+value.studentPrice+'&nbsp;/&nbsp;'+value.monthlyRental+'</td> ';
+                          netSuiteProducts +='                <td>'+value.listPrice+'</td>';
+                          netSuiteProducts +='                <td>'+value.status+'</td>';
+                          netSuiteProducts +='                </tr>';
+                    }); 
+                    $('#netSuiteProducts').append(netSuiteProducts);
+                }
+                // Added by nishi: 11-Oct-2021:end: As discussed with Rajesh we use string and create data table data using javascript
+                var accTable = j$('[id$="accTable"]').removeAttr('width').DataTable({
+                        "pageLength": 10, //"pageLength": 30, CH02 showing only 10 results  
+                        "bInfo": false,
+                        responsive: true,
+                        "lengthChange": false,
+                        "language": {
+                            "search": "_INPUT_",
+                            "searchPlaceholder": "Search Brand, Model, Serial No., or Type"
+                        },
+                        //CH06 Start
+                        columnDefs: [
+                            { width: 10, targets: 0 }, { width: 27, targets: 1 }, { width: 60, targets: 2 }, { width: 60, targets: 3 }, { width: 60, targets: 5 }
+                        ],//CH06 END
+                        fixedColumns: true,
+                        //"oSearch": { "sSearch": packageInstrument }
+                    });
+                var isAureusNewEnolment = {!isAureusNewEnolment};
+                
+                if(isAureusNewEnolment){
+                    var accPromotinalTable = j$('[id$="accPromotinalTable"]').removeAttr('width').DataTable({
+                        "pageLength": 10, //"pageLength": 30, CH02 showing only 10 results  
+                        "bInfo": false,
+                        responsive: true,
+                        "lengthChange": false,
+                        "language": {
+                            "search": "_INPUT_",
+                            "searchPlaceholder": "Search Brand, Model, Serial No., or Type"
+                        },
+                        //CH06 Start
+                        columnDefs: [
+                            { width: 10, targets: 0 }, { width: 27, targets: 1 }, { width: 60, targets: 2 }, { width: 60, targets: 3 }, { width: 60, targets: 5 }
+                        ],//CH06 END
+                        fixedColumns: true,
+                        //"oSearch": { "sSearch": packageInstrument }
+                    });
+                   
+                }
+                //CH06 Start - making the search box width as for the ipad
+                if(isAureusNewEnolment){
+                    var accTable_filter = document.getElementById('accTable_filter');
+                    accTable_filter.firstChild.getElementsByTagName('input')[0].style.width = "500px";
                     
-                });
+                    $( "#accTable_filter label" ).after(function() {
+                        return `<fieldset class="slds-form-element" style="display: inline-flex;padding-left: 120px;width: auto;margin-bottom: -12px">
+                            <div class="slds-form-element__control">
+                                <div class="slds-radio_button-group" style="height:40px;">
+                                <span class="slds-button slds-radio_button" style="height:42px;">
+                                    <input type="radio" name="accTableSelectAll" id="accTablePromotional" value="Promotional" onclick="getAllProduct(false);return false;" />
+                                    <label class="slds-radio_button__label" for="accTablePromotional">
+                                    <span class="slds-radio_faux">Show Promotional Instruments</span>
+                                    </label>
+                                </span>
+                                <span class="slds-button slds-radio_button" style="height:42px;">
+                                    <input type="radio" name="accTableSelectAll" id="accTableallinstrument" value="allinstrument" onclick="getAllProduct(true);return false;" />
+                                    <label class="slds-radio_button__label" for="accTableallinstrument">
+                                    <span class="slds-radio_faux">Show All Instruments</span>
+                                    </label>
+                                </span>
+                            </div>
+                        </fieldset>`;
+                        /*return `<label class="slds-checkbox_toggle" style="display: inline-flex;padding-left: 120px;width: auto;margin-bottom: -12px">
+                            <span class="slds-form-element__label slds-m-bottom_none showAllInstrument" style="font-weight: bold;font-size: inherit;">Show Promotional Instruments : </span>
+                            <input type="checkbox" name="SelectAll" value="SelectAll" aria-describedby="SelectAll" onclick="getAllProduct();" checked=""/>
+                            <span id="SelectAll" class="slds-checkbox_faux_container" aria-live="assertive">
+                                <span class="slds-checkbox_faux"></span>
+                                <span class="slds-checkbox_on">Enabled</span>
+                                <span class="slds-checkbox_off">Disabled</span>
+                            </span>
+                        </label>`*/;
+                    });
+                    $('.allProductTable').addClass('slds-hide');
+                    var accPromotinalTable_filter = document.getElementById('accPromotinalTable_filter');
+                    accPromotinalTable_filter.firstChild.getElementsByTagName('input')[0].style.width = "500px";
+                        $( "#accPromotinalTable_filter label" ).after(function() {
+                            return `<fieldset class="slds-form-element" style="display: inline-flex;padding-left: 120px;width: auto;margin-bottom: -12px">
+                                <div class="slds-form-element__control">
+                                    <div class="slds-radio_button-group" style="height:40px;">
+                                    <span class="slds-button slds-radio_button" style="height:42px;">
+                                        <input type="radio" name="accPromotinalSelectAll" id="accPromotinalPromotional" value="Promotional" onclick="getAllProduct(false);return false;" />
+                                        <label class="slds-radio_button__label" for="accPromotinalPromotional">
+                                        <span class="slds-radio_faux">Show Promotional Instruments</span>
+                                        </label>
+                                    </span>
+                                    <span class="slds-button slds-radio_button" style="height:42px;">
+                                        <input type="radio" name="accPromotinalSelectAll" id="accPromotinalallinstrument" value="allinstrument" onclick="getAllProduct(true);return false;" />
+                                        <label class="slds-radio_button__label" for="accPromotinalallinstrument">
+                                        <span class="slds-radio_faux">Show All Instruments</span>
+                                        </label>
+                                    </span>
+                                </div>
+                            </fieldset>`;
+                            /*return `<label class="slds-checkbox_toggle" style="display: inline-flex;padding-left: 120px;width: auto;margin-bottom: -12px">
+                                <span class="slds-form-element__label slds-m-bottom_none showAllInstrument" style="font-weight: bold;font-size: inherit;">Show Promotional Instruments : </span>
+                                <input type="checkbox" name="SelectAll" value="SelectAll" aria-describedby="SelectAll" onclick="getAllProduct();" checked=""/>
+                                <span id="SelectAll" class="slds-checkbox_faux_container" aria-live="assertive">
+                                    <span class="slds-checkbox_faux"></span>
+                                    <span class="slds-checkbox_on">Enabled</span>
+                                    <span class="slds-checkbox_off">Disabled</span>
+                                </span>
+                            </label>`*/;
+                        });
+                        $('#accPromotinalPromotional').prop('checked',true);
+                        //$('input[name="SelectAll"]').prop('checked',false);
+                    
+                }
+                //CH06 END
             });
+
+
+            function getAllProduct(showAllProduct){
+                /*if($('input[name="SelectAll"]').prop('checked')){
+                    $('.showAllInstrument').text('Show All Instruments');
+                    var oldtable = j$('[id$="accTable"]').DataTable();
+                    oldtable.search('').draw();
+                }else{
+                    $('.showAllInstrument').text('Show Promotional Instruments');
+                    var packageInstrument = '{!packageInstrument}';
+                    if(packageInstrument == 'Piano'){
+                        packageInstrument = 'Keyboard';
+                    }
+                    var oldtable = j$('[id$="accTable"]').DataTable();
+                    oldtable.search(packageInstrument).draw();
+                }*/
+                //if($('#allinstrument').prop('checked')){
+                    console.log('showAllProduct',showAllProduct);
+                if(showAllProduct){    
+                     $('.allPromotionalProductTable').addClass('slds-hide');
+                     $('.allProductTable').removeClass('slds-hide');
+                    var oldtable = j$('[id$="accTable"]').DataTable();
+                    oldtable.search('').draw();
+                    $('#accTableallinstrument').prop('checked',true);
+                }else{
+                    $('.allProductTable').addClass('slds-hide');
+                    $('.allPromotionalProductTable').removeClass('slds-hide');
+                    var oldtable = j$('[id$="accPromotinalTable"]').DataTable();
+                    oldtable.search('').draw();
+                    $('#accPromotinalPromotional').prop('checked',true);
+                    /*var packageInstrument = '{!packageInstrument}';
+                    if(packageInstrument == 'Piano'){
+                        packageInstrument = 'Keyboard';
+                    }
+                    var oldtable = j$('[id$="accTable"]').DataTable();
+                    oldtable.search(packageInstrument).draw();*/
+                }
+               
+            }  
+        
+        
         
             function prcToRentalOnclick(prcType){
                 //var slcdPiano = $("input[name='slcdPianoOptions']:checked").val();
@@ -165,9 +382,9 @@
                 
                 if(!checkErr){
                     if(prcType=='Rent')
-                    	prcToRental();
+                        prcToRental();
                     else if(prcType=='Sell')
-                    	prcToSell();
+                        prcToSell();
                 }
             }
         
@@ -184,25 +401,48 @@
                         isErr = true;
                     }
                 });
-                
-                if(isErr){
-                    $('.cmpErrDiv').removeClass('slds-hide');
-                    $('.contentErrorDiv').html('Please fill all mandatory fields.');
-                }else{
-                    var isSelectedTime = $("input[name='slcdPianoOptions']:checked").val();
-                    if(!isSelectedTime){
-                        isErr = true;   
-                        $('.cmpErrDiv').removeClass('slds-hide');
-                        $('.contentErrorDiv').html('Please select a piano.');
-                    }
+                var emailVal = $('[id$=emailtxt]').val();                   
+                var reg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;                    
+                if (reg.test(emailVal) == false){
+                    $('[id$=emailtxt]').after('<div class="slds-form-element__help errortxt" style="color:#F44336">Invalid email address.</div>');
+                    isErr = true;  
                 }
+                
+                if(!isErr){
+                    var concatePhoneNo = '+' + $('[class$=btn-cc]').html().match(/\d+/);
+                    concatePhoneNo += $('[id$=phoneNumber]').val();
+                    console.log(concatePhoneNo);
+                     $('[id$=phoneCstmId]').val(concatePhoneNo);
+                }   
+			
+                    if(isErr){
+                        $('.cmpErrDiv').removeClass('slds-hide');
+                        $('.contentErrorDiv').html('Please fill all mandatory fields.');
+                    }else{
+                        var isSelectedTime = $("input[name='slcdPianoOptions']:checked").val();
+                        if(!isSelectedTime){
+                            isErr = true;   
+                            $('.cmpErrDiv').removeClass('slds-hide');
+                            $('.contentErrorDiv').html('Please select a piano.');
+                        }
+                    }
                 
                 return isErr;
             }
         </script>
     </head>
     <body class="bg-white">
+        <!--ch:011: show piano rental process for  site guest user-->
+        <apex:outputPanel rendered="{!isSiteGuestUser}">     
+            <!--@Juneid 11 AUg 202 -->
+            <div  class="slds-p-around_medium" style="{!iF(isOssia,'font-size:15px; background-color: #ed1c24; text-align:center; color:#fff; font-weight:bold;','font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;')}">{!IF(isOssia,'Ossia Piano Rental Process','Aureus Academy Piano Rental Process')}      
+            </div>
+            <p style="text-align:center;"><apex:image url="{!iF(isOssia,$Resource.Osia_Logo,$Resource.Aureus_logo_png)}" /></p>        
+            
+        </apex:outputPanel>  
+         <!--ch:011: show piano rental process for  site guest user-->
         <apex:form id="frm">
+            <div class="new-container {!IF(isSiteGuestUser, 'class-true','')}"  >
             <apex:actionStatus id="spinner">
                 <apex:facet name="start"> 
                     <apex:outputPanel id="backdrop" styleClass="popupBackground">
@@ -213,7 +453,6 @@
                     </apex:outputPanel>
                 </apex:facet>
             </apex:actionStatus>
-            
             
             <apex:actionFunction name="prcToRental" action="{!prcToRental}"/>
             <apex:actionFunction name="prcToSell" action="{!prcToSell}"/>
@@ -238,9 +477,12 @@
                         <h3 class="slds-text-heading_large" style="font-weight:bold;">Select an Instrument</h3>
                     </div>
                     <div class="slds-size_1-of-2 slds-large-size_1-of-3 slds-large-order_1  slds-p-bottom_large">
-                        <a href="javascript:void(0)" onclick="processBack();" class="slds-button btn-gray slds-p-vertical_xxx-small slds-p-horizontal_xx-large slds-m-bottom_small" >Back</a>
+                        <apex:outputPanel rendered="{!!isAureusNewEnolment}" layout="none">
+                            <a href="javascript:void(0)" onclick="processBack();" class="slds-button btn-gray slds-p-vertical_xxx-small slds-p-horizontal_xx-large slds-m-bottom_small" >
+                               Back
+                            </a>
+                        </apex:outputPanel>
                     </div>
-                    
                     <div class="slds-size_1-of-2 slds-large-size_1-of-3 slds-text-align_right slds-large-order_3  slds-p-bottom_large" >
                        <!-- <a href="javascript:void(0)" id="next_step2" class="slds-button btn-yellow slds-p-vertical_xxx-small slds-p-horizontal_xx-large slds-m-bottom_small" onclick="processEnrolment();" style="">Next</a>-->
                     </div>                    
@@ -268,24 +510,24 @@
                     <div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
                         <p class=""><strong>First Name</strong></p>
                         <p class="m-lg-right">
-                            <apex:inputText value="{!parentAcc.firstName}" styleclass="slds-input inputtxt parNameCls requiredInput" id="parFirstName"/>
+                            <apex:inputText value="{!parentAcc.firstName}"  disabled="{!isAureusNewEnolment}" styleclass="slds-input inputtxt parNameCls requiredInput" id="parFirstName"/>
                         </p>
                     </div>
                     
                     <div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
                         <p class=""><strong>Last Name</strong></p>
-                        <apex:inputText value="{!parentAcc.lastName}" styleclass="slds-input inputtxt parNameCls requiredInput" id="parLastName"/>
+                        <apex:inputText value="{!parentAcc.lastName}"  disabled="{!isAureusNewEnolment}" styleclass="slds-input inputtxt parNameCls requiredInput" id="parLastName"/>
                     </div>
                     <div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
                         <p class=""><strong>Email</strong></p>
                         <p class="m-lg-right">
-                            <apex:inputField value="{!parentAcc.PersonEmail}" styleclass="slds-input inputtxt emailCls requiredInput" id="emailtxt"/>
+                            <apex:inputText value="{!parentAcc.PersonEmail}"   disabled="{!isAureusNewEnolment}" styleclass="slds-input inputtxt emailCls requiredInput" id="emailtxt"/>
                         </p>
                     </div>
                     
                     <div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
                         <p class=""><strong>Phone
-                            <abbr class="slds-required slds-m-horizontal_none phoneNumber" title="required" style="cursor: default;"></abbr>
+                            <abbr class="slds-required slds-m-horizontal_none phoneNumber"  title="required" style="cursor: default;"></abbr>
                        </strong></p>
                         <div id="slds-form-element__control inputMobileId"></div>
                     </div>
@@ -295,59 +537,142 @@
                 
                 
                 <div class="container slds-border_top" style="background-color:#f9f9fb;" >
-                <table id="accTable" class="display slds-table slds-table_cell-buffer slds-table_bordered" style="background-color:#fff;" >
-                    <thead>
-                        <tr class="slds-line-height_reset">
-                            <th scope="col"></th>
-                            <th scope="col">No.</th>
-                            <th scope="col">Brand</th>
-                            <th scope="col">Model</th>
-                            <th scope="col">Serial No.</th>
-                            <th scope="col">Location</th>
-                            <th scope="col">Rental</th>
-                            <th scope="col">Sales Price</th>
-                            <th scope="col">Cond.</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <apex:repeat value="{!sageProducts}" var="sag">
-                            <tr class="slds-hint-parent">
-                                <td>
-                                    <span class="slds-radio">
-                                        <input type="radio" id="radio-{!sag.srNo}" value="{!sag.srNo}" onchange="setSlcdPianoIndx('{!sag.srNo}'); return false;" name="slcdPianoOptions" checked="" />
-                                        <label class="slds-radio__label" for="radio-{!sag.srNo}">
-                                            <span class="slds-radio_faux"></span>
-                                            <span class="slds-form-element__label"></span>
-                                        </label>
-                                    </span>
-                                </td>
-                                <td>{!sag.srNo}</td>
-                                <td>{!sag.brand}</td>
-                                <td>{!sag.modelNo}</td>
-                                <td>{!sag.serNo}</td>
-                                <td>{!sag.location}</td>
-                                <td>{!sag.rentalPrice}</td>
-                                <td>{!sag.salesPrice}</td>
-                                <td>{!sag.condi}</td>
-                            </tr>
-                        </apex:repeat>
-                    </tbody>
-                </table>
-                
+                    <div class="allProductTable">
+                        <table id="accTable" class="display slds-table slds-table_cell-buffer slds-table_bordered" style="background-color:#fff;" >
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th scope="col"></th> 
+                                    <th scope="col">No.</th>
+                                    <th scope="col">Brand</th>
+                                    <th scope="col">Model</th>
+                                    <th scope="col">Type</th> <!-- CH05 added new column -->
+                                    <th scope="col">Serial No.</th>
+                                    <th scope="col">Location</th>
+                                    <th scope="col">Rental</th>
+                                    <th scope="col">Sales Price</th>
+                                    <th scope="col">Cond.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="netSuiteProducts">
+                               <!--// Added by nishi: 11-Oct-2021:Start: As discussed with Rajesh we use string and create data table data using javascript
+								<apex:repeat value="{!netSuiteProducts}" var="net"><!--   <apex:repeat value="{!sageProducts}" var="sag"> -?->
+                                    <tr class="slds-hint-parent">
+                                        <td>
+                                            <span class="slds-radio">
+                                            <!-- CH02 <input type="radio" id="radio-{!sag.srNo}" value="{!sag.srNo}" onchange="setSlcdPianoIndx('{!sag.srNo}'); return false;" name="slcdPianoOptions" checked="" /> -?->
+                                                <input type="radio" id="radio-{!net.srNo}" value="{!net.srNo}" onchange="setSlcdPianoIndx('{!net.srNo}'); return false;" name="slcdPianoOptions" checked="" />
+                                                <!--CH02  <label class="slds-radio__label" for="radio-{!sag.srNo}">-?->
+                                                <label class="slds-radio__label" for="radio-{!net.srNo}">
+                                                    <span class="slds-radio_faux"></span>
+                                                    <span class="slds-form-element__label"></span>
+                                                </label>
+                                            </span>
+                                        </td>
+                                        <!--CH02 changes , see controller
+                                        <td>{!sag.srNo}</td>
+                                        <td>{!sag.brand}</td>
+                                        <td>{!sag.modelNo}</td>
+                                        <td>{!sag.serNo}</td>
+                                        <td>{!sag.location}</td>
+                                        <td>{!sag.rentalPrice}</td>
+                                        <td>{!sag.salesPrice}</td>
+                                        <td>{!sag.condi}</td>
+                                        
+                                        -?->
+                                        <td>{!net.srNo}</td>
+                                        <td>{!net.brand}</td>
+                                        <td><p>{!net.model}</p></td>
+                                        <td>{!net.inventoryType}</td><!-- CH05 added new column -?->
+                                        <td>{!net.serialNumber}</td>
+                                        <td>{!net.location}</td>
+                                        <td>{!net.studentPrice}&nbsp;/&nbsp;{!net.monthlyRental}</td> <!-- CH09 now will show both the fields : <td>{!net.monthlyRental}</td>-?->
+                                        <td>{!net.listPrice}</td>
+                                        <td>{!net.status}</td>
+                                    </tr>
+                                </apex:repeat>
+								// Added by nishi: 11-Oct-2021:end: As discussed with Rajesh we use string and create data table data using javascript-->
+                            </tbody>
+                        </table> 
+                    </div>
+                <apex:outputPanel rendered="{!isAureusNewEnolment}">
+                    <div class="allPromotionalProductTable">
+                        <table id="accPromotinalTable" class="display slds-table slds-table_cell-buffer slds-table_bordered" style="background-color:#fff;" >
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th scope="col"></th> 
+                                    <th scope="col">No.</th>
+                                    <th scope="col">Brand</th>
+                                    <th scope="col">Model</th>
+                                    <th scope="col">Type</th> <!-- CH05 added new column -->
+                                    <th scope="col">Serial No.</th>
+                                    <th scope="col">Location</th>
+                                    <th scope="col">Rental</th>
+                                    <th scope="col">Sales Price</th>
+                                    <th scope="col">Cond.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="netSuitePromotionalProducts">
+                              <!-- // Added by nishi: 11-Oct-2021:Start: As discussed with Rajesh we use string and create data table data using javascript
+									<apex:repeat value="{!netSuitePromotionalProducts}" var="net"><!--   <apex:repeat value="{!sageProducts}" var="sag"> -?->
+                                    <tr class="slds-hint-parent">
+                                        <td>
+                                            <span class="slds-radio">
+                                            <!-- CH02 <input type="radio" id="radio-{!sag.srNo}" value="{!sag.srNo}" onchange="setSlcdPianoIndx('{!sag.srNo}'); return false;" name="slcdPianoOptions" checked="" /> -?->
+                                                <input type="radio" id="radio-{!net.srNo}" value="{!net.srNo}" onchange="setSlcdPianoIndx('{!net.srNo}'); return false;" name="slcdPianoOptions" checked="" />
+                                                <!--CH02  <label class="slds-radio__label" for="radio-{!sag.srNo}">-?->
+                                                <label class="slds-radio__label" for="radio-{!net.srNo}">
+                                                    <span class="slds-radio_faux"></span>
+                                                    <span class="slds-form-element__label"></span>
+                                                </label>
+                                            </span>
+                                        </td>
+                                        <!--CH02 changes , see controller
+                                        <td>{!sag.srNo}</td>
+                                        <td>{!sag.brand}</td>
+                                        <td>{!sag.modelNo}</td>
+                                        <td>{!sag.serNo}</td>
+                                        <td>{!sag.location}</td>
+                                        <td>{!sag.rentalPrice}</td>
+                                        <td>{!sag.salesPrice}</td>
+                                        <td>{!sag.condi}</td>
+                                        
+                                        -?->
+                                        <td>{!net.srNo}</td>
+                                        <td>{!net.brand}</td>
+                                        <td><p>{!net.model}</p></td>
+                                        <td>{!net.inventoryType}</td><!-- CH05 added new column -?->
+                                        <td>{!net.serialNumber}</td>
+                                        <td>{!net.location}</td>
+                                        <td>{!net.studentPrice}&nbsp;/&nbsp;{!net.monthlyRental}</td> <!-- CH09 now will show both the fields : <td>{!net.monthlyRental}</td> -?->
+                                        <td>{!net.listPrice}</td>
+                                        <td>{!net.status}</td>
+                                    </tr>
+                                </apex:repeat>
+// Added by nishi: 11-Oct-2021:END: As discussed with Rajesh we use string and create data table data using javascript
+-->
+                            </tbody>
+                        </table> 
+                    </div>
+                </apex:outputPanel>
                  <div class="slds-grid slds-wrap slds-text-align_center slds-p-top_x-large">
-                     
                      <!--CH01 center align button by karan Singh 24 aug 2020
                     <div class="slds-medium-size_1-of-2 slds-p-bottom_small" -->
                      <div class="slds-medium-size_1-of-3 slds-p-bottom_small"/>
                      <div class="slds-medium-size_1-of-3 slds-p-bottom_small">
-                      <a class="slds-button btn-yellow slds-p-horizontal_xx-large slds-m-bottom_large" onclick="prcToRentalOnclick('Rent');return false;">Proceed to Rental</a>    
-                    </div>
+                         <apex:outputPanel rendered="{!isOssia}">
+                             <a class="slds-button btn-red slds-p-horizontal_xx-large slds-m-bottom_large" onclick="prcToRentalOnclick('Rent');return false;">Proceed to Rental</a>    
+                         </apex:outputPanel>
+                         <apex:outputPanel rendered="{!!isOssia}">
+                             <a class="slds-button btn-yellow slds-p-horizontal_xx-large slds-m-bottom_large" onclick="prcToRentalOnclick('Rent');return false;">Proceed to Rental</a>    
+                         </apex:outputPanel>
+                     </div>
                      <!-- karan Singh 24 aug 2020 commented this button as now we are not doing the purchase process
                     <div class="slds-medium-size_1-of-2 slds-p-bottom_small">
                         <a class="slds-button btn-yellow slds-p-horizontal_xx-large  slds-m-bottom_large" onclick="prcToRentalOnclick('Sell');return false;">Proceed to Purchase</a>  
                     </div -->
                     <!-- CH01 END -->     
                 </div>
+            </div>
             </div>
         </apex:form>
     </body>

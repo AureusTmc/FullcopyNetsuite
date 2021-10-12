@@ -1,7 +1,7 @@
 // Added By Ravi (25th Oct 2019)....
 @isTest
 public class LeaveRequestTest {
-
+    
     static TestMethod void invokeMethodOne(){
         Id sickRecordTypeId = Schema.SObjectType.Leave_Request__c.getRecordTypeInfosByDeveloperName().get('Sick_Leave').getRecordTypeId();
         Country__c cntry = new Country__c();
@@ -14,14 +14,27 @@ public class LeaveRequestTest {
         cntry.Stripe_Publishable_Key__c ='pk_test_eGeu4Z0mLSfXmekcJcLt7TVH';
         cntry.Stripe_Secret_Key__c ='sk_test_M3pk8qvbMs03SWjDuf6m1bss';
         insert cntry;
+        /*
+Organisation__c org = new Organisation__c(Name='Test',Country__c=cntry.Id);
+insert org;*/
         
-        Organisation__c org = new Organisation__c(Name='Test',Country__c=cntry.Id);
-        insert org;
+        // update 21 09 2020 @nishi jain 
+        Organisation__c organisationRecord = new Organisation__c();
+        organisationRecord.Name = 'Aureus Academy Singapore';
+        organisationRecord.Bank_Account_Number__c = '1123456789';
+        organisationRecord.Branch_Code__c = 'test';
+        organisationRecord.Country__c = cntry.id;
+        organisationRecord.Stripe_Base_Url__c = 'www.test.com';
+        organisationRecord.Stripe_Publishable_Key__c = 'ABC';
+        organisationRecord.Stripe_Secret_Key__c = 'test_key';
+        organisationRecord.Sage_Company__c = 'AGP';
+        Insert organisationRecord;
+        
         Account accObj=TestUtil.createAccount('Teacher', true, true);
         Account accCustObj=TestUtil.createAccount('Customer', true, true);
         Account accCentObj=TestUtil.createAccount('Centre', true, false);
         accCentObj.Country__c =cntry.Id;
-        accCentObj.Organisation__c=org.Id;
+        accCentObj.Organisation__c=organisationRecord.Id;
         insert accCentObj;
         
         List<Booking__c> booklist = new List<Booking__c>();
@@ -72,9 +85,21 @@ public class LeaveRequestTest {
         cntry.Stripe_Publishable_Key__c ='pk_test_eGeu4Z0mLSfXmekcJcLt7TVH';
         cntry.Stripe_Secret_Key__c ='sk_test_M3pk8qvbMs03SWjDuf6m1bss';
         insert cntry;
+        /*
+Organisation__c org = new Organisation__c(Name='Test',Country__c=cntry.Id);
+insert org;*/
+        // update 21 09 2020 @nishi jain 
+        Organisation__c organisationRecord = new Organisation__c();
+        organisationRecord.Name = 'Aureus Academy Singapore';
+        organisationRecord.Bank_Account_Number__c = '1123456789';
+        organisationRecord.Branch_Code__c = 'test';
+        organisationRecord.Country__c = cntry.id;
+        organisationRecord.Stripe_Base_Url__c = 'www.test.com';
+        organisationRecord.Stripe_Publishable_Key__c = 'ABC';
+        organisationRecord.Stripe_Secret_Key__c = 'test_key';
+        organisationRecord.Sage_Company__c = 'AGP';
+        Insert organisationRecord;
         
-        Organisation__c org = new Organisation__c(Name='Test',Country__c=cntry.Id);
-        insert org;
         Account accObj=TestUtil.createAccount('Teacher', true, true);
         
         Fifth_Lesson__c fifthLessonObj = new Fifth_Lesson__c();
@@ -97,10 +122,10 @@ public class LeaveRequestTest {
         insert levObjReq;
         
         //LeaveRequestScheduler objLeaveScheduler= new LeaveRequestScheduler();
-       // objLeaveScheduler.execute(Null);
+        // objLeaveScheduler.execute(Null);
     }
     
-     static TestMethod void invokeMethodThree(){
+    static TestMethod void invokeMethodThree(){
         Id sickRecordTypeId = Schema.SObjectType.Leave_Request__c.getRecordTypeInfosByDeveloperName().get('Sick_Leave').getRecordTypeId();
         Id otherRecordTypeId = Schema.SObjectType.Leave_Request__c.getRecordTypeInfosByDeveloperName().get('Other_Leave').getRecordTypeId();
         Country__c cntry = new Country__c();
@@ -117,8 +142,8 @@ public class LeaveRequestTest {
         Organisation__c org = new Organisation__c(Name='Test',Country__c=cntry.Id);
         insert org;
         Account accObj=TestUtil.createAccount('Teacher', true, true);
-         
-         Account accCustObj=TestUtil.createAccount('Customer', true, true);
+        
+        Account accCustObj=TestUtil.createAccount('Customer', true, true);
         List<Booking__c> booklist = new List<Booking__c>();
         for(integer i=1;i<=2;i++){
             Booking__c objBook = new Booking__c();
@@ -153,7 +178,7 @@ public class LeaveRequestTest {
         insert levObjReq;
         
         //LeaveRequestScheduler objLeaveScheduler= new LeaveRequestScheduler();
-       // objLeaveScheduler.execute(Null);
+        // objLeaveScheduler.execute(Null);
     }
     
     static TestMethod void invokeMethodScheduler(){
@@ -170,18 +195,34 @@ public class LeaveRequestTest {
         cntry.Stripe_Publishable_Key__c ='pk_test_eGeu4Z0mLSfXmekcJcLt7TVH';
         cntry.Stripe_Secret_Key__c ='sk_test_M3pk8qvbMs03SWjDuf6m1bss';
         insert cntry;
+        /*
+Organisation__c org = new Organisation__c(Name='Test',Country__c=cntry.Id);
+insert org; */
         
-        Organisation__c org = new Organisation__c(Name='Test',Country__c=cntry.Id);
-        insert org;
+        // update 21 09 2020 @nishi jain 
+        Organisation__c organisationRecord = new Organisation__c();
+        organisationRecord.Name = 'Aureus Academy Singapore';
+        organisationRecord.Bank_Account_Number__c = '1123456789';
+        organisationRecord.Branch_Code__c = 'test';
+        organisationRecord.Country__c = cntry.id;
+        organisationRecord.Stripe_Base_Url__c = 'www.test.com';
+        organisationRecord.Stripe_Publishable_Key__c = 'ABC';
+        organisationRecord.Stripe_Secret_Key__c = 'test_key';
+        organisationRecord.Sage_Company__c = 'AGP';
+        Insert organisationRecord;
+        
+        
         Account accObj=TestUtil.createAccount('Teacher', true, true);
         Account accCentObj=TestUtil.createAccount('Centre', true, false);
         accCentObj.Country__c =cntry.Id;
-        accCentObj.Organisation__c=org.Id;
+        // update 21 09 2020 @nishi jain 
+        accCentObj.Organisation__c=organisationRecord.Id;
         insert accCentObj;
         
         Account objtechr=TestUtil.createAccount('Teacher',False,false);
         objtechr.Employee_Duty_Type__c='Non-Duty';
-        objtechr.Organisation__c=org.Id;
+        // update 21 09 2020 @nishi jain 
+        objtechr.Organisation__c=organisationRecord.Id;
         insert objtechr;
         Datetime dt = DateTime.newInstance(system.today().addDays(1), Time.newInstance(0, 0, 0, 0));
         String dayOfWeek=dt.format('E');
@@ -212,5 +253,55 @@ public class LeaveRequestTest {
         LeaveRequestScheduler objLeaveScheduler= new LeaveRequestScheduler();
         objLeaveScheduler.execute(Null);
     }
+    
+    // added by nishi:  26-Sep-2020: for cover ossia regarding changes
+    static TestMethod void testOssiachanges(){
+        OssiaCenterCalendarControllerTestHelper.createCalenderData();
+         List<Booking__c> listOfBooking = [SELECT Id,Type__c,Student__c,center__c,Teacher_Account__c,Package__c,Enrolment__c,Booking_Date__c,
+                                          Available_Make_up_Units__c,end_Time__c,parent__c
+                                          FROM Booking__c
+                                         Where RecordType.name =:ConstantsClass.recordTypeLesson]; 
+        test.startTest();
+         List<Booking__c> listOfcreateBooking = new List<Booking__c>();
+        listOfcreateBooking.add(AureusCalendarControllerTestHelper.createBooking(listOfBooking[0].Teacher_Account__c,listOfBooking[0].enrolment__C,listOfBooking[0].parent__c,listOfBooking[0].center__c,
+                                                                                 listOfBooking[0].Package__c,system.today(),'Scheduled','Lesson','Trial',false));
+        listOfcreateBooking.add(AureusCalendarControllerTestHelper.createBooking(listOfBooking[0].Teacher_Account__c,listOfBooking[0].enrolment__C,listOfBooking[0].parent__c,listOfBooking[0].center__c,
+                                                                                 listOfBooking[0].Package__c,system.today().adddays(1),'Scheduled','Lesson','Make-up',false));
+        listOfcreateBooking.add(AureusCalendarControllerTestHelper.createBooking(listOfBooking[0].Teacher_Account__c,listOfBooking[0].enrolment__C,listOfBooking[0].parent__c,listOfBooking[0].center__c,
+                                                                                 listOfBooking[0].Package__c,system.today(),'Scheduled','Lesson','Ad-hoc',false));
+        listOfcreateBooking.add(AureusCalendarControllerTestHelper.createBooking(listOfBooking[0].Teacher_Account__c,listOfBooking[0].enrolment__C,listOfBooking[0].parent__c,listOfBooking[0].center__c,
+                                                                                 listOfBooking[0].Package__c,system.today().adddays(1),'Scheduled','Lesson','Busy',false));
+        listOfcreateBooking[0].Start_Time__c =Time.newInstance(10,00,00,00);
+        listOfcreateBooking[1].Start_Time__c =Time.newInstance(10,00,00,00);
+        listOfcreateBooking[2].Start_Time__c =Time.newInstance(10,00,00,00);
+        listOfcreateBooking[3].Start_Time__c =Time.newInstance(10,00,00,00);
+        insert listOfcreateBooking;
+        
+        List<account> listOfteacher = [select id from account where recordType.name='Teacher'];
+        Id sickRecordTypeId = Schema.SObjectType.Leave_Request__c.getRecordTypeInfosByDeveloperName().get('Sick_Leave').getRecordTypeId();
+        Id otherRecordTypeId = Schema.SObjectType.Leave_Request__c.getRecordTypeInfosByDeveloperName().get('Other_Leave').getRecordTypeId();
+        List<Leave_Request__c> levObjReqlist= new List<Leave_Request__c>();
+       /* Leave_Request__c levObjReq= new Leave_request__c();
+        levObjReq.Employee__c=listOfBooking[0].Teacher_Account__c;
+        levObjReq.Calendar_Update_Process__c=false;
+        levObjReq.Leave_Start_Date__c=system.today().addDays(1);
+        levObjReq.Leave_End_Date__c=system.today().addDays(2);
+        levObjReq.RecordTypeId=otherRecordTypeId;
+        levObjReq.Status__c='Approved';
+         insert levObjReq;
+        */
+        Leave_Request__c levObjReq= new Leave_request__c();
+        levObjReq.Employee__c=listOfBooking[0].Teacher_Account__c;
+        levObjReq.Calendar_Update_Process__c=false;
+        levObjReq.Sick_leave_start_Time__c=Time.newInstance(11,00,00,00);
+        levObjReq.Leave_Start_Date__c=system.today();
+        levObjReq.Leave_End_Date__c=system.today().addDays(2);
+        levObjReq.RecordTypeId=sickRecordTypeId;
+        levObjReq.Status__c='Pending';
+        levObjReqlist.add(levObjReq);
+        insert levObjReq;
+        test.stopTest();
+    }
+    
     
 }

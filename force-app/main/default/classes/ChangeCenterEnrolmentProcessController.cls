@@ -71,7 +71,7 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
                                                 Makeup_Expiry_Days_Teacher__c FROM Ossia_Organisation_Settings__mdt
                                                 WHERE Label =:System.Label.Ossia_Organisation_Name];
             athomeCenterIds.add(Label.Aureus_at_Home_Id);   
-            if(listOfOssia_Organisation_Settings != null && listOfOssia_Organisation_Settings.size() > 0){
+            if(listOfOssia_Organisation_Settings != null && listOfOssia_Organisation_Settings.size() > 0 && string.isNotBlank(listOfOssia_Organisation_Settings[0].Ossia_at_Home_Id__c)){
                 athomeCenterIds.add(listOfOssia_Organisation_Settings[0].Ossia_at_Home_Id__c);   
             }  
 
@@ -108,6 +108,15 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
             }
             enrolmentObj.Next_Lesson_Start_time__c = timeslot;
         }
+         //11-Sep-2020: Nishi:user can change lesson day so we manage this new lesson
+        Datetime effectiveDatetime = datetime.newInstance(effectiveDate,system.now().time());
+        if(enrolmentObj.Lesson_Day__c != effectiveDatetime.format('EEEE')){
+            enrolmentObj.New_Lesson_Day__c = effectiveDatetime.format('EEEE');
+        
+            if(isSameMonth){
+                enrolmentObj.Lesson_Day__c = effectiveDatetime.format('EEEE');
+            }
+        }
         enrolmentObj.Package_Process_Type__c = ConstantsClass.enrollmentProcessChangedCenter;
         enrolmentObj.Package_Process_Request_Date__c = System.today();
         enrolmentObj.Advance_Action_Requested_By__c = UserInfo.getUserId();
@@ -115,16 +124,17 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
         //4-sep-2020: center change then we create another subscription and related line item this start date is according to effective date
         // we deactivate Existing subscrition line item and remove nextbilling date or added subscrition end date  of current month last date
         if(String.isNotBlank(centerId) && String.isNotBlank(oldcenter) && !(centerId.equalsIgnoreCase(oldcenter))){
-            enrolmentObj = createSubscriptionAndDeactiveOldlineItem(enrolmentObj);
+            createSubscriptionAndDeactiveOldlineItem(enrolmentObj);
         }
         //4-sep-2020: center change then we create another subscription and related line item this start date is according to effective date
         // we deactivate Existing subscrition line item and remove nextbilling date or added subscrition end date  of current month last date
         if(!isSameMonth && centerisHome){
-            upgradeDetails = updatePackageEffectiveDateIsGreater(enrolmentObj, oldPackage, packageId, organisationObj, effectiveDate,teacherId);
+            upgradeDetails = updatePackageEffectiveDateIsGreater(enrolmentObj, oldPackage, packageId, organisationObj, effectiveDate,teacherId,centerId);
             invoiceId =upgradeDetails.invoiceId;
             error = false;
         }
-        DateTime newEffectiveDateTime = DateTime.newInstance(effectiveDate, Time.newInstance(0, 0, 0, 0));
+        //11-Sep-2020: Nishi:user can change lesson day so we manage this new lesson so we delete all future booking with the start of effective month
+        Date newEffectiveDate = Date.newInstance(effectiveDate.year(),effectiveDate.month(),1);
         if(String.isNotBlank(enrolmentObj.Id)){
              Database.SaveResult saveResult = Database.update(enrolmentObj, false);
             if(saveResult.isSuccess()){
@@ -145,7 +155,7 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
         return caseReturn;
     }
     
-    private Enrolment__c createSubscriptionAndDeactiveOldlineItem(Enrolment__c enr){
+    private void createSubscriptionAndDeactiveOldlineItem(Enrolment__c enr){
         map<id,Package__c> mapofpackage = new map<id,Package__c>([Select id,Package_Fee__c from Package__c where id=:enr.new_package_Id__c]); 
         Map<String, Subscription__c> activeSubMap = new Map<String, Subscription__c>();
         Map<String, Subscription_Line_Item__c> activeSubLineItemMap = new Map<String, Subscription_Line_Item__c>();
@@ -174,10 +184,9 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
                                                     And Subscription__c =:subs.id]){
                     activeSubLineItemMap.put(sublineItem.Subscription__c, sublineItem);
         }
-        system.debug('subs'+subs);
-        if(activeSubLineItemMap.containsKey(subs.id)){
-            return enrolmentObj;
-        }else{
+       //System.debug('subs'+subs);
+        if(!activeSubLineItemMap.containsKey(subs.id)){
+         
             //Filling subscription line item billing date for the enrolment
             Subscription_Line_Item__c subLItm = BillingUtility.fillSubscriptionLineItem(enr.Student__c, null, enr.new_package_Id__c, enr.Id, 
                                                 mapofpackage.get(enr.new_package_Id__c).Package_Fee__c, ConstantsClass.activeStatus);
@@ -193,41 +202,28 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
             existingsubLItm.Subscription_Expiry_Date__c = lastdateofCurrentMonth.addDays(-1);
             existingsubLItm.Status__c = ConstantsClass.statusInActive;
             subLinItmList.add(existingsubLItm);
-            system.debug('subLinItmList'+subLinItmList);
+           //System.debug('subLinItmList'+subLinItmList);
             upsert subLinItmList;
-            return fetchEnrolment(enrolmentObj.id);
+            //return fetchEnrolment(enrolmentObj.id);
         }
     }
 
-    Public  static Enrolment__c fetchEnrolment(String enrolmentId){
-        Enrolment__c enrolmentObj = new Enrolment__c();
-        List<Enrolment__c> enrolmentList = [SELECT Id,name, Effective_Date__c, Lesson_Day__c, Teacher__c, Teacher__r.Employee_Duty_Type__c, 
-                                            class__C,New_Class__c,Center__c, Student__c, Student__r.Name, Lesson_Start_time__c, package__r.unit_fee__c,
-                                            Next_Lesson_Start_time__c,new_package_Id__c,New_Teacher__c,new_package_Id__r.Duration__c,Lessons_Start_Date__c,
-                                            New_Teacher__r.id,New_Teacher__r.Employee_Duty_Type__c,Package__c, Package__r.Duration__c,Parent__c,
-                                            Center__r.Country__r.Tax_Rate__c, Center__r.Country__r.Currency_Code__c, 
-                                            Center__r.Country__r.Stripe_Secret_Key__c, Center__r.Country__r.Stripe_Base_Url__c,Center__r.Country__r.Id, 
-                                            //Start: added by nishi: 24-Aug-2020: for manage tax according to organisation
-                                            Center__r.Organisation__r.Tax_Rate__c, Center__r.Organisation__r.Country__r.Currency_Code__c, 
-                                            Center__r.Organisation__r.Stripe_Secret_Key__c, Center__r.Organisation__r.Stripe_Base_Url__c,Center__r.Organisation__r.Id, 
-                                            Center__r.Organisation__c,Center__r.Organisation__r.name, New_Centre__c,
-                                            //End: added by nishi: 24-Aug-2020: for manage tax according to organisation
-                                            (Select Id, Next_Bill_Date__c, Subscription__r.Parent__r.Stripe_Customer_Id__c,
+    Public  static  List<Subscription_Line_Item__c>  fetchsublineItemList(String enrolmentId){
+        List<Subscription_Line_Item__c> sublineItemList = [Select Id, Next_Bill_Date__c, Subscription__r.Parent__r.Stripe_Customer_Id__c,
                                             Subscription__c, Subscription__r.Center__c, Enrolment__c, Enrolment__r.Center__r.Country__r.Tax_Rate__c,
                                             Enrolment__r.Center__r.Organisation__r.Tax_Rate__c,Subscription_Expiry_Date__c,Status__c
-                                            FROM Subscription_Line_Items__r 
-                                            Where Status__c =:ConstantsClass.activeStatus) 
-                                            FROM Enrolment__c WHERE Id =: enrolmentId];
-        if(enrolmentList.size() > 0){
-            enrolmentObj = enrolmentList[0];
-        } 
-        return enrolmentObj;                                          
+                                            FROM Subscription_Line_Item__c 
+                                            Where Status__c =:ConstantsClass.activeStatus
+                                            and Enrolment__c =: enrolmentId];
+       
+        return sublineItemList;                                          
     }
 
     //Hit API and create Invoice and Line Items and Payment Record if the Next Bill Date is less than Effective Date
     //// ex: 8-Sep-2020 effective date and next Billing date 1-Sep-2020
-    Private UpgradeCaseCreation updatePackageEffectiveDateIsGreater(Enrolment__c enrolmentObj, String oldPackageId, String newPackageId, 
-    Organisation__c  organisationObj, Date effectiveDate,string newTeacherId){
+    public static UpgradeCaseCreation updatePackageEffectiveDateIsGreater(Enrolment__c enrolmentObj, String oldPackageId, String newPackageId, 
+    Organisation__c  organisationObj, Date effectiveDate,string newTeacherId,string newCenterId){
+        List<Subscription_Line_Item__c> sublineItemList = fetchsublineItemList(enrolmentObj.id);
         Boolean isSuccess = false;
         UpgradeCaseCreation upgradePackageCaseDetails = new UpgradeCaseCreation();
         String invoiceId = '';
@@ -238,23 +234,25 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
         AdvanceActionsHelper.UpgradeDowngradePackageSummary summary = AdvanceActionsHelper.getPackageDetailsUpgradeDowngrade(oldPackageId, newPackageId);
         newPackage = summary.newPackage;
         oldPackage = summary.oldPackage; 
-        system.debug('##summary'+summary);
-        system.debug('##enrolmentObj'+enrolmentObj);
+       //System.debug('##summary'+summary);
+       //System.debug('##enrolmentObj'+enrolmentObj);
         if(String.isNotBlank(enrolmentObj.Id)){
           
             currentPackageDeposit = AdvanceActionsHelper.getDepositFromFile(enrolmentObj.Id);
         }
-        system.debug('##currentPackageDeposit'+currentPackageDeposit);
+       //System.debug('##currentPackageDeposit'+currentPackageDeposit);
         List<Invoice_Line_Item__c> listOfInvoiceLineItems = new List<Invoice_Line_Item__c>();
-        system.debug('##newPackage.Deposit_Fee__c '+newPackage.Deposit_Fee__c );
-        Decimal depositeFee = BillingUtility.roundOffAmount((newPackage.Deposit_Fee__c - currentPackageDeposit)); 
+       //System.debug('##newPackage.Deposit_Fee__c '+newPackage );
+        Decimal depositeFee = 0;
+        if(newPackage.Deposit_Fee__c != null && newPackage.Deposit_Fee__c> 0)
+            depositeFee = BillingUtility.roundOffAmount((newPackage.Deposit_Fee__c - currentPackageDeposit)); 
         if(enrolmentObj != Null){
-            stripeId = enrolmentObj.Subscription_Line_Items__r[0].Subscription__r.Parent__r.Stripe_Customer_Id__c;
-            parentId = enrolmentObj.Subscription_Line_Items__r[0].Subscription__r.Parent__c;
+            stripeId = sublineItemList[0].Subscription__r.Parent__r.Stripe_Customer_Id__c;// enrolmentObj.Subscription_Line_Items__r[0].Subscription__r.Parent__r.Stripe_Customer_Id__c;
+            parentId =sublineItemList[0].Subscription__r.Parent__c;//enrolmentObj.Subscription_Line_Items__r[0].Subscription__r.Parent__c;
         }
-        system.debug('##stripeId'+stripeId);
-        system.debug('##parentId'+parentId);
-        system.debug('##depositeFee'+depositeFee);
+       //System.debug('##stripeId'+stripeId);
+       //System.debug('##parentId'+parentId);
+       //System.debug('##depositeFee'+depositeFee);
         //Summary details on upgrade package...
         upgradePackageCaseDetails.depositAmount = depositeFee;
        upgradePackageCaseDetails.total = depositeFee;
@@ -263,22 +261,24 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
         if(String.isNotBlank(stripeId) && depositeFee > 0 && String.isNotBlank(organisationObj.Id)){ //String.isNotBlank(centreCountry.Id)){commented by @nishi 24 Aug 2020,Organisation wise charge as per new logic*/
            
             Invoice_Line_Item__c inlineItemforChange = new Invoice_Line_Item__c();
-           BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId, depositeFee, organisationObj.country__r.Currency_Code__c, 
+           
+            BillingUtility.StripeCharge chargeResponse = BillingUtility.createChargeForCustomer(stripeId, depositeFee, organisationObj.country__r.Currency_Code__c, 
                                                             organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c); 
             
-            System.debug('@@@chargeResponse'+chargeResponse);
+           //System.debug('@@@chargeResponse'+chargeResponse);
             if(chargeResponse.statusCode == 200 && chargeResponse.paid){                
                 isSuccess = true;
-                Invoice__c objInvoice = BillingUtility.fillInvoice(enrolmentObj.Subscription_Line_Items__r[0].Subscription__c, parentId, constantsClass.paidStatus);
-                objInvoice.Center__c = enrolmentObj.Subscription_Line_Items__r[0].Subscription__r.center__c;
-                
+                //Invoice__c objInvoice = BillingUtility.fillInvoice(enrolmentObj.Subscription_Line_Items__r[0].Subscription__c, parentId, constantsClass.paidStatus);
+                //objInvoice.Center__c = enrolmentObj.Subscription_Line_Items__r[0].Subscription__r.center__c;
+                Invoice__c objInvoice = BillingUtility.fillInvoice(sublineItemList[0].Subscription__c, parentId, constantsClass.paidStatus);
+                objInvoice.Center__c =sublineItemList[0].Subscription__r.center__c;
                 insert objInvoice;
-                System.debug('@@@objInvoice'+objInvoice);
+               //System.debug('@@@objInvoice'+objInvoice);
                 if(String.isNotBlank(objInvoice.Id)){
                     upgradePackageCaseDetails.invoiceId = objInvoice.Id;
                 }
                 if(depositeFee > 0){
-                    inlineItemforChange = PackageUpgradeController.createInvoiceLineItem(objInvoice.id, enrolmentObj.Subscription_Line_Items__r[0], depositeFee, newPackage.Id, true, '');
+                    inlineItemforChange = PackageUpgradeController.createInvoiceLineItem(objInvoice.id, sublineItemList[0], depositeFee, newPackage.Id, true, '');
                     inlineItemforChange.Month__c = effectiveDate;
                     inlineItemforChange.Is_Deposit__c = True;
                     listOfInvoiceLineItems.add(inlineItemforChange);
@@ -287,7 +287,7 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
                 if(listOfInvoiceLineItems.size() > 0){
                     INSERT listOfInvoiceLineItems;
                 } 
-                System.debug('@@@listOfInvoiceLineItems'+listOfInvoiceLineItems);
+               //System.debug('@@@listOfInvoiceLineItems'+listOfInvoiceLineItems);
                 objInvoice = [SELECT Id,Name,Total_Amount__c,Parent_Account__c, status__c FROM Invoice__c WHERE Id =:objInvoice.Id];
                 if(!Test.isRunningTest() && String.isNotBlank(organisationObj.Id)){
                     BillingUtility.updateCharge(chargeResponse.Id,objInvoice.Name, organisationObj.Stripe_Base_Url__c, organisationObj.Stripe_Secret_Key__c);
@@ -297,7 +297,7 @@ public without sharing class ChangeCenterEnrolmentProcessController implements I
                 objPayment.Transaction_ID__c = chargeResponse.Id;
                 objPayment.Method_of_Payment__c = ConstantsClass.cardModeType;
                 INSERT objPayment; 
-                System.debug('@@@objPayment'+objPayment);
+               //System.debug('@@@objPayment'+objPayment);
                 if(String.isNotBlank(objPayment.id) && String.isNotBlank(objInvoice.id)){
                     SageIntacctIntegrationUtility.packageUpgrade(objInvoice.Id, objPayment.Id);
                 }

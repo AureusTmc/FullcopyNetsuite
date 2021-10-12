@@ -49,6 +49,20 @@
         float: right;       
         height:32px;        
     }
+    /*5-Oct-2020: nishi: for change color is organisation is ossia**/
+    .custom-btn_ossia{
+            color:#ed1c24;
+            padding: 5px 46px 3px !important;       
+            color: #fff !important;     
+            background: #ed1c24 !important;     
+            font-size: 16px !important;     
+            text-transform: uppercase;      
+            line-height: 20px !important;       
+            margin: 15px 0 20px;        
+            float: right;       
+            height:32px;   
+    }
+            
     .outstanding{
         padding: 20px;
         text-align: center;
@@ -202,7 +216,8 @@
                 </div>    
                 <div class="slds-grid slds-wrap">
                     <div class="slds-col slds-size--1-of-1 slds-small-size--12-of-12 slds-medium-size--12-of-12 slds-align_absolute-center slds-p-around_x-small">  
-                        <button  class="slds-button slds-button_neutral custom-btn" onclick="updCard();return false;" style="border:1px solid #F79C1A">
+                        <!-- 5-Oct-2020: nishi: for change color is organisation is ossia -->
+                        <button  class="{!IF(isossiaOrg==true,'slds-button slds-button_neutral custom-btn_ossia','slds-button slds-button_neutral custom-btn')}" onclick="updCard();return false;" style="border:1px solid #F79C1A">
                             Update Card
                             <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
                                 <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
@@ -220,7 +235,8 @@
                                 <center>
                                     <p><b style="font-size: small;">Currently there are no payment methods linked to your account. Please click here to upload a new payment method.</b></p>                                    
                                     <div class="footer slds-p-around_medium" >   
-                                        <button style="float:none;" class="slds-button slds-button_neutral custom-btn" onclick="showAddCstmr();return false;">
+                                         <!-- 5-Oct-2020: nishi: for change color is organisation is ossia -->
+                                        <button style="float:none;" class="{!IF(isossiaOrg==true,'slds-button slds-button_neutral custom-btn_ossia','slds-button slds-button_neutral custom-btn')}" onclick="showAddCstmr();return false;">
                                             Ok
                                             <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
                                                 <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
@@ -228,7 +244,8 @@
                                                 </svg>
                                             </span>
                                         </button>    
-                                        <button style="float:none;"  class="slds-button slds-button_neutral custom-btn" onclick="self.close();">
+                                         <!-- 5-Oct-2020: nishi: for change color is organisation is ossia -->
+                                        <button style="float:none;"  class="{!IF(isossiaOrg==true,'slds-button slds-button_neutral custom-btn_ossia','slds-button slds-button_neutral custom-btn')}" onclick="self.close();">
                                             Cancel
                                             <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
                                                 <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
@@ -273,8 +290,9 @@
                                         </div>                                        
                                     </div>                                    
                                 </div>
-                                <div class="footer slds-p-around_medium slds-align_absolute-center">                       
-                                    <button  class="slds-button slds-button_neutral custom-btn" style="border:1px solid #63CE63;background:#63CE63 !important;"> <!-- onclick="addNewCard();" -->
+                                <div class="footer slds-p-around_medium slds-align_absolute-center">     
+                                     <!-- 5-Oct-2020: nishi: for change color is organisation is ossia -->                  
+                                    <button  class="{!IF(isossiaOrg==true,'slds-button slds-button_neutral custom-btn_ossia','slds-button slds-button_neutral custom-btn')}" style="border:1px solid #63CE63;background:#63CE63 !important;"> <!-- onclick="addNewCard();" -->
                                         Add a card
                                         <span class="slds-icon_container slds-icon-utility-announcement" title="Description of icon when needed">
                                             <svg class="slds-icon slds-icon_xx-small" aria-hidden="true">
@@ -348,7 +366,8 @@
                     if(event.status){
                         document.getElementById("status").style.display = 'none';
                         if(result == 'Card update Successfully' || result == 'Customer created Successfully'){
-                            location.href='apex/trialthankyou';
+                            // 5-Oct-2020: nishi: added parameter to thankyou page 
+                            location.href='apex/trialthankyou?isOssia={!isossiaOrg}';
                             //sendMail();
                         }else{
                             document.getElementById('card-errors').innerHTML = result;
@@ -367,7 +386,8 @@
                     if(event.status){
                         document.getElementById("status").style.display = 'none';
                         if(result == 'Mail Sent'){
-                            location.href='apex/trialthankyou';
+                            // 5-Oct-2020: nishi: added parameter to thankyou page 
+                            location.href='apex/trialthankyou?isOssia={!isossiaOrg}';
                         }else{
                             
                         }                              

@@ -13,6 +13,13 @@
     margin-top: 5%;
     margin-left:10px;
 }
+
+.THIS .red{
+    background: #ed1c24;
+    color: white;
+    margin-top: 5%;
+    margin-left:10px;
+}
 .THIS .avlCheckbox{
     float:left;
 }
@@ -25,6 +32,12 @@
 }
 .THIS .btn_yellow{
     background-color:#ffbf2f;
+    color:#fff;
+    min-width:160px;
+    margin-top: 30px;
+}
+.THIS .btn_red{
+    background-color:#ed1c24;
     color:#fff;
     min-width:160px;
     margin-top: 30px;
@@ -82,8 +95,24 @@ padding-bottom:15px;
     padding-right:15px;
     margin-bottom:20px;
 }
+.THIS .time-list_red .slds-radio__label{
+    display:block;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: solid 1px #dcdcdc;
+}
+.THIS .time-list_red .slds-radio{
+    display:inline-block;
+    width:50%;
+    padding-right:15px;
+    margin-bottom:20px;
+}
 .THIS .time-list .slds-radio [type="radio"]:checked + .slds-radio__label {
     background-color: #ffbf2f;
+    color:   #fff;
+}
+.THIS .time-list_red .slds-radio [type="radio"]:checked + .slds-radio__label {
+    background-color: #ed1c24; 
     color:   #fff;
 }
 .THIS .slds-radio [type="radio"]:checked + .slds-form-element__label, 

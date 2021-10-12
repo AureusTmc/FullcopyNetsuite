@@ -22,7 +22,7 @@ public class EnrolmentProcessIpadCntrl {
     String countryCode;
     string currentOrg;//@Juneid 19 Aug 2020, Storing current organization id
     public string defaultOrg{get;set;}//@Juneid 19 Aug 2020, Storing current users organization name
-    
+    public string pagetype{get;set;}// nishi: 5Feb2021: Aureus Q1 2021 : for get page name is found that means user use direct entolment process
     public EnrolmentProcessIpadCntrl(){
         studentWrapList = new List<StudentWrapper>();
         isAmcClubMember = false;
@@ -35,6 +35,12 @@ public class EnrolmentProcessIpadCntrl {
         currentOrg = ApexPages.currentPage().getParameters().get('currentOrg');//@Juneid 19 Aug 2020, Current Organization id
         system.debug('org default--->'+ApexPages.currentPage().getParameters().get('orgType'));
         defaultOrg = ApexPages.currentPage().getParameters().get('orgType');
+        // nishi: 5Feb2021: Aureus Q1 2021 : for get page name is found that means user use direct entolment process
+        if(string.isnotBlank(ApexPages.currentPage().getParameters().get('pagetype'))){
+            pagetype= ApexPages.currentPage().getParameters().get('pagetype');
+        }
+        // nishi: 5Feb2021:end: Aureus Q1 2021 : for get page name is found that means user use direct entolment process
+
         Map<String, String> params  =  ApexPages.currentPage().getParameters(); 
         if(params != null && params.size() > 0){
             for(String strKey : params.keySet()){
@@ -55,16 +61,31 @@ public class EnrolmentProcessIpadCntrl {
         
         if(enrIds.size() > 0){     
             //Updated by Rajesh: 12th Nov 2011, Added lost condition for the pardot trial as per discussion with Ashish ji
-            List<Enrolment__c> enrList = [SELECT Id, Center__c, Teacher__c, Package__c, Package__r.Type__c,Package__r.Duration__c, Package__r.Program__r.Instrument__c, Parent__r.Also_a_Student__c, Parent__r.Personemail,
-                                                 Student__c, Student__r.Name, Parent__c, Parent__r.Name, Trial_Date__c, Trial_Start_Time__c, Center__r.Travel_Time__c, Center__r.Name, Parent__r.Is_Club_Member__c,
-                                                 Parent__r.Membership_Type__c, Parent__r.personContactId, Lessons_Start_Date__c, Lesson_Start_Time__c,Type__c,Stage__c,
-                                                Center__r.Country__r.Name
-                                          FROM Enrolment__c
-                                          WHERE Id IN: enrIds AND (Type__c = 'Trial' OR Type__c = 'Group') AND Student__c != null AND Parent__c != null AND 
-                                          ((Stage__c =: ConstantsClass.enrollStageAttended AND Trial_Date__c != null AND Trial_Start_Time__c != null) OR 
-                                           (Stage__c =: ConstantsClass.enrollStageLost AND Trial_Date__c != null AND Trial_Start_Time__c != null) OR
-                                           (Stage__c =: ConstantsClass.PendingEnrolment AND Lessons_Start_Date__c != null AND Lesson_Start_Time__c != null))
-                                          AND Center__c != null AND Teacher__c != null AND Package__c != null ORDER BY Student__c];
+            List<Enrolment__c> enrList = new List<Enrolment__c>();
+            // nishi: 5Feb2021: Aureus Q1 2021 : for get page name is found that means user use direct entolment process
+            if(string.isNotBlank(pagetype)){
+                enrList = [SELECT Id, Center__c, Teacher__c, Package__c, Package__r.Type__c,Package__r.Duration__c, Package__r.Program__r.Instrument__c, Parent__r.Also_a_Student__c, Parent__r.Personemail,
+                                    Student__c, Student__r.Name, Parent__c, Parent__r.Name, Trial_Date__c, Trial_Start_Time__c, Center__r.Travel_Time__c, Center__r.Name, Parent__r.Is_Club_Member__c,
+                                    Parent__r.Membership_Type__c, Parent__r.personContactId, Lessons_Start_Date__c, Lesson_Start_Time__c,Type__c,Stage__c,
+                                Center__r.Country__r.Name
+                            FROM Enrolment__c
+                            WHERE Id IN: enrIds AND (Type__c = 'Trial' OR Type__c = 'Group') 
+                            AND Student__c != null AND Parent__c != null AND 
+                            Stage__c =: ConstantsClass.enrollStageAttended
+                            AND Center__c != null ORDER BY Student__c];
+            }else{
+                // nishi: 5Feb2021: Aureus Q1 2021 : end: for get page name is found that means user use direct entolment process
+             enrList = [SELECT Id, Center__c, Teacher__c, Package__c, Package__r.Type__c,Package__r.Duration__c, Package__r.Program__r.Instrument__c, Parent__r.Also_a_Student__c, Parent__r.Personemail,
+                                Student__c, Student__r.Name, Parent__c, Parent__r.Name, Trial_Date__c, Trial_Start_Time__c, Center__r.Travel_Time__c, Center__r.Name, Parent__r.Is_Club_Member__c,
+                                Parent__r.Membership_Type__c, Parent__r.personContactId, Lessons_Start_Date__c, Lesson_Start_Time__c,Type__c,Stage__c,
+                            Center__r.Country__r.Name
+                        FROM Enrolment__c
+                        WHERE Id IN: enrIds AND (Type__c = 'Trial' OR Type__c = 'Group') AND Student__c != null AND Parent__c != null AND 
+                        ((Stage__c =: ConstantsClass.enrollStageAttended AND Trial_Date__c != null AND Trial_Start_Time__c != null) OR 
+                        (Stage__c =: ConstantsClass.enrollStageLost AND Trial_Date__c != null AND Trial_Start_Time__c != null) OR
+                        (Stage__c =: ConstantsClass.PendingEnrolment AND Lessons_Start_Date__c != null AND Lesson_Start_Time__c != null))
+                        AND Center__c != null  AND Teacher__c != null AND Package__c != null ORDER BY Student__c];
+            }
             
             if(enrList.size() > 0){
                 countryCode = String.isNotBlank(enrList.get(0).Center__r.Country__r.Name) ? enrList.get(0).Center__r.Country__r.Name : 'SG';
@@ -83,27 +104,33 @@ public class EnrolmentProcessIpadCntrl {
                     
                     Date tempDT;
                     Time tempTime;
-                    if(enr.Stage__c.equalsIgnoreCase('Attended')){
-                         tempDT= enr.Trial_Date__c.addDays(7);
-                         tempTime= enr.Trial_Start_Time__c;
-                    //Updated by Rajesh: 12th Nov 2011, Added lost condition for the pardot trial as per discussion with Ashish ji
-                    }else if(enr.Stage__c.equalsIgnoreCase('Lost')){
-                         tempDT= enr.Trial_Date__c.addDays(7);
-                         tempTime= enr.Trial_Start_Time__c;
-                    }else if(enr.Stage__c.equalsIgnoreCase('Pending Enrolment')){
-                        tempDT = enr.Lessons_Start_Date__c;
-                        tempTime = enr.Lesson_Start_Time__c;
+                    
+                    if(string.isBlank(pagetype)){// nishi: 5Feb2021: Aureus Q1 2021 : for get page name is found that means user use direct entolment process
+                        if(enr.Stage__c.equalsIgnoreCase('Attended') && enr.Trial_Date__c != null && enr.Trial_Start_Time__c != null ){
+                            tempDT= enr.Trial_Date__c.addDays(7);
+                            tempTime= enr.Trial_Start_Time__c;
+                        //Updated by Rajesh: 12th Nov 2011, Added lost condition for the pardot trial as per discussion with Ashish ji
+                        }else if(enr.Stage__c.equalsIgnoreCase('Lost') && enr.Trial_Date__c != null && enr.Trial_Start_Time__c != null){
+                            tempDT= enr.Trial_Date__c.addDays(7);
+                            tempTime= enr.Trial_Start_Time__c;
+                        }else if(enr.Stage__c.equalsIgnoreCase('Pending Enrolment') && enr.Lessons_Start_Date__c != null && enr.Lesson_Start_Time__c != null){
+                            tempDT = enr.Lessons_Start_Date__c;
+                            tempTime = enr.Lesson_Start_Time__c;
+                        }
+                        if(tempDT != null && tempTime != null){
+                            lsn.lessonSlcdDate = tempDT.day()+'/'+tempDT.month()+'/'+tempDT.year() ;
+                            lsn.lessonSlcdDateD = tempDT;
+                            
+                            String minTmp = tempTime.minute() != 0 ?  (tempTime.minute() +'') : '00';
+                            String tempTSlot = tempTime.hour() + ':' + minTmp;
+                            lsn.lessonSlctSlot = tempTSlot;
+                            lsn.lessonSlctSlotT = DateTime.newInstance(tempDT, tempTime).format('hh:mm a');
+                        }
                     }
-                    lsn.lessonSlcdDate = tempDT.day()+'/'+tempDT.month()+'/'+tempDT.year() ;
-                    lsn.lessonSlcdDateD = tempDT;
-                    
-                    String minTmp = tempTime.minute() != 0 ?  (tempTime.minute() +'') : '00';
-                    String tempTSlot = tempTime.hour() + ':' + minTmp;
-                    lsn.lessonSlctSlot = tempTSlot;
-                    lsn.lessonSlctSlotT = DateTime.newInstance(tempDT, tempTime).format('hh:mm a');
-                    
                     st.lesson = lsn;
+                    
                     studentWrapList.add(st);
+                
                 }     
                 
                 //Process for first enrolment
@@ -111,14 +138,21 @@ public class EnrolmentProcessIpadCntrl {
                 st.lesson.teacherOptions= fetchTeachers(st.lesson);
                 Boolean isTrialAtt = true;
                 if(st.enrl.Stage__c.equalsIgnoreCase('Pending Enrolment')){
-                    isTrialAtt = false;                    
-                    st.lesson.selectedPlan = st.enrl.Package__c;
-                    st.lesson.pkgDuration  = Integer.valueOf(st.enrl.Package__r.Duration__c);
+                    isTrialAtt = false;      
+                    if(string.isNotBlank(st.enrl.Package__c) && string.isBlank(pagetype)){  // nishi: 5Feb2021: Aureus Q1 2021 : for get page name is found that means user use direct entolment process            
+                        st.lesson.selectedPlan = st.enrl.Package__c;
+                        st.lesson.pkgDuration  = Integer.valueOf(st.enrl.Package__r.Duration__c);
+                    }
                 }
                 st.lesson.planOptions   =  fetchPlans(st.lesson, isTrialAtt);
                 
                 //fetchTimeSlot(st.lesson);
-                fetchTimeSlot(st);
+                // nishi: 5Feb2021: Aureus Q1 2021 : for get page name is found that means user use direct entolment process
+                //fetchTimeSlot(st);
+                if(string.isBlank(pagetype) && (enrList.get(0).Trial_Date__c != null && enrList.get(0).Trial_Start_Time__c != null) || (enrList.get(0).Lessons_Start_Date__c != null && enrList.get(0).Lesson_Start_Time__c != null)){
+                    fetchTimeSlot(st);
+                }
+                // nishi: 5Feb2021: Aureus Q1 2021 end: for get page name is found that means user use direct entolment process
                 
                 if(enrList.get(0).Parent__r.Is_Club_Member__c && enrList.get(0).Parent__r.Membership_Type__c == ConstantsClass.amcClubMember)
                     isAmcClubMember = true;
@@ -146,7 +180,11 @@ public class EnrolmentProcessIpadCntrl {
             Map<Id,String> centMap = new Map<Id,String>();
             for(Class__c cls : [SELECT Id,Centre_Name__c,Centre_Name__r.Name,Centre_Name__r.CentreName_Cust__c FROM Class__c 
                                WHERE Centre_Name__r.RecordType.Id =: centerRecId AND Centre_Name__r.Centre_Status__c =:ConstantsClass.activeStatus 
-                               AND Centre_Name__r.CentreName_Cust__c != null AND Centre_Name__r.Country__r.Name =:countryCode ORDER BY Centre_Name__r.CentreName_Cust__c]){
+                               AND Centre_Name__r.CentreName_Cust__c != null AND Centre_Name__r.Country__r.Name =:countryCode 
+                                // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                And Is_Makeup_Class__c = false
+                               ORDER BY Centre_Name__r.CentreName_Cust__c
+                               ]){
                 centMap.put(cls.Centre_Name__c, cls.Centre_Name__r.CentreName_Cust__c);
             }
             if(centMap.size() > 0){
@@ -178,14 +216,18 @@ public class EnrolmentProcessIpadCntrl {
             for(String tchrId: tchrMap.keySet())
                 teacherOptions.add(new SelectOption(tchrId, tchrMap.get(tchrId))); 
         }else if(lessonWrap.selectedLsnType.equalsIgnoreCase('Group')){
-            List<Class__c> clsList = [SELECT Id,Name,Teacher__c,Teacher__r.Name FROM Class__c WHERE Centre_Name__c =: selCenter AND Active__c= true]; 
+            List<Class__c> clsList = [SELECT Id,Name,Teacher__c,Teacher__r.Name FROM Class__c WHERE Centre_Name__c =: selCenter AND Active__c= true
+                                        // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                        And Is_Makeup_Class__c = false]; 
             
             Map<String,String> tchrMap = new Map<String,String>();
             for(Class__c cls : clsList)
                 tchrMap.put(cls.Teacher__c, cls.Teacher__r.Name);
             
-            for(String tchrId: tchrMap.keySet())
-                teacherOptions.add(new SelectOption(tchrId, tchrMap.get(tchrId))); 
+            for(String tchrId: tchrMap.keySet()){
+                if(string.isNotBlank(tchrId)&& tchrMap.containskey(tchrId))
+                	teacherOptions.add(new SelectOption(tchrId, tchrMap.get(tchrId))); 
+            }
         }
         return teacherOptions;
     }        
@@ -266,6 +308,8 @@ public class EnrolmentProcessIpadCntrl {
                                         AND Teacher__c =: lessonWrap.selectedTeacher 
                                         AND Active__c = True 
                                         AND Available_Capacity__c > 0 
+                                         // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                         And Is_Makeup_Class__c = false
                                     ]){
                         if(string.isNotBlank(cls.Centre_Name__c) && string.isNotBlank(cls.Centre_Name__r.Organisation__c) &&
                         cls.Centre_Name__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
@@ -290,6 +334,8 @@ public class EnrolmentProcessIpadCntrl {
                                             AND Teacher__c =: lessonWrap.selectedTeacher 
                                             AND Active__c = True 
                                             AND Available_Capacity__c > 0 
+                                             // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                             And Is_Makeup_Class__c = false
                                            ]){
                             if(!pkgSet.contains(cls.Package__c)){
                                 pkgSet.add(cls.Package__c);
@@ -441,7 +487,7 @@ public class EnrolmentProcessIpadCntrl {
                          // start:nishi: 4-Sep-2020: for check teacher engagement type is part-time and is day is greater then 28 mean (5th lesson booking) so we not consider this teacher
                        //remove any timeslot for 5th days for part-time teachers.
                        Boolean isPartTimeTeacher = false; 
-                       if(teachWorkSch.Teacher_Name__r.Engagement_Type__c =='Part-Time' && st.day() > 28){
+                       if(ConstantsClass.teacherPartTimeEngagementStatus.contains(teachWorkSch.Teacher_Name__r.Engagement_Type__c) && st.day() > 28 && defaultOrg=='ossia'){
                            isPartTimeTeacher = true;
                        }
                        system.debug('%%%%isPartTimeTeacher'+isPartTimeTeacher +'  '+st); 
@@ -602,7 +648,9 @@ public class EnrolmentProcessIpadCntrl {
                                 WHERE Teacher__c =:slcdTeacher 
                                 AND Id IN:listOfGradePackageClass 
                                 AND Centre_Name__c =:  lessonWrap.selectedCenter 
-                                AND Active__c = True AND Available_Capacity__c > 0]){
+                                AND Active__c = True AND Available_Capacity__c > 0
+                                 // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                 And Is_Makeup_Class__c = false]){
                         List<Class__c> clsList = clsSchMap.get(cls.Class_Day__c);
                         if(clsList == null)
                             clsList = new List<Class__c>();
@@ -628,7 +676,9 @@ public class EnrolmentProcessIpadCntrl {
                                 WHERE Teacher__c =:slcdTeacher 
                                 AND Package__c =: lessonWrap.selectedPlan 
                                 AND Centre_Name__c =:  lessonWrap.selectedCenter 
-                                AND Active__c = True AND Available_Capacity__c > 0]){
+                                AND Active__c = True AND Available_Capacity__c > 0
+                                 // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                 And Is_Makeup_Class__c = false]){
                     List<Class__c> clsList = clsSchMap.get(cls.Class_Day__c);
                     if(clsList == null)
                         clsList = new List<Class__c>();
@@ -701,6 +751,7 @@ public class EnrolmentProcessIpadCntrl {
     }
     
     public pageReference redirectOnSrch(){
+        
         PageReference pageRef = Page.searchtrial_ipad; 
         pageRef.getParameters().put('country', countrycode);    
         return pageRef;
@@ -836,6 +887,8 @@ public class EnrolmentProcessIpadCntrl {
         List<Enrolment__c> updEnrList = new List<Enrolment__c>();
         for(StudentWrapper stu : studentWrapList){
             Enrolment__c enrl = new Enrolment__c(Id = stu.enrl.Id, Enrolment_Email_Date__c = System.now());
+            enrl.Enrolment_Owner__c = UserInfo.getUserId(); // updated by nishi: 11- mar-2021: to store center staff on enrolment to track Who sent the enrolment email to be tracked via enrolment link from calendar
+
             //updated by Rajesh, 7th Aug 2019. to store enrolmentsource on enrolment/case object
             if(String.isNotBlank(enrolmentSource))
                 enrl.Enrolment_Source__c = enrolmentSource;
@@ -902,7 +955,7 @@ public class EnrolmentProcessIpadCntrl {
     public pageReference saveEnrolment(){
         Savepoint sp;
         isError = false;
-        errorMsg = '';
+        errorMsg = 'success';
             
         try{
             sp = Database.setSavepoint();
@@ -937,7 +990,9 @@ public class EnrolmentProcessIpadCntrl {
                                         WHERE Teacher__c IN:tchrSet 
                                         AND Centre_Name__c IN:centSet 
                                         AND Active__c = True
-                                        AND Available_Capacity__c > 0]){  
+                                        AND Available_Capacity__c > 0
+                                         // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                         And Is_Makeup_Class__c = false]){  
                         if(cls.Ossia_Group_Grade_Packages__r != null && cls.Ossia_Group_Grade_Packages__r.size() > 0){ 
                             for(Ossia_Group_Grade_Package__c objGradePackage: cls.Ossia_Group_Grade_Packages__r)    {                                                                            
                                 String key = cls.Centre_Name__c +'#'+ cls.Teacher__c +'#'+ objGradePackage.Package__c +'#'+ cls.Class_Day__c +'#'+ cls.Start_Time__c;
@@ -952,7 +1007,9 @@ public class EnrolmentProcessIpadCntrl {
                 // end :added by nishi: 1-sep-2020: for if class related to ossia organisation then we show package list into  
                  //new created object Ossia_Group_Grade_Packages__r other wise we get package list into package field 
                     for(Class__c cls: [SELECT Id, Name, Centre_Name__c, Teacher__c, Package__c, Class_Day__c, Start_Time__c,End_Time__c FROM Class__c WHERE Teacher__c IN:tchrSet AND Package__c IN:pkgSet 
-                                    AND Centre_Name__c IN:centSet AND Teacher__c IN:tchrSet AND Package__c IN:pkgSet AND Active__c = True AND Available_Capacity__c > 0]){                                                               
+                                    AND Centre_Name__c IN:centSet AND Teacher__c IN:tchrSet AND Package__c IN:pkgSet AND Active__c = True AND Available_Capacity__c > 0
+                                     // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                     And Is_Makeup_Class__c = false]){                                                               
                         String key = cls.Centre_Name__c +'#'+ cls.Teacher__c +'#'+ cls.Package__c +'#'+ cls.Class_Day__c +'#'+ cls.Start_Time__c;
                         clsSchMap.put(key, cls);                                                  
                     }
@@ -984,7 +1041,8 @@ public class EnrolmentProcessIpadCntrl {
                 stu.enrl.Lessons_Start_Date__c =  lessDt;
                 stu.enrl.Lesson_Start_time__c =  startTime;
                 stu.enrl.Enrolment_Email_Date__c = System.now();
-                
+                stu.enrl.Enrolment_Owner__c = UserInfo.getUserId(); // updated by nishi: 11- mar-2021: to store center staff on enrolment to track Who sent the enrolment email to be tracked via enrolment link from calendar
+
                 //updated by Rajesh, 7th Aug 2019. to store enrolmentsource on enrolment/case object
                 if(String.isNotBlank(enrolmentSource))
                     stu.enrl.Enrolment_Source__c = enrolmentSource;
@@ -1013,7 +1071,9 @@ public class EnrolmentProcessIpadCntrl {
                 String bookGrpClsRecId =  Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get('Group Class').getRecordTypeId();   
                 for(Class__c cls: [SELECT Id, Name, Package__c, Package__r.Name, Teacher__c, Class_Day__c, Start_Time__c,End_Time__c,
                                    (SELECT Id, Class__c, Booking_Date__c FROM Bookings__r WHERE RecordTypeId =: bookGrpClsRecId AND Booking_Date__c != null)
-                                   FROM Class__c WHERE Id IN:grpClsBookSet AND Active__c = True AND Available_Capacity__c > 0]){                                                               
+                                   FROM Class__c WHERE Id IN:grpClsBookSet AND Active__c = True AND Available_Capacity__c > 0
+                                    // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                    And Is_Makeup_Class__c = false]){                                                               
                                        
                  for(Booking__c book: cls.Bookings__r)
                     grpClsBookMap.put(cls.Id+'#'+book.Booking_Date__c, book);                                   
@@ -1243,7 +1303,7 @@ public class EnrolmentProcessIpadCntrl {
     public pageReference saveAndNextProcess(){
         Savepoint sp;
         isError = false;
-        errorMsg = '';
+        errorMsg = 'success';
             
         try{
             sp = Database.setSavepoint();
@@ -1264,7 +1324,7 @@ public class EnrolmentProcessIpadCntrl {
                 if(defaultOrg=='ossia'){ 
                     // start :added by nishi: 1-sep-2020: for if class related to ossia organisation then we show package list into  
                   //new created object Ossia_Group_Grade_Packages__r other wise we get package list into package field 
-                     for(Class__c cls: [SELECT Id, Name, Centre_Name__c, Teacher__c, Package__c, Class_Day__c, Start_Time__c,End_Time__c, 
+                     for(Class__c cls: [SELECT Id, Name, Centre_Name__c, Teacher__c, Package__c, Class_Day__c, Start_Time__c,End_Time__c, Available_Capacity__c,
                                          (SELECT Class_Name__c, Package__c,Package__r.Name,  Name, Id ,
                                              Package__r.Type__c,Package__r.RecordtypeId,Package__r.Type_of_package__c
                                              FROM Ossia_Group_Grade_Packages__r 
@@ -1274,7 +1334,9 @@ public class EnrolmentProcessIpadCntrl {
                                          WHERE Teacher__c IN:tchrSet 
                                          AND Centre_Name__c IN:centSet 
                                          AND Active__c = True
-                                         AND Available_Capacity__c > 0]){  
+                                         AND Available_Capacity__c > 0
+                                          // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                          And Is_Makeup_Class__c = false]){  
                          if(cls.Ossia_Group_Grade_Packages__r != null && cls.Ossia_Group_Grade_Packages__r.size() > 0){ 
                              for(Ossia_Group_Grade_Package__c objGradePackage: cls.Ossia_Group_Grade_Packages__r)    {                                                                            
                                  String key = cls.Centre_Name__c +'#'+ cls.Teacher__c +'#'+ objGradePackage.Package__c +'#'+ cls.Class_Day__c +'#'+ cls.Start_Time__c;
@@ -1289,8 +1351,11 @@ public class EnrolmentProcessIpadCntrl {
                  // end :added by nishi: 1-sep-2020: for if class related to ossia organisation then we show package list into  
                   //new created object Ossia_Group_Grade_Packages__r other wise we get package list into package field 
                     
-                    for(Class__c cls: [SELECT Id, Name, Centre_Name__c, Teacher__c, Package__c, Class_Day__c, Start_Time__c,End_Time__c FROM Class__c WHERE Teacher__c IN:tchrSet AND Package__c IN:pkgSet 
-                    AND Centre_Name__c IN:centSet AND Teacher__c IN:tchrSet AND Package__c IN:pkgSet AND Active__c = True AND Available_Capacity__c > 0]){                                                               
+                    for(Class__c cls: [SELECT Id, Name, Centre_Name__c, Teacher__c, Package__c, Class_Day__c, Start_Time__c,End_Time__c,Available_Capacity__c 
+                                        FROM Class__c WHERE Teacher__c IN:tchrSet AND Package__c IN:pkgSet 
+                                        AND Centre_Name__c IN:centSet AND Teacher__c IN:tchrSet AND Package__c IN:pkgSet AND Active__c = True AND Available_Capacity__c > 0
+                     // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                     And Is_Makeup_Class__c = false]){                                                               
                         String key = cls.Centre_Name__c +'#'+ cls.Teacher__c +'#'+ cls.Package__c +'#'+ cls.Class_Day__c +'#'+ cls.Start_Time__c;
                         clsSchMap.put(key, cls);                                                  
                     }
@@ -1298,7 +1363,8 @@ public class EnrolmentProcessIpadCntrl {
 
             }
             system.debug('@@clsSchMap'+clsSchMap);
-        
+            Set<string> setOfTeacherAndTime =new Set<string>();
+            
             List<Enrolment__c> enrList = new List<Enrolment__c>();            
             for(StudentWrapper stu : studentWrapList){
                 Date lessDt; 
@@ -1324,38 +1390,61 @@ public class EnrolmentProcessIpadCntrl {
                 //updated by Rajesh, 7th Aug 2019. to store enrolmentsource on enrolment/case object
                 if(String.isNotBlank(enrolmentSource))
                     stu.enrl.Enrolment_Source__c = enrolmentSource;
-                
+                String currDay =  DateTime.newInstance(lessDt, Time.newInstance(0, 0, 0, 0)).format('E');
                 if(stu.lesson.selectedLsnType.equalsIgnoreCase('Group')){
-                    String currDay =  DateTime.newInstance(lessDt, Time.newInstance(0, 0, 0, 0)).format('E');
                     String key = stu.enrl.Center__c +'#'+ stu.enrl.Teacher__c +'#'+stu.enrl.Package__c +'#'+ currDay +'#'+ startTime;
                     system.debug('@@clsSchMap'+clsSchMap);
 
                     if(clsSchMap.containsKey(key))
                         stu.enrl.Class__c = clsSchMap.get(key).Id;
                     stu.enrl.Type__c    = 'Group';
+                   //start: 14-Sep-2020:nishi: If a user added two enrolment and both enrolment types were grouped then we allowed the user to select the same teacher, time slot
+                  // otherwise the enrolment type is individual then we showed an error message
+                    if(!setOfTeacherAndTime.contains(currDay+'-'+startTime+'-'+stu.lesson.selectedTeacher+clsSchMap.get(key).Id)){
+                        setOfTeacherAndTime.add(currDay+'-'+startTime+'-'+stu.lesson.selectedTeacher+clsSchMap.get(key).Id);
+                    }else{
+                        if(clsSchMap.get(key).Available_Capacity__c < 2){
+                            errorMsg = 'Error: You can\'t book the same Teacher for \'the Same Time\'.';
+                            isError  = true;
+                            break; 
+                        }
+                    }
+                }else{
+                    if(!setOfTeacherAndTime.contains(currDay+'-'+startTime+'-'+stu.lesson.selectedTeacher)){
+                        setOfTeacherAndTime.add(currDay+'-'+startTime+'-'+stu.lesson.selectedTeacher);
+                    }else{
+                        errorMsg = 'Error: You can\'t book the same Teacher for \'the Same Time\'.';
+                        isError  = true;
+                        break; 
+                    }
                 }
+                //end: 14-Sep-2020:nishi: If a user added two enrolment and both enrolment types were grouped then we allowed the user to select the same teacher, time slot
+                  // otherwise the enrolment type is individual then we showed an error message
                 enrList.add(stu.enrl);
-            }      
-            upsert enrList;      
-             system.debug('@@enrList'+enrList);
-            List<Booking__c> bookLstForDel = [SELECT Id,Name FROM Booking__c WHERE Status__c = 'Blocked' AND Enrolment__c IN: enrList];
-            if(bookLstForDel.size() > 0)
-                delete bookLstForDel;
-            
-            PageReference pageRef = new PageReference('/apex/EnrolmentProcessForClass');
-            
-            Integer counter = 1;
-            for(Enrolment__c enr: enrList){
-                String enrlStr = 'enr'+counter;
-                pageRef.getParameters().put(enrlStr, enr.Id); 
-               
-                counter = counter+1;            
-            }        
-            
-            return pageRef;
+            }   
+            system.debug('setOfTeacherAndTime'+setOfTeacherAndTime);
+            system.debug('errorMsg'+errorMsg);
+            system.debug('isError'+isError);
+            if(!isError){   
+                upsert enrList;      
+                system.debug('@@enrList'+enrList);
+                List<Booking__c> bookLstForDel = [SELECT Id,Name FROM Booking__c WHERE Status__c = 'Blocked' AND Enrolment__c IN: enrList];
+                if(bookLstForDel.size() > 0)
+                    delete bookLstForDel;
+                
+                PageReference pageRef = new PageReference('/apex/EnrolmentProcessForClass');
+                
+                Integer counter = 1;
+                for(Enrolment__c enr: enrList){
+                    String enrlStr = 'enr'+counter;
+                    pageRef.getParameters().put(enrlStr, enr.Id); 
+                
+                    counter = counter+1;            
+                }        
+                return pageRef;
+            }
         }catch(Exception e){
              Database.rollback(sp);
-             
              System.debug('Error:  '+e.getMessage());
              errorMsg = e.getMessage();
              isError  = true;
@@ -1458,7 +1547,7 @@ public class EnrolmentProcessIpadCntrl {
         public String tSlotStr{get;set;}
         public TimeSlotModelCntrl tSlotMap{get;set;}
         
-        Integer  pkgDuration;
+        public Integer  pkgDuration;
         String selectedPlanT;
         String selectedTeacherT;
         public LessonWrapper(){

@@ -8,7 +8,7 @@ Description :        It is the test class of CreateGroupClassBatch for code cove
 public class CreateGroupClassBatchTest {
  @testSetup 
     Private static void createData(){
-        ClassEditControllerTestHelper.createGroupClassData();
+       ClassEditControllerTestHelper.createGroupClassData1();       
     }  
     
     Private Static TestMethod void test_CreateGroupClassBatch(){
@@ -16,6 +16,7 @@ public class CreateGroupClassBatchTest {
         LIst<class__c> classList =  [select id from Class__C];
         List<Account> teacherAccountList =  [select id from Account where RecordType.name='Teacher'];
         List<Account> ListCentre =  [select id from Account where RecordType.name='Centre'];
+        Test.startTest();
         List<Class__c > GroupClassList = new List<Class__C>();
         GroupClassList.add(AureusCalendarControllerTestHelper.createGroupClass('test Group Class5',listOfPackage[0].id,ListCentre[0].Id,listOfPackage[0].Program__c,date.today(),date.newInstance(date.today().year(),12,31),Time.newInstance(11,0,0,0),Time.newInstance(11,30,0,0),teacherAccountList[0].Id,false));
         GroupClassList.add(AureusCalendarControllerTestHelper.createGroupClass('test Group Class6',listOfPackage[2].id,ListCentre[1].Id,listOfPackage[0].Program__c,date.today().addMonths(1),date.newInstance(date.today().year(),12,31),Time.newInstance(12,0,0,0),Time.newInstance(12,45,0,0),teacherAccountList[1].Id,false));
@@ -29,7 +30,7 @@ public class CreateGroupClassBatchTest {
         system.assert(listOfGroupClassBooking.size() > 0, 'listOfGroupClassBooking'+listOfGroupClassBooking.size());
         //Created by Jatin 17March 2020
         String CRON_EXP = '0 0 0 15 3 ? *';
-        Test.startTest();
+        
         String jobId = System.schedule('CreateGroupClassScheduler',  CRON_EXP, new CreateGroupClassScheduler());
         Test.stopTest();
         

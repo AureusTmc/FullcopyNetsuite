@@ -33,9 +33,26 @@ private class FifthLessonReminderBatchTest{
         country.Stripe_Publishable_Key__c = 'ABC';
         country.Stripe_Secret_Key__c = 'deede';
         insert country;
+        
+        //updated by @nishi 17 sep 2020
+      	Organisation__c organisationRecord = new Organisation__c();
+        organisationRecord.Name = 'Aureus Academy Singapore';
+        organisationRecord.Bank_Account_Number__c = '1123456789';
+        organisationRecord.Branch_Code__c = 'test';
+        organisationRecord.Country__c = country.id;
+        organisationRecord.Stripe_Base_Url__c = 'www.test.com';
+        organisationRecord.Stripe_Publishable_Key__c = 'ABC';
+        organisationRecord.Stripe_Secret_Key__c = 'test_key';
+        organisationRecord.Sage_Company__c = 'AGP';
+        Insert organisationRecord; 
+        
         Account objCentr = TestUtil.createAccount('Centre',false,FALSE);
         objCentr.Country__c = country.Id;
+        //updated by @nishi 17 sep 2020
+        objCentr.Organisation__c = organisationRecord.id;
+        objCentr.Organisation_Sharing__c ='Aureus Academy Singapore';
         INSERT objCentr;
+        
       	Account objTeachr = TestUtil.createAccount('Teacher',false,true);
       	Account objCustmr = TestUtil.createAccount('Customer',True,true);
        Program__C objProg = TestUtil.createProgram('Active','Piano',true);

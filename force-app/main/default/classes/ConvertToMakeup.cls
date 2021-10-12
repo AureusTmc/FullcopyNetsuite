@@ -18,13 +18,29 @@ public class ConvertToMakeup implements IConvertFifthLesson{
         List<Fifth_Lesson__c> fifthLessons = new List<Fifth_Lesson__c>();
         if(String.isNotBlank(lessonId)){
             fifthLessons = AureusCalendarControllerHelper.fetchFifthLessson(new Set<String>{lessonId});
-            if(fifthLessons.size() > 0 && fifthLessons[0].parent__r.Available_Make_up_Units__c >= fifthLessons[0].duration__c){
-                makeupList = AureusCalendarControllerHelper.createBookingFromFifthLesson(fifthLessons, 'makeup');    
-            }
+            if(fifthLessons.size() > 0){
+                 //Start:added by nishi:If the user converts to the fifth lesson Make Booking and this center is ossia then we get available minutes in enrollment otherwise we get minutes available from parents
+                if(String.isNotBlank(fifthLessons[0].Center__c) && 
+                    String.isNotBlank(fifthLessons[0].Center__r.Organisation__c) && 
+                    String.isNotBlank(fifthLessons[0].Center__r.Organisation__r.Name) && 
+                    fifthLessons[0].Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                    if(fifthLessons[0].Enrolment__r.Available_Make_up_mins__c != null && fifthLessons[0].Enrolment__r.Available_Make_up_mins__c >= fifthLessons[0].duration__c){
+                        makeupList = AureusCalendarControllerHelper.createBookingFromFifthLesson(fifthLessons, 'makeup');   
+                    }
+                }else{
+                //end:added by nishi: If the user converts to the fifth lesson Make Booking and this center is ossia then we get available minutes in enrollment otherwise we get minutes available from parents
+                    if(fifthLessons[0].parent__r.Available_Make_up_Units__c != null && fifthLessons[0].parent__r.Available_Make_up_Units__c >= fifthLessons[0].duration__c){
+                        makeupList = AureusCalendarControllerHelper.createBookingFromFifthLesson(fifthLessons, 'makeup');   
+                    }
+                }
+            } 
+            
             
         }
+        system.debug('makeupList'+makeupList);
         if(makeupList.size() > 0){
             insert makeupList;
+            
             parentId = makeupList[0].parent__c;
             if(String.isNotBlank(parentId)){
                 AureusCalendarController.deductMakeupHours(makeupList, parentId);
@@ -41,6 +57,7 @@ public class ConvertToMakeup implements IConvertFifthLesson{
             update lessonObj;
             if(caseFlag){
                 Case caseObj = AureusCalendarControllerHelper.createCase(caseId, makeupList[0].Id, 'Make-Up');
+                system.debug('caseObj'+caseObj);
                 if(caseObj != NULL && String.isNotBlank(caseObj.id)){
                     caseIdToReturn = caseObj.Id;
                 }

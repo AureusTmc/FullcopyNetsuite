@@ -8,13 +8,13 @@ public class PrePaymentSummaryControllerTest {
     
     @testsetup
     public static void DataSetup(){
-    	
+        
         Account objCustmr=TestUtil.createAccount('Customer',True,False);
         objCustmr.Stripe_Customer_Id__c='ch_1AxWbTFytruJp2FXW6iuRd1X';
         objCustmr.Available_Make_up_Units__c=30;
         insert objCustmr;
-		
-		DateTime dt = System.today();
+        
+        DateTime dt = System.today();
         
         Country__c country = new Country__c();
         country.Name = 'IN';
@@ -27,10 +27,32 @@ public class PrePaymentSummaryControllerTest {
         country.Stripe_Secret_Key__c = 'deede';
         insert country;
         
+        
+        //updated by @nishi 24 sep 2020
+        Organisation__c organisationRecord = new Organisation__c();
+        organisationRecord.Name = 'Aureus Academy Singapore';
+        organisationRecord.Bank_Account_Number__c = '1123456789';
+        organisationRecord.Branch_Code__c = 'test';
+        organisationRecord.Country__c = country.id;
+        organisationRecord.Stripe_Base_Url__c = 'www.test.com';
+        organisationRecord.Stripe_Publishable_Key__c = 'ABC';
+        organisationRecord.Stripe_Secret_Key__c = 'test_key';
+        organisationRecord.Sage_Company__c = 'AGP';
+        Insert organisationRecord;
+        
         Account objCentr=TestUtil.createAccount('Centre',false,FALSE);
-		objCentr.Country__c = country.Id;
+        objCentr.Country__c = country.Id;
         objCentr.Location__c = 'Aureus AMK Hub';
+        //updated by @nishi 24 sep 2020
+        objCentr.Center_Email__c =  'Test@gmail.com';
+        objCentr.Organisation__c = organisationRecord.id;
+        //objCentr.Location__c = 'Ossia Music';
+        objCentr.Organisation_Sharing__c ='Aureus Academy Singapore';
+        
         INSERT objCentr;
+        
+        
+        
         Account objTchr=TestUtil.createAccount('Teacher',false,true);
         Program__C objProg=TestUtil.createProgram('Active','Piano',true);
         Package__c objPack=TestUtil.createPackage(objProg.id,objCentr.id,'60',false);

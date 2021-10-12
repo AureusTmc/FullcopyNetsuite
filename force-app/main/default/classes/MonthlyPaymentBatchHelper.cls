@@ -8,13 +8,36 @@
 
 public class MonthlyPaymentBatchHelper{
 
-    public static Set<String> getPaymentForInvoices(List<Invoice__c> listOfInvoice){
-        Set<String> successinvoiceIdSet = new Set<String>();
+    public static Set<String>  getPaymentForInvoices(List<Invoice__c> listOfInvoice){
+        List<Stripe_Payment_Log__c> invoiceLogList = new List<Stripe_Payment_Log__c>();
+        BillingUtility.MonthlyBatchClassChunkError objMonthlyBatchClassChunkError =  getMonthlyPaymentForInvoices(listOfInvoice,false);
+        if(objMonthlyBatchClassChunkError.mapOfPaymentErrorWrapper != null && objMonthlyBatchClassChunkError.mapOfPaymentErrorWrapper.size() > 0){
+            for(Invoice__c objInvoice : listOfInvoice){
+                if(objMonthlyBatchClassChunkError.mapOfPaymentErrorWrapper.containsKey(objInvoice.id)){
+                    Stripe_Payment_Log__c iLog = new Stripe_Payment_Log__c();
+                    iLog.Status__c = 'Failure';
+                    iLog.Invoice__c = objInvoice.id;
+                    iLog.Message__c =   objMonthlyBatchClassChunkError.mapOfPaymentErrorWrapper.get(objInvoice.id).erroDescription; 
+                    iLog.Type__c =  'internal_error';
+                    iLog.ChargeId__c = objMonthlyBatchClassChunkError.mapOfPaymentErrorWrapper.get(objInvoice.id).stripeId;
+                    invoiceLogList.add(iLog); 
+                }
+            }
+        }
+        if(invoiceLogList != null && invoiceLogList.size() > 0 ){
+            insert invoiceLogList;
+        }
+       return objMonthlyBatchClassChunkError.invoiceIds;
+    }
+    public static BillingUtility.MonthlyBatchClassChunkError getMonthlyPaymentForInvoices(List<Invoice__c> listOfInvoice,boolean isBatchclass){
+        //Set<String> successinvoiceIdSet = new Set<String>();
+        Map<String,Invoice__c> successinvoiceIdmap = new  Map<String,Invoice__c>();
         List<Invoice__c> listOfInvoicesTOUpdate = new List<Invoice__c>();
         List<Invoice__c> DeclinedInvoiceList = new List<Invoice__c>();
         //List<Invoice__c> listOfInvoiceToRefund = new List<Invoice__c>();
         Set<Id> fifthBookingIdSet = new Set<Id>();
-        List<Payment__c> listOfPayment = new List<Payment__c>();
+        //List<Payment__c> listOfPayment = new List<Payment__c>(); 
+        Map<string,Payment__c> mapOfPayment = new Map<string,Payment__c>();
         List<Stripe_Payment_Log__c> invoiceLogList = new List<Stripe_Payment_Log__c>();
         Set<String> declinedSet = new Set<String>();
         
@@ -28,10 +51,20 @@ public class MonthlyPaymentBatchHelper{
             declinedSet.add(decMdt.Label);
         } 
         //26-Nov-2019:jatin Send Email to the Customer if its charge gives error and the payment is not collected from his account
-        list<EmailTemplate> listOfEmailTemplate = [SELECT Id, Name 
-                                                    FROM EmailTemplate 
-                                                    WHERE DeveloperName ='Payment_Collection_Failed'];
-        system.debug('@@listOfEmailTemplate'+listOfEmailTemplate);
+        
+        //Commented by nishi:12-Oct-2020 we get templete according to organisation
+        // list<EmailTemplate> listOfEmailTemplate = [SELECT Id, Name 
+        //                                             FROM EmailTemplate 
+        //                                             WHERE DeveloperName ='Payment_Collection_Failed'];
+        //system.debug('@@listOfEmailTemplate'+listOfEmailTemplate);
+        Set<String> paymentFailedEmails=new Set<string>{'Ossia_Payment_Collection_Failed','Payment_Collection_Failed'};
+        Map<String,EmailTemplate> mapOfEmailTemplate = new Map<String,EmailTemplate>();
+        for(EmailTemplate objEmailTemplate: [SELECT Id, Name,DeveloperName 
+                                            FROM EmailTemplate 
+                                            WHERE DeveloperName In:paymentFailedEmails]){
+                                                mapOfEmailTemplate.put(objEmailTemplate.DeveloperName,objEmailTemplate);
+                                            }
+        //Commented by nishi:12-Oct-2020:end: we get templete according to organisation
         List<Messaging.SingleEmailMessage> sendSingleEmailMessage = new List<Messaging.SingleEmailMessage>();
         for(Invoice__c objInvoice : listOfInvoice){
             Stripe_Payment_Log__c iLog = new Stripe_Payment_Log__c();
@@ -68,10 +101,10 @@ public class MonthlyPaymentBatchHelper{
                                                                 organisationObj.Stripe_Secret_Key__c);                                                   
                     System.debug('@@@objStripeCharge'+objStripeCharge);
                     if(objStripeCharge.statusCode == 200 && objStripeCharge.paid){
-                        objInvoice.status__c = ConstantsClass.paidStatus;
-                        listOfInvoicesTOUpdate.add(objInvoice);
-                        successinvoiceIdSet.add(objInvoice.Id);
-                        
+                        //objInvoice.status__c = ConstantsClass.paidStatus;
+                        listOfInvoicesTOUpdate.add(new invoice__c(id = objInvoice.id,status__c = ConstantsClass.paidStatus));
+                        //successinvoiceIdSet.add(objInvoice.Id);
+                        successinvoiceIdmap.put(objInvoice.id,objInvoice);
                         if(objInvoice.Subscription__c == null){
                             fifthBookingIdSet.add(objInvoice.Id);
                         }
@@ -81,7 +114,8 @@ public class MonthlyPaymentBatchHelper{
                         objPayment.Transaction_ID__c = objStripeCharge.Id;
                         objPayment.Method_of_Payment__c = ConstantsClass.cardModeType;               
                         objPayment.recordTypeId = paymentRecType;                
-                        listOfPayment.add(objPayment); //String parId, String invId, Decimal payAmt, String status
+                        // listOfPayment.add(objPayment);
+                        mapOfPayment.put(objInvoice.Id,objPayment); //String parId, String invId, Decimal payAmt, String status
                     }else{
                         if(objStripeCharge.error != null){
                             iLog.Status__c = 'Failure';
@@ -102,7 +136,8 @@ public class MonthlyPaymentBatchHelper{
                         }
                         invoiceLogList.add(iLog); 
                         //26-Nov-2019:jatin Send Email to the Customer if its charge gives error and the payment is not collected from his account
-                        if(listOfEmailTemplate != null && listOfEmailTemplate.size() > 0 ){
+                        //if(listOfEmailTemplate != null && listOfEmailTemplate.size() > 0 ){
+                        if(mapOfEmailTemplate != null && mapOfEmailTemplate.size() > 0 ){
                             string centerId,personContactId;
                             if(objInvoice.Parent_Account__r != null && objInvoice.Parent_Account__r.Centre_Name__r != null &&
                                 string.isNotBlank(objInvoice.Parent_Account__r.Centre_Name__r.Location__c) ){
@@ -111,40 +146,72 @@ public class MonthlyPaymentBatchHelper{
                             if(objInvoice.Parent_Account__r != null && string.isNotBlank(objInvoice.Parent_Account__r.PersonContactId)){
                                 personContactId = objInvoice.Parent_Account__r.PersonContactId;
                             }
-                            sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(listOfEmailTemplate[0].Id,personContactId,objInvoice.id,centerId));
+                             //nishi:12-Oct-2020: for sending a email according to organisation
+                            if(organisationObj.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                                if(mapOfEmailTemplate.containsKey('Ossia_Payment_Collection_Failed')){
+                                    sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(mapOfEmailTemplate.get('Ossia_Payment_Collection_Failed').Id,personContactId,objInvoice.id,centerId));
+                                }
+                            }else{
+                                if(mapOfEmailTemplate.containsKey('Payment_Collection_Failed')){
+                                    sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(mapOfEmailTemplate.get('Payment_Collection_Failed').Id,personContactId,objInvoice.id,centerId));
+                                }   
+                            }
+
+                            //sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(listOfEmailTemplate[0].Id,personContactId,objInvoice.id,centerId));
+                             //nishi:12-Oct-2020:end: for sending a email according to organisation
                         }
                     }        
                 } //commmented by jatin: 15-jan-2020:Payment should not be created if zero amount is due
                 //else if(objInvoice.Balance_Amount__c <= 0.30 && objInvoice.Balance_Amount__c >= 0){
                 else if(objInvoice.Balance_Amount__c <= 0.30 && objInvoice.Balance_Amount__c > 0){
-                        objInvoice.status__c = ConstantsClass.paidStatus;
-                        listOfInvoicesTOUpdate.add(objInvoice);
-                        successinvoiceIdSet.add(objInvoice.Id);
-                    
+                        //objInvoice.status__c = ConstantsClass.paidStatus;
+                        listOfInvoicesTOUpdate.add(new invoice__c(id = objInvoice.id,status__c = ConstantsClass.paidStatus));
+                        //successinvoiceIdSet.add(objInvoice.Id);
+                        successinvoiceIdmap.put(objInvoice.id,objInvoice);
                         Payment__c objPayment = BillingUtility.fillPayment(objInvoice.Parent_Account__c,objInvoice.Id, objInvoice.Balance_Amount__c,
                                                                         ConstantsClass.successStatus); 
                         objPayment.recordTypeId = payCreditRecType;
                         objPayment.remarks__c = 'Rounding Down';
-                        listOfPayment.add(objPayment); //String parId, String invId, Decimal payAmt, String status
+                        //listOfPayment.add(objPayment);
+                        mapOfPayment.put(objInvoice.Id,objPayment); //String parId, String invId, Decimal payAmt, String status
                 }   
             }catch(Exception ex){
                 System.debug('@@@@Exception '+ex.getMessage());
-                iLog.Status__c = 'Failure';
-                iLog.Invoice__c = objInvoice.Id;
-                iLog.Message__c =   ex.getMessage(); //objStripeCharge.error.message;
-                iLog.Type__c =     ex.getTypeName();  //objStripeCharge.error.stripeType;
-                invoiceLogList.add(iLog);  
-                //26-Nov-2019:jatin Send Email to the Customer if its charge gives error and the payment is not collected from his account
-                if(listOfEmailTemplate != null && listOfEmailTemplate.size() > 0 ){
-                    string centerId,personContactId;
-                    if(objInvoice.Parent_Account__r != null && objInvoice.Parent_Account__r.Centre_Name__r != null &&
-                        string.isNotBlank(objInvoice.Parent_Account__r.Centre_Name__r.Location__c) ){
-                        centerId = objInvoice.Parent_Account__r.Centre_Name__r.Location__c;
+                Organisation__c organisationObj = new Organisation__c();
+                if(organisationMap.containsKey(objInvoice.Center__r.Organisation__c)){
+                    organisationObj = organisationMap.get(objInvoice.Center__r.Organisation__c);
+                }
+                if(!test.isRunningTest()){
+                    iLog.Status__c = 'Failure';
+                    iLog.Invoice__c = objInvoice.Id;
+                    iLog.Message__c =   ex.getMessage(); //objStripeCharge.error.message;
+                    iLog.Type__c =     ex.getTypeName();  //objStripeCharge.error.stripeType;
+                    invoiceLogList.add(iLog);  
+                    //26-Nov-2019:jatin Send Email to the Customer if its charge gives error and the payment is not collected from his account
+                    //if(listOfEmailTemplate != null && listOfEmailTemplate.size() > 0 ){
+                    if(mapOfEmailTemplate != null && mapOfEmailTemplate.size() > 0 ){    
+                        string centerId,personContactId;
+                        if(objInvoice.Parent_Account__r != null && objInvoice.Parent_Account__r.Centre_Name__r != null &&
+                            string.isNotBlank(objInvoice.Parent_Account__r.Centre_Name__r.Location__c) ){
+                            centerId = objInvoice.Parent_Account__r.Centre_Name__r.Location__c;
+                        }
+                        if(objInvoice.Parent_Account__r != null && string.isNotBlank(objInvoice.Parent_Account__r.PersonContactId)){
+                            personContactId = objInvoice.Parent_Account__r.PersonContactId;
+                        }
+                        //nishi:12-Oct-2020: for sending a email according to organisation
+                        if(organisationObj.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                            if(mapOfEmailTemplate.containsKey('Ossia_Payment_Collection_Failed')){
+                                sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(mapOfEmailTemplate.get('Ossia_Payment_Collection_Failed').Id,personContactId,objInvoice.id,centerId));
+                            }
+                        }else{
+                            if(mapOfEmailTemplate.containsKey('Payment_Collection_Failed')){
+                                sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(mapOfEmailTemplate.get('Payment_Collection_Failed').Id,personContactId,objInvoice.id,centerId));
+                            }
+                        }
+
+                        //sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(listOfEmailTemplate[0].Id,personContactId,objInvoice.id,centerId));
+                        //nishi:12-Oct-2020:end: for sending a email according to organisation
                     }
-                    if(objInvoice.Parent_Account__r != null && string.isNotBlank(objInvoice.Parent_Account__r.PersonContactId)){
-                        personContactId = objInvoice.Parent_Account__r.PersonContactId;
-                    }
-                    sendSingleEmailMessage.add(AureusUtility.getSingleEmailMessage(listOfEmailTemplate[0].Id,personContactId,objInvoice.id,centerId));
                 }
             }
            
@@ -157,16 +224,20 @@ public class MonthlyPaymentBatchHelper{
         }
         system.debug('@@@listOfInvoicesTOUpdate'+listOfInvoicesTOUpdate);
         system.debug('@@@invoiceLogList'+invoiceLogList);
-        system.debug('@@@sendSingleEmailMessage'+sendSingleEmailMessage);
+        system.debug('@@@sendSingleEmailMessage'+sendSingleEmailMessage.size());
+        BillingUtility.MonthlyBatchClassChunkError objMonthlyBatchClassChunkError = new BillingUtility.MonthlyBatchClassChunkError();
+       
         if(listOfInvoicesTOUpdate.size()>0){
+            // 15-Dec-2020: Nishi: start: as per new logic if in this process we have found any type of error in invoice and payment then we send a email. 
+            objMonthlyBatchClassChunkError = createpaymentsForDueInvoice(listOfInvoicesTOUpdate,mapOfPayment, successinvoiceIdmap,listOfInvoice.size(),isBatchclass/*'Monthly Payment Batch Job Details '*/);
+            /*
             Database.Update(listOfInvoicesTOUpdate,false);
-            
-            
-            if(listOfPayment.size() > 0){
-                Database.insert(listOfPayment,false);
-            }
-            
+            if(mapOfPayment.size() > 0){
+                 Database.insert(listOfPayment,false);
+            }*/
+        }
             /*List<Enrolment__c> listOfEnrolment = getListOfEnrollments(successinvoiceIdSet);    //getListOfEnrollments(listOfInvoicesTOUpdate);
+            
             List<Enrolment__c> listOfEnrolmentToProcess = getEnrolmentsToProccess(listOfEnrolment);
             if(listOfEnrolmentToProcess.size()>0){
                 update listOfEnrolmentToProcess;
@@ -174,7 +245,7 @@ public class MonthlyPaymentBatchHelper{
             listOfEnrolment = getUpdatedEnrolment(listOfEnrolment);
             changeThisMonthBookingStatus(listOfEnrolment);
             createNextAppointments(listOfEnrolment);*/
-        }  
+          
         
         /*if(DeclinedInvoiceList.size()>0){
             BillingUtility.sendDeclinedMail(DeclinedInvoiceList,'Declined');
@@ -183,11 +254,176 @@ public class MonthlyPaymentBatchHelper{
             updateFifthBookingStatus(fifthBookingIdSet);
         }
         
-        return successinvoiceIdSet;
+        return objMonthlyBatchClassChunkError;//successinvoiceIdSet
     }
 
+    // 15-Dec-2020: Nishi: start: as per new logic if in this process we have found any type of error in invoice and payment then we send a email. 
+    public static BillingUtility.MonthlyBatchClassChunkError createpaymentsForDueInvoice(List<Invoice__c> listOfInvoicesTOUpdate,Map<string,Payment__c> mapOfPayment,Map<String,Invoice__c> successinvoiceIdmap,Integer totalInvoice,boolean isBatchclass/*,string subjectname*/){
+         List<Payment__c> listOfPayment = new List<Payment__c>(); 
+         boolean sendErrorEmail =false;
+         BillingUtility.MonthlyBatchClassChunkError objMonthlyBatchClassChunkError = new BillingUtility.MonthlyBatchClassChunkError();
+         if(listOfInvoicesTOUpdate.size()>0){
+            set<string> failInvoiceId=new Set<string>();
+            Set<string> sucessInvoiceIds=new Set<string>();
+            Set<string> sucesspaymentIds=new Set<string>();
+            Map<string,paymentErrorWrapper> mapOfinvoiceErrorWrapper = new Map<string,paymentErrorWrapper>();
+            //List<paymentErrorWrapper> listOfpaymentErrorWrapper = new list<paymentErrorWrapper>();
+            list<Database.SaveResult> invoiceUpdatioResult = Database.Update(listOfInvoicesTOUpdate,false);
+            for(Integer i=0; i < listOfInvoicesTOUpdate.size(); i++) {
+                Database.SaveResult objinvoiceUpdatioResult = invoiceUpdatioResult[i];
+                Invoice__c objinvoice = listOfInvoicesTOUpdate[i];
+                if(objinvoiceUpdatioResult.isSuccess()) {
+                    sucessInvoiceIds.add(objinvoiceUpdatioResult.Id);
+                } 
+                else if(!objinvoiceUpdatioResult.isSuccess()) {
+                    Database.Error errors =  objinvoiceUpdatioResult.getErrors().get(0);
+                    failInvoiceId.add(objinvoiceUpdatioResult.Id);
+                    sendErrorEmail = true;
+                    successinvoiceIdmap.remove(objinvoiceUpdatioResult.Id);
+                    mapOfinvoiceErrorWrapper.put(objinvoiceUpdatioResult.Id,new paymentErrorWrapper(objinvoice.Name, objinvoice.Parent_Account__r.Name, mapOfPayment.containsKey(objinvoice.id) ? mapOfPayment.get(objinvoice.id).Transaction_ID__c : '', errors.getMessage(),string.join(errors.getFields(), ', ')));
+                }
+            }
+            System.debug('sucessInvoiceIds'+sucessInvoiceIds);
+            System.debug('failInvoiceId'+failInvoiceId);
+            System.debug('listOfinvoiceErrorWrapper'+mapOfinvoiceErrorWrapper);
+            if(mapOfPayment.size() > 0){
+                if(failInvoiceId != null && failInvoiceId.size() > 0 ){
+                    for(string invoiceId : failInvoiceId){
+                        if(mapOfPayment.containskey(invoiceId)){
+                            mapOfPayment.remove(invoiceId);
+                        }
+                    }
+                }
+                System.debug('mapOfPayment'+mapOfPayment);
+                for(payment__C objPay  : mapOfPayment.values()){
+                    listOfPayment.add(objPay);
+                }
+                System.debug('listOfPayment'+listOfPayment);
+                list<Database.SaveResult> paymentInsertResults = Database.insert(listOfPayment, false);
+                for(Integer i=0; i < listOfPayment.size(); i++) {
+                    Database.SaveResult objpaymentInsertResult = paymentInsertResults[i];
+                    Payment__c objPay = listOfPayment[i];
+                    if(objpaymentInsertResult.isSuccess()) {
+                        sucesspaymentIds.add(objpaymentInsertResult.Id);
+                    } 
+                    else if(!objpaymentInsertResult.isSuccess()) {
+                        Database.Error errors =  objpaymentInsertResult.getErrors().get(0);
+                        sendErrorEmail = true;
+                       string invoiceName ='';string parentName ='';
+                        if(successinvoiceIdmap.containsKey(objPay.Invoice__c)){
+                            invoiceName = successinvoiceIdmap.get(objPay.Invoice__c).name;
+                            parentName = successinvoiceIdmap.get(objPay.Invoice__c).Parent_Account__r.Name;
+                            successinvoiceIdmap.remove(objPay.Invoice__c);
+                        }
+                        //listOfpaymentErrorWrapper.add(new paymentErrorWrapper(invoiceName, parentName, objPay.Transaction_ID__c, errors.getMessage(),string.join(errors.getFields(), ', ')));
+                        mapOfinvoiceErrorWrapper.put(objPay.Invoice__c,new paymentErrorWrapper(invoiceName, parentName, objPay.Transaction_ID__c, errors.getMessage(),string.join(errors.getFields(), ', ')));
+                    }
+                }
+                System.debug('sucesspaymentIds'+sucesspaymentIds);
+                System.debug('mapOfinvoiceErrorWrapper'+mapOfinvoiceErrorWrapper);
+                System.debug('sendErrorEmail'+sendErrorEmail);
+                if(sendErrorEmail){
+                    if(mapOfinvoiceErrorWrapper != null && mapOfinvoiceErrorWrapper.size() > 0){
+                        string errorDescription ='';
+                        Integer errorNumber = 1;
+                        for(paymentErrorWrapper objInvoiceErrorWrapper :mapOfinvoiceErrorWrapper.values()){
+                            if(isBatchclass){
+                            errorDescription+= '#'+errorNumber +'.Invoice_Name:'+objInvoiceErrorWrapper.invoiceName;
+                            errorDescription+= ',Customer Name:'+objInvoiceErrorWrapper.parentName;
+                            errorDescription+= ',Stripe Id:'+objInvoiceErrorWrapper.stripeId;
+                            errorDescription+= ',Error:'+ objInvoiceErrorWrapper.erroDescription + (string.isNotBlank(objInvoiceErrorWrapper.errorField) ? '(Field Error :'+objInvoiceErrorWrapper.errorField+');\n' : ';\n') ;
+                            }else{
+                                errorDescription+= objInvoiceErrorWrapper.erroDescription+';';
+                            }
+                            errorNumber++;
+                        }
+                        objMonthlyBatchClassChunkError.mapOfPaymentErrorWrapper = mapOfinvoiceErrorWrapper;
+                        objMonthlyBatchClassChunkError.errorDescription = errorDescription.removeEnd(',');
+                        objMonthlyBatchClassChunkError.processRecords = totalInvoice;
+                        objMonthlyBatchClassChunkError.failRecords = mapOfinvoiceErrorWrapper.size();
+                    }
+                    
+                    /*commented by nishi: 16-Dec-2020 : change requirement we create batch chunk error  Log records 
+                    Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+                    String[] toAddresses = new String[] {};
+                    
+                    if(string.isnotBlank(label.Batch_Error_User_id)){
+                        List<user> listUserList = [select id,email from user where id=:label.Batch_Error_User_id];
+                        if(listUserList.size() > 0 ){
+                            toAddresses.add(listUserList[0].email);
+                        }else{
+                            toAddresses.add('aureus@techmatrixconsulting.com');
+                        }
+                    }else{
+                        toAddresses.add('aureus@techmatrixconsulting.com');
+                    }
+                    if(toAddresses != null && toAddresses.size() >  0){
+                        mail.setToAddresses(toAddresses);
+                        mail.setSubject(subjectname);
+                        mail.setSaveAsActivity(false);
+                        string htmlbody='';
+                        htmlbody+= '\n Total Invoice Records : ' + totalInvoice;
+                        htmlbody+= '\n Total Invoice Records Processed : ' + sucessInvoiceIds.size() ;
+                        if(listOfinvoiceErrorWrapper != null && listOfinvoiceErrorWrapper.size() > 0){
+                            htmlbody+= ' \n  Error Description : \n\n';
+                            Integer errorNumber = 1;
+                            for(paymentErrorWrapper objInvoiceErrorWrapper :listOfinvoiceErrorWrapper){
+                                htmlbody+= '\n '+errorNumber +'. Invoice Name : '+objInvoiceErrorWrapper.invoiceName+' \n';
+                                htmlbody+= ' Customer Name: '+objInvoiceErrorWrapper.parentName+' \n';
+                                htmlbody+= ' Stripe Id : '+objInvoiceErrorWrapper.stripeId+' \n';
+                                htmlbody+= ' Error : '+ objInvoiceErrorWrapper.erroDescription + (string.isNotBlank(objInvoiceErrorWrapper.errorField) ? ' (Field Error :'+objInvoiceErrorWrapper.errorField+') \n' : ' \n') ;
+                                htmlbody+= ' \n -----------------------------------------------\n';
+                                errorNumber++;
+                            }
+                        }
+
+                        htmlbody+= '\n\n Total Payment Records : ' + mapOfPayment.size() ;
+                        htmlbody+= '\n Total Payment Records Processed : ' + sucesspaymentIds.size() ;
+
+                        if(listOfpaymentErrorWrapper != null && listOfpaymentErrorWrapper.size() > 0){
+                            htmlbody+= ' \n  Error Description : \n\n';
+                            Integer errorNumber = 1;
+                            for(paymentErrorWrapper objpaymentErrorWrapper :listOfpaymentErrorWrapper){
+                                htmlbody+= '\n '+errorNumber +'. Invoice Name : '+objpaymentErrorWrapper.invoiceName+' \n';
+                                htmlbody+= ' Customer Name: '+objpaymentErrorWrapper.parentName+' \n';
+                                htmlbody+= ' Stripe Id : '+objpaymentErrorWrapper.stripeId+' \n';
+                                htmlbody+= ' Error : '+ objpaymentErrorWrapper.erroDescription + (string.isNotBlank(objpaymentErrorWrapper.errorField) ? ' (Field Error :'+objpaymentErrorWrapper.errorField+') \n' : ' \n') ;
+                                htmlbody+= ' \n --------------------------------------------------\n ';
+                                errorNumber++;
+                            }
+                        }
+
+                        mail.setPlainTextBody(htmlbody);
+                        Messaging.sendEmail(new Messaging.SingleEmailMessage[] { mail });
+                        system.debug('mail'+mail);
+                    }commented by nishi: 16-Dec-2020 : change requirement we create batch chunk error  Log records */
+
+                }
+                objMonthlyBatchClassChunkError.invoiceIds = successinvoiceIdmap.keyset();
+            }
+        }
+        return objMonthlyBatchClassChunkError;
+    }
     
+    public class paymentErrorWrapper{
+        public string invoiceName{get;set;}
+        public String parentName{get;set;}
+        public String stripeId{get;set;}
+        public String erroDescription{get;set;}
+        public String errorField{get;set;}
+        public paymentErrorWrapper(string invoiceName,String parentName,String stripeId, String erroDescription,String errorField){
+            this.invoiceName = invoiceName;
+            this.parentName = parentName;
+            this.stripeId = stripeId;
+            this.erroDescription = erroDescription;
+            this.errorField = errorField;
+            
+        }
+    }
     
+
+   
+
     //12-03-2019 This method update the fifth bookings status By Sanjay Bhati
     public static void updateFifthBookingStatus(Set<Id> invoiceIdSet){
         Set<Id> bookingIdSet = new Set<Id>();

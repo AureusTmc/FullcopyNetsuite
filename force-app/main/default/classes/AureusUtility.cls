@@ -62,7 +62,7 @@ public class AureusUtility{
         
         //Fill the set of Enrolments and map of enrolment
         for(Enrolment__c enrol : enrolmentList){
-            enrolmentMap.put(enrol.Id, enrol);
+                enrolmentMap.put(enrol.Id, enrol);
         }
         
         if(enrolmentMap.keySet().size() > 0){
@@ -82,7 +82,7 @@ C. Withdrawal of Enrolment
 D. Change of Enrolment
 2. creating 13th Month Bookings
 */
-    public static void postInvoiceJobOnEnrolment(List<Enrolment__c> enrolmentList){
+    public static void postInvoiceJobOnEnrolment(List<Enrolment__c> enrolmentList,date startingDate){
         
         Map<String, Enrolment__c> enrolmentMap = new Map<String, Enrolment__c>();
         Set<String> cancelledEnrolmentSet = new Set<String>();
@@ -104,7 +104,10 @@ D. Change of Enrolment
              }
             
         }
-        list<Enrolment__c> listOfUpdatedEnrolment = enrolmentAdvanceAction(enrolmentMap);
+        // commented by nishi: 9-Sep-2020: for creating next month invoice requirement we send next month date with enrolment id
+        //list<Enrolment__c> listOfUpdatedEnrolment = enrolmentAdvanceAction(enrolmentMap);
+
+        list<Enrolment__c> listOfUpdatedEnrolment = enrolmentAdvanceAction(enrolmentMap,startingDate);
         // @@jatin: 9-jan-2020: for manage Group lesson and regular bookings
         if(listOfUpdatedEnrolment.size() > 0){
             for(Enrolment__c enrolObj : listOfUpdatedEnrolment){
@@ -140,20 +143,33 @@ D. Change of Enrolment
         }
         system.debug('!!groupEnrolmentMap'+groupEnrolmentMap);
         system.debug('!!enrolmentRegularMap'+enrolmentRegularMap);
-
-         if(enrolmentRegularMap != null && enrolmentRegularMap.size() > 0 ){
-           createBookingFor13Month(enrolmentRegularMap.values(), cancelledEnrolmentSet);
+        Date current = startingDate.addMonths(13);
+        Date firstDate = Date.newInstance(current.year(),current.month(),01);
+        Date lastDate = Date.newInstance(current.year(),current.month(),Date.daysInMonth(current.month(),current.year()));
+        system.debug('!!current'+current);
+        system.debug('!!firstDate'+firstDate);
+        system.debug('!!lastDate'+lastDate);
+         // nishi: 6-Oct-2020: for get all enrolment ids if 13 month booking exist
+        Set<string> existing13MonthBookingEnrolmentIds = getexisting13MonthBookingEnrolmentIds(enrolmentMap,firstDate,lastDate);
+        system.debug('!!existing13MonthBookingEnrolmentIds'+existing13MonthBookingEnrolmentIds);
+        if(enrolmentRegularMap != null && enrolmentRegularMap.size() > 0 ){
+             // commented by nishi: 9-Sep-2020: for creating next month invoice requirement we send next month date with enrolment id
+             //createBookingFor13Month(enrolmentRegularMap.values(), cancelledEnrolmentSet);
+           createBookingFor13Month(enrolmentRegularMap.values(), cancelledEnrolmentSet,startingDate,existing13MonthBookingEnrolmentIds);
         }
         if(groupEnrolmentMap!= null && groupEnrolmentMap.size() > 0 ){
             //@@jatin: 9-jan-2020 Create 4 group lesson bookings of per enrolment for 13 month
-            createGroupLessonBookingFor13Month(groupEnrolmentMap.values(), cancelledGroupEnrolmentSet,getmapOfEffectiveDateGroupLesson(classIds));
+            // commented by nishi: 9-Sep-2020: for creating next month invoice requirement we send next month date with enrolment id
+            //createGroupLessonBookingFor13Month(groupEnrolmentMap.values(), cancelledGroupEnrolmentSet,getmapOfEffectiveDateGroupLesson(classIds));
+            createGroupLessonBookingFor13Month(groupEnrolmentMap.values(), cancelledGroupEnrolmentSet,getmapOfEffectiveDateGroupLesson(classIds,startingDate),existing13MonthBookingEnrolmentIds);
         }
     }     
     // /@@jatin: 9-jan-2020  get date and group lesson of 13th months according to classIds  
-    private  static Map<String,Map<Date,String>> getmapOfEffectiveDateGroupLesson(List<Id> classIds){
+    private  static Map<String,Map<Date,String>> getmapOfEffectiveDateGroupLesson(List<Id> classIds,Date startingDate){
         Map<String,Map<Date,String>> mapOfClassDates = New  Map<String,Map<Date,String>>();
         Map<Date,String> mapOfDateGroupLesson = New  Map<Date,String>();
-        Date current = System.today().addMonths(13);
+       // Date current = System.today().addMonths(13); // commented by nishi: 9-Sep-2020: for creating next month invoice requirement we send next month date with enrolment id
+        Date current = startingDate.addMonths(13);
         Date firstDate = Date.newInstance(current.year(),current.month(),01);
         Date lastDate = Date.newInstance(current.year(),current.month(),Date.daysInMonth(current.month(),current.year()));
         system.debug('firstDate'+firstDate);
@@ -174,7 +190,74 @@ D. Change of Enrolment
                                         mapOfDateGroupLesson.put(objBook.Booking_Date__c ,objBook.id);
                                         mapOfClassDates.put(objBook.Class__c,mapOfDateGroupLesson);
                                   }
-                                  system.debug('mapOfClassDates'+mapOfClassDates);
+        system.debug('mapOfClassDates'+mapOfClassDates);
+        mapOfClassDates = check13MonthGroupLessonExistOrNot(classIds,firstDate,lastDate,mapOfClassDates);  
+        system.debug('mapOfClassDates'+mapOfClassDates);  
+        return mapOfClassDates;
+    }
+    
+     // added by nishi: 9-Sep-2020: for if group lesson instance creates.
+        //we firslty check the group lesson booking is already created or not is group lesson booking not found then we are  creating new group lesson instance. 
+    private static Map<String,Map<Date,String>> check13MonthGroupLessonExistOrNot(List<Id> classIds,Date firstDate,Date lastDate,Map<String,Map<Date,String>> mapOfClassDates){
+        if(classIds != null && classIds.size() > 0){
+            if(mapOfClassDates != null && mapOfClassDates.size() > 0 ){
+                List<Id> newClassIds = new List<Id>();
+                for(string classId : classIds){
+                    if(!mapOfClassDates.containsKey(classId)){
+                        newClassIds.add(classId);
+                    }
+                }
+                system.debug('newClassIds'+newClassIds);
+                if(newClassIds != null && newClassIds.size()>0 ){
+                    mapOfClassDates = createGroupClassInstance(newClassIds,firstDate,lastDate,mapOfClassDates);    
+                }
+            }else{
+                system.debug('classIds'+classIds);
+                mapOfClassDates = createGroupClassInstance(classIds,firstDate,lastDate,mapOfClassDates);    
+            }
+        }
+        return mapOfClassDates;
+    }
+
+     // added by nishi: 9-Sep-2020: for we creating group lesson instance  
+    private static  Map<String,Map<Date,String>> createGroupClassInstance(List<Id> classIds,Date firstDate,Date lastDate,Map<String,Map<Date,String>> mapOfClassDates){
+        Map<Date,String> mapOfDateGroupLesson = New  Map<Date,String>();
+        List<Booking__c> bookingListForClass = new List<Booking__c>();
+        
+        if(classIds != null && classIds.size() > 0){
+            for(Class__c objClass :[SELECT Id,name, Centre_Name__c, Package_Fee__c, Program__c, Total_Capacity__c, Class_Type__c, Class_Start_Date__c, End_Time__c, Start_Time__c, Teacher__c,
+                                        Package__c, Active__c, Total_Enrolment__c, Class_Date__c, Class_End_Date__c, Class_Day__c, Minimum_age__c, Maximum_age__c, Instrument__c, Available_Capacity__c 
+                                        FROM Class__c 
+                                        WHERE Active__c = true 
+                                        AND Class_Start_Date__c <= THIS_MONTH 
+                                        And (Class_End_Date__c = null OR Class_End_Date__c >=:lastDate)
+                                        AND Id In: classIds]){
+                if(objClass.Start_Time__c != null ){ 
+                    system.debug('firstDate'+firstDate);    
+                    system.debug('lastDate'+lastDate);    
+                    DateTime startTime  = AureusUtility.getFirstWeekDayDate(objClass.Class_Day__c,firstDate.month(),firstDate.year());
+                    DateTime endTime =objClass.Class_End_Date__c != null && objClass.Class_End_Date__c.month() == firstDate.month() ? 
+                            DateTime.newInstance(objClass.Class_End_Date__c,objClass.Start_Time__c) :
+                            DateTime.newInstance(Date.newInstance(lastDate.year(),lastDate.month(),Date.daysInMonth(lastDate.month(),lastDate.year())),objClass.Start_Time__c);
+                    system.debug('startTime'+startTime);    
+                    system.debug('endTime'+endTime);   
+                    bookingListForClass.addAll(ClassTriggerHelper.createBookingsForClass(objClass,startTime,endTime));
+                }
+            }
+            if(bookingListForClass.size() > 0){
+                upsert   bookingListForClass;    
+                system.debug('bookingListForClass'+bookingListForClass); 
+                for(Booking__c objBook: bookingListForClass){
+                    // 14-Sep-2020: for get only group class not busy (fifth lesson bookings)
+                    if(objBook.Type__c == ConstantsClass.groupTypeBooking){
+                        mapOfDateGroupLesson = mapOfClassDates.containsKey(objBook.Class__c) ?  mapOfClassDates.get(objBook.Class__c):New Map<Date,String>();
+                        mapOfDateGroupLesson.put(objBook.Booking_Date__c ,objBook.id);
+                        mapOfClassDates.put(objBook.Class__c,mapOfDateGroupLesson);
+                    }
+                }
+                system.debug('mapOfClassDates'+mapOfClassDates); 
+            }
+        }
         return mapOfClassDates;
     }
 
@@ -193,7 +276,7 @@ D. Change of Enrolment
 
 
     //@@jatin: 9-jan-2020 Create 4 group lesson bookings of per enrolment for 13 month
-    private static void createGroupLessonBookingFor13Month(List<Enrolment__c> enrolmentList, Set<String> cancelledBookingsSet,Map<String,Map<Date,String>> mapOfClassDates ){
+    private static void createGroupLessonBookingFor13Month(List<Enrolment__c> enrolmentList, Set<String> cancelledBookingsSet,Map<String,Map<Date,String>> mapOfClassDates, Set<string> existing13MonthBookingEnrolmentIds){
         String groupLessonBookingRecordType = Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get(ConstantsClass.groupLessonBookingRecordType).getRecordTypeId();
         
         List<Booking__c> listOfBookings = new List<Booking__c>();
@@ -203,75 +286,78 @@ D. Change of Enrolment
         Boolean isHome = FALSE;
         if(enrolmentList.size() > 0){
             for(Enrolment__c enrolmentObj : enrolmentList){
-                isHome = FALSE;
-                //Check that the enrolment is of Aureus home centre or not....
-                workingHour = new Teacher_Working_Hour__c();
-                if(enrolmentObj.Center__c == Label.Aureus_at_Home_Id && String.isNotBlank(enrolmentObj.Lesson_Day__c) && String.isNotBlank(enrolmentObj.Teacher__c)){
-                    workingHour = (mapOfHomeTeachersHours.containsKey(enrolmentObj.Teacher__c + '-'+enrolmentObj.Lesson_Day__c.left(3)) ? mapOfHomeTeachersHours.get(enrolmentObj.Teacher__c + '-'+enrolmentObj.Lesson_Day__c.left(3)) : NULL);
-                    isHome = TRUE;
-                }
-                //If the cancelledBookingsSet contains the enrolment Id then loop will skip the further process of creating regular bookings for that enrolment.
-                if(cancelledBookingsSet.contains(enrolmentObj.Id)){
-                    continue;
-                }
-                
-                if(String.isNotBlank(enrolmentObj.Lesson_Day__c)){
-                    mapOfDateGroupLesson = new  Map<Date,String>();
-                    if(mapOfClassDates != null && mapOfClassDates.size() > 0 && mapOfClassDates.containsKey(enrolmentObj.class__c)){
-                        mapOfDateGroupLesson = mapOfClassDates.get(enrolmentObj.class__c);
+                 // nishi: 6-Oct-2020: for if any enrolment ids is exist in existing13MonthBookingEnrolmentIds this set 
+                 //that a 13-month booking has already been created, so we do not want to make the 13th month booking again
+                if(!existing13MonthBookingEnrolmentIds.contains(enrolmentObj.id)){
+                    isHome = FALSE;
+                    //Check that the enrolment is of Aureus home centre or not....
+                    workingHour = new Teacher_Working_Hour__c();
+                    if(enrolmentObj.Center__c == Label.Aureus_at_Home_Id && String.isNotBlank(enrolmentObj.Lesson_Day__c) && String.isNotBlank(enrolmentObj.Teacher__c)){
+                        workingHour = (mapOfHomeTeachersHours.containsKey(enrolmentObj.Teacher__c + '-'+enrolmentObj.Lesson_Day__c.left(3)) ? mapOfHomeTeachersHours.get(enrolmentObj.Teacher__c + '-'+enrolmentObj.Lesson_Day__c.left(3)) : NULL);
+                        isHome = TRUE;
                     }
-                    System.debug('enrolmentObj.class__c'+enrolmentObj.class__c);
-                    System.debug('mapOfDateGroupLesson'+mapOfDateGroupLesson);
-                    System.debug('enrolmentObj.Lesson_Day__c'+enrolmentObj.Lesson_Day__c);
-                    if(mapOfDateGroupLesson != null && mapOfDateGroupLesson.size() > 0){
-                        for(Date objDate : mapOfDateGroupLesson.keySet()){
-                            
-                                if(mapOfDateGroupLesson.containsKey(objDate)){
-                                    Booking__c objBooking = new Booking__c();
-                                    objBooking.Student__c = enrolmentObj.Student__c;
-                                    objBooking.Center__c = enrolmentObj.Center__c;
-                                    objBooking.Teacher_Account__c = enrolmentObj.Teacher__c;
-                                    objBooking.Booking_Date__c = objDate;
-                                    objBooking.recordTypeId = groupLessonBookingRecordType;
-                                    objBooking.parent__c = String.isNotBlank(enrolmentObj.parent__c) && enrolmentObj.parent__c !=null ? enrolmentObj.parent__c : null;
-                                    objBooking.start_time__c = enrolmentObj.Lesson_Start_time__c;
-                                    if(objBooking.start_time__c != NULL){
-                                        objBooking.End_time__c = objBooking.start_time__c.addMinutes(Integer.valueOf(enrolmentObj.Package__r.Duration__c));
+                    //If the cancelledBookingsSet contains the enrolment Id then loop will skip the further process of creating regular bookings for that enrolment.
+                    if(cancelledBookingsSet.contains(enrolmentObj.Id)){
+                        continue;
+                    }
+                    
+                    if(String.isNotBlank(enrolmentObj.Lesson_Day__c)){
+                        mapOfDateGroupLesson = new  Map<Date,String>();
+                        if(mapOfClassDates != null && mapOfClassDates.size() > 0 && mapOfClassDates.containsKey(enrolmentObj.class__c)){
+                            mapOfDateGroupLesson = mapOfClassDates.get(enrolmentObj.class__c);
+                        }
+                        System.debug('enrolmentObj.class__c'+enrolmentObj.class__c);
+                        System.debug('mapOfDateGroupLesson'+mapOfDateGroupLesson);
+                        System.debug('enrolmentObj.Lesson_Day__c'+enrolmentObj.Lesson_Day__c);
+                        if(mapOfDateGroupLesson != null && mapOfDateGroupLesson.size() > 0){
+                            for(Date objDate : mapOfDateGroupLesson.keySet()){
+                                
+                                    if(mapOfDateGroupLesson.containsKey(objDate)){
+                                        Booking__c objBooking = new Booking__c();
+                                        objBooking.Student__c = enrolmentObj.Student__c;
+                                        objBooking.Center__c = enrolmentObj.Center__c;
+                                        objBooking.Teacher_Account__c = enrolmentObj.Teacher__c;
+                                        objBooking.Booking_Date__c = objDate;
+                                        objBooking.recordTypeId = groupLessonBookingRecordType;
+                                        objBooking.parent__c = String.isNotBlank(enrolmentObj.parent__c) && enrolmentObj.parent__c !=null ? enrolmentObj.parent__c : null;
+                                        objBooking.start_time__c = enrolmentObj.Lesson_Start_time__c;
+                                        if(objBooking.start_time__c != NULL){
+                                            objBooking.End_time__c = objBooking.start_time__c.addMinutes(Integer.valueOf(enrolmentObj.Package__r.Duration__c));
+                                        }
+                                        objBooking.Enrolment__c = enrolmentObj.Id; 
+                                        objBooking.Package__c = enrolmentObj.Package__c;
+                                        objBooking.type__c = ConstantsClass.groupLessonTypeBooking;
+                                        objBooking.Status__c = ConstantsClass.pendingStatus;
+                                        objBooking.Group_Class__c = mapOfDateGroupLesson.get(objDate);
+                                                    
+                                        listOfBookings.add(objBooking);
                                     }
-                                    objBooking.Enrolment__c = enrolmentObj.Id; 
-                                    objBooking.Package__c = enrolmentObj.Package__c;
-                                    objBooking.type__c = ConstantsClass.groupLessonTypeBooking;
-                                    objBooking.Status__c = ConstantsClass.pendingStatus;
-                                    objBooking.Group_Class__c = mapOfDateGroupLesson.get(objDate);
-                                                
-                                    listOfBookings.add(objBooking);
-                                }
-                            if(isHome && enrolmentObj.Lesson_Start_time__c != NULL &&
-                                String.isNotBlank(workingHour.Id) && 
-                                workingHour.start_Time__c < enrolmentObj.Lesson_Start_time__c){
-                                if(mapOfDateGroupLesson.containsKey(objDate)){
-                                    Booking__c objBooking = new Booking__c();
-                                    objBooking.Center__c = enrolmentObj.Center__c;
-                                    objBooking.Teacher_Account__c = enrolmentObj.Teacher__c;
-                                    objBooking.Booking_Date__c = objDate;
-                                    objBooking.recordTypeId = groupLessonBookingRecordType;
-                                    objBooking.End_time__c = enrolmentObj.Lesson_Start_time__c;
-                                    if(objBooking.End_time__c != NULL){
-                                        objBooking.start_time__c = objBooking.End_time__c.addMinutes(-30);
+                                if(isHome && enrolmentObj.Lesson_Start_time__c != NULL &&
+                                    String.isNotBlank(workingHour.Id) && 
+                                    workingHour.start_Time__c < enrolmentObj.Lesson_Start_time__c){
+                                    if(mapOfDateGroupLesson.containsKey(objDate)){
+                                        Booking__c objBooking = new Booking__c();
+                                        objBooking.Center__c = enrolmentObj.Center__c;
+                                        objBooking.Teacher_Account__c = enrolmentObj.Teacher__c;
+                                        objBooking.Booking_Date__c = objDate;
+                                        objBooking.recordTypeId = groupLessonBookingRecordType;
+                                        objBooking.End_time__c = enrolmentObj.Lesson_Start_time__c;
+                                        if(objBooking.End_time__c != NULL){
+                                            objBooking.start_time__c = objBooking.End_time__c.addMinutes(-30);
+                                        }
+                                        objBooking.Enrolment__c = enrolmentObj.Id; 
+                                        objBooking.type__c = ConstantsClass.typeBusy;
+                                        objBooking.Status__c = ConstantsClass.statusScheduled;
+                                        objBooking.Category__c = ConstantsClass.categoryTravel;
+                                        objBooking.Remarks__c = 'Travel';
+                                        objBooking.Group_Class__c = mapOfDateGroupLesson.get(objDate);
+                                        listOfBookings.add(objBooking);
                                     }
-                                    objBooking.Enrolment__c = enrolmentObj.Id; 
-                                    objBooking.type__c = ConstantsClass.typeBusy;
-                                    objBooking.Status__c = ConstantsClass.statusScheduled;
-                                    objBooking.Category__c = ConstantsClass.categoryTravel;
-                                    objBooking.Remarks__c = 'Travel';
-                                    objBooking.Group_Class__c = mapOfDateGroupLesson.get(objDate);
-                                    listOfBookings.add(objBooking);
                                 }
                             }
                         }
                     }
                 }
-                
             }
             system.debug('listOfBookings'+listOfBookings);
             if(listOfBookings.size() > 0){
@@ -315,11 +401,18 @@ D. Change of Enrolment
                 if(enrolObj.type__c != ConstantsClass.enrolGroupType){
                     //Start:added by nishi: 13-aug-2020: for if enrolment is Ossia then we manage available makeup mins in enroment otherwise we mange parent records
                     if(mapOfDates.containskey(enrolObj.Lesson_Day__c) && mapOfDates.get(enrolObj.Lesson_Day__c).size() == 5 && mapOfDates.get(enrolObj.Lesson_Day__c)[4].day() > 28){
-                        if(String.isNotBlank(enrolObj.Center__c) && 
-                        String.isNotBlank(enrolObj.Center__r.Organisation__c) && 
-                        String.isNotBlank(enrolObj.Center__r.Organisation__r.Name) && 
-                        enrolObj.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
-                            fifthOssiaBookingMap.put(enrolObj, mapOfDates.get(enrolObj.Lesson_Day__c)[4]);
+                        if(String.isNotBlank(enrolObj.Center__c) && String.isNotBlank(enrolObj.Center__r.Organisation__c) && 
+                        String.isNotBlank(enrolObj.Center__r.Organisation__r.Name) && enrolObj.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                            //7-Sep:2020:Start: added by nishi: if teacher Engagement_Type__c type is part-time then not creating fifth lesson booking 
+                            Boolean isTeaacherPartTime = false;
+                            if(string.isNotBlank(enrolObj.Teacher__c) && string.isNotBlank(enrolObj.Teacher__r.Engagement_Type__c) && 
+                             ConstantsClass.teacherPartTimeEngagementStatus.contains(enrolObj.Teacher__r.Engagement_Type__c)){
+                                isTeaacherPartTime = true;
+                            }
+                            //7-Sep:2020:Start: added by nishi: if teacher Engagement_Type__c type is part-time then not creating fifth lesson booking 
+                            if(!isTeaacherPartTime){
+                                    fifthOssiaBookingMap.put(enrolObj, mapOfDates.get(enrolObj.Lesson_Day__c)[4]);
+                            }
                         }else{
                             fifthBookingMap.put(enrolObj, mapOfDates.get(enrolObj.Lesson_Day__c)[4]);
                         }
@@ -624,12 +717,13 @@ D. Change of Enrolment
     }
     
     //Update Enrolment According to the Advance Action
-    public static List<Enrolment__c> enrolmentAdvanceAction(Map<String, Enrolment__c> enrolmentMap){
+    public static List<Enrolment__c> enrolmentAdvanceAction(Map<String, Enrolment__c> enrolmentMap,Date startingDate){
         system.debug('enrolmentAdvanceAction');
         Enrolment__c objEnrolment;
         List<Enrolment__c> enrolmentList = new List<Enrolment__c>();
         
-        Date startDate = System.today().toStartOfMonth();
+        //Date startDate = System.today().toStartOfMonth();// commented by nishi: 9-Sep-2020: for creating next month invoice requirement we send next month date with enrolment id
+        Date startDate = startingDate.toStartOfMonth();
         Date endDate = startDate.addMonths(1).addDays(-1);
         system.debug('!!endDate'+endDate);
         for(String enrolId : enrolmentMap.keyset()){
@@ -739,7 +833,13 @@ D. Change of Enrolment
                             objEnrolment.Center__c = objEnrolment.New_Centre__c;
                             objEnrolment.New_Centre__c = Null;
                         }
-                       
+                        // added by nishi: 27-Nov-2020: For is group class enrolment changes
+                        if(objEnrolment.type__c == ConstantsClass.enrolGroupType){
+                            if(objEnrolment.New_Class__c != NULL){
+                                objEnrolment.Class__c = objEnrolment.New_Class__c;
+                                objEnrolment.New_Class__c = NULL;
+                            }
+                        }
                         objEnrolment.Package_Process_Status__c =  ConstantsClass.enrollmentProcessCompletedStatus; //'Completed';
                     }
                    //added by nishi: 4-sep-2020: for if enrolment process is pending and Package_Process_Type__c == change center then we update enrolment
@@ -755,95 +855,99 @@ D. Change of Enrolment
     }
     
     //Create 4 bookings of per enrolment for 13 month
-    private static void createBookingFor13Month(List<Enrolment__c> enrolmentList, Set<String> cancelledBookingsSet){
+    private static void createBookingFor13Month(List<Enrolment__c> enrolmentList, Set<String> cancelledBookingsSet,Date startingdate, Set<string> existing13MonthBookingEnrolmentIds){
         String lessonRecorType = Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get(ConstantsClass.recordTypeLesson).getRecordTypeId();
         
         List<Booking__c> listOfBookings = new List<Booking__c>();
-        Date current = System.today().addMonths(13);
+        //Date current = System.today().addMonths(13); // commented by nishi: 9-Sep-2020: for creating next month invoice requirement we send next month date with enrolment id
+        Date current = startingdate.addMonths(13);
         Date firstDate = Date.newInstance(current.year(),current.month(),01);
         Date lastDate = Date.newInstance(current.year(),current.month(),Date.daysInMonth(current.month(),current.year()));
         Map<String, List<Date>> mapOfDates = getDateMap(firstDate,lastDate);
         integer counter = 0;
-        
         List<Fifth_Lesson__c> fifthLessons = new List<Fifth_Lesson__c>();
         Map<String, Teacher_Working_Hour__c> mapOfHomeTeachersHours = fetchWorkingHoursHome();
         Teacher_Working_Hour__c workingHour = new Teacher_Working_Hour__c();
         Boolean isHome = FALSE;
         if(enrolmentList.size() > 0){
             for(Enrolment__c enrolmentObj : enrolmentList){
-                isHome = FALSE;
-                //Check that the enrolment is of Aureus home centre or not....
-                workingHour = new Teacher_Working_Hour__c();
-                if(enrolmentObj.Center__c == Label.Aureus_at_Home_Id && String.isNotBlank(enrolmentObj.Lesson_Day__c) && String.isNotBlank(enrolmentObj.Teacher__c)){
-                    workingHour = (mapOfHomeTeachersHours.containsKey(enrolmentObj.Teacher__c + '-'+enrolmentObj.Lesson_Day__c.left(3)) ? mapOfHomeTeachersHours.get(enrolmentObj.Teacher__c + '-'+enrolmentObj.Lesson_Day__c.left(3)) : NULL);
-                    isHome = TRUE;
-                }
-                //If the cancelledBookingsSet contains the enrolment Id then loop will skip the further process of creating regular bookings for that enrolment.
-                if(cancelledBookingsSet.contains(enrolmentObj.Id)){
-                    continue;
-                }
-                
-                counter = 0;
-                if(String.isNotBlank(enrolmentObj.Lesson_Day__c)){
-                    List<Date> listOfDates = mapOfDates.get(enrolmentObj.Lesson_Day__c);
+                system.debug('contains'+existing13MonthBookingEnrolmentIds.contains(enrolmentObj.id));
+                 // nishi: 6-Oct-2020: for if any enrolment ids is exist in existing13MonthBookingEnrolmentIds this set 
+                 //that a 13-month booking has already been created, so we do not want to make the 13th month booking again
+                if(!existing13MonthBookingEnrolmentIds.contains(enrolmentObj.id)){
+                    isHome = FALSE;
+                    //Check that the enrolment is of Aureus home centre or not....
+                    workingHour = new Teacher_Working_Hour__c();
+                    if(enrolmentObj.Center__c == Label.Aureus_at_Home_Id && String.isNotBlank(enrolmentObj.Lesson_Day__c) && String.isNotBlank(enrolmentObj.Teacher__c)){
+                        workingHour = (mapOfHomeTeachersHours.containsKey(enrolmentObj.Teacher__c + '-'+enrolmentObj.Lesson_Day__c.left(3)) ? mapOfHomeTeachersHours.get(enrolmentObj.Teacher__c + '-'+enrolmentObj.Lesson_Day__c.left(3)) : NULL);
+                        isHome = TRUE;
+                    }
+                    //If the cancelledBookingsSet contains the enrolment Id then loop will skip the further process of creating regular bookings for that enrolment.
+                    if(cancelledBookingsSet.contains(enrolmentObj.Id)){
+                        continue;
+                    }
                     
-                    for(Date objDate : listOfDates){
-                        ++counter;
-                        if(counter == 5){
-                            Fifth_Lesson__c fifthLesson = new Fifth_Lesson__c();
-                            fifthLesson.Enrolment__c = enrolmentObj.Id;
-                            fifthLesson.Student__c = enrolmentObj.Student__c;
-                            fifthLesson.Center__c = enrolmentObj.Center__c;
-                            fifthLesson.Teacher_Account__c = enrolmentObj.Teacher__c;
-                            fifthLesson.Booking_Date__c = objDate;
-                            fifthLesson.parent__c = String.isNotBlank(enrolmentObj.parent__c) && enrolmentObj.parent__c !=null ? enrolmentObj.parent__c : null;
-                            fifthLesson.start_time__c = enrolmentObj.Lesson_Start_time__c;
-                            if(fifthLesson.start_time__c != NULL){
-                                fifthLesson.End_time__c = fifthLesson.start_time__c.addMinutes(Integer.valueOf(enrolmentObj.Package__r.Duration__c));
+                    counter = 0;
+                    if(String.isNotBlank(enrolmentObj.Lesson_Day__c)){
+                        List<Date> listOfDates = mapOfDates.get(enrolmentObj.Lesson_Day__c);
+                        
+                        for(Date objDate : listOfDates){
+                            ++counter;
+                            if(counter == 5){
+                                Fifth_Lesson__c fifthLesson = new Fifth_Lesson__c();
+                                fifthLesson.Enrolment__c = enrolmentObj.Id;
+                                fifthLesson.Student__c = enrolmentObj.Student__c;
+                                fifthLesson.Center__c = enrolmentObj.Center__c;
+                                fifthLesson.Teacher_Account__c = enrolmentObj.Teacher__c;
+                                fifthLesson.Booking_Date__c = objDate;
+                                fifthLesson.parent__c = String.isNotBlank(enrolmentObj.parent__c) && enrolmentObj.parent__c !=null ? enrolmentObj.parent__c : null;
+                                fifthLesson.start_time__c = enrolmentObj.Lesson_Start_time__c;
+                                if(fifthLesson.start_time__c != NULL){
+                                    fifthLesson.End_time__c = fifthLesson.start_time__c.addMinutes(Integer.valueOf(enrolmentObj.Package__r.Duration__c));
+                                }
+                                fifthLesson.Package__c = enrolmentObj.Package__c;
+                                fifthLesson.Remarks__c = '5th lesson '+enrolmentObj.Parent__r.Name+'-'+enrolmentObj.Student__r.Name;
+                                fifthLessons.add(fifthLesson);
+                                
+                            }else{
+                                Booking__c objBooking = new Booking__c();
+                                objBooking.Student__c = enrolmentObj.Student__c;
+                                objBooking.Center__c = enrolmentObj.Center__c;
+                                objBooking.Teacher_Account__c = enrolmentObj.Teacher__c;
+                                objBooking.Booking_Date__c = objDate;
+                                objBooking.recordTypeId = lessonRecorType;
+                                objBooking.parent__c = String.isNotBlank(enrolmentObj.parent__c) && enrolmentObj.parent__c !=null ? enrolmentObj.parent__c : null;
+                                objBooking.start_time__c = enrolmentObj.Lesson_Start_time__c;
+                                if(objBooking.start_time__c != NULL){
+                                    objBooking.End_time__c = objBooking.start_time__c.addMinutes(Integer.valueOf(enrolmentObj.Package__r.Duration__c));
+                                }
+                                objBooking.Enrolment__c = enrolmentObj.Id; 
+                                objBooking.Package__c = enrolmentObj.Package__c;
+                                objBooking.type__c = ConstantsClass.typeRegular;
+                                objBooking.Status__c = ConstantsClass.pendingStatus;
+                                listOfBookings.add(objBooking);
                             }
-                            fifthLesson.Package__c = enrolmentObj.Package__c;
-                            fifthLesson.Remarks__c = '5th lesson '+enrolmentObj.Parent__r.Name+'-'+enrolmentObj.Student__r.Name;
-                            fifthLessons.add(fifthLesson);
-                            
-                        }else{
-                            Booking__c objBooking = new Booking__c();
-                            objBooking.Student__c = enrolmentObj.Student__c;
-                            objBooking.Center__c = enrolmentObj.Center__c;
-                            objBooking.Teacher_Account__c = enrolmentObj.Teacher__c;
-                            objBooking.Booking_Date__c = objDate;
-                            objBooking.recordTypeId = lessonRecorType;
-                            objBooking.parent__c = String.isNotBlank(enrolmentObj.parent__c) && enrolmentObj.parent__c !=null ? enrolmentObj.parent__c : null;
-                            objBooking.start_time__c = enrolmentObj.Lesson_Start_time__c;
-                            if(objBooking.start_time__c != NULL){
-                                objBooking.End_time__c = objBooking.start_time__c.addMinutes(Integer.valueOf(enrolmentObj.Package__r.Duration__c));
-                            }
-                            objBooking.Enrolment__c = enrolmentObj.Id; 
-                            objBooking.Package__c = enrolmentObj.Package__c;
-                            objBooking.type__c = ConstantsClass.typeRegular;
-                            objBooking.Status__c = ConstantsClass.pendingStatus;
-                            listOfBookings.add(objBooking);
-                        }
 
-                        if(isHome && enrolmentObj.Lesson_Start_time__c != NULL && String.isNotBlank(workingHour.Id) && workingHour.start_Time__c < enrolmentObj.Lesson_Start_time__c){
-                            Booking__c objBooking = new Booking__c();
-                            objBooking.Center__c = enrolmentObj.Center__c;
-                            objBooking.Teacher_Account__c = enrolmentObj.Teacher__c;
-                            objBooking.Booking_Date__c = objDate;
-                            objBooking.recordTypeId = lessonRecorType;
-                            objBooking.End_time__c = enrolmentObj.Lesson_Start_time__c;
-                            if(objBooking.End_time__c != NULL){
-                                objBooking.start_time__c = objBooking.End_time__c.addMinutes(-30);
+                            if(isHome && enrolmentObj.Lesson_Start_time__c != NULL && String.isNotBlank(workingHour.Id) && workingHour.start_Time__c < enrolmentObj.Lesson_Start_time__c){
+                                Booking__c objBooking = new Booking__c();
+                                objBooking.Center__c = enrolmentObj.Center__c;
+                                objBooking.Teacher_Account__c = enrolmentObj.Teacher__c;
+                                objBooking.Booking_Date__c = objDate;
+                                objBooking.recordTypeId = lessonRecorType;
+                                objBooking.End_time__c = enrolmentObj.Lesson_Start_time__c;
+                                if(objBooking.End_time__c != NULL){
+                                    objBooking.start_time__c = objBooking.End_time__c.addMinutes(-30);
+                                }
+                                objBooking.Enrolment__c = enrolmentObj.Id; 
+                                objBooking.type__c = ConstantsClass.typeBusy;
+                                objBooking.Status__c = ConstantsClass.statusScheduled;
+                                objBooking.Category__c = ConstantsClass.categoryTravel;
+                                objBooking.Remarks__c = 'Travel';
+                                listOfBookings.add(objBooking);
                             }
-                            objBooking.Enrolment__c = enrolmentObj.Id; 
-                            objBooking.type__c = ConstantsClass.typeBusy;
-                            objBooking.Status__c = ConstantsClass.statusScheduled;
-                            objBooking.Category__c = ConstantsClass.categoryTravel;
-                            objBooking.Remarks__c = 'Travel';
-                            listOfBookings.add(objBooking);
                         }
                     }
                 }
-                
             }
             if(listOfBookings.size() > 0){
                 insert listOfBookings;
@@ -852,6 +956,23 @@ D. Change of Enrolment
                 insert fifthLessons;
             }
         }
+    }
+    // nishi: 6-Oct-2020: for get all enrolment ids if 13 month booking exist
+    public static set<string> getexisting13MonthBookingEnrolmentIds(map<string,Enrolment__c> enrolmentmap,Date firstDate,Date lastDate){
+        Set<string> existing13MonthBookingEnrolmentIds = new Set<string>();
+        Set<string> bookingTypes = new Set<string>{ConstantsClass.groupLessonTypeBooking,ConstantsClass.typeRegular};
+        for(Booking__c objBook : [SELECT Id, Start_Time__c, Group_Class__c,end_time__c, Booking_Date__c, Teacher_Account__c, Student__r.Name, Enrolment__c, Enrolment__r.new_package_Id__c, 
+                                    Enrolment__r.new_package_Id__r.Duration__c, Enrolment__r.Next_Lesson_Start_time__c, Center__c, Enrolment__r.Parent__c, Enrolment__r.Lesson_Day__c, 
+                                    Enrolment__r.New_Teacher__c,Enrolment__r.new_Lesson_Day__c, Enrolment__r.Lesson_Start_time__c,package__c, package__r.Duration__c, Is_Fifth_Booking__c ,
+                                    Class__c
+                                    FROM Booking__c 
+                                    WHERE type__c in: bookingTypes
+                                    AND Booking_Date__c >=: firstDate
+                                    AND Booking_Date__c <=: lastDate
+                                    And Enrolment__c In:enrolmentmap.keySet()]){
+                                        existing13MonthBookingEnrolmentIds.add(objBook.Enrolment__c);                          
+        }
+        return existing13MonthBookingEnrolmentIds;
     }
     /*
     * 
@@ -898,38 +1019,78 @@ D. Change of Enrolment
     
     //Send Email Notification To Parent
     Public static void makeupCreationNotification(List<Enrolment__c> makeupsCreated, List<Enrolment__c> makeupsNotCreated){
-
-        EmailTemplate templateForMakeupCreation = new EmailTemplate();
-        EmailTemplate templateForMakeupCreationFailed = new EmailTemplate();
+        map<string,EmailTemplate> templatemap= new map<string,EmailTemplate>();
         Messaging.SingleEmailMessage mailNotification = new Messaging.SingleEmailMessage();
         List<Messaging.SingleEmailMessage> emailList = new List<Messaging.SingleEmailMessage>();
         Map<String,OrgWideEmailAddress> mapOfOrgWide = new Map<String,OrgWideEmailAddress>(); 
-        for(EmailTemplate templateObj : [SELECT Id, Developername FROM EmailTemplate WHERE Developername ='Makeup_Booking_Creation_Notification' OR Developername ='Makeup_Booking_Creation_Fails_Notification']){
+        //added by nishi: 12-Oct-2020:start: for send email according to organisation
+        for(EmailTemplate templateObj : [SELECT Id, Developername FROM EmailTemplate 
+        WHERE Developername ='Makeup_Booking_Creation_Notification' 
+        OR Developername ='Makeup_Booking_Creation_Fails_Notification'
+        Or Developername ='Ossia_Makeup_Booking_Creation_Notification' 
+        OR Developername ='Ossia_Makeup_Booking_Creation_Fails_Notification'
+        ]){
+            templatemap.put(templateObj.Developername,templateObj);
+        }
+        /**  commneted  by nishi: 12-Oct-2020:end: for send email according to organisation
+         * EmailTemplate templateForMakeupCreation = new EmailTemplate();
+            EmailTemplate templateForMakeupCreationFailed = new EmailTemplate();
+         *  for(EmailTemplate templateObj : [SELECT Id, Developername FROM EmailTemplate WHERE Developername ='Makeup_Booking_Creation_Notification' OR Developername ='Makeup_Booking_Creation_Fails_Notification']){
             if(templateObj.Developername == 'Makeup_Booking_Creation_Notification'){
                 templateForMakeupCreation = templateObj;
             }else if(templateObj.Developername == 'Makeup_Booking_Creation_Fails_Notification'){
                 templateForMakeupCreationFailed = templateObj;
             }
         }
+         */
+        //added by nishi: 12-Oct-2020:end: for send email according to organisation
         
         for(OrgWideEmailAddress objAddress : [SELECT Address, DisplayName, Id FROM OrgWideEmailAddress]){
             mapOfOrgWide.put(objAddress.DisplayName,objAddress);
         }
-        if(String.isNotBlank(templateForMakeupCreation.id)){
+        // if(String.isNotBlank(templateForMakeupCreation.id)){
+        if(templatemap != null && templatemap.size()>0){    
             for(Enrolment__c makeupCreated : makeupsCreated){
                 String location = makeupCreated.Center__r.Location__c;
                 mailNotification = new Messaging.SingleEmailMessage();
-                mailNotification = getSingleEmailMessage(templateForMakeupCreation.id, makeupCreated.Parent__r.personContactId, makeupCreated.Id, location);
-                emailList.add(mailNotification);
+                //added by nishi: 12-Oct-2020:start: for send email according to organisation
+                if(String.isNotBlank(makeupCreated.Center__c) && String.isNotBlank(makeupCreated.Center__r.Organisation__c) && 
+                String.isNotBlank(makeupCreated.Center__r.Organisation__r.Name) && makeupCreated.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                    if(templatemap.containsKey('Ossia_Makeup_Booking_Creation_Notification')){
+                        mailNotification = getSingleEmailMessage(templatemap.get('Ossia_Makeup_Booking_Creation_Notification').id, makeupCreated.Parent__r.personContactId, makeupCreated.Id, location);
+                        emailList.add(mailNotification);
+                    }
+                }else{
+                    if(templatemap.containsKey('Makeup_Booking_Creation_Notification')){
+                        mailNotification = getSingleEmailMessage(templatemap.get('Makeup_Booking_Creation_Notification').id, makeupCreated.Parent__r.personContactId, makeupCreated.Id, location);
+                        emailList.add(mailNotification);
+                    }
+                }
+                //ailNotification = getSingleEmailMessage(templateForMakeupCreation.id, makeupCreated.Parent__r.personContactId, makeupCreated.Id, location);
+                 //added by nishi: 12-Oct-2020:end: for send email according to organisation
+                
             }
-        }
+        //}
         
-        if(String.isNotBlank(templateForMakeupCreationFailed.id)){
+        //if(String.isNotBlank(templateForMakeupCreationFailed.id)){
             for(Enrolment__c makeupnotCreated : makeupsNotCreated){
                 String location = makeupnotCreated.Center__r.Location__c;
                 mailNotification = new Messaging.SingleEmailMessage();
-                mailNotification = getSingleEmailMessage(templateForMakeupCreationFailed.id, makeupnotCreated.Parent__r.personContactId, makeupnotCreated.Id, location);
-                emailList.add(mailNotification);
+                //added by nishi: 12-Oct-2020:start: for send email according to organisation
+                if(String.isNotBlank(makeupnotCreated.Center__c) && String.isNotBlank(makeupnotCreated.Center__r.Organisation__c) && 
+                String.isNotBlank(makeupnotCreated.Center__r.Organisation__r.Name) && makeupnotCreated.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                    if(templatemap.containsKey('Ossia_Makeup_Booking_Creation_Fails_Notification')){
+                        mailNotification = getSingleEmailMessage(templatemap.get('Ossia_Makeup_Booking_Creation_Fails_Notification').id, makeupnotCreated.Parent__r.personContactId, makeupnotCreated.Id, location);
+                        emailList.add(mailNotification);
+                    }
+                }else{
+                    if(templatemap.containsKey('Makeup_Booking_Creation_Fails_Notification')){
+                        mailNotification = getSingleEmailMessage(templatemap.get('Makeup_Booking_Creation_Fails_Notification').id, makeupnotCreated.Parent__r.personContactId, makeupnotCreated.Id, location);
+                        emailList.add(mailNotification);
+                    }
+                }
+                //added by nishi: 12-Oct-2020:end: for send email according to organisation
+               
             }
         }
         if(emailList.size() > 0){
@@ -1023,8 +1184,10 @@ D. Change of Enrolment
 
             //Start: added by nishi: 3-Sep-2020: for check teacher type is part-time then we not creating bookings
             isCreateFifthlessonBooking = true;
-            if(string.isNotBlank(fifthLessons.Enrolment__c) && string.isNotBlank(fifthLessons.Enrolment__r.Teacher__c) && mapOfteacherType != null && mapOfteacherType.size() > 0){
-                if(mapOfteacherType.containsKey(fifthLessons.Enrolment__r.Teacher__c) && mapOfteacherType.get(fifthLessons.Enrolment__r.Teacher__c).equalsIgnoreCase('Part-Time')){
+            if(string.isNotBlank(fifthLessons.Enrolment__c) && string.isNotBlank(fifthLessons.Enrolment__r.Teacher__c) && mapOfteacherType != null && mapOfteacherType.size() > 0
+            && ossiaEnrolmentIds != null && ossiaEnrolmentIds.size() > 0 && ossiaEnrolmentIds.contains(fifthLessons.Enrolment__c)){
+                if(mapOfteacherType.containsKey(fifthLessons.Enrolment__r.Teacher__c) &&
+                ConstantsClass.teacherPartTimeEngagementStatus.contains(mapOfteacherType.get(fifthLessons.Enrolment__r.Teacher__c))){
                     isCreateFifthlessonBooking = false;
                 }
             }
@@ -1472,8 +1635,8 @@ D. Change of Enrolment
         
         Map<String,Id> templateMap = new Map<String,Id>();
         for(EmailTemplate et: [Select Id,Name,DeveloperName from EmailTemplate where (DeveloperName  = 'Ossia_Teacher_Leave_Enrolment' OR 
-                                                                                      DeveloperName  = 'Ossia_Holiday_Enrolment_Open' OR 
-                                                                                      DeveloperName  = 'Ossia_Holiday_Enrolment_Closed')]){
+                                                                                      DeveloperName  = 'Holiday_Enrolment_Open_Ossia' OR 
+                                                                                      DeveloperName  = 'Holiday_Enrolment_Closed_Ossia')]){
                                                                                           templateMap.put(et.DeveloperName, et.Id);
                                                                                       }
         
@@ -1484,13 +1647,13 @@ D. Change of Enrolment
                             FROM Case WHERE Id IN:caseIds]){
                                 
                                 String templateId;
-                                if(CasObject.Booking__r.Cancellation_Reason__c.equalsIgnoreCase('Teacher Mc') && templateMap.containsKey('Teacher_Leave_Enrolment')){
-                                    templateId = templateMap.get('Teacher_Leave_Enrolment');
+                                if(CasObject.Booking__r.Cancellation_Reason__c.equalsIgnoreCase('Teacher Mc') && templateMap.containsKey('Ossia_Teacher_Leave_Enrolment')){
+                                    templateId = templateMap.get('Ossia_Teacher_Leave_Enrolment');
                                 }else if(CasObject.Booking__r.Cancellation_Reason__c.equalsIgnoreCase('Holidays') && String.isNotBlank(CasObject.Booking__r.Public_Holiday_Status__c)){
-                                    if(CasObject.Booking__r.Public_Holiday_Status__c.equalsIgnoreCase('Open') && templateMap.containsKey('Holiday_Enrolment_Open'))
-                                        templateId = templateMap.get('Holiday_Enrolment_Open');
-                                    else if(CasObject.Booking__r.Public_Holiday_Status__c.equalsIgnoreCase('Closed') && templateMap.containsKey('Holiday_Enrolment_Closed'))
-                                        templateId = templateMap.get('Holiday_Enrolment_Closed');
+                                    if(CasObject.Booking__r.Public_Holiday_Status__c.equalsIgnoreCase('Open') && templateMap.containsKey('Holiday_Enrolment_Open_Ossia'))
+                                        templateId = templateMap.get('Holiday_Enrolment_Open_Ossia');
+                                    else if(CasObject.Booking__r.Public_Holiday_Status__c.equalsIgnoreCase('Closed') && templateMap.containsKey('Holiday_Enrolment_Closed_Ossia'))
+                                        templateId = templateMap.get('Holiday_Enrolment_Closed_Ossia');
                                 }
                                 
                                 if(String.isNotBlank(templateId) && String.isNotBlank(CasObject.Booking__r.Parent__r.PersonEmail)){

@@ -30,9 +30,22 @@ public class RegularInvoiceHandlerTest {
         country.Stripe_Publishable_Key__c = 'ABC';
         country.Stripe_Secret_Key__c = 'deede'; 
         insert country;
-        
+         //added by nishi: 25-Sep-2020:create organisation
+        Organisation__c organisationRecord = new Organisation__c();
+        organisationRecord.Name = 'Aureus Academy Singapore';
+        organisationRecord.Bank_Account_Number__c = '1123456789';
+        organisationRecord.Branch_Code__c = 'test';
+        organisationRecord.Country__c = country.id;
+        organisationRecord.Stripe_Base_Url__c = 'www.test.com';
+        organisationRecord.Stripe_Publishable_Key__c = 'ABC';
+        organisationRecord.Stripe_Secret_Key__c = 'test_key';
+        organisationRecord.Sage_Company__c = 'AGP';
+        Insert organisationRecord;  
         Account objCentr = TestUtil.createAccount('Centre',TRUE,FALSE);
         objCentr.Country__c = country.Id;
+          //added by nishi: 25-Sep-2020:added organisation
+        objCentr.Organisation__c = organisationRecord.id;
+        objCentr.Organisation_Sharing__c ='Aureus Academy Singapore';
         INSERT objCentr;
         
         Account objTeachr = TestUtil.createAccount('Teacher',TRUE,TRUE);

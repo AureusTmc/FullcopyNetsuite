@@ -5,10 +5,6 @@
    
     <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/fullCalenderCustom.js')}"/>
     
-    
-    
-    
-    
     <apex:stylesheet value="{!URLFOR($Resource.FullCalender, '/fullcalendar.min.css')}"/>
     
     <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
@@ -25,12 +21,11 @@
     <apex:includeScript value="{!$Resource.datepicker}"/>
     <apex:slds />
      <!-- Added by Nishi:start: 17-Jul-2020: for manage Ossian Organization students -->
-     <c:OssianCalendarCMP />
+     <c:OssiaCenterCalendarCMP />
      <!-- Added by Nishi:end: 17-Jul-2020: for manage Ossian Organization students -->
     
     <c:ClassEditCMP />
-    <!--Commented by Jatin: 11_mar-2020: for Depolyment
-        " <c:PianoRentalEditCalendarCMP />-->
+     <c:PianoRentalEditCalendarCMP />
     <c:FifthLessonCMP />
     <c:aureusCalendarCMP />
         <script>

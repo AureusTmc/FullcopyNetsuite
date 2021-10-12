@@ -13,7 +13,7 @@ global class SendInvoiceInMailBatch implements Database.Batchable<Invoice__c>{
     global List<Invoice__c> start(Database.BatchableContext context){
         String query;
         if(invoiceIds != null && !invoiceIds.isEmpty()){
-            query = 'SELECT Id, Center__r.Location__c, Parent_Account__r.PersonEmail, Parent_Account__r.PersonContactId, Email_Sent__c FROM Invoice__c WHERE Id IN : invoiceIds AND Email_Sent__c = FALSE AND Parent_Account__r.Want_Invoice_As_Email__c = TRUE';
+            query = 'SELECT Id, Center__r.Location__c, Parent_Account__r.PersonEmail, Parent_Account__r.PersonContactId, Email_Sent__c,Center__r.Organisation__r.Name FROM Invoice__c WHERE Id IN : invoiceIds AND Email_Sent__c = FALSE AND Parent_Account__r.Want_Invoice_As_Email__c = TRUE';
         }
         return Database.query(query);
     }
@@ -22,10 +22,18 @@ global class SendInvoiceInMailBatch implements Database.Batchable<Invoice__c>{
         
         List<Messaging.SingleEmailMessage> mailsToSendList = new List<Messaging.SingleEmailMessage>();
         String templateId = AureusUtility.getEmailTemplateId('Invoice_Receipt');
-        if(String.isNotBlank(templateId)){
+        String ossiaTemplateId = AureusUtility.getEmailTemplateId('Ossia_Invoice_Receipt');
+        if(String.isNotBlank(templateId) && String.isNotBlank(ossiaTemplateId)){
             for(Invoice__c invoiceObj: listOfInvoices){
                 if(String.isNotBlank(invoiceObj.Parent_Account__r.PersonContactId) && String.isNotBlank(invoiceObj.Center__r.Location__c)){
-                    Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(templateId,invoiceObj.Parent_Account__r.PersonContactId,invoiceObj.Id,invoiceObj.Center__r.Location__c);
+                    Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+                    //nishi:12-Oct-2020: for sending a email according to organisation
+                    if(string.isNotBlank(invoiceObj.Center__r.Organisation__r.Name) && invoiceObj.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                        mail = AureusUtility.getSingleEmailMessage(ossiaTemplateId,invoiceObj.Parent_Account__r.PersonContactId,invoiceObj.Id,invoiceObj.Center__r.Location__c);
+                    }else{
+                        mail = AureusUtility.getSingleEmailMessage(templateId,invoiceObj.Parent_Account__r.PersonContactId,invoiceObj.Id,invoiceObj.Center__r.Location__c);
+                    }
+                    //nishi:12-Oct-2020: for sending a email according to organisation
                     Messaging.EmailFileAttachment efa = new Messaging.EmailFileAttachment();
                     efa.setFileName('Invoice.pdf');
                     efa.setBody(AureusUtility.getInvoicePDF(invoiceObj.Id));

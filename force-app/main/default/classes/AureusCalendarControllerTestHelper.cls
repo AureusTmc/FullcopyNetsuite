@@ -10,14 +10,31 @@ public class AureusCalendarControllerTestHelper {
         objSetting.Name = 'setting';
         objSetting.Enable_Notifications__c = false;
         insert objSetting;
-         
+        
         //Create Country Records
         Country__c objCountry = createCountryRecord ('Singapore','SGD',true);
+        
+        //updated by @nishi 17 sep 2020
+      	Organisation__c organisationRecord = new Organisation__c();
+        organisationRecord.Name = 'Aureus Academy Singapore';
+        organisationRecord.Bank_Account_Number__c = '1123456789';
+        organisationRecord.Branch_Code__c = 'test';
+        organisationRecord.Country__c = objCountry.id;
+        organisationRecord.Stripe_Base_Url__c = 'www.test.com';
+        organisationRecord.Stripe_Publishable_Key__c = 'ABC';
+        organisationRecord.Stripe_Secret_Key__c = 'test_key';
+        organisationRecord.Sage_Company__c = 'AGP';
+        Insert organisationRecord;  
        
         // Create 2 Centre  
         List<Account> ListCentre = new List<Account>();
         ListCentre.add(createCentre('Aureus Northpoint', objCountry.Id,FALSE));
         ListCentre.add(createCentre('Aureus AMK Hub', objCountry.Id,FALSE));
+         //updated by @nishi 17 sep 2020
+        ListCentre[0].Organisation__c = organisationRecord.id;
+        ListCentre[0].Organisation_Sharing__c ='Aureus Academy Singapore';
+        ListCentre[1].Organisation__c = organisationRecord.id;
+        ListCentre[1].Organisation_Sharing__c ='Aureus Academy Singapore';
         Insert ListCentre; 
         
         //create  Centre_Users__c
@@ -66,6 +83,14 @@ public class AureusCalendarControllerTestHelper {
         listOfPackage.Add(createPackage(objProg.id,ListCentre[1].id,'60','Trial',False));
         listOfPackage.Add(createPackage(objProg.id,ListCentre[1].id,'15',ConstantsClass.pakageTypeMakeup,False));
         listOfPackage.Add(createPackage(objProg.id,ListCentre[0].id,'30',ConstantsClass.pakageTypeMakeup,False));
+         listOfPackage[0].Package_Fee__c = 100;
+        listOfPackage[0].Deposit_Fee__c = 100;
+        listOfPackage[1].Package_Fee__c = 200;
+        listOfPackage[2].Package_Fee__c = 300;
+        listOfPackage[3].Package_Fee__c = 400;
+        listOfPackage[1].Deposit_Fee__c = 200;
+        listOfPackage[2].Deposit_Fee__c = 300;
+        listOfPackage[3].Deposit_Fee__c = 400;
         insert listOfPackage;
         
         DateTime dt = DateTime.newInstance(date.today(), Time.newInstance(0,0,0,0));
@@ -158,12 +183,14 @@ public class AureusCalendarControllerTestHelper {
         listOfGroupPackage.Add(createPackage(objProg.id,ListCentre[0].id,'15',ConstantsClass.packageTypeGroup,False));
         listOfGroupPackage.Add(createPackage(objProg.id,ListCentre[1].id,'45',ConstantsClass.packageTypeGroup,False)); 
         listOfGroupPackage.Add(createPackage(objProg.id,ListCentre[1].id,'60',ConstantsClass.packageTypeGroup,False));
+       
         insert listOfGroupPackage;
         
         List<Class__c > GroupClassList = new List<Class__C>();
-         GroupClassList.add(createGroupClass('test Group Class',listOfPackage[0].id,ListCentre[0].Id,objProg.id,date.today(),date.today().addYears(1),Time.newInstance(11,0,0,0),Time.newInstance(11,30,0,0),ListOfTeacherAccount[0].Id,true));
-         GroupClassList.add(createGroupClass('test Group Class',listOfPackage[2].id,ListCentre[1].Id,objProg.id,date.today(),date.today().addYears(1),Time.newInstance(12,0,0,0),Time.newInstance(12,45,0,0),ListOfTeacherAccount[1].Id,true));
-         
+         GroupClassList.add(createGroupClass('test Group Class',listOfPackage[0].id,ListCentre[0].Id,objProg.id,date.today(),date.today().addYears(1),Time.newInstance(11,0,0,0),Time.newInstance(11,30,0,0),ListOfTeacherAccount[0].Id,false));
+         GroupClassList.add(createGroupClass('test Group Class',listOfPackage[2].id,ListCentre[1].Id,objProg.id,date.today(),date.today().addYears(1),Time.newInstance(12,0,0,0),Time.newInstance(12,45,0,0),ListOfTeacherAccount[1].Id,false));
+         insert GroupClassList;
+        
          List<Enrolment__c> listOfGroupEnrolment = new List<Enrolment__c>();
          listOfGroupEnrolment.Add(createEnrolment(ListCentre[0].Id,ListOfTeacherAccount[0].Id,listOfCustomerAccount[0].Id,listOfGroupPackage[0].id,dt.format('EEEE'),'Enrolled',ConstantsClass.enrolGroupType,false));
          listOfGroupEnrolment[0].Class__C = GroupClassList[0].id;
@@ -352,6 +379,7 @@ public class AureusCalendarControllerTestHelper {
         objSLI.Enrolment__c = ENrolId;
         objSLI.Next_Bill_Date__c= nextBillDate;
         
+        objSLI.Status__c='Active';
         if(isDml)
             insert objSLI;
         return objSLI;    
@@ -384,6 +412,8 @@ public class AureusCalendarControllerTestHelper {
         objCentreAcc.Location__c=centreName;
         objCentreAcc.Center_Email__c='rajesh@techmatrixconsulting.com';
         objCentreAcc.Country__c = countryId;
+        // update @nishi jain 17 09 2020
+        objCentreAcc.Organisation_Sharing__c ='Aureus Academy Singapore';
         objCentreAcc.Centre_Status__c = ConstantsClass.activeStatus;
         // set values here
         if(isDml){
@@ -427,6 +457,9 @@ public class AureusCalendarControllerTestHelper {
         objBook.Available_Make_up_Units__c = 0;
         objBook.center__c = (centerId != null ? centerId : null);
         objBook.Package__c = (packageId  != null ? packageId : null);
+        objBook.Organisation_Sharing__c ='Aureus Academy Singapore';
+        objBook.Country_Sharing__c ='Singapore';
+        
         if(isDml){
             insert objBook;
         }

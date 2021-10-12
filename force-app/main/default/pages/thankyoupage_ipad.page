@@ -21,7 +21,7 @@
                     </div>
                     <apex:form styleclass="slds-col">
                         <apex:actionFunction name="redirectToAdminHome"  action="/apex/adminhome" />
-                        
+                        <apex:actionFunction name="redirectToPianoRental"  action="{!redirectToPianoRental}" />
                         <!-------  Fourth block  Start ------------------->
                         <div class="fourthCmpcls" id="fourthCmpId"> 
                             <!--<div class="slds-col "><span class="main-title">THANK YOU</span></div>-->
@@ -32,18 +32,20 @@
                                             <img src="{!$Resource.thankyou}" style="text-align:center;margin-top: 40px;margin-bottom: 0;"/>
                                         </div>
                                     </fieldset>
-                                    <apex:outputPanel rendered="{!$CurrentPage.parameters.type =='Enrolment'}">
+                                    <apex:outputPanel rendered="{!isAureusNewEnolment}">
                                         <p style="font-size: 16px; margin-top: 0; text-align:center;">Are you interested in renting a Piano?</p>
                                         <div class="slds-form-element__control slds-grid slds-wrap slds-align_absolute-center">
-                                            <button class="slds-button custom-btn" style="float:none;" type="submit">Yes</button>
-                                            <button class="slds-button custom-btn" style="float:none;" type="submit">No</button>
+                                            <button class="slds-button custom-btn" style="float:none;" type="submit" onclick="redirectToPianoRental(); return false;">Yes</button>
+                                            <button class="slds-button custom-btn" style="float:none;" type="submit" onclick="redirectToAdminHome();">No</button>
                                         </div>
                                     </apex:outputPanel>
                                     <h2 style="text-align: center;font-size: 14px;margin-bottom: 15px;line-height: normal; margin-top: 20px;">You will receive an email notification for further steps.</h2>
                                 </div>
                             </div>
                         </div>
-                        <center><a href="#" onclick="redirectToAdminHome();" class="slds-button {!IF(isOssia,'custom-btn_Ossia','custom-btn')}" style="float:none;">Click here to go back Home</a></center>
+                        <apex:outputPanel rendered="{!!isAureusNewEnolment}">
+                            <center><a href="#" onclick="redirectToAdminHome();" class="slds-button {!IF(isOssia,'custom-btn_Ossia','custom-btn')}" style="float:none;">Click here to go back Home</a></center>
+                        </apex:outputPanel>
                         <!-------  Fourth block  End ------------------->
                     </apex:form>
                 </div>

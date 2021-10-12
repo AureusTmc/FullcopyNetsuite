@@ -416,7 +416,7 @@
                 <apex:param name="slcdInd" value="" assignTo="{!selectedIndex}"/> 
                 <apex:param name="slcdSlot" value="" assignTo="{!slcdSlot}"/> 
             </apex:actionFunction>      
-            <apex:actionFunction name="savePrc" action="{!saveAndNextProcess}" reRender="frm" status="spinner"/>
+            <apex:actionFunction name="savePrc" action="{!saveAndNextProcess}" oncomplete="checksaveAndNextProcessError();return false;" status="spinner" />
             <apex:actionFunction name="sendMailToCstmr" action="{!sendEmail}" oncomplete="checkError();return false;"  reRender="frm" status="spinner"/>
             <apex:actionFunction name="saveStudentAndSend" action="{!saveStudentAndSendEmail}" oncomplete="checkError();return false;"  reRender="frm" status="spinner"/>
             
@@ -764,7 +764,7 @@
                                     $('.contentErrorDiv').html(errorMsg);
                                 }
                             }
-                            
+                          
                             function showHideSections(count, currentEle){
                                 /*$('.cmpErrDiv').addClass('slds-hide');
                                         
@@ -918,10 +918,24 @@
                 */
               showSlcdEnr(count);
           }
+       
             
             
             
             </script>
-        </apex:form>       
+        </apex:form>    
+        <script>
+            /*// 14-Sep-2020:nishi: If a user added two enrolment and both enrolment types were grouped then we allowed the user to select the same teacher, time slot
+                  // otherwise the enrolment type is individual then we showed an error message*/
+            function checksaveAndNextProcessError(){
+                console.log('{!errorMsg}');
+                var errorMsg = 'Error: You can\'t book the same Teacher for \'the Same Time\'.';
+                console.log('checksaveAndNextProcessError errorMsg',errorMsg);
+                if(errorMsg != '' && errorMsg != null && errorMsg != undefined){
+                    $('.cmpErrDiv').removeClass('slds-hide');
+                    $('.contentErrorDiv').html(errorMsg);
+                }
+            }
+            </script>   
     </body>
 </apex:page>

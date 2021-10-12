@@ -10,7 +10,7 @@ public class WebServiceModelHelper{
     }
     
     public class instrument{
-        public String teachername;
+    public String teachername;
         public String teacherId; 
         public instrument(){
             teachername = null;
@@ -172,8 +172,10 @@ url = null;
     }
     public class BookingResult{
         Public List<Bookings> bookings;
+        Public List<Bookings> complimentaries; //Added by nishi : 11-10-2021
         public BookingResult(){
             bookings= new List<Bookings>();
+            complimentaries = new List<Bookings>(); //Added by nishi : 11-10-2021
         }
     }
     public class Cases {
@@ -305,6 +307,8 @@ url = null;
         public String lessonTypeNew;
         public String lessonPasscode;
         public String lessonOnlineURL;
+        //public String availableComplimentryMin; //Added By : Nishi : 04-10-2021 : To get complimentry minutes
+        //public Boolean isComplimentry; //Added By : Nishi : 04-10-2021 : To get complimentry minutes
         public Bookings(){
             bookingId = null;
             studentName = null;
@@ -333,6 +337,8 @@ url = null;
             lessonTypeNew = null;
             lessonPasscode = null;
             lessonOnlineURL = null;
+            //availableComplimentryMin = null; //Added By : Nishi : 04-10-2021 : To get complimentry minutes
+            //isComplimentry = false;
         }
         
     }
@@ -347,6 +353,7 @@ url = null;
         public Date invoiceDate;
         public Date dueDate;
         public Decimal balanceAmount;
+        public Decimal creditMemoAmount;
         public String status ;
         public Decimal grossTotal;
         public Decimal subTotal; 
@@ -379,6 +386,7 @@ url = null;
             invoiceNumber= null;
             cardNumber= null;
             cardType= null;
+            creditMemoAmount = null;
             payments= new List<payment>();
         }
         
@@ -695,6 +703,7 @@ url = null;
         public String bookingdate{get;set;}
         public String startTime{get;set;}
         public string bookingId{get;set;}
+        public String lessonTypeNew{get; set;}
         public MakeAppointmentForPortalModalClass(){
             teacherId = null;
             studentId = null;
@@ -706,6 +715,7 @@ url = null;
             duration = null;
             packageId = null;
             enrolmentId = null;
+            lessonTypeNew = null;
         }
     } 
     //for Mobile Notification Api
@@ -714,11 +724,21 @@ url = null;
         public String title{get;set;}
         public String bodymsg{get;set;}
         public dateTime createdDate{get;set;}
-        public Notification(String notificationId,String title,String bodymsg,dateTime createdDate){
+        public boolean isRead{get;set;}// added by ravi on 16 sept 2020 as per discussion with nitin to send is read parameter 
+        //changed spelling of Impotant to Important by Nitin on 23 Sept
+        public boolean isImportant{get;set;}// added by ravi on 21 sept 2020 as per discussion with nitin to send is important parameter
+        public String button_url{get;set;}//added by Nitin on 23 Sep
+        public String image_url{get;set;}//added by Nitin on 23 Sep 
+        public Notification(String notificationId,String title,String bodymsg,dateTime createdDate,boolean isRead,boolean isImportant, String image_url, String button_url){
             this.notificationId= notificationId;
             this.title = title;
             this.bodymsg = bodymsg;
             this.createdDate = createdDate;
+            this.isRead=isRead;// added by ravi on 16 sept 2020 as per discussion with nitin to send is read parameter
+            this.isImportant=isImportant;// added by ravi on 21 sept 2020 as per discussion with nitin to send is important parameter
+            this.button_url = button_url; //added by Nitin on 23 sept
+            this.image_url= image_url; //added by Nitin on 23 sept
+            
         }
     }
     //for Mobile Notification Api List
@@ -796,6 +816,16 @@ public class StripeCustomer{
         public mobileAppError (){
             errorCode= null;  
             message= null; 
+        }
+    }
+    //Added by Nitin
+    public class teacherLogin{
+        public String teacherName;
+        public List<Booking__c> teacherBookings;
+        
+        public teacherLogin(String teacherName, List<Booking__c> teacherBookings){
+            this.teacherName = teacherName;
+            this.teacherBookings = teacherBookings;
         }
     }
 }

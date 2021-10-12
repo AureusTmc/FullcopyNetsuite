@@ -1,0 +1,92 @@
+<apex:component controller="WaitingEnrolmentListCtrl" allowDML="True" access="global">
+    <!-- <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/jquery.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/moment.min.js')}" /> -->
+    <apex:slds />
+    <apex:attribute name="centerId" description="" type="String" assignTo="{!relatedCenterId}" />
+    <apex:attribute name="isPage" description="" type="Boolean" default="false" />
+    <apex:outputPanel rendered="{!isPage}">
+        <div class="slds-p-around_medium" style="{!iF(isOssiaOrg,'font-size:15px; background-color: #ed1c24; text-align:center; color:#fff; font-weight:bold;','font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;')}">{!IF(isOssiaOrg,'Ossia Preferred Enrolment List','Aureus Academy  Preferred Enrolment List')}
+        </div>
+        <p style="text-align:center;">
+            <apex:image url="{!iF(isOssiaOrg,$Resource.Osia_Logo,$Resource.Aureus_logo_png)}" />
+        </p>
+    </apex:outputPanel>
+
+    <apex:outputPanel id="availTimeslots" layout="none">
+        <div class="new-container class-true" style="padding:50px;">
+            <div class="slds-text-heading_large  slds-p-around_small slds-text-align_center" style="font-weight:bold;font-size: large;">Preferred Enrollment List  {!objCenter.name} for {!bookingDate}</div>
+            <div class="container slds-p-around_small " style="padding: 18px;">
+                <table width="100%" class="slds-table slds-table_cell-buffer slds-table_header-hidden slds-table_bordered" style=" font-family: arial, sans-serif;border:1px solid #d8c9c9;">
+                    <tbody>
+                        <tr  class="slds-line-height_reset" style="height: 45px;background-color: #dddddd;border-bottom:1px solid grey;">
+                            <th class="" scope="col" >
+                                <div class="slds-truncate" title="Time Slot">Sr. No</div>
+                            </th>
+                            <th class="" scope="col">
+                                <div class="slds-truncate" title="Enrolment Name">Enrolment Name</div>
+                            </th>
+                            <th class="" scope="col">
+                                <div class="slds-truncate" title="Parent Name<">Parent Name</div>
+                            </th>
+                            <th class="" scope="col">
+                                <div class="slds-truncate" title="Student Name<">Student Name</div>
+                            </th>
+                            <th class="" scope="col">
+                                <div class="slds-truncate" title="Enrolment Stage">Enrolment Stage</div>
+                            </th>
+                            <th class="" scope="col">
+                                <div class="slds-truncate" title="Enrolment Type">Enrolment Type</div>
+                            </th>
+                            <th class="" scope="col">
+                                <div class="slds-truncate" title="Preffered Teacher Name">Preffered Teacher Name</div>
+                            </th>
+                            <th class="" scope="col">
+                                <div class="slds-truncate" title="Preffered Start Time">Preffered Lesson Time</div>
+                            </th>
+                            <!-- <th class="" scope="col">
+                                <div class="slds-truncate" title="Preffered Lesson Day">Preffered Lesson Day</div>
+                            </th> -->
+                        </tr>
+                        <apex:variable var="index" value="{!0}" />
+                        <apex:repeat value="{!listOfPrefferdEnrolments}" var="prefferdEnrolments">
+                            <apex:variable var="index" value="{!index+ 1}" />
+                            <tr class="slds-hint-parent" style="height: 45px;border-bottom:1px solid #d8c9c9;">
+                                <td data-label="Preffered Enrolment Details">
+                                    <div class="slds-truncate" > {!index}</div>
+                                </td>
+                                <td data-label="Preffered Enrolment Details">
+                                    <div class="slds-truncate"> {!prefferdEnrolments.objEnrolment.Name}</div>
+                                </td>
+                                <td data-label="Preffered Enrolment Details">
+                                    <div class="slds-truncate"> {!prefferdEnrolments.objEnrolment.Parent__r.Name}</div>
+                                </td>
+                                <td data-label="Preffered Enrolment Details">
+                                    <div class="slds-truncate"> {!prefferdEnrolments.objEnrolment.Student__r.Name}</div>
+                                </td>
+                                <td data-label="Preffered Enrolment Details">
+                                    <div class="slds-truncate"> {!prefferdEnrolments.objEnrolment.Stage__c}</div>
+                                </td>
+                                <td data-label="Preffered Enrolment Details">
+                                    <div class="slds-truncate"> {!prefferdEnrolments.objEnrolment.type__c}</div>
+                                </td>
+                                <td data-label="Preffered Enrolment Details">
+                                    <div class="slds-truncate"> {!prefferdEnrolments.objEnrolment.Preferred_Teacher__r.Name}</div>
+                                </td>
+                                <td data-label="Preffered Enrolment Details">
+                                    <div class="slds-truncate">{!prefferdEnrolments.enrolmentStartTime} - {!prefferdEnrolments.enrolmentEndTime}</div>
+                                </td>
+                                <!-- <td data-label="Preffered Enrolment Details">
+                                    <div class="slds-truncate"> {!prefferdEnrolments.objEnrolment.Preferred_Day__c}</div>
+                                </td> -->
+                            </tr>
+                        </apex:repeat>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+    </apex:outputPanel>
+    
+   
+</apex:component>

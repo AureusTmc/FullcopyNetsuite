@@ -18,9 +18,24 @@ public class AdvanceActionsHelperTest {
         country.Stripe_Publishable_Key__c = 'ABC';
         country.Stripe_Secret_Key__c = 'deede';
         insert country;
+          //added by nishi: 25-sep-2020: create organisation
+        Organisation__c organisationRecord = new Organisation__c();
+        organisationRecord.Name = 'Aureus Academy Singapore';
+        organisationRecord.Bank_Account_Number__c = '1123456789';
+        organisationRecord.Branch_Code__c = 'test';
+        organisationRecord.Country__c = country.id;
+        organisationRecord.Stripe_Base_Url__c = 'www.test.com';
+        organisationRecord.Stripe_Publishable_Key__c = 'ABC';
+        organisationRecord.Stripe_Secret_Key__c = 'test_key';
+        organisationRecord.Sage_Company__c = 'AGP';
+        Insert organisationRecord;  
         Account objTechr=TestUtil.createAccount('Teacher',False,True);
         Account objCntr=TestUtil.createAccount('Centre',False,FALSE);
         objCntr.Country__c = country.Id;
+        //added by @nishi 25 sep 2020
+        objCntr.Organisation__c = organisationRecord.id;
+        objCntr.Organisation_Sharing__c ='Aureus Academy Singapore';
+        //added by @nishi 25 sep 2020
         INSERT objCntr;
         Account objCustmr=TestUtil.createAccount('Customer',False,False);
         objCustmr.Stripe_Customer_Id__c='ch_1AxWbTFytruJp2FXW6iuRd1X';
@@ -65,7 +80,7 @@ public class AdvanceActionsHelperTest {
         Booking__c objBook2=TestUtil.createBooking(objTechr.Id,'Lesson','Make-up',False);
         objBook2.Enrolment__c=objEnrl.Id;
         objBook2.status__c = 'Scheduled';
-        objBook2.Booking_Date__c=date.newInstance(2019, 10, 29);
+        objBook2.Booking_Date__c=Date.today().adddays(10);
         objBook2.Package__c = objMakeup2.Id;
         insert objBook2;
         
@@ -74,7 +89,7 @@ public class AdvanceActionsHelperTest {
         objBook3.Booking_Date__c=Date.today().adddays(10);
         objBook3.Package__c = objOldPack.Id;
         insert objBook3;
-        Fifth_Lesson__c  objFifthLesson = new Fifth_Lesson__c(Booking_Date__c=date.newInstance(2019, 10, 29), Center__c=objCntr.id, End_Time__c=time.newInstance(10, 0, 0, 0), Enrolment__c=objEnrl.id,
+        Fifth_Lesson__c  objFifthLesson = new Fifth_Lesson__c(Booking_Date__c=Date.today().adddays(10), Center__c=objCntr.id, End_Time__c=time.newInstance(10, 0, 0, 0), Enrolment__c=objEnrl.id,
                                                               Package__c=objOldPack.id, Start_Time__c= time.newInstance(10, 30, 0, 0), Student__c=objCustmr.id, Teacher_Account__c=objTechr.id, Remarks__c='40',
                                                               IsActive__c=FALSE ,Parent__c=objCustmr.id, Booking__c = objBook2.Id);
         insert objFifthLesson;
@@ -97,7 +112,15 @@ public class AdvanceActionsHelperTest {
         AdvanceActionsHelper.getDepositFromFile(objEnrl.Id);
         AdvanceActionsHelper.getPackageDetailsUpgradeDowngrade(objOldPack.Id, objNewPack.Id);
         AdvanceActionsHelper.processFutureBookings(objEnrl2, 'downgrade');
+        objEnrl.Effective_Date__c = system.today();
+        update objEnrl;
         Set<string> makeupSet = AdvanceActionsHelper.processFutureFifthLessons(objEnrl, 'upgrade');
+        objEnrl.Effective_Date__c = system.today();
+        objEnrl.Next_Lesson_Start_time__c = time.newInstance(10, 30, 0, 0);
+        objEnrl.new_package_Id__c = objNewPack.id;
+        objEnrl.New_Teacher__c = objTechr.id;
+        update objEnrl;
+        makeupSet = AdvanceActionsHelper.processFutureFifthLessons(objEnrl, 'downgrade');
         AdvanceActionsHelper.fetchAllBooking(new Set<String>{objBook.Id});
         AdvanceActionsHelper.getOldNewPackage(objOldPack.Id, objNewPack.Id);
         objBook2.Make_up_Utilize_Bookings__c =objBook.Id+'-45;';
@@ -106,5 +129,11 @@ public class AdvanceActionsHelperTest {
         update objBook;
         AdvanceActionsHelper.AddFifthMakeupMinutesToParent(objCntr.Id, 60, 30, Time.newInstance(10, 0, 0, 0), Time.newInstance(10, 30, 0, 0), new Set<String>{objBook2.Id});
         AdvanceActionsHelper.deleteFutureFifthLessons(objEnrl);
+        AdvanceActionsHelper.getNextBillingDateSubscription(objEnrl.id);
+        AdvanceActionsHelper.initEnroll(objEnrl);
+        objEnrl = AdvanceActionsHelper.fetchEnrolment(objEnrl.id);
+        list<booking__c> listofbooking =new list<booking__c>();
+        listofbooking.add(objBook3);
+        AdvanceActionsHelper.processFutureMakeupAndBusyBookingsForWithdrawal(objEnrl,listofbooking,new set<string>{objBook2.id});
     }
 }

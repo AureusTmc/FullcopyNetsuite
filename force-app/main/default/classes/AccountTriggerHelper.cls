@@ -5,8 +5,24 @@
   Description : This triggerHelper is used to create case when person account sync with Pardot 
  */
 public class AccountTriggerHelper {
-	
-    public static void createCaseForPIsyncAccounts(List<Account> filtrAccList){
+	//Added by Rajesh on 27th Oct 2020, For populate centre name on the bases of location as per discussion with Deepak or Ashish
+    public static void populateCentre(List<Account> filtrAccList){
+        Map<String, Id> accLocMap = new Map<String, Id>();
+        for(Account acc: filtrAccList)
+            accLocMap.put(acc.Location_PI__pc, null);
+        
+        if(accLocMap.size() > 0){
+        	for(Account acc: [SELECT Id, Name, Location__c FROM Account WHERE Location__c IN: accLocMap.keySet() AND RecordType.Name = 'Centre'])
+        		accLocMap.put(acc.Location__c, acc.Id);
+        	
+            for(Account ac: filtrAccList){
+                if(String.isNotBlank(ac.Location_PI__pc) && accLocMap.get(ac.Location_PI__pc)!=null)
+                	ac.Centre_Name__c = accLocMap.get(ac.Location_PI__pc);
+            }
+        }
+    }
+    
+    public static void createCaseForPIsyncAccounts(List<Account> filtrAccList,Boolean isCreateSalesEnquiery){//commented by nishi: 28-Apr-2021:for  we create salesenquiery or instrument rental records (List<Account> filtrAccList){
         List<Case>   caseAccList  = new List<Case>();
         List<Account> updAccList  = new List<Account>();
         Map<String, Id> accLocMap = new Map<String, Id>();
@@ -23,13 +39,16 @@ public class AccountTriggerHelper {
         if(accLocMap.size() > 0){
         	for(Account acc: [SELECT Id, Name, Location__c FROM Account WHERE Location__c IN: accLocMap.keySet() AND RecordType.Name = 'Centre'])
         		accLocMap.put(acc.Location__c, acc.Id);
-        }    
+        }   
+        //added and commented by nishi: 28-apr-2021:start: according to isCreateSalesEnquiery we create salesenquiery or instrument rental records
+        //String caseRecName =ConstantsClass.caseSalesEnqRecTypeName;
+        String caseRecName =isCreateSalesEnquiery ? ConstantsClass.caseSalesEnqRecTypeName  :ConstantsClass.InstrumentRentalEnquiryRecordType; 
+        //added and commented by nishi: 28-apr-2021:end: according to isCreateSalesEnquiery we create salesenquiery or instrument rental records
         
-        String salesRecId = Schema.SObjectType.Case.getRecordTypeInfosByName().get('Sales Enquiry').getRecordTypeId();
-        //Added by Rajesh on 30th Oct 2019, Add code as per discussion with Prashant. To solve duplicate insertion case(sales enquiry) record
+         //Added by Rajesh on 30th Oct 2019, Add code as per discussion with Prashant. To solve duplicate insertion case(sales enquiry) record
         for(Case c : [SELECT Id, Status, AccountId FROM Case 
                       WHERE AccountId IN: accCaseMap.keySet() AND Status !=: ConstantsClass.ClosedStatus AND CreatedDate = Today AND
-                      RecordType.Name =: ConstantsClass.caseSalesEnqRecTypeName AND CreatedBy.Name Like '%Aureusacademy Site Guest User%' ORDER BY CreatedDate DESC]){
+                      RecordType.Name =: caseRecName AND CreatedBy.Name Like '%Aureusacademy Site Guest User%' ORDER BY CreatedDate DESC]){
             if(accCaseMap.get(c.AccountId) == null)
                 accCaseMap.put(c.AccountId, c);          
         }
@@ -47,9 +66,14 @@ public class AccountTriggerHelper {
                 cs.UTM_Term__c      = ac.UTM_Term__pc;       
                 cs.Pardot_Source__c = ac.Pardot_Source__pc;
                 cs.UTM_Adgroup__c	= ac.UTM_Adgroup__pc;
+                cs.Organisation_Name__c= ac.Organisation_Name__pc; //Added by Nishi on 3th Dec 2020. As per discussion with Rajesh  Organisation Name mapping from Contact to Case on Person Account creation from Pardot
                 caseUpdateList.add(cs);
             }else{
-                Case cs 	= fillCase(salesRecId, ac);
+                Case cs 	= fillCase(caseRecName, ac);
+                //added  by nishi: 28-apr-2021:start according to isCreateSalesEnquiery we added stage and type values for instrument rental records
+                cs.stage__c = isCreateSalesEnquiery ? ''  :'Piano Rental Enquiry';
+                cs.Type = isCreateSalesEnquiery ? ''  :'Instrument Rental Enquiry';
+               //added  by nishi: 28-apr-2021:end according to isCreateSalesEnquiery we added stage and type values for instrument rental records
             	if(String.isNotBlank(ac.Location_PI__pc) && accLocMap.containsKey(ac.Location_PI__pc))
                 	cs.Centre_Name__c = accLocMap.get(ac.Location_PI__pc);
             
@@ -70,10 +94,12 @@ public class AccountTriggerHelper {
             update updAccList;
     }
     
-    public static Case fillCase(String recId, Account ac){
-        Case cas = new Case(RecordTypeId = recId);
+    public static Case fillCase(String caseRecName, Account ac){
+        String caseRecId = Schema.SObjectType.Case.getRecordTypeInfosByName().get(caseRecName).getRecordTypeId();
+     
+        Case cas = new Case(RecordTypeId = caseRecId);
         cas.AccountId 	 = ac.Id;
-        cas.Subject		  = 'Sales Enquiry';
+        cas.Subject		  = caseRecName;//commented by nishi: 28-Apr-2021: As per discussion with rajesh we add subject according to record type 'Sales Enquiry';
         cas.Origin  	  = 'Web';
         cas.Status  	  = 'New';
         cas.Priority	  = 'High';
@@ -91,6 +117,8 @@ public class AccountTriggerHelper {
          //Added by Rajesh on 20th July 2020. As per discussion with Prashant and Gandi
         cas.Pardot_Source__c = ac.Pardot_Source__pc;
         cas.UTM_Adgroup__c= ac.UTM_Adgroup__pc;
+        cas.Organisation_Name__c= ac.Organisation_Name__pc; //Added by Nishi on 3th Dec 2020. As per discussion with Rajesh  Organisation Name mapping from Contact to Case on Person Account creation from Pardot
+      
         return cas;
     }
     //@Juneid 12 Aug 2020, Updating Contacts with referal code

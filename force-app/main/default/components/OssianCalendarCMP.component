@@ -1,6 +1,10 @@
 <apex:component controller="OssiaCenterCalendarController" allowDML="true">
     <script>  
+<<<<<<< HEAD
+        //nishi
+=======
         //nishi jain
+>>>>>>> 387fe3c8ce74d764ea87c32d1e206c069f372149
         function showGroupClassGradepackages(centreId,teacherId,grade,duration){
             $('#newOssiaClassBookingDetailsHeader').html('Select Grade Packages');
             $('#newGroupClassModal').addClass('slds-hide');
@@ -41,7 +45,7 @@
                 '{!$RemoteAction.OssiaCenterCalendarController.getOssiaGroupClassPackages}',
                 centreId,teacherId,grade,duration,
                 function (result, event) {
-                    console.log('result', result);
+                   //console.log('result', result);
                     var ossiaGroupPackage  = result;
                     if (ossiaGroupPackage && ossiaGroupPackage != null && ossiaGroupPackage != undefined && ossiaGroupPackage.length > 0) {
                         $(grade).each(function (gradeindex, gradevalue) {
@@ -84,6 +88,7 @@
             var centreId = $('#saveNewClass').attr('data-centre');
             var teacherId = $('#saveNewClass').attr('data-teacher');
             var dateTime = moment($('#saveNewClass').attr('data-date'));
+            var classEndDate = moment($('#saveNewClass').attr('data-date'));
             var classType = $('#ClassTypeSelect').val();
             var minAge = $('#ClassMinimumAgeInput').val();
             var maxAge = $('#ClassMaximumAgeInput').val();
@@ -101,15 +106,36 @@
                     gradevalues[packageGrade] = packageId.split(':')[0];
                 }
             });
-            console.log('gradevalues',gradevalues);
+           //console.log('gradevalues',gradevalues);
             if(!iserror){
                 $('#newossiaGroupClassModal').addClass('slds-hide');
                 $('#statusOnPage').show();
+                var isGroupclassEndDate = false;
+                if($('#onmakupAvailablegroup').prop('checked')){
+                    isGroupclassEndDate = true;
+                    var repeatval = $('#repeatgroupSelect').val();
+                   //console.log('repeatval',repeatval);
+                    if(repeatval == 'None'){
+                       //console.log('classEndDate',classEndDate);
+                    }else{
+                        if($('#aftergroupRadio').prop('checked')){
+                            var recurringdays = $('#recurrencegroupOccure').val();
+                           //console.log('recurringdays',recurringdays);
+                            classEndDate.add(parseInt(recurringdays), 'weeks');  
+                        }else if($('#ongroupRadio').prop('checked')){
+                            classEndDate = $('#onSelectedgroupDate').val();
+                        }
+                    }
+                   //console.log('isGroupclassEndDate',isGroupclassEndDate);
+                   //console.log('classEndDate',classEndDate);
+                   //console.log('classEndDate',classEndDate.format('YYYY-MM-DD'));
+                }              
+                
                 Visualforce.remoting.Manager.invokeAction(
                         '{!$RemoteAction.OssiaCenterCalendarController.saveNewOssiaClass}',
                         centreId, teacherId, gradevalues, dateTime.format('YYYY-MM-DD'), 
                         dateTime.format('HH:mm:ss'), duration, capacity, 
-                        classType,minAge,maxAge,grades,
+                        classType,minAge,maxAge,grades,isGroupclassEndDate,classEndDate.format('YYYY-MM-DD'),
                         function(result, event){
                             if(result){
                                 $('#statusOnPage').hide();
@@ -140,15 +166,15 @@
             $('#OssiaInstrumentSelect').attr('disabled', 'true');
             $('#ossiaGroupClassInstrmentErrorMsg').text('');
             var instrumentStr = '<option value="">Select Insturment</option>';
-            console.log('centerid'+centerid);
-            console.log('teacherId'+teacherId);
-            console.log('groupClassId'+groupClassId);
-            console.log('studentId'+studentId);
+           //console.log('centerid'+centerid);
+           //console.log('teacherId'+teacherId);
+           //console.log('groupClassId'+groupClassId);
+           //console.log('studentId'+studentId);
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.OssiaCenterCalendarController.getOssiaGroupClassStudentInstrument}',
                 centerid,teacherId,groupClassId,studentId, 
                 function (result, event) {
-                    console.log('result', result);
+                   //console.log('result', result);
                     if (result) {
                         $('#ossiaGroupClassInstrment').empty();
                         bookingData.packageId = result.packageId;
@@ -213,14 +239,14 @@
             $('#OssiaInstrumentErrorMsg').text('');
             var instrumentStr = '<option value="">Select Insturment</option>';
             var teacherStr = '<option value="">Select Teacher</option>';
-            console.log('parentId', parentId);
-            console.log('studentId', studentId);
-            console.log('centerId', centerId);
+           //console.log('parentId', parentId);
+           //console.log('studentId', studentId);
+           //console.log('centerId', centerId);
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.OssiaCenterCalendarController.getOssiaStudentInstrument}',
                 studentId, parentId, centerId,
                 function (result, event) {
-                    console.log('result', result);
+                   //console.log('result', result);
                     if (result) {
                         $('#OssiaTeacherSelect').empty();
                         $('#OssiaInstrumentSelect').empty();
@@ -246,8 +272,8 @@
                         if (result.teacherList && result.teacherList != null && result.teacherList != undefined && result.teacherList.length > 0) {
                             var teacherVal = '';
                             $(result.teacherList).each(function (index, value) {
-                                console.log('Minor_Instruments_Disciplines__c', value.Minor_Instruments_Disciplines__c);
-                                console.log('Major_Instruments_Disciplines__c', value.Major_Instruments_Disciplines__c)
+                               //console.log('Minor_Instruments_Disciplines__c', value.Minor_Instruments_Disciplines__c);
+                               //console.log('Major_Instruments_Disciplines__c', value.Major_Instruments_Disciplines__c)
                                 teacherStr += '<option value="' + value.Id + '-';
                                 var instrument = '';
                                 if (value.Minor_Instruments_Disciplines__c != null && value.Minor_Instruments_Disciplines__c != undefined) {
@@ -309,13 +335,13 @@
             }
         }
         function OssiaStudentCancelWithMakeupBooking(bookingId) {
-            console.log('bookingId', bookingId);
+           //console.log('bookingId', bookingId);
             $('#OssiaStudentCancelBookingBody').empty();
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.OssiaCenterCalendarController.getOssiaStudentDetail}',
                 bookingId,
                 function (result, event) {
-                    console.log('result', result);
+                   //console.log('result', result);
                     if (result) {
                         $('.cancellationReasonPopup').addClass('slds-hide');
                         $('#cancelBookingWithMakeupBtn').attr({ 'data-id': bookingId, 'data-reason': '' });
@@ -325,7 +351,7 @@
                             var total = 0;
                             var gstTotal = 0;
                             var listOfOssiaStudentCancelBooking = result.listOfOssiaStudentCancelBooking;
-                            console.log('listOfOssiaStudentCancelBooking', listOfOssiaStudentCancelBooking);
+                           //console.log('listOfOssiaStudentCancelBooking', listOfOssiaStudentCancelBooking);
                             for (var i = 0; i < result.cancelBookingrecordsSize; i++) {
                                 trRow += '<tr class="slds-hint-parent">';
                                 //trRow +='<td data-label="Sr.No"><div class="slds-truncate" title="Sr.No">' + (i + 1) + '</div></td>';
@@ -366,7 +392,7 @@
         }
 
         function OssiaStudentCancelBooking(bookingId) {
-            console.log('bookingId', bookingId);
+           //console.log('bookingId', bookingId);
             if ($('#cancelOssiaBookingWithoutMakeup').attr('data-reason')) {
                 OssiaStudentCancelWithMakeupBooking(bookingId);
             } else {
@@ -433,7 +459,7 @@
 
         //10-Aug-2020:nishi:start manage ossia Upgrade ,downGrade Subscription model 
         function changeOssiaEnrolment(changeEnrolmentType) {
-            console.log('changeEnrolmentType', changeEnrolmentType);
+           //console.log('changeEnrolmentType', changeEnrolmentType);
             $('#showEffectiveDateEnrolOssiaUpdate').addClass('slds-hide');
             if (changeEnrolmentType === 'UpgradeEnrolment') {
                 $('#enrolmentOssiaUpdatePopupHeader').html('Upgrade Subscription');
@@ -452,13 +478,13 @@
             else {
                 $('#enrolmentOssiaUpdatePopupHeader').html('Update Enrolment');
             }
-            console.log('changeEnrolmentType', changeEnrolmentType);
+           //console.log('changeEnrolmentType', changeEnrolmentType);
 
         }
         //10-Aug-2020:nishi:end manage ossia Upgrade ,downGrade Subscription model
 
         function updateOssiaEnrolment() {
-            console.log('hellos updateOssiaEnrolment');
+           //console.log('hellos updateOssiaEnrolment');
             $('#OssiateacherSelectErrorMsg').html('');
             $('#OssiapackageSelectErrorMsg').html('');
             $('#OssiaeffectiveDateErrorMsg').html('');
@@ -623,23 +649,24 @@
                     for (var startday = 1; startday <= 7; startday++) {
                         var day = new Date(effectiveDate.year(), parseInt(effectiveDate.month()) + 1, startday);
                         var startedDate = new moment(day);
-                        if (startedDate.format('ddd') == week) {
+                        //if (startedDate.format('ddd') == week) {
                             newEffectiveDayObj = {};
                             newEffectiveDayObj.value = startedDate.format('MM/DD/YYYY');
                             newEffectiveDayObj.label = startedDate.format('ddd, MMM DD YYYY');
                             weekDatesList.push(newEffectiveDayObj);
-                        }
+                       // }
                     }
-                    console.log('weekDatesList', weekDatesList);
-                    console.log('result.currentWeekDay' + result.currentWeekDay);
+                   //console.log('weekDatesList', weekDatesList);
+                   //console.log('result.currentWeekDay' + result.currentWeekDay);
                     if (weekDatesList.length > 0) {
                         var effectiveDateStr = '<option>Select Effective Date</option>';
                         $(weekDatesList).each(function (index, value) {
                             effectiveDateStr += '<option value="' + value.value + '">' + value.label + '</option>';
                         });
                         $('#selectEffectiveDateEnrolCenterUpdate').append(effectiveDateStr);
-                        $('#selectEffectiveDateEnrolCenterUpdate').val(weekDatesList[0].value);
-                        $('#selectEffectiveDateEnrolCenterUpdate').attr('disabled', 'true');
+                        // commented by nishi: 11-Sep-2020: for we show all 1 to 7 date list not first effective date
+                        // $('#selectEffectiveDateEnrolCenterUpdate').val(weekDatesList[0].value);
+                        //$('#selectEffectiveDateEnrolCenterUpdate').attr('disabled', 'true');
                         $('#availableTimeSlotsCenterUpdateEnrolment').val('');
                         $('#availableTimeSlotsCenterUpdateEnrolment').empty();
                         $('#availableTimeSlotsCenterUpdateEnrolment').attr('disabled', 'true');
@@ -662,20 +689,20 @@
             var centerId = $('#selectTeacherEnrolOssiaUpdate').attr('data-center');
             var enrolmentType = $('#selectTeacherEnrolOssiaUpdate').attr('data-enrolmentType');
             var booingid = $('#OssiaUpdateEnrolmentonClick').attr('data-id');
-            console.log('teacherId',teacherId);
-            console.log('centerId',centerId);
-            console.log('duration',duration);
-            console.log('enrolmentType',enrolmentType);
-            console.log('booingid',booingid);
+           //console.log('teacherId',teacherId);
+           //console.log('centerId',centerId);
+           //console.log('duration',duration);
+           //console.log('enrolmentType',enrolmentType);
+           //console.log('booingid',booingid);
             if (teacherId != 'Select Teacher' && centerId && duration && booingid) {
                 Visualforce.remoting.Manager.invokeAction(
                     '{!$RemoteAction.OssiaCenterCalendarController.getPackageAccordingToOssiaTeacher}',
                     centerId, teacherId, duration, booingid, enrolmentType,
                     function (result, event) {
-                        console.log('result',result);
+                       //console.log('result',result);
                         var packageEnrol = '<option value="Select Package">Select an Option</option>';
                         $(result).each(function (index, value) {
-                            console.log('value', value);
+                           //console.log('value', value);
                             packageEnrol += '<option value="' + value.Id + '-' + value.duration + '- ' /*+ value.facilityFee*/ + '-' + value.grade + '-' + value.packageFee + '">' + value.Name + '</option>';
                         });
                         $('#selectPackageEnrolOssiaUpdate').append(packageEnrol);
@@ -705,7 +732,7 @@
                     function (result, event) {
                         var packageEnrol = '<option value="Select Package">Select an Option</option>';
                         $(result).each(function (index, value) {
-                            console.log('value', value);
+                           //console.log('value', value);
                             packageEnrol += '<option value="' + value.Id + '-' + value.duration + '-' + /*value.facilityFee*/' ' + '-' + value.grade + '-' + value.packageFee + '">' + value.Name + '</option>';
                         });
                         $('#selectPackageEnrolUpdate').append(packageEnrol);
@@ -805,7 +832,7 @@
                 oldPackageId, newPackageId, dtObj.format('YYYY-MM-DD'), availableTimeSlots, enrolmentId,
                 grade, oldTeacher, newTeacher,
                 function (result, event) {
-                    console.log(result);
+                   //console.log(result);
                     $('#ossiaBookingTeacher').removeClass('slds-hide');
                     $('#confirmOssiaUpgradeEnrolmentCancel').removeClass('slds-hide');
                     $('#confirmUpgradeEnrolmentCancel').addClass('slds-hide');
@@ -1037,7 +1064,7 @@
         }
 
         function upgradeEnrolmentProcess(caseId) {
-            console.log('updatePackageOfCustomer', caseId);
+           //console.log('updatePackageOfCustomer', caseId);
             $('#confirmModalYes').css('pointer-events', 'none');
             $('#confirmModalYes').attr('disabled');
             $('#confirmModalNo').css('pointer-events', 'none');
@@ -1064,10 +1091,10 @@
                 '{!$RemoteAction.OssiaCenterCalendarController.updatePackageOfCustomer}',
                 bookingId, effectiveDate, newPackageId, oldPackageId, timeSlot, caseId, 'true', casevalues, oldTeacher, newTeacher,
                 function (result, event) {
-                    console.log('result', result);
+                   //console.log('result', result);
                     $('#enrolmentOssiaUpdatePopup').addClass('slds-hide');
                     if (result && result != 'error') {
-                        console.log('result', result);
+                       //console.log('result', result);
                         redirectToOssiaCaseRecord(result);
                     } else {
                         $('#upgradeDowngradeSummaryModal').addClass('slds-hide');
@@ -1086,7 +1113,7 @@
         }
 
         function redirectToOssiaCaseRecord(caseIdToRedirect) {
-            console.log('caseIdToRedirect', caseIdToRedirect);
+           //console.log('caseIdToRedirect', caseIdToRedirect);
             window.open("/" + caseIdToRedirect, '_blank');
             //window.location.href = "/"+caseIdToRedirect;
         }
@@ -1125,13 +1152,13 @@
             // casevalues.positiveFacilityInvoiceAmount = $('#confirmModalYes').attr('data-positiveFacilityInvoiceAmount'); //added by nishi 19_aug-2020:for manage Facility Fee
             // casevalues.negativeFacilityInvoiceAmount = $('#confirmModalYes').attr('data-negativeFacilityInvoiceAmount'); //added by nishi 19_aug-2020: for manage Facility Fee
             //end: added by nishi: 17-Aug-2020: for is facility Fee is differce and differce is greater then 0 then we manage Invoice
-            console.log('casevalues', casevalues);
+           //console.log('casevalues', casevalues);
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.OssiaCenterCalendarController.downgradeSubscriptionRequest}',
                 bookingId, requestDate, newPackageId, oldPackageId, timeslot, caseId, 'true', amount, depositAmount,
                 lessonFeeAmount, casevalues, oldTeacher, newTeacher,
                 function (result, event) {
-                    console.log('result', result);
+                   //console.log('result', result);
                     $('#enrolmentOssiaUpdatePopup').addClass('slds-hide');
                     if (result == 'error') {
                         $('#toastMsg').html('Request failure!<br/>Please try again....');
@@ -1145,7 +1172,7 @@
                         $('.toastclass').addClass('slds-theme_success');
                         toastLaunch();
                     } else if (result && result != 'error') {
-                        console.log('result', result);
+                       //console.log('result', result);
                         redirectToOssiaCaseRecord(result);
                     }
                     $('#downgradePopup').addClass('slds-hide');
@@ -1167,7 +1194,7 @@
                     '{!$RemoteAction.OssiaCenterCalendarController.getListOfTeacher}',
                     centreid,
                     function (result, event) {
-                        console.log('result', result);
+                       //console.log('result', result);
                         $(result).each(function (index, value) {
                             teacherStr += '<option value="' + value.Id + '">' + value.Name + '</option>';
                         });
@@ -1199,7 +1226,7 @@
                     function (result, event) {
                         var packageEnrol = '<option value="Select Package">Select an Option</option>';
                         $(result).each(function (index, value) {
-                            console.log('value', value);
+                           //console.log('value', value);
                             packageEnrol += '<option value="' + value.Id + '-' + value.duration + '- ' /*+ value.facilityFee*/ + '-' + value.grade + '-' + value.packageFee + '">' + value.Name + '</option>';
                         });
                         $('#selectPackageEnrolCenterUpdate').append(packageEnrol);
@@ -1311,7 +1338,7 @@
                 grade, enrolmentId, newTeacher, oldTeacher, newPackage, oldPackage, newEffectiveDateObj.format('YYYY-MM-DD'),
                 newTime, oldTime.trim(), newCenterId, oldCenterId,
                 function (result, event) {
-                    console.log('result', result);
+                   //console.log('result', result);
                     if (result) {
                         $('#ChangeCenterEnrollmentSummaryHeader').html('Change Centre Summary');
                         $('#confirmChangeCenterEnrolment').css('pointer-events', 'auto');
@@ -1410,25 +1437,25 @@
             oldTime = $('#confirmModalYes').attr('data-oldTime');
             oldPackageName = $('#confirmModalYes').attr('data-oldPackageName'); 
             newPackageName = $('#confirmModalYes').attr('data-newPackageName'); 
-            // console.log('enrolmentId'+enrolmentId);
-            // console.log('newCenter'+newCenter);
-            // console.log('newTeacher'+newTeacher);
-            // console.log('newPackage'+newPackage);
-            // console.log('newEffectiveDate'+newEffectiveDate);
-            // console.log('newTime'+newTime);
-            // console.log('oldTeacher'+oldTeacher);
-            // console.log('oldCenter'+oldCenter);
-            // console.log('oldPackage'+oldPackage);
-            // console.log('oldTime'+oldTime);
-            // console.log('oldPackageName'+oldPackageName);
-            // console.log('newPackageName'+newPackageName);
+            ////console.log('enrolmentId'+enrolmentId);
+            ////console.log('newCenter'+newCenter);
+            ////console.log('newTeacher'+newTeacher);
+            ////console.log('newPackage'+newPackage);
+            ////console.log('newEffectiveDate'+newEffectiveDate);
+            ////console.log('newTime'+newTime);
+            ////console.log('oldTeacher'+oldTeacher);
+            ////console.log('oldCenter'+oldCenter);
+            ////console.log('oldPackage'+oldPackage);
+            ////console.log('oldTime'+oldTime);
+            ////console.log('oldPackageName'+oldPackageName);
+            ////console.log('newPackageName'+newPackageName);
 
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.OssiaCenterCalendarController.changeEnrolmentCenter}',
                 enrolmentId, newTeacher,newCenter, newPackage, effectiveDate, newTime, caseId,
                  'true', oldTime, oldPackageName, newPackageName, oldCenter,
                 function(result, event){
-                    console.log('@@@@@@@result',result);
+                   //console.log('@@@@@@@result',result);
                     if(result && result != 'error'){
                         
                         $('#ChangeCenterEnrollmentSummaryModal').addClass('slds-hide');
@@ -1471,7 +1498,7 @@
             '{!$RemoteAction.OssiaCenterCalendarController.getlistOfOssiaGroupGradePackage}',
             classId,
             function (result, event) {
-                console.log('result', result);
+               //console.log('result', result);
                 var ossiaGroupPackage  = result;
                 var trRow ='';
                 if (ossiaGroupPackage && ossiaGroupPackage != null && ossiaGroupPackage != undefined && ossiaGroupPackage.length > 0) {

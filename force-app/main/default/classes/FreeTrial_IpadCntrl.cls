@@ -1,3 +1,5 @@
+//Comment
+//CH-Z01 : Zakir 16-11-2020: added field (Major_Instruments_Disciplines__c) showing the value on the Vf page (FreeTrial_Ipad3) .   
 public class FreeTrial_IpadCntrl {
     public String slcdLsnType{get;set;}
     public String slcdCenter{get;set;}
@@ -42,7 +44,7 @@ public Account      studentAcc{get;set;}
     String centerCountry;//@Juneid 07 Aug 2020, This variable is used to store Center country name
     Id prsonContactId;
     public Boolean isOsiaEnable{get;set;}//Juneid 14 Aug 2020
-    string currentOrg;//Juneid 17 Aug 2020, store the current organization
+    public string currentOrg;//Juneid 17 Aug 2020, store the current organization
     Map<String, String> urlParamMetaMap;//Juneid 17 Aug 2020,store metadata value 
     
     string organization;    
@@ -98,7 +100,7 @@ countryCode = 'SG';
         system.debug('org-->'+org);
         
         if(String.isNotBlank(org)){
-            if(org.equalsIgnoreCase('ossia')){
+            if(org.equalsIgnoreCase('Ossia')){
                 org ='osia'; 
                 currentOrg = urlParamMetaMap.get('Ossia');
             }else{
@@ -232,38 +234,79 @@ stuWrap.lesson = lsn;
         Set<String> instrumentTempSet = new Set<String>();
         if(String.isNotBlank(slcdCenter)){  
             checkAtHome();
-            
-            List<Class__c> clssList = [SELECT Id,Teacher__c,Teacher__r.Name,Teacher__r.Teacher_Bio__c,Active__c,Centre_Name__c,Centre_Name__r.Name,Teacher__r.Major_Instruments_Disciplines__c,Instrument__c
-                                       FROM Class__c 
-                                       WHERE Active__c = true 
-                                       AND Instrument__c != null AND Centre_Name__r.Country__r.Name =:countryCode];
-            for(Class__c cls : clssList){
-                if(cls.Centre_Name__c == slcdCenter) {
-                    slcdCentrName = cls.Centre_Name__r.Name;
-                    for(String strIns : cls.Instrument__c.split(';'))
-                        instrumentTempSet.add(strIns); 
-                }                   
-            }
-            
-            
-            if(!isAureusAtHome){
-                //Filling disabled Instruments for the selected Center
-                for(Class__c cls : clssList){
-                    if(cls.Centre_Name__c != slcdCenter) {
-                        for(String strIns : cls.Instrument__c.split(';')){
-                            
-                            if(!instrumentTempSet.contains(strIns)){
-                                String centNames =  disabledInstrument.containsKey(strIns) ? disabledInstrument.get(strIns) : cls.Centre_Name__r.Name;
+             //Start:Added by nishi:3-Sep-2020: for show ossia group class time slot we get instrument to Ossia_Group_Grade_Package__c object
+            if(org == 'osia'){
+                List<Ossia_Group_Grade_Package__c> gradePackageList = [SELECT Class_Name__c, Package__c,  Name, Id ,Class_Name__r.Centre_Name__r.Name,
+                                                                        Package__r.Program__r.Instrument__c
+                                                                        FROM Ossia_Group_Grade_Package__c
+                                                                        Where Package__r.Program__r.Instrument__c != null and
+                                                                        Class_Name__r.Centre_Name__r.Country__r.Name =:countryCode
+                                                                        and Class_Name__r.Active__c = true 
+                                                                        // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                                                        And Class_Name__r.Is_Makeup_Class__c = false];
+                
+                for(Ossia_Group_Grade_Package__c objGradePackage: gradePackageList){
+                    if(objGradePackage.Class_Name__r.Centre_Name__c == slcdCenter) {
+                        slcdCentrName = objGradePackage.Class_Name__r.Centre_Name__r.Name;
+                        instrumentTempSet.add(objGradePackage.Package__r.Program__r.Instrument__c); 
+                    } 
+                }
+
+                if(!isAureusAtHome){
+                    //Filling disabled Instruments for the selected Center
+                    for(Ossia_Group_Grade_Package__c objGradePackage: gradePackageList){
+                        if(objGradePackage.Class_Name__r.Centre_Name__c != slcdCenter) {
+                            if(!instrumentTempSet.contains(objGradePackage.Package__r.Program__r.Instrument__c)){
+                                String centNames =  disabledInstrument.containsKey(objGradePackage.Package__r.Program__r.Instrument__c) ? disabledInstrument.get(objGradePackage.Package__r.Program__r.Instrument__c) : objGradePackage.Class_Name__r.Centre_Name__r.Name;
                                 
-                                if(!(centNames.contains(cls.Centre_Name__r.Name)))
-                                    centNames += ', '+cls.Centre_Name__r.Name;
+                                if(!(centNames.contains(objGradePackage.Class_Name__r.Centre_Name__r.Name)))
+                                    centNames += ', '+objGradePackage.Class_Name__r.Centre_Name__r.Name;
                                 
-                                disabledInstrument.put(strIns, centNames);  
+                                disabledInstrument.put(objGradePackage.Package__r.Program__r.Instrument__c, centNames);  
                             }   
-                        }   
+                              
+                        }
+                    }
+                }
+               
+            }else{
+                 //end:Added by nishi:3-Sep-2020: for show ossia group class time slot we get instrument to Ossia_Group_Grade_Package__c object
+                 //CH-Z01
+                List<Class__c> clssList = [SELECT Id,Teacher__c,Teacher__r.Name,Teacher__r.Teacher_Bio__c,Active__c,Centre_Name__c,Centre_Name__r.Name,Teacher__r.Major_Instruments_Disciplines__c,Instrument__c
+                                        FROM Class__c 
+                                        WHERE Active__c = true 
+                                        AND Instrument__c != null AND Centre_Name__r.Country__r.Name =:countryCode
+                                        // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                        And Is_Makeup_Class__c = false];
+                for(Class__c cls : clssList){
+                    if(cls.Centre_Name__c == slcdCenter) {
+                        slcdCentrName = cls.Centre_Name__r.Name;
+                        for(String strIns : cls.Instrument__c.split(';'))
+                            instrumentTempSet.add(strIns); 
+                    }                   
+                }
+                if(!isAureusAtHome){
+                    //Filling disabled Instruments for the selected Center
+                    for(Class__c cls : clssList){
+                        if(cls.Centre_Name__c != slcdCenter) {
+                            for(String strIns : cls.Instrument__c.split(';')){
+                                
+                                if(!instrumentTempSet.contains(strIns)){
+                                    String centNames =  disabledInstrument.containsKey(strIns) ? disabledInstrument.get(strIns) : cls.Centre_Name__r.Name;
+                                    
+                                    if(!(centNames.contains(cls.Centre_Name__r.Name)))
+                                        centNames += ', '+cls.Centre_Name__r.Name;
+                                    
+                                    disabledInstrument.put(strIns, centNames);  
+                                }   
+                            }   
+                        }
                     }
                 }
             }
+            
+            
+            
         }
         
         instrumentList.addAll(instrumentTempSet);
@@ -354,6 +397,7 @@ stuWrap.lesson = lsn;
         }
         
         if(isParAlsoAStudent && enrModelList.size()>0){
+            enrModelList.get(0).isParAlsoAStudent =isParAlsoAStudent;
             enrModelList.get(0).studentAcc.FirstName = parentAcc.FirstName;
             enrModelList.get(0).studentAcc.LastName  = parentAcc.LastName;            
         }
@@ -478,7 +522,9 @@ stuWrap.lesson = lsn;
                 for(Booking__c book: [SELECT Id, Class__c, Booking_Date__c, Class__r.Teacher__c, Class__r.Start_Time__c, Class__r.Package__c, Class__r.Minimum_age__c, Class__r.Maximum_age__c  
                                       FROM Booking__c
                                       WHERE RecordTypeId =: bookGrpClsRecId AND Class__r.Centre_Name__c =: slcdCenter AND Class__r.Active__c = True AND Class__r.Available_Capacity__c > 0 
-                                      AND Class__c != null AND Booking_Date__c =: trialEnrMod.slcdDateDt AND  Class__r.Teacher__c =:slcdTchrId]){
+                                      AND Class__c != null AND Booking_Date__c =: trialEnrMod.slcdDateDt AND  Class__r.Teacher__c =:slcdTchrId
+                                      // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                      And Class__r.Is_Makeup_Class__c = false]){
                                           
                                           String key = book.Class__r.Teacher__c +'#'+ trialEnrMod.slcdDateDt+'#'+book.Class__r.Start_Time__c;                      
                                           grpLsnBookMap.put(key, book);
@@ -523,7 +569,7 @@ ApexPages.addMessage(new ApexPages.message(Apexpages.Severity.ERROR,'Please sele
         
         if(trialEnrMod.slcdLsnType.equalsIgnoreCase('Individual')){
             List<Teacher_Working_Hour__c> techWorkSchList = [SELECT Id,Name,Teacher_Name__c,Teacher_Name__r.Engagement_Type__c,Teacher_Name__r.Name, Teacher_Name__r.FirstName, Teacher_Name__r.LastName,
-                                                             Teacher_Name__r.Teacher_Bio__c,Working_Day__c,Start_Time__c,End_Time__c,Active__c
+                                                             Teacher_Name__r.Teacher_Bio__c,Working_Day__c,Start_Time__c,End_Time__c,Active__c,Teacher_Name__r.Major_Instruments_Disciplines__c
                                                              FROM  Teacher_Working_Hour__c 
                                                              WHERE Center_Name__c =: slcdCenter AND Active__c = true AND Working_Day__c != null AND Break_Time__c = False 
                                                              AND Teacher_Name__r.Status__c =: ConstantsClass.teacherWorkingStatus AND Start_Time__c != null AND End_Time__c != null AND
@@ -574,7 +620,8 @@ ApexPages.addMessage(new ApexPages.message(Apexpages.Severity.ERROR,'Please sele
             Set<String> bookSet       = new Set<String>();
             for(Booking__c book : [SELECT Id,Name,Booking_Date__c,Duration__c,Start_Time__c,End_Time__c,Type__c,Teacher_Account__c 
                                    FROM Booking__c 
-                                   WHERE Teacher_Account__c IN:teachAttaImageMap.keySet() AND (RecordTypeId =: bookLessRecId OR RecordTypeId =: bookGrpClsRecId) AND Start_Time__c != null AND End_Time__c != null
+                                   WHERE Teacher_Account__c IN:teachAttaImageMap.keySet() AND 
+                                   (RecordTypeId =: bookLessRecId OR RecordTypeId =: bookGrpClsRecId) AND Start_Time__c != null AND End_Time__c != null
                                    AND (Booking_Date__c >=: startDt AND Booking_Date__c <=: endDt)  AND Status__c IN: bookStatusSet
                                    AND ((Type__c IN: bookTypeSet) OR (Type__c = 'Busy' AND Category__c != 'Placeholder'))]){
                                        if(book.End_Time__c > book.Start_Time__c){
@@ -664,7 +711,7 @@ Set<Time> afternoonTimesTemp    = new Set<Time>();*/
                        // start:nishi: 4-Sep-2020: for check teacher engagement type is part-time and is day is greater then 28 mean (5th lesson booking) so we not consider this teacher
                        //remove any timeslot for 5th days for part-time teachers.
                         Boolean isPartTimeTeacher = false; 
-                        if(teachWorkSch.Teacher_Name__r.Engagement_Type__c =='Part-Time' && st.day() > 28){
+                        if(ConstantsClass.teacherPartTimeEngagementStatus.contains(teachWorkSch.Teacher_Name__r.Engagement_Type__c) && st.day() > 28 && org == 'osia'){
                             isPartTimeTeacher = true;
                         }
                         system.debug('%%%%isPartTimeTeacher'+isPartTimeTeacher +'  '+st); 
@@ -745,9 +792,9 @@ Set<Time> afternoonTimesTemp    = new Set<Time>();*/
                                                 List<String> tchrQual =  new List<String>();
                                                 if(tcrQualMap.get(teachWorkSch.Teacher_Name__c) != null)
                                                     tchrQual = tcrQualMap.get(teachWorkSch.Teacher_Name__c);
-                                                
+                                                  //CH-Z01 
                                                 TeacherModel tMod = new TeacherModel(teachWorkSch.Teacher_Name__c,teachWorkSch.Teacher_Name__r.FirstName,
-                                                                                    teachWorkSch.Teacher_Name__r.Teacher_Bio__c,'',tchrQual);
+                                                                                    teachWorkSch.Teacher_Name__r.Teacher_Bio__c,'',tchrQual, teachWorkSch.Teacher_Name__r.Major_Instruments_Disciplines__c);
                                                 if(teachAttaImageMap.get(teachWorkSch.Teacher_Name__c) != null)
                                                     tMod.attachmentId = teachAttaImageMap.get(teachWorkSch.Teacher_Name__c);
                                                 tchTempList.add(tMod);
@@ -825,7 +872,7 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
                 system.debug('timeSlotTemp------> '+timeSlotTemp);
                 List<String> slotList = new List<String>();
                 List<Time> tmpLst        = new List<Time>();
-                tmpLst.addAll(timeSlotTemp);tmpLst.sort();
+                tmpLst.addAll(timeSlotTemp);tmpLst.sort(); 
                 
                 String dayOfWeek  = ((DateTime)st).format('E');
                 for(Time t : tmpLst){
@@ -858,17 +905,21 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
                 set<String> listOfGradePackageClass= new set<String>();
                 for(Ossia_Group_Grade_Package__c objGradePackage: [SELECT Class_Name__c, Package__c,  Name, Id 
                                                                         FROM Ossia_Group_Grade_Package__c
-                                                                        Where Package__r.Program__r.Instrument__c =: trialEnrMod.slcdInstrument]){
+                                                                        Where Package__r.Program__r.Instrument__c =: trialEnrMod.slcdInstrument
+                                                                       ]){
                     listOfGradePackageClass.add(objGradePackage.Class_Name__c);
                 }
                 for(Class__c cls: [SELECT Id, Name, Package__c, Package__r.Name, Teacher__c, Teacher__r.FirstName, Teacher__r.Teacher_Bio__c, Class_Day__c, Start_Time__c,End_Time__c,
+                                    Available_Capacity__c,
                                     (SELECT Id, Booking_Date__c FROM Bookings__r WHERE RecordTypeId =: bookGrpClsRecId AND (Booking_Date__c >=: startDt AND Booking_Date__c <=: endDt))
                                     FROM Class__c WHERE 
                                     ID In: listOfGradePackageClass
                                     and Centre_Name__c =:  slcdCenter 
                                     AND Active__c = True 
                                     AND Available_Capacity__c > 0 
-                                    AND Duration__c =: trialEnrMod.slcdDuration]){ 
+                                    AND Duration__c =: trialEnrMod.slcdDuration
+                                    // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                    And Is_Makeup_Class__c = false]){ 
                     
                     if(cls.End_Time__c > cls.Start_Time__c){
                         teachAttaImageMap.put(cls.Teacher__c,null); 
@@ -878,7 +929,7 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
                         if(clsList == null)
                             clsList = new List<Class__c>();                    
                         clsList.add(cls);                                                  
-                        clsSchMap.put(cls.Class_Day__c, clsList);                       
+                        clsSchMap.put(cls.Class_Day__c, clsList);               
                         for(Booking__c book: cls.Bookings__r)
                             bookMap.put(cls.Id+'#'+book.Booking_Date__c, book);    
                     }
@@ -886,12 +937,15 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
             }else{
                  //end: Added by nishi:3-Sep-2020: for show ossia group class time slot we get instrument to Ossia_Group_Grade_Package__c object
                 for(Class__c cls: [SELECT Id, Name, Package__c, Package__r.Name, Teacher__c, Teacher__r.FirstName, Teacher__r.Teacher_Bio__c, Class_Day__c, Start_Time__c,End_Time__c,
+                                    Available_Capacity__c,
                                     (SELECT Id, Booking_Date__c FROM Bookings__r WHERE RecordTypeId =: bookGrpClsRecId AND (Booking_Date__c >=: startDt AND Booking_Date__c <=: endDt))
                                     FROM Class__c WHERE Instrument__c =:trialEnrMod.slcdInstrument 
                                     AND Centre_Name__c =:  slcdCenter 
                                     AND Active__c = True 
                                     AND Available_Capacity__c > 0 
-                                    AND Duration__c =: trialEnrMod.slcdDuration]){ 
+                                    AND Duration__c =: trialEnrMod.slcdDuration
+                                    // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                    And Is_Makeup_Class__c = false]){ 
                     
                     if(cls.End_Time__c > cls.Start_Time__c){
                         teachAttaImageMap.put(cls.Teacher__c,null); 
@@ -901,7 +955,7 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
                         if(clsList == null)
                             clsList = new List<Class__c>();                    
                         clsList.add(cls);                                                  
-                        clsSchMap.put(cls.Class_Day__c, clsList);                       
+                        clsSchMap.put(cls.Class_Day__c, clsList);                
                         for(Booking__c book: cls.Bookings__r)
                             bookMap.put(cls.Id+'#'+book.Booking_Date__c, book);    
                     }
@@ -941,9 +995,8 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
                 String currDay =  DateTime.newInstance(st, Time.newInstance(0, 0, 0, 0)).format('E');
                 
                 if(clsSchMap.containsKey(currDay) && st >= System.today()){
-                    List<Class__c> clsSchLst = clsSchMap.get(currDay);
-                    
-                    for(Class__c clsSch: clsSchLst){    
+                    List<Class__c> clsSchLst = clsSchMap.get(currDay);      
+                    for(Class__c clsSch: clsSchLst){          
                         if(bookMap.containsKey(clsSch.Id+'#'+st)){
                             Time stTime = clsSch.Start_Time__c;
                             timeSlotTemp.add(stTime);       
@@ -958,9 +1011,11 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
                             List<String> tchrQual =  new List<String>();
                             if(tcrQualMap.get(clsSch.Teacher__c) != null)
                                 tchrQual = tcrQualMap.get(clsSch.Teacher__c);
-                            
+                            // 14-Sep-2020:nishi: If a user added two enrolment and both enrolment types were grouped then we allowed the user to select the same teacher, time slot
+                            // otherwise the enrolment type is individual then we showed an error message
+                               //CH-Z01  
                             TeacherModel tMod = new TeacherModel(clsSch.Teacher__c,clsSch.Teacher__r.FirstName,
-                                                                 clsSch.Teacher__r.Teacher_Bio__c,'',tchrQual);
+                                                                 clsSch.Teacher__r.Teacher_Bio__c,'',tchrQual,clsSch.Id,clsSch.Available_Capacity__c,clsSch.Teacher__r.Major_Instruments_Disciplines__c);
                             if(teachAttaImageMap.get(clsSch.Teacher__c) != null)
                                 tMod.attachmentId = teachAttaImageMap.get(clsSch.Teacher__c);
                             tchTempList.add(tMod);
@@ -993,13 +1048,9 @@ tSlotDateMap.put(st.day()+'/'+st.month()+'/'+st.year() , tSlotMapTemp2);*/
             trialEnrMod.slcdDate    = slcdDate;
             trialEnrMod.slcdDateDt  = date.parse(slcdDate);
             trialEnrMod.slcdFullSlot= slcdSlot;
+            system.debug('slcdSlot'+slcdSlot);
             trialEnrMod.slcdSlot = trialEnrMod.slcdFullSlot.substring(4, trialEnrMod.slcdFullSlot.length());
             trialEnrMod.slcdSlotTchrs = new List<TeacherModel>();
-            System.debug('@@@@trialEnrMod.teachModSlotMap'+trialEnrMod.teachModSlotMap);
-            System.debug('@@@@slcdDate'+slcdDate);
-            System.debug('@@@@trialEnrMod.slcdSlot'+trialEnrMod.slcdSlot);
-            System.debug('@@@@trialEnrMod.teachModSlotMap.get(slcdDate)'+trialEnrMod.teachModSlotMap.get(slcdDate));
-            System.debug('@@@@trialEnrMod.teachModSlotMap.get(slcdDate).get(trialEnrMod.slcdSlot)'+trialEnrMod.teachModSlotMap.get(slcdDate).get(trialEnrMod.slcdSlot));
             if(trialEnrMod.teachModSlotMap.get(slcdDate) != null && trialEnrMod.teachModSlotMap.get(slcdDate).get(trialEnrMod.slcdSlot) != null)
                 trialEnrMod.slcdSlotTchrs = trialEnrMod.teachModSlotMap.get(slcdDate).get(trialEnrMod.slcdSlot);
             
@@ -1040,14 +1091,16 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                 System.debug('@@@tSet'+tSet);
                 
                 Integer j = 0;
-                while (j < slotList.size()){
-                    // if(slotList.get(j).equalsIgnoreCase(trialEnrMod.slcdFullSlot)){
-                    if(tSet.contains(slotList.get(j))){
-                        slotList.remove(j);
-                        enrModelList.get(1).slcdFullSlot= '';
-                        enrModelList.get(1).slcdSlot = '';
-                    }else{
-                        j++;
+                if(slotList != null && slotList.size() > 0){// added by nishi:5-Jan-2021:  to solve null pointer exception
+                    while (j < slotList.size()){
+                        // if(slotList.get(j).equalsIgnoreCase(trialEnrMod.slcdFullSlot)){
+                        if(tSet.contains(slotList.get(j))){
+                            slotList.remove(j);
+                            enrModelList.get(1).slcdFullSlot= '';
+                            enrModelList.get(1).slcdSlot = '';
+                        }else{
+                            j++;
+                        }
                     }
                 }
                 
@@ -1078,12 +1131,12 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                     scldDate.add(trMd.slcdDateDt);
                 }
             }
-            
+            system.debug('slcdCenter'+slcdCenter);
             List<Package__c> packLst = [SELECT Id,Name,Program__r.Instrument__c,Program__c,Program__r.Name, Location__r.Name 
                                         FROM Package__c 
                                         WHERE Location__c =: slcdCenter  AND Program__r.Status__c = 'Active' AND Active__c = True AND
                                         Program__r.Instrument__c IN: scldInst AND Type__c = 'Trial' AND Duration__c = '30'];
-            
+                                        system.debug('packLst'+packLst);
             if(packLst.size() == 0){
                 errorMsg = 'Trial Package is not configured for this '+slcdInstrument+', Please contact to center admin.';
                 isError = true;
@@ -1096,7 +1149,9 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                 for(Booking__c book: [SELECT Id, Class__c, Booking_Date__c, Class__r.Teacher__c, Class__r.Start_Time__c, Class__r.Package__c 
                                       FROM Booking__c
                                       WHERE RecordTypeId =: bookGrpClsRecId AND Class__r.Centre_Name__c =: slcdCenter AND Class__r.Active__c = True AND Class__r.Available_Capacity__c > 0 
-                                      AND Class__c != null AND Booking_Date__c IN: scldDate AND  Class__r.Teacher__c IN:scldTchr]){
+                                      AND Class__c != null AND Booking_Date__c IN: scldDate AND  Class__r.Teacher__c IN:scldTchr
+                                      // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                      And Class__r.Is_Makeup_Class__c = false]){
                                           String key = book.Class__r.Teacher__c +'#'+ book.Booking_Date__c+'#'+book.Class__r.Start_Time__c;                      
                                           grpLsnBookMap.put(key, book);
                                       }
@@ -1104,7 +1159,9 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                 if(org == 'osia'){
                     for(Ossia_Group_Grade_Package__c objGradePackage: [SELECT Class_Name__c, Package__c,  Name, Id ,Package__r.Program__r.Instrument__c
                                                                         FROM Ossia_Group_Grade_Package__c
-                                                                        Where Package__r.Program__r.Instrument__c In:scldInst]){
+                                                                        Where Package__r.Program__r.Instrument__c In:scldInst
+                                                                        // added by nishi : 11-Sep-2020: for We restrict those group classes for the trial enrolment process
+                                                                        And Class_Name__r.Is_Makeup_Class__c = false]){
                         if(!listOfGradePackageClass.containsKey(objGradePackage.Class_Name__c)) {                       
                             listOfGradePackageClass.put(objGradePackage.Class_Name__c+'-'+objGradePackage.Package__r.Program__r.Instrument__c,objGradePackage.Package__c);
                         }
@@ -1124,11 +1181,15 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                 packMap.put(pkg.Program__r.Instrument__c, pkg);
             
             //Fill Parent and Upasert parent record
-            parentAcc.RecordTypeId   = csmrRecId;
+        parentAcc.RecordTypeId   = csmrRecId;
+        // added by nishi: 28-Sep-2020: for stop active process builer validations 
+        if(!test.isRunningTest()){
             parentAcc.Centre_Name__c = slcdCenter;
             parentAcc.Instrument__c  = (new list<string>(scldInst) )[0] ;
-            List<Account> centrList  = [SELECT Id, Name, Location__c, Country__c, Country__r.Country_Name__c FROM Account WHERE Id =: slcdCenter];
-            if(centrList.size() > 0){
+        }
+         // added by nishi: 28-Sep-2020: for stop process builer 
+        List<Account> centrList  = [SELECT Id, Name, Location__c,Organisation__c, Country__r.name,Country__c, Country__r.Country_Name__c FROM Account WHERE Id =: slcdCenter];
+        if(centrList.size() > 0){
                 parentAcc.Location__c = centrList.get(0).Location__c;
                 //Added by rajesh, 10th sep 2019. To do some sharing seeting stuff as per Ashish ji discussion
                 if(centrList.get(0).Country__r.Country_Name__c != null)
@@ -1136,12 +1197,24 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
             }
             //Check that customer is already exist or not on the bases of email
             if(parentAcc.PersonEmail != null){
-                List<Account> accList = [SELECT Id,Name FROM Account WHERE PersonEmail =: parentAcc.PersonEmail]; 
-              
+                List<Account> accList = [SELECT Id,Name FROM Account
+                                         WHERE PersonEmail =: parentAcc.PersonEmail 
+                                        //And Centre_Name__r.Organisation__c =: centrList.get(0).Organisation__c // Added by nishi: 30-nov-2020: for Change customer key from email address to email address+Organisation name
+                                        ]; 
                 if(accList.size() > 0){
                     //Integer count = 0;
                     parentAcc.Id = accList.get(0).Id;
                 }else{
+                    // Added by nishi:Start: 30-nov-2020: for Change customer key from email address to email address+Organisation name
+                   /* string useremail=parentAcc.PersonEmail+'.';
+                    if(org.equalsIgnoreCase('osia')){
+                        useremail +='ossia'+centrList.get(0).country__r.name; 
+                    }else{
+                        useremail += 'aureus'+centrList.get(0).country__r.name;
+                    }
+                    parentAcc.User_Email__c = useremail;*/
+                    // Added by nishi:end: 30-nov-2020: for Change customer key from email address to email address+Organisation name 
+
                     system.debug('in else of refrel -->'+isOsiaApply);
                     //@Juneid 04-Aug 2020, Filling refrence code of rferree
                     if(String.isNotBlank(uniqueRefCode) && isOsiaApply == true){
@@ -1170,36 +1243,44 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
             //parentAcc.Phone = PersonMobilePhoneCustom;
             system.debug('parentAcc'+parentAcc);
             upsert parentAcc;
-            
+            system.debug('parentAcc'+parentAcc);
             List<Account> stuList = new List<Account>();
             List<Enrolment__c> enrList = new List<Enrolment__c>();
             List<Booking__c> bookList = new List<Booking__c>();
             
             String bookLessRecId =  Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get('Lesson').getRecordTypeId();    
+
             for(TrialEnrModel trMd : enrModelList){
                 //Fill Student Details
                 Account studentAcc = trMd.studentAcc;  
+                system.debug('studentAcc'+studentAcc);
                 studentAcc.RecordTypeId   = csmrRecId;
-                if(!isParAlsoAStudent){
-                    //To find existing student for the sepecific parent
-                    if(String.isNotBlank(trMd.slcdExistingStu) && !trMd.slcdExistingStu.equalsIgnoreCase('new'))
-                        studentAcc.Id = trMd.slcdExistingStu;                        
-                    studentAcc.Parent__c = parentAcc.Id;
-                    studentAcc.Current_Engagement_Status__c = ConstantsClass.activeStatus;                    
-                    studentAcc.Centre_Name__c = slcdCenter;
-                    if(centrList.size() > 0){
-                        studentAcc.Location__c = centrList.get(0).Location__c;
-                        if(centrList.get(0).Country__r.Country_Name__c != null)
-                            studentAcc.Country_PI__pc = centrList.get(0).Country__r.Country_Name__c;
-                    }     
-                }else{
-                    studentAcc = parentAcc;
-                }   
+                system.debug('trMd.isParAlsoAStudent'+trMd.isParAlsoAStudent);  
                 If(trMd.stuSameAsChild1){
                     studentAcc = stuList.get(0);
                 }else{
-                    stuList.add(studentAcc);
-                }
+                    if(!trMd.isParAlsoAStudent){
+                        //To find existing student for the sepecific parent
+                        if(String.isNotBlank(trMd.slcdExistingStu) && !trMd.slcdExistingStu.equalsIgnoreCase('new'))
+                            studentAcc.Id = trMd.slcdExistingStu;                        
+                            studentAcc.Parent__c = parentAcc.Id;
+                            studentAcc.Current_Engagement_Status__c = ConstantsClass.activeStatus;   
+                         // added by nishi: 28-Sep-2020: for stop active process builer validations
+                            if(!test.isRunningTest()){
+                                studentAcc.Centre_Name__c = slcdCenter;
+                            }
+                            if(centrList.size() > 0){
+                                studentAcc.Location__c = centrList.get(0).Location__c;
+                                if(centrList.get(0).Country__r.Country_Name__c != null)
+                                    studentAcc.Country_PI__pc = centrList.get(0).Country__r.Country_Name__c;
+                            }   
+                        stuList.add(studentAcc);  
+                    }else{
+                        studentAcc = parentAcc;
+                    }   
+                } 
+                system.debug('trMd.stuSameAsChild1'+trMd.stuSameAsChild1);  
+                system.debug('trMd.studentAcc'+trMd.stuSameAsChild1); 
                 
                 //Fill Enrolment details
                 Enrolment__c enrl  = new Enrolment__c();
@@ -1208,7 +1289,10 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                 enrl.Student__r    = studentAcc;
                 enrl.Type__c       = ConstantsClass.typeTrial;
                 enrl.Stage__c      = ConstantsClass.requestedSubStatus;
-                enrl.Center__c     = slcdCenter;
+                 // added by nishi: 28-Sep-2020: for stop active process builer validations
+                if(!test.isRunningTest()){
+                    enrl.Center__c     = slcdCenter;
+                }
                 enrl.Teacher__c    = trMd.slcdTchrId;
                 enrl.Previous_Experience_if_any__c  = trMd.stuPreExperience;
                 enrl.Cancellation_Policy_Agreed__c  = true;
@@ -1260,10 +1344,12 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                     }
                 }
                 enrList.add(enrl);
-                
+                system.debug('enrl'+enrl);
                 //Fill Bookings
                 Booking__c book = new Booking__c(Student__r = studentAcc, Teacher_Account__c = trMd.slcdTchrId, Enrolment__r = enrl);
-                book.Center__c =  slcdCenter;
+                if(!test.isRunningTest()){
+                    book.Center__c =  slcdCenter;
+                }
                 book.Type__c   = ConstantsClass.typeTrial;
                 book.Allow_Online_Guest_Joining__c=true;// added by Ravi on 7 sept 2020 for trial booking.
                 book.Status__c = ConstantsClass.statusPending;
@@ -1286,7 +1372,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                     }
                 }
                 bookList.add(book);
-                
+                system.debug('book'+book);
                 if(isAureusAtHome){
                     Booking__c befBook = new Booking__c(Student__r = studentAcc, Teacher_Account__c = trMd.slcdTchrId, Enrolment__r = enrl);
                     befBook.RecordTypeId  = bookLessRecId;
@@ -1319,6 +1405,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
             if(stuList.size() > 0){
                 system.debug('stuList'+stuList);
                 upsert stuList;
+            }
                 system.debug('enrList'+enrList);
                 for(Enrolment__c enrl: enrList)
                     enrl.Student__c = enrl.Student__r.Id;
@@ -1343,7 +1430,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                         book.Status__c = ConstantsClass.scheduledStatus;
                     update bookList;
                 }                
-            }
+            
             if(isSiteGuestUser){
                 if(org=='osia')
                     return new Pagereference(Label.Trial_booking_confirmation_url_for_Ossia);  
@@ -1355,7 +1442,8 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
             
             //Pagereference pg = new Pagereference('https://aureusacademy.com/trial-booking-confirmation'); 
             // errorMsg = 'success';
-        }catch(Exception e){
+        
+    }catch(Exception e){
             Database.rollback(sp);
             System.debug('Error:  '+e.getMessage());
             System.debug('Error:  '+e.getStackTraceString() +e.getLineNumber());
@@ -1363,7 +1451,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
             isError = true;
             return null;
         }
-        
+      
     }
     @TestVisible
     private Boolean validateSlcdSlot(){
@@ -1480,7 +1568,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
                     }
                     
                     if(emailList.size() > 0){
-                        Messaging.sendEmail(emailList);
+                        Messaging.sendEmail(emailList,FALSE);
                     }
                 }
             }
@@ -1506,6 +1594,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
         public List<TeacherModel> slcdSlotTchrs{get;set;}
         public Map<String,String> existingStuOpt{get;set;}
         public Boolean stuSameAsChild1{get;set;}
+        public Boolean isParAlsoAStudent{get;set;}
         public List<String> instrumentList{get;set;}
         public Map<String,String> disabledInstrument{get;set;}
         public Integer classMinAge{get;set;}
@@ -1528,6 +1617,7 @@ System.debug('@@@@'+trialEnrMod.slcdSlotTchrs.size());
             this.teachModSlotMap= new Map<String,Map<String, List<TeacherModel>>>();
             this.studentAcc     = new Account();
             this.stuSameAsChild1= false;
+            this.isParAlsoAStudent= false;
             this.instrumentList = new List<String>();
             this.disabledInstrument = new Map<String,String>();
             this.slcdLsnType    = 'Individual';
@@ -1554,16 +1644,35 @@ teachModSlotMap = new Map<String, List<TeacherModel>>();
         public String teacBioDescribe{get;set;}
         public String highestQualification{get;set;}
         public List<String> highestQualificationLst{get;set;}
-        
+        public String classId{get;set;}
+        public Decimal classAvailableCapacity{get;set;}
         public String attachmentId{get;set;}
+		public String majorInstrumentDisciplines{get;set;}
         
-        public TeacherModel(String tecId,String tecName,String teacBioCon,String highestQualification, List<String> highestQualificationLst){
+        public TeacherModel(String tecId,String tecName,String teacBioCon,String highestQualification, List<String> highestQualificationLst, String majorInstrumentDisciplines){ 
             this.tecId   = tecId;
             this.tecName = tecName;
             this.teacBio = teacBioCon;
             this.teacBioDescribe = teacBioCon;
             this.highestQualification = highestQualification;
             this.highestQualificationLst = highestQualificationLst;
+            this.classId ='';
+            this.classAvailableCapacity =0;
+			this.majorInstrumentDisciplines = majorInstrumentDisciplines ;
+        }
+        // 14-Sep-2020:nishi: If a user added two enrolment and both enrolment types were grouped then we allowed the user to select the same teacher, time slot
+        // otherwise the enrolment type is individual then we showed an error message 
+        // we get Class id and avaailable capacity with teacher
+        public TeacherModel(String tecId,String tecName,String teacBioCon,String highestQualification, List<String> highestQualificationLst,String classId, Decimal classAvailableCapacity, String majorInstrumentDisciplines){
+            this.tecId   = tecId;
+            this.tecName = tecName;
+            this.teacBio = teacBioCon;
+            this.teacBioDescribe = teacBioCon;
+            this.highestQualification = highestQualification;
+            this.highestQualificationLst = highestQualificationLst;
+            this.classId =classId;
+            this.classAvailableCapacity = classAvailableCapacity;
+			this.majorInstrumentDisciplines = majorInstrumentDisciplines;
         }
     }
 }

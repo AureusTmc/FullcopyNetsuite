@@ -1,6 +1,6 @@
 public class WebServiceDataFactoryBookingHelper{
     // update Reschedule Booking records 
-    public Static WebServiceModelHelper.mobileAppError createNewBookingReschedule(String bookingId, String teacherId,String oldteacherId, Time newTime,Date newDate, Time oldtime,Date olddate, Integer Duration){
+    public Static WebServiceModelHelper.mobileAppError createNewBookingReschedule(String bookingId, String teacherId,String oldteacherId, Time newTime,Date newDate, Time oldtime,Date olddate, Integer Duration, String lessonTypeNew){
         list<Booking__c> listOfBooking =SOQLQueryHelper.getListOfBookingWithId(bookingId);  
         list<Booking__c> listOfBookingNotPlaceholder =SOQLQueryHelper.getListOfBookingWithIdNotPlaceholder(bookingId);  
         WebServiceModelHelper.mobileAppError mobileAppCode = new WebServiceModelHelper.mobileAppError();
@@ -17,6 +17,8 @@ public class WebServiceDataFactoryBookingHelper{
                 Prev_Booking_Date__c = olddate,
                 Prev_Start_Time__c = oldtime,
                 Is_Reschedule_Booking__c = true,
+                Lesson_Type__c = lessonTypeNew,
+                Is_Lesson_Type_Change__c = true,
                 Individual_Booking__c = true
             );
             if(listOfBooking != null && listOfBooking.size() >0){
@@ -96,9 +98,10 @@ public class WebServiceDataFactoryBookingHelper{
     } 
     
     
-    public static  WebServiceModelHelper.mobileAppError updateCancelBooking(String bookingIds,String cancellationReason,String makeUpReason, String makeupRemark){
+    public static  WebServiceModelHelper.mobileAppError updateCancelBooking(String bookingIds,String cancellationReason,String makeUpReason, String makeupRemark){ 
         Map<String,Date> mapofBookingDate = new Map<String,Date>();  
         map<string,string> mapOfDeductedTime = new Map<string,string>();
+        map<string,string> mapOfDeductedComplimentaryTime  = new Map<string,string>(); // Added By Nishi : 07-10-2021 : For updating complimentary credit
         list<Booking__c> oldlistOfBooking =SOQLQueryHelper.getListOfBookingWithId(bookingIds); 
         list<Booking__c> listOfBooking = oldlistOfBooking;
         WebServiceModelHelper.mobileAppError mobileAppCode = new WebServiceModelHelper.mobileAppError();
@@ -108,30 +111,47 @@ public class WebServiceDataFactoryBookingHelper{
         for(booking__c bookingObj : listOfBooking){
             //system.debug('@@@@bookingObj.Type__c'+bookingObj.Type__c);
             //system.debug('@@@@bookingObj.status__c  '+bookingObj.status__c  );
-            datetime todayDate = DateTime.now();
+            datetime todayDate = DateTime.now().addHours(8);
             datetime bookingDate = DateTime.newInstanceGMT(bookingObj.Booking_Date__c, bookingObj.Start_Time__c);
-            Long bookingDateLong = bookingDate.getTime() ;
+            Long bookingDateLong = bookingDate.getTime();
             Long currentDTLong = todayDate.getTime();
             Long diffMilliSecs = bookingDateLong -currentDTLong;
             system.debug('##bookingDate '+bookingDate );
             system.debug('##todayDate '+todayDate );
             if(bookingObj.Type__c  == ConstantsClass.typeMakeup){
+                
                 //mapOfDeductedTime.put(bookingObj.Make_up_Utilize_Bookings__c.split('-')[0],bookingObj.Make_up_Utilize_Bookings__c.split('-')[1].remove(';'));
                 //system.debug('@@@bookingObj.Make_up_Utilize_Bookings__c'+bookingObj.Make_up_Utilize_Bookings__c); 
                 
                 if(String.isNotBlank(bookingObj.Make_up_Utilize_Bookings__c)) {
-                    List<String> bookingDurData = bookingObj.Make_up_Utilize_Bookings__c.split(';');
-                    for(String bookingEntry : bookingDurData ) {
-                        mapOfDeductedTime.put(bookingEntry.split('-')[0],bookingEntry.split('-')[1].remove(';'));
+                    System.debug('#bookingObj.Make_up_Utilize_Bookings__c ='+bookingObj.Make_up_Utilize_Bookings__c);
+                    //07-10-2021 : Added by nishi : For updating complimentary credit : start
+                    if(bookingObj.Is_Complimentary_Credit__c) {
+                        List<String> bookingDurationData = bookingObj.Make_up_Utilize_Bookings__c.split(';'); //Complimentary1-15;Complimentary2-30;
+                        for(String bookingEntry : bookingDurationData ) {
+                            //Complimentary1-15;
+                            mapOfDeductedComplimentaryTime.put(bookingEntry.split('-')[0],bookingEntry.split('-')[1].remove(';')); //Comlimentary1, 15
+                        }
                     }
+                    //07-10-2021 : Added by nishi : For updating complimentary credit : end
+                    else {
+                       List<String> bookingDurData = bookingObj.Make_up_Utilize_Bookings__c.split(';');
+                        for(String bookingEntry : bookingDurData ) {
+                            mapOfDeductedTime.put(bookingEntry.split('-')[0],bookingEntry.split('-')[1].remove(';'));
+                        } 
+                    }
+                    
                 }
+                
             }else{
-                if(bookingObj.Booking_Date__c != null &&  ((diffMilliSecs/1000/60) > 1400)) {
+                // Changed 1400 to 240 by Nitin 
+                if(bookingObj.Booking_Date__c != null &&  ((diffMilliSecs/1000/60) > 240)) {
                     bookingObj.Make_up_Expiry_Date__c = bookingObj.Booking_Date__c.addDays(120);
                     system.debug('##bookingObj.Make_up_Expiry_Date__c '+bookingObj.Make_up_Expiry_Date__c );
                     system.debug('##mintues'+diffMilliSecs/1000/60);
                 }
-                if(bookingObj.Duration__c != null && (diffMilliSecs/1000/60) > 1400){
+                // Changed 1400 to 240 by Nitin 
+                if(bookingObj.Duration__c != null && (diffMilliSecs/1000/60) > 240){
                     bookingObj.Available_Make_up_Units__c = bookingObj.Duration__c; 
                     system.debug('##bookingObj.Available_Make_up_Units__c '+bookingObj.Available_Make_up_Units__c );
                     system.debug('##mintues'+diffMilliSecs/1000/60);
@@ -149,7 +169,8 @@ checkBooking= True;
             bookingObj.Status__c = ConstantsClass.statusCanceled;
             if(String.isNotBlank(makeUpReason) && makeUpReason == 'Other' && String.isNotBlank(makeupRemark)){
                 bookingObj .Makeup_Reason__c =  makeUpReason;
-                if((diffMilliSecs/1000/60) > 1400){
+                // Changed 1400 to 240 by Nitin 
+                if((diffMilliSecs/1000/60) > 240){
                     bookingObj.Make_up_Credit_Note__c = makeupRemark;
                     
                     system.debug('##bookingObj.Make_up_Credit_Note__c '+bookingObj.Make_up_Credit_Note__c );
@@ -173,16 +194,45 @@ bookingObj.Make_up_Expiry_Date__c  = mapofBookingDate.get(bookingObj.id);
         mobileAppCode.errorCode = 'SUCCESS';
         mobileAppCode.message = 'Booking Reschedule Successfully'; 
         // update listOfBooking;
+        system.debug('@@@listOfBooking'+listOfBooking);
         Database.SaveResult[] saveResults = Database.update(listOfBooking, false);
         for(Database.SaveResult saveResult : saveResults){
             if(!saveResult.isSuccess() && Test.isRunningTest()){
                 mobileAppCode.errorCode = 'INTERNAL_ERROR';
                 mobileAppCode.message = 'Booking Records Not cancelled.';
                 //returnvalue  = '{"errorCode":"INTERNAL_ERROR","message":"Booking Records Not cancelled."}';
+                for(Database.Error err : saveResult.getErrors()) {
+                    System.debug('@@@error '+ err.getFields()+','+err.getMessage() );
+                }
             }
         }
         system.debug('@@@mapOfDeductedTime'+mapOfDeductedTime);
-        if(mapOfDeductedTime != null && mapOfDeductedTime.size() > 0){
+        system.debug('###mapOfDeductedComplimentaryTime'+mapOfDeductedComplimentaryTime);
+        //07-10-2021 - Added by nishi : For update complimentary credit : start
+        if(mapOfDeductedComplimentaryTime != null && mapOfDeductedComplimentaryTime.size() > 0){
+            List<Complementary_Credit__c> listOfDudectedComplimentaryBooking =SOQLQueryHelper.getListOfComplimentaryBookingWithId(string.join(new List<String>(mapOfDeductedComplimentaryTime.keySet()),','));
+            system.debug('###listOfDudectedComplimentaryBooking'+listOfDudectedComplimentaryBooking);
+            if(listOfDudectedComplimentaryBooking!= null && listOfDudectedComplimentaryBooking.size() >0 ){
+                for(Complementary_Credit__c deductedComplimentary: listOfDudectedComplimentaryBooking ){
+                    deductedComplimentary.Available_credit_Min__c  += Integer.valueOf(mapOfDeductedComplimentaryTime.get(deductedComplimentary.id));
+                } 
+                system.debug('###listOfDudectedComplimentaryBooking'+listOfDudectedComplimentaryBooking);
+                saveResults = Database.update(listOfDudectedComplimentaryBooking, false);
+                for(Database.SaveResult saveResult : saveResults){
+                    if(!saveResult.isSuccess() && Test.isRunningTest()){
+                        mobileAppCode.errorCode = 'INTERNAL_ERROR';
+                        mobileAppCode.message = 'Booking Records Not updated.';
+                        // returnvalue  = '{"errorCode":"INTERNAL_ERROR","message":"Booking Records Not updates."}';
+                        for(Database.Error err : saveResult.getErrors()) {
+                            System.debug('@@@error '+ err.getFields()+','+err.getMessage() );
+                        }
+                    }
+                } 
+                system.debug('###saveResults'+saveResults);
+            }
+        }
+        //07-10-2021 - Added by nishi : For update complimentary credit : end
+        else if(mapOfDeductedTime != null && mapOfDeductedTime.size() > 0){ 
             list<Booking__c> listOfDudectedBooking =SOQLQueryHelper.getListOfBookingWithId(string.join(new List<String>(mapOfDeductedTime.keySet()),','));
             if(listOfDudectedBooking!= null && listOfDudectedBooking.size() >0 ){
                 for(Booking__c deductedBooking: listOfDudectedBooking ){
@@ -195,6 +245,9 @@ bookingObj.Make_up_Expiry_Date__c  = mapofBookingDate.get(bookingObj.id);
                         mobileAppCode.errorCode = 'INTERNAL_ERROR';
                         mobileAppCode.message = 'Booking Records Not updates.';
                         // returnvalue  = '{"errorCode":"INTERNAL_ERROR","message":"Booking Records Not updates."}';
+                         for(Database.Error err : saveResult.getErrors()) {
+                            System.debug('@@@error '+ err.getFields()+','+err.getMessage() );
+                        }
                     }
                 } 
             }
@@ -210,6 +263,9 @@ bookingObj.Make_up_Expiry_Date__c  = mapofBookingDate.get(bookingObj.id);
                     mobileAppCode.errorCode = 'INTERNAL_ERROR';
                     mobileAppCode.message = 'Placeholder Records Not Inserted.';
                     //returnvalue  = '{"errorCode":"INTERNAL_ERROR","message":"Placeholder Records Not Inserted."}';
+                    for(Database.Error err : sr.getErrors()) {
+                        System.debug('@@@error '+ err.getFields()+','+err.getMessage() );
+                    }
                 }
             }
         }

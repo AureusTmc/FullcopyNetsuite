@@ -1,0 +1,124 @@
+<apex:component controller="AutomatingMakeupEnrolmentCtrl" allowDML="True" access="global">
+    <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/jquery.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.FullCalender, '/moment.min.js')}" />
+    <apex:attribute name="bookingId" description="" type="String" assignTo="{!regularBookingId}" />
+    <apex:attribute name="isPage" description="" type="Boolean" default="false" />
+    <apex:outputPanel rendered="{!isPage}">
+        <div class="slds-p-around_medium" style="{!iF(isOssiaOrg,'font-size:15px; background-color: #ed1c24; text-align:center; color:#fff; font-weight:bold;','font-size: 15px; background-color: #ffbf2f; text-align:center; color:#fff; font-weight:bold;')}">{!IF(isOssiaOrg,'Ossia Makup Process','Aureus Academy Makup Process')}
+        </div>
+        <p style="text-align:center;">
+            <apex:image url="{!iF(isOssiaOrg,$Resource.Osia_Logo,$Resource.Aureus_logo_png)}" />
+        </p>
+    </apex:outputPanel>
+
+    <apex:outputPanel id="availTimeslots">
+        <!-- <apex:outputPanel id="errorMessage" rendered="{!isError}">
+            <div class="slds-text-align_center slds-is-relative cmpErrDiv">
+                <div class="slds-notify slds-notify_toast slds-theme_error slds-m-left_none slds-m-right_medium" role="status">
+                    <div class="slds-notify__content">
+                        <h2 class="slds-text-heading_small contentDiv">{!errorMessage}</h2>
+                    </div>
+                </div>
+            </div>
+        </apex:outputPanel>
+        <apex:outputPanel id="sucessMessage" rendered="{!isSucess}">
+            <div class="slds-text-align_center slds-is-relative cmpErrDiv">
+                <div class="slds-notify slds-notify_toast slds-theme_success slds-m-left_none slds-m-right_medium" role="status">
+                    <div class="slds-notify__content">
+                        <h2 class="slds-text-heading_small contentDiv">{!errorMessage}</h2>
+                    </div>
+                </div>
+            </div>
+        </apex:outputPanel>
+   
+        <apex:actionStatus id="spinner" styleClass="status">
+            <apex:facet name="start">
+                <div class="demo-only demo--inverse " style="height:100%;width:100%;z-index:200;position:fixed">
+                    <div class="slds-spinner_container" style="height:100%;width:100%;">
+                        <div role="status" class="slds-spinner slds-spinner_large slds-spinner_brand">
+                            <span class="slds-assistive-text">Loading</span>
+                            <div class="slds-spinner__dot-a"></div>
+                            <div class="slds-spinner__dot-b"></div>
+                        </div>
+                    </div>
+                </div>
+            </apex:facet>
+        </apex:actionStatus> -->
+        <!-- <apex:outputPanel id="errorMessage" rendered="{!if(isError || isSucess , true,false)}">
+            <script>
+                alert('{!errorMessage}');
+            </script>
+        </apex:outputPanel> -->
+        <apex:repeat value="{!mapOfMakeupAvailTimeslots}" var="duration">
+            <div class="new-container class-true">
+                <div class="slds-text-heading_large  slds-p-around_small slds-text-align_center" style="font-weight:bold;">Schadule New Makeup Booking ({!duration} Mins)</div>
+                <div class="container slds-p-around_small ">
+                    <table class="slds-table slds-table_cell-buffer slds-table_header-hidden slds-table_bordered">
+                        <thead class="slds-assistive-text">
+                            <tr class="slds-line-height_reset">
+                                <th class="" scope="col">
+                                    <div class="slds-truncate" title="Time Slot">Time Slot</div>
+                                </th>
+                                <th class="" scope="col">
+                                    <div class="slds-truncate" title="Action">Action</div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <apex:repeat value="{!mapOfMakeupAvailTimeslots[duration]}" var="tslot">
+                                <tr class="slds-hint-parent">
+                                    <td data-label="Time Slot">
+                                        <div class="slds-truncate" title="{!tslot}" id="{!tslot}-{!duration}"></div>
+                                        <script>
+                                            var starttime = '{!tslot}';
+                                            var duration = {!duration};
+                                            var realtimeslot = moment(starttime, ["h:mm A"]).add(duration, 'm').format("h:mm A");
+                                            var div = document.getElementById(starttime + '-' + duration);
+                                            div.innerHTML = starttime + ' - ' + realtimeslot;
+                                            div.title = starttime + ' - ' + realtimeslot;
+                                        </script>
+                                    </td>
+                                    <td data-label="Schadule Makeup Booking">
+                                        <div class="slds-truncate" title="Schadule Makeup Booking">
+                                            <button class="{!if(isOssiaOrg,'slds-button btn-red slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-m-bottom_small slds-p-horizontal_large slds-m-around_small','slds-button btn-yellow slds-p-vertical_xxx-small slds-large-p-horizontal_xx-large slds-m-bottom_small slds-p-horizontal_large slds-m-around_small')}"
+                                                onClick="createmakeupBooking('{!tslot}','{!duration}');return false;">Schadule Makeup Booking</button>
+
+                                        </div>
+                                    </td>
+                                </tr>
+                            </apex:repeat>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </apex:repeat>
+    </apex:outputPanel>
+    <!-- <apex:actionFunction name="createBooking" action="{!createBooking}" reRender="availTimeslots" status="spinner">
+        <apex:param name="realtimeslot" value="" assignTo="{!selectedtimeslotRealTime}" />
+        <apex:param name="timeslot" value="" assignTo="{!selectedtimeslot}" />
+        <apex:param name="duration" value="" assignTo="{!selectedduration}" />
+    </apex:actionFunction> -->
+
+    <script>
+        function createmakeupBooking(timeslot, duration) {
+            var starttime = timeslot;
+            var realtimeslot = moment(starttime, ["h:mm A"]).format("HH:mm:ss");;
+            console.log(realtimeslot);
+            console.log(starttime);
+            console.log(duration);
+            if (confirm("Are you sure to book this " + duration + " mins Booking?")) {
+                //createBooking(realtimeslot, timeslot, duration);
+                window.open('/apex/CreateNewMakeupBookings?BookingId={!regularBookingId}&timeslotRealTime='+realtimeslot+'&bookingTime='+starttime+'&duration='+duration,'targetWindow',
+                                   `toolbar=no,
+                                    location=no,
+                                    status=no,
+                                    menubar=no,
+                                    scrollbars=yes,
+                                    resizable=yes,
+                                    width=400,
+                                    height=400`);
+            }
+        }
+    </script>
+</apex:component>

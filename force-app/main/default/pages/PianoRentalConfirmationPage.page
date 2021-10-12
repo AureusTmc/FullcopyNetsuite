@@ -1,0 +1,171 @@
+<apex:page showHeader="false" standardStylesheets="false" sidebar="false" controller="EnrolmentThankyouIpadCntrl" action="{!generateInvPdf}" docType="html-5.0" applyBodyTag="False" applyHtmlTag="False">
+    <head>
+        <title>Music SCHOOL</title>
+       <!-- <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous"/>-->
+        <!--<apex:slds /> -->
+        <apex:stylesheet value="{!URLFOR($Resource.SLDS283, '/styles/salesforce-lightning-design-system.min.css')}"/>
+    </head>
+    
+    <body class="slds-scope" style=" width: 100%;">
+        <div class="-content">
+            <div class="slds-grid slds-wrap slds-grid--pull-padded0 slds-grid--align-center container">
+                
+            </div>
+            <div class="slds-grid slds-wrap slds-grid--align-center" style="width:100%">
+                <div class="slds-col content-box">
+                
+                    <div class="header slds-col"><div class="slds-col">
+                    <h2 style="text-align: center;font-size: 26px;/* margin-bottom: 20px; */line-height: normal;font-weight: bold;">Welcome to</h2>
+                    <a href="#" class="logo"><!--<img src="https://aureusacademy.com/wp-content/uploads/2017/03/cropped-Aureus-Logo-Small.png"/>--><apex:image url="{!iF(isOssia,$Resource.Osia_Logo,$Resource.Aureus_logo_png)}" /></a></div>
+                        
+                    </div>
+                    <apex:form styleclass="slds-col">
+                        <apex:actionFunction name="redirectToAdminHome"  action="/apex/adminhome" />
+                        
+                        <!-------  Fourth block  Start ------------------->
+                        <div class="fourthCmpcls" id="fourthCmpId"> 
+                            <!--<div class="slds-col "><span class="main-title">THANK YOU</span></div>-->
+                            <div class="content-body slds-col">
+                                <div class="slds-form-element">
+                                    <fieldset class="slds-form-element final-step">
+                                        <div class="slds-form-element" style="text-align:center;">
+                                            <img src="{!$Resource.thankyou}" style="text-align:center;margin-top: 40px;margin-bottom: 0;"/>
+                                        </div>
+                                    </fieldset>
+                                    <apex:outputPanel rendered="{!$CurrentPage.parameters.type =='Enrolment'}">
+                                        <p style="font-size: 16px; margin-top: 0; text-align:center;">Are you interested in renting a Piano?</p>
+                                        <div class="slds-form-element__control slds-grid slds-wrap slds-align_absolute-center">
+                                            <button class="slds-button custom-btn" style="float:none;" type="submit">Yes</button>
+                                            <button class="slds-button custom-btn" style="float:none;" type="submit">No</button>
+                                        </div>
+                                    </apex:outputPanel>
+                                    <h2 style="text-align: center;font-size: 14px;margin-bottom: 15px;line-height: normal; margin-top: 20px;">You will receive an email notification for further steps.</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <center><a href="#" onclick="redirectToAdminHome();" class="slds-button {!IF(isOssia,'custom-btn_Ossia','custom-btn')}" style="float:none;">Click here to go back Home</a></center>
+                        <!-------  Fourth block  End ------------------->
+                    </apex:form>
+                </div>
+            </div>
+        </div>
+    </body>
+    <style>
+        body{
+       <!-- background-image: url("{!$Resource.music}") !important;-->
+        background-size:100% 100% !important;
+        background-repeat:no-repeat !important;
+        background-position:left !important;
+        background-color: #f6f9fc !important;
+        
+        }
+        .container {
+        max-width:650px;
+        }
+        span.main-title {
+        color: #200a28;
+        font-size: 24px;
+        border-radius: 0;
+        font-weight: bold;
+        margin-bottom: 10px;
+        display: block;
+        line-height: 30px;
+        padding-bottom:10px;
+        text-align:center;
+        }
+        .content-box {
+        margin: 50px 0 ;
+        width: 90%;
+        max-width: 550px;
+        background: rgba(255, 255, 255, 1);
+        border-radius: 10px;
+        padding: 10px 0 0px;
+        }
+        .header {
+        background: #fff;
+        border-radius: 10px 10px 0 0px;
+        padding: 10px 10px 0;
+        text-align: center;
+        }
+        form {
+        padding: 0 10px;
+        }
+        .info-box {
+        border: 1px solid #eee;
+        color: #333;
+        font-size: 13px;
+        padding: 10px 10px !important;
+        border-radius: 5px;
+        margin: 10px 0;
+        background: #f7f7f7;
+        }
+        .content-body span.slds-form-element__label {
+        display: block;
+        font-size: 14px !important;
+        }
+        
+        .content-body span.slds-radio {
+        margin: 10px 0;
+        }
+        form .custom-btn {
+        padding: 5px 10px 3px !important;
+        color: #fff !important;
+        background: #f79c1a !important;
+        font-size: 16px !important;
+        text-transform: uppercase;
+        line-height: 20px !important;
+        margin: 15px 0 20px;
+        float:right;
+        }
+        
+        .slds-form-element {
+        margin-bottom: 15px;
+        }
+        @font-face {
+        font-family: "Font Awesome 5 Pro";
+        src: url(https://use.fontawesome.com/releases/v5.5.0/css/all.css);
+        }
+        .content-body {
+        overflow-y: auto;
+        }
+        
+        .content-box {
+        box-shadow: 1px 2px 10px #f79c1a;
+        }
+        html{
+            min-height: 100vh;
+            justify-content: center;
+            align-items: center;
+            align-content: center;
+            display: flex;
+            flex-wrap: wrap;
+        }
+         /* Updated by Rajesh, 30th July 2019, To responsive makeup page for mobile devices */
+        @media(max-width:991px){
+            body{
+                background-image:none !important;
+                background-color:#fff !important;
+            }
+            form{
+                padding: 0;
+            }
+            .content-box{
+                width:100%;
+                max-width:100%;
+                margin: auto 0px;
+                border-radius: 0px;
+            }
+        }
+        <!--@juneid 21 Aug 2020, ossia Org Css-->
+form .custom-btn_Ossia {
+        padding: 5px 10px 3px !important;
+        color: #fff !important;
+        background: #ed1c24 !important;
+        font-size: 16px !important;
+        text-transform: uppercase;
+        line-height: 20px !important;
+        margin: 15px 0 20px;
+        float:right;
+        }
+    </style>
+</apex:page>

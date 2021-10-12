@@ -22,10 +22,13 @@ public class PianoRentalHelperController {
                     Selling_price__c,Delivery_Charges__c,Parent__r.PersonMobilePhone,Parent__r.PersonEmail,
                     Final_Delivery_Timeslot__c,Parent__r.FirstName, Parent__r.LastName,Parent__r.BillingStreet,
                     Parent__r.BillingCity, Parent__r.BillingCountry,Parent__r.Phone,Parent__r.id,Parent_Email__c,
+                    Min_Notice_Inst_Rental_Termination__c,Min_Commit_Dur_Inst_Rental__c,// added by nishi: 12-Nov-2020 : for get piano Terminating months
+                    Free_Rental_Expiration_Date__c,Free_Rental_Month__c,// added by nishi: 15-Feb-2021 : for get Enrolment free rental details
                     (SELECT Id,Subscription__c,Status__c,Subscription__r.Next_Bill_Date__c,Subscription__r.Subscription_Start_Date__c,Subscription__r.Parent__c,Subscription__r.Center__c,
                     Subscription_Expiry_Date__c,Subscription__r.Parent__r.Stripe_Customer_Id__c, Amount__c,Next_Bill_Date__c,Subscription_Start_Date__c,Subscription__r.Subscription_End_Date__c
                     FROM Subscription_Line_Items__r 
-                    WHERE Subscription__c != NULL) 
+                    WHERE Subscription__c != NULL)
+                    
                     FROM Enrolment__c 
                     WHERE Id =: enrolmentIds];
     }
@@ -34,7 +37,8 @@ public class PianoRentalHelperController {
     public static List<User> getPackerAndRemoverUser(){
         return [SELECT  Id, FirstName, LastName, Name, Email 
                 FROM User 
-                Where Name='Packers and Movers'];
+                Where Name=:System.Label.Packers_and_Movers_User_Name];
+                //commented by nishi: 18-sep-2020: for admin can set Packers and Movers user name Where Name='Packers and Movers'];
     } 
    	
     // current month invoice according to given status or enrolment id
@@ -73,19 +77,22 @@ public class PianoRentalHelperController {
         return invoicePianoRent;
     }
     
+   
     /// 8-Feb-2020: jatin : for insert payment and send email 
     public static void getPaymentForInvoices(Map<String,String> mapOfInvoiceId,string templateName){
         system.debug('mapOfInvoiceId'+mapOfInvoiceId);
         List<Invoice__c> listOfInvoice = [Select Id,Name,Parent_Account__c,Parent_Account__r.PersonContactId,Parent_Account__r.Stripe_Customer_Id__c, 
-                                          Total_Amount__c,subscription__c,Balance_Amount__c,Paid_Amount__c,
-                                          Parent_Account__r.personEmail,Parent_Account__r.Centre_Name__r.Location__c,
-                                          Center__r.Country__c, Center__r.Country__r.Id, Center__r.Country__r.Tax_Rate__c, 
-                                          Center__r.Country__r.Currency_Code__c, Center__r.Country__r.Stripe_Base_Url__c, 
-                                          Center__r.Country__r.Stripe_Secret_Key__c ,
-                                          Center__r.Location__c,status__c
-                                          FROM Invoice__c
-                                          WHERE Id In:mapOfInvoiceId.keySet()];
-                                          system.debug('listOfInvoice'+listOfInvoice);
+                                            Total_Amount__c,subscription__c,Balance_Amount__c,Paid_Amount__c,Parent_Account__r.Name,
+                                            Parent_Account__r.personEmail,Parent_Account__r.Centre_Name__r.Location__c,
+                                            Center__r.Country__c, Center__r.Country__r.Id, Center__r.Country__r.Tax_Rate__c, 
+                                            Center__r.Country__r.Currency_Code__c, Center__r.Country__r.Stripe_Base_Url__c, 
+                                            Center__r.Country__r.Stripe_Secret_Key__c,
+                                            Center__r.Organisation__c, Center__r.Organisation__r.Id, /*Center__r.Organisation__r.Tax_Rate__c, */
+                                            Center__r.Organisation__r.Country__r.Currency_Code__c, Center__r.Organisation__r.Stripe_Base_Url__c, 
+                                            Center__r.Organisation__r.Stripe_Secret_Key__c,Center__r.Organisation__r.Name
+                                            FROM Invoice__c 
+                                            WHERE Id In:mapOfInvoiceId.keySet()];
+                                            system.debug('listOfInvoice'+listOfInvoice);
         Set<String> successinvoiceIdSet = new Set<String>();
         List<Invoice__c> listOfInvoicesTOUpdate = new List<Invoice__c>();
         List<Invoice__c> DeclinedInvoiceList = new List<Invoice__c>();
@@ -114,6 +121,51 @@ public class PianoRentalHelperController {
 
         system.debug('@@listOfEmailTemplate'+listOfEmailTemplate);
         Map<String,Messaging.SingleEmailMessage> sendSingleEmailMessage = new Map<String,Messaging.SingleEmailMessage>();
+        Set<String>  invoiceIds = new Set<String>();
+        for(Invoice__c objInvoice : listOfInvoice){
+            if(objInvoice.Balance_Amount__c == 0.00 || objInvoice.Balance_Amount__c == 0){
+                listOfInvoicesTOUpdate.add(new invoice__c(id = objInvoice.id,status__c = ConstantsClass.paidStatus));
+                invoiceIds.add(objInvoice.id);
+            }   
+        }
+        if(listOfInvoicesTOUpdate != null && listOfInvoicesTOUpdate.size()> 0 ){
+            update listOfInvoicesTOUpdate;
+        }
+         // 16-dec-2020:nishi:start: as per discussion we centeralized a monthly payment batch class method 
+        List<Invoice__c> listOfDueInvoice = [Select Id,Name,Parent_Account__c,Parent_Account__r.PersonContactId,Parent_Account__r.Stripe_Customer_Id__c, 
+                                            Total_Amount__c,subscription__c,Balance_Amount__c,Paid_Amount__c,Parent_Account__r.Name,
+                                            Parent_Account__r.personEmail,Parent_Account__r.Centre_Name__r.Location__c,
+                                            Center__r.Country__c, Center__r.Country__r.Id, Center__r.Country__r.Tax_Rate__c, 
+                                            Center__r.Country__r.Currency_Code__c, Center__r.Country__r.Stripe_Base_Url__c, 
+                                            Center__r.Country__r.Stripe_Secret_Key__c,
+                                            Center__r.Organisation__c, Center__r.Organisation__r.Id, /*Center__r.Organisation__r.Tax_Rate__c, */
+                                            Center__r.Organisation__r.Country__r.Currency_Code__c, Center__r.Organisation__r.Stripe_Base_Url__c, 
+                                            Center__r.Organisation__r.Stripe_Secret_Key__c,Center__r.Organisation__r.Name
+                                            FROM Invoice__c 
+                                            WHERE Id In:mapOfInvoiceId.keySet()
+                                            and Status__c=:ConstantsClass.dueStatus];  
+        invoiceIds.addAll(MonthlyPaymentBatchHelper.getPaymentForInvoices(listOfDueInvoice));
+        if(listOfInvoice != null && listOfInvoice.size() > 0 && listOfEmailTemplate != null && listOfEmailTemplate.size() > 0 ){
+            //16-dec-2020:nishi: if we find sucessfull invoice ids then we send a confirmation email templated to customer 
+            for(Invoice__c objInvoice : listOfInvoice){
+                if((invoiceIds.contains(objInvoice.id) && mapOfInvoiceId.containsKey(objInvoice.Id)) || objInvoice.Status__c != ConstantsClass.dueStatus){
+                    string personContactId,centerId;
+                    if(objInvoice.Parent_Account__r != null && string.isNotBlank(objInvoice.Parent_Account__r.PersonContactId)){
+                        personContactId = objInvoice.Parent_Account__r.PersonContactId;
+                    }
+                    if(objInvoice.Parent_Account__r != null && objInvoice.Parent_Account__r.Centre_Name__r != null &&
+                        string.isNotBlank(objInvoice.Parent_Account__r.Centre_Name__r.Location__c) ){
+                        centerId = objInvoice.Parent_Account__r.Centre_Name__r.Location__c;
+                    }
+                    sendSingleEmailMessage.put(objInvoice.Id,AureusUtility.getSingleEmailMessage(listOfEmailTemplate[0].Id,personContactId,mapOfInvoiceId.get(objInvoice.Id),centerId));
+                }
+            }
+        }
+        // 16-dec-2020:nishi:start: as per discussion we centeralized a monthly payment batch class method   
+
+          
+
+        /* 16-dec-2020:commented by nishi:start: as per discussion we centeralized a monthly payment batch class method so we commented old code
         for(Invoice__c objInvoice : listOfInvoice){
             try{
                 //Country Object to store the country object for the perticular Invoice...
@@ -185,11 +237,11 @@ public class PianoRentalHelperController {
                 System.debug('@@@@Exception '+ex.getLineNumber());
             }
             
-        }
+        }16-dec-2020:commented by nishi:end: as per discussion we centeralized a monthly payment batch class method so we commented old code*/
         if(sendSingleEmailMessage != null && sendSingleEmailMessage.size() > 0 ){
             Messaging.sendEmail(sendSingleEmailMessage.values(), FALSE); 
         }
-        system.debug('@@@listOfInvoicesTOUpdate'+listOfInvoicesTOUpdate);
+        /*system.debug('@@@listOfInvoicesTOUpdate'+listOfInvoicesTOUpdate);
         system.debug('@@@sendSingleEmailMessage'+sendSingleEmailMessage);
         if(listOfInvoicesTOUpdate.size()>0){
             Database.Update(listOfInvoicesTOUpdate,false);
@@ -199,7 +251,7 @@ public class PianoRentalHelperController {
             if(listOfPayment.size() > 0){
                 Database.insert(listOfPayment,false);
             }
-        }  
+        } */ 
     }
 
 
@@ -241,7 +293,7 @@ public class PianoRentalHelperController {
             mail.saveAsActivity = true;
             String location = inv.Center__r.Location__c;
             if(String.isNotBlank(location) && mapOfOrgWide.containsKey(location)){
-                mail.setOrgWideEmailAddressId(mapOfOrgWide.get(location).Id);
+                mail.setOrgWideEmailAddressId(mapOfOrgWide.get(location).Id);//mapOfOrgWide.get('Aureus Westgate').Id);
             }
             List<Messaging.Emailfileattachment> fileAttachments = new List<Messaging.Emailfileattachment>();
             mapOfAttachment = mapOfInvoiceAttachment.get(inv.id); 

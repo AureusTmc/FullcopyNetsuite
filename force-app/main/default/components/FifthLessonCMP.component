@@ -128,7 +128,7 @@
                              fifthLessonStr,  
                             function(result, event){
                                 if(result){
-                                    console.log('@@@Result', result);
+                                   //console.log('@@@Result', result);
 
                                     refreshFifthLessonPopup();
                                     if(!result.amm || result.duration > result.amm){
@@ -197,7 +197,7 @@
                 }
 
                 function replaceLesson(lessonId, origin){
-                    console.log('@@@@replaceLesson',lessonId, origin);
+                   //console.log('@@@@replaceLesson',lessonId, origin);
                     $('#confirmModalFifthLesson').addClass('slds-hide');
 
                     if(!caseId){

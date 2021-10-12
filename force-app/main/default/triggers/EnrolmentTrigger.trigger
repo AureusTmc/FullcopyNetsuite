@@ -90,14 +90,19 @@ trigger EnrolmentTrigger on Enrolment__c (before Insert, after Insert,before Upd
         if(trigger.isInsert){
             //By Rajesh (Date 6-4-2019), This process is used to manage case(Sales Enquiry) for the trial request
             List<Enrolment__c> processEnrList = new List<Enrolment__c>();
-             
+            List<Enrolment__c> processPianoRentalEnrList = new List<Enrolment__c>(); 
              String enrollmentInstrumentRecTypeId = Schema.SObjectType.Enrolment__c.getRecordTypeInfosByName().get(ConstantsClass.enrollmentInstrumentRecTypeName).getRecordTypeId();
        
             for(Enrolment__c enrol: trigger.new){
                 if(enrol.Parent__c != null && enrol.Type__c == ConstantsClass.trialStatus && enrol.Stage__c == ConstantsClass.requestedSubStatus)
                     processEnrList.add(enrol);
-              //  else if(enrol.Parent__c != null && enrol.Type__c == ConstantsClass.enrollmentTypeInstrument && enrol.Stage__c == ConstantsClass.enrollmentPianoViewingBookedStage)
-                   // processEnrList.add(enrol);
+               
+                //added  by nishi:28-apr-2021:start:As per discussion with rajesh if enrolment record type is instrument rental then we create instrument rental case record
+                else if(enrol.Parent__c != null && enrol.Type__c == ConstantsClass.enrollmentTypeInstrument && enrol.recordtypeId == enrollmentInstrumentRecTypeId){
+                    processPianoRentalEnrList.add(enrol);
+                } 
+                //added  by nishi: 28-apr-2021:end: As per discussion with rajeshif enrolment record type is instrument rental then we create instrument rental case record
+             
                 //Start: added by nishi: 5-Aug-2020: for rollup referredBy Ids
                  //commented by nishi: 7-aug: for deploy Only resource CHnages
                  if(string.isNotBlank(enrol.Referred_by__c) ){
@@ -106,9 +111,15 @@ trigger EnrolmentTrigger on Enrolment__c (before Insert, after Insert,before Upd
                  //commented by nishi: 7-aug: for deploy Only resource CHnages
                 //end added by nishi: 5-Aug-2020: for rollup referredBy Ids  
             }
-             
-            if(processEnrList.size() > 0)   
-                EnrolmentTriggerHandler.manageSalesEnquiryCase(processEnrList);
+            system.debug('processEnrList'+processEnrList); 
+            if(processEnrList != null && processEnrList.size() > 0)   
+                EnrolmentTriggerHandler.manageSalesEnquiryCase(processEnrList,true);
+           
+            //added by nishi: 28-apr-2021:As per discussion with rajesh  we create instrument rental case records     
+            if(processPianoRentalEnrList != null && processPianoRentalEnrList.size() > 0)   
+                EnrolmentTriggerHandler.manageSalesEnquiryCase(processPianoRentalEnrList,false); 
+           //added by nishi: 28-apr-2021: As per discussion with rajesh we create instrument rental case records     
+           
             //new EnrolmentTriggerHandler().manageSalesEnquiry();
             //Merge the Code of 2nd Trigger UpdateEnrolmentNo
 
@@ -138,14 +149,37 @@ trigger EnrolmentTrigger on Enrolment__c (before Insert, after Insert,before Upd
             
             //@By Rajesh (Date 03-04-2019), Update Lead Case and opportunity stages for the Sales enquiry process
             list<Enrolment__c> enrList = new list<Enrolment__c>();
+            
+             //added by nishi: 28-apr-2021: As per discussion with rajesh  we create instrument rental case records
+            list<Enrolment__c> enrpianorentalList = new list<Enrolment__c>();
+            String enrollmentInstrumentRecTypeId = Schema.SObjectType.Enrolment__c.getRecordTypeInfosByName().get(ConstantsClass.enrollmentInstrumentRecTypeName).getRecordTypeId();
+             //added by nishi: 28-apr-2021:end: As per discussion with rajesh we create  instrument rental case records
+             
             for(Enrolment__c enrol:trigger.new){
                 if((String.isNotBlank(enrol.Type__c) && String.isNotBlank(enrol.Stage__c)) && enrol.Type__c != Trigger.oldMap.get(enrol.Id).Type__c || enrol.Stage__c != Trigger.oldMap.get(enrol.Id).Stage__c)
+                    //added  by nishi:28-apr-2021:start: As per discussion with rajeshif enrolment record type is instrument rental then we create instrument rental case record
+               
+                    if(enrol.RecordTypeId == enrollmentInstrumentRecTypeId){
+                        enrpianorentalList.add(enrol);
+                   }else{
+                    //added  by nishi:28-apr-2021:end:As per discussion with rajesh if enrolment record type is instrument rental then we create instrument rental case record
+                
                     enrList.add(enrol);
+                   }
             } 
-            if(enrList.size() > 0 && EnrolmentTriggerHandler.isFirstTime){
-                EnrolmentTriggerHandler.isFirstTime = False;
-                EnrolmentTriggerHandler.updateStatusForSalesProcess(enrList);
+            if(EnrolmentTriggerHandler.isFirstTime){
+                if(enrList != null && enrList.size() > 0 ){
+                    EnrolmentTriggerHandler.isFirstTime = False;
+                    EnrolmentTriggerHandler.updateStatusForSalesProcess(enrList,true);
+                }
+                 //added by nishi: 28-apr-2021: As per discussion with rajesh  we create instrument rental case records
+                if(enrpianorentalList != null && enrpianorentalList.size() > 0){
+                    EnrolmentTriggerHandler.isFirstTime = False;
+                    EnrolmentTriggerHandler.updateStatusForSalesProcess(enrpianorentalList,false);
+                }
+                 //added by nishi: 28-apr-2021: As per discussion with rajesh we create  instrument rental case records
             }
+           
             
             Map<String,Enrolment__c> mapOfCancelEnrol = new Map<String,Enrolment__c>();
             /*
@@ -241,6 +275,7 @@ trigger EnrolmentTrigger on Enrolment__c (before Insert, after Insert,before Upd
         } 
         if(Trigger.isUpdate){
             List<Enrolment__c> enrList= new List<Enrolment__c>();
+            set<id> teacherIds= new set<id>();
             for(Enrolment__c enrObj:Trigger.New){
                 if (Trigger.oldmap.get(enrObj.Id).Type__c != enrObj.Type__c 
                 || Trigger.oldmap.get(enrObj.Id).Stage__c != enrObj.Stage__c 
@@ -248,14 +283,19 @@ trigger EnrolmentTrigger on Enrolment__c (before Insert, after Insert,before Upd
                 Trigger.oldmap.get(enrObj.Id).Package_Process_Type__c != enrObj.Package_Process_Type__c) 
                 {
                     enrList.add(enrObj);
-                                                                        
+                    if(string.isNotBlank(enrObj.Teacher__c)){
+                        teacherIds.add(enrObj.Teacher__c);   
+                    }       
                 }
                 //system.debug('---enrList'+enrList);
                 if(enrList.size()>0){
                    // system.debug('enrList'+enrList);
                    EnrolmentTriggerHandler.updatetotalEnrolment(enrList); 
+                  
                 }
-                
+                if(teacherIds != null && teacherIds.size() > 0){
+                    EnrolmentTriggerHandler.updateTeacherFortotalActiveEnrolments(teacherIds); 
+                }
             }
           
         }
@@ -291,7 +331,8 @@ trigger EnrolmentTrigger on Enrolment__c (before Insert, after Insert,before Upd
                             listOfClass.add(enrObj.Class__c);
                         }
                     // added by jatin: 30-Dec-2019 : for Rental invoice will be generated and sent to the customer via email along with the confirmed timeslot
-                    if(enrObj.Type__c == ConstantsClass.enrollmentTypeInstrument && enrObj.RecordTypeId == enrollmentInstrumentRecTypeId && enrObj.Stage__c ==ConstantsClass.enrollmentPianoRentalActiveStage){
+                    if(enrObj.Type__c == ConstantsClass.enrollmentTypeInstrument && enrObj.RecordTypeId == enrollmentInstrumentRecTypeId && 
+                       enrObj.Stage__c ==ConstantsClass.enrollmentPianoRentalActiveStage){
                         if((Trigger.oldmap.get(enrObj.Id).Final_Delivery_date__c != enrObj.Final_Delivery_date__c 
                                 && Trigger.oldmap.get(enrObj.Id).Final_Delivery_date__c == null 
                                 &&  enrObj.Final_Delivery_date__c != Null )
@@ -385,6 +426,61 @@ trigger EnrolmentTrigger on Enrolment__c (before Insert, after Insert,before Upd
         }
     }
 
-
-    
+    //Start : added by Nishi : 4-Mar-2021 :Aureus Q1 2021: for update Waitlist_Status__c   emailed to  Assigned when enrolment update teacher/lesson time/ lesosn day according to  Preferred detials 
+    if(trigger.isBefore && trigger.isUpdate){
+        set<String> enroledStage = New Set<String>{ConstantsClass.enroledStatus,ConstantsClass.enrollStageAttended,ConstantsClass.PendingEnrolment,'Requested','Booked'};
+        for(Enrolment__c enrolObj:trigger.new){
+            if((String.isNotBlank(enrolObj.Type__c) && String.isNotBlank(enrolObj.Stage__c)) && 
+                enrolObj.Type__c == ConstantsClass.enrolRegularStatus && enroledStage.contains(enrolObj.Stage__c)  &&
+                enrolObj.Lesson_Start_time__c != null &&   String.isNotBlank(enrolObj.Lesson_Day__c)&& String.isNotBlank(enrolObj.Teacher__c) &&  
+                (enrolObj.Lesson_Start_time__c != Trigger.oldmap.get(enrolObj.Id).Lesson_Start_time__c ||
+                enrolObj.Teacher__c != Trigger.oldmap.get(enrolObj.Id).Teacher__c ||
+                enrolObj.Lesson_Day__c != Trigger.oldmap.get(enrolObj.Id).Lesson_Day__c)){
+                    if(string.isnotBlank(enrolObj.Waitlist_Status__c) && string.isnotBlank(enrolObj.Preferred_Day__c) && string.isnotBlank(enrolObj.Preferred_Teacher__c) 
+                        && enrolObj.Preferred_End_time__c != null && enrolObj.Preferred_Start_Time__c != null 
+                        && (enrolObj.Lesson_Start_time__c >= enrolObj.Preferred_Start_Time__c && enrolObj.Lesson_Start_time__c < enrolObj.Preferred_End_time__c)
+                        && (!enrolObj.Waitlist_Status__c.equalsIgnoreCase('Assigned')) && enrolObj.Lesson_Day__c.equalsIgnoreCase(enrolObj.Preferred_Day__c) 
+                        && enrolObj.Teacher__c == enrolObj.Preferred_Teacher__c){
+                            DateTime lessonEnrolmentstartTime = DateTime.newInstance(system.today(),  enrolObj.Lesson_Start_time__c);
+                            DateTime lessonEnrolmentendTime = DateTime.newInstance(system.today(),  enrolObj.Lesson_Start_time__c.addMinutes(Integer.valueOf(enrolObj.Duration__c)));
+                            DateTime peferredEnrolmentstartTime = DateTime.newInstance(system.today(),  enrolObj.Preferred_Start_Time__c);
+                            DateTime peferredEnrolmentendime = DateTime.newInstance(system.today(),  enrolObj.Preferred_End_time__c);
+                            set<string> peferredEnrolmentTimeslots = MakeupEnrolmentBatchHelper.getFormatedTimeSlotList(peferredEnrolmentstartTime, peferredEnrolmentendime);
+                            set<string> lessonEnrolmentTimeSlots = MakeupEnrolmentBatchHelper.getFormatedTimeSlotList(lessonEnrolmentstartTime, lessonEnrolmentendTime);
+                            if(lessonEnrolmentTimeSlots != null && lessonEnrolmentTimeSlots.size() > 0 && 
+                                peferredEnrolmentTimeslots != null && peferredEnrolmentTimeslots.size() > 0 && peferredEnrolmentTimeslots.containsAll(lessonEnrolmentTimeSlots)){
+                                enrolObj.Waitlist_Status__c ='Assigned';
+                            }
+                    }
+            } 
+             //start : added by Nishi : 8-mar-2021 :Aureus Q1 2021: for update Waitlist_Status__c   emailed to  Assigned when enrolment update teacher/lesson time/ lesosn day according to  Preferred detials 
+            if((String.isNotBlank(enrolObj.Type__c) && String.isNotBlank(enrolObj.Stage__c)) && 
+                enrolObj.Type__c == ConstantsClass.typeTrial && enroledStage.contains(enrolObj.Stage__c) && 
+                enrolObj.Trial_Date__c != null &&  enrolObj.Trial_Start_Time__c != null && String.isNotBlank(enrolObj.Teacher__c) &&  
+                (enrolObj.Trial_Start_Time__c != Trigger.oldmap.get(enrolObj.Id).Trial_Start_Time__c ||
+                enrolObj.Trial_Date__c != Trigger.oldmap.get(enrolObj.Id).Trial_Date__c ||
+                enrolObj.Teacher__c != Trigger.oldmap.get(enrolObj.Id).Teacher__c)){
+                    string lessonday = datetime.newInstance(enrolObj.Trial_Date__c,enrolObj.Trial_Start_Time__c).format('EEEE');
+                    if(string.isnotBlank(enrolObj.Waitlist_Status__c) && string.isnotBlank(enrolObj.Preferred_Day__c) && string.isnotBlank(enrolObj.Preferred_Teacher__c) 
+                        && enrolObj.Preferred_End_time__c != null && enrolObj.Preferred_Start_Time__c != null 
+                        && (enrolObj.Trial_Start_Time__c >= enrolObj.Preferred_Start_Time__c && enrolObj.Trial_Start_Time__c < enrolObj.Preferred_End_time__c)
+                        && (!enrolObj.Waitlist_Status__c.equalsIgnoreCase('Assigned')) && lessonday.equalsIgnoreCase(enrolObj.Preferred_Day__c) 
+                        && enrolObj.Teacher__c == enrolObj.Preferred_Teacher__c){
+                            DateTime lessonEnrolmentstartTime = DateTime.newInstance(system.today(),  enrolObj.Trial_Start_Time__c);
+                            DateTime lessonEnrolmentendTime = DateTime.newInstance(system.today(),  enrolObj.Trial_Start_Time__c.addMinutes(Integer.valueOf(enrolObj.Duration__c)));
+                            DateTime peferredEnrolmentstartTime = DateTime.newInstance(system.today(),  enrolObj.Preferred_Start_Time__c);
+                            DateTime peferredEnrolmentendime = DateTime.newInstance(system.today(),  enrolObj.Preferred_End_time__c);
+                            set<string> peferredEnrolmentTimeslots = MakeupEnrolmentBatchHelper.getFormatedTimeSlotList(peferredEnrolmentstartTime, peferredEnrolmentendime);
+                            set<string> lessonEnrolmentTimeSlots = MakeupEnrolmentBatchHelper.getFormatedTimeSlotList(lessonEnrolmentstartTime, lessonEnrolmentendTime);
+                            if(lessonEnrolmentTimeSlots != null && lessonEnrolmentTimeSlots.size() > 0 && 
+                                peferredEnrolmentTimeslots != null && peferredEnrolmentTimeslots.size() > 0 && peferredEnrolmentTimeslots.containsAll(lessonEnrolmentTimeSlots)){
+                                enrolObj.Waitlist_Status__c ='Assigned';
+                            }
+                    }
+            }     
+             //end : added by Nishi : 8-mar-2021 :Aureus Q1 2021: for update Waitlist_Status__c   emailed to  Assigned when enrolment update teacher/lesson time/ lesosn day according to  Preferred detials 
+        }
+    }
+     //end : added by Nishi : 4-mar-2021 :Aureus Q1 2021: for update Waitlist_Status__c   emailed to  Assigned when enrolment update teacher/lesson time/ lesosn day according to  Preferred detials 
+               
 }

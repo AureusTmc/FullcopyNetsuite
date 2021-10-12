@@ -10,6 +10,14 @@ Public without sharing class SubscriptionInvoicePDFControllerClone{
     public boolean displayUpdate{get;set;}
     public boolean isOssia{get;set;}
     public string ParentAccId{get;set;}
+    public Decimal subTotal{get;set;}
+    public Decimal totalAmount{get;set;}
+    public Decimal payableAmount{get;set;}
+    public boolean isPartial{get;set;}
+    public boolean isShowCreditMemo{get;set;}
+    public boolean isContractInvoice{get;set;} // nishi: 24-Feb-2021: aureus -Q1-2021: we check which invoice type is contract then we show student different details
+    public boolean isPianoRentalEnrolment{get;set;}  // nishi: 24-Feb-2021: aureus -Q1-2021: we check which enrolment  is piano rental  then we show piano rent date  
+    
     //By Ravi
     public SubscriptionInvoicePDFControllerClone(){
         String paymentAsDeposit = ConstantsClass.paymentAsDepositRecordType;
@@ -17,14 +25,23 @@ Public without sharing class SubscriptionInvoicePDFControllerClone{
         center = new centerInfo();
         paymentNo = '';
         isOssia = false;
+        isShowCreditMemo= false;
+        isPartial = true;
+        subTotal=0;
+        totalAmount =0;
+        payableAmount=0;
+        isContractInvoice = false;  // nishi: 24-Feb-2021: aureus -Q1-2021: we check which invoice type is contract then we show student different details
+        isPianoRentalEnrolment = false; // nishi: 24-Feb-2021: aureus -Q1-2021: we check which enrolment  is piano rental  then we show piano rent date
         string invId = Apexpages.currentPage().getParameters().get('Id');
         system.debug('@@invId'+invId);
         List<Invoice__c> invList = [Select Id,Name,Due_Date__c,Parent_Account__r.Card_Number__c,GST_Tax__c,GST_Tax_Amount__c,Invoice_Date__c,Parent_Account__c, Admin_Fees__c, 
                                     New_GST_Amount_Admin_Fee__c,
-                                    Center__r.Organisation__r.Name ,//added by nishi :18_aug:2020  for show Ossia Logo
+                                    Center__r.Organisation__r.Name ,//added by nishi :18_aug:2020  for show Ossia Logo4
+                                    Discount_LineItem_Amount__c,Gross_Total__c,Deposit__c,Total_Discount__c,Credit_Memo_Amount__c,Total_Payable__c, // added by nishi: 15-Sep-2020: for change Invoice Ui show subtotal,discount
                                     Card_Number__c,Card_Image__c,Parent_Account__r.Name, Parent_Account__r.Admin_Fees__c, 
                                     Parent_Account__r.Billingstreet,Parent_Account__r.BillingCity,Parent_Account__r.BillingState,Parent_Account__r.personEmail,
-                                    Parent_Account__r.personMobilePhone,createdDate,Remarks__c ,
+                                    Parent_Account__r.Phone,Parent_Account__r.Personal_Email__c,Invoice_Type__c,
+                                    Parent_Account__r.personMobilePhone,createdDate,Remarks__c ,CM_Created__c,
                                     Parent_Account__r.BillingPostalcode,Parent_Account__r.BillingCountry,Status__c,Sub_Total__c,Subscription__c,
                                     Total_Amount__c,Discount_Amount__c ,Stripe_Charge_Id__c,Paid_Amount__c,Balance_Amount__c,
                                     Center__r.Name,Center__r.PersonEmail,Center__r.PersonMobilePhone,Center__r.Billingstreet,Center__r.BillingCity,
@@ -32,7 +49,11 @@ Public without sharing class SubscriptionInvoicePDFControllerClone{
                                     Center__r.country__r.Id,Center__r.Organisation__r.Tax_Rate__c, Center__r.country__r.Tax_Rate__c, New_GST_Amount__c, Internal_Ref_No__c,
                                         (Select Id,Amount__c, is_Deposit__c,Subscription_Line_Item__c,Package_Name__c,Remarks__c,Opportunity__c,Student__c,
                                         Subscription_Line_Item__r.Student__r.Name,Subscription_Line_Item__r.Plan_Package__r.Location__r.Name,
-                                        Subscription_Line_Item__r.Enrolment__r.Teacher__r.Name,Month__c, Package__r.Type__c from Invoice_Line_Items__r ORDER BY Month__c Asc), 
+                                        Subscription_Line_Item__r.Enrolment__r.Teacher__r.Name,Month__c, Package__r.Type__c,
+                                        Enrolment__r.RecordType.Name,Is_Discount__c ,
+                                        Number_of_Lesson__c,Student_Name__c,Term_Start_Date__c,Term_End_Date__c,Teacher_Id__r.name // nishi: 24-Feb-2021: aureus -Q1-2021: we use this field which invoice type is contract   
+                                         from Invoice_Line_Items__r 
+                                         ORDER BY Month__c Asc), 
                                         (Select Id,Name,Payment_Status__c,createdDate,Payment_Amount__c, RecordType.Name From Payments__r)
                                     FROM Invoice__c 
                                     WHERE Id=:invId LIMIT 1];  
@@ -40,6 +61,22 @@ Public without sharing class SubscriptionInvoicePDFControllerClone{
         if(invList.size()>0){
 
             invoice = invList[0];
+            // nishi: 24-Feb-2021: aureus -Q1-2021: we check which invoice type is contract then we show student different details
+            if(invoice.Invoice_Type__c == 'Contract'){
+                isContractInvoice = true;
+            }
+            // nishi: 24-Feb-2021: aureus -Q1-2021: we check which invoice type is contract then we show student different details
+
+            // nishi: 24-Feb-2021: aureus -Q1-2021: we check which enrolment  is piano rental  then we show piano rent date
+            if(invoice.Invoice_Line_Items__r != null && invoice.Invoice_Line_Items__r.size()> 0 ){
+                for(Invoice_Line_Item__c objInvoice_Line_Item: invoice.Invoice_Line_Items__r){
+                    if(objInvoice_Line_Item.Enrolment__r.RecordType.Name ==ConstantsClass.enrollmentInstrumentRecTypeName &&
+                    objInvoice_Line_Item.Term_Start_Date__c != null && objInvoice_Line_Item.Term_End_Date__c != null){
+                        isPianoRentalEnrolment = true;
+                    }
+                }
+            }
+            // nishi: 24-Feb-2021: aureus -Q1-2021: we check which enrolment  is piano rental then we show piano rent date
             // added by nishi: 18-Aug-2020: for show Ossia Logo
             if(String.isNotBlank(invList[0].Center__c) && 
             String.isNotBlank(invList[0].Center__r.Organisation__c) && 
@@ -48,6 +85,56 @@ Public without sharing class SubscriptionInvoicePDFControllerClone{
                 isOssia= true;  
             }
             // added by nishi: 18-Aug-2020: for show Ossia Logo
+            if(invoice.CM_Created__c != null && invoice.CM_Created__c > 0){
+                isShowCreditMemo= true;
+            }
+            if(BillingUtility.roundOffAmount( invoice.CM_Created__c) == BillingUtility.roundOffAmount(invoice.Total_Amount__c)){
+                isPartial = false;
+            }
+            //nishi: 15-Sep-2020: for new requirement in netsuite we adjust discount as a line item 
+            if(invoice.Gross_Total__c != null && invoice.Gross_Total__c !=0){
+                subTotal+=invoice.Gross_Total__c;
+                totalAmount+=invoice.Gross_Total__c;
+            }
+            if(invoice.Deposit__c != null && invoice.Deposit__c != 0){
+                subTotal+=invoice.Deposit__c;
+                totalAmount+=invoice.Deposit__c;
+            }
+            if(invoice.Total_Discount__c != null && invoice.Total_Discount__c != 0){
+                subTotal+=invoice.Total_Discount__c;
+            }
+            if(subTotal == totalAmount){
+                subTotal =0;
+            }
+            if(BillingUtility.roundOffAmount( invoice.CM_Created__c) == BillingUtility.roundOffAmount( totalAmount)){ //commented by nishi: for now we check invoice amount is equal to credit memo then we show credit memo logo BillingUtility.roundOffAmount(invoice.Total_Amount__c)){
+                isPartial = false;
+            }
+            if(subTotal != 0){
+                subTotal = BillingUtility.roundOffAmount(subTotal);
+            }
+            if(totalAmount != 0){
+                totalAmount = BillingUtility.roundOffAmount(totalAmount);
+            }
+            //end:nishi: 15-Sep-2020: for new requirement in netsuite we adjust discount as a line item 
+
+            //15-Sep-2020:start: Credit Memo  handling we show Credit_Memo_Amount__c amount after showing  payableAmount (grand total duction amount)
+            if(invoice.Credit_Memo_Amount__c != null &&invoice.Credit_Memo_Amount__c != 0 ){
+               /* if(invoice.Total_Amount__c != null && invoice.Total_Amount__c  != 0){
+                    payableAmount=invoice.Total_Amount__c;
+                }
+                payableAmount-=invoice.Credit_Memo_Amount__c;
+                */
+                payableAmount=invoice.Total_Payable__c;
+                
+                if(payableAmount != 0){
+                    payableAmount = BillingUtility.roundOffAmount(payableAmount);
+                }
+            }else{
+                payableAmount =0;
+            }
+            //15-Sep-2020:end: Credit Memo  handling we show Credit_Memo_Amount__c amount after showing  payableAmount (grand total duction amount)
+          
+
             system.debug('@@@pdf invoice'+invoice);
              system.debug('@@@pdf invoice amount'+invoice.Invoice_Line_Items__r);
             system.debug('@@@pdf invoice amount'+invoice.Total_Amount__c);
@@ -56,8 +143,8 @@ Public without sharing class SubscriptionInvoicePDFControllerClone{
             if(String.isNotBlank(invoice.Status__c))
                 InvoiceStatus = invoice.Status__c;
             	InvoiceId=invoice.Id;
-            	customLabelValue = System.Label.Aureus_Site;
-            if(String.isNotBlank(invoice.Parent_Account__r.Card_Number__c))
+                customLabelValue = System.Label.Aureus_Site;
+            if(String.isNotBlank(invoice.Parent_Account__r.Card_Number__c) || isOssia || isContractInvoice)
             	displayUpdate = true;
             else
                 displayUpdate = false;

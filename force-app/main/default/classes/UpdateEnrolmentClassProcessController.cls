@@ -57,9 +57,13 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
         STRING previousTime;
         Time oldTimeSlot;
         Integer duration=0;
-        Boolean isGroupLesson = false;
-        if( String.isNotBlank(newClassId)  &&  String.isNotBlank(oldClassId)){
-            isGroupLesson = true;
+        Boolean isGroupLessonChange = false;
+        Boolean teacherPackageChange = false;
+        if( String.isNotBlank(newClassId)  &&  String.isNotBlank(oldClassId) && newClassId != oldClassId){
+            isGroupLessonChange = true;
+        }
+        if(newTeacherId != enrolmentObj.Teacher__c || newPackage != enrolmentObj.Package__c){
+            teacherPackageChange =  true;                                      
         }
         DateTime newEffectiveDateTime = DateTime.newInstance(effectiveDate, timeslot);
         Boolean isSameMonth = false;
@@ -111,7 +115,7 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                 processFutureMakeupGroupLessonBookings(enrolmentObj,mapOfEffectiveDateGroupLesson);
                   //uncommented by jatin:6-jan-2020 now we change our logic we change you class with new lesson day so thats why we deleted all previous lesson then create new one.
                 processFutureGroupLessonBookings(enrolmentObj, mapOfEffectiveDateGroupLesson);
-                if( isSameMonth ){
+                if( isSameMonth && (isGroupLessonChange || teacherPackageChange)){
                     invoiceId =  createInvoiceAndLineItemsChangeEnrol(enrolmentObj, effectiveDate, nextBillDate, oldTeacher,oldPackage,newTeacherId,newPackage);
                 }    
             }
@@ -153,6 +157,7 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
     // 27-Dec-2019: process Future Makeup Group Lesson Bookings
     public static void processFutureMakeupGroupLessonBookings(Enrolment__c enrolmentObj,Map<Date,String> mapOfEffectiveDateGroupLesson){
         map<Id,booking__c> mapOfMakeupBooking =new  map<Id,booking__c> ();
+        List<Booking__c> makeupBookingList = new List<Booking__c>();
         for(Booking__c bookingObj : [SELECT Id,Start_time__c,End_time__c, Booking_Date__c, Available_Make_up_Units__c, 
                                      Student__r.Name, Center__c, Teacher_Account__c, Make_up_Utilize_Bookings__c, Duration__c, Type__c, Category__c 
                                      FROM Booking__c 
@@ -164,13 +169,17 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                                      AND  recordType.Name =:ConstantsClass.groupLessonBookingRecordType
                                     ]){
                                         mapOfMakeupBooking.put(bookingObj.id,bookingObj);
+                                        makeupBookingList.add(bookingObj);
                                     }
         if(String.isNotBlank(enrolmentObj.Id) && mapOfMakeupBooking.size() > 0){
             updateMakeUpBookingOnUpgrade(enrolmentObj, mapOfMakeupBooking,mapOfEffectiveDateGroupLesson);
         }
+        
     }
     // 27-Dec-2019: update makeup bookings if booking date is match in class booking_date
-    public static void updateMakeUpBookingOnUpgrade(Enrolment__c enrolmentObj, map<Id,booking__c> mapOfMakeupBooking,Map<Date,String> mapOfEffectiveDateGroupLesson){
+    //commented by nishi: 25-Sep-2020: for according to new class we dont manage makup booking so we cancle all future makup bookings
+     public static void updateMakeUpBookingOnUpgrade(Enrolment__c enrolmentObj, map<Id,booking__c> mapOfMakeupBooking,Map<Date,String> mapOfEffectiveDateGroupLesson){
+         
         if(mapOfMakeupBooking != null && mapOfMakeupBooking.size() > 0){
             Map<Id, Booking__c> mapOfUpdateMakeUpBooking = new   Map<Id, Booking__c>();
             for(Id bookingId : mapOfMakeupBooking.keySet()){
@@ -196,12 +205,12 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
             if(mapOfUpdateMakeUpBooking != null && mapOfUpdateMakeUpBooking.size () > 0){
                 update mapOfUpdateMakeUpBooking.values();
                 string parentId = String.isNotBlank(enrolmentObj.Parent__c) ? enrolmentObj.Parent__c : enrolmentObj.Student__c;
-                deductMakeupHours(mapOfUpdateMakeUpBooking.keySet(),parentId);
+                deductMakeupHours(mapOfUpdateMakeUpBooking.keySet(),parentId,enrolmentObj.id);
             }
         }
     }
     // 28-dec-2019: deduct makeup hours and minus available mins and calculate utilize min then update parent 
-    public static void deductMakeupHours(set<id> bookingIds, String bookingParentId){
+    public static void deductMakeupHours(set<id> bookingIds, String bookingParentId,string enrolmentObjId){
         //System.debug('Deduct Makeup hours called');
         String statusCanceled = ConstantsClass.statusCanceled;
         Boolean isError = false;
@@ -215,12 +224,33 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
         if(String.isNotBlank(bookingParentId)){
             setOfParentStudent = getParentsChild(bookingParentId);
         }
-        List<Booking__C> bookingObjList =  [SELECT Id,Start_time__c,End_time__c, Booking_Date__c, Available_Make_up_Units__c, 
+        List<Booking__c> bookingObjList = new List<Booking__c>();
+        List<Booking__c> ossiaBookingList = new List<Booking__c>();
+         //start:added By nishi: 21-sep-2020:deduct makeup hours and minus available mins and calculate utilize min then update parent 
+        //  according to new requiremnt While utilizing Make up credit, 
+        //it should consider those makeup minutes which are related to the booking with the cancellation reason – Teacher MC/Leave first.
+        for(Booking__c objBook:[SELECT Id,Start_time__c,End_time__c, Booking_Date__c, Available_Make_up_Units__c, 
                                             Student__r.Name, Center__c, Teacher_Account__c, Make_up_Utilize_Bookings__c,
-                                            Duration__c, Type__c, Category__c 
+                                            Duration__c, Type__c, Category__c ,Center__r.Organisation__r.Name
                                             FROM Booking__c 
                                             WHERE id IN: bookingIds
-                                           ];
+                                           ]){
+                                            if(String.isNotBlank(objBook.Center__c) && 
+                                            String.isNotBlank(objBook.Center__r.Organisation__c) && 
+                                            String.isNotBlank(objBook.Center__r.Organisation__r.Name) && 
+                                            objBook.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                                                ossiaBookingList.add(objBook);  
+                                            }else{
+                                                bookingObjList.add(objBook);
+                                            }
+                                           }
+        if(ossiaBookingList != null && ossiaBookingList.size() > 0){
+            OssiaCenterCalendarController.deductOssiaMakeupHours(ossiaBookingList,bookingParentId,new Set<String>{enrolmentObjId});
+        }
+        // end:added By nishi: 21-sep-2020:deduct makeup hours and minus available mins and calculate utilize min then update parent 
+     //  according to new requiremnt While utilizing Make up credit, 
+     //it should consider those makeup minutes which are related to the booking with the cancellation reason – Teacher MC/Leave first.
+                                                    
         if(bookingObjList.size() > 0){
             
             if(setOfParentStudent.size() > 0){
@@ -246,10 +276,10 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                         bookObj = new Booking__c();
                         bookObj.Id = bookingObj.Id;
                         mapOfUtilizeBookings = new  map<string,Integer>();
-                        system.debug(bookingObj.Make_up_Utilize_Bookings__c);
+                       //system.debug(bookingObj.Make_up_Utilize_Bookings__c);
                         // if makeup Utilize mins is exist then get old utilize mins for updation
                         if(string.isNotBlank(bookingObj.Make_up_Utilize_Bookings__c)){
-                            system.debug(bookingObj.Make_up_Utilize_Bookings__c.split(';'));
+                           //system.debug(bookingObj.Make_up_Utilize_Bookings__c.split(';'));
                             for(string bookingWithDuration : bookingObj.Make_up_Utilize_Bookings__c.split(';')){
                                 if(string.isNotBlank(bookingWithDuration)){
                                     mapOfUtilizeBookings.put(bookingWithDuration.split('-')[0],Integer.valueOf(bookingWithDuration.split('-')[1]));
@@ -306,7 +336,7 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                                                               Available_Make_up_Units__c = (Decimal)mapOfHours.get(keysetValue)));
                     }
                 }
-                System.debug('@@@bookingUpdatedList '+bookingUpdatedList);
+               //system.debug('@@@bookingUpdatedList '+bookingUpdatedList);
                 if(bookingUpdatedList.size() > 0){
                     Database.SaveResult[] saveResults = Database.update(bookingUpdatedList, false);
                     for(Database.SaveResult saveResult : saveResults){
@@ -393,7 +423,7 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
         
     }
     private static void reCreateGroupLessonBookings(Enrolment__c  enrolmentObj, Map<Date,String> mapOfEffectiveDateGroupLesson){					
-       system.debug('enrolmentObj.new_teacher__c'+enrolmentObj.new_teacher__c);
+      //system.debug('enrolmentObj.new_teacher__c'+enrolmentObj.new_teacher__c);
         List<Booking__c> bookingsToInsert = new List<Booking__c>();
         if(mapOfEffectiveDateGroupLesson!= null && mapOfEffectiveDateGroupLesson.size() > 0){
             for(date effectiveDate : mapOfEffectiveDateGroupLesson.keySet()){
@@ -450,18 +480,18 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
             }
         }
         if(bookingsToInsert.size() > 0){
-            System.debug('@@bookingsToInsert'+bookingsToInsert);
+           //system.debug('@@bookingsToInsert'+bookingsToInsert);
             UPSERT bookingsToInsert;
         }
     }
     private static String getPackageInvoiceAmount(Enrolment__c objEnrol,Map<Id,Package__c> mapOfPackages,map<id,String> packageInvoiceAmount,string packageId){
         decimal totalAmount = 0;
         decimal gstAmount = 0;
-        system.debug('@@@packageId --'+ packageId);
+       //system.debug('@@@packageId --'+ packageId);
         if(packageInvoiceAmount.containsKey(packageId)){
             totalAmount = decimal.valueOf(packageInvoiceAmount.get(packageId).split(';')[0]);
         }
-        system.debug('@@unit fee '+ mapOfPackages.get(packageId).Unit_Fee__c);
+       //system.debug('@@unit fee '+ mapOfPackages.get(packageId).Unit_Fee__c);
         totalAmount += mapOfPackages.get(packageId).Unit_Fee__c;
         if(String.isNotBlank(objEnrol.Id) &&  String.isNotBlank(objEnrol.Center__c)
            && String.isNotBlank(objEnrol.Center__r.Country__c) && objEnrol.Center__r.Country__r.Tax_Rate__c > 0
@@ -469,8 +499,8 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                if(packageInvoiceAmount.containsKey(packageId)){
                    gstAmount = decimal.valueOf(packageInvoiceAmount.get(packageId).split(';')[1]);
                }
-               system.debug('@@@Gst Amount= '+ (mapOfPackages.get(packageId).Unit_Fee__c * objEnrol.Center__r.Country__r.Tax_Rate__c)/100);
-               system.debug('@@@Tax_Rate__c = '+ (objEnrol.Center__r.Country__r.Tax_Rate__c)/100);
+              //system.debug('@@@Gst Amount= '+ (mapOfPackages.get(packageId).Unit_Fee__c * objEnrol.Center__r.Country__r.Tax_Rate__c)/100);
+              //system.debug('@@@Tax_Rate__c = '+ (objEnrol.Center__r.Country__r.Tax_Rate__c)/100);
                gstAmount += (mapOfPackages.get(packageId).Unit_Fee__c * objEnrol.Center__r.Country__r.Tax_Rate__c)/100;
            }
         return totalAmount+';'+gstAmount;
@@ -485,11 +515,17 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
         String subLineItemId ;
         Integer noOfOldLesson,noOfNewLesson;
         Set<String> packageIds = new Set<string>();
+          // added by nishi: 7-oct-2020: for create credit memo records
+          map<string,Credit_Memo__c> newPendingCreditMemos = new map<string,Credit_Memo__c>();
+          map<string,List<Credit_memo_line_item__c>> mapOfCreditmemolineitem = new map<string,List<Credit_memo_line_item__c>>();
+          List<Credit_memo_line_item__c> listOfCreditmemolineitem = new List<Credit_memo_line_item__c>(); 
+          map<String,Invoice_Line_Item__c> updateInvoiceLineItem = new map<String,Invoice_Line_Item__c>();
+          map<String,Invoice_Line_Item__c> updateCreditMemoInvoiceLineItem = new map<String,Invoice_Line_Item__c>();
         packageIds.add(oldPackage);
         packageIds.add(newPackage);
         Map<id,Package__c> mapOfPackage = new Map<Id,package__c>([Select Id,Unit_Fee__c from Package__c where Id In:packageIds]);
         List<Booking__c> bookingList = [SELECT Id, Package__c, center__c, Teacher_Account__c, Package__r.Unit_Fee__c, Student__c,
-                                        Student__r.Parent__c 
+                                        Student__r.Parent__c ,Booking_date__c
                                         FROM Booking__c WHERE 
                                         Enrolment__c =: objEnrol.id 
                                         AND Booking_Date__c >= :effectiveDate AND 
@@ -497,86 +533,303 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                                         Type__c =:  ConstantsClass.groupLessonTypeBooking
                                          //jatin:7-jan-2020 : for now we calculate all booking Status__c !=: ConstantsClass.statusCanceled 
                                          ORDER BY Booking_Date__c ];
-        system.debug('@@@ get bookingList'+bookingList);
+       //system.debug('@@@ get bookingList'+bookingList);
         if(objEnrol != NULL && objEnrol.subscription_line_items__r != null && objEnrol.subscription_line_items__r.size() > 0 ){
             subLineItemId = objEnrol.subscription_line_items__r[0].id;
         }
         if(bookingList.size() > 0){
             String parentId = String.isNotBlank(bookingList[0].Student__r.Parent__c) ? bookingList[0].Student__r.Parent__c : bookingList[0].Student__c;
-            system.debug('@@@@@bookingList.size()--'+bookingList.size());
+           //system.debug('@@@@@bookingList.size()--'+bookingList.size());
             map<id,String> packageInvoiceAmount = new Map<Id,String>();
+            map<id,String> packageInvoiceNextMonthAmount = new Map<Id,String>();
+            /* 26-Apr-2021 Change Enrolment (Teacher Change) During a promo package was generated and the Credit Memo Line Item Amount for May was doubled so we added other map for old package amount calculation*/
+            map<id,String> packageInvoiceOldAmount = new Map<Id,String>();
+            map<id,String>packageInvoiceOldNextMonthAmount = new Map<Id,String>();
+            /* 26-Apr-2021 Change Enrolment (Teacher Change) During a promo package was generated and the Credit Memo Line Item Amount for May was doubled so we added other map for old package amount calculation*/
+
             Map<Id,Package__c> mapOfPackages =New Map<Id,Package__c>([Select Id,Unit_Fee__c from Package__c where Id In:packageIds]);
-            system.debug('@@@@@mapOfPackages'+mapOfPackages);
+           //system.debug('@@@@@mapOfPackages'+mapOfPackages);
+            date nextMonthDate = Date.newInstance(system.today().addMonths(2).year(),system.today().addMonths(2).Month(),1);
+               //added by nishi: 7-Oct-2020 : start:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+                        
+             Map<String,Invoice__c> mapofinvoice = new Map<String,Invoice__c>();
+             List<Subscription_Line_Item__c> listSubLineItem = UpgradeDowngradeController.fetchSubsLineItems(objEnrol.Subscription_Line_Items__r[0].id);
+             Subscription_Line_Item__c objSubLineItem;
+             if(listSubLineItem != null && listSubLineItem.size() > 0 ){
+                 objSubLineItem  = listSubLineItem[0];
+             }
+             for(Invoice__c invoiceobj : UpgradeDowngradeController.getInvoiceDetails(objEnrol,effectiveDate,objSubLineItem)){
+                if(invoiceobj.invoice_type__c == 'Recurring'){
+                    // string invoiceMonth ='';
+                    // if(invoiceobj.Invoice_Date__c.month() == effectiveDate.month())
+                    //     invoiceMonth = 'Current';
+                    // if(nextBillingDate >= nextMonthDate && effectiveDate.month() < nextMonthDate.addMonths(-1).month() && invoiceobj.Invoice_Date__c.month() == nextMonthDate.addMonths(-1).month() )
+                    //     invoiceMonth = 'Next Month';
+                    // system.debug('invoiceMonth'+invoiceMonth);
+                    // if(string.isnotBlank(invoiceMonth)){
+                    //     mapofinvoice.put(invoiceMonth,invoiceobj);
+                    for(Invoice_line_item__c objlineitem: invoiceobj.Invoice_line_items__r){
+                        string invoiceMonth ='';
+                        if(objlineitem.month__c.month() == effectiveDate.month())
+                        invoiceMonth = 'Current';
+                        if(nextBillingDate >= nextMonthDate && effectiveDate.month() < nextMonthDate.addMonths(-1).month() && objlineitem.month__c.month() == nextMonthDate.addMonths(-1).month() )
+                            invoiceMonth = 'Next Month';
+                        if(string.isnotBlank(invoiceMonth)){
+                            mapofinvoice.put(invoiceMonth,invoiceobj);
+                            updateInvoiceLineItem.put(objlineitem.id,objlineitem);
+                        }
+                    }
+                    //}
+                }
+             }
+              //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+            
             // 6 Dec 2019: jatin for manage packages fee  old package and new package unit fee
             for(Booking__c booking : bookingList){
-                if(string.isNotBlank(booking.Package__c)){
-                    if(mapOfPackages.containsKey(newPackage)){
-                        packageInvoiceAmount.put(newPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceAmount,newPackage));    
-                    }if(mapOfPackages.containsKey(oldPackage)){
-                        packageInvoiceAmount.put(oldPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceAmount,oldPackage)); 
-                    } 
+                if(nextBillingDate >= nextMonthDate && effectiveDate.month() < nextMonthDate.addMonths(-1).month() && booking.Booking_date__c.month() == nextMonthDate.addMonths(-1).month() ){
+                   //system.debug('@@@@@next Month'+booking.Booking_date__c);
+                    if(string.isNotBlank(booking.Package__c)){
+                        if(mapOfPackages.containsKey(newPackage)){
+                            packageInvoiceNextMonthAmount.put(newPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceNextMonthAmount,newPackage));    
+                        }
+                        /* 26-Apr-2021 Change Enrolment (Teacher Change) During a promo package was generated and the Credit Memo Line Item Amount for May was doubled so we added other map for old package amount calculation*/
+                        if(mapOfPackages.containsKey(oldPackage)){
+                            packageInvoiceOldNextMonthAmount.put(oldPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceOldNextMonthAmount,oldPackage)); 
+                        } 
+                        /* 26-Apr-2021 end Change Enrolment (Teacher Change) During a promo package was generated and the Credit Memo Line Item Amount for May was doubled so we added other map for old package amount calculation*/
+                    }
+                }else{
+                    if(string.isNotBlank(booking.Package__c)){
+                        if(mapOfPackages.containsKey(newPackage)){
+                            packageInvoiceAmount.put(newPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceAmount,newPackage));    
+                        }
+                        /* 26-Apr-2021 Change Enrolment (Teacher Change) During a promo package was generated and the Credit Memo Line Item Amount for May was doubled so we added other map for old package amount calculation*/
+                        if(mapOfPackages.containsKey(oldPackage)){
+                            packageInvoiceOldAmount.put(oldPackage,getPackageInvoiceAmount(objEnrol,mapOfPackages,packageInvoiceOldAmount,oldPackage)); 
+                        } 
+                        /* 26-Apr-2021 end Change Enrolment (Teacher Change) During a promo package was generated and the Credit Memo Line Item Amount for May was doubled so we added other map for old package amount calculation*/
+                    }
                 }
             }
             decimal newPackageTotalAmount = 0;
             decimal oldPackageTotalAmount = 0;
+            decimal newPackageNextMonthTotalAmount = 0;
+            decimal oldPackageNextMonthTotalAmount = 0;
             if(packageInvoiceAmount.containsKey(newPackage)){
                 newPackageTotalAmount += decimal.valueOf(packageInvoiceAmount.get(newPackage).split(';')[0]);
             }
             if(packageInvoiceAmount.containsKey(oldPackage)){
-                oldPackageTotalAmount += decimal.valueOf(packageInvoiceAmount.get(oldPackage).split(';')[0]);
+                oldPackageTotalAmount += decimal.valueOf(packageInvoiceOldAmount.get(oldPackage).split(';')[0]);
             }
-            system.debug('@@@@@packageInvoiceAmount'+packageInvoiceAmount);
-            system.debug('@@parentId'+parentId);
+            if(packageInvoiceNextMonthAmount.containsKey(newPackage)){
+                newPackageNextMonthTotalAmount += decimal.valueOf(packageInvoiceNextMonthAmount.get(newPackage).split(';')[0]);
+            }
+            if(packageInvoiceOldNextMonthAmount.containsKey(oldPackage)){
+                oldPackageNextMonthTotalAmount += decimal.valueOf(packageInvoiceOldNextMonthAmount.get(oldPackage).split(';')[0]);
+            }
+            
+           //system.debug('@@@@@packageInvoiceAmount'+packageInvoiceAmount);
+           //system.debug('@@parentId'+parentId);
             if(oldPackageTotalAmount > 0 && newPackageTotalAmount > 0 && String.isNotBlank(parentId)){
                 objectOfInvoice = new Invoice__c(Status__c=ConstantsClass.paidStatus, Due_Date__c = system.today().AddDays(ConstantsClass.addInvoiceDueDays),
                                                 Invoice_Date__c =system.today(), Parent_Account__c = parentId, Center__c=bookingList[0].center__c);
+                                                objectOfInvoice.Credit_Memo_Amount__c =  0;
                 INSERT objectOfInvoice;
-                system.debug('@@@ created objectOfInvoice'+objectOfInvoice);
+               //system.debug('@@@ created objectOfInvoice'+objectOfInvoice);
                 if(objectOfInvoice != NULL){
+                     //added by nishi: 7-Oct-2020 : start:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+                     String invoiceId = null;
+                     if(mapofinvoice != null && mapofinvoice.size() > 0 ){
+                         if(mapofinvoice.containskey('Current')){
+                             invoiceId = mapofinvoice.get('Current').id;
+                         }
+                     }
+                      Credit_Memo__c objCreditMemo = BillingUtility.createCreditMemoRec(objEnrol.Parent__c,objEnrol.center__c, invoiceId,  system.today(),'Update Enrolment invoice Adjustment');
+                     objCreditMemo.Status__c = ConstantsClass.creditMemoSuccessStatus;
+                     objCreditMemo.Invoice_Number__c = objectOfInvoice.Id;
+                     newPendingCreditMemos.put('Update Enrolment invoice Adjustment',objCreditMemo);
+                     //added by nishi: 7-Oct-2020 : start:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+                    
                     if(packageInvoiceAmount.containsKey(newPackage)){
-                        newPackageTotalAmount = decimal.valueOf(packageInvoiceAmount.get(newPackage).split(';')[0]);
-                        gstAmount = decimal.valueOf(packageInvoiceAmount.get(newPackage).split(';')[1]);
-                        
-                        if(newPackageTotalAmount != 0){
-                            newPackageTotalAmount = BillingUtility.roundOffAmount(newPackageTotalAmount);
+                        if(packageInvoiceAmount.get(newPackage).split(';') != null && packageInvoiceAmount.get(newPackage).split(';').size() >0){
+                            newPackageTotalAmount = decimal.valueOf(packageInvoiceAmount.get(newPackage).split(';')[0]);
+                            gstAmount = decimal.valueOf(packageInvoiceAmount.get(newPackage).split(';')[1]);
+                            
+                            if(newPackageTotalAmount != 0){
+                                newPackageTotalAmount = BillingUtility.roundOffAmount(newPackageTotalAmount);
+                            }
+                            if(gstAmount != 0){
+                                gstAmount = BillingUtility.roundOffAmount(gstAmount);
+                            }
+                        //system.debug('@@@totalAmount'+totalAmount);
+                        //system.debug('@@@gstAmount'+gstAmount);
+                            invoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,
+                                                                        Amount__c = newPackageTotalAmount, 
+                                                                        Teacher_Id__c = newTeacher, Month__c= effectiveDate, Enrolment__c =objEnrol.id, 
+                                                                        Subscription_line_item__c = subLineItemId,Package__c= newPackage ,
+                                                                        GST_Amount__c = gstAmount));
                         }
-                        if(gstAmount != 0){
-                            gstAmount = BillingUtility.roundOffAmount(gstAmount);
-                        }
-                        system.debug('@@@totalAmount'+totalAmount);
-                        system.debug('@@@gstAmount'+gstAmount);
-                        invoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,
-                                                                    Amount__c = newPackageTotalAmount, 
-                                                                    Teacher_Id__c = newTeacher, Month__c= effectiveDate, Enrolment__c =objEnrol.id, 
-                                                                    Subscription_line_item__c = subLineItemId,Package__c= newPackage ,
-                                                                    GST_Amount__c = gstAmount));
                     }
-                    if(packageInvoiceAmount.containsKey(oldPackage)){
-                        oldPackageTotalAmount = decimal.valueOf(packageInvoiceAmount.get(oldPackage).split(';')[0]);
-                        gstAmount = decimal.valueOf(packageInvoiceAmount.get(oldPackage).split(';')[1]);
-                        if(oldPackageTotalAmount != 0){
-                            oldPackageTotalAmount = BillingUtility.roundOffAmount(oldPackageTotalAmount);
+                    if(packageInvoiceOldAmount.containsKey(oldPackage)){
+                        if(packageInvoiceOldAmount.get(oldPackage).split(';') != null && packageInvoiceOldAmount.get(oldPackage).split(';').size() >0){
+                            oldPackageTotalAmount = decimal.valueOf(packageInvoiceOldAmount.get(oldPackage).split(';')[0]);
+                            gstAmount = decimal.valueOf(packageInvoiceOldAmount.get(oldPackage).split(';')[1]);
+                            if(oldPackageTotalAmount != 0){
+                                oldPackageTotalAmount = BillingUtility.roundOffAmount(oldPackageTotalAmount);
+                            }
+                            if(gstAmount != 0){
+                                gstAmount = BillingUtility.roundOffAmount(gstAmount);
+                            }
+                            /*Commenter by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+                        
+                            oldPackageTotalAmount = -oldPackageTotalAmount;
+                            if(gstAmount > 0){
+                                gstAmount = -gstAmount;
+                            }*/
+                        //system.debug('@@@totalAmount'+totalAmount);
+                        //system.debug('@@@gstAmount'+gstAmount);
+                            //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+                            /*invoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,Amount__c = oldPackageTotalAmount, 
+                                                                        Teacher_Id__c = oldTeacher,Month__c= effectiveDate,
+                                                                        Enrolment__c =objEnrol.id,Subscription_line_item__c = subLineItemId,
+                                                                        Package__c = oldPackage,  GST_Amount__c = gstAmount));*/
+                            String invoicelineitemId = null;
+                            if(mapofinvoice != null && mapofinvoice.size() > 0 ){
+                                if(mapofinvoice.containskey('Current')){
+                                    if(mapofinvoice.get('Current').Invoice_Line_Items__r != null && mapofinvoice.get('Current').Invoice_Line_Items__r.size()>0){
+                                        invoicelineitemId =mapofinvoice.get('Current').Invoice_Line_Items__r[0].id; 
+                                    }
+                                }
+                            }
+                            Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(Math.abs(oldPackageTotalAmount),gstAmount,oldPackage,
+                            objEnrol.id,invoicelineitemId,'');
+                            objCreditLineItem.Month__c = effectiveDate;
+                            objectOfInvoice.Credit_Memo_Amount__c +=  (Math.abs(oldPackageTotalAmount)+gstAmount);
+                            listOfCreditmemolineitem.add(objCreditLineItem);                                                  
+                            mapOfCreditmemolineitem.put('Update Enrolment invoice Adjustment',listOfCreditmemolineitem);             
+                            //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+                            
+                             //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
+                             if(string.isNotBlank(invoicelineitemId)){
+                                decimal invoicelineItemCreditAmount=0;
+                                decimal invoicelineItemCreditGst=0;
+                                
+                                if(updateInvoiceLineItem.containskey(invoicelineitemId)){
+                                    invoicelineItemCreditAmount =updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_Amount__c != null ?updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_Amount__c :0;
+                                    invoicelineItemCreditGst = updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_tax__c != null ?updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_tax__c :0;
+                                }
+                                updateCreditMemoInvoiceLineItem.put(invoicelineitemId,new Invoice_Line_Item__c(id=invoicelineitemId,
+                                                        Credit_Memo_Amount__c =invoicelineItemCreditAmount+(Math.abs(oldPackageTotalAmount)),
+                                                        Credit_Memo_tax__c=invoicelineItemCreditGst+gstAmount));
+                            }
                         }
-                        if(gstAmount != 0){
-                            gstAmount = BillingUtility.roundOffAmount(gstAmount);
+                    }
+                    if(packageInvoiceNextMonthAmount.containsKey(newPackage)){
+                        if(packageInvoiceNextMonthAmount.get(newPackage).split(';') != null && packageInvoiceNextMonthAmount.get(newPackage).split(';').size() >0){
+                            newPackageNextMonthTotalAmount = decimal.valueOf(packageInvoiceNextMonthAmount.get(newPackage).split(';')[0]);
+                            gstAmount = decimal.valueOf(packageInvoiceNextMonthAmount.get(newPackage).split(';')[1]);
+                        
+                            if(newPackageNextMonthTotalAmount != 0){
+                                newPackageNextMonthTotalAmount = BillingUtility.roundOffAmount(newPackageNextMonthTotalAmount);
+                            }
+                            if(gstAmount != 0){
+                                gstAmount = BillingUtility.roundOffAmount(gstAmount);
+                            }
+                        //system.debug('@@@totalAmount'+totalAmount);
+                        //system.debug('@@@gstAmount'+gstAmount);
+                            invoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,
+                                                                        Amount__c = newPackageNextMonthTotalAmount, 
+                                                                        Teacher_Id__c = newTeacher, Month__c= nextMonthDate.addMonths(-1), Enrolment__c =objEnrol.id, 
+                                                                        Subscription_line_item__c = subLineItemId,Package__c= newPackage ,
+                                                                        GST_Amount__c = gstAmount));
                         }
-                        oldPackageTotalAmount = -oldPackageTotalAmount;
-                        if(gstAmount > 0){
-                            gstAmount = -gstAmount;
-                        }
-                        system.debug('@@@totalAmount'+totalAmount);
-                        system.debug('@@@gstAmount'+gstAmount);
-                        invoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,Amount__c = oldPackageTotalAmount, 
-                                                                    Teacher_Id__c = oldTeacher,Month__c= effectiveDate,
+                    }
+                    if(packageInvoiceOldNextMonthAmount.containsKey(oldPackage)){
+                        if(packageInvoiceOldNextMonthAmount.get(oldPackage).split(';') != null && packageInvoiceOldNextMonthAmount.get(oldPackage).split(';').size() >0){
+                            oldPackageNextMonthTotalAmount = decimal.valueOf(packageInvoiceOldNextMonthAmount.get(oldPackage).split(';')[0]);
+                            gstAmount = decimal.valueOf(packageInvoiceOldNextMonthAmount.get(oldPackage).split(';')[1]);
+                            if(oldPackageNextMonthTotalAmount != 0){
+                                oldPackageNextMonthTotalAmount = BillingUtility.roundOffAmount(oldPackageNextMonthTotalAmount);
+                            }
+                            if(gstAmount != 0){
+                                gstAmount = BillingUtility.roundOffAmount(gstAmount);
+                            }
+                            /*Commented by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+                            oldPackageNextMonthTotalAmount = -oldPackageNextMonthTotalAmount;
+                            if(gstAmount > 0){
+                                gstAmount = -gstAmount;
+                            }
+                            //system.debug('@@@totalAmount'+totalAmount);
+                            //system.debug('@@@gstAmount'+gstAmount);
+                            
+                            /*invoiceLineItem.add(new Invoice_Line_Item__c(invoice__c = objectOfInvoice.id,Amount__c = oldPackageNextMonthTotalAmount, 
+                                                                    Teacher_Id__c = oldTeacher,Month__c= nextMonthDate.addMonths(-1),
                                                                     Enrolment__c =objEnrol.id,Subscription_line_item__c = subLineItemId,
-                                                                    Package__c = oldPackage,  GST_Amount__c = gstAmount));
+                                                                    Package__c = oldPackage,  GST_Amount__c = gstAmount));*/
+                            //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+                        
+                            String invoicelineitemId = null;
+                            if(mapofinvoice != null && mapofinvoice.size() > 0 ){
+                                if(mapofinvoice.containskey('Next Month')){
+                                    if(mapofinvoice.get('Next Month').Invoice_Line_Items__r != null && mapofinvoice.get('Next Month').Invoice_Line_Items__r.size()>0){
+                                        invoicelineitemId =mapofinvoice.get('Next Month').Invoice_Line_Items__r[0].id; 
+                                    }
+                                }
+                            }
+                            Credit_memo_line_item__c objCreditLineItem = BillingUtility.createCreditMemoLineRec(Math.abs(oldPackageNextMonthTotalAmount),gstAmount,oldPackage,
+                            objEnrol.id,invoicelineitemId,'');
+                            objCreditLineItem.Month__c = nextMonthDate.addMonths(-1);
+                            listOfCreditmemolineitem.add(objCreditLineItem); 
+                            objectOfInvoice.Credit_Memo_Amount__c +=  (Math.abs(oldPackageNextMonthTotalAmount) +gstAmount);                                                 
+                            mapOfCreditmemolineitem.put('Update Enrolment invoice Adjustment',listOfCreditmemolineitem);  
+                            //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+
+                             //added by Nishi: 19-oct-2020: According to new requirement Credit amount amount field should be populated without GST amount and applicable GST should be stored in Credit Memo Tax field
+                             if(string.isNotBlank(invoicelineitemId)){
+                                decimal invoicelineItemCreditAmount=0;
+                                decimal invoicelineItemCreditGst=0;
+                                
+                                if(updateInvoiceLineItem.containskey(invoicelineitemId)){
+                                    invoicelineItemCreditAmount =updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_Amount__c != null ?updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_Amount__c :0;
+                                    invoicelineItemCreditGst = updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_tax__c != null ?updateInvoiceLineItem.get(invoicelineitemId).Credit_Memo_tax__c :0;
+                                }
+                                updateCreditMemoInvoiceLineItem.put(invoicelineitemId,new Invoice_Line_Item__c(id=invoicelineitemId,
+                                                        Credit_Memo_Amount__c =invoicelineItemCreditAmount+(Math.abs(oldPackageNextMonthTotalAmount)),
+                                                        Credit_Memo_tax__c=invoicelineItemCreditGst+gstAmount));
+                            }
+                        }
                     }
                 }
                 
                 if(invoiceLineItem.size() > 0){
                     INSERT invoiceLineItem;
                 }
-                system.debug('@@ create new invoiceLineItem'+invoiceLineItem);
+                 //added by nishi: 7-Oct-2020 : start:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+                 if(newPendingCreditMemos.size() > 0){
+                     update objectOfInvoice;
+                    Insert newPendingCreditMemos.values();  
+                    system.debug('newPendingCreditMemos'+newPendingCreditMemos);
+                    List<Credit_memo_line_item__c> listOfnewCreditmemolineitem = new list<Credit_memo_line_item__c>();
+                    for(string creditMemoRemark : newPendingCreditMemos.keyset()){
+                        if(mapOfCreditmemolineitem.containskey(creditMemoRemark)){
+                            for(Credit_memo_line_item__c objCreditLineItem: mapOfCreditmemolineitem.get(creditMemoRemark)){
+                                objCreditLineItem.Credit_Memo_Number__c = newPendingCreditMemos.get(creditMemoRemark).id;
+                                listOfnewCreditmemolineitem.add(objCreditLineItem);
+                            }
+                        }
+                    } 
+                    if(listOfnewCreditmemolineitem != null && listOfnewCreditmemolineitem.size() > 0){
+                        insert listOfnewCreditmemolineitem;
+                    }
+                                            
+                }
+                //added by nishi: 7-Oct-2020 : end:for new requirement Create a Credit Memo record with the status Sucess instead of the Negative invoice line item record.
+              
+                if(updateCreditMemoInvoiceLineItem != null && updateCreditMemoInvoiceLineItem.size() > 0){
+                    update updateCreditMemoInvoiceLineItem.values();
+                }
+                
+                //system.debug('@@ create new invoiceLineItem'+invoiceLineItem);
                 if(String.isNotBlank(objectOfInvoice.id)){
                     SageIntacctIntegrationUtility.changeEnrolment(objectOfInvoice.Id);
                 }
@@ -587,7 +840,7 @@ public without sharing class UpdateEnrolmentClassProcessController implements IA
                 
             }
         }
-        system.debug('@@objectOfInvoice.Id'+objectOfInvoice.Id);
+       //system.debug('@@objectOfInvoice.Id'+objectOfInvoice.Id);
         return objectOfInvoice.Id;
     }
     

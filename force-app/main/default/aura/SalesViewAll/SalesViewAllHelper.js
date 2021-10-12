@@ -2,7 +2,7 @@
 	 callSalesCase:function(component,event,searchKeys){
     	var action = component.get("c.findSalesEnquiryCases");
         action.setParams({
-          "searchKey": searchKeys
+          "searchKey": searchKeys,
         });
         action.setCallback(this, function(response) {
             var result = response.getState();

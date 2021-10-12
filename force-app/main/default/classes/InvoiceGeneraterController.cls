@@ -10,30 +10,27 @@ public with sharing class InvoiceGeneraterController {
             Savepoint monthInvoiceSavePoint;
             try{
                 monthInvoiceSavePoint = Database.setSavepoint();
-                List<Subscription__c> listOfSub = getSubscriptionList(subscriptionId,nextMonthDate);
-                if(listOfSub!= null && listOfSub.size() > 0){
-                    if(listOfSub[0].Subscription_Line_Items__r != null && listOfSub[0].Subscription_Line_Items__r.size() > 0 ){
-                        //14-Aug-2020:Nishi:If any person monthly billing not created for any further reason then we create that month billing 
-                        if(listOfSub[0].Next_Bill_Date__c <=   Date.newInstance(system.today().year(),system.today().month(),01)){
-                            nextBillingDate = listOfSub[0].Next_Bill_Date__c;
+                ActiveSubscritionWrapper objActiveSubscritionWrapper = new ActiveSubscritionWrapper(subscriptionId);
+                if(objActiveSubscritionWrapper.isActiveSubscrition){
+                    List<Subscription__c> listOfSub = getSubscriptionList(subscriptionId,nextMonthDate);
+                    if(listOfSub!= null && listOfSub.size() > 0){
+                        if(listOfSub[0].Subscription_Line_Items__r != null && listOfSub[0].Subscription_Line_Items__r.size() > 0 ){
+                            //14-Aug-2020:Nishi:If any person monthly billing not created for any further reason then we create that month billing 
+                            if(listOfSub[0].Next_Bill_Date__c <=   Date.newInstance(system.today().year(),system.today().month(),01)){
+                                nextBillingDate = listOfSub[0].Next_Bill_Date__c;
+                            }
+                            //14-Aug-2020:Nishi:If any person monthly billing not created for any further reason then we create that month billing 
+                            listOfSubscriptionStudent =  invoiceFromSubscriptionSummary(listOfSub,nextBillingDate);
+                            system.debug('listOfSubscriptionStudent-'+listOfSubscriptionStudent); 
+                            return new GenerateInvoiceSummaryWrapper(listOfSubscriptionStudent,nextBillingDate,'200',''+nextBillingDate);
+                        }else{
+                            return new GenerateInvoiceSummaryWrapper(listOfSubscriptionStudent,nextBillingDate,'400','Not Found any Subscription Line Item Next Bill date is greater then Next Month..');
                         }
-                        // if(nextMonthDate == nextBillingDate){
-                        //     for(Subscription_Line_Item__c objlineitem :listOfSub[0].Subscription_Line_Items__r){
-                        //         if(objlineitem.Next_Bill_Date__c <=   Date.newInstance(system.today().year(),system.today().month(),01)){
-                        //             nextBillingDate = listOfSub[0].Next_Bill_Date__c;
-                        //             break;
-                        //         }
-                        //     }
-                        // }
-                        //14-Aug-2020:Nishi:If any person monthly billing not created for any further reason then we create that month billing 
-                        listOfSubscriptionStudent =  invoiceFromSubscriptionSummary(listOfSub,nextBillingDate);
-                        system.debug('listOfSubscriptionStudent-'+listOfSubscriptionStudent); 
-                        return new GenerateInvoiceSummaryWrapper(listOfSubscriptionStudent,nextBillingDate,'200',''+nextBillingDate);
                     }else{
-                        return new GenerateInvoiceSummaryWrapper(listOfSubscriptionStudent,nextBillingDate,'400','Not Found any Subscription Line Item Next Bill date is greater then Next Month..');
+                        return new GenerateInvoiceSummaryWrapper(listOfSubscriptionStudent,nextBillingDate,'400','Subscription Next Bill date is greater then Next Month..');
                     }
                 }else{
-                    return new GenerateInvoiceSummaryWrapper(listOfSubscriptionStudent,nextBillingDate,'400','Subscription Next Bill date is greater then Next Month..');
+                    return new GenerateInvoiceSummaryWrapper(listOfSubscriptionStudent,nextBillingDate,'400',objActiveSubscritionWrapper.errorMessage);
                 }
             }catch(exception e){
                 system.debug('e.getMessage()'+e.getMessage());
@@ -43,6 +40,27 @@ public with sharing class InvoiceGeneraterController {
         }
         return new GenerateInvoiceSummaryWrapper(listOfSubscriptionStudent,nextBillingDate,'400','Subscription Id not Found');
     }
+    public class ActiveSubscritionWrapper{
+        @AuraEnabled public string errorMessage;
+        @AuraEnabled public Boolean isActiveSubscrition;
+        public ActiveSubscritionWrapper(string subscriptionId){
+            isActiveSubscrition = true;
+            errorMessage = '';
+            List<Subscription__c> listOfSub =  getActiveSubscriptionList(subscriptionId);
+            if(listOfSub != null && listOfSub.size() > 0){
+                if(listOfSub[0].Subscription_Line_Items__r != null && listOfSub[0].Subscription_Line_Items__r.size() > 0 ){
+                    isActiveSubscrition = true;
+                }else{
+                    isActiveSubscrition = false;
+                    errorMessage ='Not Fount Any Subscription Line Item Active Status...  ';
+                }
+            }else{
+                isActiveSubscrition = false;
+                errorMessage ='Selected Subscription Is Not Active Status...  ';
+            }
+        }
+        
+    } 
 
     public static list<SubscriptionStudentWrapper> invoiceFromSubscriptionSummary(List<Subscription__c> subscriptions, Date invDate){
         list<SubscriptionStudentWrapper> listOfSubscriptionStudent = new list<SubscriptionStudentWrapper>();
@@ -86,6 +104,12 @@ public with sharing class InvoiceGeneraterController {
                             if(string.isNotBlank(objSubscriptionLineItem.Enrolment__r.New_Package_Id__c) && objinvLineItm.Package__c ==objSubscriptionLineItem.Enrolment__r.New_Package_Id__c){
                                 packageName = objSubscriptionLineItem.Enrolment__r.New_Package_Id__r.name;
                             }
+                               //added by nishi:12-Jan-2020:Start: for invoice packages amount according to Promo enrolment changed into regular package.           
+                            if(string.isNotBlank(objSubscriptionLineItem.Enrolment__r.Package_To_Be_Change__c) && objinvLineItm.Package__c ==objSubscriptionLineItem.Enrolment__r.Package_To_Be_Change__c){
+                                packageName = objSubscriptionLineItem.Enrolment__r.Package_To_Be_Change__r.name;
+                            }
+                               //added by nishi:12-Jan-2020:end: for invoice packages amount according to Promo enrolment changed into regular package.           
+               
                         }
                         if(string.isNotBlank(objSubscriptionLineItem.Enrolment__r.Student_Name__c)){
                             studentName = objSubscriptionLineItem.Enrolment__r.Student_Name__c;
@@ -132,11 +156,11 @@ public with sharing class InvoiceGeneraterController {
                             nextBillingDate = listOfSub[0].Next_Bill_Date__c;
                         }
                         //14-Aug-2020:Nishi:If any person monthly billing not created for any further reason then we create that month billing 
-                        Set<string> invoiceIds = BillingUtility.createInvoiceFromSubscription(listOfSub,NULL,nextBillingDate);
+                        Set<string> invoiceIds = BillingUtility.createInvoiceFromSubscription(listOfSub,NULL,nextBillingDate,true);
                         Set<String> enrolmentIds = new Set<String>();
                         enrolmentIds.addAll(BillingUtility.getInvoiceLineItemEnrollmentIds(invoiceIds));
                         if(enrolmentIds != NULL && enrolmentIds.size() > 0){
-                            Database.executeBatch(new PostInvoiceBatch(enrolmentIds), 200);
+                            Database.executeBatch(new PostInvoiceBatch(enrolmentIds,datetime.newInstance(nextMonthDate, system.now().time())), 200);
                         }
                         List<string> invIds = new List<string>();
                         invIds.addAll(invoiceIds); 
@@ -157,7 +181,7 @@ public with sharing class InvoiceGeneraterController {
 
     @AuraEnabled
     public static generateInvoiceWrapper generateInvoicePayment(String invoiceId){
-        Date nextBillingDate = Date.newInstance(system.today().addMonths(1).year(),system.today().addMonths(1).month(),01);
+        
         if(string.isNotBlank(invoiceId)){
             Savepoint monthInvoiceSavePoint;
             try{
@@ -224,7 +248,13 @@ public with sharing class InvoiceGeneraterController {
                                                         Enrolment__r.Package__r.Deposit_Fee__c,Enrolment__r.Package__r.Unit_Fee__c,Enrolment__r.Package__r.Name,
                                                         Next_Bill_Date__c, Enrolment__r.Center__r.Country__r.Id, Enrolment__r.Center__r.Country__r.Tax_Rate__c,
                                                         Enrolment__r.Center__r.Organisation__r.Name,/*Enrolment__r.New_Package_Id__r.Facility_Fee__c,Enrolment__r.Package__r.Facility_Fee__c,*/
-                                                        Enrolment__r.Center__r.Organisation__r.Tax_Rate__c,Enrolment__r.Parent__r.Centre_Name__r.Organisation__r.Tax_Rate__c
+                                                        Enrolment__r.Center__r.Organisation__r.Tax_Rate__c,
+                                                        Enrolment__r.No_of_Stairs__c, // 9-oct-2020: for manage Additional pickup charges with stair case charges  
+                                                        Enrolment__r.New_Centre__r.Country__r.Id, Enrolment__r.New_Centre__r.Country__r.Tax_Rate__c,
+                                                        Enrolment__r.New_Centre__r.Organisation__r.Name,/*Enrolment__r.New_Package_Id__r.Facility_Fee__c,Enrolment__r.Package__r.Facility_Fee__c,*/
+                                                        Enrolment__r.New_Centre__r.Organisation__r.Tax_Rate__c,
+														Enrolment__r.Package_To_Be_Change__r.Unit_Fee__c,Enrolment__r.Package_To_Be_Change__c,Enrolment__r.Package_To_Be_Change__r.name,///added by nishi:11-Jan-2020: for invoice packages amount according to Promo enrolment changed into regular package. 
+                                                        Enrolment__r.Parent__r.Centre_Name__r.Organisation__r.Tax_Rate__c
                                                             FROM Subscription_Line_Items__r
                                                             WHERE Status__c=:ConstantsClass.activeStatus AND Next_Bill_Date__c <= :nextBillingDate
                                                             AND Subscription_Start_Date__c <=: nextBillingDate AND (Subscription_Expiry_Date__c=NULL OR Subscription_Expiry_Date__c >: nextBillingDate))
@@ -234,6 +264,34 @@ public with sharing class InvoiceGeneraterController {
                                                     AND Next_Bill_Date__c <=:nextBillingDate AND
                                                     (Subscription_End_Date__c=NULL OR Subscription_End_Date__c >: nextBillingDate)
                                                         AND Id=:subscriptionId];
+    }
+
+    public static List<Subscription__c> getActiveSubscriptionList(String subscriptionId){
+        return [Select Id,Parent__c,Parent__r.personContactId,Next_Bill_Date__c,Center__c,
+                                                    (Select Id,Amount__c,Enrolment__c,Plan_Package__c,Enrolment__r.Effective_Date__c,
+                                                    Enrolment__r.Parent__c,Enrolment__r.Student__c,Enrolment__r.Student_Name__c,Enrolment__r.Parent__r.Centre_Name__r.Country__r.Tax_Rate__c,
+                                                    Enrolment__r.recordtype.Name,Enrolment__r.Termination_request_date__c,Enrolment__r.Parent__r.Name,
+                                                    Enrolment__r.Package_Process_Type__c,Enrolment__r.Package_Process_Status__c,Enrolment__r.Lesson_day__c,
+                                                    Enrolment__r.New_Package_Id__c,Enrolment__r.Package_Process_Request_Date__c,Enrolment__r.New_Package_Id__r.Name,
+                                                    Enrolment__r.New_Package_Id__r.Deposit_Fee__c,Enrolment__r.New_Package_Id__r.Unit_Fee__c,
+                                                    Enrolment__r.Package__c,Enrolment__r.Teacher__c, Enrolment__r.New_Teacher__c,Enrolment__r.Promotional_Period_End_Date__c,
+                                                    Enrolment__r.Package__r.Deposit_Fee__c,Enrolment__r.Package__r.Unit_Fee__c,Enrolment__r.Package__r.Name,
+                                                    Next_Bill_Date__c, Enrolment__r.Center__r.Country__r.Id, Enrolment__r.Center__r.Country__r.Tax_Rate__c,
+                                                    Enrolment__r.Center__r.Organisation__r.Name,/*Enrolment__r.New_Package_Id__r.Facility_Fee__c,Enrolment__r.Package__r.Facility_Fee__c,*/
+                                                    Enrolment__r.Center__r.Organisation__r.Tax_Rate__c,
+                                                    Enrolment__r.No_of_Stairs__c, // 9-oct-2020: for manage Additional pickup charges with stair case charges  
+                                                    Enrolment__r.New_Centre__r.Country__r.Id, Enrolment__r.New_Centre__r.Country__r.Tax_Rate__c,
+                                                    Enrolment__r.New_Centre__r.Organisation__r.Name,/*Enrolment__r.New_Package_Id__r.Facility_Fee__c,Enrolment__r.Package__r.Facility_Fee__c,*/
+                                                    Enrolment__r.New_Centre__r.Organisation__r.Tax_Rate__c,
+                                                    Enrolment__r.Package_To_Be_Change__r.Unit_Fee__c,Enrolment__r.Package_To_Be_Change__c,Enrolment__r.Package_To_Be_Change__r.name,///added by nishi:11-Jan-2020: for invoice packages amount according to Promo enrolment changed into regular package. 
+                                                    Enrolment__r.Parent__r.Centre_Name__r.Organisation__r.Tax_Rate__c
+                                                    FROM Subscription_Line_Items__r
+                                                        WHERE Status__c=:ConstantsClass.activeStatus 
+                                                        AND (Subscription_Expiry_Date__c=NULL))
+                                                    FROM Subscription__c
+                                                    WHERE Status__c=:ConstantsClass.activeStatus 
+                                                    and Parent__c!=null
+                                                    AND Id=:subscriptionId];
     }
 
     public class GenerateInvoiceSummaryWrapper{

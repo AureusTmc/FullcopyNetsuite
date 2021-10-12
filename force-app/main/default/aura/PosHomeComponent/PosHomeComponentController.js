@@ -400,21 +400,32 @@
             var slcdCstmr    = component.get("{!v.accCstmrId}");
             var slcdProducts = component.get("{!v.slcdProducts}"); 
             var slcdPayType  = component.find("mygroup").get("v.value"); 
-            
+            console.log('slcdCntr',slcdCntr);
+            console.log('slcdCstmr',slcdCstmr);
+            console.log('slcdProducts',slcdProducts);
+            console.log('slcdPayType',slcdPayType);
             // alert(slcdCstmr);
             var action = component.get("c.payAndRedirect");
-            action.setParams({"selectedCenter" : slcdCntr, "cstmrId":slcdCstmr, "slcdPayType":slcdPayType, "sgPrdItms" : slcdProducts});
+            action.setParams({"selectedCenter" : slcdCntr, "cstmrId":slcdCstmr, "slcdPayType":slcdPayType, "sgPrdItms" : slcdProducts,"enrolmentId":slcdEnrolmentId});
             
             action.setCallback(this,function(response){
                 var state = response.getState();
                 if(state == "SUCCESS"){
                     var retRes = response.getReturnValue();
+                    console.log('retRes',retRes);
                    // alert(retRes+'      '+retRes.startsWith('Error'));
                     if(!retRes.startsWith('Error')){
-                        var navEvent = $A.get("e.force:navigateToSObject");  
-                        
-                        navEvent.setParams({"recordId": response.getReturnValue()});
-                        navEvent.fire(); 
+                        // var navEvent = $A.get("e.force:navigateToSObject");  
+                        // navEvent.setParams({"recordId": response.getReturnValue()});
+                        // navEvent.fire(); 
+                        // var toastEvent = $A.get("e.force:showToast");
+                        // toastEvent.setParams({
+                        //     "title": "Success!",
+                        //     "message": "Please wait... Payments Are Pending...",
+                        //     "type":'success'
+                        // });
+                        // toastEvent.fire();
+                        window.open('/'+response.getReturnValue(),"_self");
                     }else{
                          helper.showToast(component,event,'Error',retRes);
                     }
@@ -446,19 +457,23 @@
         var slcdCntr     = component.get("{!v.slcdCentr}");
         var slcdCstmr    = component.get("{!v.accCstmrId}");
         var slcdProducts = component.get("{!v.slcdProducts}"); 
-        var slcdPayType  = component.get("{!v.slcdPayType}"); 
-        
+        var slcdPayType  = component.get("{!v.slcdPayType}");
+        var slcdEnrolmentId  = component.get("{!v.slcdEnrolmentId}"); 
+        console.log('slcdCntr',slcdCntr);
+        console.log('slcdCstmr',slcdCstmr);
+        console.log('slcdProducts',slcdProducts);
+        console.log('slcdPayType',slcdPayType);
         
         var action = component.get("c.payAndRedirect");
-        action.setParams({"selectedCenter" : slcdCntr, "cstmrId":slcdCstmr, "slcdPayType":slcdPayType, "sgPrdItms" : slcdProducts});
+        action.setParams({"selectedCenter" : slcdCntr, "cstmrId":slcdCstmr, "slcdPayType":slcdPayType, "sgPrdItms" : slcdProducts,"enrolmentId":slcdEnrolmentId});
         
         action.setCallback(this,function(response){
             var state = response.getState();
             if(state == "SUCCESS"){
-                var navEvent = $A.get("e.force:navigateToSObject");  
-                //alert(response.getReturnValue());
-                navEvent.setParams({"recordId": response.getReturnValue()});
-                navEvent.fire(); 
+                // var navEvent = $A.get("e.force:navigateToSObject");  
+                // console.log(response.getReturnValue());
+                // navEvent.setParams({"recordId": response.getReturnValue()});
+                // navEvent.fire(); 
                // alert(response.getReturnValue());
                 /*var instdAcc = response.getReturnValue();
                 
@@ -467,6 +482,14 @@
                 component.set("v.accName", name);
                 component.set("v.isModalOpen", false);*/
                   //  alert('sdfuc');
+                //   var toastEvent = $A.get("e.force:showToast");
+                //   toastEvent.setParams({
+                //       "title": "Success!",
+                //       "message": "Please wait... Payments Are Pending...",
+                //       "type":'success'
+                //   });
+                //   toastEvent.fire();
+                window.open('/'+response.getReturnValue(),"_self");
                 }else{
                     
                 } 

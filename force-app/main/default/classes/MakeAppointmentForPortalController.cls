@@ -4,6 +4,8 @@ public class MakeAppointmentForPortalController{
     public Boolean isSuccess{get;set;}
     public Date slcdDateNew{get;set;} 
     public String slcdTimeNew{get;set;}
+    public String slcdLessonType{get;set;}
+    public Integer indexData{get;set;}
     public String tempslcdTimeNew{get;set;}
     public Integer indexno{get;set;}    
     public Boolean assignFlagValue{get;set;}
@@ -13,6 +15,12 @@ public class MakeAppointmentForPortalController{
     public String slcdDate{get;set;}
     public String enrollmentId{get;set;}
     public Integer makeAvlMinutes{get;set;}
+    // added by nishi:21-Sep-2021:Start: for manage Complementry Available Minutes values
+    public Integer makeComplementryMinutes{get;set;}
+    public Boolean isComplementryMinutes{get;set;}
+    public Integer slcComplemantryPkgdDuration{get;set;}
+    public Integer complementaryAvlBalanceMinutes{get;set;}
+    // added by nishi:21-Sep-2021:End: for manage Complementry Available Minutes values
     public Integer makeAvlBalanceMinutes{get;set;}
     public Boolean isError{get;set;}
     public String  errorMsg{get;set;}
@@ -27,7 +35,8 @@ public class MakeAppointmentForPortalController{
     public Map<String,Integer> makeUpPackageMap;
     public List<selectoption> allslotslist{get;set;}
     public Boolean selectedTeacher{get;set;}
-    
+    public Boolean isAllowOnline{get;set;}
+
     public String  prcType{get;set;} 
     public Boolean isPrcAnyTime{get;set;}
     public MakeAppointmentForPortalModalClass currentStudent{get;set;}
@@ -38,13 +47,18 @@ public class MakeAppointmentForPortalController{
         slcdPkg = false;
         tSlotMap   = new TimeSlotModelCntrl();
         tSlotStr   = '';
+        isAllowOnline = true;
         tSlotDateMap = new Map<String,TimeSlotModelCntrl>();
-        
+        slcdLessonType = 'In Centre';
         isPrcAnyTime = false;
         currentStudent = new MakeAppointmentForPortalModalClass();
         indexNo = 0;
         //slcPkgdDuration = 135;
         makeAvlMinutes = 0;
+        //added by nishi: 21-Sep-2021: start:we have set Complementary Credit mins default values
+        makeComplementryMinutes =0;
+        isComplementryMinutes = false;
+        //added by nishi: 21-Sep-2021: end:we have set Complementary Credit mins default values
         getTeacherName = new Map<String,String>();
         makeUpPackageMap = new Map<String,Integer>();
         slcdDate = System.today().day()+'/'+System.today().month()+'/'+System.today().year();
@@ -55,7 +69,12 @@ public class MakeAppointmentForPortalController{
                                   Unit_Fee__c, Active__c FROM Package__c 
                                   WHERE Active__c = true AND Type__c = 'Makeup' AND Duration__c != null ORDER BY Duration__c]){
               makeUpPackageMap.put(pkg.id,Integer.valueOf(pkg.Duration__c));    
-        }                              
+        }  
+        List<pay_slip_and_salary_detail_check__c> customList = [SELECT Allow_Online__c from pay_slip_and_salary_detail_check__c Limit 1];
+            
+            if(customList.size() > 0){
+                isAllowOnline = customList[0].Allow_Online__c;
+            }
         System.debug('###@@@&&&'+makeUpPackageMap);    
         techerRecordtypeId =  Schema.SObjectType.Account.getRecordTypeInfosByName().get(ConstantsClass.teacherRecTypeName).getRecordTypeId();                 
         for(Account accObj : [select id,name,firstname,lastname,RecordType.ID,Major_Instruments_Disciplines__c,Minor_Instruments_Disciplines__c from account where RecordType.ID =: techerRecordtypeId]){
@@ -64,16 +83,24 @@ public class MakeAppointmentForPortalController{
         if(String.isNotBlank(parId)){
             accList = [SELECT Id, FirstName, LastName, Name, PersonMobilePhone, PersonOtherPhone, 
                                      PersonEmail, BillingCountryCode, Gender__c, Nationality__c, Phone, Occupation__c, 
-                                     BillingStreet, BillingCity, BillingPostalCode, BillingCountry, Available_Make_up_Units__c
+                                     BillingStreet, BillingCity, BillingPostalCode, BillingCountry, Available_Make_up_Units__c,Available_Complementary_Credit_mins__c
                                      FROM Account WHERE Id =: parId];
             if(accList.size() > 0){
                 Account ac = accList.get(0); 
                 makeAvlMinutes = ac.Available_Make_up_Units__c != null ? Integer.valueOf(ac.Available_Make_up_Units__c) : 0;
                 makeAvlBalanceMinutes = 0;
+                //added by nishi: 21-Sep-2021: start:we have set According to parent Available Complementary Credit mins 
+                makeComplementryMinutes = ac.Available_Complementary_Credit_mins__c != null ? Integer.valueOf(ac.Available_Complementary_Credit_mins__c) : 0;
+                System.debug('makeAvlMinutes'+makeAvlMinutes);    
+                System.debug('makeComplementryMinutes'+makeComplementryMinutes);  
+                complementaryAvlBalanceMinutes =0;
+                 //added by nishi: 21-Sep-2021: start:we have set According to parent Available Complementary Credit mins 
+
                 //Add a new condition to the enrollment query if a enrollment package has a type group then we exclude that enrollment change made by sakib on 3/9/2019
-                for(Enrolment__c enrolmentObj : [SELECT Id,Name,Center__r.Name,Center__c,Student__c,Student__r.Name,Package__r.Type__c,Student__r.Id,Instrument__c,Teacher__r.Name FROM Enrolment__c WHERE Parent__c =: parId AND Center__c != null AND Type__c =: ConstantsClass.typeRegular AND Stage__c =: ConstantsClass.enroledStatus AND Package__r.Type__c != 'Group']){
+                for(Enrolment__c enrolmentObj : [SELECT Id,Name,Lesson_Mode__c,Center__r.Name,Center__c,Student__c,Student__r.Name,Package__r.Type__c,Student__r.Id,Instrument__c,Teacher__r.Name FROM Enrolment__c WHERE Parent__c =: parId AND Center__c != null AND Type__c =: ConstantsClass.typeRegular AND Stage__c =: ConstantsClass.enroledStatus AND Package__r.Type__c != 'Group']){
                     MakeAppointmentForPortalModalClass modalclass = new MakeAppointmentForPortalModalClass();
                     modalclass.flag = false;
+                    
                     modalclass.enrolmentObject = enrolmentObj;
                     modelList.add(modalclass);
                 }
@@ -102,7 +129,7 @@ public class MakeAppointmentForPortalController{
     }
     public void selectedStudent(){
         slcdPkg = false;
-        isPrcAnyTime = false;       
+        isPrcAnyTime = true;       
         
         newModelList.clear();
         for(MakeAppointmentForPortalModalClass m : modelList){
@@ -116,8 +143,11 @@ public class MakeAppointmentForPortalController{
                 model.teacherName = m.enrolmentObject.Teacher__r.Name;
                 model.lessonTeacher = getTeachers(m.enrolmentObject.instrument__c,m.enrolmentObject.center__c);
                 model.packageList = getPackages(m.enrolmentObject.center__c);
+                model.makeupOptionList = getmakeupOptions(); // 21-Sep-2021: nishi: for manage Complementry min or makeup mins according to selection
+                model.selectedMakeupType = 'True';//added by nishi: 21-Sep-2021: start:default set makeup type bookings
                 model.enrolStudentCenterId = m.enrolmentObject.center__c;
                 model.selectedPackageId = '';
+              	model.LessonMode = m.enrolmentObject.Lesson_Mode__c;
                 model.centerName = m.enrolmentObject.center__r.Name;
                 model.studentId = m.enrolmentObject.student__c;
                 newModelList.add(model);
@@ -130,6 +160,15 @@ public class MakeAppointmentForPortalController{
             //currentStudent = newModelList.get(0);
         }
     }
+    public void handleChangeMode(){
+        system.debug(indexData);
+        system.debug(slcdLessonType);
+        if(newModelList.size() > 0){
+           newModelList[indexData].LessonMode = slcdLessonType;
+        }
+        
+    }
+    
     
     public void saveCurrentRecord(){
         /*MakeAppointmentForPortalModalClass model = newModelList.get(indexNo);
@@ -143,13 +182,14 @@ public class MakeAppointmentForPortalController{
         indexNo = indexNo+1;
         slcdDate = System.today().day()+'/'+System.today().month()+'/'+System.today().year();
         slcdSlot = '';*/
+        
         MakeAppointmentForPortalModalClass model = newModelList.get(indexNo);
         model.slcdTime = slcdSlot;
         List<String> timeList = slcdSlot.split(':');
         Time tempT = Time.newInstance(Integer.valueOf(timeList[0]), Integer.valueOf(timeList[1]) , 0, 0);
         model.tempslcdTime = DateTime.newInstance(Date.parse(slcdDate), tempT).format('hh:mm a');
         model.slcdDate = Date.parse(slcdDate);
-        
+       
         indexNo = indexNo+1;
         slcdDate = System.today().day()+'/'+System.today().month()+'/'+System.today().year();
         slcdSlot = '';
@@ -178,8 +218,8 @@ public class MakeAppointmentForPortalController{
     public void checkAvlMakeup(){ 
         isError = false;
         System.debug('selectedpackage = '+slcPkgdDuration);
-              
-        if(slcPkgdDuration > 0){            
+        System.debug('isComplementryMinutes = '+isComplementryMinutes);
+        if(slcPkgdDuration > 0){ 
             if(accList.size() == 0 || Integer.valueOf(accList.get(0).Available_Make_up_Units__c) < slcPkgdDuration){
                 isError = true;
                 errorMsg = 'You dont have sufficient makeup units. Please contact Centre Admin for more details.';
@@ -187,6 +227,17 @@ public class MakeAppointmentForPortalController{
         }else{
             slcPkgdDuration = 0;
         }
+         // added by nishi: 21-sep-2021:start: we have check is makeup type is  Complementary_Credit_mins or parent have no Complementary_Credit_mins then we show error message.     
+        if(slcComplemantryPkgdDuration > 0){ 
+                if(accList.size() == 0 || Integer.valueOf(accList.get(0).Available_Complementary_Credit_mins__c) < slcComplemantryPkgdDuration){
+                    isError = true;
+                    errorMsg = 'You dont have sufficient complementary credit mints. Please contact Centre Admin for more details.';
+                }
+        }else{
+            slcComplemantryPkgdDuration = 0;
+        }
+          // added by nishi: 21-sep-2021:start: we have check is makeup type is  Complementary_Credit_mins or parent have no Complementary_Credit_mins then we show error message.     
+       
         
     }
     public List<SelectOption> getLessons(){
@@ -216,6 +267,15 @@ public class MakeAppointmentForPortalController{
         }
         return teacherOptions;
     }
+
+    // 21-Sep-2021: nishi:Start: for manage Complementry min or makeup mins according to selection
+    public List<SelectOption> getmakeupOptions(){
+        List<SelectOption> pkgOptions = new List<SelectOption>();
+        pkgOptions.add(new SelectOption('True', 'Make-up'));         
+        pkgOptions.add(new SelectOption('False', 'Complimentary'));         
+        return pkgOptions;
+    }
+    // 21-Sep-2021: nishi:End: for manage Complementry min or makeup mins according to selection
     public List<SelectOption> getPackages(String centerId){
         List<SelectOption> pkgOptions = new List<SelectOption>();
         pkgOptions.add(new SelectOption('', '--None--'));         
@@ -256,8 +316,10 @@ public class MakeAppointmentForPortalController{
             }
         }        
     }
+   
     public void fetchTimeSlot(){
         slcPkgdDuration = 0;
+        slcComplemantryPkgdDuration =0;//added by nishi: 21-Sep-2021: start:default set Complemantry packages Duration 0
         //Set<ID> selectedPackageIds = new Set<ID>(); commented by sakib on 26/8/2019 because the package ids are different for each student and in this case what happen list initialize every time when this function called and this will overwrite the list with last selected package.
         Set<ID> selectStudentenrolmentIds = new Set<ID>();
         Set<ID> selectedTeacherIds = new Set<ID>();
@@ -266,6 +328,8 @@ public class MakeAppointmentForPortalController{
         Boolean isError = false;
         if(isPrcAnyTime){
             MakeAppointmentForPortalModalClass mo = newModelList.get(indexNo);
+            system.debug('mo.selectedMakeupType'+mo.selectedMakeupType);
+            System.debug('!!!!isComplementryMinutes'+isComplementryMinutes);
             System.debug('#### ids of packages'+mo.selectedPackageId);
             if(String.isNotBlank(mo.selectedPackageId)){
                 selectedPackageIds.add(mo.selectedPackageId);    
@@ -279,6 +343,7 @@ public class MakeAppointmentForPortalController{
             centerIds.add(mo.enrolStudentCenterId);  
         }else{
             for(MakeAppointmentForPortalModalClass mo : newModelList){
+                system.debug('mo.selectedMakeupType'+mo.selectedMakeupType);
                 if(String.isNotBlank(mo.selectedPackageId)){
                     selectedPackageIds.add(mo.selectedPackageId);    
                 }else{
@@ -308,12 +373,21 @@ public class MakeAppointmentForPortalController{
                                                             FROM Package__c WHERE Id IN : selectedPackageIds AND Duration__c != null]);
         system.debug('package map = '+pkgMap);
         Integer maxDuration = 0;
+        isComplementryMinutes =False;//added by nishi: 21-Sep-2021:  default set Complementry Minutes  false
         for(MakeAppointmentForPortalModalClass mo : newModelList){
             System.debug('$$$$'+mo.selectedPackageId);
             if(String.isNotBlank(mo.selectedPackageId) && pkgMap.containsKey(mo.selectedPackageId)){
                 Integer tempduration = Integer.valueOf(pkgMap.get(mo.selectedPackageId).Duration__c);
                 system.debug('%%%% = '+tempduration);
-                slcPkgdDuration += tempduration;    
+                //added by nishi: 21-Sep-2021: start:we have manage Makeup or complementry mins According to selected Makeup type
+                if(Boolean.valueOf(mo.selectedMakeupType)){
+                    slcPkgdDuration += tempduration; 
+                }else{
+                    isComplementryMinutes =true;
+                    slcComplemantryPkgdDuration +=tempduration;
+                }
+                //slcPkgdDuration += tempduration; 
+                //added by nishi: 21-Sep-2021: end:we have manage Makeup or complementry mins According to selected Makeup type
                 mo.selectedPkgDuration = tempduration;
                 
                 if(tempduration > maxDuration)
@@ -332,13 +406,22 @@ public class MakeAppointmentForPortalController{
         
         maxDuration = maxDuration-ConstantsClass.defMinutes; 
         
-        System.debug('@@@'+slcPkgdDuration);
-        System.debug('!!!!'+makeAvlMinutes);
-        
-        makeAvlBalanceMinutes = makeAvlMinutes - slcPkgdDuration;
+        System.debug('@@@slcPkgdDuration'+slcPkgdDuration);
+        System.debug('!!!!makeAvlMinutes'+makeAvlMinutes);
+        System.debug('!!!!makeComplementryMinutes'+makeComplementryMinutes);
+        System.debug('!!!!isComplementryMinutes'+isComplementryMinutes);
+        // added by nishi: start: 21-Sep-2021: we have check Avl Balance Minutes if parent want to use complementry mints insted or makeup mins
+        if(isComplementryMinutes){
+            complementaryAvlBalanceMinutes = makeComplementryMinutes - slcComplemantryPkgdDuration;
+        }
+         // added by nishi:end: 21-Sep-2021:  we have check Avl Balance Minutes if parent want to use complementry mints insted or makeup mins
+        if(slcPkgdDuration != 0){
+            makeAvlBalanceMinutes = makeAvlMinutes - slcPkgdDuration;
+        }
+        System.debug('!!!!complementaryAvlBalanceMinutes'+complementaryAvlBalanceMinutes);
         List<Enrolment__c> enrList = [SELECT Id, Center__c FROM Enrolment__c WHERE Id IN : selectStudentenrolmentIds];
         system.debug('enrol list = '+enrList);
-        if(selectedTeacherIds.size() > 0 && slcPkgdDuration > 0 && enrList.size() > 0){
+        if(selectedTeacherIds.size() > 0 && (slcPkgdDuration > 0 || slcComplemantryPkgdDuration > 0) && enrList.size() > 0){
             Map<String,List<Teacher_Working_Hour__c>> teachWorkSchMap = new Map<String,List<Teacher_Working_Hour__c>>();
             List<Teacher_Working_Hour__c> techWorkSchList = [SELECT Id,Name,Teacher_Name__c,Teacher_Name__r.Name, Teacher_Name__r.FirstName, Teacher_Name__r.LastName,
                                                              Teacher_Name__r.Teacher_Bio__c,Working_Day__c,Start_Time__c,End_Time__c,Active__c
@@ -538,6 +621,7 @@ public class MakeAppointmentForPortalController{
         }        
     }
     public void saveBooking(){
+        system.debug('isComplementryMinutes'+isComplementryMinutes);
         Savepoint sp = Database.setSavepoint();        
         isError = false;
         isSuccess   = false;
@@ -554,6 +638,7 @@ public class MakeAppointmentForPortalController{
                 startTime = Time.newInstance(Integer.valueOf(timeList[0]), Integer.valueOf(timeList[1]) , 0, 0);
             }
             for(MakeAppointmentForPortalModalClass mObj : newModelList){
+                system.debug(mObj);
                 Booking__c bookingObj = new Booking__c(RecordtypeId = bookLessRecId);
                 bookingObj.Center__c  = mObj.enrolStudentCenterId;
                 bookingObj.Teacher_Account__c = mObj.teacherId;
@@ -564,6 +649,8 @@ public class MakeAppointmentForPortalController{
                 bookingObj.status__c  = ConstantsClass.statusScheduled;
                 bookingObj.Booking_Date__c = slcdDateNew; 
                 bookingObj.Start_Time__c = startTime;
+                bookingObj.Lesson_Type__c = mObj.LessonMode;
+                bookingObj.Is_Complimentary_Credit__c = (Boolean.valueOf(mObj.selectedMakeupType)) ? False : True; //added by nishi: 21-Sep-2021: start:we have manage Makeup or complementry mins According to selected Makeup type
                 System.debug('startTime'+startTime);
                 if(isPrcAnyTime){
                     bookingObj.Booking_Date__c = mObj.slcdDate; 
@@ -574,7 +661,7 @@ public class MakeAppointmentForPortalController{
                         bookingObj.Start_Time__c = startTime = Time.newInstance(Integer.valueOf(timeList[0]), Integer.valueOf(timeList[1]) , 0, 0);
                     }
                 }
-                if(slcPkgdDuration > 0){                        
+                if(slcPkgdDuration > 0 || slcComplemantryPkgdDuration > 0){     //added Condition by nishi: 21-Sep-2021: start:we have manage Makeup or complementry mins According to selected Makeup type                    
                     bookingObj.End_Time__c = bookingObj.Start_Time__c.addMinutes(makeUpPackageMap.get(mObj.selectedPackageId));                    
                 }
                  //Added by Rajesh 18th Dec 2019. To identify booking created from
@@ -582,6 +669,9 @@ public class MakeAppointmentForPortalController{
                 bookingListForInsert.add(bookingObj);             
             }            
             if(bookingListForInsert.size() > 0){
+                 // nishi: 24-feb-2021 : deduct available Complimentary Credit hours and minus and calculate utilize min then update parent 
+                    deductComplimentaryCreditHours(bookingListForInsert, parId,makeUpPackageMap);
+                // nishi: 24-feb-2021 : deduct available Complimentary Credit hours and minus and calculate utilize min then update parent
                // if(bookingListForInsert[0].Type__c == ConstantsClass.typeMakeup){                    
                     deductMakeupHours(bookingListForInsert, parId,makeUpPackageMap);
                 //}
@@ -636,7 +726,9 @@ public class MakeAppointmentForPortalController{
             //studentId = bookingObjList[0].Student__c;
             for(Booking__c bObj : bookingObjList){
                 //setStudentIds.add(bObj.Student__c);
-                setOfBookings.add(bObj.Id);
+                if(bObj.Is_Complimentary_Credit__c == false){// added by nishi: 21-sep-2021: if Is_Complimentary_Credit__c is false then we manage deduct available makeup Credit hours and minus and calculate utilize min then update parent
+                    setOfBookings.add(bObj.Id);
+                }
             }
             /*if(setOfBookings.size() > 0){
                 bookingList = [SELECT Id, Duration__c, Make_up_Utilize_Bookings__c FROM Booking__c WHERE Id IN:setOfBookings];
@@ -659,26 +751,28 @@ public class MakeAppointmentForPortalController{
                 System.debug('@@@mapOfHours'+mapOfHours);
                 //System.debug('@@@makeUpPackageMap'+makeUpPackageMap);
                 for(Booking__c bookingObj : bookingObjList){
-                    hoursToDeduct = makeUpPackageMap.get(bookingObj.Package__c);
-                    bookingObj.Make_up_Utilize_Bookings__c = '';
-                    for(Booking__c canceledBookings : cancelBookings){
-                        if(mapOfHours.containsKey(canceledBookings.Id) && mapOfHours.get(canceledBookings.Id) > 0 ){                            
-                            if(hoursToDeduct > mapOfHours.get(canceledBookings.Id)){
-                                bookingObj.Make_up_Utilize_Bookings__c  += canceledBookings.Id +'-'+mapOfHours.get(canceledBookings.Id)+';';
-                                hoursToDeduct -= mapOfHours.get(canceledBookings.Id);
-                                mapOfHours.put(canceledBookings.Id, 0);
-                            }else if(hoursToDeduct <= mapOfHours.get(canceledBookings.Id)){
-                                mapOfHours.put(canceledBookings.Id, mapOfHours.get(canceledBookings.Id) - hoursToDeduct);
-                                bookingObj.Make_up_Utilize_Bookings__c  += canceledBookings.Id +'-'+hoursToDeduct+';';
-                                hoursToDeduct = 0;
-                            }                            
-                            if(hoursToDeduct <= 0){
-                                break;   
+                    if(bookingObj.Is_Complimentary_Credit__c == false){ // added by nishi: 21-sep-2021: if Is_Complimentary_Credit__c is false then we manage deduct available makeup Credit hours and minus and calculate utilize min then update parent
+                        hoursToDeduct = makeUpPackageMap.get(bookingObj.Package__c);
+                        bookingObj.Make_up_Utilize_Bookings__c = '';
+                        for(Booking__c canceledBookings : cancelBookings){
+                            if(mapOfHours.containsKey(canceledBookings.Id) && mapOfHours.get(canceledBookings.Id) > 0 ){                            
+                                if(hoursToDeduct > mapOfHours.get(canceledBookings.Id)){
+                                    bookingObj.Make_up_Utilize_Bookings__c  += canceledBookings.Id +'-'+mapOfHours.get(canceledBookings.Id)+';';
+                                    hoursToDeduct -= mapOfHours.get(canceledBookings.Id);
+                                    mapOfHours.put(canceledBookings.Id, 0);
+                                }else if(hoursToDeduct <= mapOfHours.get(canceledBookings.Id)){
+                                    mapOfHours.put(canceledBookings.Id, mapOfHours.get(canceledBookings.Id) - hoursToDeduct);
+                                    bookingObj.Make_up_Utilize_Bookings__c  += canceledBookings.Id +'-'+hoursToDeduct+';';
+                                    hoursToDeduct = 0;
+                                }                            
+                                if(hoursToDeduct <= 0){
+                                    break;   
+                                }
                             }
                         }
+                        System.debug('bookObj '+bookingObj);
+                        bookingInsertList.add(bookingObj);
                     }
-                    System.debug('bookObj '+bookingObj);
-                    bookingInsertList.add(bookingObj);
                 }
                 System.debug('@@@bookingInsertList'+bookingInsertList);
                 if(bookingInsertList.size() > 0){
@@ -706,6 +800,98 @@ public class MakeAppointmentForPortalController{
             }
         }
     }
+
+      // nishi: 24-feb-2021 : deduct available Complimentary Credit hours and minus and calculate utilize min then update parent 
+    public void deductComplimentaryCreditHours(List<Booking__c> bookingObjList, String bookingParentId,Map<String,Integer> makeUpPackageMap){
+        String statusCanceled = ConstantsClass.statusCanceled;
+       List<Booking__c> bookingInsertList = new List<Booking__c>();
+        List<Complementary_Credit__c> complementaryCreditUpdatedList = new List<Complementary_Credit__c>();
+        Integer hoursToDeduct = 0;
+        List<Booking__c> bookingList = new List<Booking__c>();
+        Set<Id> setOfBookings = new Set<Id>();
+        Map<Id, Integer> mapOfHours = new Map<Id, Integer>();
+        Set<String> setOfParentStudent = new Set<String>();
+        if(String.isNotBlank(bookingParentId)){
+            setOfParentStudent = getParentsChild(bookingParentId);
+        }
+        System.debug('@@@bookingObjList'+setOfParentStudent);
+        System.debug('@@@bookingObjList'+bookingObjList);
+        if(bookingObjList.size() > 0){
+            for(Booking__c bObj : bookingObjList){
+                if(bObj.Is_Complimentary_Credit__c){
+                    setOfBookings.add(bObj.Id);
+                }
+            }
+            if(setOfParentStudent.size() > 0){
+                List<Complementary_Credit__c> listOfComplementaryCredit = [SELECT Credit_Apply_date__c, Credit_Expiry_date__c, Credit_Reason__c, Enrolment__c, Teacher_Name__c, Parent__c, Available_credit_Min__c, Package_Name__c, Is_Active__c, Name, Id 
+                                                                        FROM Complementary_Credit__c
+                                                                        WHERE Is_Active__c = TRUE 
+                                                                        AND Parent__c IN: setOfParentStudent AND 
+                                                                        ((Credit_Expiry_date__c != null And
+                                                                        Credit_Expiry_date__c >= TODAY) OR Credit_Expiry_date__c = NULL) 
+                                                                        AND (Available_credit_Min__c > 0 AND Available_credit_Min__c != NULL) 
+                                                                        ORDER BY Available_credit_Min__c];
+                System.debug('@@@@listOfComplementaryCredit '+listOfComplementaryCredit.size());
+                
+                if(listOfComplementaryCredit != null && listOfComplementaryCredit.size() > 0){
+                    for(Complementary_Credit__c objComplementaryCredit : listOfComplementaryCredit){
+                        mapOfHours.put(objComplementaryCredit.Id, Integer.valueOf(objComplementaryCredit.Available_credit_Min__c)); 
+                    }
+                }
+                System.debug('@@@mapOfHours'+mapOfHours);
+                for(Booking__c bookingObj : bookingObjList){
+                    if(bookingObj.Is_Complimentary_Credit__c){
+                        hoursToDeduct = makeUpPackageMap.get(bookingObj.Package__c);
+                        bookingObj.Make_up_Utilize_Bookings__c = '';
+                        for(Complementary_Credit__c objComplementaryCredit : listOfComplementaryCredit){
+                            if(mapOfHours.containsKey(objComplementaryCredit.Id) && mapOfHours.get(objComplementaryCredit.Id) > 0 ){
+                                if(hoursToDeduct > mapOfHours.get(objComplementaryCredit.Id)){
+                                    bookingObj.Make_up_Utilize_Bookings__c  += objComplementaryCredit.Id +'-'+mapOfHours.get(objComplementaryCredit.Id)+';';
+                                    hoursToDeduct -= mapOfHours.get(objComplementaryCredit.Id);
+                                    mapOfHours.put(objComplementaryCredit.Id, 0);
+                                }else if(hoursToDeduct <= mapOfHours.get(objComplementaryCredit.Id)){
+                                    mapOfHours.put(objComplementaryCredit.Id, mapOfHours.get(objComplementaryCredit.Id) - hoursToDeduct);
+                                    bookingObj.Make_up_Utilize_Bookings__c  += objComplementaryCredit.Id +'-'+hoursToDeduct+';';
+                                    hoursToDeduct = 0;
+                                }
+                                if(hoursToDeduct <= 0){
+                                    break;   
+                                }
+                            }
+                        }
+                    
+                        System.debug('bookObj '+bookingObj);
+                        bookingInsertList.add(bookingObj);
+                    }
+                }
+                System.debug('@@@bookingInsertList'+bookingInsertList);
+                if(bookingInsertList.size() > 0){
+                    Database.SaveResult[] saveResults = Database.insert(bookingInsertList, false);
+                    for(Database.SaveResult saveResult : saveResults){
+                        if(!saveResult.isSuccess()){
+                            isError = true;
+                        }
+                    }      
+                }
+                for(String keysetValue : mapOfHours.keyset()){
+                    if(mapOfHours.containsKey(keysetValue)){
+                        complementaryCreditUpdatedList.add(new Complementary_Credit__c(Id = keysetValue, 
+                        Available_credit_Min__c = (Decimal)mapOfHours.get(keysetValue)));
+                    }
+                }
+                if(complementaryCreditUpdatedList.size() > 0){
+                    Database.SaveResult[] saveResults = Database.update(complementaryCreditUpdatedList, false);
+                    for(Database.SaveResult saveResult : saveResults){
+                        if(!saveResult.isSuccess()){
+                            isError = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
     private static Set<String> getParentsChild(String parentId){
         Set<String> setOfAccId = new Set<String>();
         List<Account> accList = [SELECT Id FROM Account WHERE (Id =: parentId OR Parent__c =: parentId)];
@@ -732,12 +918,15 @@ public class MakeAppointmentForPortalController{
         public String instrumentName{get;set;}
         public String teacherId{get;set;}
         public String selectedPackageId{get;set;}
+        public String selectedMakeupType{get;set;} // 21-Sep-2021: nishi: for manage Complementry min or makeup mins according to selection
         public List<SelectOption> lessonTeacher{get;set;}
         public List<SelectOption> packageList{get;set;}
+        public List<SelectOption> makeupOptionList{get;set;} // 21-Sep-2021: nishi: for manage Complementry min or makeup mins according to selection
         public String enrolmentId{get;set;}
         public String enrolStudentCenterId{get;set;}
         public String teacherName{get;set;}
         public String centerName{get;set;}
+        public String LessonMode{get;set;}
         public Integer selectedPkgDuration{get;set;}
         public String studentId;
         public Date slcdDate{get;set;} 

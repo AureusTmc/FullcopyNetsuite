@@ -2,6 +2,8 @@
 Name        :        AureusCalendarControllerHelper
 Date        :        2019/03/23      
 Description :        This is a helper class for AureusCalendarController. 
+Test Class  :        AureusCalendarControllerTest2
+Component   :		 AureusCalendarCMP
 */
 public without Sharing class AureusCalendarControllerHelper{
     
@@ -370,7 +372,7 @@ this method returns the list of events or bookings to show on the calendar for t
 */
 
     public static string BookingObjectQueryFields(String classLessonBookingType){
-        return ' Id,Enrolment__r.Package_Process_Type__c,Center__r.Organisation__r.Name,Enrolment__r.Effective_Date__c,Lesson_Type__c,Camp_Id__r.id, Name, Class__r.Class_Type__c, Class__r.grade__c, Class__r.Id, Class__r.package__r.name,Class__r.Total_Enrolment__c,(Select id from Bookings1__r where type__c=:classLessonBookingType), Class__r.Available_Capacity__c,Class__r.Total_Capacity__c, Class__r.Name, Category__c, Teacher_Account__r.Name, start_Time__c, Event_Color__c, End_Time__c, status__c, type__c, Student__r.Name, RecordTypeId, Student__r.Parent__r.Name, Center_Id__c, Booking_Date__c, Instrument__c, Resource__c, Resource__r.Name, Individual_Booking__c, Remarks__c ';
+        return ' Id,Is_Complimentary_Credit__c,Total_Available_Make_up_mins__c,Enrolment__r.Waitlist_Status__c,Enrolment__r.Preferred_End_time__c,Enrolment__r.Preferred_Start_Time__c,Enrolment__r.Preferred_Day__c,Enrolment__r.Preferred_Teacher__r.Name ,Enrolment__r.Package_Process_Type__c,Center__r.Organisation__r.Name,Enrolment__r.Effective_Date__c,Lesson_Type__c,Camp_Id__r.id, Name, Class__r.Class_Type__c, Class__r.grade__c, Class__r.Id, Class__r.package__r.name,Class__r.Total_Enrolment__c,(Select id from Bookings1__r where type__c=:classLessonBookingType), Class__r.Available_Capacity__c,Class__r.Total_Capacity__c, Class__r.Name, Category__c, Teacher_Account__r.Name, start_Time__c, Event_Color__c, End_Time__c, status__c, type__c, Student__r.Name, RecordTypeId, Student__r.Parent__r.Name, Center_Id__c, Booking_Date__c, Instrument__c, Resource__c, Resource__r.Name, Individual_Booking__c, Remarks__c ';
     }
     public static List<AureusCalendarController.Events> getEventsListOfBooking(Set<String> setOfTeacher, Set<String> setOfResources, String centerId, List<String> datesOfAppointments, String instrument){
         // commneted by jatin: 19-feb:2020 :start: for add camp lesson record_type condition 
@@ -457,7 +459,7 @@ this method returns the list of events or bookings to show on the calendar for t
         // we will show the message icon on event on calendar.
         // this method takes the set of booking Id's and returns the count of notes for perticular booking.
         countOfBookings  = getContentNoteCount(setOfBookings);
-        
+        String profileName=[Select Id,Name from Profile where Id=:userinfo.getProfileId()].Name;
         if(bookingList.size() > 0){
             
             for(Booking__c book: bookingList){
@@ -532,6 +534,36 @@ this method returns the list of events or bookings to show on the calendar for t
                 
                 currentEvent.start = String.valueOf(book.Booking_Date__c)+'T'+String.valueOf(book.start_Time__c).split('\\.')[0];
                 currentEvent.end_c = String.valueOf(book.Booking_Date__c)+'T'+String.valueOf(book.End_Time__c).split('\\.')[0];
+                
+                //nishi: 3-Feb-2021 start:Aureus Q1 2021: show Avl makeup minutes on all future bookings.
+                currentEvent.isavailablemins = false;
+                if(system.today().daysBetween(book.Booking_Date__c) > 0 && book.Type__c == 'Regular' && book.Total_Available_Make_up_mins__c  != null && book.Total_Available_Make_up_mins__c > decimal.valueOf(System.Label.Total_Make_up_Credits) ){
+                    currentEvent.isavailablemins = true;
+                    currentEvent.availablemins = 'AMM - '+book.Total_Available_Make_up_mins__c;
+                 }
+                //nishi: 3-Feb-2021 end:Aureus Q1 2021: show Avl makeup minutes on all future bookings.
+
+                //nishi: 4-Feb-2021 start:Aureus Q1 2021: show enrollment waitlist status is 'waiting' or 'Emailed' then show related icon for center admin.
+                if(string.isnotBlank(book.Enrolment__c) && string.isnotBlank(book.Enrolment__r.Waitlist_Status__c) && 
+                (book.Enrolment__r.Waitlist_Status__c.equalsIgnoreCase('Waiting') || book.Enrolment__r.Waitlist_Status__c.equalsIgnoreCase('Emailed'))){
+                    // if(book.Enrolment__r.Waitlist_Status__c.equalsIgnoreCase('Waiting')){
+                    //    // currentEvent.isWaitingEnrolment = true;
+                    // }    
+                    // if(book.Enrolment__r.Waitlist_Status__c.equalsIgnoreCase('Emailed')){
+                    //    // currentEvent.isEmailedEnrolment = true;
+                    // } 
+                    //nishi: 5-Feb-2021 :Aureus Q1 2021: show prefered enrollment details show in tooltip for center admin.
+                    currentEvent.isShowpreferedEnrolmentDetails = true;
+                    currentEvent.preferedEnrolmentDetails = new AureusCalendarController.preferedEnrolmentDetail(
+                                                                    String.valueOf(book.Enrolment__r.Preferred_Start_Time__c),
+                                                                    String.valueOf(book.Enrolment__r.Preferred_End_time__c),
+                                                                    string.isnotblank(book.Enrolment__r.Waitlist_Status__c) ?  book.Enrolment__r.Preferred_Day__c : '',
+                                                                    ((string.isnotblank(book.Enrolment__r.Preferred_Teacher__c) && string.isnotblank(book.Enrolment__r.Preferred_Teacher__r.Name)) ?  book.Enrolment__r.Preferred_Teacher__r.Name :''),
+                                                                    book.Enrolment__r.Waitlist_Status__c);
+                    //nishi: 5-Feb-2021 :Aureus Q1 2021: show prefered enrollment details show in tooltip for center admin.
+                }
+                //nishi: 4-Feb-2021 start:Aureus Q1 2021: show enrollment waitlist status is 'waiting' or 'Emailed' then show related icon for center admin.
+                
                // added by jatin:20-mar-2020: for show group class background color
                 if(String.isNotBlank(book.Class__r.Id) && book.type__c != 'busy'){
                     currentEvent.eventColor ='#FFBF00';
@@ -566,6 +598,11 @@ this method returns the list of events or bookings to show on the calendar for t
                                 currentEvent.className = book.Type__c.trim().replaceAll('-','_') +book.Status__c+'Class'; 
                             }else{
                                 currentEvent.className = book.Type__c.trim().replaceAll('-','_') +'Class'; 
+                                // added by nish: 10-mar-2021: for show Complimentry Credit booking color change 
+                                if(book.Is_Complimentary_Credit__c){
+                                    currentEvent.className = 'Complimentary_Credit_Class'; 
+                                }
+                                // added by nish: 10-mar-2021: for show Complimentry Credit booking color change 
                             }
                         }
                     }
@@ -944,7 +981,7 @@ parentList.add(new Account(Id = currentParent, Available_Make_up_Units__c = sumO
             }
             
         }
-        
+        system.debug('##parentList'+parentList);
         if(parentList.size() > 0){
             update parentList;
         }
@@ -989,6 +1026,46 @@ parentList.add(new Account(Id = currentParent, Available_Make_up_Units__c = sumO
                     bookingObj.resource__c = resourceId;
                 } 
                 // added by nishi: 18-sep:2020: for manage Resouce and lesson type
+                bookingObj.Parent__c = String.isNotBlank(parentId)  ? parentId : null;
+                bookingList.add(bookingObj);
+                bookDate = bookDate.addDays(7);
+            }
+        }
+        return bookingList;
+    }
+
+    // added by nishi: 2-nov-2020: for creating adhoc booking for group lessons
+    public static List<Booking__c> createAppointmentForAdhocGroupLesson(Package__c packageObj, String teacherId, String studentId, String centerId, Integer recurring, 
+    String bookingDate, String parentId,String groupLessonId,String enrolmentId){
+        Date bookDate;
+        Time bookStartTime;
+        Time bookEndTime;
+        List<Booking__c> bookingList = new List<Booking__c>();
+        Booking__c bookingObj = new Booking__c();
+        if(String.isNotBlank(bookingDate) && packageObj != NULL && packageObj.Duration__c != 'Trial'){
+            bookDate = Date.valueOf(bookingDate.split('T')[0]);
+            bookStartTime = Time.newInstance(Integer.valueOf(bookingDate.split('T')[1].split(':')[0]), Integer.valueOf(bookingDate.split('T')[1].split(':')[1]), Integer.valueOf(bookingDate.split('T')[1].split(':')[2]), 0);
+            bookEndTime = bookStartTime;
+            bookEndTime = bookEndTime.addMinutes(Integer.valueOf(packageObj.Duration__c));
+        }
+        if(String.isNotBlank(teacherId) && String.isNotBlank(centerId) && String.isNotBlank(bookingDate) && recurring > 0 && packageObj != NULL && String.isNotBlank(studentId)){
+            for(integer i=1;i<=recurring;i++){
+                bookingObj = new Booking__c();
+                bookingObj.recordTypeId = Schema.SObjectType.Booking__c.getRecordTypeInfosByName().get(ConstantsClass.groupLessonBookingRecordType).getRecordTypeId();
+                bookingObj.Center__c = centerId;
+                bookingObj.Group_Class__c = string.isNotBlank(groupLessonId) ? groupLessonId :null;
+                bookingObj.Package__c = packageObj.Id;
+                bookingObj.Student__c = studentId;
+                bookingObj.Teacher_Account__c = teacherId;
+                bookingObj.Booking_Date__c = bookDate;
+                bookingObj.Start_Time__c = bookStartTime;
+                bookingObj.End_Time__c = bookEndTime;
+                bookingObj.Type__c = ConstantsClass.typeAdhoc;
+                bookingObj.Status__c = ConstantsClass.statusScheduled;
+                // added by nishi: 18-Aug:2020: for manage enolment id in Adhoc bookings
+                if(string.isNotBlank(enrolmentId)){
+                    bookingObj.enrolment__c = enrolmentId;
+                }
                 bookingObj.Parent__c = String.isNotBlank(parentId)  ? parentId : null;
                 bookingList.add(bookingObj);
                 bookDate = bookDate.addDays(7);
@@ -1158,7 +1235,8 @@ system.debug('@@About to sendBookingCancelMail');
     
     
     public static void createFifthBookingOnUpgrade(Enrolment__c enrol, Map<String, Booking__c> mapOfFifthBookings, Integer timeDiff, Time startTime, Integer duration){
-        List<Booking__c> bookingsList = new List<Booking__c>();
+        List<Booking__c> bookingsinsertList = new List<Booking__c>();
+        map<string,Booking__c> mapbookingsupdate = new map<string,Booking__c>();
         List<Booking__c> cancelBookings = new List<Booking__c>();
         Decimal availableUnits = 0;
        
@@ -1170,12 +1248,13 @@ system.debug('@@About to sendBookingCancelMail');
         if(availableUnits >= timeDiff && String.isNotBlank(enrol.Parent__c)){
             cancelBookings = fetchCancelBookings(fetchChildrens(enrol.Parent__c));
         }
-        system.debug('cancelBookings'+cancelBookings);
-        system.debug('availableUnits'+availableUnits);
+       //System.debug('cancelBookings'+cancelBookings);
+       //System.debug('availableUnits'+availableUnits);
+       Booking__c bookObj = new Booking__c();
+       Booking__c newBook = new Booking__c();
         for(String bookingId : mapOfFifthBookings.keySet()){
-            Booking__c bookObj = mapOfFifthBookings.get(bookingId);
-            Booking__c newBook = new Booking__c();
-            
+            bookObj = mapOfFifthBookings.get(bookingId);
+            newBook = new Booking__c();
             if(startTime != NULL && duration > 0){
                 bookObj.start_Time__c = startTime;
                 bookObj.end_Time__c = bookObj.start_Time__c.addMinutes(duration);
@@ -1200,8 +1279,7 @@ system.debug('@@About to sendBookingCancelMail');
                             hoursToDeduct -= Integer.valueOf(bookingObj.Available_Make_up_Units__c);
                             bookingObj.Available_Make_up_Units__c = 0;
                         }
-                        bookingsList.add(bookingObj);
-                        
+                        mapbookingsupdate.put(bookingObj.id,bookingObj);
                         if(hoursToDeduct == 0){
                             break;
                         }
@@ -1224,14 +1302,18 @@ system.debug('@@About to sendBookingCancelMail');
                 bookObj.end_Time__c = bookObj.end_Time__c.addMinutes(timeDiff);
             }
             
-            bookingsList.add(bookObj);
-            bookingsList.add(newBook);
+            //bookingsList.add(bookObj);
+            mapbookingsupdate.put(bookingId,bookObj);
+            bookingsinsertList.add(newBook);
             
         }
-        if(bookingsList.size() > 0){
-            upsert bookingsList; 
+        if(bookingsinsertList.size() > 0){
+            upsert bookingsinsertList; 
         }
-        system.debug('bookingsList'+bookingsList);
+        if(mapbookingsupdate.size() > 0){
+            upsert mapbookingsupdate.values(); 
+        }
+       //System.debug('bookingsList'+bookingsList);
         
     }
     public  static Set<String> fetchChildrens(String setOfParentIds){
@@ -1403,7 +1485,7 @@ It will perform following tasks
     /*
 * This method will fetch all bookings of Enrolment greater than effective date except ad-hoc type bookings
 */
-    
+    /*commented by nishi: 24-Sep-2020: this funciton not use in our class 
     private static List<Booking__c> fetchAllFutureBookingsOfEnrolment(Enrolment__c enrolObj, Date effectiveDate){
         DateTime weekDayDT = effectiveDate;
         List<Booking__c> bookingList = new List<Booking__c>();
@@ -1412,25 +1494,25 @@ It will perform following tasks
                            Make_up_Utilize_Bookings__c, Category__c FROM Booking__c WHERE Enrolment__c =: enrolObj.Id /*((Enrolment__c =: enrolObj.Id) OR 
 (Type__c =: ConstantsClass.typeMakeup AND Status__c !=: ConstantsClass.statusCanceled AND 
 Student__c =: enrolObj.Student__c AND Teacher_Account__c =: enrolObj.Teacher__c AND 
-start_Time__c =: enrolObj.Lesson_Start_time__c AND Duration__c = :Decimal.valueOf(enrolObj.Package__r.Duration__c)))*/ AND 
+start_Time__c =: enrolObj.Lesson_Start_time__c AND Duration__c = :Decimal.valueOf(enrolObj.Package__r.Duration__c)))* AND 
                            Booking_Date__c >=: effectiveDate AND Type__c !=: ConstantsClass.typeAdhoc];
         }
         return bookingList;
-    }
+    }*/
    
     /*
 * This method will delete all non canceled and makeup bookings greater than effective date
 */
-    
+   /* commented by nishi: 24-Sep-2020: this funciton not use in our class 
     private static void deleteRegularFutureBooking(List<Booking__c> bookingsToBeDeleted){
         DELETE bookingsToBeDeleted;
-    }
+    }*/
     
     /*
 * This method will return the canceled bookings whose available makeup hours
 * will be processed with the following formula : Available Makeup Minutes = (Available Makeup Minutes - Duration)
 */
-    
+    /*commented by nishi: 24-Sep-2020: this funciton not use in our class 
     private static List<Booking__c> processCanceledRegularBookings(List<Booking__c> canceledBookings){
         List<Booking__c> bookingsToUpsert = new List<Booking__c>();
         for(Booking__c bookObj : canceledBookings){
@@ -1439,7 +1521,7 @@ start_Time__c =: enrolObj.Lesson_Start_time__c AND Duration__c = :Decimal.valueO
         
         return bookingsToUpsert;
     }
-    
+    */
     /*
 * This method will Re-Create all Regular Bookings for the enrolment which is deleted by previous step.  
 */
@@ -1755,25 +1837,27 @@ and booking date > 28 of month.
     *   This Method Will Fetch the desired the Fifth Lesson
     */
 
-   Public static List<Fifth_Lesson__c> fetchFifthLessson(Set<String> fifthLesson){
-       List<Fifth_Lesson__c> fifthLessons = new List<Fifth_Lesson__c>();
-       if(fifthLesson.size() > 0){
-           fifthLessons = [SELECT Id, Name, Booking_Date__c, Booking_Day__c, Center__r.Name, Duration__c,
-                           End_Time__c, Enrolment__c, Event_Color__c, Package__r.Name, Parent__r.FirstName, Parent__r.LastName, Parent__r.Stripe_Customer_Id__c, 
-                           Parent__r.PersonMobilePhone, Parent__r.PersonEmail, Parent__r.Available_Make_up_Units__c,
-                           //Start: added by nishi: 31-Jul-2020: if enrolment Lesson mode is Is center ther we added resource Id
-                           Enrolment__r.Lesson_Mode__c,  Enrolment__r.Resource__c,Center__r.Organisation__r.Name,Enrolment__r.Available_Make_up_mins__c,
-                           Enrolment__r.Center__r.Organisation__r.Tax_Rate__c,  Enrolment__r.Center__r.Organisation__r.Country__r.Currency_Code__c, 
-                           Enrolment__r.Center__r.Organisation__r.Stripe_Base_Url__c, Enrolment__r.Center__r.Organisation__r.Stripe_Secret_Key__c ,
-                           //end: added by nishi: 31-Jul-2020: if enrolment Lesson mode is Is center ther we added resource Id
-                           Start_Time__c, Student__r.FirstName, Student__r.LastName, Teacher_Account__r.FirstName,
-                           Teacher_Account__r.LastName, IsActive__c, Enrolment__r.center__c,  Enrolment__r.Package__r.Duration__c, 
-                           Enrolment__r.Center__r.Country__r.Tax_Rate__c,  Enrolment__r.Center__r.Country__r.Currency_Code__c, 
-                           Enrolment__r.Center__r.Country__r.Stripe_Base_Url__c, Enrolment__r.Center__r.Country__r.Stripe_Secret_Key__c 
-                           FROM Fifth_Lesson__c WHERE Id IN:fifthLesson];
-       }
-       return fifthLessons;
-   }
+    Public static List<Fifth_Lesson__c> fetchFifthLessson(Set<String> fifthLesson){
+        List<Fifth_Lesson__c> fifthLessons = new List<Fifth_Lesson__c>();
+        if(fifthLesson.size() > 0){
+            fifthLessons = [SELECT Id, Name, Booking_Date__c, Booking_Day__c, Center__r.Name, Duration__c,
+                            End_Time__c, Enrolment__c, Event_Color__c, Package__r.Name, Parent__r.FirstName, Parent__r.LastName, Parent__r.Stripe_Customer_Id__c, 
+                            Parent__r.PersonMobilePhone, Parent__r.PersonEmail, Parent__r.Available_Make_up_Units__c,
+                            Enrolment__r.package__r.Program__r.Instrument__c,Enrolment__r.package__r.Grade_new__c, //added by nishi: for ossia center we get adhoc packages accoding to enrolment grade and instrument
+                            //Start: added by nishi: 31-Jul-2020: if enrolment Lesson mode is Is center ther we added resource Id
+                            Enrolment__r.Lesson_Mode__c,  Enrolment__r.Resource__c,Center__r.Organisation__r.Name,Enrolment__r.Available_Make_up_mins__c,
+                            Enrolment__r.Center__r.Organisation__r.Tax_Rate__c,  Enrolment__r.Center__r.Organisation__r.Country__r.Currency_Code__c, 
+                            Enrolment__r.Center__r.Organisation__r.Stripe_Base_Url__c, Enrolment__r.Center__r.Organisation__r.Stripe_Secret_Key__c ,
+                            //end: added by nishi: 31-Jul-2020: if enrolment Lesson mode is Is center ther we added resource Id
+                            Start_Time__c, Student__r.FirstName, Student__r.LastName, Teacher_Account__r.FirstName,
+                            Teacher_Account__r.LastName, IsActive__c, Enrolment__r.center__c,  Enrolment__r.Package__r.Duration__c, 
+                            Enrolment__r.Center__r.Country__r.Tax_Rate__c,  Enrolment__r.Center__r.Country__r.Currency_Code__c, 
+                            Enrolment__r.Center__r.Country__r.Stripe_Base_Url__c, Enrolment__r.Center__r.Country__r.Stripe_Secret_Key__c 
+                            FROM Fifth_Lesson__c WHERE Id IN:fifthLesson];
+        }
+        return fifthLessons;
+    }
+
 
    /*
      *This Method will Clone the FifthLesson To Placeholder Booking

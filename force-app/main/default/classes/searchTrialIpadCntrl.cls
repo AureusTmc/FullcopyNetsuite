@@ -59,12 +59,19 @@ public class searchTrialIpadCntrl {
         if(String.isNotBlank(slcdCenter)){
             for(Enrolment__c enr: [SELECT Id, Name, Parent__c, Parent__r.Name, Parent__r.Personemail, Parent_Email__c, Student__c, Student__r.Name,
                                       		 Teacher__c, Teacher__r.Name, Package__c, Package__r.Name, Trial_Date__c, Trial_Start_Time__c,
-                                      		 Center__c, Center__r.Name 
+                                      		 Center__c, Center__r.Name,Lesson_Start_time__c 
                                       FROM Enrolment__c 
                                       WHERE Parent__r.Personemail != null AND Type__c IN:typeSet  AND Stage__c IN:stgList 
                                    	  AND Center__c=:slcdCenter and Trial_Date__c=:GetToday]){
                                         system.debug('----'+enr);  
-                String tempTSlot = DateTime.newInstance(enr.Trial_Date__c, enr.Trial_Start_Time__c).format('hh:mm a');                          
+                String tempTSlot = '';
+                // added by nishi: 3-Mar-2020: for re-enrolment and Direct enrolment case we have not trial time so we get lesson start time
+                if(enr.Trial_Date__c != null && enr.Trial_Start_Time__c != null){
+                    tempTSlot = DateTime.newInstance(enr.Trial_Date__c, enr.Trial_Start_Time__c).format('hh:mm a');      
+                }else if(enr.Lesson_Start_time__c != null){
+                    tempTSlot =  DateTime.newInstance(system.today(), enr.Lesson_Start_time__c).format('hh:mm a');   
+                }             
+                 // added by nishi: 3-Mar-2020: for re-enrolment and Direct enrolment case we have not trial time so we get lesson start time       
              	enrList.add(new EnrolmentModel(enr, tempTSlot));
              }
         }
@@ -84,7 +91,7 @@ public class searchTrialIpadCntrl {
             String tempSerch = srchKey + '%';
             system.debug('=====>'+tempSerch);
             String str = 'SELECT Id, Name, Parent__c, Parent__r.Name, Parent__r.Personemail, Parent_Email__c, Student__c, Student__r.Name,Teacher__c, '+
-                				 'Teacher__r.Name, Package__c, Package__r.Name, Trial_Date__c, Trial_Start_Time__c,Center__c, Center__r.Name  '+
+                				 'Teacher__r.Name, Package__c, Package__r.Name, Trial_Date__c, Trial_Start_Time__c,Center__c, Center__r.Name,Lesson_Start_time__c  '+
                 		 'FROM Enrolment__c WHERE Center__r.Country__r.Name =:cntryCode AND Parent__r.Personemail != null AND Student__c != null AND '+
                 		 	  'Student__r.Name != null AND Stage__c IN:stgList AND Type__c IN:typeSet AND (Name like: tempSerch OR Parent__r.Name like: tempSerch OR '+
                 		 	  'Student__r.Name like: tempSerch OR Parent__r.PersonEmail like: tempSerch OR Parent__r.Phone like: tempSerch )';  
@@ -93,11 +100,21 @@ public class searchTrialIpadCntrl {
             
             //System.debug('@str@@@'+enrListing.size());
             for(Enrolment__c enr:enrListing){
-                String tempTSlot;
+                /*String tempTSlot='';
                 system.debug('---->'+enr);
                 if(enr.Trial_Date__c != null){
                    tempTSlot = DateTime.newInstance(enr.Trial_Date__c, enr.Trial_Start_Time__c).format('hh:mm a');   
-                } 
+                } */
+                String tempTSlot='';
+                system.debug('---->'+enr);
+                 // added by nishi: 3-Mar-2020: for re-enrolment and Direct enrolment case we have not trial time so we get lesson start time
+                if(enr.Trial_Date__c != null && enr.Trial_Start_Time__c != null){
+                    tempTSlot = DateTime.newInstance(enr.Trial_Date__c, enr.Trial_Start_Time__c).format('hh:mm a');      
+                }else if(enr.Lesson_Start_time__c != null ){
+                    tempTSlot =  DateTime.newInstance(system.today(), enr.Lesson_Start_time__c).format('hh:mm a');   
+                }             
+                 // added by nishi: 3-Mar-2020: for re-enrolment and Direct enrolment case we have not trial time so we get lesson start time       
+
                 enr.Parent_Email__c = enr.Parent__r.Personemail;
                 enrList.add(new EnrolmentModel(enr, tempTSlot));  
             }
@@ -105,6 +122,11 @@ public class searchTrialIpadCntrl {
         system.debug('enrList---'+enrList.size());
         return enrList;
     }
+    /* Nishi: 5-Feb-2021:Start: Aureus Q1 2021: Clicking on New customer  button then we open a new page to capture the Parent and Student details.*/
+	public PageReference directCreateNewEnrolment(){
+        return new PageReference('/apex/createDirectEnrolmentPage?'+'currentOrg='+enrolmentOrg+'&'+'orgType='+orgType+'&'+'slcdCenter='+slcdCenter+'&'+'countryCode='+countryCode);
+    }
+     /* Nishi: 5-Feb-2021:end: Aureus Q1 2021: Clicking on New customer  button then we open a new page to capture the Parent and Student details.*/
 	
     public PageReference redirectToEnrolment(){
         isError    = false;

@@ -113,6 +113,48 @@ public class ReCalculatePayoutActionController{
             }
             return true;
         }catch(Exception e){
+            system.debug(''+e.getmessage());
+            return false;
+        }
+    }
+      //Nishi : 9-Apr-2021:for calculate teacher working hrs  and created payitem accordingly and calculate CPF amount accordingly
+    @AuraEnabled
+    public static boolean getCalculatePayoutTeacherTieredHrs(String payoutId){
+        try{ 
+            date dateOfToday = system.today();
+            Integer yInt = dateOfToday.Year(); Integer mInt = dateOfToday.month();
+            Datetime dateTimeOfToday = (datetime) dateOfToday;
+            Date startMonthDate = date.newInstance(yInt,mInt,1); 
+            Date lastMonthDate = date.newInstance(yInt,mInt,Date.DaysInMonth(yInt,mInt));
+            // --------------------
+            String mString = dateTimeOfToday.format('MMMM');
+            String yString = dateTimeOfToday.format('yyyy');
+            
+            Map<Id,Payout__c> accToPayoutMap = AureusHRUtility.getEmployeePayout(new List<String>{payoutId});
+            Map<Id, Account> accountMap = new Map<Id, Account>([Select id,Joining_Date__c,Issue_Date__c,PersonBirthdate,ID_Type__c,Age__c,Last_Working_Date__c from Account where (recordType.Name='Teacher') AND Id IN: accToPayoutMap.keyset()]);
+           
+            //below code to run only on button click -> 'Calculate Payout'
+            if(!System.isBatch()){
+                Set<Id> payoutIdSet = new Set<Id>();
+                Date processDate;
+                for(Payout__c payout: accToPayoutMap.values()){
+                    payoutIdSet.add(payout.Id);
+                    Integer year = Integer.valueOf(payout.Year__c); 
+                    Integer month = monthMap.get(payout.Month__c);
+                    processDate = Date.newInstance(year,month,1); 
+                    System.debug(processDate);
+                    break;
+                }
+                if(processDate != NULL && accountMap != null && accountMap.size() > 0){
+                    AureusHRManagementUtil.createPayItemForSalaryPayroll(accToPayoutMap.keyset(),processDate,payoutIdSet);
+                    AureusHRManagementUtil.calcualterPayoutCPFAmount(accountMap.values(),payoutIdSet,processDate);
+                }
+                
+            }
+            
+            return true;
+        }catch(Exception e){
+            system.debug(''+e.getmessage());
             return false;
         }
     }

@@ -710,7 +710,7 @@ public class InstrumentRental_IpadCntrl{
             parentAcc.RecordTypeId   = csmrRecId;
             parentAcc.Centre_Name__c = slcdCenter;
            // parentAcc.Instrument__c  = (new list<string>(scldInst) )[0] ;
-            List<Account> centrList  = [SELECT Id, Name, Location__c, Country__c, Country__r.Country_Name__c FROM Account WHERE Id =: slcdCenter];
+            List<Account> centrList  = [SELECT Id, Name,Organisation__c,Organisation__r.name, Location__c, Country__c, Country__r.Country_Name__c FROM Account WHERE Id =: slcdCenter];
             if(centrList.size() > 0){
                 parentAcc.Location__c = centrList.get(0).Location__c;
                 //Added by rajesh, 10th sep 2019. To do some sharing seeting stuff as per Ashish ji discussion
@@ -719,9 +719,24 @@ public class InstrumentRental_IpadCntrl{
             }
             //Check that customer is already exist or not on the bases of email
             if(parentAcc.PersonEmail != null){
-                List<Account> accList = [SELECT Id,Name FROM Account WHERE PersonEmail =: parentAcc.PersonEmail]; 
+                List<Account> accList = [SELECT Id,Name FROM Account 
+                                        WHERE PersonEmail =: parentAcc.PersonEmail
+                                     //  And Centre_Name__r.Organisation__c =: centrList.get(0).Organisation__c // Added by nishi: 30-nov-2020: for Change customer key from email address to email address+Organisation name
+                                        ]; 
                 if(accList.size() > 0)
                     parentAcc.Id = accList.get(0).Id;
+                else{
+                    /*// Added by nishi:Start: 30-nov-2020: for Change customer key from email address to email address+Organisation name
+                    string useremail=parentAcc.PersonEmail+'.';
+                    if(centrList.get(0).Organisation__r.name == Label.Ossia_Organisation_Name){
+                        useremail +='ossia'+centrList.get(0).name; 
+                    }else{
+                        useremail += 'aureus'+centrList.get(0).name;
+                    }
+                    parentAcc.User_Email__c = useremail;
+                    // Added by nishi:end: 30-nov-2020: for Change customer key from email address to email address+Organisation name     */
+                    
+                }
             }
            /* if(isParAlsoAStudent){
                 Account stuAcc = enrModelList.get(0).studentAcc;

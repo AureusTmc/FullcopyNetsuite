@@ -21,11 +21,27 @@ public class VoidInvoiceController {
                     system.debug('mapOfInvoiceIsPromoPrepayemnt'+mapOfInvoiceIsPromoPrepayemnt);
                     if(mapOfInvoiceIsPromoPrepayemnt != null && mapOfInvoiceIsPromoPrepayemnt.size() > 0){
                         if(mapOfInvoiceIsPromoPrepayemnt.containsKey(objInv.id) && mapOfInvoiceIsPromoPrepayemnt.get(objInv.id)){
-                            EmailTemplate template = [SELECT Id FROM EmailTemplate WHERE DeveloperName =:'Void_Invoice_PrePayment' LIMIT 1];
-                            system.debug('template'+template);
-                            objInv =  [SELECT Id, Parent_Account__r.personContactId ,Center__r.Location__c FROM Invoice__c WHERE Id=: objInv.id];
+                            //EmailTemplate template = [SELECT Id FROM EmailTemplate WHERE DeveloperName =:'Void_Invoice_PrePayment' LIMIT 1];
+                            map<string,EmailTemplate> templatemap= new map<string,EmailTemplate>();
+                            for(EmailTemplate objEmailTemplate :[Select Id,DeveloperName from EmailTemplate 
+									where DeveloperName = 'Void_Invoice_PrePayment' 
+									or DeveloperName = 'Ossia_Void_Invoice_PrePayment' 
+									]){
+										templatemap.put(objEmailTemplate.DeveloperName,objEmailTemplate);
+									}
+                            //system.debug('template'+template);
+                            objInv =  [SELECT Id, Parent_Account__r.personContactId ,Center__r.Location__c,Center__r.Organisation__r.Name FROM Invoice__c WHERE Id=: objInv.id];
                             system.debug('objInv'+objInv);
-                            Messaging.SingleEmailMessage mail = AureusUtility.getSingleEmailMessage(template.id,objInv.Parent_Account__r.personContactId,objInv.Id,objInv.Center__r.Location__c);
+                            Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+                            if(string.isNotBlank(objInv.Center__r.Organisation__r.Name) && objInv.Center__r.Organisation__r.Name.equalsIgnoreCase(System.Label.Ossia_Organisation_Name)){
+                                if(templateMap.containsKey('Ossia_Void_Invoice_PrePayment')){
+                                    mail = AureusUtility.getSingleEmailMessage(templatemap.get('Ossia_Void_Invoice_PrePayment').id,objInv.Parent_Account__r.personContactId,objInv.Id,objInv.Center__r.Location__c);
+                                }
+                            }else{
+                                if(templateMap.containsKey('Void_Invoice_PrePayment')){
+                                    mail = AureusUtility.getSingleEmailMessage(templatemap.get('Void_Invoice_PrePayment').id,objInv.Parent_Account__r.personContactId,objInv.Id,objInv.Center__r.Location__c);
+                                }
+                            }
                             mail.setTreatTargetObjectAsRecipient(false);
                             mail.setToAddresses(new list<string>{Label.Financial_User_Email});
                             system.debug('mail'+mail);
